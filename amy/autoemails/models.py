@@ -320,7 +320,10 @@ class RQJob(CreatedUpdatedMixin, models.Model):
     """Simple class for storing Redis Queue job's ID."""
 
     job_id = models.CharField(
-        max_length=100, blank=False, null=False, verbose_name="RQ Job ID",
+        max_length=100,
+        blank=False,
+        null=False,
+        verbose_name="RQ Job ID",
     )
 
     trigger = models.ForeignKey(

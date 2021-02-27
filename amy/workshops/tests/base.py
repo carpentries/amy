@@ -1,5 +1,4 @@
 import datetime
-import itertools
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
@@ -98,7 +97,10 @@ class TestBase(
         """Set up airport objects."""
 
         self.airport_0_10 = Airport.objects.create(
-            iata="ZZZ", fullname="Airport 0x10", latitude=0.0, longitude=10.0,
+            iata="ZZZ",
+            fullname="Airport 0x10",
+            latitude=0.0,
+            longitude=10.0,
         )
         self.airport_0_0 = Airport.objects.create(
             iata="AAA",
@@ -132,9 +134,15 @@ class TestBase(
     def _setUpLanguages(self):
         """Set up language objects."""
 
-        self.english, _ = Language.objects.get_or_create(name="English",)
-        self.french, _ = Language.objects.get_or_create(name="French",)
-        self.latin, _ = Language.objects.get_or_create(name="Latin",)
+        self.english, _ = Language.objects.get_or_create(
+            name="English",
+        )
+        self.french, _ = Language.objects.get_or_create(
+            name="French",
+        )
+        self.latin, _ = Language.objects.get_or_create(
+            name="Latin",
+        )
 
     def _setUpBadges(self):
         """Set up badge objects."""

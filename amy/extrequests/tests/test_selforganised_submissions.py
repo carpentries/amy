@@ -617,7 +617,9 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         """
         # setup mock to "fake" the response from non-existing URL
         mock.get(
-            self.sos1.workshop_url, text=html, status_code=200,
+            self.sos1.workshop_url,
+            text=html,
+            status_code=200,
         )
 
         view_url = reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk])
@@ -716,10 +718,12 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailActions(
             body_template="Sample text.",
         )
         self.trigger1 = Trigger.objects.create(
-            action="self-organised-request-form", template=template1,
+            action="self-organised-request-form",
+            template=template1,
         )
         self.trigger2 = Trigger.objects.create(
-            action="week-after-workshop-completion", template=template2,
+            action="week-after-workshop-completion",
+            template=template2,
         )
 
         self.url = reverse("selforganisedsubmission_accept_event", args=[self.sos.pk])

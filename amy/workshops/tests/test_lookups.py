@@ -10,10 +10,9 @@ class TestLookups(TestBase):
     def setUp(self):
         # prepare urlpatterns; only include lookup views that are restricted
         # to logged-in users and/or admins
-        self.patterns_nonrestricted = ('language-lookup', )
+        self.patterns_nonrestricted = ("language-lookup",)
         self.urlpatterns = filter(
-            lambda pattern: pattern.name not in self.patterns_nonrestricted,
-            urlpatterns
+            lambda pattern: pattern.name not in self.patterns_nonrestricted, urlpatterns
         )
 
     def test_login_regression(self):

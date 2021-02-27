@@ -100,8 +100,8 @@ class InstructorAvailabilityMixin(models.Model):
         blank=True,  # special condition check in the form
         default=False,
         verbose_name="I understand that if my workshop is less than two months away,"
-                     " The Carpentries can not guarantee availability of Instructors"
-                     " and I may not be able to hold my workshop as scheduled.",
+        " The Carpentries can not guarantee availability of Instructors"
+        " and I may not be able to hold my workshop as scheduled.",
     )
 
     class Meta:
@@ -173,7 +173,10 @@ class GenderMixin(models.Model):
         default=UNDISCLOSED,
     )
     gender_other = models.CharField(
-        max_length=100, verbose_name="Other gender", blank=True, null=False,
+        max_length=100,
+        verbose_name="Other gender",
+        blank=True,
+        null=False,
     )
 
     class Meta:

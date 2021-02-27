@@ -30,10 +30,16 @@ class TestGenericAction(TestCase):
 
         self.instructor_role = Role.objects.create(name="instructor")
         self.person1 = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk", username="hp",
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="hp",
         )
         self.person2 = Person.objects.create(
-            personal="Ron", family="Weasley", email="rw@magic.uk", username="rw",
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="rw",
         )
 
     def testLaunchAt(self):
@@ -99,7 +105,8 @@ class TestGenericAction(TestCase):
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action="workshop-request-response1", template=template,
+            action="workshop-request-response1",
+            template=template,
         )
         wr = WorkshopRequest(email="test@email.com")
         event = Event.objects.create(
@@ -151,5 +158,6 @@ class TestGenericAction(TestCase):
         )
 
         self.assertEqual(
-            a.all_recipients(), "test@email.com",
+            a.all_recipients(),
+            "test@email.com",
         )

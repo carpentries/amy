@@ -51,7 +51,8 @@ class TestBadge(TestBase):
 
         rv = self.client.post(
             "{}?next={}".format(
-                reverse("award_delete", args=[award.pk]), reverse("admin-dashboard"),
+                reverse("award_delete", args=[award.pk]),
+                reverse("admin-dashboard"),
             ),
             follow=True,
         )

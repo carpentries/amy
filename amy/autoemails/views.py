@@ -29,9 +29,7 @@ def generic_schedule_email(request, pk):
     Generic view for scheduling an email to be sent.
     """
     template_slug = request.POST.get("slug", "")
-    original_template = get_object_or_404(
-        EmailTemplate, slug=template_slug
-    )
+    original_template = get_object_or_404(EmailTemplate, slug=template_slug)
     # Hardcoded, maybe in future respond to other requests, like
     # SelfOrganizedSubmission or WorkshopInquiry
     trigger = get_object_or_404(
@@ -107,8 +105,7 @@ def generic_schedule_email(request, pk):
         )
 
         return redirect(
-            request.POST.get("next", "")
-            or workshop_request.get_absolute_url()
+            request.POST.get("next", "") or workshop_request.get_absolute_url()
         )
 
     else:
@@ -119,6 +116,5 @@ def generic_schedule_email(request, pk):
         )
 
         return redirect(
-            request.POST.get("next", "")
-            or workshop_request.get_absolute_url()
+            request.POST.get("next", "") or workshop_request.get_absolute_url()
         )

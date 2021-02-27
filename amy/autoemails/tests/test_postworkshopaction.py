@@ -32,7 +32,10 @@ class TestPostWorkshopAction(TestCase):
         )
 
     def testLaunchAt(self):
-        e1 = Event(slug="test-event1", host=Organization.objects.first(),)
+        e1 = Event(
+            slug="test-event1",
+            host=Organization.objects.first(),
+        )
         e2 = Event(
             slug="test-event2",
             host=Organization.objects.first(),
@@ -189,7 +192,7 @@ class TestPostWorkshopAction(TestCase):
             country="GB",
             venue="Ministry of Magic",
             # additionally testing the empty email
-            contact=TAG_SEPARATOR.join(["peter@webslinger.net", ""])
+            contact=TAG_SEPARATOR.join(["peter@webslinger.net", ""]),
         )
         e.tags.set(Tag.objects.filter(name__in=["TTT", "SWC"]))
         p1 = Person.objects.create(
@@ -205,8 +208,10 @@ class TestPostWorkshopAction(TestCase):
             personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
         )
         p4 = Person.objects.create(
-            personal="Draco", family="Malfoy", username="dmalfoy",
-            email="draco@malfoy.com"
+            personal="Draco",
+            family="Malfoy",
+            username="dmalfoy",
+            email="draco@malfoy.com",
         )
         host = Role.objects.create(name="host")
         instructor = Role.objects.create(name="instructor")
@@ -243,9 +248,9 @@ class TestPostWorkshopAction(TestCase):
                 ],
                 assignee="Regional Coordinator",
                 reports_link="https://workshop-reports.carpentries.org/"
-                             "?key=e18dd84d093be5cd6c6ccaf63d38a8477ca126f4"
-                             "&slug=test-event",
-                tags=['SWC', 'TTT'],
+                "?key=e18dd84d093be5cd6c6ccaf63d38a8477ca126f4"
+                "&slug=test-event",
+                tags=["SWC", "TTT"],
             ),
         )
 
@@ -276,8 +281,10 @@ class TestPostWorkshopAction(TestCase):
             personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
         )
         p4 = Person.objects.create(
-            personal="Draco", family="Malfoy", username="dmalfoy",
-            email="draco@malfoy.com"
+            personal="Draco",
+            family="Malfoy",
+            username="dmalfoy",
+            email="draco@malfoy.com",
         )
         host = Role.objects.create(name="host")
         instructor = Role.objects.create(name="instructor")
@@ -303,9 +310,13 @@ class TestPostWorkshopAction(TestCase):
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
-        a = PostWorkshopAction(trigger=trigger, objects=dict(event=e),)
+        a = PostWorkshopAction(
+            trigger=trigger,
+            objects=dict(event=e),
+        )
         email = a._email()
         self.assertEqual(email.to, [p2.email, p4.email, p1.email, p3.email])
 
@@ -355,8 +366,10 @@ class TestPostWorkshopAction(TestCase):
             personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
         )
         p4 = Person.objects.create(
-            personal="Draco", family="Malfoy", username="dmalfoy",
-            email="draco@malfoy.com"
+            personal="Draco",
+            family="Malfoy",
+            username="dmalfoy",
+            email="draco@malfoy.com",
         )
         host = Role.objects.create(name="host")
         instructor = Role.objects.create(name="instructor")
@@ -378,5 +391,5 @@ class TestPostWorkshopAction(TestCase):
 
         self.assertEqual(
             a.all_recipients(),
-            "hg@magic.uk, draco@malfoy.com, hp@magic.uk, rw@magic.uk"
+            "hg@magic.uk, draco@malfoy.com, hp@magic.uk, rw@magic.uk",
         )

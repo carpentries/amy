@@ -11,15 +11,15 @@ class TestInstructorIssues(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
-        TTT, _ = Tag.objects.get_or_create(name='TTT')
-        stalled = Tag.objects.get(name='stalled')
-        learner, _ = Role.objects.get_or_create(name='learner')
+        TTT, _ = Tag.objects.get_or_create(name="TTT")
+        stalled = Tag.objects.get(name="stalled")
+        learner, _ = Role.objects.get_or_create(name="learner")
 
         # add two TTT events, one stalled and one normal
-        e1 = Event.objects.create(slug='ttt-stalled', host=self.org_alpha)
+        e1 = Event.objects.create(slug="ttt-stalled", host=self.org_alpha)
         e1.tags.set([TTT, stalled])
 
-        e2 = Event.objects.create(slug='ttt-not-stalled', host=self.org_alpha)
+        e2 = Event.objects.create(slug="ttt-not-stalled", host=self.org_alpha)
         e2.tags.add(TTT)
 
         Task.objects.create(event=e1, person=self.spiderman, role=learner)
@@ -29,9 +29,9 @@ class TestInstructorIssues(TestBase):
 
     def test_stalled_trainees_not_in_pending(self):
         """"""
-        rv = self.client.get(reverse('instructor_issues'))
-        pending = [t.person for t in rv.context['pending']]
-        stalled = [t.person for t in rv.context['stalled']]
+        rv = self.client.get(reverse("instructor_issues"))
+        pending = [t.person for t in rv.context["pending"]]
+        stalled = [t.person for t in rv.context["stalled"]]
 
         self.assertIn(self.spiderman, pending)
         self.assertNotIn(self.spiderman, stalled)

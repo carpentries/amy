@@ -11,7 +11,7 @@ from workshops.tests.base import SuperuserMixin
 class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()
-        self.url = reverse('admin:autoemails_emailtemplate_queue')
+        self.url = reverse("admin:autoemails_emailtemplate_queue")
         self._setUpSuperuser()  # creates self.admin
 
         # save scheduler and connection data
@@ -29,7 +29,7 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.assertEqual(rv.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
-        self.assertTrue(rv.url.startswith(reverse('login')))
+        self.assertTrue(rv.url.startswith(reverse("login")))
 
     def test_view_access_by_admin(self):
         # log admin user
@@ -48,7 +48,7 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.assertEqual(rv.status_code, 200)
 
         # make sure there were no jobs listed
-        self.assertEqual(rv.context['queue'], [])
+        self.assertEqual(rv.context["queue"], [])
 
     def test_not_empty_queue(self):
         # log admin user
@@ -59,7 +59,7 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.assertEqual(rv.status_code, 200)
 
         # make sure we start with no jobs listed
-        self.assertEqual(rv.context['queue'], [])
+        self.assertEqual(rv.context["queue"], [])
 
         # schedule some dummy job
         job = self.scheduler.enqueue_in(timedelta(hours=1), dummy_job)
@@ -68,9 +68,9 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # refresh queue list
         rv = self.client.get(self.url)
         self.assertEqual(rv.status_code, 200)
-        self.assertNotEqual(rv.context['queue'], [])
+        self.assertNotEqual(rv.context["queue"], [])
 
         # first element contains a pair of (job, scheduled time)
-        queue = rv.context['queue']
+        queue = rv.context["queue"]
         job2, time = queue[0]
         self.assertEqual(job, job2)

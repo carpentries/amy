@@ -5,17 +5,20 @@ from workshops.models import Person
 
 
 class Command(BaseCommand):
-    help = ('Synchronizes entries in UserSocialAuth with values '
-            'in Person.github for given Persons.')
+    help = (
+        "Synchronizes entries in UserSocialAuth with values "
+        "in Person.github for given Persons."
+    )
 
     def add_arguments(self, parser):
-        parser.add_argument('username', nargs='+', type=str,
-                            help='Username in AMY database')
+        parser.add_argument(
+            "username", nargs="+", type=str, help="Username in AMY database"
+        )
 
     def handle(self, *args, **options):
-        '''Main entry point.'''
+        """Main entry point."""
 
-        usernames = options['username']
+        usernames = options["username"]
         for username in usernames:
             try:
                 person = Person.objects.get(username=username)

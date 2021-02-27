@@ -33,8 +33,8 @@ class TestAssignmentForm(TestCase):
 
         This is a regression test for https://github.com/carpentries/amy/issues/1792.
         """
-        admins = Group.objects.get(name='administrators')
-        committee = Group.objects.get(name='steering committee')
+        admins = Group.objects.get(name="administrators")
+        committee = Group.objects.get(name="steering committee")
         self.administrator.groups.add(admins)
         # user has to be in 2 groups to yield duplicate
         # results in the queryset
@@ -42,6 +42,6 @@ class TestAssignmentForm(TestCase):
         self.both.groups.add(admins)
 
         field = AssignmentForm().fields["assigned_to"]
-        self.assertEqual(list(field.queryset), [
-            self.both, self.superuser, self.administrator
-        ])
+        self.assertEqual(
+            list(field.queryset), [self.both, self.superuser, self.administrator]
+        )

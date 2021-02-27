@@ -243,7 +243,6 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
                     output_field=IntegerField(),
                 )
             ),
-
             num_supporting=Count(
                 Case(
                     When(task__role__name="supporting-instructor", then=Value(1)),
@@ -1432,7 +1431,7 @@ def events_metadata_changed(request):
     context = {
         "title": "Events with metadata changed",
         "events": events,
-        'assignment_form': assignment_form,
+        "assignment_form": assignment_form,
         "assigned_to": assigned_to,
     }
     return render(request, "workshops/events_metadata_changed.html", context)
@@ -1575,7 +1574,10 @@ class TaskDetails(OnlyForAdminsMixin, AMYDetailView):
 
 
 class TaskCreate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    RedirectSupportMixin,
+    AMYCreateView,
 ):
     permission_required = "workshops.add_task"
     model = Task
@@ -1643,7 +1645,8 @@ class TaskCreate(
                     self.request,
                     'Training "{}" has start or end date outside '
                     'membership "{}" agreement dates.'.format(
-                        str(event), str(seat_membership),
+                        str(event),
+                        str(seat_membership),
                     ),
                 )
 
@@ -1677,9 +1680,8 @@ class TaskCreate(
             )
 
         # check conditions for running a InstructorsHostIntroductionAction
-        if (
-            not check_ihia_old
-            and InstructorsHostIntroductionAction.check(self.object.event)
+        if not check_ihia_old and InstructorsHostIntroductionAction.check(
+            self.object.event
         ):
             triggers = Trigger.objects.filter(
                 active=True, action="instructors-host-introduction"
@@ -1695,10 +1697,7 @@ class TaskCreate(
             )
 
         # check conditions for running an AskForWebsiteAction
-        if (
-            not check_afwa_old
-            and AskForWebsiteAction.check(self.object.event)
-        ):
+        if not check_afwa_old and AskForWebsiteAction.check(self.object.event):
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
@@ -1711,10 +1710,7 @@ class TaskCreate(
             )
 
         # check conditions for running a RecruitHelpersAction
-        if (
-            not check_rha_old
-            and RecruitHelpersAction.check(self.object.event)
-        ):
+        if not check_rha_old and RecruitHelpersAction.check(self.object.event):
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
@@ -1728,10 +1724,7 @@ class TaskCreate(
 
         # When someone adds a helper, then the condition will no longer be met and we
         # have to remove the job.
-        elif (
-            check_rha_old
-            and not RecruitHelpersAction.check(self.object.event)
-        ):
+        elif check_rha_old and not RecruitHelpersAction.check(self.object.event):
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
@@ -1748,7 +1741,9 @@ class TaskCreate(
 
 
 class TaskUpdate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYUpdateView,
 ):
     permission_required = "workshops.change_task"
     model = Task
@@ -1916,7 +1911,10 @@ class TaskUpdate(
 
 
 class TaskDelete(
-    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYDeleteView,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    RedirectSupportMixin,
+    AMYDeleteView,
 ):
     model = Task
     permission_required = "workshops.delete_task"
@@ -1976,9 +1974,7 @@ class TaskDelete(
 
         # AskForWebsiteAction conditions were met, but aren't anymore
         if self.check_afwa_old and not self.check_afwa_new:
-            jobs = self.object.event.rq_jobs.filter(
-                trigger__action="ask-for-website"
-            )
+            jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
                 logger=logger,

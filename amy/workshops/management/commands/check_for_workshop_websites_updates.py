@@ -23,19 +23,15 @@ def datetime_match(string):
     """Convert string date/datetime/time to date/datetime/time."""
     formats = (
         # date
-        ('%Y-%m-%d', 'date'),
-
+        ("%Y-%m-%d", "date"),
         # datetime (no microseconds, timezone unaware)
-        ('%Y-%m-%dT%H:%M:%S', None),
-
+        ("%Y-%m-%dT%H:%M:%S", None),
         # datetime (w/ microseconds, timezone unaware)
-        ('%Y-%m-%dT%H:%M:%S.%f', None),
-
+        ("%Y-%m-%dT%H:%M:%S.%f", None),
         # time (no microseconds, timezone unaware)
-        ('%H:%M:%S', 'time'),
-
+        ("%H:%M:%S", "time"),
         # try parsing time (w/ microseconds, timezone unaware)
-        ('%H:%M:%S.%f', 'time'),
+        ("%H:%M:%S.%f", "time"),
     )
     for format_, method in formats:
         try:
@@ -81,22 +77,31 @@ def datetime_decode(obj):
 
 
 class Command(BaseCommand):
-    help = 'Check if events have had their metadata updated.'
+    help = "Check if events have had their metadata updated."
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-t', '--token', help='GitHub API token', required=True,
+            "-t",
+            "--token",
+            help="GitHub API token",
+            required=True,
         )
         parser.add_argument(
-            '-s', '--slug', help='Use only this specific event slug',
+            "-s",
+            "--slug",
+            help="Use only this specific event slug",
         )
         parser.add_argument(
-            '--init', action='store_true', help='Run for the first time.',
+            "--init",
+            action="store_true",
+            help="Run for the first time.",
         )
         parser.add_argument(
-            '--cutoff-days', default=180, type=int,
-            help='Age (in days) of the oldest events that can be checked.  '
-                 'Default: 180'
+            "--cutoff-days",
+            default=180,
+            type=int,
+            help="Age (in days) of the oldest events that can be checked.  "
+            "Default: 180",
         )
 
     def get_events(self, cutoff_days=180):
@@ -119,7 +124,7 @@ class Command(BaseCommand):
         mo = regex.match(url)
         if mo:
             groups = mo.groupdict()
-            return groups['name'], groups['repo']
+            return groups["name"], groups["repo"]
         raise WrongWorkshopURL()
 
     def get_event_metadata(self, event_url):
@@ -143,11 +148,11 @@ class Command(BaseCommand):
         # convert strings to datetimes (if they match format)
         return datetime_decode(objs)
 
-    def load_from_github(self, github, repo_url, default_branch='gh-pages'):
+    def load_from_github(self, github, repo_url, default_branch="gh-pages"):
         """Fetch repository data from GitHub API."""
         owner, repo_name = self.parse_github_url(repo_url)
         repo = github.get_repo("{}/{}".format(owner, repo_name))
-        branch = repo.get_branch('gh-pages')
+        branch = repo.get_branch("gh-pages")
         return branch
 
     def detect_changes(self, branch, event, save_metadata=False):
@@ -169,17 +174,17 @@ class Command(BaseCommand):
                 metadata_old = self.empty_metadata()
 
             metadata_to_check = (
-                ('instructors', 'Instructors changed'),
-                ('helpers', 'Helpers changed'),
-                ('start', 'Start date changed'),
-                ('end', 'End date changed'),
-                ('country', 'Country changed'),
-                ('venue', 'Venue changed'),
-                ('address', 'Address changed'),
-                ('latitude', 'Latitude changed'),
-                ('longitude', 'Longitude changed'),
-                ('contact', 'Contact details changed'),
-                ('reg_key', 'Eventbrite key changed'),
+                ("instructors", "Instructors changed"),
+                ("helpers", "Helpers changed"),
+                ("start", "Start date changed"),
+                ("end", "End date changed"),
+                ("country", "Country changed"),
+                ("venue", "Venue changed"),
+                ("address", "Address changed"),
+                ("latitude", "Latitude changed"),
+                ("longitude", "Longitude changed"),
+                ("contact", "Contact details changed"),
+                ("reg_key", "Eventbrite key changed"),
             )
 
             changed = False
@@ -206,16 +211,16 @@ class Command(BaseCommand):
         event.repository_last_commit_hash = branch.commit.sha
         metadata = self.get_event_metadata(event.url)
         event.repository_metadata = self.serialize(metadata)
-        event.metadata_all_changes = ''
+        event.metadata_all_changes = ""
         event.metadata_changed = False
         event.save()
 
     def handle(self, *args, **options):
         """Run."""
-        token = options['token']
-        initial_run = options['init']
-        slug = options['slug']
-        cutoff_days = options['cutoff_days']
+        token = options["token"]
+        initial_run = options["init"]
+        slug = options["slug"]
+        cutoff_days = options["cutoff_days"]
 
         g = Github(token)
 
@@ -235,29 +240,33 @@ class Command(BaseCommand):
                 if initial_run:
                     branch = self.load_from_github(g, event.repository_url)
                     self.init(branch, event)
-                    print('Initialized {}'.format(event.slug))
+                    print("Initialized {}".format(event.slug))
                 else:
                     branch = self.load_from_github(g, event.repository_url)
                     changes = self.detect_changes(branch, event)
                     if changes:
                         events_for_update[event.slug] = changes
-                        print('Detected changes in {}'.format(event.slug))
+                        print("Detected changes in {}".format(event.slug))
 
             except GithubException:
-                print('GitHub error when accessing {} repo'.format(event.slug),
-                      file=sys.stderr)
+                print(
+                    "GitHub error when accessing {} repo".format(event.slug),
+                    file=sys.stderr,
+                )
 
             except socket.timeout:
-                print('Timeout when accessing {} repo'.format(event.slug),
-                      file=sys.stderr)
+                print(
+                    "Timeout when accessing {} repo".format(event.slug), file=sys.stderr
+                )
 
             except WrongWorkshopURL:
-                print('Wrong URL for {}'.format(event.slug), file=sys.stderr)
+                print("Wrong URL for {}".format(event.slug), file=sys.stderr)
 
             except requests.exceptions.RequestException:
-                print('Network error when accessing {}'.format(event.slug),
-                      file=sys.stderr)
+                print(
+                    "Network error when accessing {}".format(event.slug),
+                    file=sys.stderr,
+                )
 
             except Exception as e:
-                print('Unknown error ({}): {}'.format(event.slug, e),
-                      file=sys.stderr)
+                print("Unknown error ({}): {}".format(event.slug, e), file=sys.stderr)

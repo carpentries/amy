@@ -1,7 +1,6 @@
 from datetime import timedelta, datetime
 
-from django.test import TestCase, override_settings
-from django_rq import get_scheduler
+from django.test import TestCase
 import pytz
 from rq.queue import Queue
 from rq.worker import SimpleWorker
@@ -26,7 +25,10 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
 
     def test_time_for_scheduled_job(self):
         # add job
-        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
+        job = self.scheduler.enqueue_in(
+            timedelta(minutes=5),
+            dummy_job,
+        )
         job_id = job.get_id()
 
         # test
@@ -38,7 +40,10 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
 
     def test_time_for_run_job(self):
         # add job
-        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
+        job = self.scheduler.enqueue_in(
+            timedelta(minutes=5),
+            dummy_job,
+        )
         job_id = job.get_id()
 
         # move the job to queue
@@ -50,7 +55,10 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
 
     def test_time_unaware_aware(self):
         # add job
-        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
+        job = self.scheduler.enqueue_in(
+            timedelta(minutes=5),
+            dummy_job,
+        )
         job_id = job.get_id()
 
         # test
@@ -69,7 +77,10 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
 
     def test_status_scheduled_job(self):
         # add job
-        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
+        job = self.scheduler.enqueue_in(
+            timedelta(minutes=5),
+            dummy_job,
+        )
 
         # test
         rv = check_status(job, self.scheduler)
@@ -77,7 +88,10 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
 
     def test_status_queued_job(self):
         # add job
-        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
+        job = self.scheduler.enqueue_in(
+            timedelta(minutes=5),
+            dummy_job,
+        )
 
         # move the job to queue
         self.scheduler.enqueue_job(job)
@@ -124,7 +138,10 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
 
     def test_status_cancelled_job(self):
         # add job
-        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
+        job = self.scheduler.enqueue_in(
+            timedelta(minutes=5),
+            dummy_job,
+        )
 
         # cancel job
         self.scheduler.cancel(job)

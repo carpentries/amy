@@ -96,7 +96,11 @@ class WorkshopInquiryRequest(
         verbose_name="Workshop location",
         help_text="City, state, or province.",
     )
-    country = CountryField(null=False, blank=False, verbose_name="Country",)
+    country = CountryField(
+        null=False,
+        blank=False,
+        verbose_name="Country",
+    )
     # Here starts "Your Audience" part with this description:
     # The Carpentries offers several different workshops intended for audiences
     # from different domain backgrounds, with different computational
@@ -124,7 +128,10 @@ class WorkshopInquiryRequest(
         "all that apply.",
     )
     domains_other = models.CharField(
-        max_length=STR_LONGEST, blank=True, default="", verbose_name="Other domains",
+        max_length=STR_LONGEST,
+        blank=True,
+        default="",
+        verbose_name="Other domains",
     )
     academic_levels = models.ManyToManyField(
         AcademicLevel,
@@ -435,10 +442,7 @@ class SelfOrganisedSubmission(
         help_text="Please provide the dates that your Self-Organised workshop will"
         " run.",
     )
-    end = models.DateField(
-        null=True,
-        verbose_name="Workshop end date"
-    )
+    end = models.DateField(null=True, verbose_name="Workshop end date")
     workshop_url = models.URLField(
         max_length=STR_LONGEST,
         blank=True,
@@ -496,7 +500,11 @@ class SelfOrganisedSubmission(
         'lesson only" or "We are teaching Data Carpentry\'s Ecology '
         'workshop, but not teaching a programming language."',
     )
-    country = CountryField(null=True, blank=False, verbose_name="Country",)
+    country = CountryField(
+        null=True,
+        blank=False,
+        verbose_name="Country",
+    )
     language = models.ForeignKey(
         Language,
         on_delete=models.PROTECT,

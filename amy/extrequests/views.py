@@ -196,7 +196,8 @@ class WorkshopRequestAcceptEvent(
                 logger=logger,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
-                    active=True, action="week-after-workshop-completion",
+                    active=True,
+                    action="week-after-workshop-completion",
                 ),
                 context_objects=objs,
                 object_=event,
@@ -313,7 +314,8 @@ class WorkshopInquiryAcceptEvent(
                 logger=logger,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
-                    active=True, action="week-after-workshop-completion",
+                    active=True,
+                    action="week-after-workshop-completion",
                 ),
                 context_objects=objs,
                 object_=event,
@@ -508,7 +510,8 @@ class SelfOrganisedSubmissionAcceptEvent(
                 logger=logger,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
-                    active=True, action="week-after-workshop-completion",
+                    active=True,
+                    action="week-after-workshop-completion",
                 ),
                 context_objects=objs,
                 object_=event,
@@ -607,7 +610,8 @@ def all_trainingrequests(request):
                         request,
                         'Training "{}" has start or end date outside '
                         'membership "{}" agreement dates.'.format(
-                            str(event), str(member_site),
+                            str(event),
+                            str(member_site),
                         ),
                     )
 
@@ -961,7 +965,9 @@ def bulk_upload_training_request_scores(request):
         "charset": settings.DEFAULT_CHARSET,
     }
     return render(
-        request, "requests/trainingrequest_bulk_upload_manual_score_form.html", context,
+        request,
+        "requests/trainingrequest_bulk_upload_manual_score_form.html",
+        context,
     )
 
 
@@ -1010,7 +1016,8 @@ def bulk_upload_training_request_scores_confirmation(request):
                     return redirect("bulk_upload_training_request_scores")
             else:
                 messages.warning(
-                    request, "Please fix the data according to error messages below.",
+                    request,
+                    "Please fix the data according to error messages below.",
                 )
 
         else:
@@ -1022,7 +1029,8 @@ def bulk_upload_training_request_scores_confirmation(request):
         errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
         if errors:
             messages.warning(
-                request, "Please fix errors in the provided CSV file and re-upload.",
+                request,
+                "Please fix errors in the provided CSV file and re-upload.",
             )
 
     context = {

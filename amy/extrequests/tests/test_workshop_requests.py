@@ -582,7 +582,8 @@ class TestAcceptWorkshopRequestAddsEmailAction(FakeRedisTestCaseMixin, TestBase)
             body_template="Sample text.",
         )
         self.trigger1 = Trigger.objects.create(
-            action="week-after-workshop-completion", template=template1,
+            action="week-after-workshop-completion",
+            template=template1,
         )
 
         self.url = reverse("workshoprequest_accept_event", args=[self.wr1.pk])

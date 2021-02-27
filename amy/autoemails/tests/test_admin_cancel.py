@@ -24,10 +24,10 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # fake RQJob
         self.email = EmailTemplate.objects.create(slug="test-1")
-        self.trigger = Trigger.objects.create(action="new-instructor",
-                                              template=self.email)
-        self.rqjob = RQJob.objects.create(job_id="fake-id",
-                                          trigger=self.trigger)
+        self.trigger = Trigger.objects.create(
+            action="new-instructor", template=self.email
+        )
+        self.rqjob = RQJob.objects.create(job_id="fake-id", trigger=self.trigger)
 
     def tearDown(self):
         super().tearDown()
@@ -38,28 +38,29 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # log admin user
         self._logSuperuserIn()
 
-        url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[self.rqjob.pk])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 405)  # Method not allowed
 
     def test_view_access_by_anonymous(self):
-        url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
-        self.assertTrue(rv.url.startswith(reverse('login')))
+        self.assertTrue(rv.url.startswith(reverse("login")))
 
     def test_view_access_by_admin(self):
         # log admin user
         self._logSuperuserIn()
 
         # try accessing the view again
-        url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
-        self.assertRedirects(rv, reverse('admin:autoemails_rqjob_preview',
-                                         args=[self.rqjob.pk]))
+        self.assertRedirects(
+            rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk])
+        )
 
     def test_no_such_job(self):
         # log admin user
@@ -68,11 +69,11 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         with self.assertRaises(NoSuchJobError):
             Job.fetch(self.rqjob.job_id, connection=self.scheduler.connection)
 
-        url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[self.rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
-            'The corresponding job in Redis was probably already executed',
-            rv.content.decode('utf-8'),
+            "The corresponding job in Redis was probably already executed",
+            rv.content.decode("utf-8"),
         )
 
     def test_job_executed(self):
@@ -87,17 +88,13 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         with self.connection.pipeline() as pipe:
             pipe.watch(self.scheduler.scheduled_jobs_key)
             # no jobs in scheduler
-            self.assertIsNone(
-                pipe.zscore(
-                    self.scheduler.scheduled_jobs_key, job.id
-                )
-            )
+            self.assertIsNone(pipe.zscore(self.scheduler.scheduled_jobs_key, job.id))
 
-        url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
-            'Job has unknown status or was already executed.',
-            rv.content.decode('utf-8'),
+            "Job has unknown status or was already executed.",
+            rv.content.decode("utf-8"),
         )
 
     def test_enqueued_job_cancelled(self):
@@ -124,29 +121,21 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         with self.connection.pipeline() as pipe:
             pipe.watch(self.scheduler.scheduled_jobs_key)
             # job in scheduler
-            self.assertIsNotNone(
-                pipe.zscore(
-                    self.scheduler.scheduled_jobs_key, job.id
-                )
-            )
+            self.assertIsNotNone(pipe.zscore(self.scheduler.scheduled_jobs_key, job.id))
 
         # cancel the job
-        url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
-            f'The job {rqjob.job_id} was cancelled.',
-            rv.content.decode('utf-8'),
+            f"The job {rqjob.job_id} was cancelled.",
+            rv.content.decode("utf-8"),
         )
 
         # the job is no longer in scheduler's queue
         with self.connection.pipeline() as pipe:
             pipe.watch(self.scheduler.scheduled_jobs_key)
             # job in scheduler
-            self.assertIsNone(
-                pipe.zscore(
-                    self.scheduler.scheduled_jobs_key, job.id
-                )
-            )
+            self.assertIsNone(pipe.zscore(self.scheduler.scheduled_jobs_key, job.id))
 
         # job status updated
         rqjob.refresh_from_db()
@@ -162,27 +151,27 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # Create an asynchronous queue.
         # The name `separate_queue` used here is to ensure the queue isn't
         # used anywhere else.
-        queue = Queue('separate_queue', connection=self.connection)
+        queue = Queue("separate_queue", connection=self.connection)
 
         # log admin user
         self._logSuperuserIn()
 
         # add job to the queue
         job = queue.enqueue(dummy_job)
-        self.assertEqual(job.get_status(), 'queued')
+        self.assertEqual(job.get_status(), "queued")
 
         # log the job in our system as RQJob
         rqjob = RQJob.objects.create(job_id=job.id, trigger=self.trigger)
 
         # force the job status to be "started"
-        job.set_status('started')
+        job.set_status("started")
         self.assertTrue(job.is_started)
 
-        url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
-            f'Job {rqjob.job_id} has started and cannot be cancelled.',
-            rv.content.decode('utf-8'),
+            f"Job {rqjob.job_id} has started and cannot be cancelled.",
+            rv.content.decode("utf-8"),
         )
 
     def test_other_status_job(self):
@@ -190,26 +179,26 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # Create an asynchronous queue.
         # The name `separate_queue` used here is to ensure the queue isn't
         # used anywhere else.
-        queue = Queue('separate_queue', connection=self.connection)
+        queue = Queue("separate_queue", connection=self.connection)
 
         # log admin user
         self._logSuperuserIn()
 
         # add job to the queue
         job = queue.enqueue(dummy_job)
-        self.assertEqual(job.get_status(), 'queued')
+        self.assertEqual(job.get_status(), "queued")
 
         # log the job in our system as RQJob
         rqjob = RQJob.objects.create(job_id=job.id, trigger=self.trigger)
 
         # force the job status to be "deferred" (could be something else,
         # except for "started" and "queued")
-        job.set_status('deferred')
+        job.set_status("deferred")
         self.assertTrue(job.is_deferred)
 
-        url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_cancel", args=[rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
-            'Job has unknown status or was already executed.',
-            rv.content.decode('utf-8'),
+            "Job has unknown status or was already executed.",
+            rv.content.decode("utf-8"),
         )

@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, date, timezone
 from urllib.parse import urlencode
-import unittest
 import sys
 
 from django.contrib.sites.models import Site
@@ -239,7 +238,10 @@ class TestEvent(TestBase):
         assert event.website_url == link
 
     def test_open_TTT_applications_validation(self):
-        event = Event.objects.create(slug="test-event", host=self.org_alpha,)
+        event = Event.objects.create(
+            slug="test-event",
+            host=self.org_alpha,
+        )
 
         # without TTT tag, the validation fails
         event.open_TTT_applications = True
@@ -463,13 +465,13 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse("event_add"), data, follow=True)
         event = Event.objects.get(slug="2016-07-09-test")
         self.assertRedirects(
-            response, reverse("event_details", kwargs={"slug": event.slug}),
+            response,
+            reverse("event_details", kwargs={"slug": event.slug}),
         )
         self.assertEqual(event.assigned_to, self.admin)
 
     def test_unique_non_empty_slug(self):
-        """Ensure events with no slugs are *not* saved to the DB.
-        """
+        """Ensure events with no slugs are *not* saved to the DB."""
         data = {
             "host": self.test_host.id,
             "tags": [self.test_tag.id],
@@ -1292,7 +1294,8 @@ class TestEventCreatePostWorkshopAction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         template = EmailTemplate.objects.create(
@@ -1306,7 +1309,8 @@ class TestEventCreatePostWorkshopAction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
 
     def test_job_scheduled(self):
@@ -1388,7 +1392,8 @@ class TestEventUpdatePostWorkshopAction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         template = EmailTemplate.objects.create(
@@ -1402,7 +1407,8 @@ class TestEventUpdatePostWorkshopAction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
 
     def test_job_scheduled(self):
@@ -1576,7 +1582,8 @@ class TestEventDeletePostWorkshopAction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         template = EmailTemplate.objects.create(
@@ -1590,7 +1597,8 @@ class TestEventDeletePostWorkshopAction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
 
     def test_job_unscheduled(self):
@@ -1693,7 +1701,8 @@ class TestEventUpdateInstructorsHostIntroduction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         self.instructor = Role.objects.create(name="instructor")
@@ -1710,7 +1719,8 @@ class TestEventUpdateInstructorsHostIntroduction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="instructors-host-introduction", template=template,
+            action="instructors-host-introduction",
+            template=template,
         )
 
         self.instructor1 = Person.objects.create(
@@ -1919,7 +1929,8 @@ class TestEventDeleteInstructorsHostIntroduction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         self.instructor = Role.objects.create(name="instructor")
@@ -1936,7 +1947,8 @@ class TestEventDeleteInstructorsHostIntroduction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="instructors-host-introduction", template=template,
+            action="instructors-host-introduction",
+            template=template,
         )
 
         self.instructor1 = Person.objects.create(
@@ -2048,9 +2060,7 @@ class TestEventCreateAskForWebsite(TestCase):
     pass
 
 
-class TestEventUpdateAskForWebsite(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2107,7 +2117,9 @@ class TestEventUpdateAskForWebsite(
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(AskForWebsiteAction.check(event))
 
@@ -2167,7 +2179,9 @@ class TestEventUpdateAskForWebsite(
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(AskForWebsiteAction.check(event))
 
@@ -2241,9 +2255,7 @@ class TestEventUpdateAskForWebsite(
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestEventDeleteAskForWebsite(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2300,7 +2312,9 @@ class TestEventDeleteAskForWebsite(
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(AskForWebsiteAction.check(event))
 
@@ -2374,9 +2388,7 @@ class TestEventCreateRecruitHelpers(TestCase):
     pass
 
 
-class TestEventUpdateRecruitHelpers(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2436,7 +2448,9 @@ class TestEventUpdateRecruitHelpers(
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(RecruitHelpersAction.check(event))
 
@@ -2497,7 +2511,9 @@ class TestEventUpdateRecruitHelpers(
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(RecruitHelpersAction.check(event))
 
@@ -2573,9 +2589,7 @@ class TestEventUpdateRecruitHelpers(
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestEventDeleteRecruitHelpers(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2635,7 +2649,9 @@ class TestEventDeleteRecruitHelpers(
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(RecruitHelpersAction.check(event))
 
