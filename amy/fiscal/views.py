@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import (
@@ -13,6 +13,7 @@ from django.db.models import (
 from django.db.models.functions import Now
 from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
+from django.views.generic import FormView
 
 from fiscal.filters import (
     OrganizationFilter,
@@ -25,10 +26,12 @@ from fiscal.forms import (
     MembershipCreateForm,
     MemberForm,
     MembershipTaskForm,
+    MembershipExtensionForm,
     SponsorshipForm,
 )
 from fiscal.models import MembershipTask
 from fiscal.base_views import (
+    GetMembershipMixin,
     MembershipFormsetView,
 )
 from workshops.base_views import (
@@ -287,6 +290,36 @@ class MembershipTasks(OnlyForAdminsMixin, MembershipFormsetView):
         if "title" not in kwargs:
             kwargs["title"] = "Change person roles for {}".format(self.membership)
         return super().get_context_data(**kwargs)
+
+
+class MembershipExtend(OnlyForAdminsMixin, GetMembershipMixin, FormView):
+    form_class = MembershipExtensionForm
+    template_name = "generic_form.html"
+
+    def get_initial(self):
+        return {
+            "agreement_start": self.membership.agreement_start,
+            "agreement_end": self.membership.agreement_end,
+            "extension": 0,
+            "new_agreement_end": self.membership.agreement_end,
+        }
+
+    def get_context_data(self, **kwargs):
+        if "title" not in kwargs:
+            kwargs["title"] = f"Extend membership {self.membership}"
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        days = form.cleaned_data["extension"]
+        extension = timedelta(days=days)
+        self.membership.agreement_end += extension
+        self.membership.extended = days
+        self.membership.save()
+
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        return self.membership.get_absolute_url()
 
 
 # ------------------------------------------------------------

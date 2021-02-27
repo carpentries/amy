@@ -264,6 +264,22 @@ class MembershipTaskForm(forms.ModelForm):
         )
 
 
+class MembershipExtensionForm(forms.Form):
+    agreement_start = forms.DateField(disabled=True, required=False)
+    agreement_end = forms.DateField(disabled=True, required=False)
+    extension = forms.IntegerField(
+        min_value=1,
+        required=True,
+        help_text="Number of days the agreement should be extended.",
+    )
+    new_agreement_end = forms.DateField(disabled=True, required=False)
+
+    helper = BootstrapHelper()
+
+    class Media:
+        js = ("membership_extend.js", "date_yyyymmdd.js")
+
+
 class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
 
     helper = BootstrapHelper(submit_label="Add")
