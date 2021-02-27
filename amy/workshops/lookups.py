@@ -4,6 +4,7 @@ import operator
 import re
 
 from django_select2.views import AutoResponseView
+from django.http import JsonResponse
 from django.contrib.auth.models import Group
 from django.conf.urls import url
 from django.db.models import Q, Count
@@ -11,6 +12,26 @@ from django.db.models import Q, Count
 from fiscal.models import MembershipPersonRole
 from workshops import models
 from workshops.util import OnlyForAdminsNoRedirectMixin, LoginNotRequiredMixin
+
+
+class ExtensibleAutoResponseView(AutoResponseView):
+    def get(self, request, *args, **kwargs):
+        self.widget = self.get_widget_or_404()
+        self.term = kwargs.get("term", request.GET.get("term", ""))
+        self.object_list = self.get_queryset()
+        context = self.get_context_data()
+        return JsonResponse(
+            {
+                "results": self.parse_results(context["object_list"]),
+                "more": context["page_obj"].has_next(),
+            }
+        )
+
+    def parse_results(self, object_list):
+        return [
+            {"text": self.widget.label_from_instance(obj), "id": obj.pk}
+            for obj in object_list
+        ]
 
 
 class TagLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
@@ -59,7 +80,7 @@ class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
     def get_queryset(self):
         results = models.Organization.objects.order_by("fullname")
 
@@ -69,6 +90,16 @@ class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
             )
 
         return results
+
+    def parse_results(self, object_list):
+        return [
+            {
+                "fullname": obj.fullname,
+                "text": self.widget.label_from_instance(obj),
+                "id": obj.pk,
+            }
+            for obj in object_list
+        ]
 
 
 class AdministratorOrganizationLookupView(
