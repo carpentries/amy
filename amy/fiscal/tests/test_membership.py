@@ -3,7 +3,11 @@ from datetime import timedelta, date
 from django.urls import reverse
 from django_comments.models import Comment
 
-from fiscal.forms import MembershipCreateForm, MembershipForm
+from fiscal.forms import (
+    MembershipCreateForm,
+    MembershipForm,
+    MembershipExtensionForm,
+)
 from workshops.tests.base import TestBase
 from workshops.models import (
     Membership,
@@ -598,3 +602,82 @@ class TestNewMembershipWorkflow(TestBase):
         )
 
         self.assertEqual(list(self.membership.organizations.all()), [self.org_beta])
+
+
+class TestMembershipExtension(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+    def test_form_simple_valid(self):
+        data = {
+            "agreement_start": "2021-02-27",
+            "agreement_end": "2022-02-27",
+            "new_agreement_end": "2022-02-28",
+            "extension": "1",
+        }
+
+        form = MembershipExtensionForm(data)
+
+        self.assertTrue(form.is_valid())
+
+    def test_form_ignoring_fields(self):
+        data = {
+            # fields ignored
+            "agreement_start": "invalid value",
+            "agreement_end": "invalid value",
+            "new_agreement_end": "invalid value",
+            # field accepted
+            "extension": "1",
+        }
+
+        form = MembershipExtensionForm(data)
+
+        self.assertTrue(form.is_valid())
+
+    def test_form_validating_extension(self):
+        data = [
+            ("string", False),
+            ("", False),
+            ("-1", False),
+            ("0", False),
+            ("1", True),
+            ("2", True),
+        ]
+        for extension, valid in data:
+            with self.subTest(extension=extension, valid=valid):
+                form = MembershipExtensionForm(dict(extension=extension))
+                self.assertEqual(form.is_valid(), valid)
+
+    def test_membership_extended(self):
+        membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=False,
+            public_status="public",
+            variant="partner",
+            agreement_start="2020-03-01",
+            agreement_end="2021-03-01",
+            extended=None,
+            contribution_type="financial",
+            seats_instructor_training=0,
+            additional_instructor_training_seats=0,
+        )
+        Member.objects.create(
+            organization=self.org_alpha,
+            membership=membership,
+            role=MemberRole.objects.first(),
+        )
+        data = {"extension": 30}
+
+        response = self.client.post(
+            reverse("membership_extend", args=[membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response, reverse("membership_details", args=[membership.pk])
+        )
+        membership.refresh_from_db()
+        self.assertEqual(membership.extended, 30)
+        self.assertEqual(membership.agreement_end, date(2021, 3, 31))
