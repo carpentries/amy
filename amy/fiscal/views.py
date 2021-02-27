@@ -254,7 +254,11 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
         return reverse("all_memberships")
 
 
-class MembershipMembers(OnlyForAdminsMixin, MembershipFormsetView):
+class MembershipMembers(
+    OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
+):
+    permission_required = "workshops.change_membership"
+
     def get_formset_kwargs(self):
         kwargs = super().get_formset_kwargs()
         if not self.membership.consortium:
@@ -277,7 +281,11 @@ class MembershipMembers(OnlyForAdminsMixin, MembershipFormsetView):
         return super().get_context_data(**kwargs)
 
 
-class MembershipTasks(OnlyForAdminsMixin, MembershipFormsetView):
+class MembershipTasks(
+    OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
+):
+    permission_required = "workshops.change_membership"
+
     def get_formset(self, *args, **kwargs):
         return modelformset_factory(MembershipTask, MembershipTaskForm, *args, **kwargs)
 
@@ -292,9 +300,12 @@ class MembershipTasks(OnlyForAdminsMixin, MembershipFormsetView):
         return super().get_context_data(**kwargs)
 
 
-class MembershipExtend(OnlyForAdminsMixin, GetMembershipMixin, FormView):
+class MembershipExtend(
+    OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, FormView
+):
     form_class = MembershipExtensionForm
     template_name = "generic_form.html"
+    permission_required = "workshops.change_membership"
 
     def get_initial(self):
         return {
