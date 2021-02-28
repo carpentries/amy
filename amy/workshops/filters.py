@@ -23,6 +23,7 @@ from workshops.models import (
     Tag,
     Task,
     Award,
+    KnowledgeDomain,
     Language,
     Lesson,
 )
@@ -383,6 +384,11 @@ class WorkshopStaffFilter(AMYFilterSet):
     languages = django_filters.ModelMultipleChoiceFilter(
         label="Languages",
         queryset=Language.objects.all(),
+        conjoined=True,  # `AND`
+    )
+    domains = django_filters.ModelMultipleChoiceFilter(
+        label="Knowledge Domains",
+        queryset=KnowledgeDomain.objects.all(),
         conjoined=True,  # `AND`
     )
     gender = django_filters.ChoiceFilter(

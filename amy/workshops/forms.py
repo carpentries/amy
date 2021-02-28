@@ -31,6 +31,7 @@ from workshops.models import (
     Membership,
     Tag,
     Language,
+    KnowledgeDomain,
     Badge,
 )
 
@@ -251,7 +252,15 @@ class WorkshopStaffForm(forms.Form):
             attrs=SELECT2_SIDEBAR,
         ),
     )
-
+    domains = forms.ModelMultipleChoiceField(
+        label="Knowlege Domains",
+        required=False,
+        queryset=KnowledgeDomain.objects.all(),
+        widget=ModelSelect2MultipleWidget(
+            data_view="knowledge-domains-lookup",
+            attrs=SELECT2_SIDEBAR,
+        ),
+    )
     country = forms.MultipleChoiceField(
         choices=list(Countries()),
         required=False,
@@ -320,6 +329,7 @@ class WorkshopStaffForm(forms.Form):
             "was_organizer",
             "is_in_progress_trainee",
             "languages",
+            "domains",
             "gender",
             "lessons",
             Submit("", "Submit"),
