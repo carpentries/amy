@@ -150,11 +150,31 @@ class Membership(models.Model):
         help_text="Acceptable number of workshops without admin fee per "
         "agreement duration",
     )
+    workshops_without_admin_fee_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Workshops without admin fee rolled over from previous membership.",
+    )
+    workshops_without_admin_fee_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Workshops without admin fee rolled over into next membership.",
+    )
     self_organized_workshops_per_agreement = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text="Expected number of self-organized workshops per agreement "
         "duration",
+    )
+    self_organized_workshops_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Self-organized workshops rolled over from previous membership.",
+    )
+    self_organized_workshops_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Self-organized workshops rolled over into next membership.",
     )
     # according to Django docs, PositiveIntegerFields accept 0 as valid as well
     seats_instructor_training = models.PositiveIntegerField(
@@ -171,6 +191,16 @@ class Membership(models.Model):
         verbose_name="Additional instructor training seats",
         help_text="Use this field if you want to grant more seats than "
         "the agreement provides for.",
+    )
+    instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Instructor training seats rolled over from previous membership.",
+    )
+    instructor_training_seats_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Instructor training seats rolled over into next membership.",
     )
     organizations = models.ManyToManyField(
         Organization,
@@ -249,9 +279,11 @@ class Membership(models.Model):
 
         return (
             Event.objects.filter(date_started)  # .filter(host=self.organization)
+            .filter(host__in=self.organizations.all())
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
+            .distinct()
             .count()
         )
 
@@ -266,9 +298,11 @@ class Membership(models.Model):
 
         return (
             Event.objects.filter(date_started)  # .filter(host=self.organization)
+            .filter(host__in=self.organizations.all())
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
+            .distinct()
             .count()
         )
 
