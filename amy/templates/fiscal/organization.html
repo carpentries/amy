@@ -16,7 +16,7 @@
 <table class="table table-striped">
   <tr><th>Full name:</th><td>{{ organization.fullname }}</td></tr>
   <tr><th>Domain:</th><td><a href="http://{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td></tr>
-  <tr><th>Country:</th><td>{{ organization.country.name|default:"—" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
+  <tr><th>Country:</th><td>{{ organization.country.name|default:"&mdash;" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
 </table>
 
 <div class="clearfix">
@@ -75,35 +75,61 @@
   <tr>
     <th rowspan="2">Name</th>
     <th rowspan="2">Variant</th>
-    <th rowspan="2">Agreement start</th>
-    <th rowspan="2">Agreement end</th>
+    <th rowspan="2">Agreement dates</th>
     <th rowspan="2">Contribution type</th>
-    <th colspan="4">Workshops w/o admin fee <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
-    <th colspan="2">Self-organized workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
-    <th colspan="3">Instructor training seats</th>
+    <th colspan="6">Centrally-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
+    <th colspan="6">Self-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
+    <th colspan="5">Instructor training seats</th>
     <th class="additional-links"></th>
   </tr>
   <tr>
-    <th><small>Allowed</small></th><th><small>Completed</small></th><th><small>Planned</small></th><th><small>Remaining</small></th>
-    <th><small>Completed</small></th><th><small>Planned</small></th>
-    <th><small>Allowed</small></th><th><small>Utilized</small></th><th><small>Remaining</small></th>
+    <!-- centrally-organised -->
+    <th><small>Allowed</small></th>
+    <th><small>Rolled from prev.</small></th>
+    <th><small>Completed</small></th>
+    <th><small>Planned</small></th>
+    <th><small>Rolled-over</small></th>
+    <th><small>Remaining</small></th>
+    <!-- self-organised -->
+    <th><small>Allowed</small></th>
+    <th><small>Rolled from prev.</small></th>
+    <th><small>Completed</small></th>
+    <th><small>Planned</small></th>
+    <th><small>Rolled-over</small></th>
+    <th><small>Remaining</small></th>
+    <!-- instructor training seats -->
+    <th><small>Total</small></th>
+    <th><small>Rolled from prev.</small></th>
+    <th><small>Utilized</small></th>
+    <th><small>Rolled-over</small></th>
+    <th><small>Remaining</small></th>
     <th></th>
   </tr>
   {% for membership in organization.memberships.all %}
   <tr>
     <td><a href="{{ membership.get_absolute_url }}">{{ membership.name }}</a></td>
     <td>{{ membership.get_variant_display }}</td>
-    <td>{{ membership.agreement_start }}</td>
-    <td>{{ membership.agreement_end }}</td>
+    <td>
+      {{ membership.agreement_start }} &ndash; {{ membership.agreement_end }}
+      {% if membership.extended %}<p class="small">Includes extension by {{ membership.extended }} days.</p>{% endif %}
+    </td>
     <td>{{ membership.get_contribution_type_display }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_agreement|default:"—" }}</td>
-    <td>{{ membership.workshops_without_admin_fee_completed|default:"—" }}</td>
-    <td>{{ membership.workshops_without_admin_fee_planned|default:"—" }}</td>
-    <td>{{ membership.workshops_without_admin_fee_remaining|default:"—" }}</td>
-    <td>{{ membership.self_organized_workshops_completed|default:"—" }}</td>
-    <td>{{ membership.self_organized_workshops_planned|default:"—" }}</td>
-    <td>{{ membership.seats_instructor_training_total }}</td>
-    <td>{{ membership.seats_instructor_training_utilized }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_agreement|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_rolled_from_previous|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_completed|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_planned|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_rolled_over|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_remaining|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.self_organized_workshops_per_agreement|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.self_organized_workshops_rolled_from_previous|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.self_organized_workshops_completed|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.self_organized_workshops_planned|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.self_organized_workshops_rolled_over|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.self_organized_workshops_remaining|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.seats_instructor_training_total|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.instructor_training_seats_rolled_from_previous|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.seats_instructor_training_utilized|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.instructor_training_seats_rolled_over|default_if_none:"&mdash;" }}</td>
     <td {% if membership.seats_instructor_training_remaining <= 0 and membership.seats_instructor_training_total > 0 or membership.seats_instructor_training_remaining < 0 and membership.seats_instructor_training_total == 0 %}class="table-danger"{% endif %}>{{ membership.seats_instructor_training_remaining }}</td>
     <td>
       <a href="{% url 'membership_details' membership.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
