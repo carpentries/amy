@@ -16,6 +16,17 @@ from api.renderers import (
     TrainingRequestCSVRenderer,
     TrainingRequestManualScoreCSVRenderer,
 )
+from autoemails.models import EmailTemplate
+from workshops.models import (
+    Airport,
+    Event,
+    Organization,
+    Task,
+    Award,
+    Person,
+    TrainingRequest,
+    TrainingProgress,
+)
 from api.serializers import (
     AirportSerializer,
     AwardSerializer,
@@ -26,10 +37,18 @@ from api.serializers import (
     PersonSerializerAllData,
     TaskSerializer,
     TrainingRequestForManualScoringSerializer,
-    TrainingRequestWithPersonSerializer,
+    EmailTemplateSerializer,
+    TrainingProgressSerializer
 )
-from autoemails.models import EmailTemplate
-from workshops.models import (
+
+from api.filters import (
+    EventFilter,
+    TaskFilter,
+    PersonFilter,
+    TrainingRequestFilterIDs,
+)
+from autoemails.models import (
+    EmailTemplate,
     Airport,
     Award,
     Event,
@@ -311,3 +330,25 @@ class EmailTemplateViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EmailTemplate.objects.all()
     serializer_class = EmailTemplateSerializer
     lookup_field = "slug"
+
+
+class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
+    """List training progresses belonging to specific person."""
+
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = TrainingProgressSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = TrainingProgress.objects.all()
+        if self._person_pk:
+            qs = qs.filter(trainee=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)

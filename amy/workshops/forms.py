@@ -62,6 +62,7 @@ class BootstrapHelper(FormHelper):
         duplicate_buttons_on_top=False,
         submit_label="Submit",
         submit_name="submit",
+        submit_onclick=None,
         use_get_method=False,
         wider_labels=False,
         add_submit_button=True,
@@ -123,7 +124,13 @@ class BootstrapHelper(FormHelper):
             self.field_class = "col-lg-12"
 
         if add_submit_button:
-            self.add_input(Submit(submit_name, submit_label))
+            self.add_input(
+                Submit(
+                    submit_name,
+                    submit_label,
+                    onclick=submit_onclick,
+                )
+            )
 
         if add_delete_button:
             self.add_input(
@@ -641,8 +648,18 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
+        failed_trainings = kwargs.pop("failed_trainings", False)
         super().__init__(*args, **kwargs)
-        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
+        bootstrap_kwargs = {
+            "add_cancel_button": False,
+            "form_tag": form_tag,
+        }
+        if failed_trainings:
+            bootstrap_kwargs["submit_onclick"] = (
+                'return confirm("Warning: Trainee failed previous training(s).'
+                ' Are you sure you want to continue?");'
+            )
+        self.helper = BootstrapHelper(**bootstrap_kwargs)
 
 
 class PersonForm(forms.ModelForm):
@@ -965,8 +982,18 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
+        failed_trainings = kwargs.pop("failed_trainings", False)
         super().__init__(*args, **kwargs)
-        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
+        bootstrap_kwargs = {
+            "add_cancel_button": False,
+            "form_tag": form_tag,
+        }
+        if failed_trainings:
+            bootstrap_kwargs["submit_onclick"] = (
+                'return confirm("Warning: Trainee failed previous training(s).'
+                ' Are you sure you want to continue?");'
+            )
+        self.helper = BootstrapHelper(**bootstrap_kwargs)
 
 
 class EventLookupForm(forms.Form):

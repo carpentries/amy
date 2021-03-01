@@ -75,5 +75,16 @@
   $(function() {
     $('#tabs').stickyTabs();
   });
+  $('select[name="task-person"]').on('change', function() {
+    var person_id = $(this).val();
+    var url = `/api/v1/persons/${person_id}/trainingprogress/`;
+    $.get(url, function (training_progresses) {   
+      for (training of training_progresses){
+        if (training.state === "Failed"){
+          alert("Warning: Trainee failed previous training(s). Are you sure you want to continue?");
+        }
+      }
+    });
+  });
 </script>
 {% endblock extrajs %}

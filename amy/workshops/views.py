@@ -104,6 +104,7 @@ from workshops.models import (
     Role,
     Tag,
     Task,
+    TrainingProgress,
 )
 from workshops.signals import create_comment_signal
 from workshops.util import (
@@ -609,6 +610,9 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        failed_trainings = TrainingProgress.objects.filter(
+            state="f", trainee=self.object
+        ).exists()
         kwargs = {
             "initial": {"person": self.object},
             "widgets": {"person": HiddenInput()},
@@ -627,8 +631,18 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                     prefix="consents",
                     **kwargs,
                 ),
-                "award_form": AwardForm(form_tag=False, prefix="award", **kwargs),
-                "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
+                "award_form": AwardForm(
+                    form_tag=False,
+                    prefix="award",
+                    failed_trainings=failed_trainings,
+                    **kwargs,
+                ),
+                "task_form": TaskForm(
+                    form_tag=False,
+                    prefix="task",
+                    failed_trainings=failed_trainings,
+                    **kwargs,
+                ),
             }
         )
         return context
@@ -2070,7 +2084,10 @@ class MockAwardCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"prefix": "award"})
+        has_failed_trainings = TrainingProgress.objects.filter(
+            state="f", trainee=self.request.GET["person"]
+        ).exists()
+        kwargs.update({"prefix": "award", "failed_trainings": has_failed_trainings})
         return kwargs
 
     def get_initial(self, **kwargs):

@@ -15,6 +15,8 @@ person_task_router = routers.NestedSimpleRouter(router, 'persons',
                                                 lookup='person')
 person_task_router.register('tasks', views.PersonTaskViewSet,
                             basename='person-tasks')
+training_progress_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
+training_progress_router.register('trainingprogress', views.TrainingProgressViewSet, basename='person-training-progress')
 router.register('events', views.EventViewSet)
 tasks_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
 tasks_router.register('tasks', views.TaskViewSet, basename='event-tasks')
@@ -31,11 +33,15 @@ urlpatterns = [
     path('training_requests/',
          views.TrainingRequests.as_view(),
          name='training-requests'),
+     path('training_requests/',
+         views.TrainingRequests.as_view(),
+         name='training-requests'),
 
     path('', include(router.urls)),
     path('', include(awards_router.urls)),
     path('', include(person_task_router.urls)),
     path('', include(tasks_router.urls)),
+    path('', include(training_progress_router.urls)),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)  # allow to specify format
