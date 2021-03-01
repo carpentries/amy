@@ -192,6 +192,38 @@ class MembershipCreateForm(MembershipForm):
         return res
 
 
+class MembershipRollOverForm(MembershipCreateForm):
+    main_organization = None  # remove the additional field
+
+    class Meta(MembershipCreateForm.Meta):
+        fields = [
+            "name",
+            "consortium",
+            "public_status",
+            "variant",
+            "agreement_start",
+            "agreement_end",
+            "contribution_type",
+            "registration_code",
+            "agreement_link",
+            "workshops_without_admin_fee_per_agreement",
+            "workshops_without_admin_fee_rolled_from_previous",
+            "self_organized_workshops_per_agreement",
+            "self_organized_workshops_rolled_from_previous",
+            "seats_instructor_training",
+            "additional_instructor_training_seats",
+            "instructor_training_seats_rolled_from_previous",
+            "emergency_contact",
+            "comment",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self["workshops_without_admin_fee_rolled_from_previous"].field.disabled = True
+        self["self_organized_workshops_rolled_from_previous"].field.disabled = True
+        self["instructor_training_seats_rolled_from_previous"].field.disabled = True
+
+
 class MemberForm(forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 

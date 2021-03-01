@@ -163,17 +163,22 @@
 </table>
 
 <div class="clearfix">
-  <p class="edit-object float-left">
+  <div class="edit-object float-left">
     <div class="btn-group" role="group">
       {% if perms.workshops.change_membership %}
       <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
       <a href="{% url 'membership_extend' membership.id %}" class="btn btn-secondary">Extend</a>
       {% else %}
-      <a aria-disabled="true" class="btn btn-primary disabled">Edit</a>
-      <a aria-disabled="true" class="btn btn-secondary disabled">Extend</a>
+      <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
+      {% endif %}
+      {% if perms.workshops.create_membership and perms.workshops.change_membership %}
+      <a href="{% url 'membership_create_roll_over' membership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
+      {% else %}
+      <a class="btn btn-secondary disabled" aria-disabled="true">Create new &amp; roll-over</a>
       {% endif %}
     </div>
-  </p>
+  </div>
   <div class="delete-object float-right">
     {% if perms.workshops.delete_membership %}
     <form action="{% url 'membership_delete' membership.id %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ membership }}\"?")' method="POST">
@@ -181,7 +186,7 @@
       <button type="submit" class="btn btn-danger">Delete membership</button>
     </form>
     {% else %}
-    <button class="btn btn-danger disabled">Delete membership</button>
+    <button class="btn btn-danger disabled" aria-disabled="true">Delete membership</button>
     {% endif %}
   </div>
 </div>

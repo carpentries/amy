@@ -26,6 +26,7 @@ urlpatterns = [
         path("tasks/", views.MembershipTasks.as_view(), name="membership_tasks"),
         path("extend/", views.MembershipExtend.as_view(), name="membership_extend"),
         path("delete/", views.MembershipDelete.as_view(), name="membership_delete"),
+        path("roll-over/", views.MembershipCreateRollOver.as_view(), name="membership_create_roll_over"),
     ])),
     # sponsorships
     path("sponsorships/add/", views.SponsorshipCreate.as_view(), name="sponsorship_add"),

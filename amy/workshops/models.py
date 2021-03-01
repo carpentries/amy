@@ -353,7 +353,7 @@ class Membership(models.Model):
             .count()
         )
 
-    @cached_property
+    @property
     def self_organized_workshops_remaining(self):
         """Count remaining self-organized workshops for the year agreement
         started."""
