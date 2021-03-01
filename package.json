@@ -20,6 +20,6 @@
     "metrics-graphics": "^2.15.6",
     "popper.js": "^1.16.1",
     "select2": "^4.0.10",
-    "urijs": "^1.19.4"
+    "urijs": "^1.19.6"
   }
 }
