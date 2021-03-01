@@ -463,6 +463,7 @@ class Command(BaseCommand):
             start = self.faker.date_time_between(start_date="-5y").date()
             organization_count = randint(1, 4)
             membership = Membership.objects.create(
+                name=self.faker.company(),
                 consortium=organization_count > 1,
                 variant=choice(Membership.MEMBERSHIP_CHOICES)[0],
                 agreement_start=start,
@@ -856,7 +857,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         seed = options["seed"]
         if seed is not None:
-            self.faker.seed(seed)
+            Faker.seed(seed)
 
         try:
             self.fake_groups()
