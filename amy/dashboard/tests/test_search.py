@@ -183,3 +183,19 @@ class TestSearch(TestBase):
 
         self.assertEqual(len(response.context["memberships"]), 1)
         self.assertEqual(len(response.context["organisations"]), 0)
+
+    def test_search_redirect_two_single_results(self):
+        """Regression test: make sure redirect doesn't happen if two single results are
+        present."""
+        Comment.objects.create(
+            content_object=self.org_alpha,
+            user=self.hermione,
+            comment="Testing commenting system for Alpha Organization",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
+
+        response = self.search_for("Alpha", no_redirect=False, follow=False)
+        self.assertEqual(response.status_code, 200)  # doesn't redirect
+        self.assertEqual(len(response.context["organisations"]), 1)
+        self.assertEqual(len(response.context["comments"]), 1)
