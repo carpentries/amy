@@ -8,6 +8,7 @@ from fiscal.forms import (
     MembershipCreateForm,
     MembershipForm,
     MembershipExtensionForm,
+    MembershipRollOverForm,
 )
 from workshops.tests.base import TestBase
 from workshops.models import (
@@ -923,3 +924,161 @@ class TestMembershipExtension(TestBase):
         membership.refresh_from_db()
         self.assertEqual(membership.extended, 30)
         self.assertEqual(membership.agreement_end, date(2021, 3, 31))
+
+
+class TestMembershipCreateRollOver(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+    def setUpMembership(self):
+        self.membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=False,
+            public_status="public",
+            variant="partner",
+            agreement_start="2020-03-01",
+            agreement_end="2021-03-01",
+            extended=None,
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=11,
+            seats_instructor_training=12,
+            additional_instructor_training_seats=0,
+        )
+        Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=MemberRole.objects.first(),
+        )
+
+    def test_form_simple_valid(self):
+        data = {
+            "name": "Test Name",
+            "consortium": True,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-03-01",
+            "agreement_end": "2022-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+        }
+
+        form = MembershipRollOverForm(data)
+
+        self.assertTrue(form.is_valid())
+
+    def test_form_ignoring_fields(self):
+        data = {
+            # field accepted
+            "name": "Test Name",
+            "consortium": True,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-03-01",
+            "agreement_end": "2022-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+            # fields ignored
+            "workshops_without_admin_fee_rolled_from_previous": "invalid value",
+            "self_organized_workshops_rolled_from_previous": "invalid value",
+            "instructor_training_seats_rolled_from_previous": "invalid value",
+        }
+
+        form = MembershipRollOverForm(data)
+
+        self.assertTrue(form.is_valid())
+
+    def test_new_membership_created(self):
+        self.setUpMembership()
+        data = {
+            "name": "Test Name",
+            "consortium": True,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-03-01",
+            "agreement_end": "2022-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+        }
+
+        response = self.client.post(
+            reverse("membership_create_roll_over", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        last_membership = Membership.objects.order_by("pk").last()
+        self.assertRedirects(
+            response, reverse("membership_details", args=[last_membership.pk])
+        )
+
+    def test_membership_rollovers(self):
+        self.setUpMembership()
+        data = {
+            "name": "Test Membership",
+            "consortium": False,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2020-03-01",
+            "agreement_end": "2021-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+        }
+
+        self.client.post(
+            reverse("membership_create_roll_over", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        last_membership = Membership.objects.order_by("pk").last()
+        self.membership.refresh_from_db()
+
+        self.assertEqual(self.membership.workshops_without_admin_fee_per_agreement, 10)
+        self.assertEqual(self.membership.self_organized_workshops_per_agreement, 11)
+        self.assertEqual(self.membership.seats_instructor_training, 12)
+        self.assertEqual(self.membership.additional_instructor_training_seats, 0)
+
+        self.assertEqual(
+            self.membership.workshops_without_admin_fee_rolled_from_previous, None
+        )
+        self.assertEqual(
+            self.membership.self_organized_workshops_rolled_from_previous, None
+        )
+        self.assertEqual(
+            self.membership.instructor_training_seats_rolled_from_previous, None
+        )
+
+        self.assertEqual(self.membership.workshops_without_admin_fee_rolled_over, 10)
+        self.assertEqual(self.membership.self_organized_workshops_rolled_over, 11)
+        self.assertEqual(self.membership.instructor_training_seats_rolled_over, 12)
+
+        self.assertEqual(last_membership.workshops_without_admin_fee_per_agreement, 10)
+        self.assertEqual(last_membership.self_organized_workshops_per_agreement, 11)
+        self.assertEqual(last_membership.seats_instructor_training, 12)
+        self.assertEqual(last_membership.additional_instructor_training_seats, 0)
+        self.assertEqual(
+            last_membership.workshops_without_admin_fee_rolled_from_previous, 10
+        )
+        self.assertEqual(
+            last_membership.self_organized_workshops_rolled_from_previous, 11
+        )
+        self.assertEqual(
+            last_membership.instructor_training_seats_rolled_from_previous, 12
+        )
+        self.assertEqual(last_membership.workshops_without_admin_fee_rolled_over, None)
+        self.assertEqual(last_membership.self_organized_workshops_rolled_over, None)
+        self.assertEqual(last_membership.instructor_training_seats_rolled_over, None)
