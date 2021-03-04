@@ -32,7 +32,13 @@
   <tr><th>Status:</th><td colspan="2">{{ membership.get_public_status_display }}</td></tr>
   <tr><th>Variant:</th><td colspan="2">{{ membership.get_variant_display }}</td></tr>
   <tr><th>Start date:</th><td colspan="2">{{ membership.agreement_start }}</td></tr>
-  <tr><th>End date:</th><td colspan="2">{{ membership.agreement_end }}</td></tr>
+  <tr><th>End date:</th>
+      <td colspan="2">
+        {{ membership.agreement_end }}
+        {% if membership.extended %}
+        <p class="small">Includes {{ membership.extended }} day extension.</p>
+        {% endif %}
+      </td></tr>
   <tr><th>Contribution type:</th><td colspan="2">{{ membership.get_contribution_type_display }}</td></tr>
   <tr><th>Registration Code:</th><td colspan="2">{{ membership.registration_code }}</td></tr>
   <tr><th>Agreement Document:</th>
@@ -123,11 +129,15 @@
 
 <div class="clearfix">
   <p class="edit-object float-left">
-    {% if perms.workshops.change_membership %}
-    <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
-    {% else %}
-    <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary disabled">Edit</a>
-    {% endif %}
+    <div class="btn-group" role="group">
+      {% if perms.workshops.change_membership %}
+      <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
+      <a href="{% url 'membership_extend' membership.id %}" class="btn btn-secondary">Extend</a>
+      {% else %}
+      <a aria-disabled="true" class="btn btn-primary disabled">Edit</a>
+      <a aria-disabled="true" class="btn btn-secondary disabled">Extend</a>
+      {% endif %}
+    </div>
   </p>
   <div class="delete-object float-right">
     {% if perms.workshops.delete_membership %}

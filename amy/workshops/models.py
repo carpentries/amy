@@ -123,7 +123,16 @@ class Membership(models.Model):
         choices=MEMBERSHIP_CHOICES,
     )
     agreement_start = models.DateField()
-    agreement_end = models.DateField()
+    agreement_end = models.DateField(
+        help_text="If an extension is being granted, do not manually edit the end date."
+        ' Use the "Extend" button on membership details page instead.'
+    )
+    extended = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of days the agreement was extended with. If this value was"
+        " provided, then the agreement end has been moved.",
+    )
     CONTRIBUTION_CHOICES = (
         ("financial", "Financial"),
         ("person-days", "Person-days"),

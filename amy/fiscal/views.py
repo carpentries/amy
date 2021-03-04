@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import (
@@ -12,7 +12,6 @@ from django.db.models import (
 )
 from django.db.models.functions import Now
 from django.forms import modelformset_factory
-from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
@@ -27,9 +26,14 @@ from fiscal.forms import (
     MembershipCreateForm,
     MemberForm,
     MembershipTaskForm,
+    MembershipExtensionForm,
     SponsorshipForm,
 )
 from fiscal.models import MembershipTask
+from fiscal.base_views import (
+    GetMembershipMixin,
+    MembershipFormsetView,
+)
 from workshops.base_views import (
     AMYCreateView,
     AMYUpdateView,
@@ -250,51 +254,11 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
         return reverse("all_memberships")
 
 
-class MembershipFormsetView(FormView):
-    template_name = "fiscal/membership_formset.html"
+class MembershipMembers(
+    OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
+):
+    permission_required = "workshops.change_membership"
 
-    def dispatch(self, request, *args, **kwargs):
-        self.membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_formset_kwargs(self):
-        return {
-            "extra": 0,
-            "can_delete": True,
-        }
-
-    def get_form_class(self):
-        return self.get_formset(**self.get_formset_kwargs())
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["queryset"] = self.get_formset_queryset(self.membership)
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        kwargs["membership"] = self.membership
-        kwargs["formset"] = self.get_form()
-        return super().get_context_data(**kwargs)
-
-    def form_valid(self, form):
-        instances = form.save(commit=False)
-
-        # assign membership to any new/changed instance
-        for instance in instances:
-            instance.membership = self.membership
-            instance.save()
-
-        # remove deleted objects
-        for instance in form.deleted_objects:
-            instance.delete()
-
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return self.membership.get_absolute_url()
-
-
-class MembershipMembers(OnlyForAdminsMixin, MembershipFormsetView):
     def get_formset_kwargs(self):
         kwargs = super().get_formset_kwargs()
         if not self.membership.consortium:
@@ -317,7 +281,11 @@ class MembershipMembers(OnlyForAdminsMixin, MembershipFormsetView):
         return super().get_context_data(**kwargs)
 
 
-class MembershipTasks(OnlyForAdminsMixin, MembershipFormsetView):
+class MembershipTasks(
+    OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
+):
+    permission_required = "workshops.change_membership"
+
     def get_formset(self, *args, **kwargs):
         return modelformset_factory(MembershipTask, MembershipTaskForm, *args, **kwargs)
 
@@ -330,6 +298,39 @@ class MembershipTasks(OnlyForAdminsMixin, MembershipFormsetView):
         if "title" not in kwargs:
             kwargs["title"] = "Change person roles for {}".format(self.membership)
         return super().get_context_data(**kwargs)
+
+
+class MembershipExtend(
+    OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, FormView
+):
+    form_class = MembershipExtensionForm
+    template_name = "generic_form.html"
+    permission_required = "workshops.change_membership"
+
+    def get_initial(self):
+        return {
+            "agreement_start": self.membership.agreement_start,
+            "agreement_end": self.membership.agreement_end,
+            "extension": 0,
+            "new_agreement_end": self.membership.agreement_end,
+        }
+
+    def get_context_data(self, **kwargs):
+        if "title" not in kwargs:
+            kwargs["title"] = f"Extend membership {self.membership}"
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        days = form.cleaned_data["extension"]
+        extension = timedelta(days=days)
+        self.membership.agreement_end += extension
+        self.membership.extended = days
+        self.membership.save()
+
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        return self.membership.get_absolute_url()
 
 
 # ------------------------------------------------------------

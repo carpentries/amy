@@ -73,6 +73,7 @@
 <h2>Memberships</h2>
 <table class="table table-striped">
   <tr>
+    <th rowspan="2">Name</th>
     <th rowspan="2">Variant</th>
     <th rowspan="2">Agreement start</th>
     <th rowspan="2">Agreement end</th>
@@ -90,7 +91,8 @@
   </tr>
   {% for membership in organization.memberships.all %}
   <tr>
-    <td><a href="{{ membership.get_absolute_url }}">{{ membership.get_variant_display }}</a></td>
+    <td><a href="{{ membership.get_absolute_url }}">{{ membership.name }}</a></td>
+    <td>{{ membership.get_variant_display }}</td>
     <td>{{ membership.agreement_start }}</td>
     <td>{{ membership.agreement_end }}</td>
     <td>{{ membership.get_contribution_type_display }}</td>
