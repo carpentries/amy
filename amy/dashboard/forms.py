@@ -163,7 +163,5 @@ class SearchForm(forms.Form):
     """Represent general searching form."""
 
     term = forms.CharField(label="Term", max_length=100)
-    no_redirect = forms.BooleanField(
-        required=False, initial=False, widget=forms.HiddenInput
-    )
+    no_redirect = forms.BooleanField(required=False, initial=False)
     helper = BootstrapHelper(add_cancel_button=False, use_get_method=True)

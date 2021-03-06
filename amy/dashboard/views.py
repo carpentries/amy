@@ -238,7 +238,7 @@ def search(request):
     airports = None
     training_requests = None
     comments = None
-    only_result = None
+    single_results = []
 
     if request.method == "GET" and "term" in request.GET:
         form = SearchForm(request.GET)
@@ -249,14 +249,14 @@ def search(request):
             organizations = Organization.objects.filter(
                 Q(domain__icontains=term) | Q(fullname__icontains=term)
             ).order_by("fullname")
-            if len(organizations) == 1 and not only_result:
-                only_result = organizations[0]
+            if len(organizations) == 1:
+                single_results.append(organizations[0])
 
             memberships = Membership.objects.filter(
                 registration_code__icontains=term
             ).order_by("-agreement_start")
-            if len(memberships) == 1 and not only_result:
-                only_result = memberships[0]
+            if len(memberships) == 1:
+                single_results.append(memberships[0])
 
             events = Event.objects.filter(
                 Q(slug__icontains=term)
@@ -267,8 +267,8 @@ def search(request):
                 | Q(venue__icontains=term)
                 | Q(address__icontains=term)
             ).order_by("-slug")
-            if len(events) == 1 and not only_result:
-                only_result = events[0]
+            if len(events) == 1:
+                single_results.append(events[0])
 
             # if user searches for two words, assume they mean a person
             # name
@@ -291,14 +291,14 @@ def search(request):
                     | Q(github__icontains=term)
                 ).order_by("family")
 
-            if len(persons) == 1 and not only_result:
-                only_result = persons[0]
+            if len(persons) == 1:
+                single_results.append(persons[0])
 
             airports = Airport.objects.filter(
                 Q(iata__icontains=term) | Q(fullname__icontains=term)
             ).order_by("iata")
-            if len(airports) == 1 and not only_result:
-                only_result = airports[0]
+            if len(airports) == 1:
+                single_results.append(airports[0])
 
             training_requests = TrainingRequest.objects.filter(
                 Q(group_name__icontains=term)
@@ -309,8 +309,8 @@ def search(request):
                 | Q(location__icontains=term)
                 | Q(user_notes__icontains=term)
             )
-            if len(training_requests) == 1 and not only_result:
-                only_result = training_requests[0]
+            if len(training_requests) == 1:
+                single_results.append(training_requests[0])
 
             comments = Comment.objects.filter(
                 Q(comment__icontains=term)
@@ -321,25 +321,26 @@ def search(request):
                 | Q(user__email__icontains=term)
                 | Q(user__github__icontains=term)
             ).prefetch_related("content_object")
-            if len(comments) == 1 and not only_result:
-                only_result = comments[0]
+            if len(comments) == 1:
+                single_results.append(comments[0])
 
             # only 1 record found? Let's move to it immediately
-            if only_result and not form.cleaned_data["no_redirect"]:
+            if len(single_results) == 1 and not form.cleaned_data["no_redirect"]:
+                result = single_results[0]
                 msg = format_html(
                     "You were moved to this page, because your search <i>{}</i> "
                     "yields only this result.",
                     term,
                 )
-                if isinstance(only_result, Comment):
+                if isinstance(result, Comment):
                     messages.success(request, msg)
                     return redirect(
-                        only_result.content_object.get_absolute_url()
-                        + "#c{}".format(only_result.id)
+                        result.content_object.get_absolute_url()
+                        + "#c{}".format(result.id)
                     )
-                elif hasattr(only_result, "get_absolute_url"):
+                elif hasattr(result, "get_absolute_url"):
                     messages.success(request, msg)
-                    return redirect(only_result.get_absolute_url())
+                    return redirect(result.get_absolute_url())
 
         else:
             messages.error(request, "Fix errors below.")
