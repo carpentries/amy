@@ -1,4 +1,5 @@
 from datetime import timedelta, date
+from typing import List
 
 from django.urls import reverse
 from django_comments.models import Comment
@@ -7,6 +8,7 @@ from fiscal.forms import (
     MembershipCreateForm,
     MembershipForm,
     MembershipExtensionForm,
+    MembershipRollOverForm,
 )
 from workshops.tests.base import TestBase
 from workshops.models import (
@@ -189,6 +191,247 @@ class TestMembership(TestBase):
         self.assertEqual(self.current.additional_instructor_training_seats, 3)
         self.assertEqual(self.current.seats_instructor_training_utilized, 5)
         self.assertEqual(self.current.seats_instructor_training_remaining, 23)
+
+
+class TestMembershipConsortiumCountingBase(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.learner = Role.objects.get(name="learner")
+        self.instructor = Role.objects.get(name="instructor")
+        self.TTT = Tag.objects.get(name="TTT")
+        self.cancelled = Tag.objects.get(name="cancelled")
+
+        self.self_organized = Organization.objects.get(domain="self-organized")
+        self.dc = Organization.objects.create(
+            domain="datacarpentry.org",
+            fullname="Data Carpentry",
+        )
+
+        self.setUpMembership()
+
+    def setUpMembership(self):
+        self.agreement_start = date.today() - timedelta(days=180)
+        self.agreement_end = date.today() + timedelta(days=180)
+        self.membership = Membership.objects.create(
+            name="Greek Consortium",
+            variant="partner",
+            agreement_start=self.agreement_start,
+            agreement_end=self.agreement_end,
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            workshops_without_admin_fee_rolled_from_previous=2,
+            workshops_without_admin_fee_rolled_over=5,
+            self_organized_workshops_per_agreement=8,
+            self_organized_workshops_rolled_from_previous=4,
+            self_organized_workshops_rolled_over=5,
+            seats_instructor_training=6,
+            additional_instructor_training_seats=4,
+            instructor_training_seats_rolled_from_previous=2,
+            instructor_training_seats_rolled_over=5,
+        )
+        Member.objects.bulk_create(
+            [
+                Member(
+                    membership=self.membership,
+                    organization=self.org_alpha,
+                    role=MemberRole.objects.first(),
+                ),
+                Member(
+                    membership=self.membership,
+                    organization=self.org_beta,
+                    role=MemberRole.objects.last(),
+                ),
+            ]
+        )
+
+    def setUpWorkshops(
+        self,
+        *categories,
+        count: int = 1,
+        administrator: Organization = None,
+    ) -> List[Event]:
+        if not categories:
+            return []
+
+        events: List[Event] = []
+        if not administrator:
+            administrator = self.dc
+
+        if "cancelled" in categories:
+            cancelled_events = [
+                Event(
+                    slug=f"event-cancelled-{i}",
+                    host=self.org_alpha,
+                    start=self.agreement_start,
+                    end=self.agreement_start + timedelta(days=1),
+                    administrator=administrator,
+                )
+                for i in range(count)
+            ]
+            cancelled_events = Event.objects.bulk_create(cancelled_events)
+            self.cancelled.event_set.set(cancelled_events)
+            events += cancelled_events
+
+        if "self-organised" in categories:
+            self_organised = [
+                Event(
+                    slug=f"event-self-organised-{i}",
+                    host=self.org_alpha,
+                    start=self.agreement_start,
+                    end=self.agreement_start + timedelta(days=1),
+                    administrator=self.self_organized,
+                )
+                for i in range(count)
+            ]
+            self_organised = Event.objects.bulk_create(self_organised)
+            events += self_organised
+
+        if "completed" in categories:
+            completed_events = [
+                Event(
+                    slug=f"event-completed-{i}",
+                    host=self.org_alpha,
+                    start=self.agreement_start,
+                    end=self.agreement_start + timedelta(days=1),
+                    administrator=administrator,
+                )
+                for i in range(count)
+            ]
+            completed_events = Event.objects.bulk_create(completed_events)
+            events += completed_events
+
+        if "planned" in categories:
+            planned_events = [
+                Event(
+                    slug=f"event-planned-{i}",
+                    host=self.org_alpha,
+                    start=date.today() + timedelta(days=1),
+                    end=date.today() + timedelta(days=2),
+                    administrator=administrator,
+                )
+                for i in range(count)
+            ]
+            planned_events = Event.objects.bulk_create(planned_events)
+            events += planned_events
+
+        return events
+
+    def setUpTasks(self, count: int) -> List[Task]:
+        tasks = self.membership.task_set.bulk_create(
+            [
+                Task(
+                    role=self.learner,
+                    person=self.admin,
+                    event=Event.objects.create(
+                        slug=f"event-learner-{i}",
+                        host=self.dc,
+                        administrator=self.org_alpha,
+                    ),
+                    seat_membership=self.membership,
+                )
+                for i in range(count)
+            ]
+        )
+        return tasks
+
+
+class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
+    TestMembershipConsortiumCountingBase
+):
+    def test_cancelled_workshops_are_not_counted(self):
+        self.setUpWorkshops("cancelled", count=2)
+        self.assert_(Event.objects.all())
+        self.assertEqual(
+            list(self.membership._workshops_without_admin_fee_queryset()), []
+        )
+
+    def test_self_organised_workshops_are_not_counted(self):
+        self.setUpWorkshops("self-organised", count=2)
+        self.assert_(Event.objects.all())
+        self.assertEqual(
+            list(self.membership._workshops_without_admin_fee_queryset()), []
+        )
+
+    def test_completed_workshops(self):
+        self.setUpWorkshops("completed", count=3)
+        self.assert_(Event.objects.all())
+        self.assertEqual(self.membership.workshops_without_admin_fee_completed, 3)
+
+    def test_planned_workshops(self):
+        self.setUpWorkshops("planned", count=4)
+        self.assert_(Event.objects.all())
+        self.assertEqual(self.membership.workshops_without_admin_fee_planned, 4)
+
+    def test_remaining_workshops(self):
+        self.setUpWorkshops(
+            "cancelled", "self-organised", "completed", "planned", count=2
+        )
+        self.assert_(Event.objects.all())
+        # number of available: 10 + 2 - 5 = 7
+        # number of workshops counted: 2 * completed + 2 * planned
+        self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 3)
+
+
+class TestMembershipConsortiumCountingSelfOrganisedWorkshops(
+    TestMembershipConsortiumCountingBase
+):
+    def test_cancelled_workshops_are_not_counted(self):
+        self.setUpWorkshops("cancelled", count=2, administrator=self.self_organized)
+        self.assert_(Event.objects.all())
+        self.assertEqual(list(self.membership._self_organized_workshops_queryset()), [])
+
+    def test_centrally_organised_workshops_are_not_counted(self):
+        self.setUpWorkshops("completed", count=2, administrator=self.dc)
+        self.assert_(Event.objects.all())
+        self.assertEqual(list(self.membership._self_organized_workshops_queryset()), [])
+
+    def test_completed_workshops(self):
+        self.setUpWorkshops("completed", count=3, administrator=self.self_organized)
+        self.assert_(Event.objects.all())
+        self.assertEqual(self.membership.self_organized_workshops_completed, 3)
+
+    def test_planned_workshops(self):
+        self.setUpWorkshops("planned", count=4, administrator=self.self_organized)
+        self.assert_(Event.objects.all())
+        self.assertEqual(self.membership.self_organized_workshops_planned, 4)
+
+    def test_remaining_workshops(self):
+        self.setUpWorkshops(
+            "cancelled",
+            "self-organised",
+            "completed",
+            "planned",
+            count=2,
+            administrator=self.self_organized,
+        )
+        self.assert_(Event.objects.all())
+        # number of available: 8 + 4 - 5 = 7
+        # number of workshops counted: 2 * self-org + 2 * completed + 2 * planned
+        self.assertEqual(self.membership.self_organized_workshops_remaining, 1)
+
+
+class TestMembershipConsortiumCountingInstructorTrainingSeats(
+    TestMembershipConsortiumCountingBase
+):
+    def test_seats_total(self):
+        # rolled from previous aren't counted into the total
+        self.assertEqual(self.membership.seats_instructor_training_total, 10)
+
+    def test_seats_utilized(self):
+        self.setUpTasks(count=5)
+        self.assertEqual(self.membership.seats_instructor_training_utilized, 5)
+
+    def test_seats_remaining(self):
+        self.setUpTasks(count=5)
+        # total and rolled over from previous: 10 + 2
+        # utilized: 5
+        # rolled-over: 5
+        # remaining: 2
+        self.assertEqual(self.membership.seats_instructor_training_remaining, 2)
 
 
 class TestMembershipForms(TestBase):
@@ -681,3 +924,161 @@ class TestMembershipExtension(TestBase):
         membership.refresh_from_db()
         self.assertEqual(membership.extended, 30)
         self.assertEqual(membership.agreement_end, date(2021, 3, 31))
+
+
+class TestMembershipCreateRollOver(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+    def setUpMembership(self):
+        self.membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=False,
+            public_status="public",
+            variant="partner",
+            agreement_start="2020-03-01",
+            agreement_end="2021-03-01",
+            extended=None,
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=11,
+            seats_instructor_training=12,
+            additional_instructor_training_seats=0,
+        )
+        Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=MemberRole.objects.first(),
+        )
+
+    def test_form_simple_valid(self):
+        data = {
+            "name": "Test Name",
+            "consortium": True,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-03-01",
+            "agreement_end": "2022-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+        }
+
+        form = MembershipRollOverForm(data)
+
+        self.assertTrue(form.is_valid())
+
+    def test_form_ignoring_fields(self):
+        data = {
+            # field accepted
+            "name": "Test Name",
+            "consortium": True,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-03-01",
+            "agreement_end": "2022-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+            # fields ignored
+            "workshops_without_admin_fee_rolled_from_previous": "invalid value",
+            "self_organized_workshops_rolled_from_previous": "invalid value",
+            "instructor_training_seats_rolled_from_previous": "invalid value",
+        }
+
+        form = MembershipRollOverForm(data)
+
+        self.assertTrue(form.is_valid())
+
+    def test_new_membership_created(self):
+        self.setUpMembership()
+        data = {
+            "name": "Test Name",
+            "consortium": True,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-03-01",
+            "agreement_end": "2022-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+        }
+
+        response = self.client.post(
+            reverse("membership_create_roll_over", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        last_membership = Membership.objects.order_by("pk").last()
+        self.assertRedirects(
+            response, reverse("membership_details", args=[last_membership.pk])
+        )
+
+    def test_membership_rollovers(self):
+        self.setUpMembership()
+        data = {
+            "name": "Test Membership",
+            "consortium": False,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2020-03-01",
+            "agreement_end": "2021-03-01",
+            "contribution_type": "financial",
+            "workshops_without_admin_fee_per_agreement": 10,
+            "self_organized_workshops_per_agreement": 11,
+            "seats_instructor_training": 12,
+            "additional_instructor_training_seats": 0,
+        }
+
+        self.client.post(
+            reverse("membership_create_roll_over", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        last_membership = Membership.objects.order_by("pk").last()
+        self.membership.refresh_from_db()
+
+        self.assertEqual(self.membership.workshops_without_admin_fee_per_agreement, 10)
+        self.assertEqual(self.membership.self_organized_workshops_per_agreement, 11)
+        self.assertEqual(self.membership.seats_instructor_training, 12)
+        self.assertEqual(self.membership.additional_instructor_training_seats, 0)
+
+        self.assertEqual(
+            self.membership.workshops_without_admin_fee_rolled_from_previous, None
+        )
+        self.assertEqual(
+            self.membership.self_organized_workshops_rolled_from_previous, None
+        )
+        self.assertEqual(
+            self.membership.instructor_training_seats_rolled_from_previous, None
+        )
+
+        self.assertEqual(self.membership.workshops_without_admin_fee_rolled_over, 10)
+        self.assertEqual(self.membership.self_organized_workshops_rolled_over, 11)
+        self.assertEqual(self.membership.instructor_training_seats_rolled_over, 12)
+
+        self.assertEqual(last_membership.workshops_without_admin_fee_per_agreement, 10)
+        self.assertEqual(last_membership.self_organized_workshops_per_agreement, 11)
+        self.assertEqual(last_membership.seats_instructor_training, 12)
+        self.assertEqual(last_membership.additional_instructor_training_seats, 0)
+        self.assertEqual(
+            last_membership.workshops_without_admin_fee_rolled_from_previous, 10
+        )
+        self.assertEqual(
+            last_membership.self_organized_workshops_rolled_from_previous, 11
+        )
+        self.assertEqual(
+            last_membership.instructor_training_seats_rolled_from_previous, 12
+        )
+        self.assertEqual(last_membership.workshops_without_admin_fee_rolled_over, None)
+        self.assertEqual(last_membership.self_organized_workshops_rolled_over, None)
+        self.assertEqual(last_membership.instructor_training_seats_rolled_over, None)

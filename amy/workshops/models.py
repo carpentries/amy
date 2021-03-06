@@ -150,11 +150,31 @@ class Membership(models.Model):
         help_text="Acceptable number of workshops without admin fee per "
         "agreement duration",
     )
+    workshops_without_admin_fee_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Workshops without admin fee rolled over from previous membership.",
+    )
+    workshops_without_admin_fee_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Workshops without admin fee rolled over into next membership.",
+    )
     self_organized_workshops_per_agreement = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text="Expected number of self-organized workshops per agreement "
         "duration",
+    )
+    self_organized_workshops_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Self-organized workshops rolled over from previous membership.",
+    )
+    self_organized_workshops_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Self-organized workshops rolled over into next membership.",
     )
     # according to Django docs, PositiveIntegerFields accept 0 as valid as well
     seats_instructor_training = models.PositiveIntegerField(
@@ -171,6 +191,16 @@ class Membership(models.Model):
         verbose_name="Additional instructor training seats",
         help_text="Use this field if you want to grant more seats than "
         "the agreement provides for.",
+    )
+    instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Instructor training seats rolled over from previous membership.",
+    )
+    instructor_training_seats_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Instructor training seats rolled over into next membership.",
     )
     organizations = models.ManyToManyField(
         Organization,
@@ -238,118 +268,129 @@ class Membership(models.Model):
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
-    # TODO: fix counting (currently it depends on self.organization)
+    def _workshops_without_admin_fee_queryset(self):
+        """Provide universal queryset for looking up centrally-organised workshops for
+        this membership."""
+        during_membership = Q(
+            start__gte=self.agreement_start, start__lt=self.agreement_end
+        )
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
+        return (
+            Event.objects.filter(during_membership)
+            .filter(host__in=self.organizations.all())
+            .filter(administrator__in=Organization.objects.administrators())
+            .exclude(administrator__domain="self-organized")
+            .exclude(cancelled)
+            .distinct()
+        )
+
     @cached_property
     def workshops_without_admin_fee_completed(self):
         """Count centrally-organised workshops already hosted during the agreement."""
-        date_started = Q(
-            start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__lt=datetime.date.today())
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
-
         return (
-            Event.objects.filter(date_started)  # .filter(host=self.organization)
-            .filter(administrator__in=Organization.objects.administrators())
-            .exclude(administrator__domain="self-organized")
-            .exclude(cancelled)
+            self._workshops_without_admin_fee_queryset()
+            .filter(start__lt=datetime.date.today())
             .count()
         )
 
-    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def workshops_without_admin_fee_planned(self):
         """Count centrally-organised workshops hosted in future during the agreement."""
-        date_started = Q(
-            start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__gte=datetime.date.today())
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
-
         return (
-            Event.objects.filter(date_started)  # .filter(host=self.organization)
-            .filter(administrator__in=Organization.objects.administrators())
-            .exclude(administrator__domain="self-organized")
-            .exclude(cancelled)
+            self._workshops_without_admin_fee_queryset()
+            .filter(start__gte=datetime.date.today())
             .count()
         )
 
-    @cached_property
+    @property
     def workshops_without_admin_fee_remaining(self):
         """Count remaining centrally-organised workshops for the agreement."""
-        if not self.workshops_without_admin_fee_per_agreement:
+        if self.workshops_without_admin_fee_per_agreement is None:
             return None
-        a = self.workshops_without_admin_fee_per_agreement
-        b = self.workshops_without_admin_fee_completed
-        c = self.workshops_without_admin_fee_planned
-        return a - b - c
 
-    # TODO: fix counting (currently it depends on self.organization)
+        a = self.workshops_without_admin_fee_per_agreement
+        b = self.workshops_without_admin_fee_rolled_from_previous or 0
+        c = self.workshops_without_admin_fee_rolled_over or 0
+        d = self.workshops_without_admin_fee_completed
+        e = self.workshops_without_admin_fee_planned
+        return a + b - c - d - e
+
+    def _self_organized_workshops_queryset(self):
+        """Provide universal queryset for looking up self-organised events for this
+        membership."""
+        during_membership = Q(
+            start__gte=self.agreement_start, start__lt=self.agreement_end
+        )
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
+        self_organized = Q(administrator=None) | Q(
+            administrator__domain="self-organized"
+        )
+        return (
+            Event.objects.filter(during_membership)
+            .filter(host__in=self.organizations.all())
+            .filter(self_organized)
+            .exclude(cancelled)
+            .distinct()
+        )
+
     @cached_property
     def self_organized_workshops_completed(self):
         """Count self-organized workshops hosted the year agreement started (completed,
         ie. in past)."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        date_started = Q(
-            start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__lt=datetime.date.today())
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
-
         return (
-            Event.objects.filter(date_started)  # .filter(host=self.organization)
-            .filter(self_organized)
-            .exclude(cancelled)
+            self._self_organized_workshops_queryset()
+            .filter(start__lt=datetime.date.today())
             .count()
         )
 
-    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def self_organized_workshops_planned(self):
         """Count self-organized workshops hosted the year agreement started (planned,
         ie. in future)."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        date_started = Q(
-            start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__gte=datetime.date.today())
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
-
         return (
-            Event.objects.filter(date_started)  # .filter(host=self.organization)
-            .filter(self_organized)
-            .exclude(cancelled)
+            self._self_organized_workshops_queryset()
+            .filter(start__gte=datetime.date.today())
             .count()
         )
 
-    @cached_property
+    @property
     def self_organized_workshops_remaining(self):
         """Count remaining self-organized workshops for the year agreement
         started."""
-        if not self.self_organized_workshops_per_agreement:
+        if self.self_organized_workshops_per_agreement is None:
             return None
+
         a = self.self_organized_workshops_per_agreement
-        b = self.self_organized_workshops_completed
-        c = self.self_organized_workshops_planned
-        return a - b - c
+        b = self.self_organized_workshops_rolled_from_previous or 0
+        c = self.self_organized_workshops_rolled_over or 0
+        d = self.self_organized_workshops_completed
+        e = self.self_organized_workshops_planned
+        return a + b - c - d - e
 
     @cached_property
     def seats_instructor_training_total(self):
-        return (
-            self.additional_instructor_training_seats + self.seats_instructor_training
-        )
+        """Calculate combined instructor training seats total.
+
+        Unlike self-organised workshops or workshops w/o admin fee, instructor
+        training seats have two numbers combined to calculate total of allowed
+        instructor training seats in ITT events."""
+        a = self.seats_instructor_training
+        b = self.additional_instructor_training_seats
+        return a + b
 
     @cached_property
     def seats_instructor_training_utilized(self):
-        # count number of tasks that have this membership
+        """Count number of tasks that point to this membership."""
         return self.task_set.filter(role__name="learner").count()
 
     @cached_property
     def seats_instructor_training_remaining(self):
-        return (
-            self.seats_instructor_training_total
-            - self.seats_instructor_training_utilized
-        )
+        """Count remaining seats for instructor training."""
+        a = self.seats_instructor_training_total
+        b = self.instructor_training_seats_rolled_from_previous or 0
+        c = self.seats_instructor_training_utilized
+        d = self.instructor_training_seats_rolled_over or 0
+        return a + b - c - d
 
 
 class Sponsorship(models.Model):

@@ -57,35 +57,66 @@
         <a href="{% url 'membership_tasks' membership.pk %}">Edit</a>
       </td></tr>
   <tr>
-    <th rowspan="4">Workshops without fee per agreement duration</th>
+    <th rowspan="6">Workshops without fee per agreement duration</th>
     <th>Allowed:</th>
-    <td width="60%">{{ membership.workshops_without_admin_fee_per_agreement|default:"—" }}</td>
+    <td width="60%">{{ membership.workshops_without_admin_fee_per_agreement|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Rolled from previous membership:</th>
+    <td>{{ membership.workshops_without_admin_fee_rolled_from_previous|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>Completed:</th>
-    <td>{{ membership.workshops_without_admin_fee_completed|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_completed|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>Planned:</th>
-    <td>{{ membership.workshops_without_admin_fee_planned|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_planned|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>Remaining:</th>
-    <td>{{ membership.workshops_without_admin_fee_remaining|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_remaining|default:"&mdash;" }}</td>
   </tr>
   <tr>
-    <th rowspan="2">Self-organized workshops per agreement duration</th>
+    <th>Rolled over:</th>
+    <td>{{ membership.workshops_without_admin_fee_rolled_over|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th rowspan="6">Self-organized workshops per agreement duration</th>
+    <th>Allowed:</th>
+    <td>{{ membership.self_organized_workshops_per_agreement|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Rolled from previous membership:</th>
+    <td>{{ membership.self_organized_workshops_rolled_from_previous|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
     <th>Completed:</th>
-    <td>{{ membership.self_organized_workshops_completed|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_completed|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>Planned:</th>
-    <td>{{ membership.self_organized_workshops_planned|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_planned|default:"&mdash;" }}</td>
   </tr>
   <tr>
-    <th rowspan="3" width="30%">Instructor training seats</th>
+    <th>Remaining:</th>
+    <td>{{ membership.self_organized_workshops_remaining|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Rolled over:</th>
+    <td>{{ membership.self_organized_workshops_rolled_over|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th rowspan="5" width="30%">Instructor training seats</th>
     <th>Allowed:</th>
-    <td>{{ membership.seats_instructor_training_total }}</td>
+    <td>
+      {{ membership.seats_instructor_training_total }}
+      <p class="small">Includes {{ membership.additional_instructor_training_seats }} additional seats.</p>
+    </td>
+  </tr>
+  <tr>
+    <th>Rolled from previous membership:</th>
+    <td>{{ membership.instructor_training_seats_rolled_from_previous|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>Utilized:</th>
@@ -94,6 +125,10 @@
   <tr {% if membership.seats_instructor_training_remaining <= 0 and membership.seats_instructor_training_total > 0 or membership.seats_instructor_training_remaining < 0 and membership.seats_instructor_training_total == 0 %}class="table-danger"{% endif %}>
     <th>Remaining:</th>
     <td>{{ membership.seats_instructor_training_remaining }}</td>
+  </tr>
+  <tr>
+    <th>Rolled over:</th>
+    <td>{{ membership.instructor_training_seats_rolled_over|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>Instructor training seats &mdash; tasks:</th>
@@ -128,17 +163,22 @@
 </table>
 
 <div class="clearfix">
-  <p class="edit-object float-left">
+  <div class="edit-object float-left">
     <div class="btn-group" role="group">
       {% if perms.workshops.change_membership %}
       <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
       <a href="{% url 'membership_extend' membership.id %}" class="btn btn-secondary">Extend</a>
       {% else %}
-      <a aria-disabled="true" class="btn btn-primary disabled">Edit</a>
-      <a aria-disabled="true" class="btn btn-secondary disabled">Extend</a>
+      <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
+      {% endif %}
+      {% if perms.workshops.create_membership and perms.workshops.change_membership %}
+      <a href="{% url 'membership_create_roll_over' membership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
+      {% else %}
+      <a class="btn btn-secondary disabled" aria-disabled="true">Create new &amp; roll-over</a>
       {% endif %}
     </div>
-  </p>
+  </div>
   <div class="delete-object float-right">
     {% if perms.workshops.delete_membership %}
     <form action="{% url 'membership_delete' membership.id %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ membership }}\"?")' method="POST">
@@ -146,7 +186,7 @@
       <button type="submit" class="btn btn-danger">Delete membership</button>
     </form>
     {% else %}
-    <button class="btn btn-danger disabled">Delete membership</button>
+    <button class="btn btn-danger disabled" aria-disabled="true">Delete membership</button>
     {% endif %}
   </div>
 </div>
