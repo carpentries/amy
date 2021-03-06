@@ -284,36 +284,86 @@ class Membership(models.Model):
             .distinct()
         )
 
-    @cached_property
-    def workshops_without_admin_fee_completed(self):
-        """Count centrally-organised workshops already hosted during the agreement."""
-        return (
-            self._workshops_without_admin_fee_queryset()
-            .filter(start__lt=datetime.date.today())
-            .count()
+    def _workshops_without_admin_fee_completed_queryset(self):
+        return self._workshops_without_admin_fee_queryset().filter(
+            start__lt=datetime.date.today()
         )
 
-    @cached_property
-    def workshops_without_admin_fee_planned(self):
-        """Count centrally-organised workshops hosted in future during the agreement."""
-        return (
-            self._workshops_without_admin_fee_queryset()
-            .filter(start__gte=datetime.date.today())
-            .count()
+    def _workshops_without_admin_fee_planned_queryset(self):
+        return self._workshops_without_admin_fee_queryset().filter(
+            start__gte=datetime.date.today()
         )
 
     @property
-    def workshops_without_admin_fee_remaining(self):
-        """Count remaining centrally-organised workshops for the agreement."""
-        if self.workshops_without_admin_fee_per_agreement is None:
-            return None
+    def workshops_without_admin_fee_available(self) -> int:
+        """Available for counting, "contracted" centrally-organised workshops.
 
-        a = self.workshops_without_admin_fee_per_agreement
+        This number represents the real number of available workshops for counting
+        completed / planned / remaining no-fee workshops.
+
+        Because the data may be entered incorrectly, a sharp cutoff at 0 was introduced,
+        meaning this value won't be ever negative."""
+        a = self.workshops_without_admin_fee_per_agreement or 0
         b = self.workshops_without_admin_fee_rolled_from_previous or 0
         c = self.workshops_without_admin_fee_rolled_over or 0
-        d = self.workshops_without_admin_fee_completed
-        e = self.workshops_without_admin_fee_planned
-        return a + b - c - d - e
+        return max(a + b - c, 0)
+
+    @cached_property
+    def workshops_without_admin_fee_completed(self) -> int:
+        """Count centrally-organised workshops already hosted during the agreement.
+
+        This value must not be higher than "contracted" (or available for counting)
+        no-fee workshops.
+
+        Excess is counted towards discounted-fee completed workshops."""
+        return min(
+            self._workshops_without_admin_fee_completed_queryset().count(),
+            self.workshops_without_admin_fee_available,
+        )
+
+    @cached_property
+    def workshops_without_admin_fee_planned(self) -> int:
+        """Count centrally-organised workshops hosted in future during the agreement.
+
+        This value must not be higher than "contracted" (or available for counting)
+        no-fee workshops reduced by already completed no-fee workshops.
+
+        Excess is counted towards discounted-fee planned workshops."""
+        return min(
+            self._workshops_without_admin_fee_planned_queryset().count(),
+            self.workshops_without_admin_fee_available
+            - self.workshops_without_admin_fee_completed,
+        )
+
+    @property
+    def workshops_without_admin_fee_remaining(self) -> int:
+        """Count remaining centrally-organised workshops for the agreement."""
+        a = self.workshops_without_admin_fee_available
+        b = self.workshops_without_admin_fee_completed
+        c = self.workshops_without_admin_fee_planned
+
+        # can't get below 0, that's when discounted workshops kick in
+        return max(a - b - c, 0)
+
+    @cached_property
+    def workshops_discounted_completed(self) -> int:
+        """Any centrally-organised workshops exceeding the workshops without fee allowed
+        number - already completed."""
+        return max(
+            self._workshops_without_admin_fee_completed_queryset().count()
+            - self.workshops_without_admin_fee_available,
+            0,
+        )
+
+    @cached_property
+    def workshops_discounted_planned(self) -> int:
+        """Any centrally-organised workshops exceeding the workshops without fee allowed
+        number - to happen in future."""
+        return max(
+            self._workshops_without_admin_fee_planned_queryset().count()
+            - self.workshops_without_admin_fee_available,
+            0,
+        )
 
     def _self_organized_workshops_queryset(self):
         """Provide universal queryset for looking up self-organised events for this

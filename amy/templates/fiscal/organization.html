@@ -77,7 +77,8 @@
     <th rowspan="2">Variant</th>
     <th rowspan="2">Agreement dates</th>
     <th rowspan="2">Contribution type</th>
-    <th colspan="6">Centrally-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
+    <th colspan="6">Centrally-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="No fee. Numbers per agreement duration"></i></th>
+    <th colspan="2">Discounted workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
     <th colspan="6">Self-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
     <th colspan="5">Instructor training seats</th>
     <th class="additional-links"></th>
@@ -90,6 +91,9 @@
     <th><small>Planned</small></th>
     <th><small>Rolled-over</small></th>
     <th><small>Remaining</small></th>
+    <!-- discounted -->
+    <th><small>Completed</small></th>
+    <th><small>Planned</small></th>
     <!-- self-organised -->
     <th><small>Allowed</small></th>
     <th><small>Rolled from prev.</small></th>
@@ -120,6 +124,8 @@
     <td>{{ membership.workshops_without_admin_fee_planned|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.workshops_without_admin_fee_rolled_over|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.workshops_without_admin_fee_remaining|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.workshops_discounted_completed|default_if_none:"&mdash;" }}</td>
+    <td>{{ membership.workshops_discounted_planned|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.self_organized_workshops_per_agreement|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.self_organized_workshops_rolled_from_previous|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.self_organized_workshops_completed|default_if_none:"&mdash;" }}</td>

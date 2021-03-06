@@ -342,6 +342,31 @@ class TestMembershipConsortiumCountingBase(TestBase):
 class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
     TestMembershipConsortiumCountingBase
 ):
+    def test_queryset(self):
+        events = self.setUpWorkshops("completed", "planned", count=1)
+        self.assert_(Event.objects.all())
+        self.assertEqual(
+            set(self.membership._workshops_without_admin_fee_queryset()), set(events)
+        )
+
+    def test_queryset_completed(self):
+        events = self.setUpWorkshops("completed", count=1)
+        self.setUpWorkshops("planned", count=1)
+        self.assert_(Event.objects.all())
+        self.assertEqual(
+            set(self.membership._workshops_without_admin_fee_completed_queryset()),
+            set(events),
+        )
+
+    def test_queryset_planned(self):
+        self.setUpWorkshops("completed", count=1)
+        events = self.setUpWorkshops("planned", count=1)
+        self.assert_(Event.objects.all())
+        self.assertEqual(
+            set(self.membership._workshops_without_admin_fee_planned_queryset()),
+            set(events),
+        )
+
     def test_cancelled_workshops_are_not_counted(self):
         self.setUpWorkshops("cancelled", count=2)
         self.assert_(Event.objects.all())
@@ -356,17 +381,40 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
             list(self.membership._workshops_without_admin_fee_queryset()), []
         )
 
-    def test_completed_workshops(self):
+    def test_available_workshops_count(self):
+        # agreement: 10, rolled from previous: 2, rolled over: 5
+        # 10 + 2 - 5 = 7
+        self.assertEqual(self.membership.workshops_without_admin_fee_available, 7)
+
+    def test_completed_workshops_count(self):
         self.setUpWorkshops("completed", count=3)
         self.assert_(Event.objects.all())
         self.assertEqual(self.membership.workshops_without_admin_fee_completed, 3)
+        self.assertEqual(self.membership.workshops_discounted_completed, 0)
+        self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 4)
 
-    def test_planned_workshops(self):
+    def test_completed_workshops_count_maxed_out(self):
+        self.setUpWorkshops("completed", count=10)
+        self.assert_(Event.objects.all())
+        self.assertEqual(self.membership.workshops_without_admin_fee_completed, 7)
+        self.assertEqual(self.membership.workshops_discounted_completed, 3)
+        self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 0)
+
+    def test_planned_workshops_count(self):
         self.setUpWorkshops("planned", count=4)
         self.assert_(Event.objects.all())
         self.assertEqual(self.membership.workshops_without_admin_fee_planned, 4)
+        self.assertEqual(self.membership.workshops_discounted_planned, 0)
+        self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 3)
 
-    def test_remaining_workshops(self):
+    def test_planned_workshops_count_maxed_out(self):
+        self.setUpWorkshops("planned", count=10)
+        self.assert_(Event.objects.all())
+        self.assertEqual(self.membership.workshops_without_admin_fee_planned, 7)
+        self.assertEqual(self.membership.workshops_discounted_planned, 3)
+        self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 0)
+
+    def test_remaining_workshops_count(self):
         self.setUpWorkshops(
             "cancelled", "self-organised", "completed", "planned", count=2
         )
@@ -374,6 +422,8 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
         # number of available: 10 + 2 - 5 = 7
         # number of workshops counted: 2 * completed + 2 * planned
         self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 3)
+        self.assertEqual(self.membership.workshops_discounted_completed, 0)
+        self.assertEqual(self.membership.workshops_discounted_planned, 0)
 
 
 class TestMembershipConsortiumCountingSelfOrganisedWorkshops(

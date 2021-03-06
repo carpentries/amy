@@ -82,6 +82,15 @@
     <td>{{ membership.workshops_without_admin_fee_rolled_over|default:"&mdash;" }}</td>
   </tr>
   <tr>
+    <th rowspan="2">Discounted workshops</th>
+    <th>Completed:</th>
+    <td>{{ membership.workshops_discounted_completed|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Planned:</th>
+    <td>{{ membership.workshops_discounted_planned|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
     <th rowspan="6">Self-organized workshops per agreement duration</th>
     <th>Allowed:</th>
     <td>{{ membership.self_organized_workshops_per_agreement|default:"&mdash;" }}</td>
