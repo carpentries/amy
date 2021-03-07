@@ -38,7 +38,6 @@ class InitialWRFTestMixin:
             "host": Organization.objects.first(),
             "start": date(2020, 11, 11),
             "end": date(2020, 11, 12),
-            "slug": "2020-11-11-scotland",
         }
 
     def test_get_initial(self):
@@ -108,10 +107,6 @@ class TestInitialWorkshopInquiryAccept(InitialWRFTestMixin, TestCase):
 
 class TestInitialSelfOrganisedSubmissionAccept(InitialWRFTestMixin, TestCase):
     view_class = SelfOrganisedSubmissionAcceptEvent
-
-    def setUp(self):
-        super().setUp()
-        self.expected["slug"] = "2020-11-11-xxx"
 
     def setUpOther(self):
         other_object = SelfOrganisedSubmission.objects.create(

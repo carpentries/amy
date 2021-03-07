@@ -48,11 +48,6 @@ class WRFInitial:
 
         if start:
             initial["start"] = start
-            location = getattr(self.other_object, "location", "XXX")
-            initial["slug"] = "{:%Y-%m-%d}-{}".format(
-                start, location.replace(" ", "-").lower()
-            )
-
         if end:
             initial["end"] = end
 
