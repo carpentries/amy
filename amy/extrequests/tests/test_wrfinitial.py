@@ -108,9 +108,6 @@ class TestInitialWorkshopInquiryAccept(InitialWRFTestMixin, TestCase):
 class TestInitialSelfOrganisedSubmissionAccept(InitialWRFTestMixin, TestCase):
     view_class = SelfOrganisedSubmissionAcceptEvent
 
-    def setUp(self):
-        super().setUp()
-
     def setUpOther(self):
         other_object = SelfOrganisedSubmission.objects.create(
             state="p",
