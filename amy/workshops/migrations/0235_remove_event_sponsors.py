@@ -4,6 +4,12 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def create_event_host_to_sponsor(apps, schema_editor):
+    """Copy event.host to event.sponsor for existing events."""
+    Event = apps.get_model("workshops", "Event")
+    Event.objects.exclude(host__isnull=True).update(sponsor=models.F('host'))
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -20,6 +26,7 @@ class Migration(migrations.Migration):
             name='sponsor',
             field=models.ForeignKey(blank=False, help_text='Institution that is funding or organising the workshop.', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='sponsored_events', to='workshops.Organization'),
         ),
+        migrations.RunPython(create_event_host_to_sponsor, migrations.RunPython.noop),
         migrations.AlterField(
             model_name='event',
             name='administrator',
