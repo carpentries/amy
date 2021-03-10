@@ -8,7 +8,6 @@
   <ul class="nav nav-tabs" role="tablist" id="tabs">
     <li role="presentation" class="nav-item"><a class="nav-link active" href="#event" role="tab" data-toggle="tab" aria-controls="event" aria-selected="true" id="event-tab">Event</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks" aria-selected="false" id="tasks-tab">Tasks</a></li>
-    <li role="presentation" class="nav-item"><a class="nav-link" href="#sponsors" role="tab" data-toggle="tab" aria-controls="sponsors" aria-selected="false" id="sponsors-tab">Sponsors</a></li>
   </ul>
 </nav>
 <div class="col-12 tab-content">
@@ -59,45 +58,6 @@
     <p>No tasks.</p>
     {% endif %}
     {% endblock task_tab %}
-  </div>
-  <div class="tab-pane" role="tabpanel" aria-labelledby="sponsors-tab" id="sponsors">
-    {% block sponsor_tab %}
-    <form class="form-horizontal" role="form" method="POST" action="{% url 'sponsorship_add' %}">
-      {% crispy sponsor_form %}
-    </form>
-
-    {% if object.sponsorship_set.all %}
-    {% block sponsor_list %}
-    <table class="table table-striped">
-    <tr>
-      <th>Organization</th>
-      <th>Amount</th>
-      <th>Contact</th>
-      <th>Actions</th>
-    </tr>
-    {% for sponsorship in object.sponsorship_set.all %}
-    <tr>
-      <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a></td>
-      <td>{{ sponsorship.amount|default:"—" }}</td>
-      <td>
-      {% if sponsorship.contact %}
-        <a href="{{ sponsorship.contact.get_absolute_url }}">{{ sponsorship.contact }}</a>
-      {% else %}—{% endif %}
-      </td>
-      <td>
-        <form action="{% url 'sponsorship_delete' pk=sponsorship.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ sponsorship }}\" from {{ object }}?")' method="POST">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-    </table>
-    {% endblock sponsor_list %}
-    {% else %}
-    <p>No sponsors.</p>
-    {% endif %}
-    {% endblock sponsor_tab %}
   </div>
 </div>
 

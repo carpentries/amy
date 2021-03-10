@@ -148,34 +148,6 @@
 
 <hr>
 
-{% block sponsorships %}
-{% with sponsorships=event.sponsorship_set.all %}
-{% if sponsorships %}
-<h3>Sponsors</h3>
-<table class="table table-striped">
-  <tr>
-    <th>Organization</th>
-    <th>Amount</th>
-    <th>Contact</th>
-  </tr>
-  {% for sponsorship in sponsorships %}
-  <tr>
-    <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a></td>
-    <td>{{ sponsorship.amount|default:"—" }}</td>
-    <td>
-    {% if sponsorship.contact %}
-        <a href="{{ sponsorship.contact.get_absolute_url }}">{{ sponsorship.contact }}</a>
-    {% else %}—{% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>No sponsors.</p>
-{% endif %}
-{% endwith %}
-{% endblock sponsorships %}
-
 <div class="clearfix">
   <div class="edit-object float-left">
     {% if perms.workshops.change_event %}

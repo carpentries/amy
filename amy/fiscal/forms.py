@@ -8,15 +8,12 @@ from markdownx.fields import MarkdownxFormField
 from fiscal.models import MembershipTask
 from workshops.forms import (
     BootstrapHelper,
-    WidgetOverrideMixin,
     form_saved_add_comment,
-    SELECT2_SIDEBAR,
 )
 from workshops.models import (
     Organization,
     Member,
     Membership,
-    Sponsorship,
 )
 
 # this is used instead of Django Autocomplete Light widgets
@@ -310,31 +307,6 @@ class MembershipExtensionForm(forms.Form):
 
     class Media:
         js = ("membership_extend.js", "date_yyyymmdd.js")
-
-
-class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
-
-    helper = BootstrapHelper(submit_label="Add")
-
-    class Meta:
-        model = Sponsorship
-        fields = "__all__"
-        widgets = {
-            "organization": ModelSelect2Widget(
-                data_view="organization-lookup", attrs=SELECT2_SIDEBAR
-            ),
-            "event": ModelSelect2Widget(
-                data_view="event-lookup", attrs=SELECT2_SIDEBAR
-            ),
-            "contact": ModelSelect2Widget(
-                data_view="person-lookup", attrs=SELECT2_SIDEBAR
-            ),
-        }
-
-    def __init__(self, *args, **kwargs):
-        form_tag = kwargs.pop("form_tag", True)
-        super().__init__(*args, **kwargs)
-        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
 
 
 # ----------------------------------------------------------

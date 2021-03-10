@@ -56,7 +56,6 @@ from autoemails.actions import (
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
 from dashboard.forms import AssignmentForm
-from fiscal.forms import SponsorshipForm
 from workshops.base_views import (
     AMYCreateView,
     AMYUpdateView,
@@ -105,7 +104,7 @@ from workshops.models import (
     Person,
     Role,
     Membership,
-    Sponsorship,
+    # ,
     Tag,
     Task,
 )
@@ -884,9 +883,6 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     """List details of a particular event."""
     try:
-        sponsorship_prefetch = Prefetch(
-            "sponsorship_set", queryset=Sponsorship.objects.select_related("contact")
-        )
         task_prefetch = Prefetch(
             "task_set",
             to_attr="contacts",
@@ -902,11 +898,12 @@ def event_details(request, slug):
         )
         event = (
             Event.objects.attendance()
-            .prefetch_related(sponsorship_prefetch, task_prefetch)
+            .prefetch_related(task_prefetch)
             .select_related(
                 "assigned_to",
                 "host",
                 "administrator",
+                "sponsor",
             )
             .get(slug=slug)
         )
@@ -1045,13 +1042,14 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     permission_required = [
         "workshops.change_event",
         "workshops.add_task",
-        "workshops.add_sponsorship",
     ]
     queryset = Event.objects.select_related(
         "assigned_to",
+        "host",
         "administrator",
+        "sponsor",
         "language",
-    ).prefetch_related("sponsorship_set")
+    )
     slug_field = "slug"
     template_name = "workshops/event_edit_form.html"
 
@@ -1067,9 +1065,6 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
                 .task_set.select_related("person", "role")
                 .order_by("role__name"),
                 "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
-                "sponsor_form": SponsorshipForm(
-                    form_tag=False, prefix="sponsor", **kwargs
-                ),
             }
         )
         return context

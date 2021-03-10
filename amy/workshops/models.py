@@ -7,7 +7,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models import (
     Q,
@@ -441,41 +441,6 @@ class Membership(models.Model):
         c = self.seats_instructor_training_utilized
         d = self.instructor_training_seats_rolled_over or 0
         return a + b - c - d
-
-
-class Sponsorship(models.Model):
-    """Represent sponsorship from a host for an event."""
-
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE,
-        help_text="Organization sponsoring the event",
-    )
-    event = models.ForeignKey(
-        "Event",
-        on_delete=models.CASCADE,
-    )
-    amount = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
-        blank=True,
-        null=True,
-        validators=[MinValueValidator(0)],
-        verbose_name="Sponsorship amount",
-        help_text="e.g. 1992.33",
-    )
-    contact = models.ForeignKey(
-        "Person",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-
-    class Meta:
-        unique_together = ("organization", "event", "amount")
-
-    def __str__(self):
-        return "{}: {}".format(self.organization, self.amount)
 
 
 # ------------------------------------------------------------
@@ -1190,7 +1155,26 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
     host = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
-        help_text="Organization hosting the event.",
+        null=False,
+        blank=False,
+        related_name="hosted_events",
+        help_text="Organisation hosting the event.",
+    )
+    sponsor = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=False,
+        related_name="sponsored_events",
+        help_text="Institution that is funding or organising the workshop.",
+    )
+    administrator = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=False,
+        related_name="administered_events",
+        help_text="Lesson Program administered for this workshop.",
     )
     tags = models.ManyToManyField(
         Tag,
@@ -1201,20 +1185,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         "<li><i>cancelled</i> — for events that were supposed to "
         "happen, but due to some circumstances got cancelled.</li>"
         "</ul>",
-    )
-    administrator = models.ForeignKey(
-        Organization,
-        related_name="administrator",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        help_text="Lesson Program administered for this workshop.",
-    )
-    sponsors = models.ManyToManyField(
-        Organization,
-        related_name="sponsored_events",
-        blank=True,
-        through=Sponsorship,
     )
     start = models.DateField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT)
     end = models.DateField(null=True, blank=True)
