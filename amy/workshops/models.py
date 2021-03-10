@@ -277,7 +277,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
         return (
             Event.objects.filter(during_membership)
-            .filter(host__in=self.organizations.all())
+            .filter(sponsor__in=self.organizations.all())
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
@@ -377,7 +377,7 @@ class Membership(models.Model):
         )
         return (
             Event.objects.filter(during_membership)
-            .filter(host__in=self.organizations.all())
+            .filter(sponsor__in=self.organizations.all())
             .filter(self_organized)
             .exclude(cancelled)
             .distinct()

@@ -76,6 +76,7 @@ class TestMembership(TestBase):
             Event(
                 slug="event-outside-agreement-range-{}".format(i),
                 host=self.org_beta,
+                sponsor=self.org_beta,
                 # create each event starts roughly month later
                 start=start_date,
                 end=start_date + timedelta(days=1),
@@ -89,6 +90,7 @@ class TestMembership(TestBase):
             Event(
                 slug="event-self-org-{}".format(i),
                 host=self.org_beta,
+                sponsor=self.org_beta,
                 # create each event starts roughly month later
                 start=self.agreement_start + i * self.workshop_interval,
                 end=self.agreement_start_next_day + i * self.workshop_interval,
@@ -100,6 +102,7 @@ class TestMembership(TestBase):
             Event(
                 slug="event-no-fee-{}".format(i),
                 host=self.org_beta,
+                sponsor=self.org_beta,
                 # create each event starts roughly month later
                 start=self.agreement_start + i * self.workshop_interval,
                 end=self.agreement_start_next_day + i * self.workshop_interval,
@@ -112,6 +115,7 @@ class TestMembership(TestBase):
             Event(
                 slug="event-cancelled-{}".format(i),
                 host=self.org_beta,
+                sponsor=self.org_beta,
                 # create each event starts roughly month later
                 start=self.agreement_start + i * self.workshop_interval,
                 end=self.agreement_start_next_day + i * self.workshop_interval,
@@ -266,6 +270,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                 Event(
                     slug=f"event-cancelled-{i}",
                     host=self.org_alpha,
+                    sponsor=self.org_alpha,
                     start=self.agreement_start,
                     end=self.agreement_start + timedelta(days=1),
                     administrator=administrator,
@@ -281,6 +286,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                 Event(
                     slug=f"event-self-organised-{i}",
                     host=self.org_alpha,
+                    sponsor=self.org_alpha,
                     start=self.agreement_start,
                     end=self.agreement_start + timedelta(days=1),
                     administrator=self.self_organized,
@@ -295,6 +301,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                 Event(
                     slug=f"event-completed-{i}",
                     host=self.org_alpha,
+                    sponsor=self.org_alpha,
                     start=self.agreement_start,
                     end=self.agreement_start + timedelta(days=1),
                     administrator=administrator,
@@ -309,6 +316,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                 Event(
                     slug=f"event-planned-{i}",
                     host=self.org_alpha,
+                    sponsor=self.org_alpha,
                     start=date.today() + timedelta(days=1),
                     end=date.today() + timedelta(days=2),
                     administrator=administrator,
@@ -329,6 +337,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                     event=Event.objects.create(
                         slug=f"event-learner-{i}",
                         host=self.dc,
+                        sponsor=self.dc,
                         administrator=self.org_alpha,
                     ),
                     seat_membership=self.membership,
