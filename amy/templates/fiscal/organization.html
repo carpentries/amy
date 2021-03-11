@@ -41,8 +41,7 @@
 
 <hr>
 
-{% with events=organization.event_set.all %}
-{% if events %}
+{% if all_events %}
 <h2>Events</h2>
 <table class="table table-striped">
   <tr>
@@ -52,7 +51,7 @@
     <th>slug</th>
     <th>url</th>
   </tr>
-  {% for e in events %}
+  {% for e in all_events %}
   <tr>
     <td>{{ e.tags.all | join:", " }}</td>
     <td>{{ e.start }}</td>
@@ -65,7 +64,6 @@
 {% else %}
 <p>No events.</p>
 {% endif %}
-{% endwith %}
 
 <hr>
 
