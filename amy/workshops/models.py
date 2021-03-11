@@ -76,6 +76,9 @@ class Organization(models.Model):
     fullname = models.CharField(max_length=STR_LONG, unique=True)
     country = CountryField(null=True, blank=True)
 
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
     objects = OrganizationManager()
 
     def __str__(self):
