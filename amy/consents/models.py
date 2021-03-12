@@ -2,7 +2,6 @@ from django.db import models
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import Person, STR_MED
 from django.db.models import Prefetch
-from django.urls import reverse
 from django.core.exceptions import ValidationError
 
 
@@ -82,9 +81,6 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
                 condition=models.Q(archived_at__isnull=True),
             ),
         ]
-
-    def get_absolute_url(self):
-        return reverse("consent_details", kwargs={"consent_id": self.id})
 
     def save(self, *args, **kwargs):
         if self.term_id != self.term_option.term_id:
