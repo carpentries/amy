@@ -132,6 +132,7 @@ LOCAL_APPS = [
     "amy.trainings.apps.TrainingsConfig",
     "amy.extcomments.apps.ExtcommentsConfig",
     "amy.autoemails.apps.AutoemailsConfig",
+    "amy.consents.apps.ConsentsConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
