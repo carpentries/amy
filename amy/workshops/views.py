@@ -104,7 +104,6 @@ from workshops.models import (
     Person,
     Role,
     Membership,
-    # ,
     Tag,
     Task,
 )

@@ -22,7 +22,7 @@ The new application structure contains:
 `EventSubmission`, `DCSelfOrganizedEventRequest`, ~~`ProfileUpdateRequest`~~,
 ~~`InvoiceRequest`~~ - by the way all these models are deprecated and to be
 removed in future - `WorkshopRequest`, and `TrainingRequest`),
-* `fiscal` - for organizations, and memberships,
+* `fiscal` - for organisations and memberships,
 * `reports` - for reports,
 * `trainings` - for managing trainees and trainings,
 * `workshops` - for persons and workshops management, including tasks and
