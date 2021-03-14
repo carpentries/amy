@@ -80,14 +80,58 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `id` Sequential, automatically assigned integer.
 * `variant` Membership type (Gold, Silver, etc.)
 * `agreement_start` and `agreement_end` Membership term start and end dates
+* `extended` Integer; number of days the membership term end date has been extended by; `NULL` value indicates no extension
 * `contribution_type` Financial, Person-days, or Other
 * `workshops_without_admin_fee_per_agreement` Integer; number of centrally organized workshops allowed
+* `workshops_without_admin_fee_rolled_from_previous` Integer; number of centrally-organised workshops allowed that was rolled over from previous membership. This should be the same as `workshops_without_admin_fee_rolled_over` in preceding membership
+* `workshops_without_admin_fee_rolled_over` Integer; number of centrally-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `workshops_without_admin_fee_rolled_from_previous` in successing membership
 * `self_organized_workshops_per_agreement` Integer; number of self organized workshops allowed. Typically unused as there is no cap on self-organized workshops
-* `organization_id` An integer representing the Member organization.  This is linked to the `workshops_organization` table
+* `self_organized_workshops_rolled_from_previous` Integer; number of self-organised workshops allowed that was rolled over from previous membership. This should be the same as `self_organized_workshops_rolled_over` in preceding membership
+* `self_organized_workshops_rolled_over` Integer; number of self-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `self_organized_workshops_rolled_from_previous` in successing membership
 * `seats_instructor_training` Integer; number of seats allowed in instructor training events in the original contract.
 * `additional_instructor_training_seats`  Integer; number of additional seats allowed in instructor training events beyond the original contract.
+* `instructor_training_seats_rolled_from_previous` Integer; number of instructor training seats allowed that was rolled over from previous membership. This should be the same as `instructor_training_seats_rolled_over` in preceding membership
+* `instructor_training_seats_rolled_over` Integer; number of self-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `instructor_training_seats_rolled_from_previous` in successing membership
 * `agreement_link` A link to the Member agreement in Google Drive
 * `registration_code` A string representing the code used by the Member site for Eventbrite registration and the instructor training application
+* `public_status` a string indicating agreement to publicising membership on The Carpentries websites
+* `emergency_contact` text with emergency contact data for the membership
+* `consortium` a boolean value indicating consortium (umbrella for more than one organisation member)
+
+## Member
+
+`workshops_member` - Stores information about organisations and their roles in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `membership_id` - Integer linking membership instance
+* `organization_id` - Integer linking organisation instance
+* `role_id` - Integer linking member role instance
+
+## MemberRole
+
+`workshops_memberrole` - Stores roles for organisations in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `name` string with role's name, e.g. `contact_signatory` - preferably a computer-friendly format
+* `verbose_name` string with role's name suitable for humans, e.g. `Contact Signatory`
+
+## MembershipTask
+
+`fiscal_membershiptask` - Stores information about persons and their roles in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `membership_id` - Integer linking membership instance
+* `person_id` - Integer linking person instance
+* `role_id` - Integer linking membership person role instance
+
+## MembershipPersonRole
+
+`fiscal_membershippersonrole` - Stores roles for persons in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `name` string with role's name - preferably a computer-friendly format
+* `verbose_name` string with role's name suitable for humans
+
 
 ## Organizations
 
@@ -97,6 +141,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `domain` Website of the organization
 * `fullname` Human friendly name of the organization
 * `country` Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+* `latitude` and `longitude` Stored as floating point (decimal) numbers
 
 # Additional Tables in AMY
 
@@ -136,7 +181,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 
 * `workshops_tag` Lists all availabe tags for an Event (SWC, DC, LC, Online, Pilot, Circuits, etc.)
     * `id`  Sequential, automatically assigned integer.
-    * `name`  "back end" tag name 
+    * `name`  "back end" tag name
     * `details` Description of what tag is used for
     * `priority` Used to control the sort order in the AMY web interface. Not relevant for any other queries.
 
@@ -162,6 +207,5 @@ The primary tables used in AMY (that will likely appear in every query) are thos
     * `notes` Any human generated notes
     * `evaluated_by_id` id of the user entering this record.  This is linked to the `workshops_person` table
     * `event_id` id of the event this trainee was at.  This is linked to the `workshops_event` table
-    * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table* 
+    * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table*
     * `trainee_id` id of the trainee being evaluated.  This is linked to the `workshops_person` table
-    
