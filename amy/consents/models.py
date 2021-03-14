@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
     """This mixin adds an archived timestamp to the CreatedUpdatedMixin."""
 
-    archived_at = models.DateTimeField(null=True)
+    archived_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         abstract = True
