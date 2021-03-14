@@ -863,10 +863,10 @@ class Command(BaseCommand):
         user_old_enough = Term.objects.create(
             content="Are you 18 years of age or older?",
             slug="18-or-older",
-            required_type="profile",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
         )
         user_old_enough_agree = TermOption.objects.create(
-            term=user_old_enough, option_type="agree"
+            term=user_old_enough, option_type=TermOption.AGREE
         )
         may_contact = Term.objects.create(
             content="May contact: Allow to contact from The Carpentries according to"
@@ -874,10 +874,10 @@ class Command(BaseCommand):
             slug="may-contact",
         )
         may_contact_agree = TermOption.objects.create(
-            term=may_contact, option_type="agree"
+            term=may_contact, option_type=TermOption.AGREE
         )
         may_contact_disagree = TermOption.objects.create(
-            term=may_contact, option_type="disagree"
+            term=may_contact, option_type=TermOption.DECLINE
         )
         may_publish_name = Term.objects.create(
             content="Do you consent to have your name or identity"
@@ -886,21 +886,21 @@ class Command(BaseCommand):
         )
         may_publish_name_agree1 = TermOption.objects.create(
             term=may_publish_name,
-            option_type="agree",
+            option_type=TermOption.AGREE,
             content="Yes, and only use my GitHub Handle",
         )
         may_publish_name_agree2 = TermOption.objects.create(
             term=may_publish_name,
-            option_type="agree",
+            option_type=TermOption.AGREE,
             content="Yes, and use the name associated with my ORCID profile",
         )
         may_publish_name_agree3 = TermOption.objects.create(
             term=may_publish_name,
-            option_type="agree",
+            option_type=TermOption.AGREE,
             content="Yes, and use the name associated with my profile.",
         )
         may_publish_name_disagree = TermOption.objects.create(
-            term=may_publish_name, option_type="disagree"
+            term=may_publish_name, option_type=TermOption.DECLINE
         )
 
         for person in Person.objects.all():
