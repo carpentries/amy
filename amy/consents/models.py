@@ -45,21 +45,26 @@ class ConsentQuerySet(models.query.QuerySet):
 
 
 class Term(CreatedUpdatedArchivedMixin, models.Model):
+    PROFILE_REQUIRE_TYPE = "profile"
+    OPTIONAL_REQUIRE_TYPE = "optional"
     TERM_REQUIRE_TYPE = (
-        ("profile", "Required to create a Profile"),
-        ("optional", "Optional"),
+        (PROFILE_REQUIRE_TYPE, "Required to create a Profile"),
+        (OPTIONAL_REQUIRE_TYPE, "Optional"),
     )
 
     slug = models.SlugField(unique=True)
     content = models.TextField(verbose_name="Content")
     required_type = models.CharField(
-        max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default="optional"
+        max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
     objects = TermQuerySet.as_manager()
 
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
-    OPTION_TYPE = (("agree", "Agree"), ("decline", "Decline"), ("unset", "Unset"))
+    AGREE = "agree"
+    DECLINE = "decline"
+    UNSET = "unset"
+    OPTION_TYPE = ((AGREE, "Agree"), (DECLINE, "Decline"), (UNSET, "Unset"))
 
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     option_type = models.CharField(max_length=STR_MED, choices=OPTION_TYPE)
