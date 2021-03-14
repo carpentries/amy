@@ -125,6 +125,6 @@ class TestConsentModel(TestCase):
             personal="Harry", family="Potter", email="hp@magic.uk"
         )
         with self.assertRaisesRegex(
-            ValidationError, r"Consent term\.id must match term_option\.term_id"
+            ValidationError, "Consent term.id must match term_option.term_id"
         ):
             Consent.objects.create(person=person, term=term1, term_option=term2_option1)
