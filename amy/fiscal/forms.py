@@ -49,7 +49,7 @@ class OrganizationForm(forms.ModelForm):
 
     class Meta:
         model = Organization
-        fields = ["domain", "fullname", "country"]
+        fields = ["domain", "fullname", "country", "latitude", "longitude"]
 
 
 class OrganizationCreateForm(OrganizationForm):

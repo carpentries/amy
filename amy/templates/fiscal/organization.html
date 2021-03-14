@@ -17,6 +17,15 @@
   <tr><th>Full name:</th><td>{{ organization.fullname }}</td></tr>
   <tr><th>Domain:</th><td><a href="http://{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td></tr>
   <tr><th>Country:</th><td>{{ organization.country.name|default:"&mdash;" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
+  <tr>
+    <th>Latitude / longitude:</th>
+    <td>
+      {{ organization.latitude|default_if_none:"&mdash;" }} / {{ organization.longitude|default_if_none:"&mdash;" }}
+      {% if organization.latitude != None and organization.latitude != None %}
+        <a href="https://www.google.com/maps/place/{{ organization.latitude }},{{ organization.longitude }}" target="_blank" rel="noreferrer">(map)</a>
+      {% endif %}
+    </td>
+  </tr>
 </table>
 
 <div class="clearfix">
