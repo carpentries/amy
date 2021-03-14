@@ -57,6 +57,9 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
     )
     objects = TermQuerySet.as_manager()
 
+    def __str__(self):
+        return self.slug
+
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     OPTION_TYPE = (("agree", "Agree"), ("decline", "Decline"), ("unset", "Unset"))
@@ -65,6 +68,9 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     option_type = models.CharField(max_length=STR_MED, choices=OPTION_TYPE)
     content = models.TextField(verbose_name="Content", blank=True)
     objects = TermOptionQuerySet.as_manager()
+
+    def __str__(self):
+        return f"{self.content} ({self.option_type})"
 
 
 class Consent(CreatedUpdatedArchivedMixin, models.Model):
