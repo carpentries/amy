@@ -28,7 +28,6 @@ from fiscal.forms import (
     MemberForm,
     MembershipTaskForm,
     MembershipExtensionForm,
-    SponsorshipForm,
 )
 from fiscal.models import MembershipTask
 from fiscal.base_views import (
@@ -48,7 +47,6 @@ from workshops.models import (
     Member,
     MemberRole,
     Membership,
-    Sponsorship,
     Task,
     Award,
 )
@@ -80,7 +78,7 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView):
 
 
 class OrganizationDetails(OnlyForAdminsMixin, AMYDetailView):
-    queryset = Organization.objects.all()
+    queryset = Organization.objects.prefetch_related("memberships")
     context_object_name = "organization"
     template_name = "fiscal/organization.html"
     slug_field = "domain"
@@ -89,6 +87,14 @@ class OrganizationDetails(OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Organization {0}".format(self.object)
+        context["all_events"] = (
+            self.object.hosted_events.all()
+            .union(
+                self.object.sponsored_events.all(),
+                self.object.administered_events.all(),
+            )
+            .prefetch_related("tags")
+        )
         return context
 
 
@@ -417,25 +423,3 @@ class MembershipCreateRollOver(
 
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()
-
-
-# ------------------------------------------------------------
-# Sponsorship related views
-# ------------------------------------------------------------
-
-
-class SponsorshipCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
-    model = Sponsorship
-    permission_required = "workshops.add_sponsorship"
-    form_class = SponsorshipForm
-
-    def get_success_url(self):
-        return reverse("event_edit", args=[self.object.event.slug]) + "#sponsors"
-
-
-class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
-    model = Sponsorship
-    permission_required = "workshops.delete_sponsorship"
-
-    def get_success_url(self):
-        return reverse("event_edit", args=[self.get_object().event.slug]) + "#sponsors"

@@ -46,7 +46,6 @@ A custom user model (`Person`) was defined according to Django documentation.
 
 ### `Organization`
 ### `Membership`
-### `Sponsorship`
 ### `Airport`
 ### `Person` and `PersonManager`
 ### `Event`

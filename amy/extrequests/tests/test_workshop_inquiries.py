@@ -445,6 +445,7 @@ class TestWorkshopInquiryViews(TestBase):
         data = {
             "slug": "2018-10-28-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -567,6 +568,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
         data = {
             "slug": "2018-10-28-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -587,6 +589,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
         data = {
             "slug": "2019-08-18-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -676,6 +679,7 @@ class TestAcceptWorkshopInquiryAddsEmailAction(FakeRedisTestCaseMixin, TestBase)
         data = {
             "slug": "xxxx-xx-xx-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.get(domain="self-organized").pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=8),

@@ -22,7 +22,7 @@ The new application structure contains:
 `EventSubmission`, `DCSelfOrganizedEventRequest`, ~~`ProfileUpdateRequest`~~,
 ~~`InvoiceRequest`~~ - by the way all these models are deprecated and to be
 removed in future - `WorkshopRequest`, and `TrainingRequest`),
-* `fiscal` - for organizations, memberships, and sponsorships,
+* `fiscal` - for organisations and memberships,
 * `reports` - for reports,
 * `trainings` - for managing trainees and trainings,
 * `workshops` - for persons and workshops management, including tasks and
@@ -40,7 +40,6 @@ indicated in this tree below.
 
 * `extrequests`:
     * `TrainingRequest`,
-    * ~~`InvoiceRequest`~~,
     * `WorkshopRequest`,
     * non-versioned, but their removal causes huge problems with migration,
       since they're referenced by `WorkshopRequest`:
@@ -49,9 +48,6 @@ indicated in this tree below.
 * `fiscal`:
     * `Membership`,
     * `Organization`,
-    * non-versioned, but it's used in M2M relationship as `through` table, and
-      therefore is difficult to move it around:
-        * `Sponsorship`,
 * `trainings`:
     * `TrainingRequirement`,
     * `TrainingProgress`,

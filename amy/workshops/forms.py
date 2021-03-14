@@ -370,14 +370,6 @@ class BulkUploadCSVForm(forms.Form):
 
 
 class EventForm(forms.ModelForm):
-    host = forms.ModelChoiceField(
-        label="Host",
-        required=True,
-        help_text=Event._meta.get_field("host").help_text,
-        queryset=Organization.objects.all(),
-        widget=ModelSelect2Widget(data_view="organization-lookup"),
-    )
-
     administrator = forms.ModelChoiceField(
         label="Administrator",
         required=True,
@@ -424,6 +416,7 @@ class EventForm(forms.ModelForm):
             "start",
             "end",
             "host",
+            "sponsor",
             "administrator",
             "assigned_to",
             "tags",
@@ -444,19 +437,18 @@ class EventForm(forms.ModelForm):
             "comment",
         ]
         widgets = {
+            "host": ModelSelect2Widget(data_view="organization-lookup"),
+            "sponsor": ModelSelect2Widget(data_view="organization-lookup"),
             "manual_attendance": TextInput,
             "latitude": TextInput,
             "longitude": TextInput,
             "tags": SelectMultiple(attrs={"size": Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET}),
-            # "tags": CheckboxSelectMultiple(),
             "curricula": CheckboxSelectMultiple(),
             "lessons": CheckboxSelectMultiple(),
             "contact": Select2TagWidget,
         }
 
     class Media:
-        # thanks to this, {{ form.media }} in the template will generate
-        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = (
             "date_yyyymmdd.js",
             "edit_from_url.js",
@@ -474,8 +466,9 @@ class EventForm(forms.ModelForm):
             Field("start", placeholder="YYYY-MM-DD"),
             Field("end", placeholder="YYYY-MM-DD"),
             "host",
-            "public_status",
+            "sponsor",
             "administrator",
+            "public_status",
             "assigned_to",
             "tags",
             "open_TTT_applications",
@@ -1064,7 +1057,13 @@ class EventsMergeForm(forms.Form):
     start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    sponsor = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     administrator = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
+    public_status = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,
