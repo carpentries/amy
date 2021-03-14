@@ -4,6 +4,7 @@ from django.contrib import admin
 
 class TermOptionInline(admin.TabularInline):
     model = TermOption
+    extra = 0
 
 
 class TermAdmin(admin.ModelAdmin):
