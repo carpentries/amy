@@ -29,7 +29,7 @@ fakeredis==1.4.4
 lupa==1.9
 Markdown==3.3.3
 mkdocs==1.1.2
-Pillow==8.0.1
+Pillow==8.1.1
 psycopg2==2.8.6
 PyGithub==1.53
 PyYAML==5.3.1
