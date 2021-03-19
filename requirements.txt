@@ -20,7 +20,7 @@ django-reversion==3.0.8
 django-rq==2.3.0
 django-select2==7.4.2
 django-webtest==1.9.7
-Django==2.2.17
+Django==2.2.18
 djangorestframework-csv==2.1.0
 djangorestframework==3.12.2
 drf-nested-routers==0.92.1
