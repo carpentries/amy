@@ -7,6 +7,7 @@ from random import (
     sample as random_sample,
     randint,
 )
+from typing import List
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
@@ -47,6 +48,7 @@ from workshops.models import (
     WorkshopRequest,
 )
 from workshops.util import create_username
+from consents.models import Term, TermOption, Consent
 
 
 def randbool(chances_of_true):
@@ -854,6 +856,88 @@ class Command(BaseCommand):
             req.workshop_types.set(workshop_types)
             req.save()
 
+    def fake_terms_and_consents(self):
+        count = (
+            Person.objects.all().count() * 3
+        )  # all persons * number of consents generated
+        self.stdout.write("Generating {} fake terms and consents...".format(count))
+        user_old_enough = Term.objects.create(
+            content="Are you 18 years of age or older?",
+            slug="18-or-older",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
+        )
+        user_old_enough_agree = TermOption.objects.create(
+            term=user_old_enough, option_type=TermOption.AGREE
+        )
+        may_contact = Term.objects.create(
+            content="May contact: Allow to contact from The Carpentries according to"
+            " the Privacy Policy.",
+            slug="may-contact",
+        )
+        may_contact_agree = TermOption.objects.create(
+            term=may_contact, option_type=TermOption.AGREE
+        )
+        may_contact_disagree = TermOption.objects.create(
+            term=may_contact, option_type=TermOption.DECLINE
+        )
+        may_publish_name = Term.objects.create(
+            content="Do you consent to have your name or identity"
+            " associated with lesson publications?",
+            slug="may-publish-name",
+        )
+        may_publish_name_agree1 = TermOption.objects.create(
+            term=may_publish_name,
+            option_type=TermOption.AGREE,
+            content="Yes, and only use my GitHub Handle",
+        )
+        may_publish_name_agree2 = TermOption.objects.create(
+            term=may_publish_name,
+            option_type=TermOption.AGREE,
+            content="Yes, and use the name associated with my ORCID profile",
+        )
+        may_publish_name_agree3 = TermOption.objects.create(
+            term=may_publish_name,
+            option_type=TermOption.AGREE,
+            content="Yes, and use the name associated with my profile.",
+        )
+        may_publish_name_disagree = TermOption.objects.create(
+            term=may_publish_name, option_type=TermOption.DECLINE
+        )
+
+        consents: List[Consent] = []
+        for person in Person.objects.all():
+            consents.append(
+                Consent(
+                    person=person,
+                    term_option=user_old_enough_agree,
+                    term=user_old_enough,
+                )
+            )
+            consents.append(
+                Consent(
+                    person=person,
+                    term_option=choice([may_contact_agree, may_contact_disagree]),
+                    term=may_contact,
+                )
+            )
+            may_publish_name_answer = choice(
+                [
+                    may_publish_name_agree1,
+                    may_publish_name_agree2,
+                    may_publish_name_agree3,
+                    may_publish_name_disagree,
+                ]
+            )
+            consents.append(
+                Consent(
+                    person=person,
+                    term_option=may_publish_name_answer,
+                    term=may_publish_name,
+                )
+            )
+
+        Consent.objects.bulk_create(consents)
+
     def handle(self, *args, **options):
         seed = options["seed"]
         if seed is not None:
@@ -882,6 +966,7 @@ class Command(BaseCommand):
             self.fake_workshop_requests()
             self.fake_workshop_inquiries()
             self.fake_selforganised_submissions()
+            self.fake_terms_and_consents()
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")
