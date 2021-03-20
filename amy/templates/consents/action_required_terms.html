@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block maincolumn %}col-md-8 offset-md-2 col-sm-12{% endblock %}
+
+{% block content %}
+
+<p>Please agree to our <a href="https://docs.carpentries.org/topic_folders/policies/privacy.html" target="_blank" rel="noreferrer">privacy policy</a> to continue using AMY. We use this data only to contact you about Carpentries related activities and
+summarize information about workshops and instructor training. It is never shared with third parties.</p>
+
+{% crispy form %}
+<a href="{% url 'logout' %}" class="btn btn-secondary">Log out</a>
+
+<p>In the case of any questions, please send us email at <a href="mailto:team@carpentries.org">team@carpentries.org</a>.</p>
+
+</div>
+
+{% endblock %}

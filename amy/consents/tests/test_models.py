@@ -85,6 +85,12 @@ class TestQuerySet(TestCase):
 
 
 class TestConsentModel(TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.person = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+
     def test_unique_constraint(self) -> None:
         term1 = Term.objects.create(
             content="term1", slug="term1", archived_at=timezone.now()
@@ -99,13 +105,13 @@ class TestConsentModel(TestCase):
             option_type="agree",
             content="option2",
         )
-        person1 = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
+
+        Consent.objects.create(
+            person=self.person, term=term1, term_option=term1_option1
         )
-        Consent.objects.create(person=person1, term=term1, term_option=term1_option1)
         with self.assertRaises(IntegrityError):
             Consent.objects.create(
-                person=person1, term=term1, term_option=term1_option2
+                person=self.person, term=term1, term_option=term1_option2
             )
 
     def test_term_and_term_option_should_match(self):
@@ -121,10 +127,32 @@ class TestConsentModel(TestCase):
             option_type="agree",
             content="option1",
         )
-        person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
         with self.assertRaisesRegex(
             ValidationError, "Consent term.id must match term_option.term_id"
         ):
-            Consent.objects.create(person=person, term=term1, term_option=term2_option1)
+            Consent.objects.create(
+                person=self.person, term=term1, term_option=term2_option1
+            )
+
+    def test_save_with_previous_consent(self) -> None:
+        term1 = Term.objects.create(content="term1", slug="term1")
+        term1_option1 = TermOption.objects.create(
+            term=term1,
+            option_type="agree",
+            content="option1",
+        )
+        term1_option2 = TermOption.objects.create(
+            term=term1,
+            option_type="disagree",
+            content="option2",
+        )
+
+        consent1 = Consent.objects.create(
+            person=self.person, term=term1, term_option=term1_option1
+        )
+        consent2 = Consent.objects.create(
+            person=self.person, term=term1, term_option=term1_option2
+        )
+
+        self.assertIsNotNone(Consent.objects.filter(id=consent1.id).archived_at)
+        self.assertIsNone(Consent.objects.filter(id=consent2.id).archived_at)

@@ -4,6 +4,7 @@ from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import Person, STR_MED
 from django.db.models import Prefetch
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
@@ -13,6 +14,10 @@ class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
 
     class Meta:
         abstract = True
+
+    def archive(self):
+        self.archived_at = timezone.now()
+        self.save()
 
 
 class TermQuerySet(models.query.QuerySet):
@@ -79,8 +84,12 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
     )
     objects = TermQuerySet.as_manager()
 
-    # def save(self, *args, **kwargs):
-    #     self
+    def save(self, *args, **kwargs):
+        # If we are adding a new Term, create unset consent objects for all users.
+        result = super().save(*args, **kwargs)
+        if self._state.adding:
+            Consent.create_unset_consents_for_term(self)
+        return result
 
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
@@ -125,4 +134,27 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
     def save(self, *args, **kwargs):
         if self.term_id != self.term_option.term_id:
             raise ValidationError("Consent term.id must match term_option.term_id")
+
+        # Archive old consent if user has consented previously.
+        try:
+            prev_consent = Consent.objects.get(
+                person=self.person, term=self.term, archived_at=None
+            )
+        except Consent.DoesNotExist:
+            pass
+        else:
+            prev_consent.archive()
+
         return super().save(*args, **kwargs)
+
+    @classmethod
+    def create_unset_consents_for_term(cls, term: Term) -> None:
+        consents = [
+            cls(
+                person=person,
+                term=term,
+                term_option=None,
+            )
+            for person in Person.objects.all()
+        ]
+        cls.objects.bulk_create(consents)
