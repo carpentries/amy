@@ -7,6 +7,7 @@ from random import (
     sample as random_sample,
     randint,
 )
+from typing import List
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
@@ -859,7 +860,7 @@ class Command(BaseCommand):
         count = (
             Person.objects.all().count() * 3
         )  # all persons * number of consents generated
-        self.stdout.write("Generating {} fake " "terms and consents...".format(count))
+        self.stdout.write("Generating {} fake terms and consents...".format(count))
         user_old_enough = Term.objects.create(
             content="Are you 18 years of age or older?",
             slug="18-or-older",
@@ -903,14 +904,21 @@ class Command(BaseCommand):
             term=may_publish_name, option_type=TermOption.DECLINE
         )
 
+        consents: List[Consent] = []
         for person in Person.objects.all():
-            Consent.objects.create(
-                person=person, term_option=user_old_enough_agree, term=user_old_enough
+            consents.append(
+                Consent(
+                    person=person,
+                    term_option=user_old_enough_agree,
+                    term=user_old_enough,
+                )
             )
-            Consent.objects.create(
-                person=person,
-                term_option=choice([may_contact_agree, may_contact_disagree]),
-                term=may_contact,
+            consents.append(
+                Consent(
+                    person=person,
+                    term_option=choice([may_contact_agree, may_contact_disagree]),
+                    term=may_contact,
+                )
             )
             may_publish_name_answer = choice(
                 [
@@ -920,11 +928,15 @@ class Command(BaseCommand):
                     may_publish_name_disagree,
                 ]
             )
-            Consent.objects.create(
-                person=person,
-                term_option=may_publish_name_answer,
-                term=may_publish_name,
+            consents.append(
+                Consent(
+                    person=person,
+                    term_option=may_publish_name_answer,
+                    term=may_publish_name,
+                )
             )
+
+        Consent.objects.bulk_create(consents)
 
     def handle(self, *args, **options):
         seed = options["seed"]
