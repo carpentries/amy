@@ -1,0 +1,29 @@
+<table class="table table-striped">
+    <tr>
+        <th>Term</th>
+        <th>Date Consented</th>
+        <th>Option Chosen</th>
+        <th class="additional-links-wider"></th>
+    </tr>
+    {% for term, consent in consent_by_term.items %}
+    <tr>
+        <td><a href="{{ term.get_absolute_url }}">{{ term.slug }}</a></td>
+        {% if consent %}
+        <td>{{ consent.created_at }}</td>
+        <td>{{ consent.term_option.content }}</td>
+        {% else %}
+        <td> - </td>
+        <td> - </td>
+        {% endif %}
+       <td>
+        {% comment %} <a href="{% url 'consent_details' consent.pk %}" title="View {{ consent }}"><i class="fas fa-info-circle"></i></a>
+        &nbsp;
+        <a href="{% url 'consent_edit' consent.pk %}" title="Edit {{ consent }}"><i class="fas fa-edit"></i></a>
+        <form class="amy-form-inline" action="{% url 'consent_delete' consent.id %}?next={{ request.get_full_path|urlencode }}#consents" onsubmit='return confirm("Are you sure you wish to remove \"{{ t }}\" from {{ consent.term.slug }}?")' method="POST">
+            {% csrf_token %}
+            <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
+        </form> {% endcomment %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>

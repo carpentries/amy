@@ -1,3 +1,4 @@
+from __future__ import annotations
 from django.db import models
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import Person, STR_MED
@@ -43,6 +44,25 @@ class ConsentQuerySet(models.query.QuerySet):
     def active(self):
         return self.filter(archived_at=None)
 
+    # def from_terms_and_person(self, terms: Iterable[Term], person: Person):
+    #     """
+    #     Retrive a list of consents from the given Person.
+    #     # TODO: I think originally I thought about
+    #     # saving unset values for all users on term create
+    #     # but I'm realizing that might not be necessary.
+    #     # That said if I store unset values for all users,
+    #     # this query will not be necessary.
+    #     """
+    #     queryset = self.filter(person=person, term__in=terms)
+    #     set(self.filter(person=person, term__in=terms).values)
+    #     for term in terms:
+    #         if
+
+    # def terms_not_consented_to(self, terms: Iterable[Term], person: Person):
+    #     self.filter(
+    #         ~Exists(
+    #             Consents.object.filter(person=
+
 
 class Term(CreatedUpdatedArchivedMixin, models.Model):
     PROFILE_REQUIRE_TYPE = "profile"
@@ -59,23 +79,38 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
     )
     objects = TermQuerySet.as_manager()
 
+    # def save(self, *args, **kwargs):
+    #     self
+
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     AGREE = "agree"
     DECLINE = "decline"
-    UNSET = "unset"
-    OPTION_TYPE = ((AGREE, "Agree"), (DECLINE, "Decline"), (UNSET, "Unset"))
+    OPTION_TYPE = ((AGREE, "Agree"), (DECLINE, "Decline"))
 
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     option_type = models.CharField(max_length=STR_MED, choices=OPTION_TYPE)
     content = models.TextField(verbose_name="Content", blank=True)
     objects = TermOptionQuerySet.as_manager()
 
+    def save(self, *args, **kwargs):
+        if not self.content:
+            if self.option_type == self.AGREE:
+                self.content = "Yes"
+            elif self.option_type == self.DECLINE:
+                self.content = "No"
+            else:  # TODO: should this even be possible?
+                raise ValueError(
+                    "TermOption content not defined"
+                    f" and option_type not in {self.OPTION_TYPE}."
+                )
+        return super().save(*args, **kwargs)
+
 
 class Consent(CreatedUpdatedArchivedMixin, models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
-    term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT)
+    term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT, null=True)
     objects = ConsentQuerySet.as_manager()
 
     class Meta:

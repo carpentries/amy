@@ -9,6 +9,7 @@
     <li role="presentation" class="nav-item"><a class="nav-link active" href="#person" role="tab" data-toggle="tab" aria-controls="person" aria-selected="true" id="person-tab">Person</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#awards" role="tab" data-toggle="tab" aria-controls="awards">Awards</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks">Tasks</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#consents" role="tab" data-toggle="tab" aria-controls="consents">Consents</a></li>
   </ul>
 </nav>
 
@@ -100,6 +101,14 @@
     {% else %}
     <p>No tasks.</p>
     {% endif %}
+  </div>
+  <div class="tab-pane" role="tabpanel" aria-labelledby="consents-tab" id="consents">
+    {% if consent_by_term %}
+      {% include 'consents/consents_table.html' with consents=consents %}
+    {% else %}
+      <p>No Terms.</p>
+    {% endif %}
+    
   </div>
 </div>
 

@@ -126,6 +126,7 @@ from workshops.util import (
     login_required,
     add_comment,
 )
+from consents.util import consent_by_term
 
 
 logger = logging.getLogger("amy.signals")
@@ -611,6 +612,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 "tasks": self.object.task_set.select_related("role", "event").order_by(
                     "-event__slug"
                 ),
+                "consent_by_term": consent_by_term(person=self.object),
                 "award_form": AwardForm(form_tag=False, prefix="award", **kwargs),
                 "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
             }
