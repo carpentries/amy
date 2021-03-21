@@ -307,7 +307,7 @@ class Membership(models.Model):
         )
 
     @property
-    def workshops_without_admin_fee_available(self) -> int:
+    def workshops_without_admin_fee_total_allowed(self) -> int:
         """Available for counting, "contracted" centrally-organised workshops.
 
         This number represents the real number of available workshops for counting
@@ -317,8 +317,20 @@ class Membership(models.Model):
         meaning this value won't be ever negative."""
         a = self.workshops_without_admin_fee_per_agreement or 0
         b = self.workshops_without_admin_fee_rolled_from_previous or 0
-        c = self.workshops_without_admin_fee_rolled_over or 0
-        return max(a + b - c, 0)
+        return a + b
+
+    @property
+    def workshops_without_admin_fee_available(self) -> int:
+        """Available for counting, "contracted" centrally-organised workshops.
+
+        This number represents the real number of available workshops for counting
+        completed / planned / remaining no-fee workshops.
+
+        Because the data may be entered incorrectly, a sharp cutoff at 0 was introduced,
+        meaning this value won't be ever negative."""
+        a = self.workshops_without_admin_fee_total_allowed
+        b = self.workshops_without_admin_fee_rolled_over or 0
+        return max(a - b, 0)
 
     @cached_property
     def workshops_without_admin_fee_completed(self) -> int:
@@ -415,44 +427,57 @@ class Membership(models.Model):
             .count()
         )
 
-    @property
-    def self_organized_workshops_remaining(self):
-        """Count remaining self-organized workshops for the year agreement
-        started."""
-        if self.self_organized_workshops_per_agreement is None:
-            return None
-
-        a = self.self_organized_workshops_per_agreement
-        b = self.self_organized_workshops_rolled_from_previous or 0
-        c = self.self_organized_workshops_rolled_over or 0
-        d = self.self_organized_workshops_completed
-        e = self.self_organized_workshops_planned
-        return a + b - c - d - e
-
     @cached_property
-    def seats_instructor_training_total(self):
-        """Calculate combined instructor training seats total.
+    def public_instructor_training_seats_total(self):
+        """Calculate combined public instructor training seats total.
 
-        Unlike self-organised workshops or workshops w/o admin fee, instructor
-        training seats have two numbers combined to calculate total of allowed
-        instructor training seats in ITT events."""
+        Unlike workshops w/o admin fee, instructor training seats have two numbers
+        combined to calculate total of allowed instructor training seats in ITT events.
+        """
         a = self.public_instructor_training_seats
         b = self.additional_public_instructor_training_seats
-        return a + b
+        c = self.public_instructor_training_seats_rolled_from_previous or 0
+        return a + b + c
 
     @cached_property
-    def seats_instructor_training_utilized(self):
-        """Count number of tasks that point to this membership."""
+    def public_instructor_training_seats_utilized(self):
+        """Count number of learner tasks that point to this membership."""
+        # TODO: this calculation should change
         return self.task_set.filter(role__name="learner").count()
 
     @cached_property
-    def seats_instructor_training_remaining(self):
-        """Count remaining seats for instructor training."""
-        a = self.seats_instructor_training_total
-        b = self.instructor_training_seats_rolled_from_previous or 0
-        c = self.seats_instructor_training_utilized
-        d = self.instructor_training_seats_rolled_over or 0
-        return a + b - c - d
+    def public_instructor_training_seats_remaining(self):
+        """Count remaining public seats for instructor training."""
+        a = self.public_instructor_training_seats_total
+        b = self.public_instructor_training_seats_utilized
+        c = self.public_instructor_training_seats_rolled_over or 0
+        return a - b - c
+
+    @cached_property
+    def inhouse_instructor_training_seats_total(self):
+        """Calculate combined in-house instructor training seats total.
+
+        Unlike workshops w/o admin fee, instructor training seats have two numbers
+        combined to calculate total of allowed instructor training seats in ITT events.
+        """
+        a = self.inhouse_instructor_training_seats
+        b = self.additional_inhouse_instructor_training_seats
+        c = self.inhouse_instructor_training_seats_rolled_from_previous or 0
+        return a + b + c
+
+    @cached_property
+    def inhouse_instructor_training_seats_utilized(self):
+        """Count number of learner tasks that point to this membership."""
+        # TODO: this calculation should change
+        return self.task_set.filter(role__name="learner").count()
+
+    @cached_property
+    def inhouse_instructor_training_seats_remaining(self):
+        """Count remaining in-house seats for instructor training."""
+        a = self.inhouse_instructor_training_seats_total
+        b = self.inhouse_instructor_training_seats_utilized
+        c = self.inhouse_instructor_training_seats_rolled_over or 0
+        return a - b - c
 
 
 # ------------------------------------------------------------

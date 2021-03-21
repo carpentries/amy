@@ -10,7 +10,7 @@ from django.db.models import (
     Count,
     Prefetch,
 )
-from django.db.models.functions import Now
+from django.db.models.functions import Now, Coalesce
 from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
@@ -140,21 +140,13 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     filter_class = MembershipFilter
     queryset = (
         Membership.objects.annotate(
-            instructor_training_seats_total=(
-                F("public_instructor_training_seats")
-                + F("additional_public_instructor_training_seats")
-                # TODO: improve
-            ),
-            # for future reference, in case someone would want to implement
-            # this annotation
-            # instructor_training_seats_utilized=(
-            #     Count('task', filter=Q(task__role__name='learner'))
-            # ),
             instructor_training_seats_remaining=(
                 F("public_instructor_training_seats")
                 + F("additional_public_instructor_training_seats")
-                # TODO: improve
+                # Coalesce returns first non-NULL value
+                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
                 - Count("task", filter=Q(task__role__name="learner"))
+                - Coalesce("public_instructor_training_seats_rolled_over", 0)
             ),
         )
         .prefetch_related("organizations")
