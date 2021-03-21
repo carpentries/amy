@@ -180,30 +180,30 @@ class Membership(models.Model):
         help_text="Self-organized workshops rolled over into next membership.",
     )
     # according to Django docs, PositiveIntegerFields accept 0 as valid as well
-    seats_instructor_training = models.PositiveIntegerField(
+    public_instructor_training_seats = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=0,
-        verbose_name="Instructor training seats",
-        help_text="Number of seats in instructor trainings",
+        verbose_name="Public instructor training seats",
+        help_text="Number of public seats in instructor trainings",
     )
-    additional_instructor_training_seats = models.PositiveIntegerField(
+    additional_public_instructor_training_seats = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=0,
-        verbose_name="Additional instructor training seats",
-        help_text="Use this field if you want to grant more seats than "
+        verbose_name="Additional public instructor training seats",
+        help_text="Use this field if you want to grant more public seats than "
         "the agreement provides for.",
     )
-    instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
+    public_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Instructor training seats rolled over from previous membership.",
+        help_text="Public instructor training seats rolled over from previous membership.",  # noqa
     )
-    instructor_training_seats_rolled_over = models.PositiveIntegerField(
+    public_instructor_training_seats_rolled_over = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Instructor training seats rolled over into next membership.",
+        help_text="Public instructor training seats rolled over into next membership.",
     )
     organizations = models.ManyToManyField(
         Organization,
@@ -427,8 +427,8 @@ class Membership(models.Model):
         Unlike self-organised workshops or workshops w/o admin fee, instructor
         training seats have two numbers combined to calculate total of allowed
         instructor training seats in ITT events."""
-        a = self.seats_instructor_training
-        b = self.additional_instructor_training_seats
+        a = self.public_instructor_training_seats
+        b = self.additional_public_instructor_training_seats
         return a + b
 
     @cached_property

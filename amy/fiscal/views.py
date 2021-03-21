@@ -141,8 +141,9 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     queryset = (
         Membership.objects.annotate(
             instructor_training_seats_total=(
-                F("seats_instructor_training")
-                + F("additional_instructor_training_seats")
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # TODO: improve
             ),
             # for future reference, in case someone would want to implement
             # this annotation
@@ -150,8 +151,9 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
             #     Count('task', filter=Q(task__role__name='learner'))
             # ),
             instructor_training_seats_remaining=(
-                F("seats_instructor_training")
-                + F("additional_instructor_training_seats")
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # TODO: improve
                 - Count("task", filter=Q(task__role__name="learner"))
             ),
         )
@@ -368,9 +370,9 @@ class MembershipCreateRollOver(
             "workshops_without_admin_fee_rolled_from_previous": self.membership.workshops_without_admin_fee_remaining,  # noqa
             "self_organized_workshops_per_agreement": self.membership.self_organized_workshops_per_agreement,  # noqa
             "self_organized_workshops_rolled_from_previous": self.membership.self_organized_workshops_remaining,  # noqa
-            "seats_instructor_training": self.membership.seats_instructor_training,
-            "additional_instructor_training_seats": self.membership.additional_instructor_training_seats,  # noqa
-            "instructor_training_seats_rolled_from_previous": self.membership.seats_instructor_training_remaining,  # noqa
+            "public_instructor_training_seats": self.membership.public_instructor_training_seats,  # noqa
+            "additional_public_instructor_training_seats": self.membership.additional_public_instructor_training_seats,  # noqa
+            "public_instructor_training_seats_rolled_from_previous": self.membership.seats_instructor_training_remaining,  # noqa
             "emergency_contact": self.membership.emergency_contact,
         }
 
@@ -386,7 +388,7 @@ class MembershipCreateRollOver(
         form.instance.self_organized_workshops_rolled_from_previous = (
             self.membership.self_organized_workshops_remaining
         )
-        form.instance.instructor_training_seats_rolled_from_previous = (
+        form.instance.public_instructor_training_seats_rolled_from_previous = (
             self.membership.seats_instructor_training_remaining
         )
 
@@ -397,8 +399,8 @@ class MembershipCreateRollOver(
         self.membership.self_organized_workshops_rolled_over = (
             form.instance.self_organized_workshops_rolled_from_previous
         )
-        self.membership.instructor_training_seats_rolled_over = (
-            form.instance.instructor_training_seats_rolled_from_previous
+        self.membership.public_instructor_training_seats_rolled_over = (
+            form.instance.public_instructor_training_seats_rolled_from_previous
         )
         self.membership.save()
 
