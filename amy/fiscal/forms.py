@@ -94,7 +94,6 @@ class MembershipForm(forms.ModelForm):
             "registration_code",
             "agreement_link",
             "workshops_without_admin_fee_per_agreement",
-            "self_organized_workshops_per_agreement",
             "public_instructor_training_seats",
             "additional_public_instructor_training_seats",
             "inhouse_instructor_training_seats",
@@ -207,8 +206,6 @@ class MembershipRollOverForm(MembershipCreateForm):
             "agreement_link",
             "workshops_without_admin_fee_per_agreement",
             "workshops_without_admin_fee_rolled_from_previous",
-            "self_organized_workshops_per_agreement",
-            "self_organized_workshops_rolled_from_previous",
             "public_instructor_training_seats",
             "additional_public_instructor_training_seats",
             "public_instructor_training_seats_rolled_from_previous",
@@ -222,7 +219,6 @@ class MembershipRollOverForm(MembershipCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self["workshops_without_admin_fee_rolled_from_previous"].field.disabled = True
-        self["self_organized_workshops_rolled_from_previous"].field.disabled = True
         self[
             "public_instructor_training_seats_rolled_from_previous"
         ].field.disabled = True

@@ -163,22 +163,6 @@ class Membership(models.Model):
         blank=True,
         help_text="Workshops without admin fee rolled over into next membership.",
     )
-    self_organized_workshops_per_agreement = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Expected number of self-organized workshops per agreement "
-        "duration",
-    )
-    self_organized_workshops_rolled_from_previous = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Self-organized workshops rolled over from previous membership.",
-    )
-    self_organized_workshops_rolled_over = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Self-organized workshops rolled over into next membership.",
-    )
     # according to Django docs, PositiveIntegerFields accept 0 as valid as well
     public_instructor_training_seats = models.PositiveIntegerField(
         null=False,

@@ -368,8 +368,6 @@ class MembershipCreateRollOver(
             "agreement_link": self.membership.agreement_link,
             "workshops_without_admin_fee_per_agreement": self.membership.workshops_without_admin_fee_per_agreement,  # noqa
             "workshops_without_admin_fee_rolled_from_previous": self.membership.workshops_without_admin_fee_remaining,  # noqa
-            "self_organized_workshops_per_agreement": self.membership.self_organized_workshops_per_agreement,  # noqa
-            "self_organized_workshops_rolled_from_previous": self.membership.self_organized_workshops_remaining,  # noqa
             "public_instructor_training_seats": self.membership.public_instructor_training_seats,  # noqa
             "additional_public_instructor_training_seats": self.membership.additional_public_instructor_training_seats,  # noqa
             "public_instructor_training_seats_rolled_from_previous": self.membership.seats_instructor_training_remaining,  # noqa
@@ -388,9 +386,6 @@ class MembershipCreateRollOver(
         form.instance.workshops_without_admin_fee_rolled_from_previous = (
             self.membership.workshops_without_admin_fee_remaining
         )
-        form.instance.self_organized_workshops_rolled_from_previous = (
-            self.membership.self_organized_workshops_remaining
-        )
         form.instance.public_instructor_training_seats_rolled_from_previous = (
             self.membership.seats_instructor_training_remaining
         )
@@ -401,9 +396,6 @@ class MembershipCreateRollOver(
         # save values rolled over in membership
         self.membership.workshops_without_admin_fee_rolled_over = (
             form.instance.workshops_without_admin_fee_rolled_from_previous
-        )
-        self.membership.self_organized_workshops_rolled_over = (
-            form.instance.self_organized_workshops_rolled_from_previous
         )
         self.membership.public_instructor_training_seats_rolled_over = (
             form.instance.public_instructor_training_seats_rolled_from_previous

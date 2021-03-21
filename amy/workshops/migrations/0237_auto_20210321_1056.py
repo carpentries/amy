@@ -70,4 +70,16 @@ class Migration(migrations.Migration):
             name='inhouse_instructor_training_seats_rolled_over',
             field=models.PositiveIntegerField(blank=True, help_text='In-house instructor training seats rolled over into next membership.', null=True),
         ),
+        migrations.RemoveField(
+            model_name='membership',
+            name='self_organized_workshops_per_agreement',
+        ),
+        migrations.RemoveField(
+            model_name='membership',
+            name='self_organized_workshops_rolled_from_previous',
+        ),
+        migrations.RemoveField(
+            model_name='membership',
+            name='self_organized_workshops_rolled_over',
+        ),
     ]
