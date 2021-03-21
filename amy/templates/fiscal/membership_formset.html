@@ -27,6 +27,7 @@
           {% crispy formset.empty_form formset.empty_form.helper_empty_form %}
           <div class="form-group row">
             <div class="offset-12 offset-lg-2 col-12 col-lg-10">
+              <input type="hidden" name="form-__prefix__-EDITABLE" value="1">
               <button type="button" class="btn btn-secondary" data-formset-delete-button>Discard</button>
             </div>
           </div>

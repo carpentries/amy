@@ -158,3 +158,22 @@ form .form-check label, form .checkbox label {
 .markdownx.row .col textarea {
     width: 100%;
 }
+
+/* Select2 read-only with CSS: https://stackoverflow.com/a/55001516 */
+select[readonly].select2-hidden-accessible + .select2-container {
+    pointer-events: none;
+    touch-action: none;
+}
+
+select[readonly].select2-hidden-accessible + .select2-container
+.select2-selection {
+    background: #eee;
+    box-shadow: none;
+}
+
+select[readonly].select2-hidden-accessible + .select2-container
+.select2-selection__arrow,
+select[readonly].select2-hidden-accessible + .select2-container
+.select2-selection__clear {
+    display: none;
+}

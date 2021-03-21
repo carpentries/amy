@@ -230,7 +230,20 @@ class MembershipRollOverForm(MembershipCreateForm):
         ].field.disabled = True
 
 
-class MemberForm(forms.ModelForm):
+class EditableFormsetFormMixin(forms.ModelForm):
+    EDITABLE = forms.BooleanField(
+        label="Change",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"data-form-editable-check": ""}),
+    )
+
+    def clean(self):
+        if self.has_changed() and not self.cleaned_data["EDITABLE"]:
+            raise ValidationError("Form values weren't supposed to be changed.")
+        return super().clean()
+
+
+class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -257,16 +270,19 @@ class MemberForm(forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
-        self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper.layout.append(Field("id"))
         self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
+        self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper_empty_form.layout.append(Field("id"))
         self.helper_empty_form.layout.append(
             Div(Field("DELETE"), css_class="d-none")  # hidden
         )
+        # remove EDITABLE checkbox from empty helper form
+        pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
+        self.helper_empty_form.layout.pop(pos_index)
 
 
-class MembershipTaskForm(forms.ModelForm):
+class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -293,13 +309,16 @@ class MembershipTaskForm(forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
-        self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper.layout.append(Field("id"))
         self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
+        self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper_empty_form.layout.append(Field("id"))
         self.helper_empty_form.layout.append(
             Div(Field("DELETE"), css_class="d-none")  # hidden
         )
+        # remove EDITABLE checkbox from empty helper form
+        pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
+        self.helper_empty_form.layout.pop(pos_index)
 
 
 class MembershipExtensionForm(forms.Form):

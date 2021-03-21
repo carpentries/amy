@@ -765,6 +765,7 @@ class TestNewMembershipWorkflow(TestBase):
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
+            "form-0-EDITABLE": True,
         }
         response = self.client.post(
             reverse("membership_members", args=[self.membership.pk]),
@@ -787,9 +788,11 @@ class TestNewMembershipWorkflow(TestBase):
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
+            "form-0-EDITABLE": True,
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
+            "form-1-EDITABLE": True,
         }
         response = self.client.post(
             reverse("membership_members", args=[self.membership.pk]),
@@ -810,9 +813,11 @@ class TestNewMembershipWorkflow(TestBase):
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
+            "form-0-EDITABLE": True,
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
+            "form-1-EDITABLE": True,
         }
         response = self.client.post(
             reverse("membership_members", args=[self.membership.pk]),
@@ -846,6 +851,7 @@ class TestNewMembershipWorkflow(TestBase):
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
+            "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
         }
         response = self.client.post(
@@ -878,10 +884,12 @@ class TestNewMembershipWorkflow(TestBase):
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
+            "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
             "form-1-organization": m2.organization.pk,
             "form-1-role": m2.role.pk,
             "form-1-id": m2.pk,
+            "form-1-EDITABLE": True,
             "form-1-DELETE": "on",
         }
         response = self.client.post(
@@ -913,10 +921,12 @@ class TestNewMembershipWorkflow(TestBase):
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
+            "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
+            "form-1-EDITABLE": True,
         }
         response = self.client.post(
             reverse("membership_members", args=[self.membership.pk]),
@@ -929,6 +939,65 @@ class TestNewMembershipWorkflow(TestBase):
         )
 
         self.assertEqual(list(self.membership.organizations.all()), [self.org_beta])
+
+    def test_editing_noneditable_members_fails(self):
+        """Ensure an attempt to edit member without 'editable' checkbox ticked off
+        fails with validation error."""
+        self.setUpMembership(consortium=True)
+        m1 = Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        data = {
+            "form-TOTAL_FORMS": 1,
+            "form-INITIAL_FORMS": 1,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-organization": self.org_beta.pk,
+            "form-0-role": m1.role.pk,
+            "form-0-id": m1.pk,
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)  # form failed
+        self.assertIn("__all__", response.context["formset"].errors[0])
+        self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
+
+    def test_not_editing_noneditable_members_fails(self):
+        """Ensure saving edit member without 'editable' checkbox ticked off works fine.
+        No changes are introduced to the member."""
+        self.setUpMembership(consortium=True)
+        m1 = Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        data = {
+            "form-TOTAL_FORMS": 1,
+            "form-INITIAL_FORMS": 1,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-organization": m1.organization.pk,
+            "form-0-role": m1.role.pk,
+            "form-0-id": m1.pk,
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response, reverse("membership_details", args=[self.membership.pk])
+        )
+        self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
 
 class TestMembershipExtension(TestBase):

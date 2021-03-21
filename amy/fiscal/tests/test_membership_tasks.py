@@ -34,9 +34,11 @@ class TestMembershipTasks(TestBase):
             "form-0-person": self.hermione.pk,
             "form-0-role": self.membership_person_role.pk,
             "form-0-id": "",
+            "form-0-EDITABLE": True,
             "form-1-person": self.harry.pk,
             "form-1-role": self.membership_person_role.pk,
             "form-1-id": "",
+            "form-1-EDITABLE": True,
         }
         response = self.client.post(
             reverse("membership_tasks", args=[self.membership.pk]),
@@ -72,10 +74,12 @@ class TestMembershipTasks(TestBase):
             "form-0-person": mt1.person.pk,
             "form-0-role": mt1.role.pk,
             "form-0-id": mt1.pk,
+            "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
             "form-1-person": mt2.person.pk,
             "form-1-role": mt2.role.pk,
             "form-1-id": mt2.pk,
+            "form-1-EDITABLE": True,
             "form-1-DELETE": "on",
         }
         response = self.client.post(
@@ -110,14 +114,17 @@ class TestMembershipTasks(TestBase):
             "form-0-person": mt1.person.pk,
             "form-0-role": mt1.role.pk,
             "form-0-id": mt1.pk,
+            "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
             "form-1-person": mt2.person.pk,
             "form-1-role": mt2.role.pk,
             "form-1-id": mt2.pk,
+            "form-1-EDITABLE": True,
             "form-1-DELETE": "on",
             "form-2-person": self.ron.pk,
             "form-2-role": self.membership_person_role.pk,
             "form-2-id": "",
+            "form-2-EDITABLE": True,
         }
         response = self.client.post(
             reverse("membership_tasks", args=[self.membership.pk]),
