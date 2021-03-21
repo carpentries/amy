@@ -3,6 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.dispatch import receiver
+from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from fiscal.models import MembershipTask
@@ -174,8 +175,10 @@ class MembershipCreateForm(MembershipForm):
 
         self.fields["consortium"].help_text += (
             "<br>If you select this option, you'll be taken to the next screen to "
-            "select organisations engaged in consortium."
-        )
+            "select organisations engaged in consortium. You must create the "
+            "organisation (<a href='{}'>here</a>) before applying it to this "
+            "membership."
+        ).format(reverse("organization_add"))
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
