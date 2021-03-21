@@ -50,4 +50,24 @@ class Migration(migrations.Migration):
             name='public_instructor_training_seats_rolled_over',
             field=models.PositiveIntegerField(blank=True, help_text='Public instructor training seats rolled over into next membership.', null=True),
         ),
+        migrations.AddField(
+            model_name='membership',
+            name='additional_inhouse_instructor_training_seats',
+            field=models.PositiveIntegerField(default=0, help_text='Use this field if you want to grant more in-house seats than the agreement provides for.', verbose_name='Additional in-house instructor training seats'),
+        ),
+        migrations.AddField(
+            model_name='membership',
+            name='inhouse_instructor_training_seats',
+            field=models.PositiveIntegerField(default=0, help_text='Number of in-house seats in instructor trainings', verbose_name='In-house instructor training seats'),
+        ),
+        migrations.AddField(
+            model_name='membership',
+            name='inhouse_instructor_training_seats_rolled_from_previous',
+            field=models.PositiveIntegerField(blank=True, help_text='In-house instructor training seats rolled over from previous membership.', null=True),
+        ),
+        migrations.AddField(
+            model_name='membership',
+            name='inhouse_instructor_training_seats_rolled_over',
+            field=models.PositiveIntegerField(blank=True, help_text='In-house instructor training seats rolled over into next membership.', null=True),
+        ),
     ]

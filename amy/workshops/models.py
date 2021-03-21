@@ -205,6 +205,31 @@ class Membership(models.Model):
         blank=True,
         help_text="Public instructor training seats rolled over into next membership.",
     )
+    inhouse_instructor_training_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="In-house instructor training seats",
+        help_text="Number of in-house seats in instructor trainings",
+    )
+    additional_inhouse_instructor_training_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="Additional in-house instructor training seats",
+        help_text="Use this field if you want to grant more in-house seats than "
+        "the agreement provides for.",
+    )
+    inhouse_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(  # noqa
+        null=True,
+        blank=True,
+        help_text="In-house instructor training seats rolled over from previous membership.",  # noqa
+    )
+    inhouse_instructor_training_seats_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="In-house instructor training seats rolled over into next membership.",  # noqa
+    )
     organizations = models.ManyToManyField(
         Organization,
         blank=False,

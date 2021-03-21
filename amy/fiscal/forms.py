@@ -97,6 +97,8 @@ class MembershipForm(forms.ModelForm):
             "self_organized_workshops_per_agreement",
             "public_instructor_training_seats",
             "additional_public_instructor_training_seats",
+            "inhouse_instructor_training_seats",
+            "additional_inhouse_instructor_training_seats",
             "emergency_contact",
         ]
 
@@ -210,6 +212,9 @@ class MembershipRollOverForm(MembershipCreateForm):
             "public_instructor_training_seats",
             "additional_public_instructor_training_seats",
             "public_instructor_training_seats_rolled_from_previous",
+            "inhouse_instructor_training_seats",
+            "additional_inhouse_instructor_training_seats",
+            "inhouse_instructor_training_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
         ]
@@ -220,6 +225,9 @@ class MembershipRollOverForm(MembershipCreateForm):
         self["self_organized_workshops_rolled_from_previous"].field.disabled = True
         self[
             "public_instructor_training_seats_rolled_from_previous"
+        ].field.disabled = True
+        self[
+            "inhouse_instructor_training_seats_rolled_from_previous"
         ].field.disabled = True
 
 
