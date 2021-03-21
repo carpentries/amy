@@ -34,9 +34,16 @@
         {% endescapescript %}
       </script>
 
-      <input type="button" value="Add another" class="btn btn-success" data-formset-add>
+      <div class="form-group row">
+        <div class="col-12 col-lg-2">
+          {% if add_another_help_text %}
+          <small class="form-text text-muted">{{ add_another_help_text }}</small>
+          {% endif %}
+          <input type="button" value="Add another" class="btn btn-success" data-formset-add>
+          <input type="submit" value="Save" class="btn btn-primary">
+        </div>
+      </div>
 
-      <input type="submit" value="Save" class="btn btn-primary">
     </div>
   </form>
 

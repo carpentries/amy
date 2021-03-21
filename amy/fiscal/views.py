@@ -279,6 +279,13 @@ class MembershipMembers(
     def get_context_data(self, **kwargs):
         if "title" not in kwargs:
             kwargs["title"] = "Change members for {}".format(self.membership)
+        if not self.membership.consortium:
+            kwargs["add_another_help_text"] = (
+                "Only one affiliated organisation can be listed because this is not "
+                "a consortium membership. If you would like to list more than one "
+                "affiliated organisation, please select 'Consortium' in the "
+                "membership view."
+            )
         return super().get_context_data(**kwargs)
 
 
