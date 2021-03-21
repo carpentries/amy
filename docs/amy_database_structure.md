@@ -85,13 +85,14 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `workshops_without_admin_fee_per_agreement` Integer; number of centrally organized workshops allowed
 * `workshops_without_admin_fee_rolled_from_previous` Integer; number of centrally-organised workshops allowed that was rolled over from previous membership. This should be the same as `workshops_without_admin_fee_rolled_over` in preceding membership
 * `workshops_without_admin_fee_rolled_over` Integer; number of centrally-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `workshops_without_admin_fee_rolled_from_previous` in successing membership
-* `self_organized_workshops_per_agreement` Integer; number of self organized workshops allowed. Typically unused as there is no cap on self-organized workshops
-* `self_organized_workshops_rolled_from_previous` Integer; number of self-organised workshops allowed that was rolled over from previous membership. This should be the same as `self_organized_workshops_rolled_over` in preceding membership
-* `self_organized_workshops_rolled_over` Integer; number of self-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `self_organized_workshops_rolled_from_previous` in successing membership
-* `seats_instructor_training` Integer; number of seats allowed in instructor training events in the original contract.
-* `additional_instructor_training_seats`  Integer; number of additional seats allowed in instructor training events beyond the original contract.
-* `instructor_training_seats_rolled_from_previous` Integer; number of instructor training seats allowed that was rolled over from previous membership. This should be the same as `instructor_training_seats_rolled_over` in preceding membership
-* `instructor_training_seats_rolled_over` Integer; number of self-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `instructor_training_seats_rolled_from_previous` in successing membership
+* `public_instructor_training_seats` Integer; number of public seats allowed in instructor training events in the original contract.
+* `additional_public_instructor_training_seats`  Integer; number of additional public seats allowed in instructor training events beyond the original contract.
+* `public_instructor_training_seats_rolled_from_previous` Integer; number of public instructor training seats allowed that was rolled over from previous membership. This should be the same as `public_instructor_training_seats_rolled_over` in preceding membership
+* `public_instructor_training_seats_rolled_over` Integer; number of public instructor training seats allowed that was rolled over to successing membership. The same number should be recorded in `public_instructor_training_seats_rolled_from_previous` in successing membership
+* `inhouse_instructor_training_seats` Integer; number of in-house seats allowed in instructor training events in the original contract.
+* `additional_inhouse_instructor_training_seats`  Integer; number of additional in-house seats allowed in instructor training events beyond the original contract.
+* `inhouse_instructor_training_seats_rolled_from_previous` Integer; number of in-house instructor training seats allowed that was rolled over from previous membership. This should be the same as `inhouse_instructor_training_seats_rolled_over` in preceding membership
+* `inhouse_instructor_training_seats_rolled_over` Integer; number of in-house instructor training seats allowed that was rolled over to successing membership. The same number should be recorded in `inhouse_instructor_training_seats_rolled_from_previous` in successing membership
 * `agreement_link` A link to the Member agreement in Google Drive
 * `registration_code` A string representing the code used by the Member site for Eventbrite registration and the instructor training application
 * `public_status` a string indicating agreement to publicising membership on The Carpentries websites
