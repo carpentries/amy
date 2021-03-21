@@ -114,7 +114,10 @@
   </tr>
   {% for membership in organization.memberships.all %}
   <tr>
-    <td><a href="{{ membership.get_absolute_url }}">{{ membership.name }}</a></td>
+    <td>
+      <a href="{{ membership.get_absolute_url }}">{{ membership.name }}</a>
+      {% if membership.consortium %}<p class="small">consortium</p>{% endif %}
+    </td>
     <td>{{ membership.get_variant_display }}</td>
     <td>
       {{ membership.agreement_start }} &ndash; {{ membership.agreement_end }}
