@@ -253,7 +253,7 @@ def search(request):
                 single_results.append(organizations[0])
 
             memberships = Membership.objects.filter(
-                registration_code__icontains=term
+                Q(name__icontains=term) | Q(registration_code__icontains=term)
             ).order_by("-agreement_start")
             if len(memberships) == 1:
                 single_results.append(memberships[0])
