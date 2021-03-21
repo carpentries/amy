@@ -140,6 +140,16 @@ class MembershipForm(forms.ModelForm):
         except TypeError:
             pass
 
+        # check if multiple members are assigned - then disallow changing to
+        # non-consortium
+        new_consortium = self.cleaned_data.get("consortium")
+        members_count = self.instance.member_set.count()
+        if not new_consortium and members_count > 1:
+            errors["consortium"] = ValidationError(
+                "Cannot change to non-consortium when there are multiple members "
+                "assigned. Remove the members so that at most 1 is left."
+            )
+
         if errors:
             raise ValidationError(errors)
 

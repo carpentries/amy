@@ -631,6 +631,57 @@ class TestMembershipForms(TestBase):
             ["Agreement end date can't be sooner than the start date."],
         )
 
+    def test_changing_consortium_to_nonconsortium(self):
+        membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=True,
+            variant="partner",
+            agreement_start=date(2021, 3, 21),
+            agreement_end=date(2022, 3, 21),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
+        )
+        m1 = Member.objects.create(
+            membership=membership,
+            organization=self.org_alpha,
+            role=MemberRole.objects.first(),
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=self.org_beta,
+            role=MemberRole.objects.last(),
+        )
+
+        data = {
+            "name": membership.name,
+            "consortium": False,  # changing to non-consortium
+            "public_status": membership.public_status,
+            "agreement_start": membership.agreement_start,
+            "agreement_end": membership.agreement_end,
+            "variant": membership.variant,
+            "contribution_type": membership.contribution_type,
+            "public_instructor_training_seats": membership.public_instructor_training_seats,  # noqa
+            "additional_public_instructor_training_seats": membership.additional_public_instructor_training_seats,  # noqa
+            "inhouse_instructor_training_seats": membership.inhouse_instructor_training_seats,  # noqa
+            "additional_inhouse_instructor_training_seats": membership.additional_inhouse_instructor_training_seats,  # noqa
+        }
+        form = MembershipForm(data, instance=membership)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors["consortium"],
+            [
+                "Cannot change to non-consortium when there are multiple members "
+                "assigned. Remove the members so that at most 1 is left."
+            ],
+        )
+
+        # after deleting the member, form validates with no errors
+        m1.delete()
+        form = MembershipForm(data, instance=membership)
+        self.assertTrue(form.is_valid())
+
 
 class TestNewMembershipWorkflow(TestBase):
     def setUp(self):
