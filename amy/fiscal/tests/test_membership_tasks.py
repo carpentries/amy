@@ -19,8 +19,8 @@ class TestMembershipTasks(TestBase):
             agreement_start="2021-02-14",
             agreement_end="2022-02-14",
             contribution_type="financial",
-            seats_instructor_training=0,
-            additional_instructor_training_seats=0,
+            public_instructor_training_seats=0,
+            additional_public_instructor_training_seats=0,
         )
         self.membership_person_role = MembershipPersonRole.objects.first()
 

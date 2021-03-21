@@ -169,9 +169,8 @@ class TestSearch(TestBase):
             agreement_end=date.today() + timedelta(days=365),
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=20,
-            seats_instructor_training=25,
-            additional_instructor_training_seats=3,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
         )
         Member.objects.create(
             membership=membership,

@@ -362,10 +362,10 @@ class MembershipCreateRollOver(
             "workshops_without_admin_fee_rolled_from_previous": self.membership.workshops_without_admin_fee_remaining,  # noqa
             "public_instructor_training_seats": self.membership.public_instructor_training_seats,  # noqa
             "additional_public_instructor_training_seats": self.membership.additional_public_instructor_training_seats,  # noqa
-            "public_instructor_training_seats_rolled_from_previous": self.membership.seats_instructor_training_remaining,  # noqa
+            "public_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa
             "inhouse_instructor_training_seats": self.membership.inhouse_instructor_training_seats,  # noqa
             "additional_inhouse_instructor_training_seats": self.membership.additional_inhouse_instructor_training_seats,  # noqa
-            "inhouse_instructor_training_seats_rolled_from_previous": self.membership.seats_instructor_training_remaining,  # noqa  # TODO
+            "inhouse_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa  # TODO
             "emergency_contact": self.membership.emergency_contact,
         }
 
@@ -379,10 +379,10 @@ class MembershipCreateRollOver(
             self.membership.workshops_without_admin_fee_remaining
         )
         form.instance.public_instructor_training_seats_rolled_from_previous = (
-            self.membership.seats_instructor_training_remaining
+            self.membership.public_instructor_training_seats_remaining
         )
         form.instance.inhouse_instructor_training_seats_rolled_from_previous = (
-            self.membership.seats_instructor_training_remaining  # TODO
+            self.membership.public_instructor_training_seats_remaining  # TODO
         )
 
         # save values rolled over in membership
@@ -393,7 +393,7 @@ class MembershipCreateRollOver(
             form.instance.public_instructor_training_seats_rolled_from_previous
         )
         self.membership.inhouse_instructor_training_seats_rolled_over = (
-            form.instance.inhouse_instructor_training_seats_rolled_from_previous
+            form.instance.inhouse_instructor_training_seats_rolled_from_previous  # TODO
         )
         self.membership.save()
 

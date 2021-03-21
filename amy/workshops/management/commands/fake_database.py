@@ -472,7 +472,8 @@ class Command(BaseCommand):
                 agreement_end=start + timedelta(days=365),
                 contribution_type=choice(Membership.CONTRIBUTION_CHOICES)[0],
                 workshops_without_admin_fee_per_agreement=randint(5, 15),
-                self_organized_workshops_per_agreement=randint(5, 15),
+                public_instructor_training_seats=randint(5, 15),
+                inhouse_instructor_training_seats=randint(5, 15),
             )
             members = [
                 Member(
