@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
     """This mixin adds an archived timestamp to the CreatedUpdatedMixin."""
 
-    archived_at = models.DateTimeField(null=True)
+    archived_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         abstract = True
@@ -59,6 +59,9 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
     )
     objects = TermQuerySet.as_manager()
 
+    def __str__(self):
+        return self.slug
+
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     AGREE = "agree"
@@ -70,6 +73,9 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     option_type = models.CharField(max_length=STR_MED, choices=OPTION_TYPE)
     content = models.TextField(verbose_name="Content", blank=True)
     objects = TermOptionQuerySet.as_manager()
+
+    def __str__(self):
+        return f"{self.content} ({self.option_type})"
 
 
 class Consent(CreatedUpdatedArchivedMixin, models.Model):
