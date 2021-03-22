@@ -49,25 +49,6 @@ class ConsentQuerySet(models.query.QuerySet):
     def active(self):
         return self.filter(archived_at=None)
 
-    # def from_terms_and_person(self, terms: Iterable[Term], person: Person):
-    #     """
-    #     Retrive a list of consents from the given Person.
-    #     # TODO: I think originally I thought about
-    #     # saving unset values for all users on term create
-    #     # but I'm realizing that might not be necessary.
-    #     # That said if I store unset values for all users,
-    #     # this query will not be necessary.
-    #     """
-    #     queryset = self.filter(person=person, term__in=terms)
-    #     set(self.filter(person=person, term__in=terms).values)
-    #     for term in terms:
-    #         if
-
-    # def terms_not_consented_to(self, terms: Iterable[Term], person: Person):
-    #     self.filter(
-    #         ~Exists(
-    #             Consents.object.filter(person=
-
 
 class Term(CreatedUpdatedArchivedMixin, models.Model):
     PROFILE_REQUIRE_TYPE = "profile"
