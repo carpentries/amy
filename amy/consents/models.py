@@ -79,6 +79,7 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
 
     slug = models.SlugField(unique=True)
     content = models.TextField(verbose_name="Content")
+    help_text = models.TextField(verbose_name="Help Text", blank=True)
     required_type = models.CharField(
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )

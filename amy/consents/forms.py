@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, List
 from consents.models import Consent
 from django import forms
 from workshops.forms import BootstrapHelper
@@ -21,7 +21,7 @@ def option_display_value(option: TermOption) -> str:
 class ConsentsForm(WidgetOverrideMixin, forms.ModelForm):
     class Meta:
         model = Consent
-        fields = []
+        fields = ["person"]
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
@@ -60,11 +60,13 @@ class ConsentsForm(WidgetOverrideMixin, forms.ModelForm):
             label=term.content,
             required=required,
             initial=selected,
+            help_text=term.help_text,
         )
         return field
 
     def save(self, *args, **kwargs):
         person = self.cleaned_data["person"]
+        consents: List[Consent] = []
         for term in self.terms:
             option_id = self.cleaned_data.get(term.slug)
             if not option_id:
@@ -78,12 +80,7 @@ class ConsentsForm(WidgetOverrideMixin, forms.ModelForm):
             else:
                 consent.archived_at = timezone.now()
                 consent.save()
-            Consent.objects.create(
-                person=person, term_option_id=option_id, term_id=term.id
+            consents.append(
+                Consent(person=person, term_option_id=option_id, term_id=term.id)
             )
-
-    def _yes_only(self, term) -> bool:
-        return len(term.options) == 1
-
-    def _yes_and_no(self, term) -> bool:
-        return len(term.options) == 2
+        Consent.objects.bulk_create(consents)

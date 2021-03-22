@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.shortcuts import render
 from rest_framework.reverse import reverse
+from django.forms import HiddenInput
 
 
 class ConsentDetails(AMYDetailView):
@@ -64,13 +65,10 @@ def action_required_terms(request):
     if person_has_consented_to_required_terms(person):
         raise Http404("This view is disabled.")
 
-    form = ConsentsForm(person=person)
-
     if request.method == "POST":
-        form = ConsentsForm(request.POST, instance=person)
-
-        if form.is_valid() and form.instance == person:
-            person = form.save()
+        form = ConsentsForm(request.POST, person=person)
+        if form.is_valid():
+            form.save()
             messages.success(request, "Agreement successfully saved.")
 
             if "next" in request.GET:
@@ -79,6 +77,12 @@ def action_required_terms(request):
                 return redirect(reverse("dispatch"))
         else:
             messages.error(request, "Fix errors below.")
+    elif request.method == "GET":
+        kwargs = {
+            "initial": {"person": person},
+            "widgets": {"person": HiddenInput()},
+        }
+        form = ConsentsForm(person=person, **kwargs)
 
     context = {
         "title": "Action required: terms agreement",

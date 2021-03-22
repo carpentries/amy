@@ -858,9 +858,20 @@ class Command(BaseCommand):
 
     def fake_terms_and_consents(self):
         count = (
-            Person.objects.all().count() * 3
+            Person.objects.all().count() * 5
         )  # all persons * number of consents generated
         self.stdout.write("Generating {} fake terms and consents...".format(count))
+        user_privacy_policy = Term.objects.create(
+            content="*I have read and agree to <a href="
+            '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
+            ' target="_blank" rel="noreferrer">'
+            "the data privacy policy of The Carpentries</a>.",
+            slug="privacy-policy",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
+        )
+        user_privacy_policy_agree = TermOption.objects.create(
+            term=user_privacy_policy, option_type=TermOption.AGREE
+        )
         user_old_enough = Term.objects.create(
             content="Are you 18 years of age or older?",
             slug="18-or-older",
@@ -870,15 +881,28 @@ class Command(BaseCommand):
             term=user_old_enough, option_type=TermOption.AGREE
         )
         may_contact = Term.objects.create(
-            content="May contact: Allow to contact from The Carpentries according to"
-            " the Privacy Policy.",
+            content="May contact",
             slug="may-contact",
+            help_text="Allow to contact from The Carpentries according"
+            " to the Privacy Policy.",
         )
         may_contact_agree = TermOption.objects.create(
             term=may_contact, option_type=TermOption.AGREE
         )
         may_contact_disagree = TermOption.objects.create(
             term=may_contact, option_type=TermOption.DECLINE
+        )
+        public_profile = Term.objects.create(
+            content="Consent to making profile public",
+            help_text="Allow to post your name and any public profile"
+            " you list (website, Twitter) on our instructors website."
+            " Emails will not be posted.",
+        )
+        public_profile_agree = TermOption.objects.create(
+            term=public_profile, option_type=TermOption.AGREE
+        )
+        public_profile_disagree = TermOption.objects.create(
+            term=public_profile, option_type=TermOption.DECLINE
         )
         may_publish_name = Term.objects.create(
             content="Do you consent to have your name or identity"
@@ -909,8 +933,22 @@ class Command(BaseCommand):
             consents.append(
                 Consent(
                     person=person,
+                    term_option=user_privacy_policy_agree,
+                    term=user_privacy_policy,
+                )
+            )
+            consents.append(
+                Consent(
+                    person=person,
                     term_option=user_old_enough_agree,
                     term=user_old_enough,
+                )
+            )
+            consents.append(
+                Consent(
+                    person=person,
+                    term_option=choice([public_profile_agree, public_profile_disagree]),
+                    term=public_profile,
                 )
             )
             consents.append(
