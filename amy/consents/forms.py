@@ -3,6 +3,7 @@ from typing import Iterable, List
 from consents.models import Consent, Term, TermOption
 from django import forms
 from django.db.models import Q
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
 from workshops.forms import BootstrapHelper, WidgetOverrideMixin
 from workshops.models import Person
@@ -38,7 +39,11 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.terms = self.get_terms()
         self._build_form(person)
-        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
+        self.helper = BootstrapHelper(
+            add_cancel_button=False,
+            form_tag=form_tag,
+            wider_labels=True,
+        )
 
     def _build_form(self, person: Person) -> None:
         """
@@ -59,9 +64,20 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         consent = self.term_id_by_consent.get(term.id, None)
         options = [(opt.id, option_display_value(opt)) for opt in term.options]
         required = term.required_type != Term.OPTIONAL_REQUIRE_TYPE
+        # if term.is_yes_only or term.is_yes_and_no:
+        #     # Changing yes-only terms to checkbox so that the user
+        #     # can unclick the option if desired without refreshing the page
+        #     field = forms.BooleanField(
+        #         # widget=,
+        #         # choices=options,
+        #         label=term.content,
+        #         required=required,
+        #         initial=consent.term_option_id if consent else None,
+        #     )
+        # else:
         field = forms.ChoiceField(
-            widget=forms.RadioSelect,
-            choices=options,
+            # widget=forms.RadioSelect,
+            choices=BLANK_CHOICE_DASH + options,
             label=term.content,
             required=required,
             initial=consent.term_option_id if consent else None,

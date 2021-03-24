@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
@@ -19,17 +21,17 @@ class TermQuerySet(models.query.QuerySet):
         return self.filter(archived_at=None)
 
     def prefetch_active_options(self):
-        return self._prefetch_options(TermOption.objects.active())
+        return self._prefetch_options(TermOption.objects.active(), "active_options")
 
     def prefetch_all_options(self):
-        return self._prefetch_options(TermOption.objects.all())
+        return self._prefetch_options(TermOption.objects.all(), "all_options")
 
-    def _prefetch_options(self, options_queryset):
+    def _prefetch_options(self, options_queryset, attr_name: str):
         return self.prefetch_related(
             Prefetch(
                 "termoption_set",
                 queryset=options_queryset,
-                to_attr="options",
+                to_attr=attr_name,
             )
         )
 
@@ -59,8 +61,26 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
     )
     objects = TermQuerySet.as_manager()
 
-    def __str__(self):
-        return self.slug
+    @cached_property
+    def options(self):
+        # If you've already prefetched_active_options
+        # Use that instead. Otherwise query for the options
+        if hasattr(self, "active_options"):
+            return self.active_options
+        return TermOption.objects.active().filter(term=self)
+
+    @cached_property
+    def is_yes_only(self) -> bool:
+        options = self.options
+        return len(options) == 1 and options[0].option_type == TermOption.AGREE
+
+    @cached_property
+    def is_yes_and_no(self) -> bool:
+        if len(self.options) != 2:
+            return False
+
+        option_types = set([option.option_type for option in self.options])
+        return option_types == set([TermOption.AGREE, TermOption.DECLINE])
 
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
@@ -97,3 +117,28 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         if self.term_id != self.term_option.term_id:
             raise ValidationError("Consent term.id must match term_option.term_id")
         return super().save(*args, **kwargs)
+
+
+def create_yes_only_term(
+    *, slug: str, content: str, required_type: str = Term.OPTIONAL_REQUIRE_TYPE
+) -> Term:
+    term = Term.objects.create(
+        slug=slug,
+        content=content,
+        required_type=required_type,
+    )
+    TermOption.objects.create(
+        term=term,
+        option_type=TermOption.AGREE,
+    )
+    return term
+
+
+def create_yes_and_no_term(
+    *, slug: str, content: str, required_type: str = Term.OPTIONAL_REQUIRE_TYPE
+) -> Term:
+    term = create_yes_only_term(slug=slug, content=content, required_type=required_type)
+    TermOption.objects.create(
+        term=term,
+        option_type=TermOption.DISAGREE,
+    )
