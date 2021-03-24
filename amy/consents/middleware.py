@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 
-class TermsAndConditions:
+class TermsMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 

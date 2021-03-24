@@ -261,7 +261,7 @@ MIDDLEWARE = [
     "workshops.github_auth.GithubAuthMiddleware",
 ]
 if CONSENTS:
-    MIDDLEWARE += ["consents.middleware.TermsAndConditions"]
+    MIDDLEWARE += ["consents.middleware.TermsMiddleware"]
 else:
     MIDDLEWARE += ["workshops.action_required.PrivacyPolicy"]
 
