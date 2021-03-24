@@ -1,4 +1,4 @@
-from consents.forms import ActiveTermConsentsForm
+from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
 from consents.models import Consent
 from consents.util import person_has_consented_to_required_terms
 from django.contrib import messages
@@ -44,7 +44,7 @@ def action_required_terms(request):
         "widgets": {"person": HiddenInput()},
     }
     if request.method == "POST":
-        form = ActiveTermConsentsForm(request.POST, person=person, **kwargs)
+        form = RequiredConsentsForm(request.POST, person=person, **kwargs)
         if form.is_valid():
             form.save()
             messages.success(request, "Agreement successfully saved.")
@@ -56,7 +56,7 @@ def action_required_terms(request):
         else:
             messages.error(request, "Fix errors below.")
     if request.method == "GET":
-        form = ActiveTermConsentsForm(person=person, **kwargs)
+        form = RequiredConsentsForm(person=person, **kwargs)
 
     context = {
         "title": "Action required: terms agreement",

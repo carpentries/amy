@@ -2,6 +2,7 @@ from typing import List
 
 from consents.models import Consent, Term, TermOption
 from django import forms
+from django.db.models import Q
 from django.utils import timezone
 from workshops.forms import BootstrapHelper, WidgetOverrideMixin
 from workshops.models import Person
@@ -17,11 +18,12 @@ def option_display_value(option: TermOption) -> str:
     return option.content or OPTION_DISPLAY[option.option_type]
 
 
-class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
+class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
     """
     Builds form including all active terms with
     the provided person's consents as the initial selection.
-    Saves Consent models.
+
+    Saves the user's responses as Consent models.
     """
 
     class Meta:
@@ -31,6 +33,7 @@ class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
         person = kwargs.pop("person")
+        self.terms = kwargs.pop("terms")
         super().__init__(*args, **kwargs)
         self._build_form(person)
         self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
@@ -40,7 +43,7 @@ class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         Construct a Form of terms with the
         consent answers added as initial.
         """
-        self.terms = Term.objects.active().prefetch_active_options()
+
         self.term_id_by_consent = {
             consent.term_id: consent
             for consent in Consent.objects.filter(
@@ -78,3 +81,30 @@ class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
                 Consent(person=person, term_option_id=option_id, term_id=term.id)
             )
         Consent.objects.bulk_create(new_consents)
+
+
+class ActiveTermConsentsForm(BaseTermConsentsForm):
+    """
+    Builds form with all active terms.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs["terms"] = Term.objects.active().prefetch_active_options()
+        super().__init__(*args, **kwargs)
+
+
+class RequiredConsentsForm(BaseTermConsentsForm):
+    """
+    Builds form shown on login when there are missing required consents.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs["terms"] = (
+            Term.objects.active()
+            .prefetch_active_options()
+            .filter(
+                Q(required_type=Term.PROFILE_REQUIRE_TYPE)
+                | Q(slug__in=("privacy-policy", "may-contact"))
+            )
+        )
+        super().__init__(*args, **kwargs)
