@@ -1,4 +1,4 @@
-from typing import List
+from typing import Iterable, List
 
 from consents.models import Consent, Term, TermOption
 from django import forms
@@ -32,9 +32,11 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
+        # Because the form is built manually,
+        # passing in the person in kwargs is required.
         person = kwargs.pop("person")
-        self.terms = kwargs.pop("terms")
         super().__init__(*args, **kwargs)
+        self.terms = self.get_terms()
         self._build_form(person)
         self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
 
@@ -82,15 +84,19 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
             )
         Consent.objects.bulk_create(new_consents)
 
+    @classmethod
+    def get_terms(cls) -> Iterable[Term]:
+        return Term.objects.all().prefetch_active_options()
+
 
 class ActiveTermConsentsForm(BaseTermConsentsForm):
     """
     Builds form with all active terms.
     """
 
-    def __init__(self, *args, **kwargs):
-        kwargs["terms"] = Term.objects.active().prefetch_active_options()
-        super().__init__(*args, **kwargs)
+    @classmethod
+    def get_terms(cls) -> Iterable[Term]:
+        return Term.objects.active().prefetch_active_options()
 
 
 class RequiredConsentsForm(BaseTermConsentsForm):
@@ -98,13 +104,19 @@ class RequiredConsentsForm(BaseTermConsentsForm):
     Builds form shown on login when there are missing required consents.
     """
 
-    def __init__(self, *args, **kwargs):
-        kwargs["terms"] = (
+    # Optional Terms we want to include
+    # when the user is consenting to required terms.
+    # TODO: looks like these should just be required, based on the model
+    # I want to add them to the db as a migration instead
+    OPTIONAL_TERM_SLUGS = ("privacy-policy", "may-contact")
+
+    @classmethod
+    def get_terms(cls) -> Iterable[Term]:
+        return (
             Term.objects.active()
             .prefetch_active_options()
             .filter(
                 Q(required_type=Term.PROFILE_REQUIRE_TYPE)
-                | Q(slug__in=("privacy-policy", "may-contact"))
+                | Q(slug__in=cls.OPTIONAL_TERM_SLUGS)
             )
         )
-        super().__init__(*args, **kwargs)

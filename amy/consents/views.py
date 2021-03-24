@@ -33,18 +33,22 @@ class ConsentsUpdate(RedirectSupportMixin, AMYCreateView, LoginRequiredMixin):
 
 @login_required
 def action_required_terms(request):
+    # TODO: turn into a class-based view
     person = request.user
 
     # disable the view for users who already agreed
     if person_has_consented_to_required_terms(person):
         raise Http404("This view is disabled.")
 
+    # TODO: Because I'm building the form manually,
+    # The person must be passed in.
     kwargs = {
         "initial": {"person": person},
         "widgets": {"person": HiddenInput()},
+        "person": person,
     }
     if request.method == "POST":
-        form = RequiredConsentsForm(request.POST, person=person, **kwargs)
+        form = RequiredConsentsForm(request.POST, **kwargs)
         if form.is_valid():
             form.save()
             messages.success(request, "Agreement successfully saved.")
@@ -56,7 +60,7 @@ def action_required_terms(request):
         else:
             messages.error(request, "Fix errors below.")
     if request.method == "GET":
-        form = RequiredConsentsForm(person=person, **kwargs)
+        form = RequiredConsentsForm(**kwargs)
 
     context = {
         "title": "Action required: terms agreement",
