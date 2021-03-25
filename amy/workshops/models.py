@@ -1771,7 +1771,7 @@ class TrainingRequest(
     )
 
     REVIEW_CHOICES = (
-        ("preapproved", "Pre-approved Registration"),
+        ("preapproved", "Profile Creation for Pre-approved Trainees"),
         ("open", "Open Training Application"),
     )
     REVIEW_CHOICES_NOTES = {
