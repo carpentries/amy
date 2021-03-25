@@ -13,6 +13,7 @@
   <tr><th>Role:</th><td>{{ task.role }}</td></tr>
   <tr><th>URL:</th><td>{{ task.url|urlize_newtab }}</td></tr>
   <tr><th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:</th><td>{% if task.seat_membership %}<a href="{{ task.seat_membership.get_absolute_url }}">{{ task.seat_membership }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Public or in-house seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:</th><td>{{ task.get_seat_public_display }}</td></tr>
   <tr><th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i>:</th><td>{{ task.seat_open_training|yesno }}</td></tr>
   <tr><th>RQ Jobs:</th>
       <td>

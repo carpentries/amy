@@ -1569,6 +1569,18 @@ class Task(RQJobsMixin, models.Model):
         "membership instructor training seats, a correct membership "
         "entry needs to be selected.",
     )
+    SEAT_PUBLIC_CHOICES = (
+        (True, "Public seat"),
+        (False, "In-house seat"),
+    )
+    seat_public = models.BooleanField(
+        null=False,
+        blank=True,
+        default=True,
+        choices=SEAT_PUBLIC_CHOICES,
+        verbose_name="Count seat as public or in-house?",
+        help_text="Ignored if the task is not for membership seat.",
+    )
     seat_open_training = models.BooleanField(
         null=False,
         blank=True,
