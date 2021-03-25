@@ -127,9 +127,12 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
             except ValueError:
                 date = None
 
+            # filter by membership name
+            name = Q(name__icontains=self.term)
+
             # filter by organization name
-            org_q = Q(organization__domain__icontains=self.term) | Q(
-                organization__fullname__icontains=self.term
+            org_q = Q(organizations__domain__icontains=self.term) | Q(
+                organizations__fullname__icontains=self.term
             )
 
             # filter by variant
@@ -139,9 +142,11 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
                 # filter by agreement date range
                 agreement_q = Q(agreement_start__lte=date, agreement_end__gte=date)
 
-                results = results.filter(org_q | variant_q | agreement_q)
+                results = results.filter(
+                    name | org_q | variant_q | agreement_q
+                ).distinct()
             else:
-                results = results.filter(org_q | variant_q)
+                results = results.filter(name | org_q | variant_q).distinct()
 
         return results
 
