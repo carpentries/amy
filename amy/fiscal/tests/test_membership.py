@@ -323,7 +323,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
 
         return events
 
-    def setUpTasks(self, count: int) -> List[Task]:
+    def setUpTasks(self, count: int, public: bool = True) -> List[Task]:
         tasks = self.membership.task_set.bulk_create(
             [
                 Task(
@@ -336,6 +336,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                         administrator=self.org_alpha,
                     ),
                     seat_membership=self.membership,
+                    seat_public=public,
                 )
                 for i in range(count)
             ]
@@ -490,11 +491,11 @@ class TestMembershipConsortiumCountingInhouseInstructorTrainingSeats(
         self.assertEqual(self.membership.inhouse_instructor_training_seats_total, 10)
 
     def test_seats_utilized(self):
-        self.setUpTasks(count=5)  # TODO: still counts just like public seats
+        self.setUpTasks(count=5, public=False)
         self.assertEqual(self.membership.inhouse_instructor_training_seats_utilized, 5)
 
     def test_seats_remaining(self):
-        self.setUpTasks(count=5)
+        self.setUpTasks(count=5, public=False)
         # total and rolled over from previous: 10
         # utilized: 5
         # rolled-over: 3
@@ -1158,8 +1159,8 @@ class TestMembershipCreateRollOver(TestBase):
             self.membership.public_instructor_training_seats_rolled_over, 12
         )
         self.assertEqual(
-            self.membership.inhouse_instructor_training_seats_rolled_over, 12
-        )  # TODO
+            self.membership.inhouse_instructor_training_seats_rolled_over, 9
+        )
 
         self.assertEqual(last_membership.workshops_without_admin_fee_per_agreement, 10)
         self.assertEqual(last_membership.public_instructor_training_seats, 12)
@@ -1175,8 +1176,8 @@ class TestMembershipCreateRollOver(TestBase):
             last_membership.public_instructor_training_seats_rolled_from_previous, 12
         )
         self.assertEqual(
-            last_membership.inhouse_instructor_training_seats_rolled_from_previous, 12
-        )  # TODO
+            last_membership.inhouse_instructor_training_seats_rolled_from_previous, 9
+        )
         self.assertEqual(last_membership.workshops_without_admin_fee_rolled_over, None)
         self.assertEqual(
             last_membership.public_instructor_training_seats_rolled_over, None

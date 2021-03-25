@@ -145,7 +145,9 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
                 + F("additional_public_instructor_training_seats")
                 # Coalesce returns first non-NULL value
                 + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-                - Count("task", filter=Q(task__role__name="learner"))
+                - Count(
+                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
+                )
                 - Coalesce("public_instructor_training_seats_rolled_over", 0)
             ),
         )
@@ -389,7 +391,7 @@ class MembershipCreateRollOver(
             self.membership.public_instructor_training_seats_remaining
         )
         form.instance.inhouse_instructor_training_seats_rolled_from_previous = (
-            self.membership.public_instructor_training_seats_remaining  # TODO
+            self.membership.inhouse_instructor_training_seats_remaining
         )
 
         # save values rolled over in membership
@@ -400,7 +402,7 @@ class MembershipCreateRollOver(
             form.instance.public_instructor_training_seats_rolled_from_previous
         )
         self.membership.inhouse_instructor_training_seats_rolled_over = (
-            form.instance.inhouse_instructor_training_seats_rolled_from_previous  # TODO
+            form.instance.inhouse_instructor_training_seats_rolled_from_previous
         )
         self.membership.save()
 

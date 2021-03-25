@@ -1597,6 +1597,7 @@ class TaskCreate(
         """
 
         seat_membership = form.cleaned_data["seat_membership"]
+        seat_public = form.cleaned_data["seat_public"]
         event = form.cleaned_data["event"]
         check_ihia_old = InstructorsHostIntroductionAction.check(event)
         check_afwa_old = AskForWebsiteAction.check(event)
@@ -1604,18 +1605,23 @@ class TaskCreate(
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
+            remaining = (
+                seat_membership.public_instructor_training_seats_remaining
+                if seat_public
+                else seat_membership.inhouse_instructor_training_seats_remaining
+            )
             # check number of available seats
-            if seat_membership.seats_instructor_training_remaining == 1:
+            if remaining == 1:
                 messages.warning(
                     self.request,
-                    'Membership "{}" has 0 instructor training seats'
-                    " available.".format(str(seat_membership)),
+                    f'Membership "{seat_membership}" has 0 instructor training seats '
+                    "available.",
                 )
-            if seat_membership.seats_instructor_training_remaining < 1:
+            if remaining < 1:
                 messages.warning(
                     self.request,
-                    'Membership "{}" is using more training seats'
-                    " than it's been allowed.".format(str(seat_membership)),
+                    f'Membership "{seat_membership}" is using more training seats than '
+                    "it's been allowed.",
                 )
 
             today = datetime.date.today()
@@ -1627,7 +1633,7 @@ class TaskCreate(
             ):
                 messages.warning(
                     self.request,
-                    'Membership "{}" is not active.'.format(str(seat_membership)),
+                    f'Membership "{seat_membership}" is not active.',
                 )
 
             # show warning if training falls out of agreement dates
@@ -1639,11 +1645,8 @@ class TaskCreate(
             ):
                 messages.warning(
                     self.request,
-                    'Training "{}" has start or end date outside '
-                    'membership "{}" agreement dates.'.format(
-                        str(event),
-                        str(seat_membership),
-                    ),
+                    f'Training "{event}" has start or end date outside '
+                    f'membership "{seat_membership}" agreement dates.',
                 )
 
         # save the object

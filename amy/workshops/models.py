@@ -427,7 +427,7 @@ class Membership(models.Model):
             .count()
         )
 
-    @cached_property
+    @property
     def public_instructor_training_seats_total(self):
         """Calculate combined public instructor training seats total.
 
@@ -442,10 +442,9 @@ class Membership(models.Model):
     @cached_property
     def public_instructor_training_seats_utilized(self):
         """Count number of learner tasks that point to this membership."""
-        # TODO: this calculation should change
-        return self.task_set.filter(role__name="learner").count()
+        return self.task_set.filter(role__name="learner", seat_public=True).count()
 
-    @cached_property
+    @property
     def public_instructor_training_seats_remaining(self):
         """Count remaining public seats for instructor training."""
         a = self.public_instructor_training_seats_total
@@ -453,7 +452,7 @@ class Membership(models.Model):
         c = self.public_instructor_training_seats_rolled_over or 0
         return a - b - c
 
-    @cached_property
+    @property
     def inhouse_instructor_training_seats_total(self):
         """Calculate combined in-house instructor training seats total.
 
@@ -468,10 +467,9 @@ class Membership(models.Model):
     @cached_property
     def inhouse_instructor_training_seats_utilized(self):
         """Count number of learner tasks that point to this membership."""
-        # TODO: this calculation should change
-        return self.task_set.filter(role__name="learner").count()
+        return self.task_set.filter(role__name="learner", seat_public=False).count()
 
-    @cached_property
+    @property
     def inhouse_instructor_training_seats_remaining(self):
         """Count remaining in-house seats for instructor training."""
         a = self.inhouse_instructor_training_seats_total
@@ -1646,6 +1644,24 @@ class Task(RQJobsMixin, models.Model):
         ) and self.role.name != "learner":
             errors["role"] = ValidationError(
                 "Seat (open / membership) can be assigned only to a workshop learner."
+            )
+
+        if (
+            self.seat_membership
+            and self.seat_public
+            and not self.seat_membership.public_instructor_training_seats_remaining
+        ):
+            errors["seat_public"] = ValidationError(
+                "This membership doesn't have any remaining public seats."
+            )
+
+        if (
+            self.seat_membership
+            and not self.seat_public
+            and not self.seat_membership.inhouse_instructor_training_seats_remaining
+        ):
+            errors["seat_public"] = ValidationError(
+                "This membership doesn't have any remaining in-house seats."
             )
 
         if errors:
