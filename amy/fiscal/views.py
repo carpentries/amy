@@ -33,6 +33,7 @@ from fiscal.models import MembershipTask
 from fiscal.base_views import (
     GetMembershipMixin,
     MembershipFormsetView,
+    UnquoteSlugMixin,
 )
 from workshops.base_views import (
     AMYCreateView,
@@ -77,7 +78,7 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView):
     title = "All Organizations"
 
 
-class OrganizationDetails(OnlyForAdminsMixin, AMYDetailView):
+class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
     queryset = Organization.objects.prefetch_related("memberships")
     context_object_name = "organization"
     template_name = "fiscal/organization.html"
@@ -112,7 +113,9 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateV
         return initial
 
 
-class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class OrganizationUpdate(
+    UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView
+):
     permission_required = "workshops.change_organization"
     model = Organization
     form_class = OrganizationForm
@@ -121,7 +124,9 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateV
     template_name = "generic_form_with_comments.html"
 
 
-class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class OrganizationDelete(
+    UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
+):
     model = Organization
     slug_field = "domain"
     slug_url_kwarg = "org_domain"

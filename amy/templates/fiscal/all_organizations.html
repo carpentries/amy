@@ -18,7 +18,7 @@
         </tr>
     {% for organization in all_organizations %}
         <tr>
-            <td><a href="{% url 'organization_details' organization.domain %}">{{ organization.fullname }}</a></td>
+            <td><a href="{% url 'organization_details' organization.domain_quoted %}">{{ organization.fullname }}</a></td>
             <td><a href="http://{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td>
             <td>
               {% for membership in organization.current_memberships %}
@@ -28,10 +28,10 @@
               {% endfor %}
             </td>
             <td>
-              <a href="{% url 'organization_details' organization.domain %}" title="View {{ organization.fullname }}"><i class="fas fa-info-circle"></i></a>
+              <a href="{% url 'organization_details' organization.domain_quoted %}" title="View {{ organization.fullname }}"><i class="fas fa-info-circle"></i></a>
                 &nbsp;
               {% if perms.workshops.change_organization %}
-                <a href="{% url 'organization_edit' organization.domain %}" title="Edit {{ organization.fullname }}"><i class="fas fa-edit"></i></a>
+                <a href="{% url 'organization_edit' organization.domain_quoted %}" title="Edit {{ organization.fullname }}"><i class="fas fa-edit"></i></a>
               {% endif %}
             </td>
         </tr>

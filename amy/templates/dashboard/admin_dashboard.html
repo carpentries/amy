@@ -82,7 +82,7 @@
         {% endif %}
         <!-- HOST -->
         <td>
-          <a href="{% url 'organization_details' event.host.domain %}">
+          <a href="{% url 'organization_details' event.host.domain_quoted %}">
             {{ event.host }}
           </a>
         </td>
