@@ -36,7 +36,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 
 ## Persons
 
-`workshops_persons` - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.
+`workshops_person` - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.
 
 ### Commonly used fields
 
