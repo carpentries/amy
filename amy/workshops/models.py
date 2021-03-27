@@ -80,6 +80,8 @@ class Organization(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
+    affiliated_organizations = models.ManyToManyField("Organization", blank=True)
+
     objects = OrganizationManager()
 
     def __str__(self):
