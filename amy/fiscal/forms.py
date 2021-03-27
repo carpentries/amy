@@ -1,4 +1,4 @@
-from crispy_forms.layout import Div, HTML, Field
+from crispy_forms.layout import Div, HTML
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -280,12 +280,12 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
-        self.helper.layout.append(Field("id"))
-        self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
+        self.helper.layout.append("id")
+        self.helper.layout.append("DELETE")  # visible; formset adds it
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
-        self.helper_empty_form.layout.append(Field("id"))
+        self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
-            Div(Field("DELETE"), css_class="d-none")  # hidden
+            Div("DELETE", css_class="d-none")  # hidden
         )
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
@@ -319,12 +319,12 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
-        self.helper.layout.append(Field("id"))
-        self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
+        self.helper.layout.append("id")
+        self.helper.layout.append("DELETE")  # visible; formset adds it
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
-        self.helper_empty_form.layout.append(Field("id"))
+        self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
-            Div(Field("DELETE"), css_class="d-none")  # hidden
+            Div("DELETE", css_class="d-none")  # hidden
         )
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")

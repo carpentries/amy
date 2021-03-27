@@ -1,11 +1,30 @@
 from django.urls import reverse
 
 from workshops.tests.base import TestBase
-from workshops.models import (
-    Membership,
-)
+from workshops.models import Membership
 
+from fiscal.forms import MembershipTaskForm
 from fiscal.models import MembershipPersonRole, MembershipTask
+
+
+class TestMembershipTaskFormLayout(TestBase):
+    def test_main_helper_layout(self):
+        form = MembershipTaskForm()
+
+        self.assertEqual(
+            list(form.helper.layout),
+            ["person", "role", "EDITABLE", "id", "DELETE"],
+        )
+
+    def test_empty_helper_layout(self):
+        form = MembershipTaskForm()
+
+        self.assertEqual(len(form.helper_empty_form.layout), 4)
+        self.assertEqual(
+            list(form.helper_empty_form.layout)[:3],
+            ["person", "role", "id"],
+        )
+        self.assertEqual(form.helper_empty_form.layout[3].fields, ["DELETE"])
 
 
 class TestMembershipTasks(TestBase):
