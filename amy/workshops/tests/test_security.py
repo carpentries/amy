@@ -2,6 +2,7 @@ import unittest
 
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.views.generic import View, RedirectView
@@ -362,7 +363,11 @@ class TestViews(TestBase):
                             assert is_view
 
                             mixins = set(class_.__mro__)
-                            desired_mixins = {OnlyForAdminsMixin, LoginNotRequiredMixin}
+                            desired_mixins = {
+                                OnlyForAdminsMixin,
+                                LoginNotRequiredMixin,
+                                LoginRequiredMixin,
+                            }
                             found = mixins & desired_mixins
 
                             self.assertNotEqual(
