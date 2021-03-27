@@ -372,12 +372,11 @@ class TestTask(TestBase):
         task4.full_clean()
 
     def test_seat_public_validation(self):
-        # zero seats in membership
+        # zero public seats in membership
         self.membership.public_instructor_training_seats = 0
-        self.membership.inhouse_instructor_training_seats = 0
         self.membership.save()
 
-        # wrong tasks
+        # invalid task
         task1 = Task(
             event=self.ttt_event_open,
             person=self.test_person_1,
@@ -385,7 +384,26 @@ class TestTask(TestBase):
             seat_membership=self.membership,
             seat_public=True,
         )
-        task2 = Task(
+
+        with self.assertRaises(ValidationError) as cm:
+            task1.full_clean()
+        exception = cm.exception
+        self.assertEqual({"seat_public"}, exception.error_dict.keys())
+
+        # reset seats in membership
+        self.membership.public_instructor_training_seats = 1
+        self.membership.save()
+        # refresh the cached properties
+        del self.membership.__dict__["public_instructor_training_seats_utilized"]
+        task1.full_clean()
+
+    def test_seat_inhouse_validation(self):
+        # zero inhouse seats in membership
+        self.membership.inhouse_instructor_training_seats = 0
+        self.membership.save()
+
+        # invalid task
+        task1 = Task(
             event=self.ttt_event_open,
             person=self.test_person_2,
             role=self.learner,
@@ -398,20 +416,12 @@ class TestTask(TestBase):
         exception = cm.exception
         self.assertEqual({"seat_public"}, exception.error_dict.keys())
 
-        with self.assertRaises(ValidationError) as cm:
-            task2.full_clean()
-        exception = cm.exception
-        self.assertEqual({"seat_public"}, exception.error_dict.keys())
-
         # reset seats in membership
-        self.membership.public_instructor_training_seats = 1
         self.membership.inhouse_instructor_training_seats = 1
         self.membership.save()
-        # refreshes the cached properties
-        del self.membership.__dict__["public_instructor_training_seats_utilized"]
+        # refresh the cached properties
         del self.membership.__dict__["inhouse_instructor_training_seats_utilized"]
         task1.full_clean()
-        task2.full_clean()
 
 
 class TestTaskCreateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):

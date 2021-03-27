@@ -182,7 +182,8 @@ class Membership(models.Model):
     public_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Public instructor training seats rolled over from previous membership.",  # noqa
+        help_text="Public instructor training seats rolled over from previous "
+        "membership.",
     )
     public_instructor_training_seats_rolled_over = models.PositiveIntegerField(
         null=True,

@@ -161,7 +161,7 @@ class TestSearch(TestBase):
         self.assertEqual(response.request.path, self.org_alpha.get_absolute_url())
 
     def test_search_for_memberships_code(self):
-        """Make sure that finding memberships works."""
+        """Make sure that finding memberships by registration code works."""
         membership = Membership.objects.create(
             variant="partner",
             registration_code="test-beta-code-test",
@@ -184,7 +184,7 @@ class TestSearch(TestBase):
         self.assertEqual(len(response.context["organisations"]), 0)
 
     def test_search_for_memberships_name(self):
-        """Make sure that finding memberships works."""
+        """Make sure that finding memberships by name works."""
         membership = Membership.objects.create(
             name="alpha-name",
             variant="partner",

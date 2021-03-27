@@ -84,15 +84,15 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `contribution_type` Financial, Person-days, or Other
 * `workshops_without_admin_fee_per_agreement` Integer; number of centrally organized workshops allowed
 * `workshops_without_admin_fee_rolled_from_previous` Integer; number of centrally-organised workshops allowed that was rolled over from previous membership. This should be the same as `workshops_without_admin_fee_rolled_over` in preceding membership
-* `workshops_without_admin_fee_rolled_over` Integer; number of centrally-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `workshops_without_admin_fee_rolled_from_previous` in successing membership
+* `workshops_without_admin_fee_rolled_over` Integer; number of centrally-organised workshops allowed that was rolled over to succeeding membership. The same number should be recorded in `workshops_without_admin_fee_rolled_from_previous` in succeeding membership
 * `public_instructor_training_seats` Integer; number of public seats allowed in instructor training events in the original contract.
 * `additional_public_instructor_training_seats`  Integer; number of additional public seats allowed in instructor training events beyond the original contract.
 * `public_instructor_training_seats_rolled_from_previous` Integer; number of public instructor training seats allowed that was rolled over from previous membership. This should be the same as `public_instructor_training_seats_rolled_over` in preceding membership
-* `public_instructor_training_seats_rolled_over` Integer; number of public instructor training seats allowed that was rolled over to successing membership. The same number should be recorded in `public_instructor_training_seats_rolled_from_previous` in successing membership
+* `public_instructor_training_seats_rolled_over` Integer; number of public instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in `public_instructor_training_seats_rolled_from_previous` in succeeding membership
 * `inhouse_instructor_training_seats` Integer; number of in-house seats allowed in instructor training events in the original contract.
 * `additional_inhouse_instructor_training_seats`  Integer; number of additional in-house seats allowed in instructor training events beyond the original contract.
 * `inhouse_instructor_training_seats_rolled_from_previous` Integer; number of in-house instructor training seats allowed that was rolled over from previous membership. This should be the same as `inhouse_instructor_training_seats_rolled_over` in preceding membership
-* `inhouse_instructor_training_seats_rolled_over` Integer; number of in-house instructor training seats allowed that was rolled over to successing membership. The same number should be recorded in `inhouse_instructor_training_seats_rolled_from_previous` in successing membership
+* `inhouse_instructor_training_seats_rolled_over` Integer; number of in-house instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in `inhouse_instructor_training_seats_rolled_from_previous` in succeeding membership
 * `agreement_link` A link to the Member agreement in Google Drive
 * `registration_code` A string representing the code used by the Member site for Eventbrite registration and the instructor training application
 * `public_status` a string indicating agreement to publicising membership on The Carpentries websites
