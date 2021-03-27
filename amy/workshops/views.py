@@ -56,6 +56,7 @@ from autoemails.actions import (
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
 from dashboard.forms import AssignmentForm
+from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
     AMYUpdateView,
@@ -250,17 +251,30 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
             ),
         )
         .prefetch_related(
-            "award_set__badge",
-            "award_set__awarded_by",
-            "award_set__event",
-            "task_set__role",
-            "task_set__event",
+            "badges",
+            "lessons",
+            "domains",
+            "languages",
+            Prefetch(
+                "award_set",
+                queryset=Award.objects.select_related(),
+            ),
+            Prefetch(
+                "task_set",
+                queryset=Task.objects.select_related(),
+            ),
             Prefetch(
                 "task_set",
                 to_attr="training_tasks",
                 queryset=Task.objects.filter(
                     role__name="learner", event__tags__name="TTT"
-                ),
+                ).select_related(),
+            ),
+            "trainingrequest_set",
+            "trainingprogress_set",
+            Prefetch(
+                "membershiptask_set",
+                queryset=MembershipTask.objects.select_related(),
             ),
         )
         .select_related("airport")

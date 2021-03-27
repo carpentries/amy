@@ -2,6 +2,7 @@
 
 {% load links %}
 {% load revisions %}
+{% load dates %}
 
 {% block content %}
 {% last_modified person %}
@@ -177,6 +178,28 @@
   <tr>
     <th>Instructor Training progress:</th>
     <td>{% include "includes/training_progresses_inline.html" with person=person %}</td>
+  </tr>
+  <tr>
+    <th>Membership roles:</th>
+    <td>
+      {% with membership_tasks=person.membershiptask_set.all %}
+      {% if membership_tasks %}
+      <table class="table table-sm">
+        <tr><th>Role</th><th>Membership</th><th>Dates</th><th>Consortium?</th></tr>
+        {% for task in membership_tasks %}
+        <tr>
+          <td>{{ task.role }}</td>
+          <td><a href="{{ task.membership.get_absolute_url }}">{{ task.membership.name }}</a></td>
+          <td>{% human_daterange task.membership.agreement_start task.membership.agreement_end %}</td>
+          <td>{{ task.membership.consortium|yesno }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No related membership roles.
+      {% endif %}
+      {% endwith %}
+    </td>
   </tr>
 </table>
 
