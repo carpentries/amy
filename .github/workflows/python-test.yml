@@ -1,0 +1,71 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches:
+    - main
+    - develop
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.7', '3.8', '3.9' ]
+        
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_amy
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Check migrations
+      run: |
+        python manage.py makemigrations --dry-run --check;
+        if [[ $? != "0" ]]; then
+          exit 1;
+        fi;
+      env: 
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_amy
+        
+    - name: Test
+      run: python manage.py test
+      env: 
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_amy
+
