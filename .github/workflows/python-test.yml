@@ -58,10 +58,10 @@ jobs:
           exit 1;
         fi;
       env: 
-        DATABASE_URL: postgres://postgres:postgres@localhost/test_amy
+        DATABASE_URL: postgres://postgres:postgres@postgres:5432/test_amy
         
     - name: Test
       run: python manage.py test
       env: 
-        DATABASE_URL: postgres://postgres:postgres@localhost/test_amy
+        DATABASE_URL: postgres://postgres:postgres@postgres:5432/test_amy
 
