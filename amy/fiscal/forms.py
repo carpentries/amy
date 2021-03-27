@@ -3,6 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.dispatch import receiver
+from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from fiscal.models import MembershipTask
@@ -94,9 +95,10 @@ class MembershipForm(forms.ModelForm):
             "registration_code",
             "agreement_link",
             "workshops_without_admin_fee_per_agreement",
-            "self_organized_workshops_per_agreement",
-            "seats_instructor_training",
-            "additional_instructor_training_seats",
+            "public_instructor_training_seats",
+            "additional_public_instructor_training_seats",
+            "inhouse_instructor_training_seats",
+            "additional_inhouse_instructor_training_seats",
             "emergency_contact",
         ]
 
@@ -173,8 +175,10 @@ class MembershipCreateForm(MembershipForm):
 
         self.fields["consortium"].help_text += (
             "<br>If you select this option, you'll be taken to the next screen to "
-            "select organisations engaged in consortium."
-        )
+            "select organisations engaged in consortium. You must create the "
+            "organisation (<a href='{}'>here</a>) before applying it to this "
+            "membership."
+        ).format(reverse("organization_add"))
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
@@ -205,11 +209,12 @@ class MembershipRollOverForm(MembershipCreateForm):
             "agreement_link",
             "workshops_without_admin_fee_per_agreement",
             "workshops_without_admin_fee_rolled_from_previous",
-            "self_organized_workshops_per_agreement",
-            "self_organized_workshops_rolled_from_previous",
-            "seats_instructor_training",
-            "additional_instructor_training_seats",
-            "instructor_training_seats_rolled_from_previous",
+            "public_instructor_training_seats",
+            "additional_public_instructor_training_seats",
+            "public_instructor_training_seats_rolled_from_previous",
+            "inhouse_instructor_training_seats",
+            "additional_inhouse_instructor_training_seats",
+            "inhouse_instructor_training_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
         ]
@@ -217,8 +222,12 @@ class MembershipRollOverForm(MembershipCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self["workshops_without_admin_fee_rolled_from_previous"].field.disabled = True
-        self["self_organized_workshops_rolled_from_previous"].field.disabled = True
-        self["instructor_training_seats_rolled_from_previous"].field.disabled = True
+        self[
+            "public_instructor_training_seats_rolled_from_previous"
+        ].field.disabled = True
+        self[
+            "inhouse_instructor_training_seats_rolled_from_previous"
+        ].field.disabled = True
 
 
 class MemberForm(forms.ModelForm):

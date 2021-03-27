@@ -57,13 +57,14 @@
         <a href="{% url 'membership_tasks' membership.pk %}">Edit</a>
       </td></tr>
   <tr>
-    <th rowspan="6">Workshops without fee per agreement duration</th>
+    <th rowspan="4">Workshops without fee per agreement duration</th>
     <th>Allowed:</th>
-    <td width="60%">{{ membership.workshops_without_admin_fee_per_agreement|default:"&mdash;" }}</td>
-  </tr>
-  <tr>
-    <th>Rolled from previous membership:</th>
-    <td>{{ membership.workshops_without_admin_fee_rolled_from_previous|default:"&mdash;" }}</td>
+    <td width="60%">
+      {{ membership.workshops_without_admin_fee_total_allowed|default:"&mdash;" }}
+      <p class="small">
+        Includes {{ membership.workshops_without_admin_fee_rolled_from_previous|default_if_none:0 }} workshops rolled from previous membership.
+      </p>
+    </td>
   </tr>
   <tr>
     <th>Completed:</th>
@@ -75,11 +76,12 @@
   </tr>
   <tr>
     <th>Remaining:</th>
-    <td>{{ membership.workshops_without_admin_fee_remaining|default:"&mdash;" }}</td>
-  </tr>
-  <tr>
-    <th>Rolled over:</th>
-    <td>{{ membership.workshops_without_admin_fee_rolled_over|default:"&mdash;" }}</td>
+    <td>
+      {{ membership.workshops_without_admin_fee_remaining|default:"&mdash;" }}
+      <p class="small">
+        {{ membership.workshops_without_admin_fee_rolled_over|default:"None" }} were rolled over to following membership.
+      </p>
+    </td>
   </tr>
   <tr>
     <th rowspan="2">Discounted workshops</th>
@@ -91,15 +93,7 @@
     <td>{{ membership.workshops_discounted_planned|default:"&mdash;" }}</td>
   </tr>
   <tr>
-    <th rowspan="6">Self-organized workshops per agreement duration</th>
-    <th>Allowed:</th>
-    <td>{{ membership.self_organized_workshops_per_agreement|default:"&mdash;" }}</td>
-  </tr>
-  <tr>
-    <th>Rolled from previous membership:</th>
-    <td>{{ membership.self_organized_workshops_rolled_from_previous|default:"&mdash;" }}</td>
-  </tr>
-  <tr>
+    <th rowspan="2">Self-organized workshops</th>
     <th>Completed:</th>
     <td>{{ membership.self_organized_workshops_completed|default:"&mdash;" }}</td>
   </tr>
@@ -108,39 +102,55 @@
     <td>{{ membership.self_organized_workshops_planned|default:"&mdash;" }}</td>
   </tr>
   <tr>
-    <th>Remaining:</th>
-    <td>{{ membership.self_organized_workshops_remaining|default:"&mdash;" }}</td>
-  </tr>
-  <tr>
-    <th>Rolled over:</th>
-    <td>{{ membership.self_organized_workshops_rolled_over|default:"&mdash;" }}</td>
-  </tr>
-  <tr>
-    <th rowspan="5" width="30%">Instructor training seats</th>
+    <th rowspan="3" width="30%">Public instructor training seats</th>
     <th>Allowed:</th>
     <td>
-      {{ membership.seats_instructor_training_total }}
-      <p class="small">Includes {{ membership.additional_instructor_training_seats }} additional seats.</p>
+      {{ membership.public_instructor_training_seats_total }}
+      <p class="small">
+        Includes {{ membership.additional_public_instructor_training_seats }} additional seats.<br>
+        Includes {{ membership.public_instructor_training_seats_rolled_from_previous|default_if_none:0 }} seats rolled from previous membership.
+      </p>
     </td>
   </tr>
   <tr>
-    <th>Rolled from previous membership:</th>
-    <td>{{ membership.instructor_training_seats_rolled_from_previous|default:"&mdash;" }}</td>
+    <th>Utilized:</th>
+    <td>{{ membership.public_instructor_training_seats_utilized }}</td>
+  </tr>
+  <tr {% if membership.public_instructor_training_seats_remaining <= 0 and membership.public_instructor_training_seats_total > 0 or membership.public_instructor_training_seats_remaining < 0 and membership.public_instructor_training_seats_total == 0 %}class="table-danger"{% endif %}>
+    <th>Remaining:</th>
+    <td>
+      {{ membership.public_instructor_training_seats_remaining }}
+      <p class="small">
+        {{ membership.public_instructor_training_seats_rolled_over|default:"None" }} were rolled over to following membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th rowspan="3" width="30%">In-house instructor training seats</th>
+    <th>Allowed:</th>
+    <td>
+      {{ membership.inhouse_instructor_training_seats_total }}
+      <p class="small">
+        Includes {{ membership.additional_inhouse_instructor_training_seats }} additional seats.<br>
+        Includes {{ membership.inhouse_instructor_training_seats_rolled_from_previous|default_if_none:0 }} seats rolled from previous membership.
+      </p>
+    </td>
   </tr>
   <tr>
     <th>Utilized:</th>
-    <td>{{ membership.seats_instructor_training_utilized }}</td>
+    <td>{{ membership.inhouse_instructor_training_seats_utilized }}</td>
   </tr>
-  <tr {% if membership.seats_instructor_training_remaining <= 0 and membership.seats_instructor_training_total > 0 or membership.seats_instructor_training_remaining < 0 and membership.seats_instructor_training_total == 0 %}class="table-danger"{% endif %}>
+  <tr {% if membership.inhouse_instructor_training_seats_remaining <= 0 and membership.inhouse_instructor_training_seats_total > 0 or membership.inhouse_instructor_training_seats_remaining < 0 and membership.inhouse_instructor_training_seats_total == 0 %}class="table-danger"{% endif %}>
     <th>Remaining:</th>
-    <td>{{ membership.seats_instructor_training_remaining }}</td>
+    <td>
+      {{ membership.inhouse_instructor_training_seats_remaining }}
+      <p class="small">
+        {{ membership.inhouse_instructor_training_seats_rolled_over|default:"None" }} were rolled over to following membership.
+      </p>
+    </td>
   </tr>
   <tr>
-    <th>Rolled over:</th>
-    <td>{{ membership.instructor_training_seats_rolled_over|default:"&mdash;" }}</td>
-  </tr>
-  <tr>
-    <th>Instructor training seats &mdash; tasks:</th>
+    <th>Public instructor training seats &mdash; tasks:</th>
     <td colspan="2">
       {% if membership.task_set.all %}
       <table class="w-100">

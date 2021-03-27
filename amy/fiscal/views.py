@@ -10,7 +10,7 @@ from django.db.models import (
     Count,
     Prefetch,
 )
-from django.db.models.functions import Now
+from django.db.models.functions import Now, Coalesce
 from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
@@ -140,19 +140,15 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     filter_class = MembershipFilter
     queryset = (
         Membership.objects.annotate(
-            instructor_training_seats_total=(
-                F("seats_instructor_training")
-                + F("additional_instructor_training_seats")
-            ),
-            # for future reference, in case someone would want to implement
-            # this annotation
-            # instructor_training_seats_utilized=(
-            #     Count('task', filter=Q(task__role__name='learner'))
-            # ),
             instructor_training_seats_remaining=(
-                F("seats_instructor_training")
-                + F("additional_instructor_training_seats")
-                - Count("task", filter=Q(task__role__name="learner"))
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+                - Count(
+                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
+                )
+                - Coalesce("public_instructor_training_seats_rolled_over", 0)
             ),
         )
         .prefetch_related("organizations")
@@ -285,6 +281,13 @@ class MembershipMembers(
     def get_context_data(self, **kwargs):
         if "title" not in kwargs:
             kwargs["title"] = "Change members for {}".format(self.membership)
+        if not self.membership.consortium:
+            kwargs["add_another_help_text"] = (
+                "Only one affiliated organisation can be listed because this is not "
+                "a consortium membership. If you would like to list more than one "
+                "affiliated organisation, please select 'Consortium' in the "
+                "membership view."
+            )
         return super().get_context_data(**kwargs)
 
 
@@ -366,11 +369,12 @@ class MembershipCreateRollOver(
             "agreement_link": self.membership.agreement_link,
             "workshops_without_admin_fee_per_agreement": self.membership.workshops_without_admin_fee_per_agreement,  # noqa
             "workshops_without_admin_fee_rolled_from_previous": self.membership.workshops_without_admin_fee_remaining,  # noqa
-            "self_organized_workshops_per_agreement": self.membership.self_organized_workshops_per_agreement,  # noqa
-            "self_organized_workshops_rolled_from_previous": self.membership.self_organized_workshops_remaining,  # noqa
-            "seats_instructor_training": self.membership.seats_instructor_training,
-            "additional_instructor_training_seats": self.membership.additional_instructor_training_seats,  # noqa
-            "instructor_training_seats_rolled_from_previous": self.membership.seats_instructor_training_remaining,  # noqa
+            "public_instructor_training_seats": self.membership.public_instructor_training_seats,  # noqa
+            "additional_public_instructor_training_seats": self.membership.additional_public_instructor_training_seats,  # noqa
+            "public_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa
+            "inhouse_instructor_training_seats": self.membership.inhouse_instructor_training_seats,  # noqa
+            "additional_inhouse_instructor_training_seats": self.membership.additional_inhouse_instructor_training_seats,  # noqa
+            "inhouse_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa  # TODO
             "emergency_contact": self.membership.emergency_contact,
         }
 
@@ -383,22 +387,22 @@ class MembershipCreateRollOver(
         form.instance.workshops_without_admin_fee_rolled_from_previous = (
             self.membership.workshops_without_admin_fee_remaining
         )
-        form.instance.self_organized_workshops_rolled_from_previous = (
-            self.membership.self_organized_workshops_remaining
+        form.instance.public_instructor_training_seats_rolled_from_previous = (
+            self.membership.public_instructor_training_seats_remaining
         )
-        form.instance.instructor_training_seats_rolled_from_previous = (
-            self.membership.seats_instructor_training_remaining
+        form.instance.inhouse_instructor_training_seats_rolled_from_previous = (
+            self.membership.inhouse_instructor_training_seats_remaining
         )
 
         # save values rolled over in membership
         self.membership.workshops_without_admin_fee_rolled_over = (
             form.instance.workshops_without_admin_fee_rolled_from_previous
         )
-        self.membership.self_organized_workshops_rolled_over = (
-            form.instance.self_organized_workshops_rolled_from_previous
+        self.membership.public_instructor_training_seats_rolled_over = (
+            form.instance.public_instructor_training_seats_rolled_from_previous
         )
-        self.membership.instructor_training_seats_rolled_over = (
-            form.instance.instructor_training_seats_rolled_from_previous
+        self.membership.inhouse_instructor_training_seats_rolled_over = (
+            form.instance.inhouse_instructor_training_seats_rolled_from_previous
         )
         self.membership.save()
 

@@ -53,9 +53,10 @@ class TestMembership(TestBase):
             agreement_end=self.agreement_end,
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=20,
-            seats_instructor_training=25,
-            additional_instructor_training_seats=3,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
+            inhouse_instructor_training_seats=14,
+            additional_inhouse_instructor_training_seats=5,
         )
         Member.objects.create(
             membership=self.current,
@@ -149,7 +150,6 @@ class TestMembership(TestBase):
             agreement_end=date(2016, 6, 30),
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=20,
         )
         Member.objects.create(
             membership=overlapping,
@@ -164,17 +164,10 @@ class TestMembership(TestBase):
         """Ensure we calculate properly number of workshops per year."""
         self.setUpTasks()
         self.assertEqual(self.current.workshops_without_admin_fee_per_agreement, 10)
+        self.assertEqual(self.current.workshops_without_admin_fee_total_allowed, 10)
         self.assertEqual(self.current.workshops_without_admin_fee_completed, 6)
         self.assertEqual(self.current.workshops_without_admin_fee_planned, 4)
         self.assertEqual(self.current.workshops_without_admin_fee_remaining, 0)
-
-    def test_self_organized_workshops(self):
-        """Ensure we calculate properly number of workshops per year."""
-        self.setUpTasks()
-        self.assertEqual(self.current.self_organized_workshops_per_agreement, 20)
-        self.assertEqual(self.current.self_organized_workshops_completed, 6)
-        self.assertEqual(self.current.self_organized_workshops_planned, 4)
-        self.assertEqual(self.current.self_organized_workshops_remaining, 10)
 
     def test_delete_membership(self):
         """Test that we can delete membership instance"""
@@ -191,10 +184,11 @@ class TestMembership(TestBase):
         """Ensure calculation of seats in the instructor training events is
         correct."""
         self.setUpTasks()
-        self.assertEqual(self.current.seats_instructor_training, 25)
-        self.assertEqual(self.current.additional_instructor_training_seats, 3)
-        self.assertEqual(self.current.seats_instructor_training_utilized, 5)
-        self.assertEqual(self.current.seats_instructor_training_remaining, 23)
+        self.assertEqual(self.current.public_instructor_training_seats, 25)
+        self.assertEqual(self.current.additional_public_instructor_training_seats, 3)
+        self.assertEqual(self.current.public_instructor_training_seats_total, 28)
+        self.assertEqual(self.current.public_instructor_training_seats_utilized, 5)
+        self.assertEqual(self.current.public_instructor_training_seats_remaining, 23)
 
 
 class TestMembershipConsortiumCountingBase(TestBase):
@@ -229,13 +223,14 @@ class TestMembershipConsortiumCountingBase(TestBase):
             workshops_without_admin_fee_per_agreement=10,
             workshops_without_admin_fee_rolled_from_previous=2,
             workshops_without_admin_fee_rolled_over=5,
-            self_organized_workshops_per_agreement=8,
-            self_organized_workshops_rolled_from_previous=4,
-            self_organized_workshops_rolled_over=5,
-            seats_instructor_training=6,
-            additional_instructor_training_seats=4,
-            instructor_training_seats_rolled_from_previous=2,
-            instructor_training_seats_rolled_over=5,
+            public_instructor_training_seats=6,
+            additional_public_instructor_training_seats=4,
+            public_instructor_training_seats_rolled_from_previous=2,
+            public_instructor_training_seats_rolled_over=5,
+            inhouse_instructor_training_seats=2,
+            additional_inhouse_instructor_training_seats=5,
+            inhouse_instructor_training_seats_rolled_from_previous=3,
+            inhouse_instructor_training_seats_rolled_over=3,
         )
         Member.objects.bulk_create(
             [
@@ -328,7 +323,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
 
         return events
 
-    def setUpTasks(self, count: int) -> List[Task]:
+    def setUpTasks(self, count: int, public: bool = True) -> List[Task]:
         tasks = self.membership.task_set.bulk_create(
             [
                 Task(
@@ -341,6 +336,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                         administrator=self.org_alpha,
                     ),
                     seat_membership=self.membership,
+                    seat_public=public,
                 )
                 for i in range(count)
             ]
@@ -389,6 +385,11 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
         self.assertEqual(
             list(self.membership._workshops_without_admin_fee_queryset()), []
         )
+
+    def test_total_allowed_workshops_count(self):
+        # agreement: 10, rolled from previous: 2
+        # 10 + 2 = 12
+        self.assertEqual(self.membership.workshops_without_admin_fee_total_allowed, 12)
 
     def test_available_workshops_count(self):
         # agreement: 10, rolled from previous: 2, rolled over: 5
@@ -458,31 +459,17 @@ class TestMembershipConsortiumCountingSelfOrganisedWorkshops(
         self.assert_(Event.objects.all())
         self.assertEqual(self.membership.self_organized_workshops_planned, 4)
 
-    def test_remaining_workshops(self):
-        self.setUpWorkshops(
-            "cancelled",
-            "self-organised",
-            "completed",
-            "planned",
-            count=2,
-            administrator=self.self_organized,
-        )
-        self.assert_(Event.objects.all())
-        # number of available: 8 + 4 - 5 = 7
-        # number of workshops counted: 2 * self-org + 2 * completed + 2 * planned
-        self.assertEqual(self.membership.self_organized_workshops_remaining, 1)
 
-
-class TestMembershipConsortiumCountingInstructorTrainingSeats(
+class TestMembershipConsortiumCountingPublicInstructorTrainingSeats(
     TestMembershipConsortiumCountingBase
 ):
     def test_seats_total(self):
-        # rolled from previous aren't counted into the total
-        self.assertEqual(self.membership.seats_instructor_training_total, 10)
+        # rolled from previous are counted into the total
+        self.assertEqual(self.membership.public_instructor_training_seats_total, 12)
 
     def test_seats_utilized(self):
         self.setUpTasks(count=5)
-        self.assertEqual(self.membership.seats_instructor_training_utilized, 5)
+        self.assertEqual(self.membership.public_instructor_training_seats_utilized, 5)
 
     def test_seats_remaining(self):
         self.setUpTasks(count=5)
@@ -490,7 +477,30 @@ class TestMembershipConsortiumCountingInstructorTrainingSeats(
         # utilized: 5
         # rolled-over: 5
         # remaining: 2
-        self.assertEqual(self.membership.seats_instructor_training_remaining, 2)
+        self.assertEqual(self.membership.public_instructor_training_seats_remaining, 2)
+
+
+class TestMembershipConsortiumCountingInhouseInstructorTrainingSeats(
+    TestMembershipConsortiumCountingBase
+):
+    def test_seats_total(self):
+        # seats: 2
+        # additional: 5
+        # rolled from previous: 3
+        # total: 10
+        self.assertEqual(self.membership.inhouse_instructor_training_seats_total, 10)
+
+    def test_seats_utilized(self):
+        self.setUpTasks(count=5, public=False)
+        self.assertEqual(self.membership.inhouse_instructor_training_seats_utilized, 5)
+
+    def test_seats_remaining(self):
+        self.setUpTasks(count=5, public=False)
+        # total and rolled over from previous: 10
+        # utilized: 5
+        # rolled-over: 3
+        # remaining: 2
+        self.assertEqual(self.membership.inhouse_instructor_training_seats_remaining, 2)
 
 
 class TestMembershipForms(TestBase):
@@ -513,8 +523,10 @@ class TestMembershipForms(TestBase):
             "agreement_end": date(2022, 1, 28),
             "variant": "partner",
             "contribution_type": "financial",
-            "additional_instructor_training_seats": 0,
-            "seats_instructor_training": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
             "comment": "",
         }
         form = MembershipCreateForm(data)
@@ -534,8 +546,10 @@ class TestMembershipForms(TestBase):
             "agreement_end": date(2022, 1, 28),
             "variant": "partner",
             "contribution_type": "financial",
-            "additional_instructor_training_seats": 0,
-            "seats_instructor_training": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
             "comment": "This is a test comment.",
         }
         form = MembershipCreateForm(data)
@@ -564,9 +578,8 @@ class TestMembershipForms(TestBase):
             agreement_end=agreement_end,
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=20,
-            seats_instructor_training=25,
-            additional_instructor_training_seats=3,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
         )
         Member.objects.create(
             membership=membership,
@@ -586,8 +599,10 @@ class TestMembershipForms(TestBase):
             "agreement_end": date(2022, 1, 28),
             "variant": "partner",
             "contribution_type": "financial",
-            "additional_instructor_training_seats": 0,
-            "seats_instructor_training": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
         }
         form = MembershipForm(data, instance=membership)
         form.save()
@@ -604,8 +619,10 @@ class TestMembershipForms(TestBase):
             "agreement_end": date(2020, 1, 26),
             "variant": "partner",
             "contribution_type": "financial",
-            "additional_instructor_training_seats": 0,
-            "seats_instructor_training": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
         }
         form = MembershipForm(data)
         self.assertFalse(form.is_valid())
@@ -629,8 +646,8 @@ class TestNewMembershipWorkflow(TestBase):
             agreement_start="2021-02-14",
             agreement_end="2022-02-14",
             contribution_type="financial",
-            seats_instructor_training=0,
-            additional_instructor_training_seats=0,
+            public_instructor_training_seats=0,
+            additional_public_instructor_training_seats=0,
         )
         self.member_role = MemberRole.objects.first()
 
@@ -646,8 +663,10 @@ class TestNewMembershipWorkflow(TestBase):
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
             "contribution_type": "financial",
-            "seats_instructor_training": 0,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
         }
         response = self.client.post(reverse("membership_add"), data=data)
         latest_membership = Membership.objects.order_by("-id").first()
@@ -668,8 +687,10 @@ class TestNewMembershipWorkflow(TestBase):
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
             "contribution_type": "financial",
-            "seats_instructor_training": 0,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
         }
         response = self.client.post(reverse("membership_add"), data=data)
         latest_membership = Membership.objects.order_by("-id").first()
@@ -690,8 +711,10 @@ class TestNewMembershipWorkflow(TestBase):
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
             "contribution_type": "financial",
-            "seats_instructor_training": 0,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
         }
         response = self.client.post(reverse("membership_add"), data=data, follow=True)
 
@@ -714,8 +737,10 @@ class TestNewMembershipWorkflow(TestBase):
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
             "contribution_type": "financial",
-            "seats_instructor_training": 0,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
         }
         response = self.client.post(reverse("membership_add"), data=data, follow=True)
 
@@ -961,8 +986,8 @@ class TestMembershipExtension(TestBase):
             agreement_end="2021-03-01",
             extended=None,
             contribution_type="financial",
-            seats_instructor_training=0,
-            additional_instructor_training_seats=0,
+            public_instructor_training_seats=0,
+            additional_public_instructor_training_seats=0,
         )
         Member.objects.create(
             organization=self.org_alpha,
@@ -1001,9 +1026,10 @@ class TestMembershipCreateRollOver(TestBase):
             extended=None,
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=11,
-            seats_instructor_training=12,
-            additional_instructor_training_seats=0,
+            public_instructor_training_seats=12,
+            additional_public_instructor_training_seats=0,
+            inhouse_instructor_training_seats=9,
+            additional_inhouse_instructor_training_seats=0,
         )
         Member.objects.create(
             organization=self.org_alpha,
@@ -1021,9 +1047,10 @@ class TestMembershipCreateRollOver(TestBase):
             "agreement_end": "2022-03-01",
             "contribution_type": "financial",
             "workshops_without_admin_fee_per_agreement": 10,
-            "self_organized_workshops_per_agreement": 11,
-            "seats_instructor_training": 12,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 12,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 9,
+            "additional_inhouse_instructor_training_seats": 0,
         }
 
         form = MembershipRollOverForm(data)
@@ -1041,18 +1068,19 @@ class TestMembershipCreateRollOver(TestBase):
             "agreement_end": "2022-03-01",
             "contribution_type": "financial",
             "workshops_without_admin_fee_per_agreement": 10,
-            "self_organized_workshops_per_agreement": 11,
-            "seats_instructor_training": 12,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 12,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 9,
+            "additional_inhouse_instructor_training_seats": 0,
             # fields ignored
             "workshops_without_admin_fee_rolled_from_previous": "invalid value",
-            "self_organized_workshops_rolled_from_previous": "invalid value",
-            "instructor_training_seats_rolled_from_previous": "invalid value",
+            "public_instructor_training_seats_rolled_from_previous": "invalid value",
+            "inhouse_instructor_training_seats_rolled_from_previous": "invalid value",
         }
 
         form = MembershipRollOverForm(data)
 
-        self.assertTrue(form.is_valid())
+        self.assertTrue(form.is_valid(), form.errors)
 
     def test_new_membership_created(self):
         self.setUpMembership()
@@ -1065,9 +1093,10 @@ class TestMembershipCreateRollOver(TestBase):
             "agreement_end": "2022-03-01",
             "contribution_type": "financial",
             "workshops_without_admin_fee_per_agreement": 10,
-            "self_organized_workshops_per_agreement": 11,
-            "seats_instructor_training": 12,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 12,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 9,
+            "additional_inhouse_instructor_training_seats": 0,
         }
 
         response = self.client.post(
@@ -1092,9 +1121,10 @@ class TestMembershipCreateRollOver(TestBase):
             "agreement_end": "2021-03-01",
             "contribution_type": "financial",
             "workshops_without_admin_fee_per_agreement": 10,
-            "self_organized_workshops_per_agreement": 11,
-            "seats_instructor_training": 12,
-            "additional_instructor_training_seats": 0,
+            "public_instructor_training_seats": 12,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 9,
+            "additional_inhouse_instructor_training_seats": 0,
         }
 
         self.client.post(
@@ -1107,37 +1137,51 @@ class TestMembershipCreateRollOver(TestBase):
         self.membership.refresh_from_db()
 
         self.assertEqual(self.membership.workshops_without_admin_fee_per_agreement, 10)
-        self.assertEqual(self.membership.self_organized_workshops_per_agreement, 11)
-        self.assertEqual(self.membership.seats_instructor_training, 12)
-        self.assertEqual(self.membership.additional_instructor_training_seats, 0)
+        self.assertEqual(self.membership.public_instructor_training_seats, 12)
+        self.assertEqual(self.membership.additional_public_instructor_training_seats, 0)
+        self.assertEqual(self.membership.inhouse_instructor_training_seats, 9)
+        self.assertEqual(
+            self.membership.additional_inhouse_instructor_training_seats, 0
+        )
 
         self.assertEqual(
             self.membership.workshops_without_admin_fee_rolled_from_previous, None
         )
         self.assertEqual(
-            self.membership.self_organized_workshops_rolled_from_previous, None
+            self.membership.public_instructor_training_seats_rolled_from_previous, None
         )
         self.assertEqual(
-            self.membership.instructor_training_seats_rolled_from_previous, None
+            self.membership.inhouse_instructor_training_seats_rolled_from_previous, None
         )
 
         self.assertEqual(self.membership.workshops_without_admin_fee_rolled_over, 10)
-        self.assertEqual(self.membership.self_organized_workshops_rolled_over, 11)
-        self.assertEqual(self.membership.instructor_training_seats_rolled_over, 12)
+        self.assertEqual(
+            self.membership.public_instructor_training_seats_rolled_over, 12
+        )
+        self.assertEqual(
+            self.membership.inhouse_instructor_training_seats_rolled_over, 9
+        )
 
         self.assertEqual(last_membership.workshops_without_admin_fee_per_agreement, 10)
-        self.assertEqual(last_membership.self_organized_workshops_per_agreement, 11)
-        self.assertEqual(last_membership.seats_instructor_training, 12)
-        self.assertEqual(last_membership.additional_instructor_training_seats, 0)
+        self.assertEqual(last_membership.public_instructor_training_seats, 12)
+        self.assertEqual(last_membership.additional_public_instructor_training_seats, 0)
+        self.assertEqual(last_membership.inhouse_instructor_training_seats, 9)
+        self.assertEqual(
+            last_membership.additional_inhouse_instructor_training_seats, 0
+        )
         self.assertEqual(
             last_membership.workshops_without_admin_fee_rolled_from_previous, 10
         )
         self.assertEqual(
-            last_membership.self_organized_workshops_rolled_from_previous, 11
+            last_membership.public_instructor_training_seats_rolled_from_previous, 12
         )
         self.assertEqual(
-            last_membership.instructor_training_seats_rolled_from_previous, 12
+            last_membership.inhouse_instructor_training_seats_rolled_from_previous, 9
         )
         self.assertEqual(last_membership.workshops_without_admin_fee_rolled_over, None)
-        self.assertEqual(last_membership.self_organized_workshops_rolled_over, None)
-        self.assertEqual(last_membership.instructor_training_seats_rolled_over, None)
+        self.assertEqual(
+            last_membership.public_instructor_training_seats_rolled_over, None
+        )
+        self.assertEqual(
+            last_membership.inhouse_instructor_training_seats_rolled_over, None
+        )

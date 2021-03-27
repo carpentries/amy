@@ -631,6 +631,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             "title",
             "url",
             "seat_membership",
+            "seat_public",
             "seat_open_training",
         ]
         widgets = {
@@ -640,6 +641,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             "event": ModelSelect2Widget(
                 data_view="event-lookup", attrs=SELECT2_SIDEBAR
             ),
+            "seat_public": forms.RadioSelect(),
         }
 
     def __init__(self, *args, **kwargs):

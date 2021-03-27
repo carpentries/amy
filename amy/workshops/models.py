@@ -163,47 +163,57 @@ class Membership(models.Model):
         blank=True,
         help_text="Workshops without admin fee rolled over into next membership.",
     )
-    self_organized_workshops_per_agreement = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Expected number of self-organized workshops per agreement "
-        "duration",
-    )
-    self_organized_workshops_rolled_from_previous = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Self-organized workshops rolled over from previous membership.",
-    )
-    self_organized_workshops_rolled_over = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Self-organized workshops rolled over into next membership.",
-    )
     # according to Django docs, PositiveIntegerFields accept 0 as valid as well
-    seats_instructor_training = models.PositiveIntegerField(
+    public_instructor_training_seats = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=0,
-        verbose_name="Instructor training seats",
-        help_text="Number of seats in instructor trainings",
+        verbose_name="Public instructor training seats",
+        help_text="Number of public seats in instructor trainings",
     )
-    additional_instructor_training_seats = models.PositiveIntegerField(
+    additional_public_instructor_training_seats = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=0,
-        verbose_name="Additional instructor training seats",
-        help_text="Use this field if you want to grant more seats than "
+        verbose_name="Additional public instructor training seats",
+        help_text="Use this field if you want to grant more public seats than "
         "the agreement provides for.",
     )
-    instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
+    public_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Instructor training seats rolled over from previous membership.",
+        help_text="Public instructor training seats rolled over from previous "
+        "membership.",
     )
-    instructor_training_seats_rolled_over = models.PositiveIntegerField(
+    public_instructor_training_seats_rolled_over = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Instructor training seats rolled over into next membership.",
+        help_text="Public instructor training seats rolled over into next membership.",
+    )
+    inhouse_instructor_training_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="In-house instructor training seats",
+        help_text="Number of in-house seats in instructor trainings",
+    )
+    additional_inhouse_instructor_training_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="Additional in-house instructor training seats",
+        help_text="Use this field if you want to grant more in-house seats than "
+        "the agreement provides for.",
+    )
+    inhouse_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(  # noqa
+        null=True,
+        blank=True,
+        help_text="In-house instructor training seats rolled over from previous membership.",  # noqa
+    )
+    inhouse_instructor_training_seats_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="In-house instructor training seats rolled over into next membership.",  # noqa
     )
     organizations = models.ManyToManyField(
         Organization,
@@ -236,7 +246,7 @@ class Membership(models.Model):
     public_status = models.CharField(
         max_length=20,
         choices=PUBLIC_STATUS_CHOICES,
-        default=PUBLIC_STATUS_CHOICES[0][0],
+        default=PUBLIC_STATUS_CHOICES[1][0],
         verbose_name="Can this membership be publicized on The carpentries websites?",
         help_text="Public memberships may be listed on any of The Carpentries "
         "websites.",
@@ -298,7 +308,7 @@ class Membership(models.Model):
         )
 
     @property
-    def workshops_without_admin_fee_available(self) -> int:
+    def workshops_without_admin_fee_total_allowed(self) -> int:
         """Available for counting, "contracted" centrally-organised workshops.
 
         This number represents the real number of available workshops for counting
@@ -308,8 +318,20 @@ class Membership(models.Model):
         meaning this value won't be ever negative."""
         a = self.workshops_without_admin_fee_per_agreement or 0
         b = self.workshops_without_admin_fee_rolled_from_previous or 0
-        c = self.workshops_without_admin_fee_rolled_over or 0
-        return max(a + b - c, 0)
+        return a + b
+
+    @property
+    def workshops_without_admin_fee_available(self) -> int:
+        """Available for counting, "contracted" centrally-organised workshops.
+
+        This number represents the real number of available workshops for counting
+        completed / planned / remaining no-fee workshops.
+
+        Because the data may be entered incorrectly, a sharp cutoff at 0 was introduced,
+        meaning this value won't be ever negative."""
+        a = self.workshops_without_admin_fee_total_allowed
+        b = self.workshops_without_admin_fee_rolled_over or 0
+        return max(a - b, 0)
 
     @cached_property
     def workshops_without_admin_fee_completed(self) -> int:
@@ -407,43 +429,54 @@ class Membership(models.Model):
         )
 
     @property
-    def self_organized_workshops_remaining(self):
-        """Count remaining self-organized workshops for the year agreement
-        started."""
-        if self.self_organized_workshops_per_agreement is None:
-            return None
+    def public_instructor_training_seats_total(self):
+        """Calculate combined public instructor training seats total.
 
-        a = self.self_organized_workshops_per_agreement
-        b = self.self_organized_workshops_rolled_from_previous or 0
-        c = self.self_organized_workshops_rolled_over or 0
-        d = self.self_organized_workshops_completed
-        e = self.self_organized_workshops_planned
-        return a + b - c - d - e
+        Unlike workshops w/o admin fee, instructor training seats have two numbers
+        combined to calculate total of allowed instructor training seats in ITT events.
+        """
+        a = self.public_instructor_training_seats
+        b = self.additional_public_instructor_training_seats
+        c = self.public_instructor_training_seats_rolled_from_previous or 0
+        return a + b + c
 
     @cached_property
-    def seats_instructor_training_total(self):
-        """Calculate combined instructor training seats total.
+    def public_instructor_training_seats_utilized(self):
+        """Count number of learner tasks that point to this membership."""
+        return self.task_set.filter(role__name="learner", seat_public=True).count()
 
-        Unlike self-organised workshops or workshops w/o admin fee, instructor
-        training seats have two numbers combined to calculate total of allowed
-        instructor training seats in ITT events."""
-        a = self.seats_instructor_training
-        b = self.additional_instructor_training_seats
-        return a + b
+    @property
+    def public_instructor_training_seats_remaining(self):
+        """Count remaining public seats for instructor training."""
+        a = self.public_instructor_training_seats_total
+        b = self.public_instructor_training_seats_utilized
+        c = self.public_instructor_training_seats_rolled_over or 0
+        return a - b - c
+
+    @property
+    def inhouse_instructor_training_seats_total(self):
+        """Calculate combined in-house instructor training seats total.
+
+        Unlike workshops w/o admin fee, instructor training seats have two numbers
+        combined to calculate total of allowed instructor training seats in ITT events.
+        """
+        a = self.inhouse_instructor_training_seats
+        b = self.additional_inhouse_instructor_training_seats
+        c = self.inhouse_instructor_training_seats_rolled_from_previous or 0
+        return a + b + c
 
     @cached_property
-    def seats_instructor_training_utilized(self):
-        """Count number of tasks that point to this membership."""
-        return self.task_set.filter(role__name="learner").count()
+    def inhouse_instructor_training_seats_utilized(self):
+        """Count number of learner tasks that point to this membership."""
+        return self.task_set.filter(role__name="learner", seat_public=False).count()
 
-    @cached_property
-    def seats_instructor_training_remaining(self):
-        """Count remaining seats for instructor training."""
-        a = self.seats_instructor_training_total
-        b = self.instructor_training_seats_rolled_from_previous or 0
-        c = self.seats_instructor_training_utilized
-        d = self.instructor_training_seats_rolled_over or 0
-        return a + b - c - d
+    @property
+    def inhouse_instructor_training_seats_remaining(self):
+        """Count remaining in-house seats for instructor training."""
+        a = self.inhouse_instructor_training_seats_total
+        b = self.inhouse_instructor_training_seats_utilized
+        c = self.inhouse_instructor_training_seats_rolled_over or 0
+        return a - b - c
 
 
 # ------------------------------------------------------------
@@ -1535,6 +1568,18 @@ class Task(RQJobsMixin, models.Model):
         "membership instructor training seats, a correct membership "
         "entry needs to be selected.",
     )
+    SEAT_PUBLIC_CHOICES = (
+        (True, "Public seat"),
+        (False, "In-house seat"),
+    )
+    seat_public = models.BooleanField(
+        null=False,
+        blank=True,
+        default=True,
+        choices=SEAT_PUBLIC_CHOICES,
+        verbose_name="Count seat as public or in-house?",
+        help_text="Ignored if the task is not for membership seat.",
+    )
     seat_open_training = models.BooleanField(
         null=False,
         blank=True,
@@ -1600,6 +1645,24 @@ class Task(RQJobsMixin, models.Model):
         ) and self.role.name != "learner":
             errors["role"] = ValidationError(
                 "Seat (open / membership) can be assigned only to a workshop learner."
+            )
+
+        if (
+            self.seat_membership
+            and self.seat_public
+            and not self.seat_membership.public_instructor_training_seats_remaining
+        ):
+            errors["seat_public"] = ValidationError(
+                "This membership doesn't have any remaining public seats."
+            )
+
+        if (
+            self.seat_membership
+            and not self.seat_public
+            and not self.seat_membership.inhouse_instructor_training_seats_remaining
+        ):
+            errors["seat_public"] = ValidationError(
+                "This membership doesn't have any remaining in-house seats."
             )
 
         if errors:

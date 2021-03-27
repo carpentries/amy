@@ -23,6 +23,7 @@ from workshops.models import (
     KnowledgeDomain,
     WorkshopRequest,
     Curriculum,
+    Task,
 )
 from workshops.fields import (
     Select2Widget,
@@ -117,6 +118,13 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="membership-lookup"),
     )
 
+    seat_public = forms.BooleanField(
+        label=Task._meta.get_field("seat_public").verbose_name,
+        required=False,
+        initial=Task._meta.get_field("seat_public").default,
+        widget=forms.RadioSelect(choices=Task.SEAT_PUBLIC_CHOICES),
+    )
+
     seat_open_training = forms.BooleanField(
         label="Open training seat",
         required=False,
@@ -130,6 +138,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     helper.layout = Layout(
         "event",
         "seat_membership",
+        "seat_public",
         "seat_open_training",
     )
     helper.add_input(

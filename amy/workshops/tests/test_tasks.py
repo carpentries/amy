@@ -121,6 +121,8 @@ class TestTask(TestBase):
             agreement_start=datetime.now() - timedelta(weeks=4),
             agreement_end=datetime.now() + timedelta(weeks=4),
             contribution_type="financial",
+            public_instructor_training_seats=1,
+            inhouse_instructor_training_seats=1,
         )
         Member.objects.create(
             membership=self.membership,
@@ -368,6 +370,58 @@ class TestTask(TestBase):
         )
         task3.full_clean()
         task4.full_clean()
+
+    def test_seat_public_validation(self):
+        # zero public seats in membership
+        self.membership.public_instructor_training_seats = 0
+        self.membership.save()
+
+        # invalid task
+        task1 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=True,
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            task1.full_clean()
+        exception = cm.exception
+        self.assertEqual({"seat_public"}, exception.error_dict.keys())
+
+        # reset seats in membership
+        self.membership.public_instructor_training_seats = 1
+        self.membership.save()
+        # refresh the cached properties
+        del self.membership.__dict__["public_instructor_training_seats_utilized"]
+        task1.full_clean()
+
+    def test_seat_inhouse_validation(self):
+        # zero inhouse seats in membership
+        self.membership.inhouse_instructor_training_seats = 0
+        self.membership.save()
+
+        # invalid task
+        task1 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=False,
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            task1.full_clean()
+        exception = cm.exception
+        self.assertEqual({"seat_public"}, exception.error_dict.keys())
+
+        # reset seats in membership
+        self.membership.inhouse_instructor_training_seats = 1
+        self.membership.save()
+        # refresh the cached properties
+        del self.membership.__dict__["inhouse_instructor_training_seats_utilized"]
+        task1.full_clean()
 
 
 class TestTaskCreateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
