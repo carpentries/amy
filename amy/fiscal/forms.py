@@ -1,4 +1,4 @@
-from crispy_forms.layout import Div, HTML, Field
+from crispy_forms.layout import Div, HTML
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -140,6 +140,16 @@ class MembershipForm(forms.ModelForm):
         except TypeError:
             pass
 
+        # check if multiple members are assigned - then disallow changing to
+        # non-consortium
+        new_consortium = self.cleaned_data.get("consortium")
+        members_count = self.instance.member_set.count()
+        if not new_consortium and members_count > 1:
+            errors["consortium"] = ValidationError(
+                "Cannot change to non-consortium when there are multiple members "
+                "assigned. Remove the members so that at most 1 is left."
+            )
+
         if errors:
             raise ValidationError(errors)
 
@@ -230,7 +240,20 @@ class MembershipRollOverForm(MembershipCreateForm):
         ].field.disabled = True
 
 
-class MemberForm(forms.ModelForm):
+class EditableFormsetFormMixin(forms.ModelForm):
+    EDITABLE = forms.BooleanField(
+        label="Change",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"data-form-editable-check": ""}),
+    )
+
+    def clean(self):
+        if self.has_changed() and not self.cleaned_data["EDITABLE"]:
+            raise ValidationError("Form values weren't supposed to be changed.")
+        return super().clean()
+
+
+class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -257,16 +280,19 @@ class MemberForm(forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout.append("id")
+        self.helper.layout.append("DELETE")  # visible; formset adds it
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
-        self.helper.layout.append(Field("id"))
-        self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
-        self.helper_empty_form.layout.append(Field("id"))
+        self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
-            Div(Field("DELETE"), css_class="d-none")  # hidden
+            Div("DELETE", css_class="d-none")  # hidden
         )
+        # remove EDITABLE checkbox from empty helper form
+        pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
+        self.helper_empty_form.layout.pop(pos_index)
 
 
-class MembershipTaskForm(forms.ModelForm):
+class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -293,13 +319,16 @@ class MembershipTaskForm(forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout.append("id")
+        self.helper.layout.append("DELETE")  # visible; formset adds it
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
-        self.helper.layout.append(Field("id"))
-        self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
-        self.helper_empty_form.layout.append(Field("id"))
+        self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
-            Div(Field("DELETE"), css_class="d-none")  # hidden
+            Div("DELETE", css_class="d-none")  # hidden
         )
+        # remove EDITABLE checkbox from empty helper form
+        pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
+        self.helper_empty_form.layout.pop(pos_index)
 
 
 class MembershipExtensionForm(forms.Form):

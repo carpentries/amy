@@ -631,25 +631,62 @@ class TestMembershipForms(TestBase):
             ["Agreement end date can't be sooner than the start date."],
         )
 
+    def test_changing_consortium_to_nonconsortium(self):
+        membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=True,
+            variant="partner",
+            agreement_start=date(2021, 3, 21),
+            agreement_end=date(2022, 3, 21),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
+        )
+        m1 = Member.objects.create(
+            membership=membership,
+            organization=self.org_alpha,
+            role=MemberRole.objects.first(),
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=self.org_beta,
+            role=MemberRole.objects.last(),
+        )
+
+        data = {
+            "name": membership.name,
+            "consortium": False,  # changing to non-consortium
+            "public_status": membership.public_status,
+            "agreement_start": membership.agreement_start,
+            "agreement_end": membership.agreement_end,
+            "variant": membership.variant,
+            "contribution_type": membership.contribution_type,
+            "public_instructor_training_seats": membership.public_instructor_training_seats,  # noqa
+            "additional_public_instructor_training_seats": membership.additional_public_instructor_training_seats,  # noqa
+            "inhouse_instructor_training_seats": membership.inhouse_instructor_training_seats,  # noqa
+            "additional_inhouse_instructor_training_seats": membership.additional_inhouse_instructor_training_seats,  # noqa
+        }
+        form = MembershipForm(data, instance=membership)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors["consortium"],
+            [
+                "Cannot change to non-consortium when there are multiple members "
+                "assigned. Remove the members so that at most 1 is left."
+            ],
+        )
+
+        # after deleting the member, form validates with no errors
+        m1.delete()
+        form = MembershipForm(data, instance=membership)
+        self.assertTrue(form.is_valid())
+
 
 class TestNewMembershipWorkflow(TestBase):
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
-
-    def setUpMembership(self, consortium: bool):
-        self.membership = Membership.objects.create(
-            name="Test Membership",
-            consortium=consortium,
-            public_status="public",
-            variant="partner",
-            agreement_start="2021-02-14",
-            agreement_end="2022-02-14",
-            contribution_type="financial",
-            public_instructor_training_seats=0,
-            additional_public_instructor_training_seats=0,
-        )
-        self.member_role = MemberRole.objects.first()
 
     def test_new_nonconsortium_membership_redirects_to_details(self):
         """Ensure once created, new non-consortium membership redirects to it's details
@@ -750,185 +787,6 @@ class TestNewMembershipWorkflow(TestBase):
         member = latest_membership.member_set.first()
         self.assertEqual(member.role.name, "contract_signatory")
         self.assertEqual(member.organization, self.org_alpha)
-
-    def test_adding_new_member_to_nonconsortium(self):
-        """Ensure only 1 member can be added to non-consortium membership."""
-        self.setUpMembership(consortium=False)
-        self.assertEqual(self.membership.member_set.count(), 0)
-
-        # only 1 member allowed
-        data = {
-            "form-TOTAL_FORMS": 1,
-            "form-INITIAL_FORMS": 0,
-            "form-MIN_NUM_FORMS": 0,
-            "form-MAX_NUM_FORMS": 1000,
-            "form-0-organization": self.org_alpha.pk,
-            "form-0-role": self.member_role.pk,
-            "form-0-id": "",
-        }
-        response = self.client.post(
-            reverse("membership_members", args=[self.membership.pk]),
-            data=data,
-            follow=True,
-        )
-
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
-        self.assertEqual(self.membership.member_set.count(), 1)
-        self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
-
-        # posting this will fail because only 1 form in the formset is allowed
-        data = {
-            "form-TOTAL_FORMS": 2,
-            "form-INITIAL_FORMS": 0,
-            "form-MIN_NUM_FORMS": 0,
-            "form-MAX_NUM_FORMS": 1000,
-            "form-0-organization": self.org_alpha.pk,
-            "form-0-role": self.member_role.pk,
-            "form-0-id": "",
-            "form-1-organization": self.org_beta.pk,
-            "form-1-role": self.member_role.pk,
-            "form-1-id": "",
-        }
-        response = self.client.post(
-            reverse("membership_members", args=[self.membership.pk]),
-            data=data,
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.membership.member_set.count(), 1)  # number didn't change
-
-    def test_adding_new_members_to_consortium(self):
-        """Ensure 1+ members can be added to consortium membership."""
-        self.setUpMembership(consortium=True)
-        self.assertEqual(self.membership.member_set.count(), 0)
-        data = {
-            "form-TOTAL_FORMS": 2,
-            "form-INITIAL_FORMS": 0,
-            "form-MIN_NUM_FORMS": 0,
-            "form-MAX_NUM_FORMS": 1000,
-            "form-0-organization": self.org_alpha.pk,
-            "form-0-role": self.member_role.pk,
-            "form-0-id": "",
-            "form-1-organization": self.org_beta.pk,
-            "form-1-role": self.member_role.pk,
-            "form-1-id": "",
-        }
-        response = self.client.post(
-            reverse("membership_members", args=[self.membership.pk]),
-            data=data,
-            follow=True,
-        )
-
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
-        self.assertEqual(self.membership.member_set.count(), 2)
-        self.assertEqual(
-            list(self.membership.organizations.all()), [self.org_alpha, self.org_beta]
-        )
-
-    def test_removing_members_from_nonconsortium(self):
-        """Ensure removing the only member from non-consortium membership is not
-        allowed."""
-        self.setUpMembership(consortium=False)
-        m1 = Member.objects.create(
-            organization=self.org_alpha,
-            membership=self.membership,
-            role=self.member_role,
-        )
-
-        data = {
-            "form-TOTAL_FORMS": 1,
-            "form-INITIAL_FORMS": 1,
-            "form-MIN_NUM_FORMS": 0,
-            "form-MAX_NUM_FORMS": 1000,
-            "form-0-organization": m1.organization.pk,
-            "form-0-role": m1.role.pk,
-            "form-0-id": m1.pk,
-            "form-0-DELETE": "on",
-        }
-        response = self.client.post(
-            reverse("membership_members", args=[self.membership.pk]),
-            data=data,
-            follow=True,
-        )
-        self.assertEqual(response.status_code, 200)  # response failed
-        self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
-
-    def test_removing_members_from_consortium(self):
-        """Ensure removing all members from consortium membership is allowed."""
-        self.setUpMembership(consortium=True)
-        m1 = Member.objects.create(
-            organization=self.org_alpha,
-            membership=self.membership,
-            role=self.member_role,
-        )
-        m2 = Member.objects.create(
-            organization=self.org_beta,
-            membership=self.membership,
-            role=self.member_role,
-        )
-
-        data = {
-            "form-TOTAL_FORMS": 2,
-            "form-INITIAL_FORMS": 2,
-            "form-MIN_NUM_FORMS": 0,
-            "form-MAX_NUM_FORMS": 1000,
-            "form-0-organization": m1.organization.pk,
-            "form-0-role": m1.role.pk,
-            "form-0-id": m1.pk,
-            "form-0-DELETE": "on",
-            "form-1-organization": m2.organization.pk,
-            "form-1-role": m2.role.pk,
-            "form-1-id": m2.pk,
-            "form-1-DELETE": "on",
-        }
-        response = self.client.post(
-            reverse("membership_members", args=[self.membership.pk]),
-            data=data,
-            follow=True,
-        )
-
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
-        self.assertEqual(list(self.membership.organizations.all()), [])
-
-    def test_mix_adding_removing_members_from_consortium(self):
-        """Ensure a mixed-content formset for consortium membership members works
-        fine (e.g. a new member is added, and an old one is removed)."""
-        self.setUpMembership(consortium=True)
-        m1 = Member.objects.create(
-            organization=self.org_alpha,
-            membership=self.membership,
-            role=self.member_role,
-        )
-
-        data = {
-            "form-TOTAL_FORMS": 2,
-            "form-INITIAL_FORMS": 1,
-            "form-MIN_NUM_FORMS": 0,
-            "form-MAX_NUM_FORMS": 1000,
-            "form-0-organization": m1.organization.pk,
-            "form-0-role": m1.role.pk,
-            "form-0-id": m1.pk,
-            "form-0-DELETE": "on",
-            "form-1-organization": self.org_beta.pk,
-            "form-1-role": self.member_role.pk,
-            "form-1-id": "",
-        }
-        response = self.client.post(
-            reverse("membership_members", args=[self.membership.pk]),
-            data=data,
-            follow=True,
-        )
-
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
-
-        self.assertEqual(list(self.membership.organizations.all()), [self.org_beta])
 
 
 class TestMembershipExtension(TestBase):

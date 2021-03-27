@@ -359,15 +359,10 @@ $(document).ready(function() {
           const fieldset = mutation.target;
           // indicate fieldset is discarded, but don't disable it
           // (disabled fields aren't sent by the browsers)
-          fieldset.classList.add("bg-light");
+          fieldset.classList.add("d-none");
         }
       })
     };
-
-    // don't existing fieldsets -> they're using the default, built-in "Delete" checkbox
-    // formsetBody.querySelectorAll("fieldset[data-formset-form]").forEach((element) => {
-    //   new MutationObserver(formDeletedHandler).observe(element, formDeletedObserverConfig);
-    // })
 
     // handle new fieldsets
     new MutationObserver((mutations) => {
@@ -382,6 +377,34 @@ $(document).ready(function() {
       })
     }).observe(formsetBody, {
       childList: true,
+    });
+
+    // set readonly on every select inside parent
+    const readonly_selects = (parent, read_only) => {
+      parent.querySelectorAll("select").forEach(select => {
+        if (read_only) {
+          select.setAttribute("readonly", "");
+        } else {
+          select.removeAttribute("readonly");
+        }
+      })
+    }
+
+    // set selects read-only when they don't have "Change" selected
+    const fieldsets = document.querySelectorAll('#formset [data-formset-body] fieldset');
+    fieldsets.forEach(fieldset => {
+      const change_allowed = fieldset.querySelector('input[type=checkbox][data-form-editable-check]:checked');
+      console.log(change_allowed);
+      // set readonly on every select inside fieldset
+      readonly_selects(fieldset, change_allowed === null);
+    });
+
+    // react on "change" button
+    const editable_checkboxes = document.querySelectorAll('#formset [data-formset-body] fieldset input[type=checkbox][data-form-editable-check]');
+    editable_checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', e => {
+        readonly_selects(e.target.closest("fieldset"), !e.target.checked);
+      });
     });
   }
 });
