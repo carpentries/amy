@@ -10,6 +10,7 @@ from fiscal.forms import (
     MembershipExtensionForm,
     MembershipRollOverForm,
 )
+from fiscal.models import MembershipTask, MembershipPersonRole
 from workshops.tests.base import TestBase
 from workshops.models import (
     Membership,
@@ -887,10 +888,10 @@ class TestMembershipCreateRollOver(TestBase):
             "additional_inhouse_instructor_training_seats": 0,
         }
 
-    def setUpMembership(self):
+    def setUpMembership(self, consortium: bool = False):
         self.membership = Membership.objects.create(
             name="Test Membership",
-            consortium=False,
+            consortium=consortium,
             public_status="public",
             variant="partner",
             agreement_start="2020-03-01",
@@ -907,6 +908,11 @@ class TestMembershipCreateRollOver(TestBase):
             organization=self.org_alpha,
             membership=self.membership,
             role=MemberRole.objects.first(),
+        )
+        MembershipTask.objects.create(
+            person=self.hermione,
+            membership=self.membership,
+            role=MembershipPersonRole.objects.first(),
         )
 
     def test_form_simple_valid(self):
@@ -1070,8 +1076,8 @@ class TestMembershipCreateRollOver(TestBase):
                 if not is_valid:
                     self.assertEqual(set(failed_fields), form.errors.keys())
 
-    def test_new_membership_created(self):
-        self.setUpMembership()
+    def test_new_membership_nonconsortium_created(self):
+        self.setUpMembership(consortium=False)
 
         response = self.client.post(
             reverse("membership_create_roll_over", args=[self.membership.pk]),
@@ -1083,6 +1089,83 @@ class TestMembershipCreateRollOver(TestBase):
         self.assertRedirects(
             response, reverse("membership_details", args=[last_membership.pk])
         )
+        # main member should be copied over to the new membership when the
+        # original membership is not a consortium
+        self.assertEqual(last_membership.member_set.count(), 1)
+        self.assertEqual(
+            last_membership.member_set.first().organization, self.org_alpha
+        )
+        self.assertEqual(
+            last_membership.member_set.first().role, MemberRole.objects.first()
+        )
+
+    def test_new_membership_consortium_created(self):
+        self.setUpMembership(consortium=True)
+
+        test_data = [True, False]
+
+        for copy_members in test_data:
+            with self.subTest(copy_members=copy_members):
+                data = {
+                    "copy_members": copy_members,
+                    **self.data,
+                }
+                response = self.client.post(
+                    reverse("membership_create_roll_over", args=[self.membership.pk]),
+                    data=data,
+                    follow=True,
+                )
+
+                last_membership = Membership.objects.order_by("pk").last()
+                self.assertRedirects(
+                    response, reverse("membership_details", args=[last_membership.pk])
+                )
+
+                if copy_members:
+                    self.assertEqual(last_membership.member_set.count(), 1)
+                    self.assertEqual(
+                        last_membership.member_set.first().organization, self.org_alpha
+                    )
+                    self.assertEqual(
+                        last_membership.member_set.first().role,
+                        MemberRole.objects.first(),
+                    )
+                else:
+                    self.assertEqual(last_membership.member_set.count(), 0)
+
+    def test_new_membership_persons_copied(self):
+        self.setUpMembership()
+
+        test_data = [True, False]
+
+        for copy_membership_tasks in test_data:
+            with self.subTest(copy_membership_tasks=copy_membership_tasks):
+                data = {
+                    "copy_membership_tasks": copy_membership_tasks,
+                    **self.data,
+                }
+                response = self.client.post(
+                    reverse("membership_create_roll_over", args=[self.membership.pk]),
+                    data=data,
+                    follow=True,
+                )
+
+                last_membership = Membership.objects.order_by("pk").last()
+                self.assertRedirects(
+                    response, reverse("membership_details", args=[last_membership.pk])
+                )
+
+                if copy_membership_tasks:
+                    self.assertEqual(last_membership.membershiptask_set.count(), 1)
+                    self.assertEqual(
+                        last_membership.membershiptask_set.first().person, self.hermione
+                    )
+                    self.assertEqual(
+                        last_membership.membershiptask_set.first().role,
+                        MembershipPersonRole.objects.first(),
+                    )
+                else:
+                    self.assertEqual(last_membership.membershiptask_set.count(), 0)
 
     def test_membership_rollovers(self):
         self.setUpMembership()

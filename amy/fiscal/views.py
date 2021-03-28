@@ -411,22 +411,26 @@ class MembershipCreateRollOver(
         )
         self.membership.save()
 
-        # create the object and store returned success url redirect
         result = super().form_valid(form)
 
         # duplicate members and membership tasks from old membership to the new one
-        Member.objects.bulk_create(
-            [
-                Member(membership=self.object, organization=m.organization, role=m.role)
-                for m in self.membership.member_set.all()
-            ]
-        )
-        MembershipTask.objects.bulk_create(
-            [
-                MembershipTask(membership=self.object, person=m.person, role=m.role)
-                for m in self.membership.membershiptask_set.all()
-            ]
-        )
+        if form.cleaned_data["copy_members"]:
+            Member.objects.bulk_create(
+                [
+                    Member(
+                        membership=self.object, organization=m.organization, role=m.role
+                    )
+                    for m in self.membership.member_set.all()
+                ]
+            )
+
+        if form.cleaned_data["copy_membership_tasks"]:
+            MembershipTask.objects.bulk_create(
+                [
+                    MembershipTask(membership=self.object, person=m.person, role=m.role)
+                    for m in self.membership.membershiptask_set.all()
+                ]
+            )
 
         return result
 

@@ -228,6 +228,20 @@ class MembershipCreateForm(MembershipForm):
 class MembershipRollOverForm(MembershipCreateForm):
     main_organization = None  # remove the additional field
 
+    copy_members = forms.BooleanField(
+        label="Do you want to automatically copy member organisations from existing "
+        "membership?",
+        required=False,
+        initial=True,
+        help_text="If not consortium, the main organisation is always copied.",
+    )
+    copy_membership_tasks = forms.BooleanField(
+        label="Do you want to automatically copy persons and their roles from existing "
+        "membership?",
+        required=False,
+        initial=True,
+    )
+
     class Meta(MembershipCreateForm.Meta):
         fields = [
             "name",
@@ -249,6 +263,8 @@ class MembershipRollOverForm(MembershipCreateForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
+            "copy_members",
+            "copy_membership_tasks",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -271,6 +287,13 @@ class MembershipRollOverForm(MembershipCreateForm):
                 MinValueValidator(self[field].field.min_value),
                 MaxValueValidator(self[field].field.max_value),
             ]
+
+        # disable editing consortium
+        self["consortium"].field.disabled = True
+
+        # if not consortium, disable option to not copy members
+        if self.initial.get("consortium", False) is False:
+            self["copy_members"].field.disabled = True
 
 
 class EditableFormsetFormMixin(forms.ModelForm):
