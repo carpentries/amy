@@ -54,7 +54,7 @@
             {% if organisations %}
             <ul>
               {% for organisation in organisations %}
-              <li><a class="searchresult" href="{% url 'organization_details' organisation.domain %}">{{ organisation.domain }}</a></li>
+              <li><a class="searchresult" href="{% url 'organization_details' organisation.domain_quoted %}">{{ organisation.domain }}</a></li>
               {% endfor %}
             </ul>
             {% else %}

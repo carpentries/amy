@@ -1,7 +1,8 @@
+from urllib.parse import urlparse, urlunparse
+
 from crispy_forms.layout import Div, HTML
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
 from django.dispatch import receiver
 from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
@@ -34,23 +35,30 @@ SIDEBAR_DAL_WIDTH = {
 
 
 class OrganizationForm(forms.ModelForm):
-    domain = forms.CharField(
-        max_length=Organization._meta.get_field("domain").max_length,
-        validators=[
-            RegexValidator(
-                r"[^\w\.-]+",
-                inverse_match=True,
-                message='Please enter only the domain (such as "math.esu.edu")'
-                ' without a leading "http://" or a trailing "/".',
-            )
-        ],
-    )
-
+    domain = forms.URLField(widget=forms.TextInput)
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta:
         model = Organization
         fields = ["domain", "fullname", "country", "latitude", "longitude"]
+
+    def clean_domain(self):
+        """Convert text into URL without scheme (http/https/etc)."""
+        cleaned = self.cleaned_data["domain"]
+
+        parsed_url = urlparse(cleaned)
+        unparsed_url = urlunparse(
+            parsed_url._replace(scheme="", params="", fragment="")
+        )
+
+        # after parsing-unparsing we may be left with scheme-less text
+        # e.g. "//carpentries.org/lessons"; we obviously want to remove the slashes
+        if unparsed_url.startswith("//"):
+            domain = unparsed_url[2:]
+        else:
+            domain = unparsed_url
+
+        return domain
 
 
 class OrganizationCreateForm(OrganizationForm):

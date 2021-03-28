@@ -201,7 +201,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     lookup_field = "domain"
-    lookup_value_regex = r"[^/]+"  # the default one doesn't work with domains
+    lookup_value_regex = ".+"  # the default one doesn't work with domains with paths
     pagination_class = StandardResultsSetPagination
 
 

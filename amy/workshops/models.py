@@ -1,5 +1,6 @@
 import datetime
 import re
+from urllib.parse import quote
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -84,8 +85,12 @@ class Organization(models.Model):
     def __str__(self):
         return "{} <{}>".format(self.fullname, self.domain)
 
+    @property
+    def domain_quoted(self):
+        return quote(self.domain, safe="")
+
     def get_absolute_url(self):
-        return reverse("organization_details", args=[str(self.domain)])
+        return reverse("organization_details", args=[self.domain_quoted])
 
     class Meta:
         ordering = ("domain",)
