@@ -1,8 +1,9 @@
-from django.test.testcases import TestCase
-from amy.consents.util import person_has_consented_to_required_terms
 from consents.models import Consent, Term, TermOption
+from django.test.testcases import TestCase
 from django.utils import timezone
 from workshops.models import Person
+
+from amy.consents.util import person_has_consented_to_required_terms
 
 
 class TestActiveTermConsentsForm(TestCase):

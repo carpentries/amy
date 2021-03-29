@@ -1,13 +1,13 @@
-from consents.util import person_has_consented_to_required_terms
-from typing import Iterable
 from contextlib import contextmanager
-from django.urls import reverse
-from django.utils.http import urlencode
+from typing import Iterable
 
-from workshops.tests.base import TestBase
-from workshops.models import Person
 from consents.forms import RequiredConsentsForm
 from consents.models import Consent, Term, TermOption
+from consents.util import person_has_consented_to_required_terms
+from django.urls import reverse
+from django.utils.http import urlencode
+from workshops.models import Person
+from workshops.tests.base import TestBase
 
 
 class ActionRequiredConsentTestBase(TestBase):

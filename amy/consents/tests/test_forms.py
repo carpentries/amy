@@ -1,9 +1,9 @@
 from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
 from consents.models import Consent, Term, TermOption
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.test import TestCase
 from django.utils import timezone
 from workshops.models import Person
-from django.db.models.fields import BLANK_CHOICE_DASH
 
 
 class TestActiveTermConsentsForm(TestCase):

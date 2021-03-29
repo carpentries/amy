@@ -1,8 +1,7 @@
-from django.utils.functional import cached_property
-
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
+from django.utils.functional import cached_property
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import STR_MED, Person
 
