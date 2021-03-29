@@ -10,7 +10,7 @@ from consents.forms import RequiredConsentsForm
 from consents.models import Consent, Term, TermOption
 
 
-class ConsentTestBase(TestBase):
+class ActionRequiredConsentTestBase(TestBase):
     @staticmethod
     def create_required_consents() -> None:
         user_privacy_policy = Term.objects.create(
@@ -61,7 +61,7 @@ class ConsentTestBase(TestBase):
             yield
 
 
-class TestActionRequiredTermView(ConsentTestBase):
+class TestActionRequiredTermView(ActionRequiredConsentTestBase):
     def setUp(self):
         super()._setUpAirports()
         super()._setUpBadges()
@@ -142,7 +142,7 @@ class TestActionRequiredTermView(ConsentTestBase):
         self.assertTrue(form.is_valid())
 
 
-class TestTermsMiddleware(ConsentTestBase):
+class TestTermsMiddleware(ActionRequiredConsentTestBase):
     def setUp(self):
         super()._setUpAirports()
         super()._setUpBadges()
