@@ -2,7 +2,6 @@ from typing import Iterable, List
 
 from consents.models import Consent, Term, TermOption
 from django import forms
-from django.db.models import Q
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
 from workshops.forms import BootstrapHelper, WidgetOverrideMixin
@@ -64,19 +63,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         consent = self.term_id_by_consent.get(term.id, None)
         options = [(opt.id, option_display_value(opt)) for opt in term.options]
         required = term.required_type != Term.OPTIONAL_REQUIRE_TYPE
-        # if term.is_yes_only or term.is_yes_and_no:
-        #     # Changing yes-only terms to checkbox so that the user
-        #     # can unclick the option if desired without refreshing the page
-        #     field = forms.BooleanField(
-        #         # widget=,
-        #         # choices=options,
-        #         label=term.content,
-        #         required=required,
-        #         initial=consent.term_option_id if consent else None,
-        #     )
-        # else:
         field = forms.ChoiceField(
-            # widget=forms.RadioSelect,
             choices=BLANK_CHOICE_DASH + options,
             label=term.content,
             required=required,
@@ -120,19 +107,10 @@ class RequiredConsentsForm(BaseTermConsentsForm):
     Builds form shown on login when there are missing required consents.
     """
 
-    # Optional Terms we want to include
-    # when the user is consenting to required terms.
-    # TODO: looks like these should just be required, based on the model
-    # I want to add them to the db as a migration instead
-    OPTIONAL_TERM_SLUGS = ("privacy-policy", "may-contact")
-
     @classmethod
     def get_terms(cls) -> Iterable[Term]:
         return (
             Term.objects.active()
             .prefetch_active_options()
-            .filter(
-                Q(required_type=Term.PROFILE_REQUIRE_TYPE)
-                | Q(slug__in=cls.OPTIONAL_TERM_SLUGS)
-            )
+            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
         )

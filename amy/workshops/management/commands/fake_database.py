@@ -885,6 +885,7 @@ class Command(BaseCommand):
             content="May contact: Allow to contact from The Carpentries according to"
             " the Privacy Policy.",
             slug="may-contact",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
         )
         may_contact_agree = TermOption.objects.create(
             term=may_contact, option_type=TermOption.AGREE
@@ -897,6 +898,7 @@ class Command(BaseCommand):
             " Allow to post your name and any public profile"
             " you list (website, Twitter) on our instructors website."
             " Emails will not be posted.",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
         )
         public_profile_agree = TermOption.objects.create(
             term=public_profile, option_type=TermOption.AGREE
