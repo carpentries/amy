@@ -68,9 +68,10 @@ class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         new_consents: List[Consent] = []
         for term in self.terms:
             option_id = self.cleaned_data.get(term.slug)
-            if not option_id:
-                continue
             consent = self.term_id_by_consent.get(term.id)
+            has_changed = option_id != str(consent.term_option_id) if consent else True
+            if not option_id or not has_changed:
+                continue
             if consent:
                 consent.archived_at = timezone.now()
                 consent.save()
