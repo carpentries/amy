@@ -1,4 +1,4 @@
-from functools import cached_property
+from django.utils.functional import cached_property
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -69,19 +69,6 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
             return self.active_options
         return TermOption.objects.active().filter(term=self)
 
-    @cached_property
-    def is_yes_only(self) -> bool:
-        options = self.options
-        return len(options) == 1 and options[0].option_type == TermOption.AGREE
-
-    @cached_property
-    def is_yes_and_no(self) -> bool:
-        if len(self.options) != 2:
-            return False
-
-        option_types = set([option.option_type for option in self.options])
-        return option_types == set([TermOption.AGREE, TermOption.DECLINE])
-
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     AGREE = "agree"
@@ -117,28 +104,3 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         if self.term_id != self.term_option.term_id:
             raise ValidationError("Consent term.id must match term_option.term_id")
         return super().save(*args, **kwargs)
-
-
-def create_yes_only_term(
-    *, slug: str, content: str, required_type: str = Term.OPTIONAL_REQUIRE_TYPE
-) -> Term:
-    term = Term.objects.create(
-        slug=slug,
-        content=content,
-        required_type=required_type,
-    )
-    TermOption.objects.create(
-        term=term,
-        option_type=TermOption.AGREE,
-    )
-    return term
-
-
-def create_yes_and_no_term(
-    *, slug: str, content: str, required_type: str = Term.OPTIONAL_REQUIRE_TYPE
-) -> Term:
-    term = create_yes_only_term(slug=slug, content=content, required_type=required_type)
-    TermOption.objects.create(
-        term=term,
-        option_type=TermOption.DISAGREE,
-    )
