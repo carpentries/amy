@@ -16,7 +16,14 @@ class TermAdmin(admin.ModelAdmin):
 
 
 class ConsentAdmin(admin.ModelAdmin):
-    list_display = ("person", "term", "term_option", "get_term_option_type")
+    list_display = (
+        "created_at",
+        "person",
+        "term",
+        "term_option",
+        "get_term_option_type",
+        "archived_at",
+    )
     readonly_fields = ("person", "term", "term_option", "archived_at")
     search_fields = ("person__personal", "person__family", "person__email")
     list_filter = ["term", "term_option__option_type", "archived_at"]
