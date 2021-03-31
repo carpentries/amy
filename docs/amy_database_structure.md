@@ -143,6 +143,8 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `fullname` Human friendly name of the organization
 * `country` Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
 * `latitude` and `longitude` Stored as floating point (decimal) numbers
+* `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related.
+   For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".
 
 # Additional Tables in AMY
 

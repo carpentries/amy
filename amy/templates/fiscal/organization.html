@@ -26,6 +26,20 @@
       {% endif %}
     </td>
   </tr>
+  <tr>
+    <th>Affiliated organisations:</th>
+    <td>
+      {% if organization.affiliated_organizations.all %}
+        <ul>
+        {% for affiliated in organization.affiliated_organizations.all %}
+          <li><a href="{{ affiliated.get_absolute_url }}">{{ affiliated }}</a></li>
+        {% endfor %}
+        </ul>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
 </table>
 
 <div class="clearfix">

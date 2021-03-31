@@ -8,6 +8,7 @@ from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from fiscal.models import MembershipTask
+from workshops.fields import ModelSelect2MultipleWidget
 from workshops.forms import (
     BootstrapHelper,
     form_saved_add_comment,
@@ -40,7 +41,19 @@ class OrganizationForm(forms.ModelForm):
 
     class Meta:
         model = Organization
-        fields = ["domain", "fullname", "country", "latitude", "longitude"]
+        fields = [
+            "domain",
+            "fullname",
+            "country",
+            "latitude",
+            "longitude",
+            "affiliated_organizations",
+        ]
+        widgets = {
+            "affiliated_organizations": ModelSelect2MultipleWidget(
+                data_view="organization-lookup"
+            ),
+        }
 
     def clean_domain(self):
         """Convert text into URL without scheme (http/https/etc)."""
