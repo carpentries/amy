@@ -681,14 +681,15 @@ def fetch_workshop_metadata(event_url, timeout=5):
     return metadata
 
 
-class WrongWorkshopURL(ValueError):
+class WrongWorkshopURL(Exception):
     """Raised when we fall back to reading metadata from event's YAML front
     matter, which requires a link to GitHub raw hosted file, but we can't get
-    that link because provided URL doesn't match Event.WEBSITE_REGEX
+    that link because provided URL doesn't match Event.WEBSITE_REGEX or Event.REPO_REGEX
     (see `generate_url_to_event_index` below)."""
 
-    def __str__(self):
-        return "Event's URL doesn't match Github website or repo format."
+    def __init__(self, msg: str):
+        self.msg = msg
+        super().__init__()
 
 
 def generate_url_to_event_index(website_url):
@@ -700,7 +701,7 @@ def generate_url_to_event_index(website_url):
         results = regex.match(website_url)
         if results:
             return template.format(**results.groupdict()), results.group("repo")
-    raise WrongWorkshopURL()
+    raise WrongWorkshopURL("URL doesn't match Github website or repo format.")
 
 
 def find_workshop_YAML_metadata(content):

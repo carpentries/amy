@@ -976,7 +976,7 @@ def validate_event(request, slug):
         error_messages, warning_messages = validate_workshop_metadata(metadata)
 
     except WrongWorkshopURL as e:
-        error_messages.append(str(e))
+        error_messages.append(f"URL error: {e.msg}")
 
     except requests.exceptions.HTTPError as e:
         error_messages.append(
@@ -1293,7 +1293,7 @@ def event_import(request):
         return HttpResponseBadRequest("Network connection error.")
 
     except WrongWorkshopURL as e:
-        return HttpResponseBadRequest(str(e))
+        return HttpResponseBadRequest(f"URL error: {e.msg}")
 
     except KeyError:
         return HttpResponseBadRequest('Missing or wrong "url" parameter.')
