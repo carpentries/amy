@@ -203,7 +203,7 @@ class TestSWCHomeworkStatus(TestBase):
 
     def test_homework_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Homework not submitted yet")
+        self.assertContains(rv, "SWC Homework not submitted")
 
     def test_homework_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
@@ -222,7 +222,7 @@ class TestSWCHomeworkStatus(TestBase):
             trainee=self.admin, requirement=self.homework, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Homework not submitted yet")
+        self.assertContains(rv, "SWC Homework not submitted")
 
     def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
         self,
@@ -270,7 +270,7 @@ class TestDCHomeworkStatus(TestBase):
 
     def test_homework_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Homework not submitted yet")
+        self.assertContains(rv, "DC Homework not submitted")
 
     def test_homework_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
@@ -289,7 +289,7 @@ class TestDCHomeworkStatus(TestBase):
             trainee=self.admin, requirement=self.homework, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Homework not submitted yet")
+        self.assertContains(rv, "DC Homework not submitted")
 
     def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
         self,
@@ -337,7 +337,7 @@ class TestLCHomeworkStatus(TestBase):
 
     def test_homework_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Homework not submitted yet")
+        self.assertContains(rv, "LC Homework not submitted")
 
     def test_homework_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
@@ -356,7 +356,7 @@ class TestLCHomeworkStatus(TestBase):
             trainee=self.admin, requirement=self.homework, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Homework not submitted yet")
+        self.assertContains(rv, "LC Homework not submitted")
 
     def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
         self,
@@ -451,15 +451,15 @@ class TestDemoSessionStatus(TestBase):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.swc_demo)
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "SWC Demo Session passed")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_swc_session_passed_but_discarded(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.swc_demo, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "SWC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_swc_last_session_discarded_but_another_is_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.swc_demo)
@@ -468,34 +468,34 @@ class TestDemoSessionStatus(TestBase):
         )
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "SWC Demo Session passed")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_swc_session_failed(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.swc_demo, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "SWC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_no_participation_in_a_swc_session_yet(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "SWC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_dc_session_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.dc_demo)
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "DC Demo Session passed")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_dc_session_passed_but_discarded(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.dc_demo, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "DC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_dc_last_session_discarded_but_another_is_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.dc_demo)
@@ -504,34 +504,34 @@ class TestDemoSessionStatus(TestBase):
         )
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "DC Demo Session passed")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_dc_session_failed(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.dc_demo, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "DC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_no_participation_in_a_dc_session_yet(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "DC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_lc_session_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.lc_demo)
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "LC Demo Session passed")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_lc_session_passed_but_discarded(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.lc_demo, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "LC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_lc_last_session_discarded_but_another_is_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.lc_demo)
@@ -540,20 +540,20 @@ class TestDemoSessionStatus(TestBase):
         )
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "LC Demo Session passed")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_lc_session_failed(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.lc_demo, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "LC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_no_participation_in_a_lc_session_yet(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session not passed yet")
-        self.assertContains(rv, "You can register for Demo Session on")
+        self.assertContains(rv, "LC Demo Session not completed")
+        self.assertContains(rv, "You can register for a Demo Session on")
 
     def test_no_registration_instruction_when_trainee_passed_both_all_sessions(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.swc_demo)
@@ -563,4 +563,4 @@ class TestDemoSessionStatus(TestBase):
         self.assertContains(rv, "SWC Demo Session passed")
         self.assertContains(rv, "DC Demo Session passed")
         self.assertContains(rv, "LC Demo Session passed")
-        self.assertNotContains(rv, "You can register for Demo Session on")
+        self.assertNotContains(rv, "You can register for a Demo Session on")
