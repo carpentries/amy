@@ -40,7 +40,7 @@
     </tr>
     <tr>
       <th rowspan="5">2. Homework</th>
-      <th>Carpentry type</th>
+      <th>Carpentry lesson program</th>
       <th>Status</th>
     </tr>
     {% if user.passed_swc_homework %}
@@ -56,7 +56,7 @@
     {% else %}
     <tr>
       <td><b>SWC</b></td>
-      <td>SWC Homework not submitted yet.<br>It's only necessary if you want to become Software Carpentry Instructor.</td>
+      <td>SWC Homework not submitted.<br>Only one homework is necessary to become a certified Carpentries Instructor.</td>
     </tr>
     {% endif %}
     {% if user.passed_dc_homework %}
@@ -72,7 +72,7 @@
     {% else %}
     <tr>
       <td><b>DC</b></td>
-      <td>DC Homework not submitted yet.<br>It's only necessary if you want to become Data Carpentry Instructor.</td>
+      <td>DC Homework not submitted.<br>Only one homework is necessary to become a certified Carpentries Instructor.</td>
     </tr>
     {% endif %}
     {% if user.passed_lc_homework %}
@@ -88,7 +88,7 @@
     {% else %}
     <tr>
       <td><b>LC</b></td>
-      <td>LC Homework not submitted yet.<br>It's only necessary if you want to become Library Carpentry Instructor.</td>
+      <td>LC Homework not submitted.<br>Only one homework is necessary to become a certified Carpentries Instructor.</td>
     </tr>
     {% endif %}
     <tr>
@@ -104,13 +104,13 @@
           <p><span class="label label-success">Discussion Session passed.</span></p>
         {% else %}
           <p><span class="label label-default">Discussion Session not passed yet.</span></p>
-          <p>Register for Discussion Session on <a href="https://pad.carpentries.org/community-discussions">this Etherpad</a>. Register for only one session even if you want to become Instructor for more than one Carpentry.</p>
+          <p>Register for a Discussion Session on <a href="https://pad.carpentries.org/community-discussions">this Etherpad</a>. Register for only one session even if you want to become an Instructor for more than one Carpentry lesson program.</p>
         {% endif %}
       </td>
     </tr>
     <tr>
       <th rowspan="5">4. Demo Session</th>
-      <th>Carpentry type</th>
+      <th>Carpentry lesson program</th>
       <th>Status</th>
     </tr>
     {% if user.passed_swc_demo %}
@@ -121,7 +121,7 @@
     {% else %}
     <tr>
       <td><b>SWC</b></td>
-      <td>SWC Demo Session not passed yet.</td>
+      <td>SWC Demo Session not completed.</td>
     </tr>
     {% endif %}
     {% if user.passed_dc_demo %}
@@ -132,7 +132,7 @@
     {% else %}
     <tr>
       <td><b>DC</b></td>
-      <td>DC Demo Session not passed yet.</td>
+      <td>DC Demo Session not completed.</td>
     </tr>
     {% endif %}
     {% if user.passed_lc_demo %}
@@ -143,19 +143,19 @@
     {% else %}
     <tr>
       <td><b>LC</b></td>
-      <td>LC Demo Session not passed yet.</td>
+      <td>LC Demo Session not completed.</td>
     </tr>
     {% endif %}
     <tr>
       <td colspan="2">{% if not user.passed_swc_demo or not user.passed_dc_demo or not user.passed_lc_demo %}
-          <p>You can register for Demo Session on <a href="https://pad.carpentries.org/teaching-demos">this Etherpad</a>.</p>
+          <p>You can register for a Demo Session on <a href="https://pad.carpentries.org/teaching-demos">this Etherpad</a>.</p>
         {% endif %}</td>
     </tr>
 
   </table>
 
 
-  <p>In the case of any questions, please send us email at <a href="mailto:team@carpentries.org">team@carpentries.org</a></p>
+  <p>In the case of any questions, please send us email at <a href="mailto:checkout@carpentries.org">checkout@carpentries.org</a></p>
 </div>
 
 {% endblock %}
