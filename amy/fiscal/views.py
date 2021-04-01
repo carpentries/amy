@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Dict, Any
 
 from django.contrib import messages
 from django.contrib.auth.mixins import (
@@ -357,7 +358,7 @@ class MembershipCreateRollOver(
     form_class = MembershipRollOverForm
     pk_url_kwarg = "membership_id"
 
-    def get_initial(self):
+    def get_initial(self) -> Dict[str, Any]:
         return {
             "name": self.membership.name,
             "consortium": self.membership.consortium,
@@ -373,14 +374,24 @@ class MembershipCreateRollOver(
             "registration_code": self.membership.registration_code,
             "agreement_link": self.membership.agreement_link,
             "workshops_without_admin_fee_per_agreement": self.membership.workshops_without_admin_fee_per_agreement,  # noqa
-            "workshops_without_admin_fee_rolled_from_previous": self.membership.workshops_without_admin_fee_remaining,  # noqa
+            "workshops_without_admin_fee_rolled_from_previous": 0,
             "public_instructor_training_seats": self.membership.public_instructor_training_seats,  # noqa
             "additional_public_instructor_training_seats": self.membership.additional_public_instructor_training_seats,  # noqa
-            "public_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa
+            "public_instructor_training_seats_rolled_from_previous": 0,
             "inhouse_instructor_training_seats": self.membership.inhouse_instructor_training_seats,  # noqa
             "additional_inhouse_instructor_training_seats": self.membership.additional_inhouse_instructor_training_seats,  # noqa
-            "inhouse_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa  # TODO
+            "inhouse_instructor_training_seats_rolled_from_previous": 0,
             "emergency_contact": self.membership.emergency_contact,
+        }
+
+    def get_form_kwargs(self) -> Dict[str, Any]:
+        return {
+            "max_values": {
+                "workshops_without_admin_fee_rolled_from_previous": self.membership.workshops_without_admin_fee_remaining,  # noqa
+                "public_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa
+                "inhouse_instructor_training_seats_rolled_from_previous": self.membership.inhouse_instructor_training_seats_remaining,  # noqa
+            },
+            **super().get_form_kwargs(),
         }
 
     def get_context_data(self, **kwargs):
@@ -388,17 +399,6 @@ class MembershipCreateRollOver(
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
-        # set rolled_from_previous fields to the same values as in initial form data
-        form.instance.workshops_without_admin_fee_rolled_from_previous = (
-            self.membership.workshops_without_admin_fee_remaining
-        )
-        form.instance.public_instructor_training_seats_rolled_from_previous = (
-            self.membership.public_instructor_training_seats_remaining
-        )
-        form.instance.inhouse_instructor_training_seats_rolled_from_previous = (
-            self.membership.inhouse_instructor_training_seats_remaining
-        )
-
         # save values rolled over in membership
         self.membership.workshops_without_admin_fee_rolled_over = (
             form.instance.workshops_without_admin_fee_rolled_from_previous
@@ -411,22 +411,26 @@ class MembershipCreateRollOver(
         )
         self.membership.save()
 
-        # create the object and store returned success url redirect
         result = super().form_valid(form)
 
         # duplicate members and membership tasks from old membership to the new one
-        Member.objects.bulk_create(
-            [
-                Member(membership=self.object, organization=m.organization, role=m.role)
-                for m in self.membership.member_set.all()
-            ]
-        )
-        MembershipTask.objects.bulk_create(
-            [
-                MembershipTask(membership=self.object, person=m.person, role=m.role)
-                for m in self.membership.membershiptask_set.all()
-            ]
-        )
+        if form.cleaned_data["copy_members"]:
+            Member.objects.bulk_create(
+                [
+                    Member(
+                        membership=self.object, organization=m.organization, role=m.role
+                    )
+                    for m in self.membership.member_set.all()
+                ]
+            )
+
+        if form.cleaned_data["copy_membership_tasks"]:
+            MembershipTask.objects.bulk_create(
+                [
+                    MembershipTask(membership=self.object, person=m.person, role=m.role)
+                    for m in self.membership.membershiptask_set.all()
+                ]
+            )
 
         return result
 

@@ -3,6 +3,7 @@ from urllib.parse import urlparse, urlunparse
 from crispy_forms.layout import Div, HTML
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.dispatch import receiver
 from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
@@ -227,6 +228,20 @@ class MembershipCreateForm(MembershipForm):
 class MembershipRollOverForm(MembershipCreateForm):
     main_organization = None  # remove the additional field
 
+    copy_members = forms.BooleanField(
+        label="Do you want to automatically copy member organisations from existing "
+        "membership?",
+        required=False,
+        initial=True,
+        help_text="If not consortium, the main organisation is always copied.",
+    )
+    copy_membership_tasks = forms.BooleanField(
+        label="Do you want to automatically copy persons and their roles from existing "
+        "membership?",
+        required=False,
+        initial=True,
+    )
+
     class Meta(MembershipCreateForm.Meta):
         fields = [
             "name",
@@ -248,17 +263,37 @@ class MembershipRollOverForm(MembershipCreateForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
+            "copy_members",
+            "copy_membership_tasks",
         ]
 
     def __init__(self, *args, **kwargs):
+        max_values = kwargs.pop("max_values", {})
         super().__init__(*args, **kwargs)
-        self["workshops_without_admin_fee_rolled_from_previous"].field.disabled = True
-        self[
-            "public_instructor_training_seats_rolled_from_previous"
-        ].field.disabled = True
-        self[
-            "inhouse_instructor_training_seats_rolled_from_previous"
-        ].field.disabled = True
+
+        # don't allow values over the limit imposed by the view using this form
+        fields = [
+            "workshops_without_admin_fee_rolled_from_previous",
+            "public_instructor_training_seats_rolled_from_previous",
+            "inhouse_instructor_training_seats_rolled_from_previous",
+        ]
+        for field in fields:
+            self[field].field.min_value = 0
+            self[field].field.max_value = max_values.get(field, 0)
+            # widget is already set up at this point, so alter it's attributes
+            self[field].field.widget.attrs["max"] = self[field].field.max_value
+            # overwrite any existing validators
+            self[field].field.validators = [
+                MinValueValidator(self[field].field.min_value),
+                MaxValueValidator(self[field].field.max_value),
+            ]
+
+        # disable editing consortium
+        self["consortium"].field.disabled = True
+
+        # if not consortium, disable option to not copy members
+        if self.initial.get("consortium", False) is False:
+            self["copy_members"].field.disabled = True
 
 
 class EditableFormsetFormMixin(forms.ModelForm):
