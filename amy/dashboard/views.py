@@ -116,11 +116,11 @@ def trainee_dashboard(request):
         "languages",
         Prefetch(
             "task_set",
-            queryset=Task.objects.select_related(),
+            queryset=Task.objects.select_related("event", "role"),
         ),
         Prefetch(
             "membershiptask_set",
-            queryset=MembershipTask.objects.select_related(),
+            queryset=MembershipTask.objects.select_related("membership", "role"),
         ),
     )
     user = get_object_or_404(qs, id=request.user.id)

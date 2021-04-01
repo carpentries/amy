@@ -257,24 +257,24 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
             "languages",
             Prefetch(
                 "award_set",
-                queryset=Award.objects.select_related(),
+                queryset=Award.objects.select_related("badge", "event", "awarded_by"),
             ),
             Prefetch(
                 "task_set",
-                queryset=Task.objects.select_related(),
+                queryset=Task.objects.select_related("role", "event"),
             ),
             Prefetch(
                 "task_set",
                 to_attr="training_tasks",
                 queryset=Task.objects.filter(
                     role__name="learner", event__tags__name="TTT"
-                ).select_related(),
+                ).select_related("role", "event"),
             ),
             "trainingrequest_set",
             "trainingprogress_set",
             Prefetch(
                 "membershiptask_set",
-                queryset=MembershipTask.objects.select_related(),
+                queryset=MembershipTask.objects.select_related("role", "membership"),
             ),
         )
         .select_related("airport")
