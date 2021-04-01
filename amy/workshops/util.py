@@ -688,6 +688,9 @@ class WrongWorkshopURL(Exception):
     (see `generate_url_to_event_index` below)."""
 
     def __init__(self, msg: str):
+        # Store the error message in class field so that it can be retrieved later.
+        # This circumvents CodeQL error when the exception instance `e` was stringified
+        # `str(e)` - now the code addresses `e.msg` directly.
         self.msg = msg
         super().__init__()
 
