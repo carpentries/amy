@@ -1,7 +1,10 @@
+from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
 from django.utils.functional import cached_property
+from django.utils import timezone
+
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import STR_MED, Person
 
@@ -72,8 +75,7 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     AGREE = "agree"
     DECLINE = "decline"
-    UNSET = "unset"
-    OPTION_TYPE = ((AGREE, "Agree"), (DECLINE, "Decline"), (UNSET, "Unset"))
+    OPTION_TYPE = ((AGREE, "Agree"), (DECLINE, "Decline"))
 
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     option_type = models.CharField(max_length=STR_MED, choices=OPTION_TYPE)
@@ -87,7 +89,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
 class Consent(CreatedUpdatedArchivedMixin, models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
-    term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT)
+    term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT, null=True)
     objects = ConsentQuerySet.as_manager()
 
     class Meta:
@@ -100,6 +102,27 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        if self.term_id != self.term_option.term_id:
+        if self.term_option and self.term_id != self.term_option.term_id:
             raise ValidationError("Consent term.id must match term_option.term_id")
         return super().save(*args, **kwargs)
+
+    @classmethod
+    def create_unset_consents_for_term(cls, term: Term) -> None:
+        """
+        Creates unset consents for all users with the given term.
+
+        Used when a term is first created so that unset consents
+        are stored in the database for any given term.
+        """
+        cls.objects.bulk_create(
+            cls(
+                person=person,
+                term=term,
+                term_option=None,
+            )
+            for person in Person.objects.all()
+        )
+
+    def archive(self) -> None:
+        self.archived_at = timezone.now()
+        self.save()

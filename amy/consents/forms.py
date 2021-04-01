@@ -3,14 +3,12 @@ from typing import Iterable, List
 from consents.models import Consent, Term, TermOption
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
-from django.utils import timezone
 from workshops.forms import BootstrapHelper, WidgetOverrideMixin
 from workshops.models import Person
 
 OPTION_DISPLAY = {
     TermOption.AGREE: "Yes",
     TermOption.DECLINE: "No",
-    TermOption.UNSET: "unset",
 }
 
 
@@ -79,8 +77,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
             if not option_id or not has_changed:
                 continue
             if consent:
-                consent.archived_at = timezone.now()
-                consent.save()
+                consent.archive()
             new_consents.append(
                 Consent(person=person, term_option_id=option_id, term_id=term.id)
             )

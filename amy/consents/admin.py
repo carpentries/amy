@@ -29,7 +29,7 @@ class ConsentAdmin(admin.ModelAdmin):
     list_filter = ["term", "term_option__option_type", "archived_at"]
 
     def get_term_option_type(self, obj):
-        return obj.term_option.option_type
+        return obj.term_option.option_type if obj.term_option else None
 
     get_term_option_type.short_description = "Term Option Type"
     get_term_option_type.admin_order_field = "term_option__option_type"
