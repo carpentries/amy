@@ -4,6 +4,7 @@
 {% endblock %}
 
 {% load crispy_forms_tags %}
+{% load dates %}
 
 {% block content %}
 
@@ -14,7 +15,7 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
 
 
   <table class="table table-striped">
-    <tr><th>Personal name:</th><td>{{ user.personal|default:"—" }}</td></tr>
+    <tr><th width="40%">Personal name:</th><td>{{ user.personal|default:"—" }}</td></tr>
     <tr><th>Middle name:</th><td>{{ user.middle|default:"—" }}</td></tr>
     <tr><th>Family name:</th><td>{{ user.family|default:"—" }}</td></tr>
     <tr><th>Email:
@@ -87,7 +88,8 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
     </td></tr>
     <tr><th>Your workshop activity:<br>
         <small>If you'd like to let us know about a workshop you are planning or have run a self-organised workshop that is missing from this list, please fill out our <a href="{% url 'selforganised_submission' %}">self-organised workshop form</a>.</small></th><td>
-        {% if workshops %}
+        {% with tasks=user.task_set.all %}
+        {% if tasks %}
         <table class="table">
           <tr>
             <th>Workshop name</th>
@@ -95,7 +97,7 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
             <th>Venue</th>
             <th>Your role</th>
           </tr>
-          {% for task in workshops %}
+          {% for task in tasks %}
             <tr>
             {% if task.event.website_url %}
               <td><a href="{{ task.event.website_url }}" target="_blank" rel="noreferrer">{{ task.event.slug }}</a></td>
@@ -111,7 +113,31 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
         {% else %}
         No workshops to show.
         {% endif %}
+        {% endwith %}
     </td></tr>
+    {% with membership_tasks=user.membershiptask_set.all %}
+    {% if membership_tasks %}
+    <tr><th>Your roles in memberships:</th>
+        <td>
+        <table class="table">
+          <tr>
+            <th>Role</th>
+            <th>Membership</th>
+            <th>Dates</th>
+            <th>Consortium?</th>
+          </tr>
+          {% for task in membership_tasks %}
+          <tr>
+            <td>{{ task.role }}</td>
+            <td>{{ task.membership.name }}</td>
+            <td>{% human_daterange task.membership.agreement_start task.membership.agreement_end %}</td>
+            <td>{{ task.membership.consortium|yesno }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+    </td></tr>
+    {% endif %}
+    {% endwith %}
   </table>
 
   <p>

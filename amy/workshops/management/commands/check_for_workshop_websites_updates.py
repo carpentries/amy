@@ -125,7 +125,7 @@ class Command(BaseCommand):
         if mo:
             groups = mo.groupdict()
             return groups["name"], groups["repo"]
-        raise WrongWorkshopURL()
+        raise WrongWorkshopURL("URL doesn't match Github repo format.")
 
     def get_event_metadata(self, event_url):
         """Get metadata from event (location, instructors, helpers, etc.)."""

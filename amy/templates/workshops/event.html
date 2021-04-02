@@ -129,7 +129,12 @@
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.url|default:"&mdash;"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
-    <td>{% if t.seat_membership %}<a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+    <td>
+      {% if t.seat_membership %}
+        <a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a><br>
+        <small>{{ t.get_seat_public_display }}</small>
+      {% else %}&mdash;{% endif %}
+    </td>
     <td>{{ t.seat_open_training|yesno }}</td>
     <td>
       <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>

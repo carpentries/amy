@@ -9,6 +9,7 @@
     <li role="presentation" class="nav-item"><a class="nav-link active" href="#person" role="tab" data-toggle="tab" aria-controls="person" aria-selected="true" id="person-tab">Person</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#awards" role="tab" data-toggle="tab" aria-controls="awards">Awards</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks">Tasks</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#consents" role="tab" data-toggle="tab" aria-controls="consents">Consents</a></li>
   </ul>
 </nav>
 
@@ -81,7 +82,12 @@
         <td><a href="{{ t.event.get_absolute_url }}">{{ t.event.slug }}</a></td>
         <td>{{ t.url|default:"—"|urlize_newtab }}</td>
         <td>{{ t.role.name }}</td>
-        <td>{% if t.seat_membership %}<a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+        <td>
+          {% if t.seat_membership %}
+            <a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a><br>
+            <small>{{ t.get_seat_public_display }}</small>
+          {% else %}&mdash;{% endif %}
+        </td>
         <td>{{ t.seat_open_training|yesno }}</td>
         <td>
           <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
@@ -100,6 +106,16 @@
     {% else %}
     <p>No tasks.</p>
     {% endif %}
+  </div>
+  <div class="tab-pane" role="tabpanel" aria-labelledby="consents-tab" id="consents">
+    {% if consents_form.terms %}
+      <form class="form-horizontal" role="form" method="POST" action="{% url 'consents_add' person.id %}?next={{ request.get_full_path|urlencode }}#consents">
+      {% crispy consents_form %}
+      </form>
+    {% else %}
+      <p>No Terms.</p>
+    {% endif %}
+    
   </div>
 </div>
 

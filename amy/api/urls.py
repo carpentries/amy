@@ -7,7 +7,7 @@ from api import views
 app_name = 'api'
 
 # routers generate URLs for methods like `.list` or `.retrieve`
-router = routers.SimpleRouter()
+router = routers.SimpleRouter(trailing_slash=False)
 router.register('persons', views.PersonViewSet)
 awards_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
 awards_router.register('awards', views.AwardViewSet, basename='person-awards')

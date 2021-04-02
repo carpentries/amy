@@ -135,19 +135,9 @@ class TestBase(
     def _setUpLanguages(self):
         """Set up language objects."""
 
-        self.english, _ = Language.objects.get_or_create(
-            name="English",
-        )
-        self.french, _ = Language.objects.get_or_create(
-            name="French",
-        )
-        self.latin, _ = Language.objects.get_or_create(
-            name="Latin",
-        )
-        self.english, _ = Language.objects.get_or_create(name="English",)
-        self.french, _ = Language.objects.get_or_create(name="French",)
-        self.latin, _ = Language.objects.get_or_create(name="Latin",)
-    
+        self.english, _ = Language.objects.get_or_create(name="English")
+        self.french, _ = Language.objects.get_or_create(name="French")
+        self.latin, _ = Language.objects.get_or_create(name="Latin")
 
     def _setUpDomains(self):
         """Set up knowledge domain objects."""

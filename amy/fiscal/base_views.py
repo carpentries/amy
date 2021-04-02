@@ -1,3 +1,5 @@
+from urllib.parse import unquote
+
 from django.shortcuts import get_object_or_404
 from django.views.generic import FormView
 
@@ -51,3 +53,11 @@ class MembershipFormsetView(GetMembershipMixin, FormView):
 
     def get_success_url(self):
         return self.membership.get_absolute_url()
+
+
+class UnquoteSlugMixin:
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        slug_url = self.kwargs.get(self.slug_url_kwarg)
+        if slug_url is not None:
+            self.kwargs[self.slug_url_kwarg] = unquote(slug_url)

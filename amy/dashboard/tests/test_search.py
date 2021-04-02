@@ -160,8 +160,8 @@ class TestSearch(TestBase):
         response = self.search_for("Alpha", no_redirect=False, follow=True)
         self.assertEqual(response.request.path, self.org_alpha.get_absolute_url())
 
-    def test_search_for_memberships(self):
-        """Make sure that finding memberships works."""
+    def test_search_for_memberships_code(self):
+        """Make sure that finding memberships by registration code works."""
         membership = Membership.objects.create(
             variant="partner",
             registration_code="test-beta-code-test",
@@ -169,9 +169,8 @@ class TestSearch(TestBase):
             agreement_end=date.today() + timedelta(days=365),
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=20,
-            seats_instructor_training=25,
-            additional_instructor_training_seats=3,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
         )
         Member.objects.create(
             membership=membership,
@@ -180,6 +179,30 @@ class TestSearch(TestBase):
         )
 
         response = self.search_for("BETA-code")  # case-insensitive
+
+        self.assertEqual(len(response.context["memberships"]), 1)
+        self.assertEqual(len(response.context["organisations"]), 0)
+
+    def test_search_for_memberships_name(self):
+        """Make sure that finding memberships by name works."""
+        membership = Membership.objects.create(
+            name="alpha-name",
+            variant="partner",
+            registration_code="test-beta-code-test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=self.org_beta,
+            role=MemberRole.objects.first(),
+        )
+
+        response = self.search_for("ALPHA-name")  # case-insensitive
 
         self.assertEqual(len(response.context["memberships"]), 1)
         self.assertEqual(len(response.context["organisations"]), 0)

@@ -1,9 +1,9 @@
-from django.test import TestCase
-from consents.models import Term, TermOption, Consent
-from workshops.models import Person
-from django.utils import timezone
+from consents.models import Consent, Term, TermOption
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.test import TestCase
+from django.utils import timezone
+from workshops.models import Person
 
 
 class TestQuerySet(TestCase):

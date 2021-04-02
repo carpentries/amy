@@ -44,7 +44,7 @@
           {{ event.repository_url|default:"—"|urlize_newtab }}
         </td>
         <td {% if event.num_instructors == 0 %}class="table-warning"{% endif %}> {{ event.num_instructors }}</td>
-        <td><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td>
+        <td><a href="{% url 'organization_details' event.host.domain_quoted %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
         <td>
           {{ event.completed|yesno }}

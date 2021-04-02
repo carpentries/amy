@@ -1,7 +1,7 @@
 from django.urls import reverse
 from django_comments.models import Comment
 
-from fiscal.forms import OrganizationCreateForm
+from fiscal.forms import OrganizationForm, OrganizationCreateForm
 from workshops.models import Organization, Event
 from workshops.tests.base import TestBase
 
@@ -19,7 +19,7 @@ class TestOrganization(TestBase):
             host=self.org_alpha, administrator=self.org_beta, slug="test-event"
         )
 
-        for org_domain in [self.org_alpha.domain, self.org_beta.domain]:
+        for org_domain in [self.org_alpha.domain_quoted, self.org_beta.domain_quoted]:
             rv = self.client.post(
                 reverse(
                     "organization_delete",
@@ -33,7 +33,7 @@ class TestOrganization(TestBase):
 
         Event.objects.get(slug="test-event").delete()
 
-        for org_domain in [self.org_alpha.domain, self.org_beta.domain]:
+        for org_domain in [self.org_alpha.domain_quoted, self.org_beta.domain_quoted]:
             rv = self.client.post(
                 reverse(
                     "organization_delete",
@@ -48,24 +48,34 @@ class TestOrganization(TestBase):
                 Organization.objects.get(domain=org_domain)
 
     def test_organization_invalid_chars_in_domain(self):
-        r"""Ensure users can't put wrong characters in the organization's
-        domain field.
+        """Ensure organisation's domain is cleaned from URL scheme, if it was present.
+        Ensure other parts of the URL remain.
 
-        Invalid characters are any that match `[^\w\.-]+`, ie. domain is
-        allowed only to have alphabet-like chars, dot and dash.
-
-        The reason for only these chars lies in `workshops/urls.py`.  The regex
-        for the organization_details URL has `[\w\.-]+` matching...
+        The cleaning exists in OrganizationForm.clean_domain.
         """
-        data = {
-            "domain": "http://beta.com/",
-            "fullname": self.org_beta.fullname,
-            "country": self.org_beta.country,
-        }
-        url = reverse("organization_edit", args=[self.org_beta.domain])
-        rv = self.client.post(url, data=data)
-        # make sure we're not updating to good values
-        assert rv.status_code == 200
+        test_data = [
+            ("http://example.com/", "example.com/"),
+            ("https://example.com/", "example.com/"),
+            ("ftp://example.com/", "example.com/"),
+            ("http://example.com", "example.com"),
+            ("//example.com", "example.com"),
+            ("//example.com/", "example.com/"),
+            ("//example.com/?query", "example.com/?query"),
+            ("//example.com/path/", "example.com/path/"),
+            ("//example.com/path", "example.com/path"),
+            ("//example.com:80/path/?query", "example.com:80/path/?query"),
+            ("example.com/path;params?query#fragment", "example.com/path?query"),
+            (
+                "//user:password@example.com:80/path?query",
+                "user:password@example.com:80/path?query",
+            ),
+        ]
+        for domain, expected in test_data:
+            with self.subTest(domain=domain):
+                form = OrganizationForm({"domain": domain})
+                form.full_clean()
+                self.assertIn("domain", form.cleaned_data)
+                self.assertEqual(form.cleaned_data["domain"], expected)
 
     def test_creating_event_with_no_comment(self):
         """Ensure that no comment is added when OrganizationCreateForm without

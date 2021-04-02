@@ -11,18 +11,20 @@ from django.db.models import (
     Prefetch,
     Q,
 )
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.html import format_html
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from fiscal.models import MembershipTask
 from workshops.models import (
     Airport,
     Badge,
     Event,
     Qualification,
     Person,
+    Task,
     Organization,
     Membership,
     Tag,
@@ -107,12 +109,25 @@ def admin_dashboard(request):
 
 @login_required
 def trainee_dashboard(request):
-    # Workshops person taught at
-    workshops = request.user.task_set.select_related("role", "event")
+    qs = Person.objects.select_related("airport").prefetch_related(
+        "badges",
+        "lessons",
+        "domains",
+        "languages",
+        Prefetch(
+            "task_set",
+            queryset=Task.objects.select_related("event", "role"),
+        ),
+        Prefetch(
+            "membershiptask_set",
+            queryset=MembershipTask.objects.select_related("membership", "role"),
+        ),
+    )
+    user = get_object_or_404(qs, id=request.user.id)
 
     context = {
         "title": "Your profile",
-        "workshops": workshops,
+        "user": user,
     }
     return render(request, "dashboard/trainee_dashboard.html", context)
 
@@ -253,7 +268,7 @@ def search(request):
                 single_results.append(organizations[0])
 
             memberships = Membership.objects.filter(
-                registration_code__icontains=term
+                Q(name__icontains=term) | Q(registration_code__icontains=term)
             ).order_by("-agreement_start")
             if len(memberships) == 1:
                 single_results.append(memberships[0])

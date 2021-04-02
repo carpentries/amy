@@ -8,7 +8,7 @@
   <tr><th>Completed:</th><td colspan="2">{{ event.completed|yesno }}</td></tr>
   <tr class="{% if event.start > event.end %}table-danger{% endif %}"><th>Start date:</th><td colspan="2">{{ event.start|default:"&mdash;" }}</td></tr>
   <tr class="{% if event.start > event.end %}table-danger{% endif %}"><th>End date: </th><td colspan="2">{{ event.end|default:"&mdash;" }}</td></tr>
-  <tr><th>Host:</th><td colspan="2"><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td></tr>
+  <tr><th>Host:</th><td colspan="2"><a href="{% url 'organization_details' event.host.domain_quoted %}">{{ event.host }}</a></td></tr>
   <tr><th>Sponsor:</th><td colspan="2">{% if event.sponsor %}<a href="{{ event.sponsor.get_absolute_url }}">{{ event.sponsor }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Administrator:</th><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Is this workshop public?<br><small>Public workshops will show up in public Carpentries feeds.</small></th><td colspan="2">{{ event.get_public_status_display|default:"&mdash;" }}</td></tr>

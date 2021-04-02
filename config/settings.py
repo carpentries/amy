@@ -18,7 +18,7 @@ if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
     env.read_env(str(ROOT_DIR.path(".env")))
 
-CONTINUOUS_INTEGRATION = env.bool("CONTINUOUS_INTEGRATION", default=False)
+CONTINUOUS_INTEGRATION = env.bool("CI", default=False)
 
 # GENERAL
 # -----------------------------------------------------------------------------

@@ -558,7 +558,8 @@ def all_trainingrequests(request):
 
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]
-            member_site = match_form.cleaned_data["seat_membership"]
+            membership = match_form.cleaned_data["seat_membership"]
+            seat_public = match_form.cleaned_data["seat_public"]
             open_seat = match_form.cleaned_data["seat_open_training"]
 
             # Perform bulk match
@@ -569,55 +570,57 @@ def all_trainingrequests(request):
 
                 # assign to an event
                 Task.objects.get_or_create(
+                    event=event,
                     person=r.person,
                     role=Role.objects.get(name="learner"),
-                    event=event,
-                    seat_membership=member_site,
-                    seat_open_training=open_seat,
+                    defaults=dict(
+                        seat_membership=membership,
+                        seat_public=seat_public,
+                        seat_open_training=open_seat,
+                    ),
                 )
 
             requests_count = len(match_form.cleaned_data["requests"])
             today = datetime.date.today()
 
-            if member_site:
-                if (
-                    member_site.seats_instructor_training_remaining - requests_count
-                    <= 0
-                ):
+            if membership:
+                remaining = (
+                    membership.public_instructor_training_seats_remaining
+                    if seat_public
+                    else membership.inhouse_instructor_training_seats_remaining
+                )
+                if remaining - requests_count <= 0:
                     messages.warning(
                         request,
-                        'Membership "{}" is using more training seats than '
-                        "it's been allowed.".format(str(member_site)),
+                        f'Membership "{membership}" is using more training seats than '
+                        "it's been allowed.",
                     )
 
                 # check if membership is active
                 if not (
-                    member_site.agreement_start <= today <= member_site.agreement_end
+                    membership.agreement_start <= today <= membership.agreement_end
                 ):
                     messages.warning(
                         request,
-                        'Membership "{}" is not active.'.format(str(member_site)),
+                        f'Membership "{membership}" is not active.',
                     )
 
                 # show warning if training falls out of agreement dates
                 if (
                     event.start
-                    and event.start < member_site.agreement_start
+                    and event.start < membership.agreement_start
                     or event.end
-                    and event.end > member_site.agreement_end
+                    and event.end > membership.agreement_end
                 ):
                     messages.warning(
                         request,
-                        'Training "{}" has start or end date outside '
-                        'membership "{}" agreement dates.'.format(
-                            str(event),
-                            str(member_site),
-                        ),
+                        f'Training "{event}" has start or end date outside '
+                        f'membership "{membership}" agreement dates.',
                     )
 
             messages.success(
                 request,
-                "Successfully accepted and matched " "selected people to training.",
+                "Successfully accepted and matched selected people to training.",
             )
 
     elif request.method == "POST" and "accept" in request.POST:

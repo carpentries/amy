@@ -11,6 +11,7 @@ from django.db.models import (
     F,
     Prefetch,
 )
+from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.urls import reverse
@@ -36,26 +37,47 @@ from workshops.util import (
 @admin_required
 def membership_trainings_stats(request):
     """Display basic statistics for memberships and instructor trainings."""
-    # today = datetime.date.today()
-    data = (
-        Membership.objects
-        # .filter(agreement_end__gte=today, agreement_start__lte=today)
-        .select_related("organization")
-        .prefetch_related("task_set")
-        .annotate(
-            instructor_training_seats_total=(
-                F("seats_instructor_training")
-                + F("additional_instructor_training_seats")
-            ),
-            instructor_training_seats_utilized=(
-                Count("task", filter=Q(task__role__name="learner"))
-            ),
-            instructor_training_seats_remaining=(
-                F("seats_instructor_training")
-                + F("additional_instructor_training_seats")
-                - Count("task", filter=Q(task__role__name="learner"))
-            ),
-        )
+    data = Membership.objects.prefetch_related("organizations", "task_set").annotate(
+        instructor_training_seats_public_total=(
+            F("public_instructor_training_seats")
+            + F("additional_public_instructor_training_seats")
+            # Coalesce returns first non-NULL value
+            + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+        ),
+        instructor_training_seats_public_utilized=(
+            Count("task", filter=Q(task__role__name="learner", task__seat_public=True))
+        ),
+        instructor_training_seats_public_remaining=(
+            F("public_instructor_training_seats")
+            + F("additional_public_instructor_training_seats")
+            + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+            - Count(
+                "task", filter=Q(task__role__name="learner", task__seat_public=True)
+            )
+            - Coalesce("public_instructor_training_seats_rolled_over", 0)
+        ),
+        instructor_training_seats_inhouse_total=(
+            F("inhouse_instructor_training_seats")
+            + F("additional_inhouse_instructor_training_seats")
+            # Coalesce returns first non-NULL value
+            + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+        ),
+        instructor_training_seats_inhouse_utilized=(
+            Count(
+                "task",
+                filter=Q(task__role__name="learner", task__seat_public=False),
+            )
+        ),
+        instructor_training_seats_inhouse_remaining=(
+            F("inhouse_instructor_training_seats")
+            + F("additional_inhouse_instructor_training_seats")
+            + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+            - Count(
+                "task",
+                filter=Q(task__role__name="learner", task__seat_public=False),
+            )
+            - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
+        ),
     )
 
     filter_ = MembershipTrainingsFilter(request.GET, data)

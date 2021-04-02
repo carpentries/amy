@@ -1,11 +1,15 @@
-from crispy_forms.layout import Div, HTML, Field
+from urllib.parse import urlparse, urlunparse
+
+from crispy_forms.layout import Div, HTML
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.dispatch import receiver
+from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from fiscal.models import MembershipTask
+from workshops.fields import ModelSelect2MultipleWidget
 from workshops.forms import (
     BootstrapHelper,
     form_saved_add_comment,
@@ -33,23 +37,42 @@ SIDEBAR_DAL_WIDTH = {
 
 
 class OrganizationForm(forms.ModelForm):
-    domain = forms.CharField(
-        max_length=Organization._meta.get_field("domain").max_length,
-        validators=[
-            RegexValidator(
-                r"[^\w\.-]+",
-                inverse_match=True,
-                message='Please enter only the domain (such as "math.esu.edu")'
-                ' without a leading "http://" or a trailing "/".',
-            )
-        ],
-    )
-
+    domain = forms.URLField(widget=forms.TextInput)
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta:
         model = Organization
-        fields = ["domain", "fullname", "country", "latitude", "longitude"]
+        fields = [
+            "domain",
+            "fullname",
+            "country",
+            "latitude",
+            "longitude",
+            "affiliated_organizations",
+        ]
+        widgets = {
+            "affiliated_organizations": ModelSelect2MultipleWidget(
+                data_view="organization-lookup"
+            ),
+        }
+
+    def clean_domain(self):
+        """Convert text into URL without scheme (http/https/etc)."""
+        cleaned = self.cleaned_data["domain"]
+
+        parsed_url = urlparse(cleaned)
+        unparsed_url = urlunparse(
+            parsed_url._replace(scheme="", params="", fragment="")
+        )
+
+        # after parsing-unparsing we may be left with scheme-less text
+        # e.g. "//carpentries.org/lessons"; we obviously want to remove the slashes
+        if unparsed_url.startswith("//"):
+            domain = unparsed_url[2:]
+        else:
+            domain = unparsed_url
+
+        return domain
 
 
 class OrganizationCreateForm(OrganizationForm):
@@ -94,9 +117,10 @@ class MembershipForm(forms.ModelForm):
             "registration_code",
             "agreement_link",
             "workshops_without_admin_fee_per_agreement",
-            "self_organized_workshops_per_agreement",
-            "seats_instructor_training",
-            "additional_instructor_training_seats",
+            "public_instructor_training_seats",
+            "additional_public_instructor_training_seats",
+            "inhouse_instructor_training_seats",
+            "additional_inhouse_instructor_training_seats",
             "emergency_contact",
         ]
 
@@ -138,6 +162,16 @@ class MembershipForm(forms.ModelForm):
         except TypeError:
             pass
 
+        # check if multiple members are assigned - then disallow changing to
+        # non-consortium
+        new_consortium = self.cleaned_data.get("consortium")
+        members_count = self.instance.member_set.count()
+        if not new_consortium and members_count > 1:
+            errors["consortium"] = ValidationError(
+                "Cannot change to non-consortium when there are multiple members "
+                "assigned. Remove the members so that at most 1 is left."
+            )
+
         if errors:
             raise ValidationError(errors)
 
@@ -173,8 +207,10 @@ class MembershipCreateForm(MembershipForm):
 
         self.fields["consortium"].help_text += (
             "<br>If you select this option, you'll be taken to the next screen to "
-            "select organisations engaged in consortium."
-        )
+            "select organisations engaged in consortium. You must create the "
+            "organisation (<a href='{}'>here</a>) before applying it to this "
+            "membership."
+        ).format(reverse("organization_add"))
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
@@ -192,6 +228,20 @@ class MembershipCreateForm(MembershipForm):
 class MembershipRollOverForm(MembershipCreateForm):
     main_organization = None  # remove the additional field
 
+    copy_members = forms.BooleanField(
+        label="Do you want to automatically copy member organisations from existing "
+        "membership?",
+        required=False,
+        initial=True,
+        help_text="If not consortium, the main organisation is always copied.",
+    )
+    copy_membership_tasks = forms.BooleanField(
+        label="Do you want to automatically copy persons and their roles from existing "
+        "membership?",
+        required=False,
+        initial=True,
+    )
+
     class Meta(MembershipCreateForm.Meta):
         fields = [
             "name",
@@ -205,23 +255,61 @@ class MembershipRollOverForm(MembershipCreateForm):
             "agreement_link",
             "workshops_without_admin_fee_per_agreement",
             "workshops_without_admin_fee_rolled_from_previous",
-            "self_organized_workshops_per_agreement",
-            "self_organized_workshops_rolled_from_previous",
-            "seats_instructor_training",
-            "additional_instructor_training_seats",
-            "instructor_training_seats_rolled_from_previous",
+            "public_instructor_training_seats",
+            "additional_public_instructor_training_seats",
+            "public_instructor_training_seats_rolled_from_previous",
+            "inhouse_instructor_training_seats",
+            "additional_inhouse_instructor_training_seats",
+            "inhouse_instructor_training_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
+            "copy_members",
+            "copy_membership_tasks",
         ]
 
     def __init__(self, *args, **kwargs):
+        max_values = kwargs.pop("max_values", {})
         super().__init__(*args, **kwargs)
-        self["workshops_without_admin_fee_rolled_from_previous"].field.disabled = True
-        self["self_organized_workshops_rolled_from_previous"].field.disabled = True
-        self["instructor_training_seats_rolled_from_previous"].field.disabled = True
+
+        # don't allow values over the limit imposed by the view using this form
+        fields = [
+            "workshops_without_admin_fee_rolled_from_previous",
+            "public_instructor_training_seats_rolled_from_previous",
+            "inhouse_instructor_training_seats_rolled_from_previous",
+        ]
+        for field in fields:
+            self[field].field.min_value = 0
+            self[field].field.max_value = max_values.get(field, 0)
+            # widget is already set up at this point, so alter it's attributes
+            self[field].field.widget.attrs["max"] = self[field].field.max_value
+            # overwrite any existing validators
+            self[field].field.validators = [
+                MinValueValidator(self[field].field.min_value),
+                MaxValueValidator(self[field].field.max_value),
+            ]
+
+        # disable editing consortium
+        self["consortium"].field.disabled = True
+
+        # if not consortium, disable option to not copy members
+        if self.initial.get("consortium", False) is False:
+            self["copy_members"].field.disabled = True
 
 
-class MemberForm(forms.ModelForm):
+class EditableFormsetFormMixin(forms.ModelForm):
+    EDITABLE = forms.BooleanField(
+        label="Change",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"data-form-editable-check": ""}),
+    )
+
+    def clean(self):
+        if self.has_changed() and not self.cleaned_data["EDITABLE"]:
+            raise ValidationError("Form values weren't supposed to be changed.")
+        return super().clean()
+
+
+class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -248,16 +336,19 @@ class MemberForm(forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout.append("id")
+        self.helper.layout.append("DELETE")  # visible; formset adds it
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
-        self.helper.layout.append(Field("id"))
-        self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
-        self.helper_empty_form.layout.append(Field("id"))
+        self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
-            Div(Field("DELETE"), css_class="d-none")  # hidden
+            Div("DELETE", css_class="d-none")  # hidden
         )
+        # remove EDITABLE checkbox from empty helper form
+        pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
+        self.helper_empty_form.layout.pop(pos_index)
 
 
-class MembershipTaskForm(forms.ModelForm):
+class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -284,13 +375,16 @@ class MembershipTaskForm(forms.ModelForm):
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout.append("id")
+        self.helper.layout.append("DELETE")  # visible; formset adds it
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
-        self.helper.layout.append(Field("id"))
-        self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
-        self.helper_empty_form.layout.append(Field("id"))
+        self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
-            Div(Field("DELETE"), css_class="d-none")  # hidden
+            Div("DELETE", css_class="d-none")  # hidden
         )
+        # remove EDITABLE checkbox from empty helper form
+        pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
+        self.helper_empty_form.layout.pop(pos_index)
 
 
 class MembershipExtensionForm(forms.Form):

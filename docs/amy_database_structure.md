@@ -36,7 +36,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 
 ## Persons
 
-`workshops_persons` - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.
+`workshops_person` - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.
 
 ### Commonly used fields
 
@@ -84,14 +84,15 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `contribution_type` Financial, Person-days, or Other
 * `workshops_without_admin_fee_per_agreement` Integer; number of centrally organized workshops allowed
 * `workshops_without_admin_fee_rolled_from_previous` Integer; number of centrally-organised workshops allowed that was rolled over from previous membership. This should be the same as `workshops_without_admin_fee_rolled_over` in preceding membership
-* `workshops_without_admin_fee_rolled_over` Integer; number of centrally-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `workshops_without_admin_fee_rolled_from_previous` in successing membership
-* `self_organized_workshops_per_agreement` Integer; number of self organized workshops allowed. Typically unused as there is no cap on self-organized workshops
-* `self_organized_workshops_rolled_from_previous` Integer; number of self-organised workshops allowed that was rolled over from previous membership. This should be the same as `self_organized_workshops_rolled_over` in preceding membership
-* `self_organized_workshops_rolled_over` Integer; number of self-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `self_organized_workshops_rolled_from_previous` in successing membership
-* `seats_instructor_training` Integer; number of seats allowed in instructor training events in the original contract.
-* `additional_instructor_training_seats`  Integer; number of additional seats allowed in instructor training events beyond the original contract.
-* `instructor_training_seats_rolled_from_previous` Integer; number of instructor training seats allowed that was rolled over from previous membership. This should be the same as `instructor_training_seats_rolled_over` in preceding membership
-* `instructor_training_seats_rolled_over` Integer; number of self-organised workshops allowed that was rolled over to successing membership. The same number should be recorded in `instructor_training_seats_rolled_from_previous` in successing membership
+* `workshops_without_admin_fee_rolled_over` Integer; number of centrally-organised workshops allowed that was rolled over to succeeding membership. The same number should be recorded in `workshops_without_admin_fee_rolled_from_previous` in succeeding membership
+* `public_instructor_training_seats` Integer; number of public seats allowed in instructor training events in the original contract.
+* `additional_public_instructor_training_seats`  Integer; number of additional public seats allowed in instructor training events beyond the original contract.
+* `public_instructor_training_seats_rolled_from_previous` Integer; number of public instructor training seats allowed that was rolled over from previous membership. This should be the same as `public_instructor_training_seats_rolled_over` in preceding membership
+* `public_instructor_training_seats_rolled_over` Integer; number of public instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in `public_instructor_training_seats_rolled_from_previous` in succeeding membership
+* `inhouse_instructor_training_seats` Integer; number of in-house seats allowed in instructor training events in the original contract.
+* `additional_inhouse_instructor_training_seats`  Integer; number of additional in-house seats allowed in instructor training events beyond the original contract.
+* `inhouse_instructor_training_seats_rolled_from_previous` Integer; number of in-house instructor training seats allowed that was rolled over from previous membership. This should be the same as `inhouse_instructor_training_seats_rolled_over` in preceding membership
+* `inhouse_instructor_training_seats_rolled_over` Integer; number of in-house instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in `inhouse_instructor_training_seats_rolled_from_previous` in succeeding membership
 * `agreement_link` A link to the Member agreement in Google Drive
 * `registration_code` A string representing the code used by the Member site for Eventbrite registration and the instructor training application
 * `public_status` a string indicating agreement to publicising membership on The Carpentries websites
@@ -142,6 +143,8 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `fullname` Human friendly name of the organization
 * `country` Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
 * `latitude` and `longitude` Stored as floating point (decimal) numbers
+* `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related.
+   For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".
 
 # Additional Tables in AMY
 
@@ -174,6 +177,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
     * `person_id` An integer representing the person who was at the event.  This is linked to the `workshops_person` table
     * `role_id` An integer representing the person's role.  This is linked to the `workshops_person` table
     * `seat_membership_id` Used for Instructor Training Learner role only.  An integer representing the membership this seat was assigned to.
+    * `seat_public` Used for Instructor Training Learner role only.  Determines if the seat counts as public or in-house for the specific membership.
     * `seat_open_training` Used for Instructor Training Learner role only. Boolean field noting whether this was an open (non-member) training seat.
     * `title` and`url` are not used.
 

@@ -8,14 +8,14 @@
 
 <p class="edit-object">
   {% if perms.workshops.change_organization %}
-  <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary">Edit</a>
+  <a href="{% url 'organization_edit' organization.domain_quoted %}" class="btn btn-primary">Edit</a>
   {% else %}
-  <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
+  <a href="{% url 'organization_edit' organization.domain_quoted %}" class="btn btn-primary disabled">Edit</a>
   {% endif %}
 </p>
 <table class="table table-striped">
   <tr><th>Full name:</th><td>{{ organization.fullname }}</td></tr>
-  <tr><th>Domain:</th><td><a href="http://{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td></tr>
+  <tr><th>Domain:</th><td><a href="//{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td></tr>
   <tr><th>Country:</th><td>{{ organization.country.name|default:"&mdash;" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
   <tr>
     <th>Latitude / longitude:</th>
@@ -26,19 +26,33 @@
       {% endif %}
     </td>
   </tr>
+  <tr>
+    <th>Affiliated organisations:</th>
+    <td>
+      {% if organization.affiliated_organizations.all %}
+        <ul>
+        {% for affiliated in organization.affiliated_organizations.all %}
+          <li><a href="{{ affiliated.get_absolute_url }}">{{ affiliated }}</a></li>
+        {% endfor %}
+        </ul>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
 </table>
 
 <div class="clearfix">
   <p class="edit-object float-left">
     {% if perms.workshops.change_organization %}
-    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary">Edit</a>
+    <a href="{% url 'organization_edit' organization.domain_quoted %}" class="btn btn-primary">Edit</a>
     {% else %}
-    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
+    <a href="{% url 'organization_edit' organization.domain_quoted %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
   <div class="delete-object float-right">
     {% if perms.workshops.delete_organization %}
-    <form action="{% url 'organization_delete' organization.domain %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ organization }}\"?")' method="POST">
+    <form action="{% url 'organization_delete' organization.domain_quoted %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ organization }}\"?")' method="POST">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger">Delete organization</button>
     </form>
@@ -78,72 +92,106 @@
 
 {% if organization.memberships.all %}
 <h2>Memberships</h2>
-<table class="table table-striped">
+<table class="table table-striped table-bordered">
   <tr>
     <th rowspan="2">Name</th>
     <th rowspan="2">Variant</th>
     <th rowspan="2">Agreement dates</th>
     <th rowspan="2">Contribution type</th>
-    <th colspan="6">Centrally-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="No fee. Numbers per agreement duration"></i></th>
+    <th colspan="4">Centrally-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="No fee. Numbers per agreement duration"></i></th>
     <th colspan="2">Discounted workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
-    <th colspan="6">Self-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
-    <th colspan="5">Instructor training seats</th>
-    <th class="additional-links"></th>
+    <th colspan="2">Self-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
+    <th colspan="3">Public instructor training seats</th>
+    <th colspan="3">In-house instructor training seats</th>
+    <th rowspan="2" class="additional-links"></th>
   </tr>
   <tr>
     <!-- centrally-organised -->
     <th><small>Allowed</small></th>
-    <th><small>Rolled from prev.</small></th>
     <th><small>Completed</small></th>
     <th><small>Planned</small></th>
-    <th><small>Rolled-over</small></th>
     <th><small>Remaining</small></th>
     <!-- discounted -->
     <th><small>Completed</small></th>
     <th><small>Planned</small></th>
     <!-- self-organised -->
-    <th><small>Allowed</small></th>
-    <th><small>Rolled from prev.</small></th>
     <th><small>Completed</small></th>
     <th><small>Planned</small></th>
-    <th><small>Rolled-over</small></th>
-    <th><small>Remaining</small></th>
-    <!-- instructor training seats -->
-    <th><small>Total</small></th>
-    <th><small>Rolled from prev.</small></th>
+    <!-- public instructor training seats -->
+    <th><small>Allowed</small></th>
     <th><small>Utilized</small></th>
-    <th><small>Rolled-over</small></th>
     <th><small>Remaining</small></th>
-    <th></th>
+    <!-- in-house instructor training seats -->
+    <th><small>Allowed</small></th>
+    <th><small>Utilized</small></th>
+    <th><small>Remaining</small></th>
   </tr>
   {% for membership in organization.memberships.all %}
   <tr>
-    <td><a href="{{ membership.get_absolute_url }}">{{ membership.name }}</a></td>
+    <td>
+      <a href="{{ membership.get_absolute_url }}">{{ membership.name }}</a>
+      {% if membership.consortium %}<p class="small">consortium</p>{% endif %}
+    </td>
     <td>{{ membership.get_variant_display }}</td>
     <td>
       {{ membership.agreement_start }} &ndash; {{ membership.agreement_end }}
       {% if membership.extended %}<p class="small">Includes extension by {{ membership.extended }} days.</p>{% endif %}
     </td>
     <td>{{ membership.get_contribution_type_display }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_agreement|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.workshops_without_admin_fee_rolled_from_previous|default_if_none:"&mdash;" }}</td>
+    <!-- centrally-organised -->
+    <td>
+      {{ membership.workshops_without_admin_fee_per_agreement|default_if_none:"&mdash;" }}
+      <p class="small">Inc. {{ membership.workshops_without_admin_fee_rolled_from_previous|default:0 }} rolled from prev.</p>
+    </td>
     <td>{{ membership.workshops_without_admin_fee_completed|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.workshops_without_admin_fee_planned|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.workshops_without_admin_fee_rolled_over|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.workshops_without_admin_fee_remaining|default_if_none:"&mdash;" }}</td>
+    <td>
+      {{ membership.workshops_without_admin_fee_remaining|default_if_none:"&mdash;" }}
+      <p class="small">Inc. {{ membership.workshops_without_admin_fee_rolled_over|default:0 }} rolled over</p>
+    </td>
+    <!-- discounted -->
     <td>{{ membership.workshops_discounted_completed|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.workshops_discounted_planned|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.self_organized_workshops_per_agreement|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.self_organized_workshops_rolled_from_previous|default_if_none:"&mdash;" }}</td>
+    <!-- self-organised -->
     <td>{{ membership.self_organized_workshops_completed|default_if_none:"&mdash;" }}</td>
     <td>{{ membership.self_organized_workshops_planned|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.self_organized_workshops_rolled_over|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.self_organized_workshops_remaining|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.seats_instructor_training_total|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.instructor_training_seats_rolled_from_previous|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.seats_instructor_training_utilized|default_if_none:"&mdash;" }}</td>
-    <td>{{ membership.instructor_training_seats_rolled_over|default_if_none:"&mdash;" }}</td>
-    <td {% if membership.seats_instructor_training_remaining <= 0 and membership.seats_instructor_training_total > 0 or membership.seats_instructor_training_remaining < 0 and membership.seats_instructor_training_total == 0 %}class="table-danger"{% endif %}>{{ membership.seats_instructor_training_remaining }}</td>
+    <!-- public instructor training seats -->
+    <td>
+      {{ membership.public_instructor_training_seats_total|default_if_none:"&mdash;" }}
+      <p class="small">
+        Inc.
+        {{ membership.additional_public_instructor_training_seats|default:0 }} additional,
+        {{ membership.public_instructor_training_seats_rolled_from_previous|default:0 }} rolled from prev.
+      </p>
+    </td>
+    <td>{{ membership.public_instructor_training_seats_utilized|default_if_none:"&mdash;" }}</td>
+    <td
+      {% if membership.public_instructor_training_seats_remaining <= 0 and membership.public_instructor_training_seats_total > 0 or membership.public_instructor_training_seats_remaining < 0 and membership.public_instructor_training_seats_total == 0 %}class="table-danger"{% endif %}
+    >
+      {{ membership.public_instructor_training_seats_remaining }}
+      <p class="small">
+        Inc. {{ membership.public_instructor_training_seats_rolled_over|default:0 }} rolled over
+      </p>
+    </td>
+    <!-- in-house instructor training seats -->
+    <td>
+      {{ membership.inhouse_instructor_training_seats_total|default_if_none:"&mdash;" }}
+      <p class="small">
+        Inc.
+        {{ membership.additional_inhouse_instructor_training_seats|default:0 }} additional,
+        {{ membership.inhouse_instructor_training_seats_rolled_from_previous|default:0 }} rolled from prev.
+      </p>
+    </td>
+    <td>{{ membership.inhouse_instructor_training_seats_utilized|default_if_none:"&mdash;" }}</td>
+    <td
+      {% if membership.inhouse_instructor_training_seats_remaining <= 0 and membership.inhouse_instructor_training_seats_total > 0 or membership.inhouse_instructor_training_seats_remaining < 0 and membership.inhouse_instructor_training_seats_total == 0 %}class="table-danger"{% endif %}
+    >
+      {{ membership.inhouse_instructor_training_seats_remaining }}
+      <p class="small">
+        Inc. {{ membership.inhouse_instructor_training_seats_rolled_over|default:0 }} rolled over
+      </p>
+    </td>
+    <!-- link -->
     <td>
       <a href="{% url 'membership_details' membership.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
       &nbsp;

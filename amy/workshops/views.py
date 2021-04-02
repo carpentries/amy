@@ -56,6 +56,7 @@ from autoemails.actions import (
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
 from dashboard.forms import AssignmentForm
+from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
     AMYUpdateView,
@@ -126,6 +127,7 @@ from workshops.util import (
     login_required,
     add_comment,
 )
+from consents.forms import ActiveTermConsentsForm
 
 
 logger = logging.getLogger("amy.signals")
@@ -249,17 +251,30 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
             ),
         )
         .prefetch_related(
-            "award_set__badge",
-            "award_set__awarded_by",
-            "award_set__event",
-            "task_set__role",
-            "task_set__event",
+            "badges",
+            "lessons",
+            "domains",
+            "languages",
+            Prefetch(
+                "award_set",
+                queryset=Award.objects.select_related("badge", "event", "awarded_by"),
+            ),
+            Prefetch(
+                "task_set",
+                queryset=Task.objects.select_related("role", "event"),
+            ),
             Prefetch(
                 "task_set",
                 to_attr="training_tasks",
                 queryset=Task.objects.filter(
                     role__name="learner", event__tags__name="TTT"
-                ),
+                ).select_related("role", "event"),
+            ),
+            "trainingrequest_set",
+            "trainingprogress_set",
+            Prefetch(
+                "membershiptask_set",
+                queryset=MembershipTask.objects.select_related("role", "membership"),
             ),
         )
         .select_related("airport")
@@ -603,6 +618,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
             "initial": {"person": self.object},
             "widgets": {"person": HiddenInput()},
         }
+
         context.update(
             {
                 "awards": self.object.award_set.select_related(
@@ -610,6 +626,12 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 ).order_by("badge__name"),
                 "tasks": self.object.task_set.select_related("role", "event").order_by(
                     "-event__slug"
+                ),
+                "consents_form": ActiveTermConsentsForm(
+                    form_tag=False,
+                    prefix="consents",
+                    person=self.object,
+                    **kwargs,
                 ),
                 "award_form": AwardForm(form_tag=False, prefix="award", **kwargs),
                 "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
@@ -968,7 +990,7 @@ def validate_event(request, slug):
         error_messages, warning_messages = validate_workshop_metadata(metadata)
 
     except WrongWorkshopURL as e:
-        error_messages.append(str(e))
+        error_messages.append(f"URL error: {e.msg}")
 
     except requests.exceptions.HTTPError as e:
         error_messages.append(
@@ -1285,7 +1307,7 @@ def event_import(request):
         return HttpResponseBadRequest("Network connection error.")
 
     except WrongWorkshopURL as e:
-        return HttpResponseBadRequest(str(e))
+        return HttpResponseBadRequest(f"URL error: {e.msg}")
 
     except KeyError:
         return HttpResponseBadRequest('Missing or wrong "url" parameter.')
@@ -1597,6 +1619,7 @@ class TaskCreate(
         """
 
         seat_membership = form.cleaned_data["seat_membership"]
+        seat_public = form.cleaned_data["seat_public"]
         event = form.cleaned_data["event"]
         check_ihia_old = InstructorsHostIntroductionAction.check(event)
         check_afwa_old = AskForWebsiteAction.check(event)
@@ -1604,18 +1627,23 @@ class TaskCreate(
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
+            remaining = (
+                seat_membership.public_instructor_training_seats_remaining
+                if seat_public
+                else seat_membership.inhouse_instructor_training_seats_remaining
+            )
             # check number of available seats
-            if seat_membership.seats_instructor_training_remaining == 1:
+            if remaining == 1:
                 messages.warning(
                     self.request,
-                    'Membership "{}" has 0 instructor training seats'
-                    " available.".format(str(seat_membership)),
+                    f'Membership "{seat_membership}" has 0 instructor training seats '
+                    "available.",
                 )
-            if seat_membership.seats_instructor_training_remaining < 1:
+            if remaining < 1:
                 messages.warning(
                     self.request,
-                    'Membership "{}" is using more training seats'
-                    " than it's been allowed.".format(str(seat_membership)),
+                    f'Membership "{seat_membership}" is using more training seats than '
+                    "it's been allowed.",
                 )
 
             today = datetime.date.today()
@@ -1627,7 +1655,7 @@ class TaskCreate(
             ):
                 messages.warning(
                     self.request,
-                    'Membership "{}" is not active.'.format(str(seat_membership)),
+                    f'Membership "{seat_membership}" is not active.',
                 )
 
             # show warning if training falls out of agreement dates
@@ -1639,11 +1667,8 @@ class TaskCreate(
             ):
                 messages.warning(
                     self.request,
-                    'Training "{}" has start or end date outside '
-                    'membership "{}" agreement dates.'.format(
-                        str(event),
-                        str(seat_membership),
-                    ),
+                    f'Training "{event}" has start or end date outside '
+                    f'membership "{seat_membership}" agreement dates.',
                 )
 
         # save the object

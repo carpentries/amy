@@ -1,8 +1,8 @@
-from django.db import models
-from workshops.mixins import CreatedUpdatedMixin
-from workshops.models import Person, STR_MED
-from django.db.models import Prefetch
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import Prefetch
+from workshops.mixins import CreatedUpdatedMixin
+from workshops.models import STR_MED, Person
 
 
 class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
