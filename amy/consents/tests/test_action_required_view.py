@@ -79,7 +79,6 @@ class TestActionRequiredTermView(ActionRequiredConsentTestBase):
             publish_profile=True,
             data_privacy_agreement=True,
         )
-        self.neville.save()
 
     def test_agreement_already_set(self):
         """Make sure the view redirect somewhere if person has already agreed
@@ -230,26 +229,24 @@ class TestTermsMiddleware(ActionRequiredConsentTestBase):
             self.assertEqual(rv.status_code, 200)
 
     def test_allowed_urls(self):
-        urls = [
-            reverse("logout"),
-        ]
+        url = reverse("logout")
         # ensure we're logged in
         self.client.force_login(self.neville)
         self.assertEqual(person_has_consented_to_required_terms(self.neville), False)
         with self.terms_middleware():
-            for url in urls:
-                rv = self.client.get(url)
-                # doesn't redirect to the form
-                self.assertIn(rv.status_code, [200, 302])
-                if "Location" in rv:
-                    self.assertNotEqual(rv["Location"], self.form_url)
+            rv = self.client.get(url)
+            # doesn't redirect to the form
+            # But logout does redirect to login
+            self.assertRedirects(rv, reverse("login"))
 
     def test_next_param(self):
         """Ensure a non-dispatch URL is reachable through `?next` query
         string."""
 
         url = reverse("autoupdate_profile")
-        self.form_url += "?{}".format(urlencode({"next": url}))
+        form_url = "{}?{}".format(
+            reverse("action_required_terms"), urlencode({"next": url})
+        )
 
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -263,11 +260,10 @@ class TestTermsMiddleware(ActionRequiredConsentTestBase):
             data = {"person": self.neville.pk}
             for term in terms:
                 data[term.slug] = term.options[0].pk
-            rv = self.client.post(self.form_url, data=data)
-            self.assertEqual(rv.status_code, 302)
-            self.assertEqual(rv["Location"], url)
+            rv = self.client.post(form_url, data=data)
+            self.assertRedirects(rv, url)
 
-    def test_old_terms_do_not_affect_terms_middleware(self) -> None:
+    def test_old_terms_do_not_affect_terms_middleware(self):
         """
         User is redirected even if old terms are false.
         """
