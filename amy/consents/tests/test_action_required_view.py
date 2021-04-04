@@ -197,9 +197,10 @@ class TestTermsMiddleware(ActionRequiredConsentTestBase):
         with self.terms_middleware():
             for url in urls:
                 rv = self.client.get(url)
-                # redirects to the form
-                self.assertEqual(rv.status_code, 302)
-                self.assertTrue(rv["Location"].startswith(self.form_url))
+                action_required_url = "{}?next={}".format(
+                    reverse("action_required_terms"), url
+                )
+                self.assertRedirects(rv, action_required_url)
 
     def test_no_more_redirects_after_agreement(self):
         """Ensure user is no longer forcefully redirected to accept the
@@ -213,8 +214,10 @@ class TestTermsMiddleware(ActionRequiredConsentTestBase):
         with self.terms_middleware():
             # we can't get to the url because we're redirected to the form
             rv = self.client.get(url)
-            self.assertEqual(rv.status_code, 302)
-            self.assertTrue(rv["Location"].startswith(self.form_url))
+            action_required_url = "{}?next={}".format(
+                reverse("action_required_terms"), url
+            )
+            self.assertRedirects(rv, action_required_url)
 
             # agree on the required terms
             self.person_agree_to_terms(
@@ -294,5 +297,7 @@ class TestTermsMiddleware(ActionRequiredConsentTestBase):
             for url in urls:
                 rv = self.client.get(url)
                 # redirects to the form
-                self.assertEqual(rv.status_code, 302)
-                self.assertTrue(rv["Location"].startswith(self.form_url))
+                action_required_url = "{}?next={}".format(
+                    reverse("action_required_terms"), url
+                )
+                self.assertRedirects(rv, action_required_url)
