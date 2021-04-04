@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
+from django.utils.functional import cached_property
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import STR_MED, Person
 
@@ -19,17 +20,17 @@ class TermQuerySet(models.query.QuerySet):
         return self.filter(archived_at=None)
 
     def prefetch_active_options(self):
-        return self._prefetch_options(TermOption.objects.active())
+        return self._prefetch_options(TermOption.objects.active(), "active_options")
 
     def prefetch_all_options(self):
-        return self._prefetch_options(TermOption.objects.all())
+        return self._prefetch_options(TermOption.objects.all(), "all_options")
 
-    def _prefetch_options(self, options_queryset):
+    def _prefetch_options(self, options_queryset, attr_name: str):
         return self.prefetch_related(
             Prefetch(
                 "termoption_set",
                 queryset=options_queryset,
-                to_attr="options",
+                to_attr=attr_name,
             )
         )
 
@@ -59,8 +60,13 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
     )
     objects = TermQuerySet.as_manager()
 
-    def __str__(self):
-        return self.slug
+    @cached_property
+    def options(self):
+        # If you've already prefetched_active_options
+        # Use that instead. Otherwise query for the options
+        if hasattr(self, "active_options"):
+            return self.active_options
+        return TermOption.objects.active().filter(term=self)
 
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):

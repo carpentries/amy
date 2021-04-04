@@ -1,7 +1,8 @@
-from typing import List
+from typing import Iterable, List
 
 from consents.models import Consent, Term, TermOption
 from django import forms
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
 from workshops.forms import BootstrapHelper, WidgetOverrideMixin
 from workshops.models import Person
@@ -17,11 +18,12 @@ def option_display_value(option: TermOption) -> str:
     return option.content or OPTION_DISPLAY[option.option_type]
 
 
-class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
+class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
     """
     Builds form including all active terms with
     the provided person's consents as the initial selection.
-    Saves Consent models.
+
+    Saves the user's responses as Consent models.
     """
 
     class Meta:
@@ -30,17 +32,22 @@ class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
-        person = kwargs.pop("person")
+        person = kwargs["initial"]["person"]
         super().__init__(*args, **kwargs)
+        self.terms = self.get_terms()
         self._build_form(person)
-        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
+        self.helper = BootstrapHelper(
+            add_cancel_button=False,
+            form_tag=form_tag,
+            wider_labels=True,
+        )
 
     def _build_form(self, person: Person) -> None:
         """
         Construct a Form of terms with the
         consent answers added as initial.
         """
-        self.terms = Term.objects.active().prefetch_active_options()
+
         self.term_id_by_consent = {
             consent.term_id: consent
             for consent in Consent.objects.filter(
@@ -55,8 +62,7 @@ class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         options = [(opt.id, option_display_value(opt)) for opt in term.options]
         required = term.required_type != Term.OPTIONAL_REQUIRE_TYPE
         field = forms.ChoiceField(
-            widget=forms.RadioSelect,
-            choices=options,
+            choices=BLANK_CHOICE_DASH + options,
             label=term.content,
             required=required,
             initial=consent.term_option_id if consent else None,
@@ -79,3 +85,31 @@ class ActiveTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
                 Consent(person=person, term_option_id=option_id, term_id=term.id)
             )
         Consent.objects.bulk_create(new_consents)
+
+    @classmethod
+    def get_terms(cls) -> Iterable[Term]:
+        return Term.objects.all().prefetch_active_options()
+
+
+class ActiveTermConsentsForm(BaseTermConsentsForm):
+    """
+    Builds form with all active terms.
+    """
+
+    @classmethod
+    def get_terms(cls) -> Iterable[Term]:
+        return Term.objects.active().prefetch_active_options()
+
+
+class RequiredConsentsForm(BaseTermConsentsForm):
+    """
+    Builds form shown on login when there are missing required consents.
+    """
+
+    @classmethod
+    def get_terms(cls) -> Iterable[Term]:
+        return (
+            Term.objects.active()
+            .prefetch_active_options()
+            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
+        )

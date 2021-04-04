@@ -46,8 +46,8 @@ class TestQuerySet(TestCase):
             content="option1",
         )
         terms = Term.objects.all().prefetch_active_options()
-        self.assertEqual(terms.filter(id=term1.id)[0].options, [term1_option1])
-        self.assertEqual(terms.filter(id=term2.id)[0].options, [term2_option1])
+        self.assertEqual(terms.filter(id=term1.id)[0].active_options, [term1_option1])
+        self.assertEqual(terms.filter(id=term2.id)[0].active_options, [term2_option1])
 
     def test_consent_active(self) -> None:
         term1 = Term.objects.create(
@@ -128,3 +128,44 @@ class TestConsentModel(TestCase):
             ValidationError, "Consent term.id must match term_option.term_id"
         ):
             Consent.objects.create(person=person, term=term1, term_option=term2_option1)
+
+    def test_term_options(self) -> None:
+        term1 = Term.objects.create(content="term1", slug="term1")
+        term1_option1 = TermOption.objects.create(
+            term=term1,
+            option_type="agree",
+            content="option1",
+        )
+        term1_option2 = TermOption.objects.create(
+            term=term1,
+            option_type="agree",
+            content="option2",
+        )
+        term2 = Term.objects.create(content="term2", slug="term2")
+        term2_option1 = TermOption.objects.create(
+            term=term2,
+            option_type="agree",
+            content="option1",
+        )
+        term2_option2 = TermOption.objects.create(
+            term=term2,
+            option_type="agree",
+            content="option2",
+        )
+        # Term options method is cached and requires only one
+        # query even during subsequent calls
+        with self.assertNumQueries(2):
+            self.assertCountEqual(term1.options, [term1_option1, term1_option2])
+            self.assertCountEqual(term2.options, [term2_option1, term2_option2])
+            term1.options
+            term2.options
+
+        # term.options after prefetch_options does not need
+        # an additional query
+        terms = Term.objects.all().prefetch_active_options()
+        self.assertEqual(len(terms), 2)
+        with self.assertNumQueries(0):
+            self.assertCountEqual(terms[0].options, [term1_option1, term1_option2])
+            self.assertCountEqual(terms[1].options, [term2_option1, term2_option2])
+            self.assertCountEqual(term1.options, [term1_option1, term1_option2])
+            self.assertCountEqual(term2.options, [term2_option1, term2_option2])

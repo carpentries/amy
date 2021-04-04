@@ -630,7 +630,6 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 "consents_form": ActiveTermConsentsForm(
                     form_tag=False,
                     prefix="consents",
-                    person=self.object,
                     **kwargs,
                 ),
                 "award_form": AwardForm(form_tag=False, prefix="award", **kwargs),
