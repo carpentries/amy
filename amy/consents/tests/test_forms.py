@@ -39,7 +39,7 @@ class TestActiveTermConsentsForm(TestCase):
             term=term1,
             term_option=term1_option1,
         )
-        form = ActiveTermConsentsForm(person=self.person)
+        form = ActiveTermConsentsForm(initial={"person": self.person})
         self.assertIn(term1.slug, form.fields)
         self.assertCountEqual(
             form.fields[term1.slug].choices,
@@ -63,7 +63,7 @@ class TestActiveTermConsentsForm(TestCase):
         term1 = Term.objects.create(
             content="term1", slug="term1", archived_at=timezone.now()
         )
-        form = ActiveTermConsentsForm(person=self.person)
+        form = ActiveTermConsentsForm(initial={"person": self.person})
         self.assertNotIn(term1.slug, form.fields)
 
 
@@ -91,7 +91,7 @@ class TestRequiredConsentsForm(TestCase):
             archived_at=timezone.now(),
             required_type=Term.PROFILE_REQUIRE_TYPE,
         )
-        form = RequiredConsentsForm(person=self.person)
+        form = RequiredConsentsForm(initial={"person": self.person})
         self.assertIn(required_term.slug, form.fields)
         self.assertNotIn(not_required_term.slug, form.fields)
         self.assertNotIn(archived_term.slug, form.fields)

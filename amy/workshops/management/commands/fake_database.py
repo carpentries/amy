@@ -899,6 +899,7 @@ class Command(BaseCommand):
             " you list (website, Twitter) on our instructors website."
             " Emails will not be posted.",
             required_type=Term.PROFILE_REQUIRE_TYPE,
+            slug="public-profile",
         )
         public_profile_agree = TermOption.objects.create(
             term=public_profile, option_type=TermOption.AGREE

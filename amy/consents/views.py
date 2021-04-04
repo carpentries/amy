@@ -24,7 +24,7 @@ class ConsentsUpdate(RedirectSupportMixin, AMYCreateView, LoginRequiredMixin):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         person = kwargs["data"]["consents-person"]
-        kwargs.update({"prefix": "consents", "person": person})
+        kwargs.update({"prefix": "consents", "initial": {"person": person}})
         return kwargs
 
     def get_success_message(self, *args, **kwargs):
@@ -40,12 +40,9 @@ def action_required_terms(request):
     if person_has_consented_to_required_terms(person):
         raise Http404("This view is disabled.")
 
-    # TODO: Because I'm building the form manually,
-    # The person must be passed in.
     kwargs = {
         "initial": {"person": person},
         "widgets": {"person": HiddenInput()},
-        "person": person,
     }
     if request.method == "POST":
         form = RequiredConsentsForm(request.POST, **kwargs)
@@ -59,7 +56,7 @@ def action_required_terms(request):
                 return redirect(reverse("dispatch"))
         else:
             messages.error(request, "Fix errors below.")
-    if request.method == "GET":
+    else:
         form = RequiredConsentsForm(**kwargs)
 
     context = {

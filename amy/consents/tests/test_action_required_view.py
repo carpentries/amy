@@ -132,13 +132,13 @@ class TestActionRequiredTermView(ActionRequiredConsentTestBase):
         }
         data["person"] = self.neville.pk
         # make sure it doesn't pass without the required consents
-        form = RequiredConsentsForm(data, person=self.neville)
+        form = RequiredConsentsForm(data, initial={"person": self.neville})
         self.assertFalse(form.is_valid())
 
         # let's try with consent for required terms
         for term in terms.filter(required_type=Term.PROFILE_REQUIRE_TYPE):
             data[term.slug] = term.options[0].pk
-        form = RequiredConsentsForm(data, person=self.neville)
+        form = RequiredConsentsForm(data, initial={"person": self.neville})
         self.assertTrue(form.is_valid())
 
 

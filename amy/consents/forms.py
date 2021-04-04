@@ -32,9 +32,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
-        # Because the form is built manually,
-        # passing in the person in kwargs is required.
-        person = kwargs.pop("person")
+        person = kwargs["initial"]["person"]
         super().__init__(*args, **kwargs)
         self.terms = self.get_terms()
         self._build_form(person)
