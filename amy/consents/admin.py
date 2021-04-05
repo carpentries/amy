@@ -1,26 +1,69 @@
+from django.contrib.admin.options import csrf_protect_m
+from django.http.response import HttpResponseRedirect
+from urllib.parse import unquote
+
 from consents.models import Consent
 from consents.models import Term, TermOption
 from django.contrib import admin
 
 
+class ArchiveActionMixin:
+    change_form_template = "consents/admin_change_form_term.html"
+    actions = ["archive"]
+    readonly_fields = ("archived_at",)
+
+    @csrf_protect_m
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        if request.method == "POST" and "_archive" in request.POST:
+            obj = self.get_object(request, unquote(object_id))
+            self.archive_single(request, obj)
+            return HttpResponseRedirect(request.get_full_path())
+
+        return admin.ModelAdmin.changeform_view(
+            self,
+            request,
+            object_id=object_id,
+            form_url=form_url,
+            extra_context=extra_context,
+        )
+
+    def archive_single(self, request, obj):
+        if obj.archived_at is not None:
+            class_name = str(obj.__class__)
+            self.message_user(
+                request,
+                f"Cannot archive {class_name}. "
+                "{class_name.capitalize()} {obj.id} is already archived.",
+            )
+        else:
+            obj.archive()
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
+
+
+class TermOptionAdmin(ArchiveActionMixin, admin.ModelAdmin):
+    list_display = ("term", "option_type", "content", "archived_at")
+
+
 class TermOptionInline(admin.TabularInline):
     model = TermOption
     extra = 0
-    readonly_fields = ("archived_at",)
+    readonly_fields = (
+        "archived_at",
+        "is_archived",
+    )
+    show_change_link = True
 
-    def has_delete_permission(self, *args, **kwargs):
-        return False
+    def is_archived(self, object):
+        return object.archived_at is not None
 
 
-class TermAdmin(admin.ModelAdmin):
-    list_display = ("slug", "content", "required_type")
+class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
+    list_display = ("slug", "content", "required_type", "archived_at")
     inlines = [
         TermOptionInline,
     ]
-    readonly_fields = ("archived_at",)
-
-    def has_delete_permission(self, *args, **kwargs):
-        return False
 
 
 class ConsentAdmin(admin.ModelAdmin):
@@ -47,4 +90,5 @@ class ConsentAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Term, TermAdmin)
+admin.site.register(TermOption, TermOptionAdmin)
 admin.site.register(Consent, ConsentAdmin)
