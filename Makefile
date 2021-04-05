@@ -30,7 +30,7 @@ dev_database :
 	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
-	${MANAGE} create_superuser
+	${MANAGE} createsuperuser
 
 ## node_modules : install front-end dependencies using Yarn
 node_modules : package.json
