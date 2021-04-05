@@ -6,6 +6,10 @@ from django.contrib import admin
 class TermOptionInline(admin.TabularInline):
     model = TermOption
     extra = 0
+    readonly_fields = ("archived_at",)
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
 
 
 class TermAdmin(admin.ModelAdmin):
@@ -13,6 +17,10 @@ class TermAdmin(admin.ModelAdmin):
     inlines = [
         TermOptionInline,
     ]
+    readonly_fields = ("archived_at",)
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
 
 
 class ConsentAdmin(admin.ModelAdmin):
@@ -30,6 +38,9 @@ class ConsentAdmin(admin.ModelAdmin):
 
     def get_term_option_type(self, obj):
         return obj.term_option.option_type if obj.term_option else None
+
+    def has_delete_permission(self, *args, **kwargs):
+        return False
 
     get_term_option_type.short_description = "Term Option Type"
     get_term_option_type.admin_order_field = "term_option__option_type"
