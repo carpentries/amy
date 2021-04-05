@@ -1,9 +1,10 @@
-from consents.models import Consent, Term, TermOption
+from consents.models import Term, TermOption
 from django.test.testcases import TestCase
 from django.utils import timezone
 from workshops.models import Person
 
 from amy.consents.util import person_has_consented_to_required_terms
+from amy.consents.tests.helpers import reconsent
 
 
 class TestActiveTermConsentsForm(TestCase):
@@ -39,7 +40,5 @@ class TestActiveTermConsentsForm(TestCase):
         )
         self.assertEqual(person_has_consented_to_required_terms(person), False)
         # Consent created for the required term; should return True
-        Consent.objects.create(
-            person=person, term=required_term, term_option=required_term_option
-        )
+        reconsent(person=person, term=required_term, term_option=required_term_option)
         self.assertEqual(person_has_consented_to_required_terms(person), True)

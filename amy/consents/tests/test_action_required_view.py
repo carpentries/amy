@@ -1,8 +1,9 @@
+from amy.consents.tests.helpers import reconsent
 from contextlib import contextmanager
 from typing import Iterable
 
 from consents.forms import RequiredConsentsForm
-from consents.models import Consent, Term, TermOption
+from consents.models import Term, TermOption
 from consents.util import person_has_consented_to_required_terms
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -42,9 +43,7 @@ class ActionRequiredConsentTestBase(TestBase):
     @staticmethod
     def person_agree_to_terms(person: Person, terms: Iterable[Term]) -> None:
         for term in terms:
-            Consent.objects.create(
-                person=person, term_option=term.options[0], term=term
-            )
+            reconsent(person=person, term_option=term.options[0], term=term)
 
     @contextmanager
     def terms_middleware(self) -> None:
