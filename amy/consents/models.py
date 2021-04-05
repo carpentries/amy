@@ -61,6 +61,7 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
     required_type = models.CharField(
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
+    help_text = models.TextField(verbose_name="Help Text", blank=True)
     objects = TermQuerySet.as_manager()
 
     @cached_property
