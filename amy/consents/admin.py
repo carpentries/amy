@@ -8,6 +8,11 @@ from django.contrib import admin
 
 
 class ArchiveActionMixin:
+    """
+    Used for AdminModels that have the CreatedUpdatedArchivedMixin
+    and need to archive rather than delete the model.
+    """
+
     change_form_template = "consents/admin_change_form_term.html"
     actions = ["archive"]
     readonly_fields = ("archived_at",)
