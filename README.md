@@ -51,6 +51,12 @@ before starting work on new features.
 
 1.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
 
+1. Start running a local instance of Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
+
+    ~~~
+    $ docker-compose -f docker/docker-compose.yml -p amy up -d redis
+    ~~~
+
 1.  Set up your local database with fake (development-ready) data with:
 
     ~~~
@@ -67,13 +73,6 @@ before starting work on new features.
 
     ~~~
     $ python manage.py createsuperuser
-    ~~~
-
-
-1. Start running a local instance of Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
-
-    ~~~
-    $ docker-compose -f docker/docker-compose.yml -p amy up -d redis
     ~~~
 
 1.  Start a local Django development server by running:
