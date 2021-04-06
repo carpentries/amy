@@ -69,12 +69,6 @@ before starting work on new features.
     $ python manage.py createcachetable
     ~~~
 
-1.  Create an administrator account:
-
-    ~~~
-    $ python manage.py createsuperuser
-    ~~~
-
 1.  Start a local Django development server by running:
 
     ~~~
