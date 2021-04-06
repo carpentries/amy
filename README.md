@@ -30,7 +30,8 @@ before starting work on new features.
     ~~~
     $ git clone https://github.com/carpentries/amy.git
     $ cd amy
-    ~~~ 
+    ~~~
+
 1.  Configure git to automatically ignore revisions in the `.git-blame-ignore-revs`:
 
     ~~~
