@@ -899,7 +899,7 @@ class Command(BaseCommand):
             content="Consent to making profile public",
             required_type=Term.PROFILE_REQUIRE_TYPE,
             slug="public-profile",
-            help_text=" Allow to post your name and any public profile"
+            help_text="Allow to post your name and any public profile"
             " you list (website, Twitter) on our instructors website."
             " Emails will not be posted.",
         )
