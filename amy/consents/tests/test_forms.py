@@ -4,7 +4,7 @@ from django.db.models.fields import BLANK_CHOICE_DASH
 from django.test import TestCase
 from django.utils import timezone
 from workshops.models import Person
-from amy.consents.tests.helpers import reconsent
+from consents.tests.helpers import reconsent
 
 
 class TestActiveTermConsentsForm(TestCase):

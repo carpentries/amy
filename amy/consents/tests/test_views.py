@@ -3,7 +3,7 @@ from django.urls import reverse
 from django_webtest import WebTest
 from rest_framework import status
 from workshops.models import Person
-from amy.consents.tests.helpers import reconsent
+from consents.tests.helpers import reconsent
 
 
 class ConsentsUpdateTest(WebTest):

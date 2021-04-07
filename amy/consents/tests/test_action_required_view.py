@@ -1,9 +1,9 @@
-from amy.consents.tests.helpers import reconsent
 from contextlib import contextmanager
 from typing import Iterable
 
 from consents.forms import RequiredConsentsForm
 from consents.models import Term, TermOption
+from consents.tests.helpers import reconsent
 from consents.util import person_has_consented_to_required_terms
 from django.urls import reverse
 from django.utils.http import urlencode

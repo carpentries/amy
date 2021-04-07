@@ -982,7 +982,13 @@ class Command(BaseCommand):
         Consent.objects.filter(
             person__in=people,
             term_option__isnull=True,
-            term__in=[user_old_enough, may_contact, may_publish_name],
+            term__in=[
+                user_old_enough,
+                may_contact,
+                may_publish_name,
+                user_privacy_policy,
+                public_profile,
+            ],
         ).active().update(archived_at=timezone.now())
 
         Consent.objects.bulk_create(consents)

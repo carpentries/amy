@@ -3,8 +3,8 @@ from django.test.testcases import TestCase
 from django.utils import timezone
 from workshops.models import Person
 
-from amy.consents.util import person_has_consented_to_required_terms
-from amy.consents.tests.helpers import reconsent
+from consents.util import person_has_consented_to_required_terms
+from consents.tests.helpers import reconsent
 
 
 class TestActiveTermConsentsForm(TestCase):
