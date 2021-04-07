@@ -13,6 +13,7 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 from django_countries import countries as Countries
+from django.utils import timezone
 from faker import Faker
 from faker.providers import BaseProvider
 
@@ -932,7 +933,8 @@ class Command(BaseCommand):
         )
 
         consents: List[Consent] = []
-        for person in Person.objects.all():
+        people = Person.objects.all()
+        for person in people:
             consents.append(
                 Consent(
                     person=person,
@@ -976,6 +978,18 @@ class Command(BaseCommand):
                     term=may_publish_name,
                 )
             )
+        # Archive unset old consents before adding new ones
+        Consent.objects.filter(
+            person__in=people,
+            term_option__isnull=True,
+            term__in=[
+                user_old_enough,
+                may_contact,
+                may_publish_name,
+                user_privacy_policy,
+                public_profile,
+            ],
+        ).active().update(archived_at=timezone.now())
 
         Consent.objects.bulk_create(consents)
 

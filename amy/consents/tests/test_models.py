@@ -4,6 +4,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 from workshops.models import Person
+from consents.tests.helpers import reconsent
 
 
 class TestQuerySet(TestCase):
@@ -21,9 +22,7 @@ class TestQuerySet(TestCase):
         self.assertCountEqual(Term.objects.active(), [term2, term3])
 
     def test_term_prefetch_active_options(self) -> None:
-        term1 = Term.objects.create(
-            content="term1", slug="term1", archived_at=timezone.now()
-        )
+        term1 = Term.objects.create(content="term1", slug="term1")
         term2 = Term.objects.create(
             content="term2",
             slug="term2",
@@ -50,9 +49,7 @@ class TestQuerySet(TestCase):
         self.assertEqual(terms.filter(id=term2.id)[0].active_options, [term2_option1])
 
     def test_consent_active(self) -> None:
-        term1 = Term.objects.create(
-            content="term1", slug="term1", archived_at=timezone.now()
-        )
+        term1 = Term.objects.create(content="term1", slug="term1")
         term1_option1 = TermOption.objects.create(
             term=term1,
             option_type="agree",
@@ -67,18 +64,8 @@ class TestQuerySet(TestCase):
             email="rw@magic.uk",
             username="rweasley",
         )
-        Consent.objects.create(
-            person=person1,
-            term=term1,
-            term_option=term1_option1,
-            archived_at=timezone.now(),
-        )
-        consent1 = Consent.objects.create(
-            person=person1, term=term1, term_option=term1_option1
-        )
-        consent2 = Consent.objects.create(
-            person=person2, term=term1, term_option=term1_option1
-        )
+        consent1 = reconsent(person1, term1, term1_option1)
+        consent2 = reconsent(person2, term1, term1_option1)
         consents = Consent.objects.active()
 
         self.assertCountEqual(consents, [consent1, consent2])
@@ -86,10 +73,8 @@ class TestQuerySet(TestCase):
 
 class TestConsentModel(TestCase):
     def test_unique_constraint(self) -> None:
-        term1 = Term.objects.create(
-            content="term1", slug="term1", archived_at=timezone.now()
-        )
-        term1_option1 = TermOption.objects.create(
+        term1 = Term.objects.create(content="term1", slug="term1")
+        TermOption.objects.create(
             term=term1,
             option_type="agree",
             content="option1",
@@ -102,8 +87,12 @@ class TestConsentModel(TestCase):
         person1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk"
         )
-        Consent.objects.create(person=person1, term=term1, term_option=term1_option1)
+        # assert active consent exists for this term
+        self.assertTrue(
+            Consent.objects.filter(person=person1, term=term1).active().exists()
+        )
         with self.assertRaises(IntegrityError):
+            # create without archiving pre-existing active consent.
             Consent.objects.create(
                 person=person1, term=term1, term_option=term1_option2
             )
@@ -111,13 +100,9 @@ class TestConsentModel(TestCase):
     def test_term_and_term_option_should_match(self):
         """Term was added to the Consent model to avoid too many complicated joins.
         The term option should always be related to the term stored in the table."""
-        term1 = Term.objects.create(
-            content="term1", slug="term1", archived_at=timezone.now()
-        )
+        term1 = Term.objects.create(content="term1", slug="term1")
         term2_option1 = TermOption.objects.create(
-            term=Term.objects.create(
-                content="term2", slug="term2", archived_at=timezone.now()
-            ),
+            term=Term.objects.create(content="term2", slug="term2"),
             option_type="agree",
             content="option1",
         )

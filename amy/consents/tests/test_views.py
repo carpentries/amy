@@ -3,6 +3,7 @@ from django.urls import reverse
 from django_webtest import WebTest
 from rest_framework import status
 from workshops.models import Person
+from consents.tests.helpers import reconsent
 
 
 class ConsentsUpdateTest(WebTest):
@@ -37,7 +38,7 @@ class ConsentsUpdateTest(WebTest):
             term=term2,
             option_type=TermOption.DECLINE,
         )
-        original_term2_consent = Consent.objects.create(
+        original_term2_consent = reconsent(
             term=term2,
             term_option=term2_option2,
             person=self.person,
@@ -51,7 +52,7 @@ class ConsentsUpdateTest(WebTest):
             term=term3,
             option_type=TermOption.DECLINE,
         )
-        original_term3_consent = Consent.objects.create(
+        original_term3_consent = reconsent(
             term=term3,
             term_option=term3_option2,
             person=self.person,
@@ -80,8 +81,13 @@ class ConsentsUpdateTest(WebTest):
 
         # Old Consents are archived
         consents = Consent.objects.filter(person=self.person, archived_at__isnull=False)
-        self.assertEqual(len(consents), 1)
-        self.assertEqual(
-            consents.filter(term=term2)[0].term_option,
-            original_term2_consent.term_option,
+        self.assertEqual(len(consents), 4)
+        self.assertCountEqual(
+            [(c.term, c.term_option) for c in consents],
+            [
+                (term1, None),
+                (term2, None),
+                (term3, None),
+                (term2, original_term2_consent.term_option),
+            ],
         )
