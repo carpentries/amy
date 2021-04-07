@@ -64,6 +64,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
             label=term.content,
             required=required,
             initial=consent.term_option_id if consent else None,
+            help_text=term.help_text,
         )
         return field
 

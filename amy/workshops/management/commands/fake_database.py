@@ -883,10 +883,11 @@ class Command(BaseCommand):
             term=user_old_enough, option_type=TermOption.AGREE
         )
         may_contact = Term.objects.create(
-            content="May contact: Allow to contact from The Carpentries according to"
-            " the Privacy Policy.",
+            content="May contact",
             slug="may-contact",
             required_type=Term.PROFILE_REQUIRE_TYPE,
+            help_text="Allow to contact from The Carpentries according to"
+            " the Privacy Policy.",
         )
         may_contact_agree = TermOption.objects.create(
             term=may_contact, option_type=TermOption.AGREE
@@ -895,12 +896,12 @@ class Command(BaseCommand):
             term=may_contact, option_type=TermOption.DECLINE
         )
         public_profile = Term.objects.create(
-            content="Consent to making profile public:"
-            " Allow to post your name and any public profile"
-            " you list (website, Twitter) on our instructors website."
-            " Emails will not be posted.",
+            content="Consent to making profile public",
             required_type=Term.PROFILE_REQUIRE_TYPE,
             slug="public-profile",
+            help_text="Allow to post your name and any public profile"
+            " you list (website, Twitter) on our instructors website."
+            " Emails will not be posted.",
         )
         public_profile_agree = TermOption.objects.create(
             term=public_profile, option_type=TermOption.AGREE
