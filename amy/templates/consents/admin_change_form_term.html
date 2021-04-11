@@ -2,6 +2,6 @@
 
 {% block after_field_sets %}
 <div class="submit-row">
-    <input type="submit" value="Archive" class="default" name="_archive">
+    <input type="submit" value="Archive" class="default" name="_archive" onclick='confirm("{{warning_message}}");'>
 </div>
 {% endblock %}

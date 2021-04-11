@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.admin.options import csrf_protect_m
 from django.http.response import HttpResponseRedirect
 from urllib.parse import unquote
@@ -34,11 +35,10 @@ class ArchiveActionMixin:
 
     def archive_single(self, request, obj):
         if obj.archived_at is not None:
-            class_name = str(obj.__class__)
             self.message_user(
                 request,
-                f"Cannot archive {class_name}. "
-                "{class_name.capitalize()} {obj.id} is already archived.",
+                f"Error: Cannot archive. {obj} is already archived.",
+                level=messages.ERROR,
             )
         else:
             obj.archive()
