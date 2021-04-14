@@ -63,7 +63,6 @@ class TermOptionAdmin(ArchiveActionMixin, admin.ModelAdmin):
     list_display = ("term", "option_type", "content", "archived_at")
 
     def warning_message(self, obj: Any) -> str:
-        breakpoint()
         message = super().warning_message(obj)
         if obj.term.required_type != Term.OPTIONAL_REQUIRE_TYPE:
             return (
