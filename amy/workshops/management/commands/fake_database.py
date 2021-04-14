@@ -991,7 +991,6 @@ class Command(BaseCommand):
                 public_profile,
             ],
         ).active().update(archived_at=timezone.now())
-
         Consent.objects.bulk_create(consents)
 
     def handle(self, *args, **options):

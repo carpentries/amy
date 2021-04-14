@@ -154,3 +154,136 @@ class TestConsentModel(TestCase):
             self.assertCountEqual(terms[1].options, [term2_option1, term2_option2])
             self.assertCountEqual(term1.options, [term1_option1, term1_option2])
             self.assertCountEqual(term2.options, [term2_option1, term2_option2])
+
+
+class TestTermModel(TestCase):
+    def test_archive(self):
+        """
+        Term archive method should archive the term
+        and all related term options and consents.
+        """
+        term1 = Term.objects.create(content="term1", slug="term1")
+        term1_option1 = TermOption.objects.create(
+            term=term1,
+            option_type="agree",
+            content="option1",
+        )
+        term1_option2 = TermOption.objects.create(
+            term=term1,
+            option_type="agree",
+            content="option2",
+        )
+
+        person1 = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+        person2 = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="rweasley",
+        )
+
+        consent1 = reconsent(person1, term1, term1_option1)
+        consent2 = reconsent(person2, term1, term1_option2)
+
+        # Unrelated term, option, and consent.
+        # They should not appear in the queries below
+        unrelated_option = TermOption.objects.create(
+            term=Term.objects.create(content="unrealted", slug="unrelated"),
+            option_type="agree",
+            content="option",
+        )
+        consent3 = reconsent(person2, unrelated_option.term, unrelated_option)
+
+        term1.archive()
+
+        # Term should be archived
+        archived_term_ids = [
+            term.pk for term in Term.objects.filter(archived_at__isnull=False)
+        ]
+        self.assertEqual(
+            [term1.pk],
+            archived_term_ids,
+        )
+        # Term options should be archived
+        archived_term_option_ids = [
+            option.pk for option in TermOption.objects.filter(archived_at__isnull=False)
+        ]
+        self.assertCountEqual(
+            [term1_option1.pk, term1_option2.pk],
+            archived_term_option_ids,
+        )
+        # Consents should be archived
+        archived_consent_ids = [
+            consent.pk for consent in Consent.objects.filter(archived_at__isnull=False)
+        ]
+        self.assertIn(consent1.pk, archived_consent_ids)
+        self.assertIn(consent2.pk, archived_consent_ids)
+        # Unrelated consent should not be archived
+        self.assertNotIn(consent3.pk, archived_consent_ids)
+
+
+class TestTermOptionModel(TestCase):
+    def test_archive(self):
+        """
+        TermOption archive method should archive the TermOption
+        and all related consents.
+        """
+        term1 = Term.objects.create(content="term1", slug="term1")
+        term1_option1 = TermOption.objects.create(
+            term=term1,
+            option_type="agree",
+            content="option1",
+        )
+        term1_option2 = TermOption.objects.create(
+            term=term1,
+            option_type="agree",
+            content="option2",
+        )
+
+        person1 = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+        person2 = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="rweasley",
+        )
+        consent1 = reconsent(person1, term1, term1_option1)
+        consent2 = reconsent(person2, term1, term1_option2)
+        # Unrelated term, option, and consent.
+        # They should not appear in the queries below
+        unrelated_option = TermOption.objects.create(
+            term=Term.objects.create(content="unrealted", slug="unrelated"),
+            option_type="agree",
+            content="option",
+        )
+        consent3 = reconsent(person2, unrelated_option.term, unrelated_option)
+
+        term1_option1.archive()
+
+        # Term should not be archived
+        archived_term_ids = [
+            term.pk for term in Term.objects.filter(archived_at__isnull=False)
+        ]
+        self.assertEqual(len(archived_term_ids), 0)
+
+        # Only 1 Term options should be archived
+        archived_term_option_ids = [
+            option.pk for option in TermOption.objects.filter(archived_at__isnull=False)
+        ]
+        self.assertEqual(
+            [term1_option1.pk],
+            archived_term_option_ids,
+        )
+
+        # Only related consents should be archived
+        archived_consent_ids = [
+            consent.pk for consent in Consent.objects.filter(archived_at__isnull=False)
+        ]
+        self.assertIn(consent1.pk, archived_consent_ids)
+        # Unrelated consent should not be archived
+        self.assertNotIn(consent2.pk, archived_consent_ids)
+        self.assertNotIn(consent3.pk, archived_consent_ids)

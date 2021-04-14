@@ -72,6 +72,20 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
             return self.active_options
         return TermOption.objects.active().filter(term=self)
 
+    def archive(self) -> None:
+        """
+        Archive the term. And archive all term options and consents with the given term.
+        """
+        self.archived_at = timezone.now()
+        self.save()
+        TermOption.objects.filter(term=self).active().update(
+            archived_at=self.archived_at
+        )
+        Consent.objects.filter(term=self).active().update(archived_at=self.archived_at)
+
+    def __str__(self) -> str:
+        return self.slug
+
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     AGREE = "agree"
@@ -85,6 +99,19 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
 
     def __str__(self):
         return f"{self.content} ({self.option_type})"
+
+    def archive(self) -> None:
+        """
+        Archive self and archive all Consent objects that have the
+        term option as their answer.
+        If the Term this term option is attached to is still active,
+        the user will be notified to reconsent.
+        """
+        self.archived_at = timezone.now()
+        self.save()
+        Consent.objects.filter(term_option=self).active().update(
+            archived_at=self.archived_at
+        )
 
 
 class Consent(CreatedUpdatedArchivedMixin, models.Model):
