@@ -1,11 +1,10 @@
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
 from django.http.response import HttpResponseRedirect
+from typing import Any
 from urllib.parse import unquote
 
-from consents.models import Consent
-from consents.models import Term, TermOption
-from django.contrib import admin
+from consents.models import Consent, Term, TermOption
 
 
 class ArchiveActionMixin:
@@ -20,10 +19,15 @@ class ArchiveActionMixin:
 
     @csrf_protect_m
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        obj = self.get_object(request, unquote(object_id))
         if request.method == "POST" and "_archive" in request.POST:
-            obj = self.get_object(request, unquote(object_id))
             self.archive_single(request, obj)
             return HttpResponseRedirect(request.get_full_path())
+
+        if extra_context is None:
+            extra_context = {"warning_message": self.warning_message(obj)}
+        else:
+            extra_context["warning_message"] = self.warning_message(obj)
 
         return admin.ModelAdmin.changeform_view(
             self,
@@ -35,20 +39,38 @@ class ArchiveActionMixin:
 
     def archive_single(self, request, obj):
         if obj.archived_at is not None:
-            self.message_user(
+            messages.error(
                 request,
-                f"Error: Cannot archive. {obj} is already archived.",
-                level=messages.ERROR,
+                f"Error: Cannot archive. {obj.__class__.__name__}"
+                f"  {obj} is already archived.",
             )
         else:
             obj.archive()
 
     def has_delete_permission(self, *args, **kwargs):
+        """Determines if the admin class can delete objects.
+        See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission"""  # noqa
         return False
+
+    def warning_message(self, obj: Any) -> str:
+        """
+        Message displayed as a pop-up to the user before they archive the given object.
+        """
+        return f"Warning: This will archive {obj.__class__.__name__} {obj}"
 
 
 class TermOptionAdmin(ArchiveActionMixin, admin.ModelAdmin):
     list_display = ("term", "option_type", "content", "archived_at")
+
+    def warning_message(self, obj: Any) -> str:
+        breakpoint()
+        message = super().warning_message(obj)
+        if obj.term.required_type != Term.OPTIONAL_REQUIRE_TYPE:
+            return (
+                f"{message}. An email will be sent to all users who previously"
+                " consented with this term option."
+            )
+        return message
 
 
 class TermOptionInline(admin.TabularInline):
@@ -70,6 +92,10 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
         TermOptionInline,
     ]
 
+    def warning_message(self, obj: Any) -> str:
+        message = super().warning_message(obj)
+        return f"{message} and all associated term options and user consents."
+
 
 class ConsentAdmin(admin.ModelAdmin):
     list_display = (
@@ -88,6 +114,9 @@ class ConsentAdmin(admin.ModelAdmin):
         return obj.term_option.option_type if obj.term_option else None
 
     def has_delete_permission(self, *args, **kwargs):
+        # Note this class does not inherit from ArchiveActionMixin purposefully.
+        # Individual user consents should not be archived or deleted
+        # from the admin view.
         return False
 
     get_term_option_type.short_description = "Term Option Type"
