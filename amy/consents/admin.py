@@ -1,11 +1,21 @@
+import django_rq
+import logging
+
 from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
 from django.http.response import HttpResponseRedirect
-from typing import Any
+from typing import Any, Iterable
 from urllib.parse import unquote
 
+from autoemails.actions import NewConsentRequiredAction
+from autoemails.base_views import ActionManageMixin
+from autoemails.models import Trigger
 from consents.models import Consent, Term, TermOption
 
+
+logger = logging.getLogger("amy.signals")  # TODO... why signals logger?
+scheduler = django_rq.get_scheduler("default")
+redis_connection = django_rq.get_connection("default")
 
 class ArchiveActionMixin:
     """
@@ -72,6 +82,23 @@ class TermOptionAdmin(ArchiveActionMixin, admin.ModelAdmin):
         return message
 
 
+def send_consent_email(request, term: Term) -> None:
+    jobs, rqjobs = ActionManageMixin.add(
+        action_class=NewConsentRequiredAction,
+        logger=logger,
+        scheduler=scheduler,
+        triggers=Trigger.objects.filter(
+            active=True,
+            action="consent-required",
+        ),
+        context_objects={
+            "term": term,
+        },
+        object_=term,
+        request=request,
+    )
+
+
 class TermOptionInline(admin.TabularInline):
     model = TermOption
     extra = 0
@@ -90,6 +117,30 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
     inlines = [
         TermOptionInline,
     ]
+    actions = ["email_users_missing_consent", "email_users_to_reconsent"]
+
+    def email_users_missing_consent(self, request, queryset):
+        if not self.check_terms_for_consent_email(request, queryset):
+            return
+        for term in queryset:
+            send_consent_email(request, term)
+
+    def email_users_to_reconsent(self, request, queryset):
+        if not self.check_terms_for_consent_email(request, queryset):
+            return
+        Consent.archive_all_for_term(queryset)
+        for term in queryset:
+            send_consent_email(request, term)
+
+    def check_terms_for_consent_email(self, request, terms: Iterable[Term]) -> bool:
+        for term in terms:
+            if not NewConsentRequiredAction.check(term):
+                messages.error(
+                    request,
+                    f"Error: Selected term {term.slug} is not valid for emailing users",
+                )
+                return False
+        return True
 
     def warning_message(self, obj: Any) -> str:
         message = super().warning_message(obj)

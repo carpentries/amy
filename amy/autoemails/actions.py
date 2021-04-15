@@ -15,6 +15,7 @@ from autoemails.models import Trigger, EmailTemplate
 from autoemails.utils import compare_emails
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Task, Person
+from consents.models import Consent, Term
 
 
 logger = logging.getLogger("amy.signals")
@@ -1133,3 +1134,65 @@ class GenericAction(BaseAction):
             )
 
         return context
+
+
+class NewConsentRequiredAction(BaseAction):
+    """
+    Action for asking users to consent to newly required terms. This email
+    should be sent when a new required Term is created.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='consent-required')
+    >>> for trigger in triggers:
+    ...     action = NewConsentRequiredAction(
+    ...         trigger=trigger,
+    ...         objects=dict(terms=terms),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def get_launch_at(self):
+        return self.launch_at
+
+    def recipients(self) -> Optional[str]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context["all_emails"]
+        except (AttributeError, KeyError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            term = self.context_objects["term"]
+            person_emails = list(
+                Consent.objects.filter(
+                    term=term,
+                    term_option__isnull=True,
+                )
+                .active()
+                .distinct()
+                .values_list("person__email", flat=True)
+            )
+            all_emails = list(filter(bool, person_emails))
+            return ", ".join(all_emails)
+
+        except (KeyError, AttributeError):
+            return ""
+
+    @staticmethod
+    def check(term: Term):
+        """Conditions for creating a NewConsentRequiredAction."""
+        return (
+            term.archived_at is None
+            and term.required_type != Term.OPTIONAL_REQUIRE_TYPE
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        return dict()
