@@ -1119,6 +1119,9 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "additional_contact": Select2TagWidget,
         }
 
+    class Media:
+        js = ("selforganisedsubmission_form.js",)
+
     @staticmethod
     def institution_label_from_instance(obj):
         """Static method that overrides ModelChoiceField choice labels,
@@ -1174,6 +1177,41 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
                 self.helper.layout.fields.index(field),
                 HTML(self.helper.hr()),
             )
+
+        # add warning alert for workshop URL
+        REPO_WARNING = (
+            "Would you be able to update the name of the workshop webpage prior to "
+            "submitting this notification? If so, we recommend using the following "
+            "name: YEAR-MM-DD-site-online. If not, that's okay and please feel free "
+            "to submit the form."
+        )
+        URL_WARNING = (
+            "Please adjust the URL format so that it points to the workshop website. "
+            "The format for this is: https://username.github.io/repo"
+        )
+        pos_index = self.helper.layout.fields.index("workshop_url")
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML(REPO_WARNING),
+                    css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
+                ),
+                id="workshop_url_repo_warning",
+                css_class="form-group row d-none",
+            ),
+        )
+        self.helper.layout.insert(
+            pos_index + 2,
+            Div(
+                Div(
+                    HTML(URL_WARNING),
+                    css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
+                ),
+                id="workshop_url_warning",
+                css_class="form-group row d-none",
+            ),
+        )
 
     def clean(self):
         super().clean()
