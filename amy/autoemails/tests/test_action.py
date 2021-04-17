@@ -345,3 +345,63 @@ Regional Coordinator""",
         self.assertEqual(email.bcc, [])
         self.assertEqual(email.reply_to, ["reply-to@example.org"])
         self.assertEqual(email.from_email, "sender@example.org")
+
+    # @override_settings(AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS="test-address@example.org")
+    @override_settings(EMAIL_BACKEND="anymail.backends.test.EmailBackend")
+    def test_merge_data(self):
+        """Check behavior with `AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` setting.
+
+        This setting is used to force a different outgoing address in the
+        prepared email."""
+        # 1. create Trigger and EmailTemplate
+        self.template = EmailTemplate.objects.create(
+            slug="sample-mass-email-template",
+            subject="New Terms Available",
+            to_header="recipient@example.org",
+            from_header="sender@example.org",
+            cc_header="copy@example.org",
+            bcc_header="bcc@example.org",
+            reply_to_header="reply-to@example.org",
+            body_template=(
+                "A new term is available to consent to."
+                " Please [sign in](https://carpentries.org/) to consent to it."
+            ),
+        )
+        self.trigger = Trigger.objects.create(
+            action="sample-mass-email",
+            template=self.template,
+        )
+
+        # 2. create BaseAction, add context
+        self.objects = {}
+        a = BaseAction(trigger=self.trigger, objects=self.objects)
+        # Overwrite functions to add mass email related functionality
+        recipients = [
+            "recipient1@example.org",
+            "recipient2@example.org",
+            "recipient3@example.org",
+        ]
+        recipients_str = ",".join(recipients)
+        a.get_merge_data = lambda: {}
+        a.all_recipients = lambda: recipients_str
+        a.recipients = lambda: recipients
+
+        # 3. build email
+        email = a._email()
+
+        # 4. verify no outgoing emails yet
+        self.assertEqual(len(mail.outbox), 0)
+
+        # 5. send email (by invoking action.__call__())
+        a()
+
+        # 6. check outgoing email
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+
+        self.assertEqual(email.to, recipients)
+        self.assertEqual(email.cc, [])
+        self.assertEqual(email.bcc, [])
+        self.assertEqual(email.reply_to, ["reply-to@example.org"])
+        self.assertEqual(email.from_email, "sender@example.org")
+        self.assertEqual(email.merge_data, {})

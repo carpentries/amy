@@ -200,6 +200,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         text: str = "",
         html: str = "",
         context: Optional[dict] = None,
+        merge_data: Optional[dict] = None,
     ) -> EmailMultiAlternatives:
         """Build a Django email representation (see
         https://docs.djangoproject.com/en/2.2/topics/email/#sending-alternative-content-types
@@ -222,6 +223,11 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
             body=body.text,
         )
         msg.attach_alternative(body.html, "text/html")
+        if merge_data is not None:
+            # https://anymail.readthedocs.io/en/stable/sending/templates/#batch-sending-with-merge-data
+            # https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data
+            # When set the recipients in the two column each get an individual message
+            msg.merge_data = merge_data
 
         return msg
 

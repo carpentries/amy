@@ -127,6 +127,11 @@ class BaseAction:
         """If available, return string of all recipients."""
         return ""
 
+    def get_merge_data(self) -> Optional[Dict]:
+        """If available return a dict containing per user customizations
+        See https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data"""  # noqa
+        return None
+
     def _context(self, additional_context: Optional[Dict] = None) -> Dict:
         """Prepare general context for lazy-evaluated email message used later
         on."""
@@ -159,6 +164,7 @@ class BaseAction:
             text=self.email_text(),
             html=self.email_html(),
             context=self.context,
+            merge_data=self.get_merge_data(),
         )
         return email
 
@@ -1175,3 +1181,9 @@ class NewConsentRequiredAction(BaseAction):
 
     def get_additional_context(self, objects, *args, **kwargs):
         return dict()
+
+    def get_merge_data(self) -> Optional[Dict]:
+        # Returning an empty dictionary is necessary
+        # if you want to send an individual email to each recipient
+        # but have no per-user configuration
+        return {}
