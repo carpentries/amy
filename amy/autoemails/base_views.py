@@ -1,7 +1,10 @@
 from django.contrib import messages
 from django.urls import reverse
 from django.utils.html import format_html
+from django_rq.queues import DjangoScheduler
 from rq.exceptions import NoSuchJobError
+
+from autoemails.models import Trigger
 
 from .job import Job
 from .utils import (
@@ -108,6 +111,27 @@ class ActionManageMixin:
                 )
 
         return created_jobs, created_rqjobs
+
+    @staticmethod
+    def bulk_schedule_message(
+        request, trigger: Trigger, job: Job, scheduler: DjangoScheduler
+    ) -> None:
+        scheduled_at = scheduled_execution_time(
+            job.get_id(), scheduler=scheduler, naive=False
+        )
+        messages.info(
+            request,
+            format_html(
+                "New email ({}) was scheduled to run "
+                '<relative-time datetime="{}">{}</relative-time>: '
+                '<a href="{}">Autoemails RQJobs</a>.',
+                trigger.get_action_display(),
+                scheduled_at.isoformat(),
+                "{:%Y-%m-%d %H:%M}".format(scheduled_at),
+                reverse("admin:autoemails_rqjob_changelist"),
+            ),
+            fail_silently=True,
+        )
 
     @staticmethod
     def remove(

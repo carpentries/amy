@@ -13,9 +13,9 @@ import django_rq
 
 from autoemails.models import Trigger, EmailTemplate
 from autoemails.utils import compare_emails
+from consents.models import Term
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Task, Person
-from consents.models import Consent, Term
 
 
 logger = logging.getLogger("amy.signals")
@@ -1170,19 +1170,8 @@ class NewConsentRequiredAction(BaseAction):
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
         try:
-            term = self.context_objects["term"]
-            person_emails = list(
-                Consent.objects.filter(
-                    term=term,
-                    term_option__isnull=True,
-                )
-                .active()
-                .distinct()
-                .values_list("person__email", flat=True)
-            )
-            all_emails = list(filter(bool, person_emails))
-            return ", ".join(all_emails)
-
+            person_email = self.context_objects["person_email"]
+            return person_email
         except (KeyError, AttributeError):
             return ""
 
