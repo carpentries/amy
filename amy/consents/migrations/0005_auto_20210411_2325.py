@@ -137,7 +137,7 @@ def remove_preexisting_terms(apps, schema_editor) -> None:
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('consents', '0003_term_help_text'),
+        ('consents', '0004_term_rq_jobs'),
     ]
 
     operations = [

@@ -159,7 +159,7 @@ class TestConsentModel(ConsentTestBase):
             self.assertCountEqual(term2.options, [term2_option1, term2_option2])
 
 
-class TestTermModel(TestCase):
+class TestTermModel(ConsentTestBase):
     def test_archive(self):
         """
         Term archive method should archive the term
@@ -187,8 +187,8 @@ class TestTermModel(TestCase):
             username="rweasley",
         )
 
-        consent1 = reconsent(person1, term1, term1_option1)
-        consent2 = reconsent(person2, term1, term1_option2)
+        consent1 = self.reconsent(person1, term1, term1_option1)
+        consent2 = self.reconsent(person2, term1, term1_option2)
 
         # Unrelated term, option, and consent.
         # They should not appear in the queries below
@@ -197,7 +197,7 @@ class TestTermModel(TestCase):
             option_type="agree",
             content="option",
         )
-        consent3 = reconsent(person2, unrelated_option.term, unrelated_option)
+        consent3 = self.reconsent(person2, unrelated_option.term, unrelated_option)
 
         term1.archive()
 
@@ -227,7 +227,7 @@ class TestTermModel(TestCase):
         self.assertNotIn(consent3.pk, archived_consent_ids)
 
 
-class TestTermOptionModel(TestCase):
+class TestTermOptionModel(ConsentTestBase):
     def test_archive(self):
         """
         TermOption archive method should archive the TermOption
@@ -254,8 +254,8 @@ class TestTermOptionModel(TestCase):
             email="rw@magic.uk",
             username="rweasley",
         )
-        consent1 = reconsent(person1, term1, term1_option1)
-        consent2 = reconsent(person2, term1, term1_option2)
+        consent1 = self.reconsent(person1, term1, term1_option1)
+        consent2 = self.reconsent(person2, term1, term1_option2)
         # Unrelated term, option, and consent.
         # They should not appear in the queries below
         unrelated_option = TermOption.objects.create(
@@ -263,7 +263,7 @@ class TestTermOptionModel(TestCase):
             option_type="agree",
             content="option",
         )
-        consent3 = reconsent(person2, unrelated_option.term, unrelated_option)
+        consent3 = self.reconsent(person2, unrelated_option.term, unrelated_option)
 
         term1_option1.archive()
 
