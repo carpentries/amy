@@ -289,6 +289,10 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ("workshop-request-response1", "Response to Workshop Request 1"),
         ("workshop-request-response2", "Response to Workshop Request 2"),
         ("workshop-request-response3", "Response to Workshop Request 3"),
+        (
+            "consent-required",
+            "There is a new or updated term added that the users should consent to",
+        ),
     )
     action = models.CharField(
         max_length=50,

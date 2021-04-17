@@ -1,10 +1,59 @@
+import django_rq
+import logging
+
 from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
 from django.http.response import HttpResponseRedirect
-from typing import Any
+from typing import Any, Iterable
 from urllib.parse import unquote
 
+from autoemails.actions import NewConsentRequiredAction
+from autoemails.base_views import ActionManageMixin
+from autoemails.models import Trigger
 from consents.models import Consent, Term, TermOption
+
+
+logger = logging.getLogger("amy.signals")  # TODO... why signals logger?
+scheduler = django_rq.get_scheduler("default")
+redis_connection = django_rq.get_connection("default")
+
+
+def send_consent_email(request, term: Term) -> None:
+    """
+    Sending consent emails individually to each user to avoid
+    exposing email addresses.
+    """
+    # TODO: There is a way to do this on Mailgun's side
+    # see https://github.com/carpentries/amy/pull/1872/files#r615271469
+    emails = (
+        Consent.objects.filter(term=term, term_option__isnull=True)
+        .active()
+        .values_list("person__email", flat=True)
+    )
+    triggers = Trigger.objects.filter(
+        active=True,
+        action="consent-required",
+    )
+    for email in emails:
+        jobs, rqjobs = ActionManageMixin.add(
+            action_class=NewConsentRequiredAction,
+            logger=logger,
+            scheduler=scheduler,
+            triggers=triggers,
+            context_objects={
+                "term": term,
+                "person_email": email,
+            },
+            object_=term,
+        )
+    if triggers and jobs:
+        ActionManageMixin.bulk_schedule_message(
+            request=request,
+            num_emails=len(emails),
+            trigger=triggers[0],
+            job=jobs[0],
+            scheduler=scheduler,
+        )
 
 
 class ArchiveActionMixin:
@@ -90,6 +139,30 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
     inlines = [
         TermOptionInline,
     ]
+    actions = ["email_users_missing_consent", "email_users_to_reconsent"]
+
+    def email_users_missing_consent(self, request, queryset):
+        if not self.check_terms_for_consent_email(request, queryset):
+            return
+        for term in queryset:
+            send_consent_email(request, term)
+
+    def email_users_to_reconsent(self, request, queryset):
+        if not self.check_terms_for_consent_email(request, queryset):
+            return
+        Consent.archive_all_for_term(queryset)
+        for term in queryset:
+            send_consent_email(request, term)
+
+    def check_terms_for_consent_email(self, request, terms: Iterable[Term]) -> bool:
+        for term in terms:
+            if not NewConsentRequiredAction.check(term):
+                messages.error(
+                    request,
+                    f"Error: Selected term {term.slug} is not valid for emailing users",
+                )
+                return False
+        return True
 
     def warning_message(self, obj: Any) -> str:
         message = super().warning_message(obj)

@@ -3,7 +3,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
 from django.utils.functional import cached_property
+from typing import Iterable
 from django.utils import timezone
+from autoemails.mixins import RQJobsMixin
+
 
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import STR_MED, Person
@@ -48,7 +51,7 @@ class ConsentQuerySet(models.query.QuerySet):
         return self.filter(archived_at=None)
 
 
-class Term(CreatedUpdatedArchivedMixin, models.Model):
+class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
     PROFILE_REQUIRE_TYPE = "profile"
     OPTIONAL_REQUIRE_TYPE = "optional"
     TERM_REQUIRE_TYPE = (
@@ -154,3 +157,17 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
     def archive(self) -> None:
         self.archived_at = timezone.now()
         self.save()
+
+    @classmethod
+    def archive_all_for_term(cls, terms: Iterable[Term]) -> None:
+        consents = cls.objects.filter(term__in=terms).active()
+        new_consents = [
+            cls(
+                person=consent.person,
+                term=consent.term,
+                term_option=None,
+            )
+            for consent in consents
+        ]
+        consents.update(archived_at=timezone.now())
+        cls.objects.bulk_create(new_consents)
