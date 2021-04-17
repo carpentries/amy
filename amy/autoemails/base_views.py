@@ -114,7 +114,7 @@ class ActionManageMixin:
 
     @staticmethod
     def bulk_schedule_message(
-        request, trigger: Trigger, job: Job, scheduler: DjangoScheduler
+        request, num_emails: int, trigger: Trigger, job: Job, scheduler: DjangoScheduler
     ) -> None:
         scheduled_at = scheduled_execution_time(
             job.get_id(), scheduler=scheduler, naive=False
@@ -122,9 +122,10 @@ class ActionManageMixin:
         messages.info(
             request,
             format_html(
-                "New email ({}) was scheduled to run "
+                "{} New emails ({}) were scheduled to run "
                 '<relative-time datetime="{}">{}</relative-time>: '
                 '<a href="{}">Autoemails RQJobs</a>.',
+                num_emails,
                 trigger.get_action_display(),
                 scheduled_at.isoformat(),
                 "{:%Y-%m-%d %H:%M}".format(scheduled_at),

@@ -48,7 +48,11 @@ def send_consent_email(request, term: Term) -> None:
         )
     if triggers and jobs:
         ActionManageMixin.bulk_schedule_message(
-            request, triggers[0], jobs[0], scheduler
+            request=request,
+            num_emails=len(emails),
+            trigger=triggers[0],
+            job=jobs[0],
+            scheduler=scheduler,
         )
 
 
