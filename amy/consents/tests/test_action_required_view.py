@@ -1,70 +1,15 @@
-from contextlib import contextmanager
-from typing import Iterable
-
 from consents.forms import RequiredConsentsForm
-from consents.models import Term, TermOption
-from consents.tests.helpers import reconsent
+from consents.models import Term
+from consents.tests.base import ConsentTestBase
 from consents.util import person_has_consented_to_required_terms
 from django.urls import reverse
 from django.utils.http import urlencode
 from workshops.models import Person
-from workshops.tests.base import TestBase
 
 
-class ActionRequiredConsentTestBase(TestBase):
-    @staticmethod
-    def create_required_consents() -> None:
-        user_privacy_policy = Term.objects.create(
-            content="*I have read and agree to <a href="
-            '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
-            ' target="_blank" rel="noreferrer">'
-            "the data privacy policy of The Carpentries</a>.",
-            slug="privacy-policy",
-            required_type=Term.PROFILE_REQUIRE_TYPE,
-        )
-        TermOption.objects.create(
-            term=user_privacy_policy, option_type=TermOption.AGREE
-        )
-        may_contact = Term.objects.create(
-            content="May contact: Allow to contact from The Carpentries according to"
-            " the Privacy Policy.",
-            slug="may-contact",
-            required_type=Term.PROFILE_REQUIRE_TYPE,
-        )
-        TermOption.objects.create(term=may_contact, option_type=TermOption.AGREE)
-        TermOption.objects.create(term=may_contact, option_type=TermOption.DECLINE)
-        optional_term = Term.objects.create(
-            content="I'm an optional term",
-            slug="optional-term",
-        )
-        TermOption.objects.create(term=optional_term, option_type=TermOption.AGREE)
-        TermOption.objects.create(term=optional_term, option_type=TermOption.DECLINE)
-
-    @staticmethod
-    def person_agree_to_terms(person: Person, terms: Iterable[Term]) -> None:
-        for term in terms:
-            reconsent(person=person, term_option=term.options[0], term=term)
-
-    @contextmanager
-    def terms_middleware(self) -> None:
-        """
-        Remove workshops.action_required.PrivacyPolicy
-        and replace it with consents.middleware.TermMiddleware
-        """
-        with self.modify_settings(
-            MIDDLEWARE={
-                "append": "consents.middleware.TermsMiddleware",
-                "remove": ["workshops.action_required.PrivacyPolicy"],
-            }
-        ):
-            yield
-
-
-class TestActionRequiredTermView(ActionRequiredConsentTestBase):
+class TestActionRequiredTermView(ConsentTestBase):
     def setUp(self):
-        super()._setUpAirports()
-        super()._setUpBadges()
-        self.create_required_consents()
+        super().setUp()
         self.neville = Person.objects.create(
             personal="Neville",
             family="Longbottom",
@@ -140,11 +85,9 @@ class TestActionRequiredTermView(ActionRequiredConsentTestBase):
         self.assertTrue(form.is_valid())
 
 
-class TestTermsMiddleware(ActionRequiredConsentTestBase):
+class TestTermsMiddleware(ConsentTestBase):
     def setUp(self):
-        super()._setUpAirports()
-        super()._setUpBadges()
-        self.create_required_consents()
+        super().setUp()
         self.neville = Person.objects.create(
             personal="Neville",
             family="Longbottom",
