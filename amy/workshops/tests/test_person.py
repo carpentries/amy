@@ -1329,3 +1329,135 @@ class TestRegression1076(TestBase):
         self.assertIn("Successfully created 1 persons and 1 tasks", info_page)
         john_created = Person.objects.filter(personal="John", family="").exists()
         self.assertTrue(john_created)
+
+
+class TestArchivePerson(TestBase):
+    """ Test cases for person archive endpoint. """
+
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+        self.role = Role.objects.create(name="instructor")
+        self.event = Event.objects.create(slug="test-event", host=self.org_alpha)
+        # create a normal user
+        self.user = Person.objects.create_user(
+            username="user",
+            personal="",
+            family="",
+            email="user@example.org",
+            password="pass",
+        )
+        self.user.data_privacy_agreement = True
+        self.user.save()
+        # folks don't have any tasks by default, so let's add one
+        self.harry.task_set.create(event=self.event, role=self.role)
+        self.ron.task_set.create(event=self.event, role=self.role)
+        self.hermione.task_set.create(event=self.event, role=self.role)
+        self.admin.task_set.create(event=self.event, role=self.role)
+
+    def assert_cannot_archive(self, person: Person) -> None:
+        awards = person.award_set.all()
+        qualifications = person.qualification_set.all()
+        tasks = person.task_set.all()
+        domains = person.domains.all()
+
+        rv = self.client.post(reverse("person_archive", args=[person.pk]))
+        self.assertNotEqual(rv.status_code, 302)
+
+        archived_profile = Person.objects.get(pk=person.pk)
+        self.assertEqual(person, archived_profile)
+
+        # Awards, tasks, and qualifications should be unchanged
+        self.assertCountEqual(awards, archived_profile.award_set.all())
+        self.assertCountEqual(tasks, archived_profile.task_set.all())
+        self.assertCountEqual(qualifications, archived_profile.qualification_set.all())
+        self.assertCountEqual(domains, archived_profile.domains.all())
+
+    def assert_person_archive(self, person: Person) -> None:
+        """
+        Calls the Person Archive endpoint and asserts that the
+        given Person has been archived.
+        """
+        awards = person.award_set.all()
+        qualifications = person.qualification_set.all()
+        tasks = person.task_set.all()
+        domains = person.domains.all()
+
+        rv = self.client.post(reverse("person_archive", args=[person.pk]))
+        self.assertEqual(rv.status_code, 302)
+
+        archived_profile = Person.objects.get(pk=person.pk)
+        self._assert_personal_info_removed(archived_profile)
+
+        # First name, last name, Awards, tasks, and qualifications should be unchanged
+        self.assertEqual(archived_profile.personal, person.personal)
+        self.assertEqual(archived_profile.family, person.family)
+        self.assertEqual(archived_profile.middle, person.middle)
+        self.assertEqual(archived_profile.username, person.username)
+        self.assertCountEqual(awards, archived_profile.award_set.all())
+        self.assertCountEqual(tasks, archived_profile.task_set.all())
+        self.assertCountEqual(qualifications, archived_profile.qualification_set.all())
+        self.assertCountEqual(domains, archived_profile.domains.all())
+
+    def _assert_personal_info_removed(self, archived_profile: Person) -> None:
+        """
+        Used after calling person.archive()
+        Asserts that all personal data about the user has been removed.
+        """
+        self.assertIsNone(archived_profile.email)
+        self.assertEqual(archived_profile.country, "")
+        self.assertIsNone(archived_profile.airport)
+        self.assertIsNone(archived_profile.github)
+        self.assertIsNone(archived_profile.twitter)
+        self.assertEqual(archived_profile.url, "")
+        self.assertEqual(archived_profile.user_notes, "")
+        self.assertEqual(archived_profile.affiliation, "")
+        self.assertFalse(archived_profile.is_active)
+        self.assertEqual(archived_profile.occupation, "")
+        self.assertEqual(archived_profile.orcid, "")
+
+    def test_archive_by_super_user(self):
+        """
+        Superusers should be able to archive any user.
+        """
+        # Login as Admin
+        self.assertTrue(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+
+        # Admin should be able to archive other user's profile
+        self.assert_person_archive(self.harry)
+        self.assert_person_archive(self.ron)
+        self.assert_person_archive(self.hermione)
+        self.assert_person_archive(self.user)
+
+        # Admin should be able to archive their own profile
+        self.assert_person_archive(self.admin)
+
+        # Archived admin should not be able to log in.
+        self.assert_person_archive(self.admin)
+        self.assertFalse(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+
+    def test_archive_by_non_admin(self):
+        """
+        Non-Admin users should be able to archive their own profiles.
+        """
+        # Login as a normal user
+        assert not self.user.is_superuser
+        self.assertTrue(self.client.login(username=self.user.username, password="pass"))
+
+        # User (non-admin) should not be able to archive anyone else's profile
+        self.assert_cannot_archive(self.ron)
+        self.assert_cannot_archive(self.hermione)
+        self.assert_cannot_archive(self.harry)
+        self.assert_cannot_archive(self.admin)
+
+        # User (non-admin) should be able to archive his own profile
+        self.assert_person_archive(self.user)
+
+        # Archived User should not be able to log in.
+        self.assertFalse(
+            self.client.login(username=self.user.username, password="pass")
+        )

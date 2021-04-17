@@ -225,11 +225,21 @@
     To ensure that the form-button is a part of the btn-group,
     add css class "btn-group" to the form tag.
     {% endcomment %}
+    <form 
+      class="btn-group" 
+      action="{% url 'person_archive' person_id=person.pk %}" 
+      onsubmit='return confirm("Are you sure you wish to archive \"{{ person }}\"? All personaly identifiable information will be deleted and the user will no longer be able to log in.")' 
+      method="POST"
+    >
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Archive person</button>
+    </form>
     <form class="btn-group" action="{% url 'person_delete' person.pk %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ person }}\"?")' method="POST">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger">Delete person</button>
     </form>
     {% else %}
+    <button class="btn btn-danger disabled">Archive person</button>
     <button class="btn btn-danger disabled">Delete person</button>
     {% endif %}
   </div>

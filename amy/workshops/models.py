@@ -968,6 +968,26 @@ class Person(
         self.twitter = self.twitter or None
         super().save(*args, **kwargs)
 
+    def archive(self) -> None:
+        """
+        Archives the Person.
+
+        When archiving all personal information associated with the user profile
+        should be deleted except for first name, last name and their teaching history.
+        """
+        self.email = None
+        self.country = ""
+        self.airport = None
+        self.github = None
+        self.twitter = None
+        self.url = ""
+        self.user_notes = ""
+        self.affiliation = ""
+        self.is_active = False
+        self.occupation = ""
+        self.orcid = ""
+        self.save()
+
 
 # ------------------------------------------------------------
 
