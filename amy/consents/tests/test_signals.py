@@ -1,10 +1,10 @@
-from consents.models import Consent, Term
-from django.test import TestCase
 from django.utils import timezone
-from workshops.models import Person
+
+from consents.models import Consent, Person, Term
+from consents.tests.base import ConsentTestBase
 
 
-class TestTermModel(TestCase):
+class TestTermModel(ConsentTestBase):
     def setUp(self) -> None:
         super().setUp()
         self.person1 = Person.objects.create(
@@ -36,7 +36,7 @@ class TestTermModel(TestCase):
         # Update the term; new consents should not change
         term1.content = "New content"
         term1.save()
-        consents = Consent.objects.all()
+        consents = Consent.objects.filter(term=term1)
         self.assertEqual(len(consents), 2)
 
         consent1 = consents.filter(person=self.person1)[0]

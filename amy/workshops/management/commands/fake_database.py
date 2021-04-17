@@ -49,7 +49,7 @@ from workshops.models import (
     WorkshopRequest,
 )
 from workshops.util import create_username
-from consents.models import Term, TermOption, Consent
+from consents.models import Term, Consent
 
 
 def randbool(chances_of_true):
@@ -858,138 +858,24 @@ class Command(BaseCommand):
             req.workshop_types.set(workshop_types)
             req.save()
 
-    def fake_terms_and_consents(self):
-        count = (
-            Person.objects.all().count() * 5
+    def fake_consents(self):
+        terms = Term.objects.active().prefetch_active_options()
+        count = Person.objects.all().count() * len(
+            terms
         )  # all persons * number of consents generated
-        self.stdout.write("Generating {} fake terms and consents...".format(count))
-        user_privacy_policy = Term.objects.create(
-            content="*I have read and agree to <a href="
-            '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
-            ' target="_blank" rel="noreferrer">'
-            "the data privacy policy of The Carpentries</a>.",
-            slug="privacy-policy",
-            required_type=Term.PROFILE_REQUIRE_TYPE,
-        )
-        user_privacy_policy_agree = TermOption.objects.create(
-            term=user_privacy_policy, option_type=TermOption.AGREE
-        )
-        user_old_enough = Term.objects.create(
-            content="Are you 18 years of age or older?",
-            slug="18-or-older",
-            required_type=Term.PROFILE_REQUIRE_TYPE,
-        )
-        user_old_enough_agree = TermOption.objects.create(
-            term=user_old_enough, option_type=TermOption.AGREE
-        )
-        may_contact = Term.objects.create(
-            content="May contact",
-            slug="may-contact",
-            required_type=Term.PROFILE_REQUIRE_TYPE,
-            help_text="Allow to contact from The Carpentries according to"
-            " the Privacy Policy.",
-        )
-        may_contact_agree = TermOption.objects.create(
-            term=may_contact, option_type=TermOption.AGREE
-        )
-        may_contact_disagree = TermOption.objects.create(
-            term=may_contact, option_type=TermOption.DECLINE
-        )
-        public_profile = Term.objects.create(
-            content="Consent to making profile public",
-            required_type=Term.PROFILE_REQUIRE_TYPE,
-            slug="public-profile",
-            help_text="Allow to post your name and any public profile"
-            " you list (website, Twitter) on our instructors website."
-            " Emails will not be posted.",
-        )
-        public_profile_agree = TermOption.objects.create(
-            term=public_profile, option_type=TermOption.AGREE
-        )
-        public_profile_disagree = TermOption.objects.create(
-            term=public_profile, option_type=TermOption.DECLINE
-        )
-        may_publish_name = Term.objects.create(
-            content="Do you consent to have your name or identity"
-            " associated with lesson publications?",
-            slug="may-publish-name",
-        )
-        may_publish_name_agree1 = TermOption.objects.create(
-            term=may_publish_name,
-            option_type=TermOption.AGREE,
-            content="Yes, and only use my GitHub Handle",
-        )
-        may_publish_name_agree2 = TermOption.objects.create(
-            term=may_publish_name,
-            option_type=TermOption.AGREE,
-            content="Yes, and use the name associated with my ORCID profile",
-        )
-        may_publish_name_agree3 = TermOption.objects.create(
-            term=may_publish_name,
-            option_type=TermOption.AGREE,
-            content="Yes, and use the name associated with my profile.",
-        )
-        may_publish_name_disagree = TermOption.objects.create(
-            term=may_publish_name, option_type=TermOption.DECLINE
-        )
+        self.stdout.write("Generating {} fake consents...".format(count))
 
         consents: List[Consent] = []
         people = Person.objects.all()
         for person in people:
-            consents.append(
-                Consent(
-                    person=person,
-                    term_option=user_privacy_policy_agree,
-                    term=user_privacy_policy,
+            for term in terms:
+                consents.append(
+                    Consent(person=person, term_option=choice(term.options), term=term)
                 )
-            )
-            consents.append(
-                Consent(
-                    person=person,
-                    term_option=user_old_enough_agree,
-                    term=user_old_enough,
-                )
-            )
-            consents.append(
-                Consent(
-                    person=person,
-                    term_option=choice([public_profile_agree, public_profile_disagree]),
-                    term=public_profile,
-                )
-            )
-            consents.append(
-                Consent(
-                    person=person,
-                    term_option=choice([may_contact_agree, may_contact_disagree]),
-                    term=may_contact,
-                )
-            )
-            may_publish_name_answer = choice(
-                [
-                    may_publish_name_agree1,
-                    may_publish_name_agree2,
-                    may_publish_name_agree3,
-                    may_publish_name_disagree,
-                ]
-            )
-            consents.append(
-                Consent(
-                    person=person,
-                    term_option=may_publish_name_answer,
-                    term=may_publish_name,
-                )
-            )
         # Archive unset old consents before adding new ones
         Consent.objects.filter(
             person__in=people,
-            term_option__isnull=True,
-            term__in=[
-                user_old_enough,
-                may_contact,
-                may_publish_name,
-                user_privacy_policy,
-                public_profile,
-            ],
+            term__in=terms,
         ).active().update(archived_at=timezone.now())
         Consent.objects.bulk_create(consents)
 
@@ -1021,7 +907,7 @@ class Command(BaseCommand):
             self.fake_workshop_requests()
             self.fake_workshop_inquiries()
             self.fake_selforganised_submissions()
-            self.fake_terms_and_consents()
+            self.fake_consents()
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")

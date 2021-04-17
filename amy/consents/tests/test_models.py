@@ -1,25 +1,24 @@
-from consents.models import Consent, Term, TermOption
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.test import TestCase
 from django.utils import timezone
+
+from consents.tests.base import ConsentTestBase
+from consents.models import Consent, Term, TermOption
 from workshops.models import Person
-from consents.tests.helpers import reconsent
 
 
-class TestQuerySet(TestCase):
+class TestQuerySet(ConsentTestBase):
     def test_term_active(self) -> None:
-        Term.objects.create(content="term1", slug="term1", archived_at=timezone.now())
+        term1 = Term.objects.create(
+            content="term1", slug="term1", archived_at=timezone.now()
+        )
         term2 = Term.objects.create(
             content="term2",
             slug="term2",
         )
-        term3 = Term.objects.create(
-            content="term3",
-            slug="term3",
-        )
-
-        self.assertCountEqual(Term.objects.active(), [term2, term3])
+        active_terms = Term.objects.active()
+        self.assertNotIn(term1, active_terms)
+        self.assertIn(term2, active_terms)
 
     def test_term_prefetch_active_options(self) -> None:
         term1 = Term.objects.create(content="term1", slug="term1")
@@ -64,14 +63,16 @@ class TestQuerySet(TestCase):
             email="rw@magic.uk",
             username="rweasley",
         )
-        consent1 = reconsent(person1, term1, term1_option1)
-        consent2 = reconsent(person2, term1, term1_option1)
-        consents = Consent.objects.active()
+        consent1 = self.reconsent(person1, term1, term1_option1)
+        consent2 = self.reconsent(person2, term1, term1_option1)
+        consents = Consent.objects.filter(
+            term=term1, person__in=[person1, person2]
+        ).active()
 
         self.assertCountEqual(consents, [consent1, consent2])
 
 
-class TestConsentModel(TestCase):
+class TestConsentModel(ConsentTestBase):
     def test_unique_constraint(self) -> None:
         term1 = Term.objects.create(content="term1", slug="term1")
         TermOption.objects.create(
@@ -147,7 +148,9 @@ class TestConsentModel(TestCase):
 
         # term.options after prefetch_options does not need
         # an additional query
-        terms = Term.objects.all().prefetch_active_options()
+        terms = Term.objects.filter(
+            slug__in=[term1.slug, term2.slug]
+        ).prefetch_active_options()
         self.assertEqual(len(terms), 2)
         with self.assertNumQueries(0):
             self.assertCountEqual(terms[0].options, [term1_option1, term1_option2])

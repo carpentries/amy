@@ -1,13 +1,12 @@
 from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
 from consents.models import Term, TermOption
 from django.db.models.fields import BLANK_CHOICE_DASH
-from django.test import TestCase
 from django.utils import timezone
 from workshops.models import Person
-from consents.tests.helpers import reconsent
+from amy.consents.tests.base import ConsentTestBase
 
 
-class TestActiveTermConsentsForm(TestCase):
+class TestActiveTermConsentsForm(ConsentTestBase):
     def setUp(self) -> None:
         super().setUp()
         self.person = Person.objects.create(
@@ -35,7 +34,7 @@ class TestActiveTermConsentsForm(TestCase):
             term=term2,
             option_type=TermOption.DECLINE,
         )
-        reconsent(
+        self.reconsent(
             person=self.person,
             term=term1,
             term_option=term1_option1,
@@ -68,7 +67,7 @@ class TestActiveTermConsentsForm(TestCase):
         self.assertNotIn(term1.slug, form.fields)
 
 
-class TestRequiredConsentsForm(TestCase):
+class TestRequiredConsentsForm(ConsentTestBase):
     def setUp(self) -> None:
         super().setUp()
         self.person = Person.objects.create(

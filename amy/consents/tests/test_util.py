@@ -1,30 +1,24 @@
-from consents.models import Term, TermOption
-from django.test.testcases import TestCase
 from django.utils import timezone
+
+from consents.models import Term, TermOption
+from consents.tests.base import ConsentTestBase
+from consents.util import person_has_consented_to_required_terms
 from workshops.models import Person
 
-from consents.util import person_has_consented_to_required_terms
-from consents.tests.helpers import reconsent
 
-
-class TestActiveTermConsentsForm(TestCase):
+class TestActiveTermConsentsForm(ConsentTestBase):
     def test_person_has_consented_to_required_terms(self) -> None:
         # required term
-        required_term = Term.objects.create(
-            content="required_term",
-            slug="required_term",
-            required_type=Term.PROFILE_REQUIRE_TYPE,
-        )
-        required_term_option = TermOption.objects.create(
-            term=required_term, option_type=TermOption.AGREE
-        )
+        required_terms = Term.objects.filter(
+            required_type=Term.PROFILE_REQUIRE_TYPE
+        ).active()
+        self.assertNotEqual(len(required_terms), 0)
         # optional Term
         Term.objects.create(
             content="not_required_term",
             slug="not_required_term",
             required_type=Term.OPTIONAL_REQUIRE_TYPE,
         )
-        TermOption.objects.create(term=required_term, option_type=TermOption.AGREE)
         # archived required term
         Term.objects.create(
             content="archived_term",
@@ -33,12 +27,14 @@ class TestActiveTermConsentsForm(TestCase):
             required_type=Term.PROFILE_REQUIRE_TYPE,
         )
         TermOption.objects.create(
-            term=required_term, option_type=TermOption.AGREE, archived_at=timezone.now()
+            term=required_terms[0],
+            option_type=TermOption.AGREE,
+            archived_at=timezone.now(),
         )
         person = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk"
         )
         self.assertEqual(person_has_consented_to_required_terms(person), False)
-        # Consent created for the required term; should return True
-        reconsent(person=person, term=required_term, term_option=required_term_option)
+        # Consents created for the required terms; should return True
+        self.person_agree_to_terms(person, required_terms)
         self.assertEqual(person_has_consented_to_required_terms(person), True)
