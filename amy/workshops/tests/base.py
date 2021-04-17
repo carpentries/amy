@@ -1,9 +1,11 @@
 import datetime
+from typing import Iterable
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django_webtest import WebTest
 import webtest.forms
+from consents.models import Consent, Term, TermOption
 
 from workshops.models import (
     Airport,
@@ -452,6 +454,22 @@ class TestBase(
                 Role(name="tutor", verbose_name="Tutor"),
             ]
         )
+
+    @staticmethod
+    def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
+        consent = Consent.objects.get(
+            person=person, term=term, archived_at__isnull=True
+        )
+        consent.archive()
+        return Consent.objects.create(term_option=term_option, term=term, person=person)
+
+    def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
+        for term in terms:
+            self.reconsent(person=person, term_option=term.options[0], term=term)
+
+    def person_consent_active_terms(self, person: Person) -> None:
+        terms = Term.objects.active().prefetch_active_options()
+        self.person_agree_to_terms(person, terms)
 
     def saveResponse(self, response, filename="error.html"):
         content = response.content.decode("utf-8")

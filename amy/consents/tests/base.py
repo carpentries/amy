@@ -1,8 +1,6 @@
 from contextlib import contextmanager
-from typing import Iterable
 
-from consents.models import Consent, Term, TermOption
-from workshops.models import Person
+from consents.models import Term, TermOption
 from workshops.tests.base import TestBase
 
 
@@ -20,18 +18,6 @@ class ConsentTestBase(TestBase):
         TermOption.objects.create(term=optional_term, option_type=TermOption.AGREE)
         TermOption.objects.create(term=optional_term, option_type=TermOption.DECLINE)
         self.assert_required_terms()
-
-    @staticmethod
-    def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
-        consent = Consent.objects.get(
-            person=person, term=term, archived_at__isnull=True
-        )
-        consent.archive()
-        return Consent.objects.create(term_option=term_option, term=term, person=person)
-
-    def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
-        for term in terms:
-            self.reconsent(person=person, term_option=term.options[0], term=term)
 
     @contextmanager
     def terms_middleware(self) -> None:

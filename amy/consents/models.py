@@ -210,10 +210,19 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
     @classmethod
     def archive_all_for_term(cls, terms: Iterable[Term]) -> None:
         consents = cls.objects.filter(term__in=terms).active()
+        cls.archive_all(consents)
+
+    @classmethod
+    def archive_all_for_person(cls, person: Person):
+        consents = cls.objects.filter(person=person).active()
+        cls.archive_all(consents)
+
+    @classmethod
+    def archive_all(cls, consents: Iterable[Consent]) -> None:
         new_consents = [
             cls(
-                person=consent.person,
-                term=consent.term,
+                person_id=consent.person_id,
+                term_id=consent.term_id,
                 term_option=None,
             )
             for consent in consents

@@ -1,16 +1,11 @@
 import logging
 
 from django.contrib.auth.signals import user_login_failed
-from django.dispatch import Signal, receiver
+from django.dispatch import receiver
 from django.http.request import HttpRequest
 
 # AMY server logger
 logger = logging.getLogger("amy.server_logs")
-
-# signal generated when a comment regarding specific object should be saved
-create_comment_signal = Signal(
-    providing_args=["content_object", "comment", "timestamp"]
-)
 
 
 # a receiver for "failed login attempt" signal

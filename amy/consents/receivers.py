@@ -1,4 +1,5 @@
 from django.db.models.signals import post_save
+from workshops.signals import person_archived_signal
 from django.dispatch import receiver
 
 from consents.models import Consent, Term
@@ -35,3 +36,9 @@ def create_unset_consents_on_term_create(
             )
             for person in Person.objects.all()
         )
+
+
+@receiver(person_archived_signal, sender=Person)
+def unset_consents_on_person_archive(sender, **kwargs) -> None:
+    person = kwargs["person"]
+    Consent.archive_all_for_person(person=person)
