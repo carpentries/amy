@@ -1,8 +1,8 @@
 from django.urls import reverse
 from django_comments.models import Comment
 
-from fiscal.forms import OrganizationForm, OrganizationCreateForm
-from workshops.models import Organization, Event
+from fiscal.forms import OrganizationCreateForm, OrganizationForm
+from workshops.models import Event, Organization
 from workshops.tests.base import TestBase
 
 

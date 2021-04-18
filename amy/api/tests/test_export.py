@@ -4,18 +4,18 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from workshops.models import (
-    Badge,
-    Award,
-    Person,
     Airport,
-    Role,
-    Organization,
+    Award,
+    Badge,
     Event,
-    Language,
     KnowledgeDomain,
+    Language,
+    Organization,
+    Person,
+    Role,
+    TrainingProgress,
     TrainingRequest,
     TrainingRequirement,
-    TrainingProgress,
 )
 
 

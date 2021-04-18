@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date, timezone
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 from django.contrib.sites.models import Site
@@ -10,29 +10,29 @@ from django.urls import reverse
 from django_comments.models import Comment
 
 from autoemails.actions import (
-    PostWorkshopAction,
-    InstructorsHostIntroductionAction,
     AskForWebsiteAction,
+    InstructorsHostIntroductionAction,
+    PostWorkshopAction,
     RecruitHelpersAction,
 )
-from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
+from workshops.forms import EventCreateForm, EventForm, EventsMergeForm
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
 from workshops.models import (
-    Event,
-    Organization,
-    Tag,
-    Role,
-    Person,
-    Task,
     Award,
     Badge,
     Curriculum,
+    Event,
+    Organization,
+    Person,
+    Role,
+    Tag,
+    Task,
 )
-from workshops.forms import EventForm, EventCreateForm, EventsMergeForm
-from workshops.tests.base import TestBase, SuperuserMixin
+from workshops.tests.base import SuperuserMixin, TestBase
 import workshops.views
 
 

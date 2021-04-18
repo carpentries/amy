@@ -1,7 +1,7 @@
 from django.urls import reverse
 
-from workshops.tests.base import TestBase
 from workshops.lookups import urlpatterns
+from workshops.tests.base import TestBase
 
 
 class TestLookups(TestBase):

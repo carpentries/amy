@@ -1,7 +1,8 @@
-from consents.util import person_has_consented_to_required_terms
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
+
+from consents.util import person_has_consented_to_required_terms
 
 
 class TermsMiddleware:

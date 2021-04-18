@@ -6,14 +6,11 @@ from io import StringIO
 from django.contrib.sessions.serializers import JSONSerializer
 from django.urls import reverse
 
-from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
-from workshops.models import Organization, Event, Role, Person, Task, Tag
-from workshops.util import (
-    upload_person_task_csv,
-    verify_upload_person_task,
-)
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
+from workshops.util import upload_person_task_csv, verify_upload_person_task
 import workshops.views
 
 

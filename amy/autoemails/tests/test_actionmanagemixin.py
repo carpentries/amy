@@ -1,23 +1,16 @@
-from datetime import date, timedelta, datetime
+from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock
 
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory, TestCase
 from rq.exceptions import NoSuchJobError
 from rq_scheduler.utils import to_unix
 
 from autoemails.actions import NewInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.job import Job
-from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
-from workshops.models import (
-    Tag,
-    Event,
-    Role,
-    Person,
-    Task,
-    Organization,
-)
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):

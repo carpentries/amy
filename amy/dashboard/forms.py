@@ -3,22 +3,20 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django_countries.fields import CountryField
 
-from workshops.models import (
-    Language,
-    GenderMixin,
-    Person,
-    TrainingProgress,
-    TrainingRequirement,
-)
-
-from workshops.forms import BootstrapHelper
-
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    Select2Widget,
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
+    Select2Widget,
+)
+from workshops.forms import BootstrapHelper
+from workshops.models import (
+    GenderMixin,
+    Language,
+    Person,
+    TrainingProgress,
+    TrainingRequirement,
 )
 
 

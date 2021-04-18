@@ -1,52 +1,42 @@
 from collections import OrderedDict
 
-from django.db.models import (
-    Prefetch,
-)
+from django.db.models import Prefetch
 from rest_framework import viewsets
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from autoemails.models import EmailTemplate
-from workshops.models import (
-    Airport,
-    Event,
-    Organization,
-    Task,
-    Award,
-    Person,
-    TrainingRequest,
-)
-
-from api.serializers import (
-    OrganizationSerializer,
-    EventSerializer,
-    TaskSerializer,
-    AirportSerializer,
-    AwardSerializer,
-    PersonSerializer,
-    PersonSerializerAllData,
-    TrainingRequestWithPersonSerializer,
-    TrainingRequestForManualScoringSerializer,
-    EmailTemplateSerializer,
-)
-
-from api.filters import (
-    EventFilter,
-    TaskFilter,
-    PersonFilter,
-    TrainingRequestFilterIDs,
-)
-
+from api.filters import EventFilter, PersonFilter, TaskFilter, TrainingRequestFilterIDs
 from api.renderers import (
     TrainingRequestCSVRenderer,
     TrainingRequestManualScoreCSVRenderer,
+)
+from api.serializers import (
+    AirportSerializer,
+    AwardSerializer,
+    EmailTemplateSerializer,
+    EventSerializer,
+    OrganizationSerializer,
+    PersonSerializer,
+    PersonSerializerAllData,
+    TaskSerializer,
+    TrainingRequestForManualScoringSerializer,
+    TrainingRequestWithPersonSerializer,
+)
+from autoemails.models import EmailTemplate
+from workshops.models import (
+    Airport,
+    Award,
+    Event,
+    Organization,
+    Person,
+    Task,
+    TrainingRequest,
 )
 
 

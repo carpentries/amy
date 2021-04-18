@@ -7,7 +7,6 @@ import json
 
 from django.db import migrations, models
 
-
 PREVIOUS_NAME_MAX_LENGTH = 40
 
 

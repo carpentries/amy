@@ -2,51 +2,46 @@ from datetime import datetime, timezone
 import re
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
+from crispy_forms.layout import HTML, Button, Div, Field, Layout, Submit
 from django import forms
-from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Permission
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.dispatch import receiver
-from django.forms import (
-    SelectMultiple,
-    CheckboxSelectMultiple,
-    TextInput,
-)
+from django.forms import CheckboxSelectMultiple, SelectMultiple, TextInput
 from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
 from markdownx.fields import MarkdownxFormField
 
 from dashboard.models import Continent
-from workshops.models import (
-    Award,
-    Event,
-    Lesson,
-    GenderMixin,
-    Person,
-    Task,
-    Airport,
-    Organization,
-    Membership,
-    Tag,
-    Language,
-    KnowledgeDomain,
-    Badge,
-)
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
+    ModelSelect2MultipleWidget,
+    ModelSelect2Widget,
+    RadioSelectWithOther,
     Select2MultipleWidget,
     Select2TagWidget,
     Select2Widget,
-    ModelSelect2Widget,
-    ModelSelect2MultipleWidget,
-    RadioSelectWithOther,
+)
+from workshops.models import (
+    Airport,
+    Award,
+    Badge,
+    Event,
+    GenderMixin,
+    KnowledgeDomain,
+    Language,
+    Lesson,
+    Membership,
+    Organization,
+    Person,
+    Tag,
+    Task,
 )
 from workshops.signals import create_comment_signal
-
 
 # this makes it possible for Select2 autocomplete widget to fit in low-width sidebar
 SELECT2_SIDEBAR = {

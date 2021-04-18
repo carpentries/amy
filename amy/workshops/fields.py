@@ -1,15 +1,14 @@
-from django_select2.forms import (
-    Select2Widget as DS2_Select2Widget,
-    Select2MultipleWidget as DS2_Select2MultipleWidget,
-    ModelSelect2Widget as DS2_ModelSelect2Widget,
-    ModelSelect2MultipleWidget as DS2_ModelSelect2MultipleWidget,
-    Select2TagWidget as DS2_Select2TagWidget,
-)
-from django.core.validators import RegexValidator, MaxLengthValidator
-from django.db import models
 from django import forms
+from django.core.validators import MaxLengthValidator, RegexValidator
+from django.db import models
 from django.utils.safestring import mark_safe
-
+from django_select2.forms import (
+    ModelSelect2MultipleWidget as DS2_ModelSelect2MultipleWidget,
+)
+from django_select2.forms import ModelSelect2Widget as DS2_ModelSelect2Widget
+from django_select2.forms import Select2MultipleWidget as DS2_Select2MultipleWidget
+from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
+from django_select2.forms import Select2Widget as DS2_Select2Widget
 
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(
     39,

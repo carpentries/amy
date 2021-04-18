@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 
-from workshops.tests.base import TestBase
 from workshops.fields import NullableGithubUsernameField, Select2TagWidget
+from workshops.tests.base import TestBase
 
 
 class TestNullableGHUsernameField(TestBase):

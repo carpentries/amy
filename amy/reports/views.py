@@ -1,37 +1,25 @@
 from typing import Optional
 
 from django.contrib import messages
-from django.db.models import (
-    Case,
-    When,
-    Value,
-    IntegerField,
-    Count,
-    Q,
-    F,
-    Prefetch,
-)
+from django.db.models import Case, Count, F, IntegerField, Prefetch, Q, Value, When
 from django.db.models.functions import Coalesce
-from django.shortcuts import render, redirect
-from django.utils import timezone
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from dashboard.forms import AssignmentForm
 from fiscal.filters import MembershipTrainingsFilter
 from workshops.models import (
     Badge,
     Event,
+    Membership,
     Person,
     Role,
-    Membership,
     Tag,
     Task,
     TrainingRequest,
 )
-from workshops.util import (
-    get_pagination_items,
-    admin_required,
-)
+from workshops.util import admin_required, get_pagination_items
 
 
 @admin_required

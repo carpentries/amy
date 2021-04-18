@@ -1,9 +1,6 @@
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
-from django.template.exceptions import (
-    TemplateSyntaxError,
-    TemplateDoesNotExist,
-)
+from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 from django.test import TestCase
 
 from autoemails.models import EmailTemplate

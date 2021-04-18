@@ -1,13 +1,13 @@
 from datetime import date
 
-from django.test import TestCase
 from django.shortcuts import reverse
+from django.test import TestCase
 
 from autoemails.forms import GenericEmailScheduleForm
-from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 import autoemails.views
-from workshops.models import Event, Organization, WorkshopRequest, Language
+from workshops.models import Event, Language, Organization, WorkshopRequest
 from workshops.tests.base import SuperuserMixin
 
 

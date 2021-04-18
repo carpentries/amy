@@ -2,45 +2,34 @@ import re
 from typing import Optional
 
 from django.contrib import messages
-from django.db.models import (
-    Case,
-    When,
-    Value,
-    IntegerField,
-    Count,
-    Prefetch,
-    Q,
-)
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils.html import format_html
+from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from dashboard.forms import (
+    AssignmentForm,
+    AutoUpdateProfileForm,
+    SearchForm,
+    SendHomeworkForm,
+)
 from fiscal.models import MembershipTask
 from workshops.models import (
     Airport,
     Badge,
     Event,
-    Qualification,
-    Person,
-    Task,
-    Organization,
     Membership,
+    Organization,
+    Person,
+    Qualification,
     Tag,
-    TrainingRequest,
+    Task,
     TrainingProgress,
+    TrainingRequest,
 )
-from workshops.util import (
-    login_required,
-    admin_required,
-)
-from dashboard.forms import (
-    AssignmentForm,
-    AutoUpdateProfileForm,
-    SendHomeworkForm,
-    SearchForm,
-)
+from workshops.util import admin_required, login_required
 
 
 @login_required

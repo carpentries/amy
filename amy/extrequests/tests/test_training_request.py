@@ -6,25 +6,24 @@ from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
-from django.template import Context
-from django.template import Template
+from django.template import Context, Template
 from django.test import RequestFactory
 from django.urls import reverse
 from django_comments.models import Comment
 
 from extrequests.forms import TrainingRequestsMergeForm
 from extrequests.views import _match_training_request_to_person
-from workshops.tests.base import TestBase
 from workshops.models import (
+    Event,
+    KnowledgeDomain,
+    Organization,
     Person,
     Role,
-    TrainingRequest,
-    Organization,
-    Event,
     Tag,
     Task,
-    KnowledgeDomain,
+    TrainingRequest,
 )
+from workshops.tests.base import TestBase
 
 
 def create_training_request(state, person, open_review=True, reg_code=""):

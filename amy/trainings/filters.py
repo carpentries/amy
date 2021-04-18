@@ -1,19 +1,13 @@
 import re
 
-import django_filters
 from django.db.models import Q
 from django.forms import widgets
+import django_filters
 
 from workshops.fields import ModelSelect2Widget
-from workshops.filters import (
-    AMYFilterSet,
-    NamesOrderingFilter,
-)
+from workshops.filters import AMYFilterSet, NamesOrderingFilter
 from workshops.forms import SELECT2_SIDEBAR
-from workshops.models import (
-    Event,
-    Person,
-)
+from workshops.models import Event, Person
 
 
 def filter_all_persons(queryset, name, all_persons):

@@ -7,10 +7,7 @@ from rq.exceptions import NoSuchJobError
 from autoemails.models import Trigger
 
 from .job import Job
-from .utils import (
-    check_status,
-    scheduled_execution_time,
-)
+from .utils import check_status, scheduled_execution_time
 
 
 class ActionManageMixin:

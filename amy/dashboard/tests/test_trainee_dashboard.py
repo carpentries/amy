@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.urls import reverse
 
-from workshops.models import Person, Award, TrainingProgress, TrainingRequirement
+from workshops.models import Award, Person, TrainingProgress, TrainingRequirement
 from workshops.tests.base import TestBase
 
 

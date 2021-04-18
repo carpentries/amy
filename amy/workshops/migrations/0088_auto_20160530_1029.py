@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import random
 import string
 
-from django.db import migrations, models, transaction, IntegrityError
+from django.db import IntegrityError, migrations, models, transaction
 from django.template.defaultfilters import slugify
 
 

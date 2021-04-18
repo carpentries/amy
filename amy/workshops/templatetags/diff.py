@@ -1,7 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
-
-from reversion_compare.helpers import html_diff, SEMANTIC
+from reversion_compare.helpers import SEMANTIC, html_diff
 
 register = template.Library()
 

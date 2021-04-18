@@ -1,8 +1,8 @@
 from rest_framework_csv.renderers import CSVRenderer
 
 from api.serializers import (
-    TrainingRequestWithPersonSerializer,
     TrainingRequestForManualScoringSerializer,
+    TrainingRequestWithPersonSerializer,
 )
 
 

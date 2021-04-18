@@ -2,14 +2,14 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from workshops.models import (
-    Person,
+    Airport,
     Award,
     Badge,
     Event,
-    Task,
     Organization,
-    Airport,
+    Person,
     Role,
+    Task,
 )
 
 

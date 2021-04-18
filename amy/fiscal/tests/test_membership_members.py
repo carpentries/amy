@@ -1,9 +1,8 @@
 from django.urls import reverse
 
-from workshops.tests.base import TestBase
-from workshops.models import Membership, MemberRole, Member
-
 from fiscal.forms import MemberForm
+from workshops.models import Member, MemberRole, Membership
+from workshops.tests.base import TestBase
 
 
 class TestMemberFormLayout(TestBase):

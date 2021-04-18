@@ -1,31 +1,21 @@
 from django.contrib import messages
-from django.db.models import (
-    Case,
-    When,
-    IntegerField,
-    Count,
-    F,
-    Sum,
-    Prefetch,
-)
-from django.shortcuts import render, redirect
+from django.db.models import Case, Count, F, IntegerField, Prefetch, Sum, When
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
-from trainings.filters import (
-    TraineeFilter,
-)
+from trainings.filters import TraineeFilter
 from trainings.forms import (
-    TrainingProgressForm,
     BulkAddTrainingProgressForm,
     BulkDiscardProgressesForm,
+    TrainingProgressForm,
 )
 from workshops.base_views import (
     AMYCreateView,
-    AMYUpdateView,
     AMYDeleteView,
     AMYListView,
-    RedirectSupportMixin,
+    AMYUpdateView,
     PrepopulationSupportMixin,
+    RedirectSupportMixin,
 )
 from workshops.models import (
     Badge,
@@ -35,11 +25,7 @@ from workshops.models import (
     TrainingProgress,
     TrainingRequirement,
 )
-from workshops.util import (
-    get_pagination_items,
-    admin_required,
-    OnlyForAdminsMixin,
-)
+from workshops.util import OnlyForAdminsMixin, admin_required, get_pagination_items
 
 
 class AllTrainings(OnlyForAdminsMixin, AMYListView):

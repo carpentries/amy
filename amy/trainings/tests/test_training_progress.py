@@ -6,12 +6,12 @@ from django.urls import reverse
 
 from trainings.forms import TrainingProgressForm
 from workshops.models import (
-    TrainingProgress,
-    TrainingRequirement,
     Event,
-    Tag,
     Organization,
     Role,
+    Tag,
+    TrainingProgress,
+    TrainingRequirement,
 )
 from workshops.tests.base import TestBase
 

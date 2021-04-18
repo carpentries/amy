@@ -1,5 +1,5 @@
 # flake8: noqa
-from django.urls import path, include
+from django.urls import include, path
 
 from fiscal import views
 

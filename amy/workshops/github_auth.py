@@ -7,10 +7,7 @@ from github import Github
 from github.GithubException import UnknownObjectException
 from social_core.exceptions import SocialAuthBaseException
 
-from workshops.fields import (
-    GHUSERNAME_MAX_LENGTH_VALIDATOR,
-    GHUSERNAME_REGEX_VALIDATOR,
-)
+from workshops.fields import GHUSERNAME_MAX_LENGTH_VALIDATOR, GHUSERNAME_REGEX_VALIDATOR
 
 
 class NoPersonAssociatedWithGithubAccount(SocialAuthBaseException):

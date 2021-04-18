@@ -1,18 +1,11 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.test import TestCase
 
 from autoemails.actions import InstructorsHostIntroductionAction
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from workshops.fields import TAG_SEPARATOR
-from workshops.models import (
-    Task,
-    Role,
-    Person,
-    Event,
-    Tag,
-    Organization,
-)
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestInstructorsHostIntroductionAction(TestCase):

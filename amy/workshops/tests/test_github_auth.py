@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
-from workshops.tests.base import TestBase
 from workshops.github_auth import github_username_to_uid
+from workshops.tests.base import TestBase
 
 
 class TestGithubUsernameToUid(TestBase):

@@ -1,61 +1,41 @@
 from datetime import date, timedelta
-from typing import Dict, Any
+from typing import Any, Dict
 
 from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-)
-from django.db.models import (
-    F,
-    Q,
-    Count,
-    Prefetch,
-)
-from django.db.models.functions import Now, Coalesce
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db.models import Count, F, Prefetch, Q
+from django.db.models.functions import Coalesce, Now
 from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
-from fiscal.filters import (
-    OrganizationFilter,
-    MembershipFilter,
-)
-from fiscal.forms import (
-    OrganizationForm,
-    OrganizationCreateForm,
-    MembershipForm,
-    MembershipCreateForm,
-    MembershipRollOverForm,
-    MemberForm,
-    MembershipTaskForm,
-    MembershipExtensionForm,
-)
-from fiscal.models import MembershipTask
 from fiscal.base_views import (
     GetMembershipMixin,
     MembershipFormsetView,
     UnquoteSlugMixin,
 )
+from fiscal.filters import MembershipFilter, OrganizationFilter
+from fiscal.forms import (
+    MemberForm,
+    MembershipCreateForm,
+    MembershipExtensionForm,
+    MembershipForm,
+    MembershipRollOverForm,
+    MembershipTaskForm,
+    OrganizationCreateForm,
+    OrganizationForm,
+)
+from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
-    AMYUpdateView,
     AMYDeleteView,
-    AMYListView,
-    RedirectSupportMixin,
     AMYDetailView,
+    AMYListView,
+    AMYUpdateView,
+    RedirectSupportMixin,
 )
-from workshops.models import (
-    Organization,
-    Member,
-    MemberRole,
-    Membership,
-    Task,
-    Award,
-)
-from workshops.util import (
-    OnlyForAdminsMixin,
-)
-
+from workshops.models import Award, Member, MemberRole, Membership, Organization, Task
+from workshops.util import OnlyForAdminsMixin
 
 # ------------------------------------------------------------
 # Organization related views

@@ -1,5 +1,5 @@
 # coding: utf-8
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 import csv
 import datetime
 from functools import wraps
@@ -9,44 +9,31 @@ import logging
 import re
 from typing import Optional, Union
 
-import requests
-import yaml
-from django.contrib.auth.decorators import (
-    user_passes_test,
-    login_required as django_login_required,
-)
 from django.conf import settings
+from django.contrib.auth.decorators import login_required as django_login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import (
-    EmptyPage,
-    PageNotAnInteger,
-    Paginator as DjangoPaginator,
-)
+from django.core.paginator import EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator as DjangoPaginator
 from django.core.validators import ValidationError
-from django.db import IntegrityError, transaction, models
+from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.http import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.utils.http import is_safe_url
 from django_comments.models import Comment
 import django_rq
+import requests
+import yaml
 
 from autoemails.actions import NewInstructorAction, NewSupportingInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from dashboard.models import Criterium
-from workshops.models import (
-    Event,
-    Role,
-    Person,
-    Task,
-    Badge,
-    STR_MED,
-    STR_LONG,
-)
+from workshops.models import STR_LONG, STR_MED, Badge, Event, Person, Role, Task
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

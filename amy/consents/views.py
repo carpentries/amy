@@ -1,12 +1,13 @@
-from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
-from consents.models import Consent
-from consents.util import person_has_consented_to_required_terms
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import HiddenInput
 from django.http.response import Http404
 from django.shortcuts import redirect, render
 from rest_framework.reverse import reverse
+
+from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
+from consents.models import Consent
+from consents.util import person_has_consented_to_required_terms
 from workshops.base_views import AMYCreateView, RedirectSupportMixin
 from workshops.util import login_required
 

@@ -1,7 +1,7 @@
 from django.urls import reverse
 
+from workshops.models import Event, Role, Tag, Task
 from workshops.tests.base import TestBase
-from workshops.models import Tag, Event, Task, Role
 
 
 class TestInstructorIssues(TestBase):

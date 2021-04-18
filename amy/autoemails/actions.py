@@ -1,22 +1,18 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 import logging
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
-from django.template.exceptions import (
-    TemplateSyntaxError,
-    TemplateDoesNotExist,
-)
+from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 import django_rq
 
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
 from workshops.fields import TAG_SEPARATOR
-from workshops.models import Event, Task, Person
-
+from workshops.models import Event, Person, Task
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -258,10 +254,7 @@ class NewInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import (
-            human_daterange,
-            match_notification_email,
-        )
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -343,10 +336,7 @@ class NewSupportingInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import (
-            human_daterange,
-            match_notification_email,
-        )
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -614,7 +604,7 @@ class SelfOrganisedRequestAction(BaseAction):
             return False
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event and request
         event = objects["event"]
@@ -733,7 +723,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -887,7 +877,7 @@ class AskForWebsiteAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -1021,7 +1011,7 @@ class RecruitHelpersAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -1085,7 +1075,7 @@ class GenericAction(BaseAction):
             return ""
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # prepare context
         context = dict()

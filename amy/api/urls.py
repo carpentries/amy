@@ -1,6 +1,6 @@
-from django.urls import path, include
-from rest_framework_nested import routers
+from django.urls import include, path
 from rest_framework.urlpatterns import format_suffix_patterns
+from rest_framework_nested import routers
 
 from api import views
 

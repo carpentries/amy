@@ -4,29 +4,15 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 
 from extforms.forms import (
-    TrainingRequestForm,
-    WorkshopRequestExternalForm,
-    WorkshopInquiryRequestExternalForm,
     SelfOrganisedSubmissionExternalForm,
+    TrainingRequestForm,
+    WorkshopInquiryRequestExternalForm,
+    WorkshopRequestExternalForm,
 )
-from extrequests.models import (
-    WorkshopInquiryRequest,
-    SelfOrganisedSubmission,
-)
-from workshops.models import (
-    TrainingRequest,
-    WorkshopRequest,
-)
-from workshops.util import (
-    LoginNotRequiredMixin,
-    match_notification_email,
-)
-from workshops.base_views import (
-    AMYCreateView,
-    EmailSendMixin,
-    AutoresponderMixin,
-)
-
+from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
+from workshops.base_views import AMYCreateView, AutoresponderMixin, EmailSendMixin
+from workshops.models import TrainingRequest, WorkshopRequest
+from workshops.util import LoginNotRequiredMixin, match_notification_email
 
 # ------------------------------------------------------------
 # TrainingRequest views

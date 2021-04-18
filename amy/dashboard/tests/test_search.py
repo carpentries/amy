@@ -1,18 +1,18 @@
-from datetime import datetime, timezone, date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django_comments.models import Comment
 
-from workshops.tests.base import TestBase
 from workshops.models import (
+    Member,
+    MemberRole,
+    Membership,
     Organization,
     Person,
     TrainingRequest,
-    Membership,
-    MemberRole,
-    Member,
 )
+from workshops.tests.base import TestBase
 
 
 class TestSearch(TestBase):

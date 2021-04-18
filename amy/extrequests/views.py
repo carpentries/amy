@@ -8,57 +8,44 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import (
-    IntegrityError,
-    transaction,
-)
-from django.db.models import (
-    Prefetch,
-    Q,
-    ProtectedError,
-)
-from django.shortcuts import redirect, render, get_object_or_404
+from django.db import IntegrityError, transaction
+from django.db.models import Prefetch, ProtectedError, Q
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.actions import (
-    SelfOrganisedRequestAction,
-    PostWorkshopAction,
-)
+from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
-    TrainingRequestFilter,
-    WorkshopRequestFilter,
-    WorkshopInquiryFilter,
     SelfOrganisedSubmissionFilter,
+    TrainingRequestFilter,
+    WorkshopInquiryFilter,
+    WorkshopRequestFilter,
 )
 from extrequests.forms import (
-    MatchTrainingRequestForm,
-    BulkMatchTrainingRequestForm,
     BulkChangeTrainingRequestForm,
-    TrainingRequestUpdateForm,
-    TrainingRequestsSelectionForm,
-    TrainingRequestsMergeForm,
-    WorkshopRequestAdminForm,
-    WorkshopInquiryRequestAdminForm,
+    BulkMatchTrainingRequestForm,
+    MatchTrainingRequestForm,
     SelfOrganisedSubmissionAdminForm,
+    TrainingRequestsMergeForm,
+    TrainingRequestsSelectionForm,
+    TrainingRequestUpdateForm,
+    WorkshopInquiryRequestAdminForm,
+    WorkshopRequestAdminForm,
 )
-from extrequests.models import (
-    WorkshopInquiryRequest,
-    SelfOrganisedSubmission,
-)
+from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from workshops.base_views import (
-    AMYUpdateView,
-    AMYListView,
     AMYDetailView,
-    StateFilterMixin,
-    RedirectSupportMixin,
-    ChangeRequestStateView,
+    AMYListView,
+    AMYUpdateView,
     AssignView,
+    ChangeRequestStateView,
+    RedirectSupportMixin,
+    StateFilterMixin,
 )
 from workshops.forms import (
     AdminLookupForm,
@@ -68,28 +55,28 @@ from workshops.forms import (
 )
 from workshops.models import (
     Event,
-    TrainingRequest,
-    WorkshopRequest,
-    Task,
-    Role,
-    Person,
     Language,
     Organization,
+    Person,
+    Role,
+    Task,
+    TrainingRequest,
+    WorkshopRequest,
 )
 from workshops.util import (
-    OnlyForAdminsMixin,
-    admin_required,
-    redirect_with_next_support,
-    upload_trainingrequest_manual_score_csv,
-    clean_upload_trainingrequest_manual_score,
-    update_manual_score,
-    create_username,
-    merge_objects,
-    failed_to_delete,
     InternalError,
-    fetch_workshop_metadata,
-    parse_workshop_metadata,
+    OnlyForAdminsMixin,
     WrongWorkshopURL,
+    admin_required,
+    clean_upload_trainingrequest_manual_score,
+    create_username,
+    failed_to_delete,
+    fetch_workshop_metadata,
+    merge_objects,
+    parse_workshop_metadata,
+    redirect_with_next_support,
+    update_manual_score,
+    upload_trainingrequest_manual_score_csv,
 )
 
 logger = logging.getLogger("amy.signals")

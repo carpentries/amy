@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Criterium, Continent
+from .models import Continent, Criterium
 
 
 class CriteriumAdmin(admin.ModelAdmin):

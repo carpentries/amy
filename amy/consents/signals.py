@@ -1,7 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
+from consents.models import Consent, Term
 from workshops.models import Person
-from consents.models import Term, Consent
 
 
 @receiver(post_save, sender=Person)

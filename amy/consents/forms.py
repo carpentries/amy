@@ -1,8 +1,9 @@
 from typing import Iterable, List
 
-from consents.models import Consent, Term, TermOption
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
+
+from consents.models import Consent, Term, TermOption
 from workshops.forms import BootstrapHelper, WidgetOverrideMixin
 from workshops.models import Person
 

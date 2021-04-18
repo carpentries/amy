@@ -1,13 +1,23 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.contrib.auth.models import Permission, Group
+from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db import models, migrations
+from django.db import migrations, models
 
 from workshops.models import (
-    Airport, Award, Badge, Event, Organization, KnowledgeDomain, Lesson, Person,
-    Qualification, Role, Tag, Task,
+    Airport,
+    Award,
+    Badge,
+    Event,
+    KnowledgeDomain,
+    Lesson,
+    Organization,
+    Person,
+    Qualification,
+    Role,
+    Tag,
+    Task,
 )
 
 

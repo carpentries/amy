@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 import re
-from django.db import models, migrations
 
+from django.db import migrations, models
 
 REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
                         r'(?P<repo>[^/]+)/?')

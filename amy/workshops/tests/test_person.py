@@ -1,37 +1,37 @@
 # coding: utf-8
 
-from datetime import datetime, timezone, date
-from social_django.models import UserSocialAuth
+from datetime import date, datetime, timezone
 from unittest.mock import patch
 from urllib.parse import urlencode
-import webtest
 
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import Permission, Group
+from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django.core.validators import ValidationError
 from django.urls import reverse
 from django_comments.models import Comment
+from social_django.models import UserSocialAuth
+import webtest
 from webtest.forms import Upload
 
 from workshops.filters import filter_taught_workshops
-from workshops.tests.base import TestBase
+from workshops.forms import PersonForm, PersonsMergeForm
 from workshops.models import (
-    Person,
-    Task,
-    Qualification,
     Award,
-    Role,
+    Badge,
     Event,
     KnowledgeDomain,
-    Badge,
-    Organization,
     Language,
+    Organization,
+    Person,
+    Qualification,
+    Role,
     Tag,
-    TrainingRequirement,
+    Task,
     TrainingProgress,
+    TrainingRequirement,
 )
-from workshops.forms import PersonForm, PersonsMergeForm
+from workshops.tests.base import TestBase
 
 
 @patch("workshops.github_auth.github_username_to_uid", lambda username: None)

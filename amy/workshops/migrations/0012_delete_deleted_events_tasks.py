@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 from functools import partial
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 def drop_deleted_object(model, apps, schema_editor):

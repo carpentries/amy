@@ -1,9 +1,9 @@
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from workshops.tests.base import TestBase
 from workshops.forms import ActionRequiredPrivacyForm
 from workshops.models import Person
+from workshops.tests.base import TestBase
 
 
 class TestActionRequiredPrivacy(TestBase):

@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
 from django.test import TestCase
 import pytz
@@ -6,15 +6,8 @@ from rq.queue import Queue
 from rq.worker import SimpleWorker
 from rq_scheduler.utils import to_unix
 
-from autoemails.utils import (
-    check_status,
-    scheduled_execution_time,
-)
-from autoemails.tests.base import (
-    FakeRedisTestCaseMixin,
-    dummy_job,
-    dummy_fail_job,
-)
+from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_fail_job, dummy_job
+from autoemails.utils import check_status, scheduled_execution_time
 
 
 class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):

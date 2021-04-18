@@ -2,6 +2,7 @@
 
 from datetime import timezone
 from typing import List
+
 from django.db import migrations
 
 PROFILE_REQUIRE_TYPE = "profile"

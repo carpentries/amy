@@ -1,4 +1,4 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 from typing import List
 
 from django.urls import reverse
@@ -6,22 +6,22 @@ from django_comments.models import Comment
 
 from fiscal.forms import (
     MembershipCreateForm,
-    MembershipForm,
     MembershipExtensionForm,
+    MembershipForm,
     MembershipRollOverForm,
 )
-from fiscal.models import MembershipTask, MembershipPersonRole
-from workshops.tests.base import TestBase
+from fiscal.models import MembershipPersonRole, MembershipTask
 from workshops.models import (
+    Event,
+    Member,
+    MemberRole,
     Membership,
     Organization,
-    Event,
     Role,
     Tag,
     Task,
-    MemberRole,
-    Member,
 )
+from workshops.tests.base import TestBase
 
 
 class TestMembership(TestBase):

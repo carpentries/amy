@@ -1,97 +1,90 @@
-from typing import Optional
-
 import csv
 import datetime
 from functools import partial
 import io
 import logging
+from typing import Optional
 
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
+from django.contrib.auth.mixins import PermissionRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-    PermissionDenied,
-)
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
 from django.db.models import (
     Case,
-    When,
-    Value,
-    IntegerField,
     Count,
-    Q,
     F,
-    ProtectedError,
-    Sum,
+    IntegerField,
     Prefetch,
+    ProtectedError,
+    Q,
+    Sum,
+    Value,
+    When,
 )
 from django.forms import HiddenInput
-from django.http import Http404, HttpResponse, JsonResponse
-from django.http import HttpResponseBadRequest
-from django.shortcuts import redirect, render, get_object_or_404
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 import django_rq
 from github.GithubException import GithubException
-from reversion.models import Version, Revision
+import requests
+from reversion.models import Revision, Version
 from reversion_compare.forms import SelectDiffForm
 
 from autoemails.actions import (
+    AskForWebsiteAction,
+    InstructorsHostIntroductionAction,
     NewInstructorAction,
     NewSupportingInstructorAction,
     PostWorkshopAction,
-    InstructorsHostIntroductionAction,
-    AskForWebsiteAction,
     RecruitHelpersAction,
 )
-from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
+from autoemails.models import Trigger
+from consents.forms import ActiveTermConsentsForm
 from dashboard.forms import AssignmentForm
 from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
-    AMYUpdateView,
     AMYDeleteView,
-    AMYListView,
-    RedirectSupportMixin,
-    PrepopulationSupportMixin,
     AMYDetailView,
+    AMYListView,
+    AMYUpdateView,
     AssignView,
+    PrepopulationSupportMixin,
+    RedirectSupportMixin,
 )
 from workshops.filters import (
+    AirportFilter,
+    BadgeAwardsFilter,
     EventFilter,
     PersonFilter,
     TaskFilter,
-    AirportFilter,
-    BadgeAwardsFilter,
     WorkshopStaffFilter,
 )
 from workshops.forms import (
-    WorkshopStaffForm,
-    PersonForm,
-    BulkUploadCSVForm,
-    EventForm,
-    EventCreateForm,
-    TaskForm,
-    AwardForm,
-    PersonPermissionsForm,
-    PersonsSelectionForm,
-    BootstrapHelper,
-    AdminLookupForm,
-    EventsSelectionForm,
-    EventsMergeForm,
-    PersonsMergeForm,
-    PersonCreateForm,
     ActionRequiredPrivacyForm,
+    AdminLookupForm,
+    AwardForm,
+    BootstrapHelper,
+    BulkUploadCSVForm,
+    EventCreateForm,
+    EventForm,
+    EventsMergeForm,
+    EventsSelectionForm,
+    PersonCreateForm,
+    PersonForm,
+    PersonPermissionsForm,
+    PersonsMergeForm,
+    PersonsSelectionForm,
+    TaskForm,
+    WorkshopStaffForm,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -101,34 +94,32 @@ from workshops.models import (
     Award,
     Badge,
     Event,
-    Qualification,
-    Person,
-    Role,
     Membership,
+    Person,
+    Qualification,
+    Role,
     Tag,
     Task,
 )
 from workshops.signals import create_comment_signal
 from workshops.util import (
-    upload_person_task_csv,
-    verify_upload_person_task,
-    create_uploaded_persons_tasks,
     InternalError,
-    WrongWorkshopURL,
-    fetch_workshop_metadata,
-    parse_workshop_metadata,
-    validate_workshop_metadata,
-    get_pagination_items,
-    failed_to_delete,
-    merge_objects,
-    create_username,
-    admin_required,
     OnlyForAdminsMixin,
-    login_required,
+    WrongWorkshopURL,
     add_comment,
+    admin_required,
+    create_uploaded_persons_tasks,
+    create_username,
+    failed_to_delete,
+    fetch_workshop_metadata,
+    get_pagination_items,
+    login_required,
+    merge_objects,
+    parse_workshop_metadata,
+    upload_person_task_csv,
+    validate_workshop_metadata,
+    verify_upload_person_task,
 )
-from consents.forms import ActiveTermConsentsForm
-
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
