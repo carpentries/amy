@@ -5,19 +5,19 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.urls import reverse
-from django.views.generic import View, RedirectView
+from django.views.generic import RedirectView, View
+from markdownx.views import ImageUploadView, MarkdownifyView
 from rest_framework.views import APIView
-from markdownx.views import MarkdownifyView, ImageUploadView
 
 from config import urls
 from workshops.models import Person
 from workshops.tests.base import TestBase
 from workshops.util import (
-    OnlyForAdminsMixin,
     LoginNotRequiredMixin,
+    OnlyForAdminsMixin,
     admin_required,
-    login_required,
     login_not_required,
+    login_required,
 )
 
 

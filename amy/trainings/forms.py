@@ -1,26 +1,13 @@
 from crispy_forms.layout import Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import (
-    TextInput,
-    RadioSelect,
-)
-
-from workshops.forms import (
-    SELECT2_SIDEBAR,
-    BootstrapHelper,
-)
-from workshops.models import (
-    Event,
-    Person,
-    TrainingProgress,
-)
+from django.forms import RadioSelect, TextInput
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
-from workshops.fields import (
-    ModelSelect2Widget,
-)
+from workshops.fields import ModelSelect2Widget
+from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper
+from workshops.models import Event, Person, TrainingProgress
 
 
 class TrainingProgressForm(forms.ModelForm):

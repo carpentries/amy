@@ -1,7 +1,7 @@
 from django.urls import reverse
+from reversion import revisions as reversion
 from reversion.models import Version
 from reversion.revisions import create_revision
-from reversion import revisions as reversion
 
 from workshops.models import Event, Person, Tag
 from workshops.tests.base import TestBase

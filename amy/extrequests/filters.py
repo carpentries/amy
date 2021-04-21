@@ -1,29 +1,20 @@
 import re
 
-import django_filters
 from django.db.models import Q
 from django.forms import widgets
+import django_filters
 
-from extrequests.models import (
-    WorkshopInquiryRequest,
-    SelfOrganisedSubmission,
-)
+from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from workshops.fields import Select2Widget
 from workshops.filters import (
+    AllCountriesFilter,
     AMYFilterSet,
+    ContinentFilter,
+    ForeignKeyAllValuesFilter,
     NamesOrderingFilter,
     StateFilterSet,
-    ForeignKeyAllValuesFilter,
-    AllCountriesFilter,
-    ContinentFilter,
 )
-from workshops.models import (
-    Person,
-    TrainingRequest,
-    Curriculum,
-    WorkshopRequest,
-)
-
+from workshops.models import Curriculum, Person, TrainingRequest, WorkshopRequest
 
 # ------------------------------------------------------------
 # TrainingRequest related filter and filter methods

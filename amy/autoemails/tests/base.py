@@ -4,7 +4,6 @@ from rq import Queue
 
 from autoemails.job import Job
 
-
 connection = FakeStrictRedis()
 
 

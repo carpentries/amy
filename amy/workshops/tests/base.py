@@ -10,14 +10,14 @@ from workshops.models import (
     Award,
     Badge,
     Event,
+    KnowledgeDomain,
+    Language,
     Lesson,
+    Organization,
     Person,
     Qualification,
-    Organization,
     Role,
     Tag,
-    Language,
-    KnowledgeDomain,
 )
 from workshops.util import universal_date_format
 

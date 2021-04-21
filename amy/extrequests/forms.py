@@ -1,7 +1,7 @@
 import datetime
 
 from crispy_forms.bootstrap import FormActions
-from crispy_forms.layout import Layout, Div, HTML, Submit
+from crispy_forms.layout import HTML, Div, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
@@ -9,31 +9,31 @@ from django.db.models import Case, When
 from extrequests.models import (
     DataVariant,
     InfoSource,
-    WorkshopInquiryRequest,
     SelfOrganisedSubmission,
+    WorkshopInquiryRequest,
+)
+from workshops.fields import (
+    CheckboxSelectMultipleWithOthers,
+    CurriculumModelMultipleChoiceField,
+    ModelSelect2Widget,
+    RadioSelectFakeMultiple,
+    RadioSelectWithOther,
+    SafeModelMultipleChoiceField,
+    Select2TagWidget,
+    Select2Widget,
 )
 from workshops.forms import BootstrapHelper
 from workshops.models import (
     AcademicLevel,
-    Event,
-    Person,
-    Organization,
-    Membership,
-    TrainingRequest,
-    KnowledgeDomain,
-    WorkshopRequest,
     Curriculum,
+    Event,
+    KnowledgeDomain,
+    Membership,
+    Organization,
+    Person,
     Task,
-)
-from workshops.fields import (
-    Select2Widget,
-    Select2TagWidget,
-    ModelSelect2Widget,
-    RadioSelectWithOther,
-    CheckboxSelectMultipleWithOthers,
-    RadioSelectFakeMultiple,
-    SafeModelMultipleChoiceField,
-    CurriculumModelMultipleChoiceField,
+    TrainingRequest,
+    WorkshopRequest,
 )
 
 

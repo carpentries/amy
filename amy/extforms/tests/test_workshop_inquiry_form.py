@@ -1,14 +1,10 @@
-from django.core import mail
 from django.conf import settings
+from django.core import mail
 from django.urls import reverse
 
 from extforms.forms import WorkshopInquiryRequestExternalForm
 from extrequests.models import WorkshopInquiryRequest
-from workshops.models import (
-    Language,
-    Curriculum,
-    InfoSource,
-)
+from workshops.models import Curriculum, InfoSource, Language
 from workshops.tests.base import TestBase
 
 

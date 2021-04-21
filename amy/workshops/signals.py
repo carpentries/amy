@@ -4,7 +4,6 @@ from django.contrib.auth.signals import user_login_failed
 from django.dispatch import Signal, receiver
 from django.http.request import HttpRequest
 
-
 # AMY server logger
 logger = logging.getLogger("amy.server_logs")
 

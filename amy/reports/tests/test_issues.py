@@ -1,9 +1,9 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.urls import reverse
 
+from workshops.models import Event, Organization, Person, Role, Tag
 from workshops.tests.base import TestBase
-from workshops.models import Event, Organization, Role, Person, Tag
 
 
 class TestIssuesViews(TestBase):

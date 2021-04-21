@@ -7,18 +7,15 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.views import (
-    TrainingRequests,
-)
-
+from api.views import TrainingRequests
 from workshops.models import (
+    Badge,
+    Event,
+    KnowledgeDomain,
+    Organization,
     Person,
     Role,
-    Event,
     Tag,
-    Organization,
-    Badge,
-    KnowledgeDomain,
     TrainingRequest,
 )
 

@@ -5,17 +5,10 @@ from django.urls import reverse
 
 from autoemails import admin
 from autoemails.actions import NewInstructorAction
-from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
-from autoemails.utils import scheduled_execution_time, compare_emails
-from workshops.models import (
-    Tag,
-    Event,
-    Role,
-    Person,
-    Task,
-    Organization,
-)
+from autoemails.utils import compare_emails, scheduled_execution_time
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import SuperuserMixin
 
 

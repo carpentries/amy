@@ -1,31 +1,28 @@
-import django_filters
 from django.db.models import Q
 from django.forms import widgets
 from django_countries import Countries
+import django_filters
 
 from dashboard.models import Continent
 from workshops.fields import (
-    Select2Widget,
-    ModelSelect2Widget,
     ModelSelect2MultipleWidget,
+    ModelSelect2Widget,
+    Select2Widget,
 )
-from workshops.forms import (
-    bootstrap_helper_filter,
-    SELECT2_SIDEBAR,
-)
+from workshops.forms import SELECT2_SIDEBAR, bootstrap_helper_filter
 from workshops.models import (
-    StateMixin,
-    Event,
-    Organization,
-    Person,
-    Badge,
     Airport,
-    Tag,
-    Task,
     Award,
+    Badge,
+    Event,
     KnowledgeDomain,
     Language,
     Lesson,
+    Organization,
+    Person,
+    StateMixin,
+    Tag,
+    Task,
 )
 
 

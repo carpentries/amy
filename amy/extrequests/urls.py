@@ -1,7 +1,6 @@
-from django.urls import path, include
+from django.urls import include, path
 
 from extrequests import views
-
 
 urlpatterns = [
     # training requests

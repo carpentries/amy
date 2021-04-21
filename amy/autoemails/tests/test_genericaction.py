@@ -1,17 +1,17 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
 from django.test import TestCase
 
 from autoemails.actions import GenericAction
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from workshops.models import (
     Event,
     Organization,
-    Tag,
-    WorkshopRequest,
-    Task,
     Person,
     Role,
+    Tag,
+    Task,
+    WorkshopRequest,
 )
 
 

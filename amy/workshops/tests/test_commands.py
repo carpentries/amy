@@ -11,26 +11,20 @@ from django.core.management import call_command
 from faker import Faker
 import requests_mock
 
-from workshops.tests.base import TestBase
-from workshops.management.commands.fake_database import (
-    Command as FakeDatabaseCommand,
+from workshops.management.commands.check_for_workshop_websites_updates import (
+    Command as WebsiteUpdatesCommand,
 )
+from workshops.management.commands.check_for_workshop_websites_updates import (
+    WrongWorkshopURL,
+    datetime_decode,
+    datetime_match,
+)
+from workshops.management.commands.fake_database import Command as FakeDatabaseCommand
 from workshops.management.commands.instructors_activity import (
     Command as InstructorsActivityCommand,
 )
-from workshops.management.commands.check_for_workshop_websites_updates import (
-    Command as WebsiteUpdatesCommand,
-    WrongWorkshopURL,
-    datetime_match,
-    datetime_decode,
-)
-from workshops.models import (
-    Role,
-    Badge,
-    Organization,
-    Event,
-    Task,
-)
+from workshops.models import Badge, Event, Organization, Role, Task
+from workshops.tests.base import TestBase
 
 
 class TestInstructorsActivityCommand(TestBase):

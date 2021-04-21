@@ -2,19 +2,17 @@ from django.contrib import admin
 
 from workshops.models import (
     AcademicLevel,
-    ComputingExperienceLevel,
-)
-from workshops.models import (
-    Tag,
-    Role,
-    Lesson,
-    KnowledgeDomain,
     Badge,
-    TrainingRequirement,
-    TrainingRequest,
+    ComputingExperienceLevel,
     Curriculum,
     InfoSource,
+    KnowledgeDomain,
+    Lesson,
     MemberRole,
+    Role,
+    Tag,
+    TrainingRequest,
+    TrainingRequirement,
 )
 
 

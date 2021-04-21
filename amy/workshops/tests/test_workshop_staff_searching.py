@@ -3,8 +3,8 @@ import io
 
 from django.urls import reverse
 
+from workshops.models import Badge, Event, Organization, Role, Tag, Task
 from workshops.tests.base import TestBase
-from workshops.models import Task, Role, Event, Tag, Organization, Badge
 from workshops.views import _workshop_staff_query
 
 
@@ -229,9 +229,8 @@ class TestLocateWorkshopStaff(TestBase):
 
         self.assertIn(self.ron, response.context["persons"])
         self.assertNotIn(self.harry, response.context["persons"])
-        self.assertIn(self.ron, response.context['persons'])
-        self.assertNotIn(self.harry, response.context['persons'])
-    
+        self.assertIn(self.ron, response.context["persons"])
+        self.assertNotIn(self.harry, response.context["persons"])
 
     def test_match_on_one_domain(self):
         """Ensure people with one particular knowledge domain preference

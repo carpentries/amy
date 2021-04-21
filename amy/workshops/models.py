@@ -11,41 +11,39 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models import (
-    Q,
+    Case,
+    Count,
     F,
     IntegerField,
     PositiveIntegerField,
+    Q,
     Sum,
-    Case,
     When,
-    Count,
 )
 from django.db.models.functions import Greatest
+from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
-from django.urls import reverse, reverse_lazy
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
 from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
-
 from workshops import github_auth
+from workshops.fields import NullableGithubUsernameField
 from workshops.mixins import (
     ActiveMixin,
     AssignmentMixin,
-    CreatedUpdatedMixin,
     COCAgreementMixin,
+    CreatedUpdatedMixin,
     DataPrivacyAgreementMixin,
     EventLinkMixin,
     GenderMixin,
     HostResponsibilitiesMixin,
+    InstructorAvailabilityMixin,
     SecondaryEmailMixin,
     StateMixin,
-    InstructorAvailabilityMixin,
 )
-from workshops.fields import NullableGithubUsernameField
-
 
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings

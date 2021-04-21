@@ -4,6 +4,7 @@ from markdownx.fields import MarkdownxFormField
 from markdownx.widgets import AdminMarkdownxWidget
 
 from workshops.forms import BootstrapHelper
+
 from .models import EmailTemplate
 
 

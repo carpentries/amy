@@ -6,13 +6,9 @@ from rq import Queue, SimpleWorker
 from rq.exceptions import NoSuchJobError
 
 from autoemails import admin
-from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.job import Job
-from autoemails.tests.base import (
-    FakeRedisTestCaseMixin,
-    dummy_job,
-    dummy_fail_job,
-)
+from autoemails.models import EmailTemplate, RQJob, Trigger
+from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_fail_job, dummy_job
 from workshops.tests.base import SuperuserMixin
 
 

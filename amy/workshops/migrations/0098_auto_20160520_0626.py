@@ -3,8 +3,8 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-from django.db.models.functions import Length
 import django.db.models.deletion
+from django.db.models.functions import Length
 
 
 def migrate_language(apps, schema_editor):

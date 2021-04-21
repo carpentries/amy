@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date, datetime
 from functools import partial
 
 from django.urls import reverse
@@ -6,14 +6,14 @@ from django.urls import reverse
 from trainings.filters import filter_trainees_by_instructor_status
 from trainings.views import all_trainees_queryset
 from workshops.models import (
-    TrainingProgress,
-    TrainingRequirement,
+    Award,
     Event,
     Organization,
-    Tag,
-    Role,
     Person,
-    Award,
+    Role,
+    Tag,
+    TrainingProgress,
+    TrainingRequirement,
 )
 from workshops.tests.base import TestBase
 

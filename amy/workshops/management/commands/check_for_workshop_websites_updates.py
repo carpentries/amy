@@ -13,9 +13,9 @@ from rest_framework.utils.encoders import JSONEncoder
 
 from workshops.models import Event
 from workshops.util import (
+    WrongWorkshopURL,
     fetch_workshop_metadata,
     parse_workshop_metadata,
-    WrongWorkshopURL,
 )
 
 

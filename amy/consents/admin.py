@@ -1,17 +1,16 @@
-import django_rq
 import logging
+from typing import Any, Iterable
+from urllib.parse import unquote
 
 from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
 from django.http.response import HttpResponseRedirect
-from typing import Any, Iterable
-from urllib.parse import unquote
+import django_rq
 
 from autoemails.actions import NewConsentRequiredAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from consents.models import Consent, Term, TermOption
-
 
 logger = logging.getLogger("amy.signals")  # TODO... why signals logger?
 scheduler = django_rq.get_scheduler("default")

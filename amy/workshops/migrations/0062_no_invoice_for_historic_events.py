@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from datetime import date
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 START_OF_MODERNITY = date(2014, 1, 1)
 

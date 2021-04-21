@@ -4,17 +4,17 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from extrequests.forms import (
-    WorkshopRequestBaseForm,
-    WorkshopInquiryRequestBaseForm,
     SelfOrganisedSubmissionBaseForm,
+    WorkshopInquiryRequestBaseForm,
+    WorkshopRequestBaseForm,
 )
 from workshops.fields import (
-    RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
+    RadioSelectWithOther,
     Select2Widget,
 )
-from workshops.models import TrainingRequest
 from workshops.forms import BootstrapHelper
+from workshops.models import TrainingRequest
 
 
 class TrainingRequestForm(forms.ModelForm):

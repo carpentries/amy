@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 
 from workshops.models import Person
 from workshops.tests.base import TestBase

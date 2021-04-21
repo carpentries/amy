@@ -1,55 +1,51 @@
-import itertools
 from datetime import timedelta
-from random import (
-    random,
-    choice,
-    uniform,
-    sample as random_sample,
-    randint,
-)
+import itertools
+from random import choice, randint, random
+from random import sample as random_sample
+from random import uniform
 from typing import List
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
-from django_countries import countries as Countries
 from django.utils import timezone
+from django_countries import countries as Countries
 from faker import Faker
 from faker.providers import BaseProvider
 
+from consents.models import Consent, Term
 from extrequests.models import (
     DataVariant,
-    WorkshopInquiryRequest,
     SelfOrganisedSubmission,
+    WorkshopInquiryRequest,
 )
 from workshops.models import (
+    AcademicLevel,
     Airport,
+    Award,
+    Badge,
+    ComputingExperienceLevel,
+    Curriculum,
+    Event,
+    InfoSource,
+    KnowledgeDomain,
+    Language,
+    Lesson,
+    Member,
+    MemberRole,
+    Membership,
+    Organization,
+    Person,
+    Qualification,
     Role,
     Tag,
-    Badge,
-    Lesson,
-    Person,
-    Award,
-    Qualification,
-    Organization,
-    Event,
     Task,
-    TrainingRequirement,
     TrainingProgress,
     TrainingRequest,
-    KnowledgeDomain,
-    MemberRole,
-    Member,
-    Membership,
-    AcademicLevel,
-    ComputingExperienceLevel,
-    Language,
-    Curriculum,
-    InfoSource,
+    TrainingRequirement,
     WorkshopRequest,
 )
 from workshops.util import create_username
-from consents.models import Term, Consent
 
 
 def randbool(chances_of_true):

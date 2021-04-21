@@ -7,7 +7,7 @@ from django.template.exceptions import TemplateSyntaxError
 from django.test import TestCase, override_settings
 
 from autoemails.actions import BaseAction
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 
 
 @override_settings(AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS=None)

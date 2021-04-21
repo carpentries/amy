@@ -6,8 +6,8 @@ from rq.exceptions import NoSuchJobError
 
 from autoemails import admin
 from autoemails.actions import NewInstructorAction
-from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.job import Job
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.models import Event, Organization, Person, Role, Task
 from workshops.tests.base import SuperuserMixin

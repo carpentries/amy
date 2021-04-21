@@ -6,23 +6,23 @@ from django_countries.fields import CountryField
 
 from workshops.mixins import (
     AssignmentMixin,
-    CreatedUpdatedMixin,
     COCAgreementMixin,
+    CreatedUpdatedMixin,
     DataPrivacyAgreementMixin,
     EventLinkMixin,
     HostResponsibilitiesMixin,
-    StateMixin,
     InstructorAvailabilityMixin,
+    StateMixin,
 )
 from workshops.models import (
     STR_LONGEST,
-    Language,
-    KnowledgeDomain,
     AcademicLevel,
+    CommonRequest,
     ComputingExperienceLevel,
     Curriculum,
     InfoSource,
-    CommonRequest,
+    KnowledgeDomain,
+    Language,
 )
 
 

@@ -1,15 +1,15 @@
 from datetime import date
 
-from django.test import TestCase, RequestFactory
 from django.db.models import Q, QuerySet
+from django.test import RequestFactory, TestCase
 
-from extrequests.models import WorkshopInquiryRequest, SelfOrganisedSubmission
-from workshops.models import WorkshopRequest, Language, Curriculum, Tag, Organization
+from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from extrequests.views import (
-    WorkshopRequestAcceptEvent,
-    WorkshopInquiryAcceptEvent,
     SelfOrganisedSubmissionAcceptEvent,
+    WorkshopInquiryAcceptEvent,
+    WorkshopRequestAcceptEvent,
 )
+from workshops.models import Curriculum, Language, Organization, Tag, WorkshopRequest
 
 
 class InitialWRFTestMixin:

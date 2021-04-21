@@ -1,32 +1,21 @@
 from urllib.parse import urlparse, urlunparse
 
-from crispy_forms.layout import Div, HTML
+from crispy_forms.layout import HTML, Div
 from django import forms
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.dispatch import receiver
 from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from fiscal.models import MembershipTask
-from workshops.fields import ModelSelect2MultipleWidget
-from workshops.forms import (
-    BootstrapHelper,
-    form_saved_add_comment,
-)
-from workshops.models import (
-    Organization,
-    Member,
-    Membership,
-)
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
-from workshops.fields import (
-    ModelSelect2Widget,
-)
+from workshops.fields import ModelSelect2MultipleWidget, ModelSelect2Widget
+from workshops.forms import BootstrapHelper, form_saved_add_comment
+from workshops.models import Member, Membership, Organization
 from workshops.signals import create_comment_signal
-
 
 # settings for Select2
 # this makes it possible for autocomplete widget to fit in low-width sidebar

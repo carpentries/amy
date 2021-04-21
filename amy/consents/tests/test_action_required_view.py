@@ -1,9 +1,10 @@
+from django.urls import reverse
+from django.utils.http import urlencode
+
 from consents.forms import RequiredConsentsForm
 from consents.models import Term
 from consents.tests.base import ConsentTestBase
 from consents.util import person_has_consented_to_required_terms
-from django.urls import reverse
-from django.utils.http import urlencode
 from workshops.models import Person
 
 

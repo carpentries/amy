@@ -2,36 +2,27 @@ from smtplib import SMTPException
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404, HttpResponseRedirect
+from django.template.loader import get_template
 from django.utils.http import is_safe_url
 from django.views.generic import (
     CreateView,
-    UpdateView,
     DeleteView,
+    DetailView,
     FormView,
     ListView,
-    DetailView,
     RedirectView,
+    UpdateView,
 )
-from django.views.generic.detail import (
-    SingleObjectMixin,
-)
-from django.template.loader import get_template
+from django.views.generic.detail import SingleObjectMixin
 
 from workshops.forms import BootstrapHelper
-from workshops.util import (
-    failed_to_delete,
-    Paginator,
-    get_pagination_items,
-    assign,
-)
+from workshops.util import Paginator, assign, failed_to_delete, get_pagination_items
 
 
 class FormInvalidMessageMixin:

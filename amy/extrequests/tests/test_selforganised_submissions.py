@@ -5,22 +5,14 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from requests_mock import Mocker
 
-from autoemails.models import Trigger, EmailTemplate, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import SelfOrganisedSubmissionBaseForm
 from extrequests.models import SelfOrganisedSubmission
 import extrequests.views
 from workshops.forms import EventCreateForm
-from workshops.models import (
-    Task,
-    Role,
-    Event,
-    Organization,
-    Language,
-    Curriculum,
-    Tag,
-)
-from workshops.tests.base import TestBase, FormTestHelper
+from workshops.models import Curriculum, Event, Language, Organization, Role, Tag, Task
+from workshops.tests.base import FormTestHelper, TestBase
 
 
 class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):

@@ -1,5 +1,4 @@
 from django import template
-
 from reversion.models import Version
 
 register = template.Library()

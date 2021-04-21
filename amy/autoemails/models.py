@@ -1,11 +1,11 @@
 from collections import namedtuple
-from typing import Optional, List
+from typing import List, Optional
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
-from django.template import engines, Template, TemplateSyntaxError
+from django.template import Template, TemplateSyntaxError, engines
 from django.urls import reverse
 import markdown
 

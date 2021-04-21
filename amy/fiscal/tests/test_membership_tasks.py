@@ -1,10 +1,9 @@
 from django.urls import reverse
 
-from workshops.tests.base import TestBase
-from workshops.models import Membership
-
 from fiscal.forms import MembershipTaskForm
 from fiscal.models import MembershipPersonRole, MembershipTask
+from workshops.models import Membership
+from workshops.tests.base import TestBase
 
 
 class TestMembershipTaskFormLayout(TestBase):

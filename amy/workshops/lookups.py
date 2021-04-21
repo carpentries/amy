@@ -1,17 +1,17 @@
-from functools import reduce
 from datetime import datetime
+from functools import reduce
 import operator
 import re
 
-from django_select2.views import AutoResponseView
-from django.http import JsonResponse
-from django.contrib.auth.models import Group
 from django.conf.urls import url
-from django.db.models import Q, Count
+from django.contrib.auth.models import Group
+from django.db.models import Count, Q
+from django.http import JsonResponse
+from django_select2.views import AutoResponseView
 
 from fiscal.models import MembershipPersonRole
 from workshops import models
-from workshops.util import OnlyForAdminsNoRedirectMixin, LoginNotRequiredMixin
+from workshops.util import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 
 class ExtensibleAutoResponseView(AutoResponseView):

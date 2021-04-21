@@ -2,8 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
-from consents.tests.base import ConsentTestBase
 from consents.models import Consent, Term, TermOption
+from consents.tests.base import ConsentTestBase
 from workshops.models import Person
 
 

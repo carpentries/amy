@@ -1,5 +1,5 @@
+from datetime import date, datetime, timedelta
 from itertools import product
-from datetime import datetime, timedelta, date
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -7,26 +7,26 @@ from django.test import TestCase
 from django.urls import reverse
 
 from autoemails.actions import (
+    AskForWebsiteAction,
+    InstructorsHostIntroductionAction,
     NewInstructorAction,
     NewSupportingInstructorAction,
-    InstructorsHostIntroductionAction,
-    AskForWebsiteAction,
     RecruitHelpersAction,
 )
-from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
-from workshops.tests.base import TestBase, SuperuserMixin
 from workshops.models import (
-    Task,
     Event,
-    Role,
-    Person,
-    Organization,
-    Tag,
-    Membership,
     Member,
     MemberRole,
+    Membership,
+    Organization,
+    Person,
+    Role,
+    Tag,
+    Task,
 )
+from workshops.tests.base import SuperuserMixin, TestBase
 import workshops.views
 
 

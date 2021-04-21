@@ -3,23 +3,23 @@ from datetime import date, timedelta
 from django.conf import settings
 from django.urls import reverse
 
-from autoemails.models import Trigger, EmailTemplate, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import WorkshopRequestBaseForm
 import extrequests.views
 from workshops.forms import EventCreateForm
 from workshops.models import (
-    Tag,
-    WorkshopRequest,
-    Task,
-    Role,
-    Event,
-    Organization,
-    Language,
     Curriculum,
+    Event,
     InfoSource,
+    Language,
+    Organization,
+    Role,
+    Tag,
+    Task,
+    WorkshopRequest,
 )
-from workshops.tests.base import TestBase, FormTestHelper
+from workshops.tests.base import FormTestHelper, TestBase
 
 
 class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):

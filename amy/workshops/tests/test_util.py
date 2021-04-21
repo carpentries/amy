@@ -3,40 +3,39 @@ import datetime
 
 from django.http import Http404
 from django.test import RequestFactory
-
 import requests.exceptions
 import requests_mock
 
-from workshops.tests.base import TestBase
 from workshops.models import (
-    Organization,
-    Event,
-    Role,
-    Person,
-    Task,
-    Badge,
     Award,
-    WorkshopRequest,
+    Badge,
+    Event,
     Language,
+    Organization,
+    Person,
+    Role,
+    Task,
+    WorkshopRequest,
 )
+from workshops.tests.base import TestBase
 from workshops.util import (
-    fetch_workshop_metadata,
-    generate_url_to_event_index,
-    find_workshop_YAML_metadata,
-    find_workshop_HTML_metadata,
-    parse_workshop_metadata,
-    validate_workshop_metadata,
-    get_members,
-    default_membership_cutoff,
-    create_username,
     InternalError,
     Paginator,
     assign,
-    str2bool,
+    create_username,
+    default_membership_cutoff,
+    fetch_workshop_metadata,
+    find_workshop_HTML_metadata,
+    find_workshop_YAML_metadata,
+    generate_url_to_event_index,
+    get_members,
     human_daterange,
     match_notification_email,
-    reports_link_hash,
+    parse_workshop_metadata,
     reports_link,
+    reports_link_hash,
+    str2bool,
+    validate_workshop_metadata,
 )
 
 

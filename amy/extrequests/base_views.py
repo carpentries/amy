@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.core.exceptions import ImproperlyConfigured
 
 from workshops.base_views import AMYCreateView
-from workshops.models import Tag, Curriculum
+from workshops.models import Curriculum, Tag
 
 
 class WRFInitial:

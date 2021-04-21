@@ -1,7 +1,9 @@
-import sys
-import os
 import csv
+import os
+import sys
+
 from django.core.management.base import BaseCommand
+
 from workshops.models import Award, Badge, Person
 
 
