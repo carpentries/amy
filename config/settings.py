@@ -443,10 +443,11 @@ MANAGERS = ADMINS
 from django.contrib.messages import constants as message_constants  # noqa
 
 MESSAGE_TAGS = {
-    message_constants.INFO: "alert-info",
-    message_constants.SUCCESS: "alert-success",
-    message_constants.WARNING: "alert-warning",
-    message_constants.ERROR: "alert-danger",
+    message_constants.DEBUG: "debug",
+    message_constants.INFO: "info alert-info",
+    message_constants.SUCCESS: "success alert-success",
+    message_constants.WARNING: "warning alert-warning",
+    message_constants.ERROR: "error alert-danger",
 }
 
 # django-countries
