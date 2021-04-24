@@ -1,7 +1,10 @@
 {% extends 'admin/change_form.html' %}
 
 {% block after_field_sets %}
+{% if "/add/" not in request.path %}
+{% comment %} Archive button should not show up when adding a new term or term option. {% endcomment %}
 <div class="submit-row">
     <input type="submit" value="Archive" class="default" name="_archive" onclick='return confirm("{{warning_message}}");'>
 </div>
+{% endif %}
 {% endblock %}

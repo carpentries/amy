@@ -69,11 +69,14 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
     objects = TermQuerySet.as_manager()
 
     @cached_property
-    def options(self):
+    def options(self) -> Iterable[TermOption]:
         # If you've already prefetched_active_options
         # Use that instead. Otherwise query for the options
         if hasattr(self, "active_options"):
             return self.active_options
+        return self._fetch_options()
+
+    def _fetch_options(self) -> Iterable[TermOption]:
         return TermOption.objects.active().filter(term=self)
 
     def archive(self) -> None:
@@ -89,6 +92,19 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
 
     def __str__(self) -> str:
         return self.slug
+
+    def clean(self) -> None:
+        is_required = self.required_type != self.OPTIONAL_REQUIRE_TYPE
+        has_yes_option = False
+        for option in self._fetch_options():
+            if option.option_type == option.AGREE:
+                has_yes_option = True
+        if is_required and self.archived_at is None and not has_yes_option:
+            raise ValidationError(
+                f"Required term {self} must have agree term option."
+                " Please add a term option separately,"
+                " and then change this term to required."
+            )
 
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
@@ -108,14 +124,46 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
         """
         Archive self and archive all Consent objects that have the
         term option as their answer.
+
         If the Term this term option is attached to is still active,
         the user will be notified to reconsent.
+
+        If the Term is required and the current term option is the only yes
+        option raise an error.
         """
+        self._check_is_only_agree_option_for_required_term()
         self.archived_at = timezone.now()
         self.save()
         Consent.objects.filter(term_option=self).active().update(
             archived_at=self.archived_at
         )
+
+    def _check_is_only_agree_option_for_required_term(self) -> None:
+        """
+        Helper method for self.archive()
+
+        If this term option is the only yes option for a required term,
+        do not allow the user to archive the term option.
+        """
+        if (
+            self.option_type == self.AGREE
+            and self.archived_at is None
+            and self.term.required_type != self.term.OPTIONAL_REQUIRE_TYPE
+            and self.term.archived_at is None
+        ):
+            num_agree_options = len(
+                [
+                    option
+                    for option in self.term._fetch_options()
+                    if option.option_type == self.AGREE
+                ]
+            )
+            if num_agree_options == 1:
+                raise ValidationError(
+                    f"Term option {self} is the only {self.AGREE} term option for"
+                    f" required term {self.term}. Please add an additional"
+                    f" {self.AGREE} option or archive the term instead."
+                )
 
 
 class Consent(CreatedUpdatedArchivedMixin, models.Model):

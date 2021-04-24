@@ -4,6 +4,7 @@ from urllib.parse import unquote
 
 from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
+from django.core.exceptions import ValidationError
 from django.http.response import HttpResponseRedirect
 import django_rq
 
@@ -12,7 +13,7 @@ from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from consents.models import Consent, Term, TermOption
 
-logger = logging.getLogger("amy.signals")  # TODO... why signals logger?
+logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 
@@ -67,15 +68,17 @@ class ArchiveActionMixin:
 
     @csrf_protect_m
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
-        obj = self.get_object(request, unquote(object_id))
         if request.method == "POST" and "_archive" in request.POST:
+            obj = self.get_object(request, unquote(object_id))
             self.archive_single(request, obj)
             return HttpResponseRedirect(request.get_full_path())
 
-        if extra_context is None:
-            extra_context = {"warning_message": self.warning_message(obj)}
-        else:
-            extra_context["warning_message"] = self.warning_message(obj)
+        if object_id is not None:
+            obj = self.get_object(request, unquote(object_id))
+            if extra_context is None:
+                extra_context = {"warning_message": self.warning_message(obj)}
+            else:
+                extra_context["warning_message"] = self.warning_message(obj)
 
         return admin.ModelAdmin.changeform_view(
             self,
@@ -93,7 +96,14 @@ class ArchiveActionMixin:
                 f"  {obj} is already archived.",
             )
         else:
-            obj.archive()
+            try:
+                obj.archive()
+            except ValidationError as error:
+                messages.error(
+                    request, f"Error: Could not archive {obj}.\n{str(error)}"
+                )
+            else:
+                messages.success(request, f"Success: Archived {obj}.")
 
     def has_delete_permission(self, *args, **kwargs):
         """Determines if the admin class can delete objects.
@@ -132,6 +142,11 @@ class TermOptionInline(admin.TabularInline):
     def is_archived(self, object):
         return object.archived_at is not None
 
+    def has_delete_permission(self, *args, **kwargs):
+        """Determines if the admin class can delete objects.
+        See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission"""  # noqa
+        return False
+
 
 class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
     list_display = ("slug", "content", "required_type", "archived_at")
@@ -139,6 +154,7 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
         TermOptionInline,
     ]
     actions = ["email_users_missing_consent", "email_users_to_reconsent"]
+    readonly_fields = ("rq_jobs", "archived_at")
 
     def email_users_missing_consent(self, request, queryset):
         if not self.check_terms_for_consent_email(request, queryset):
@@ -167,6 +183,25 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
         message = super().warning_message(obj)
         return f"{message} and all associated term options and user consents."
 
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super().get_form(request, obj=None, change=False, **kwargs)
+        if not change:
+            form.base_fields["required_type"].choices = [("optional", "Optional")]
+            form.base_fields["required_type"].help_text = (
+                "If you'd like to set the term to required, you must first create it"
+                " as optional, and then set as required."
+            )
+        elif request.method == "GET":
+            warning_message = (
+                "Warning: Changing this term to required will force all users"
+                " (including admins)"
+                " to consent to this term IMMEDIATELY before using the site."
+            )
+            if obj.required_type == Term.OPTIONAL_REQUIRE_TYPE:
+                messages.warning(request, warning_message)
+            form.base_fields["required_type"].help_text = warning_message
+        return form
+
 
 class ConsentAdmin(admin.ModelAdmin):
     list_display = (
@@ -188,6 +223,12 @@ class ConsentAdmin(admin.ModelAdmin):
         # Note this class does not inherit from ArchiveActionMixin purposefully.
         # Individual user consents should not be archived or deleted
         # from the admin view.
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
     get_term_option_type.short_description = "Term Option Type"
