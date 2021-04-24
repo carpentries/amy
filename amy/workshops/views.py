@@ -11,9 +11,9 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
-    LoginRequiredMixin
 )
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
