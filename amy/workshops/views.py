@@ -10,7 +10,11 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
-from django.contrib.auth.mixins import PermissionRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
@@ -644,6 +648,33 @@ class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     permission_required = "workshops.delete_person"
     success_url = reverse_lazy("all_persons")
     pk_url_kwarg = "person_id"
+
+
+class PersonArchive(PermissionRequiredMixin, LoginRequiredMixin, AMYDeleteView):
+    model = Person
+    permission_required = "workshops.delete_person"
+    pk_url_kwarg = "person_id"
+    success_message = "{} was archived successfully."
+
+    def perform_destroy(self, *args, **kwargs):
+        self.object.archive()
+
+    def get_success_url(self) -> str:
+        """
+        If the user archived their own profile,
+        send them to the login page.
+
+        Otherwise send the user back to the page they're currently on.
+        """
+        if self.request.user.pk == self.object.pk:
+            return reverse("login")
+        return self.object.get_absolute_url()
+
+    def has_permission(self):
+        """If the user is archiving their own profile, the user has permission."""
+        user_id_being_archived = self.kwargs.get(self.pk_url_kwarg)
+        user_archiving_own_profile = self.request.user.pk == user_id_being_archived
+        return super(PersonArchive, self).has_permission() or user_archiving_own_profile
 
 
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):

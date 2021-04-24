@@ -140,10 +140,17 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
     {% endwith %}
   </table>
 
-  <p>
+  <div class="edit-object">
     <a href="{% url 'autoupdate_profile' %}" class="btn btn-primary">Update your profile</a>
-    <a href="{% url 'api:export-person-data' %}?format=json" class="btn btn-secondary float-right">Download your data</a>
-  </p>
+    <a href="{% url 'api:export-person-data' %}?format=json" class="btn btn-secondary">Download your data</a>
+    <form action="{% url 'person_archive' person_id=user.id  %}" method="POST" class="btn-group float-right">
+      <input type="submit"
+             value="Archive your Profile"
+             class="btn btn-primary btn-danger"
+             onclick="return confirm(&quot;Are you sure you want to archive your profile? All personaly identifiable information will be PERMANENTLY DELETED and the you will no longer be able to log in.&quot;);" />
+      {% csrf_token %}
+    </form>
+  </div>
 
 </div>
 

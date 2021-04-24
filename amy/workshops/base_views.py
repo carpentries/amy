@@ -145,7 +145,7 @@ class AMYDeleteView(DeleteView):
         success_url = self.get_success_url()
         try:
             self.before_delete()
-            self.object.delete()
+            self.perform_destroy()
             self.after_delete()
             messages.success(self.request, self.success_message.format(object_str))
             return HttpResponseRedirect(success_url)
@@ -154,6 +154,9 @@ class AMYDeleteView(DeleteView):
 
     def get(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request, *args, **kwargs)
+
+    def perform_destroy(self, *args, **kwargs):
+        self.object.delete()
 
 
 class AMYFormView(FormView):
