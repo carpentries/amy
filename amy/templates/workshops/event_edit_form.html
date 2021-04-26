@@ -77,7 +77,7 @@
   });
   $('select[name="task-person"]').on('change', function() {
     var person_id = $(this).val();
-    var url = `/api/v1/persons/${person_id}/trainingprogress/`;
+    var url = `/api/v1/persons/${person_id}/trainingprogress`;
     $.get(url, function (training_progresses) {   
       for (training of training_progresses){
         if (training.state === "Failed"){
