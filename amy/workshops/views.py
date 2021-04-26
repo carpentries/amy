@@ -2084,10 +2084,7 @@ class MockAwardCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        has_failed_trainings = TrainingProgress.objects.filter(
-            state="f", trainee=self.request.GET["person"]
-        ).exists()
-        kwargs.update({"prefix": "award", "failed_trainings": has_failed_trainings})
+        kwargs.update({"prefix": "award"})
         return kwargs
 
     def get_initial(self, **kwargs):

@@ -29,10 +29,10 @@ from api.serializers import (
     TrainingRequestForManualScoringSerializer,
     TrainingRequestWithPersonSerializer,
 )
-from autoemails.models import (
+from autoemails.models import EmailTemplate
+from workshops.models import (
     Airport,
     Award,
-    EmailTemplate,
     Event,
     Organization,
     Person,
