@@ -429,6 +429,8 @@ class EventForm(forms.ModelForm):
             "curricula",
             "lessons",
             "public_status",
+            "instructors_pre",
+            "instructors_post",
             "comment",
         ]
         widgets = {
@@ -473,6 +475,8 @@ class EventForm(forms.ModelForm):
             "reg_key",
             "manual_attendance",
             "contact",
+            "instructors_pre",
+            "instructors_post",
             Div(
                 Div(HTML("Location details"), css_class="card-header"),
                 Div(
