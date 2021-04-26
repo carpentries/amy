@@ -195,6 +195,7 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
             # this is brilliant: it applies OR to all search filters
             results = results.filter(reduce(operator.or_, filters))
+
         return results
 
 
