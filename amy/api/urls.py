@@ -33,9 +33,6 @@ urlpatterns = [
     path('training_requests/',
          views.TrainingRequests.as_view(),
          name='training-requests'),
-     path('training_requests/',
-         views.TrainingRequests.as_view(),
-         name='training-requests'),
 
     path('', include(router.urls)),
     path('', include(awards_router.urls)),
