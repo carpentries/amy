@@ -16,17 +16,6 @@ from api.renderers import (
     TrainingRequestCSVRenderer,
     TrainingRequestManualScoreCSVRenderer,
 )
-from autoemails.models import EmailTemplate
-from workshops.models import (
-    Airport,
-    Event,
-    Organization,
-    Task,
-    Award,
-    Person,
-    TrainingRequest,
-    TrainingProgress,
-)
 from api.serializers import (
     AirportSerializer,
     AwardSerializer,
@@ -36,25 +25,19 @@ from api.serializers import (
     PersonSerializer,
     PersonSerializerAllData,
     TaskSerializer,
+    TrainingProgressSerializer,
     TrainingRequestForManualScoringSerializer,
-    EmailTemplateSerializer,
-    TrainingProgressSerializer
-)
-
-from api.filters import (
-    EventFilter,
-    TaskFilter,
-    PersonFilter,
-    TrainingRequestFilterIDs,
+    TrainingRequestWithPersonSerializer,
 )
 from autoemails.models import (
-    EmailTemplate,
     Airport,
     Award,
+    EmailTemplate,
     Event,
     Organization,
     Person,
     Task,
+    TrainingProgress,
     TrainingRequest,
 )
 
