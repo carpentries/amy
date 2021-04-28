@@ -226,6 +226,33 @@ class TestTermModel(ConsentTestBase):
         # Unrelated consent should not be archived
         self.assertNotIn(consent3.pk, archived_consent_ids)
 
+    def test_clean(self):
+        """Ensure required terms have at least one yes term option"""
+        term = Term.objects.create(
+            slug="required-test-term",
+            content="term content",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
+        )
+        error_message = "Required term required-test-term must have agree term option."
+        with self.assertRaisesMessage(ValidationError, error_message):
+            term.clean()
+        # Adding a no term is not enough
+        TermOption.objects.create(
+            term=term,
+            option_type="decline",
+            content="no",
+        )
+        with self.assertRaisesMessage(ValidationError, error_message):
+            term.clean()
+        # Adding a yes term is enough
+        TermOption.objects.create(
+            term=term,
+            option_type="agree",
+            content="yes",
+        )
+        # no error is thrown
+        term.clean()
+
 
 class TestTermOptionModel(ConsentTestBase):
     def test_archive(self):
@@ -290,3 +317,38 @@ class TestTermOptionModel(ConsentTestBase):
         # Unrelated consent should not be archived
         self.assertNotIn(consent2.pk, archived_consent_ids)
         self.assertNotIn(consent3.pk, archived_consent_ids)
+
+    def test_cannot_archive_only_yes_option_for_required_term(self) -> None:
+        """Raise an error if trying to archive the only yes option in a required term"""
+        term = Term.objects.create(
+            slug="required-test-term",
+            content="term content",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
+        )
+        term_option = TermOption.objects.create(
+            term=term,
+            option_type="agree",
+            content="yes",
+        )
+        error_message = (
+            "Term option {term_option} is the only agree term option for required term"
+            " required-test-term."
+            " Please add an additional agree option or archive the term instead."
+        )
+        with self.assertRaisesMessage(
+            ValidationError, error_message.format(term_option=term_option)
+        ):
+            term_option.archive()
+        # Adding another yes term
+        new_yes_term = TermOption.objects.create(
+            term=term,
+            option_type="agree",
+            content="new yes",
+        )
+        # We can now archive original yes term
+        term_option.archive()
+        # cannot archive new yes term
+        with self.assertRaisesMessage(
+            ValidationError, error_message.format(term_option=new_yes_term)
+        ):
+            new_yes_term.archive()
