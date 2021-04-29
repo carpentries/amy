@@ -137,6 +137,41 @@ class TestPerson(TestBase):
         self.assertEqual(self.spiderman.award_set.count(), 1)
         self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
 
+    def test_person_failed_training_warning(self):
+        """
+        Ensure that the form warns the admin if the person
+        has a failed training, and an award or task is added
+        """
+        warning_popup = (
+            'return confirm("Warning: Trainee failed previous training(s).'
+            ' Are you sure you want to continue?");'
+        )
+        # No failed training, so no warning should show
+        url = reverse("person_edit", args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user="admin")
+        award_form = person_edit.forms[2]
+        task_form = person_edit.forms[3]
+        self.assertNotEqual(
+            award_form.fields["submit"][0].attrs.get("onclick"), warning_popup
+        )
+        self.assertNotEqual(
+            task_form.fields["submit"][0].attrs.get("onclick"), warning_popup
+        )
+
+        # Spiderman failed a training
+        training = TrainingRequirement.objects.get(name="Training")
+        TrainingProgress.objects.create(
+            trainee=self.spiderman, state="f", requirement=training, notes="Failed"
+        )
+
+        # A warning should be shown
+        url = reverse("person_edit", args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user="admin")
+        award_form = person_edit.forms[2]
+        task_form = person_edit.forms[3]
+        self.assertEqual(award_form.fields["submit"][0].attrs["onclick"], warning_popup)
+        self.assertEqual(task_form.fields["submit"][0].attrs["onclick"], warning_popup)
+
     def test_person_add_task(self):
         """Ensure that we can add a task from `person_edit` view"""
         self._setUpEvents()  # set up some events for us

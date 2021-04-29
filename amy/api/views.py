@@ -25,6 +25,7 @@ from api.serializers import (
     PersonSerializer,
     PersonSerializerAllData,
     TaskSerializer,
+    TrainingProgressSerializer,
     TrainingRequestForManualScoringSerializer,
     TrainingRequestWithPersonSerializer,
 )
@@ -36,6 +37,7 @@ from workshops.models import (
     Organization,
     Person,
     Task,
+    TrainingProgress,
     TrainingRequest,
 )
 
@@ -311,3 +313,25 @@ class EmailTemplateViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EmailTemplate.objects.all()
     serializer_class = EmailTemplateSerializer
     lookup_field = "slug"
+
+
+class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
+    """List training progresses belonging to specific person."""
+
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = TrainingProgressSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = TrainingProgress.objects.all()
+        if self._person_pk:
+            qs = qs.filter(trainee=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)

@@ -48,7 +48,7 @@ class TestTraineesView(TestBase):
         data = {
             "trainees": [self.spiderman.pk, self.ironman.pk],
             "requirement": self.discussion.pk,
-            "state": "f",
+            "state": "a",
             "submit": "",
         }
 
@@ -75,8 +75,8 @@ class TestTraineesView(TestBase):
         )
         expected = {
             (self.spiderman.pk, self.discussion.pk, "n", None),
-            (self.spiderman.pk, self.discussion.pk, "f", self.admin.pk),
-            (self.ironman.pk, self.discussion.pk, "f", self.admin.pk),
+            (self.spiderman.pk, self.discussion.pk, "a", self.admin.pk),
+            (self.ironman.pk, self.discussion.pk, "a", self.admin.pk),
         }
         self.assertEqual(got, expected)
 
@@ -279,6 +279,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                     evaluated_by=None,
                     requirement=self.discussion,
                     state="f",  # failed
+                    notes="Failed",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,

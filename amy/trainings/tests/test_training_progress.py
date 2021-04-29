@@ -96,6 +96,32 @@ class TestTrainingProgressValidation(TestBase):
             p1.full_clean()
         p2.full_clean()
 
+    def test_progress_with_failed_status_requires_notes(self):
+        """Failed state requires notes. Other states do not"""
+        failed_progress_no_notes = TrainingProgress.objects.create(
+            requirement=self.requirement,
+            trainee=self.admin,
+            evaluated_by=self.admin,
+            state="f",
+        )
+        failed_progess_with_notes = TrainingProgress.objects.create(
+            requirement=self.requirement,
+            trainee=self.admin,
+            evaluated_by=self.admin,
+            state="f",
+            notes="Notes about why trainee failed",
+        )
+        other_status_progress_no_notes = TrainingProgress.objects.create(
+            requirement=self.requirement,
+            trainee=self.admin,
+            evaluated_by=self.admin,
+            state="a",
+        )
+        failed_progess_with_notes.full_clean()
+        other_status_progress_no_notes.full_clean()
+        with self.assertRaises(ValidationError):
+            failed_progress_no_notes.full_clean()
+
     def test_evaluated_progress_may_have_mentor_or_examiner_associated(self):
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
@@ -129,6 +155,19 @@ class TestTrainingProgressValidation(TestBase):
         p2.full_clean()
 
     def test_form_invalid_if_trainee_has_no_training_task(self):
+        data = {
+            "requirement": self.requirement.pk,
+            "state": "p",
+            "evaluated_by": self.admin.pk,
+            "trainee": self.ironman.pk,
+        }
+        form = TrainingProgressForm(data)
+        self.assertEqual(form.is_valid(), False)
+        self.assertIn(
+            "not possible to add training progress", form.non_field_errors()[0]
+        )
+
+    def test_form_with_failed_status_requires_notes(self):
         data = {
             "requirement": self.requirement.pk,
             "state": "p",

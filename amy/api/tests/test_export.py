@@ -188,7 +188,7 @@ class TestExportingPersonData(BaseExportingTest):
         TrainingProgress.objects.create(
             trainee=self.user,
             requirement=TrainingRequirement.objects.get(name="DC Homework"),
-            state="f",  # failed
+            state="a",  # asked to repeat
             event=None,
             evaluated_by=self.admin,
             discarded=False,
@@ -480,7 +480,7 @@ class TestExportingPersonData(BaseExportingTest):
                     "url_required": True,
                     "event_required": False,
                 },
-                "state": "Failed",
+                "state": "Asked to repeat",
                 "discarded": False,
                 "evaluated_by": {
                     "name": "Super User",

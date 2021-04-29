@@ -2361,6 +2361,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         ("n", "Not evaluated yet"),
         ("f", "Failed"),
         ("p", "Passed"),
+        ("a", "Asked to repeat"),
     )
     state = models.CharField(choices=STATES, default="p", max_length=1)
 
@@ -2407,6 +2408,10 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                 self.requirement
             )
             raise ValidationError({"event": msg})
+
+        if self.state == "f" and not self.notes:
+            msg = "In the case of a Failed state, this field is required."
+            raise ValidationError({"notes": msg})
 
         super().clean()
 

@@ -265,10 +265,17 @@ class Command(BaseCommand):
         trainers = Person.objects.filter(award__badge__name="trainer")
         for r in TrainingRequirement.objects.all():
             if randbool(0.4):
+                notes = ""
                 if "Homework" in r.name and randbool(0.5):
                     state = "n"
                 else:
-                    state = "p" if randbool(0.95) else "f"
+                    if randbool(0.90):
+                        state = "p"
+                    elif randbool(0.50):
+                        state = "a"
+                    else:
+                        state = "f"
+                        notes = "Failed"
 
                 evaluated_by = None if state == "n" else choice(trainers)
                 event = training if r.name == "Training" else None
@@ -281,7 +288,7 @@ class Command(BaseCommand):
                     discarded=randbool(0.05),
                     event=event,
                     url=url,
-                    notes="",
+                    notes=notes,
                 )
 
     def fake_training_request(self, person_or_None):
