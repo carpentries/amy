@@ -280,11 +280,14 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["title"] = "Person {0}".format(self.object)
+        title = "Person {0}".format(self.object)
+        context["title"] = title
 
         is_usersocialauth_in_sync = len(self.object.github_usersocialauth) > 0
         context["is_usersocialauth_in_sync"] = is_usersocialauth_in_sync
 
+        if not self.object.is_active:
+            messages.info(self.request, f"{title} is not active.")
         return context
 
 
