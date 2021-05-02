@@ -1,9 +1,9 @@
 from django.db.models.signals import post_save
-from workshops.signals import person_archived_signal
 from django.dispatch import receiver
 
 from consents.models import Consent, Term
 from workshops.models import Person
+from workshops.signals import person_archived_signal
 
 
 @receiver(post_save, sender=Person)
