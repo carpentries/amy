@@ -1383,14 +1383,14 @@ class TestArchivePerson(TestBase):
             family="",
             email="user@example.org",
             password="pass",
-            data_privacy_agreement=True,
-            may_contact=True,
-            publish_profile=True,
-            is_active=True,
-            secondary_email="user@second_example.org",
-            gender=GenderMixin.OTHER,
-            other_gender="Agender",
         )
+        self.user.data_privacy_agreement = True
+        self.user.may_contact = True
+        self.user.publish_profile = True
+        self.user.is_active = True
+        self.user.secondary_email = "user@second_example.org"
+        self.user.gender = GenderMixin.OTHER
+        self.user.other_gender = "Agender"
         self.user.save()
         # folks don't have any tasks by default, so let's add one
         self.harry.task_set.create(event=self.event, role=self.role)
@@ -1459,7 +1459,7 @@ class TestArchivePerson(TestBase):
         Asserts that all personal data about the user has been removed.
         """
         self.assertIsNone(archived_profile.email)
-        self.assertIsNone(archived_profile.secondary_email)
+        self.assertEqual(archived_profile.secondary_email, "")
         self.assertEqual(archived_profile.country, "")
         self.assertIsNone(archived_profile.airport)
         self.assertIsNone(archived_profile.github)
