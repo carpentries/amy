@@ -1569,3 +1569,35 @@ class TestArchivePerson(TestBase):
         archived_profile = Person.objects.get(pk=person.pk)
         versions_after_archive = Version.objects.get_for_object(archived_profile)
         self.assertEqual(len(versions_after_archive), 1)
+    
+    def test_permissions_removed_when_archived(self):
+        # add permissions to the admin user
+        groups = Group.objects.all()
+        permissions = Permission.objects.filter(content_type__app_label="admin")
+        assert groups
+        assert permissions
+        self.admin.groups.set(groups)
+        self.admin.user_permissions.set(permissions)
+        self.admin.save()
+
+        # Login as the non-admin user and try to archive
+        assert not self.user.is_superuser
+        self.assertTrue(self.client.login(username=self.user.username, password="pass"))
+        self.assert_cannot_archive(self.admin)
+
+        # No permissions should be changed
+        self.assertCountEqual(self.admin.groups.all(), groups)
+        self.assertCountEqual(self.admin.user_permissions.all(), permissions)
+
+        # Login as Admin and archive
+        assert self.admin.is_superuser
+        self.assertTrue(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+        self.assert_person_archive(self.admin)
+        self.admin.refresh_from_db()
+
+        # Permissions are unset
+        self.assertEqual(len(self.admin.user_permissions.all()), 0)
+        self.assertEqual(len(self.admin.groups.all()), 0)
+        self.assertFalse(self.admin.is_superuser)
