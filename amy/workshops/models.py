@@ -26,6 +26,7 @@ from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
+from reversion.models import Version
 from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
@@ -45,7 +46,6 @@ from workshops.mixins import (
     StateMixin,
 )
 from workshops.signals import person_archived_signal
-
 
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings
@@ -977,6 +977,7 @@ class Person(
         When archiving all personal information associated with the user profile
         should be deleted except for first name, last name and their teaching history.
         """
+        # Remove personal information from an archived profile
         self.email = None
         self.country = ""
         self.airport = None
@@ -989,6 +990,12 @@ class Person(
         self.occupation = ""
         self.orcid = ""
         self.save()
+
+        # This deletes all pre-existing Versions of the object.
+        versions = Version.objects.get_for_object(self)
+        versions.delete()
+
+        # Send a signal that the profile has been archived
         person_archived_signal.send(
             sender=self.__class__,
             person=self,
