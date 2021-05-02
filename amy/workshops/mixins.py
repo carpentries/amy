@@ -36,6 +36,15 @@ class CreatedUpdatedMixin(models.Model):
         abstract = True
 
 
+class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
+    """This mixin adds an archived timestamp to the CreatedUpdatedMixin."""
+
+    archived_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+
 class DataPrivacyAgreementMixin(models.Model):
     """This mixin provides a data privacy agreement. Instead of being in the
     forms only (as a additional and required input), we're switching to having

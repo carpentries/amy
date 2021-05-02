@@ -1445,6 +1445,9 @@ class TestArchivePerson(TestBase):
         archived_profile = Person.objects.get(pk=person.pk)
         self._assert_personal_info_removed(archived_profile)
 
+        # Archived_at timestamp should be set
+        self.assertIsNotNone(archived_profile.archived_at)
+
         # First name, last name, Awards, tasks, and qualifications should be unchanged
         self.assertEqual(archived_profile.personal, person.personal)
         self.assertEqual(archived_profile.family, person.family)
