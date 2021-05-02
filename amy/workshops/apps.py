@@ -31,7 +31,6 @@ class WorkshopsConfig(AppConfig):
     name = "workshops"
     label = "workshops"
     verbose_name = "Workshops"
-    has_run = False
 
     def ready(self):
         # connect m2m_changed signal for TrainingRequest.domains to calculate
