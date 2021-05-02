@@ -44,6 +44,8 @@ from workshops.mixins import (
     SecondaryEmailMixin,
     StateMixin,
 )
+from workshops.signals import person_archived_signal
+
 
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings
@@ -987,6 +989,10 @@ class Person(
         self.occupation = ""
         self.orcid = ""
         self.save()
+        person_archived_signal.send(
+            sender=self.__class__,
+            person=self,
+        )
 
 
 # ------------------------------------------------------------

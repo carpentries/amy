@@ -46,3 +46,4 @@ class WorkshopsConfig(AppConfig):
             trainingrequest_m2m_changed,
             sender=TrainingRequest.previous_involvement.through,
         )
+        from workshops import receivers  # noqa

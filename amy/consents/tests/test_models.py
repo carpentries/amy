@@ -158,6 +158,51 @@ class TestConsentModel(ConsentTestBase):
             self.assertCountEqual(term1.options, [term1_option1, term1_option2])
             self.assertCountEqual(term2.options, [term2_option1, term2_option2])
 
+    def test_archive_all_for_person(self) -> None:
+        """
+        Archive all should archive the given consents
+        then bulk create new unset consents.
+        """
+        terms = Term.objects.active()
+        self.assertNotEqual(len(terms), 0)
+        person1 = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+        person2 = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="rweasley",
+        )
+        # both people consent to all terms
+        self.person_consent_active_terms(person1)
+        self.person_consent_active_terms(person2)
+        active_consents = Consent.objects.active()
+        self.assertEqual(
+            len(active_consents.filter(person=person1, term_option__isnull=False)),
+            len(terms),
+        )
+        self.assertEqual(
+            len(active_consents.filter(person=person2, term_option__isnull=False)),
+            len(terms),
+        )
+
+        Consent.archive_all_for_person(person1)
+        active_consents = Consent.objects.active()
+        # All consents for person1 is archived. And a new unset consent is active
+        self.assertEqual(
+            len(active_consents.filter(person=person1, term_option__isnull=False)), 0
+        )
+        self.assertEqual(
+            len(active_consents.filter(person=person1, term_option__isnull=True)),
+            len(terms),
+        )
+        # person2 consents remain unchanged
+        self.assertEqual(
+            len(active_consents.filter(person=person2, term_option__isnull=False)),
+            len(terms),
+        )
+
 
 class TestTermModel(ConsentTestBase):
     def test_archive(self):

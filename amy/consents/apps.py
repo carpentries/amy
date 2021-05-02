@@ -8,4 +8,4 @@ class ConsentsConfig(AppConfig):
 
     def ready(self):
         super().ready()
-        from consents import signals  # noqa
+        from consents import receivers  # noqa

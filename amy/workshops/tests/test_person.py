@@ -13,6 +13,7 @@ from django_comments.models import Comment
 from social_django.models import UserSocialAuth
 import webtest
 from webtest.forms import Upload
+from consents.models import Consent, Term
 
 from workshops.filters import filter_taught_workshops
 from workshops.forms import PersonForm, PersonsMergeForm
@@ -1390,11 +1391,19 @@ class TestArchivePerson(TestBase):
         self.hermione.task_set.create(event=self.event, role=self.role)
         self.admin.task_set.create(event=self.event, role=self.role)
 
+        # Consent to active terms
+        self.person_consent_active_terms(self.harry)
+        self.person_consent_active_terms(self.ron)
+        self.person_consent_active_terms(self.hermione)
+        self.person_consent_active_terms(self.admin)
+        self.active_terms = Term.objects.active()
+
     def assert_cannot_archive(self, person: Person) -> None:
         awards = person.award_set.all()
         qualifications = person.qualification_set.all()
         tasks = person.task_set.all()
         domains = person.domains.all()
+        consents = Consent.objects.filter(person=person).active()
 
         rv = self.client.post(reverse("person_archive", args=[person.pk]))
         self.assertNotEqual(rv.status_code, 302)
@@ -1407,6 +1416,9 @@ class TestArchivePerson(TestBase):
         self.assertCountEqual(tasks, archived_profile.task_set.all())
         self.assertCountEqual(qualifications, archived_profile.qualification_set.all())
         self.assertCountEqual(domains, archived_profile.domains.all())
+        self.assertCountEqual(
+            consents, Consent.objects.filter(person=archived_profile).active()
+        )
 
     def assert_person_archive(self, person: Person) -> None:
         """
@@ -1450,6 +1462,10 @@ class TestArchivePerson(TestBase):
         self.assertFalse(archived_profile.is_active)
         self.assertEqual(archived_profile.occupation, "")
         self.assertEqual(archived_profile.orcid, "")
+        # All Consents should be unset
+        consents = Consent.objects.filter(person=archived_profile).active()
+        self.assertEqual(len(self.active_terms), len(consents))
+        self.assertFalse(consents.filter(term_option__isnull=False).exists())
 
     def test_archive_by_super_user(self):
         """
