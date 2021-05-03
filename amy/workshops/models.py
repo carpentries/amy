@@ -1016,6 +1016,8 @@ class Person(
         self.groups.clear()
         self.user_permissions.clear()
         self.archived_at = timezone.now()
+        # Disconnect all social auth
+        self.social_auth.all().delete()
         self.save()
 
         # This deletes all pre-existing Versions of the object.

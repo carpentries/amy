@@ -1393,7 +1393,18 @@ class TestArchivePerson(TestBase):
         self.user.secondary_email = "user@second_example.org"
         self.user.gender = GenderMixin.OTHER
         self.user.other_gender = "Agender"
+        self.user.github = "user-github"
+        self.user.is_active = True
         self.user.save()
+        self.user.synchronize_usersocialauth()
+        assert self.user.social_auth.all()
+
+        # Add social auth to admin
+        self.admin.github = "admin-github"
+        self.admin.is_active = True
+        self.admin.synchronize_usersocialauth()
+        assert self.admin.social_auth.all()
+
         # folks don't have any tasks by default, so let's add one
         self.harry.task_set.create(event=self.event, role=self.role)
         self.ron.task_set.create(event=self.event, role=self.role)
@@ -1413,6 +1424,7 @@ class TestArchivePerson(TestBase):
         tasks = person.task_set.all()
         domains = person.domains.all()
         consents = Consent.objects.filter(person=person).active()
+        social_auth = person.social_auth.all()
 
         rv = self.client.post(reverse("person_archive", args=[person.pk]))
         self.assertNotEqual(rv.status_code, 302)
@@ -1428,6 +1440,8 @@ class TestArchivePerson(TestBase):
         self.assertCountEqual(
             consents, Consent.objects.filter(person=archived_profile).active()
         )
+        # social auth should be unchanged
+        self.assertCountEqual(social_auth, archived_profile.social_auth.all())
 
     def assert_person_archive(self, person: Person) -> None:
         """
@@ -1487,6 +1501,8 @@ class TestArchivePerson(TestBase):
         consents = Consent.objects.filter(person=archived_profile).active()
         self.assertEqual(len(self.active_terms), len(consents))
         self.assertFalse(consents.filter(term_option__isnull=False).exists())
+        # social auth should be removed
+        self.assertEqual(len(archived_profile.social_auth.all()), 0)
 
     def test_archive_by_super_user(self):
         """
