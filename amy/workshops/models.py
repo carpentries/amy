@@ -42,10 +42,10 @@ from workshops.mixins import (
     HostResponsibilitiesMixin,
     InstructorAvailabilityMixin,
     SecondaryEmailMixin,
+    StateExtendedMixin,
     StateMixin,
 )
 from workshops.signals import person_archived_signal
-
 
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings
@@ -1843,7 +1843,7 @@ class TrainingRequest(
     CreatedUpdatedMixin,
     DataPrivacyAgreementMixin,
     COCAgreementMixin,
-    StateMixin,
+    StateExtendedMixin,
     SecondaryEmailMixin,
     models.Model,
 ):
