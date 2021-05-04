@@ -10,6 +10,8 @@ from django.contrib.sites.models import Site
 from django.core.validators import ValidationError
 from django.urls import reverse
 from django_comments.models import Comment
+from reversion.models import Version
+from reversion.revisions import create_revision
 from social_django.models import UserSocialAuth
 import webtest
 from webtest.forms import Upload
@@ -1528,3 +1530,42 @@ class TestArchivePerson(TestBase):
         self.assertFalse(
             self.client.login(username=self.user.username, password="pass")
         )
+
+    def test_version_history_removed_when_archived(self) -> None:
+        # Create the person and change their information a few times.
+        with create_revision():
+            person = Person.objects.create(
+                personal="Draco",
+                family="Malfoy",
+                username="dmalfoy",
+                email="draco@malfoy.com",
+            )
+        with create_revision():
+            person.twitter = "dmalfoy"
+            person.save()
+        with create_revision():
+            person.github = "dmalfoy"
+            person.save()
+
+        # get the current profile change history
+        original_versions = Version.objects.get_for_object(person)
+        self.assertEqual(len(original_versions), 3)
+
+        # Login as a normal user (non-admin)
+        # This user should not be able to archive anyone else's profile
+        # Profile edit history should be unchanged
+        assert not self.user.is_superuser
+        self.assertTrue(self.client.login(username=self.user.username, password="pass"))
+        self.assert_cannot_archive(person)
+        self.assertCountEqual(original_versions, Version.objects.get_for_object(person))
+
+        # Login as the admin user and archive the profile
+        # All profile change history after archival
+        # should be removed but the current one
+        self.assertTrue(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+        self.assert_person_archive(person)
+        archived_profile = Person.objects.get(pk=person.pk)
+        versions_after_archive = Version.objects.get_for_object(archived_profile)
+        self.assertEqual(len(versions_after_archive), 1)
