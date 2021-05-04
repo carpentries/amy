@@ -46,7 +46,6 @@ from workshops.mixins import (
 )
 from workshops.signals import person_archived_signal
 
-
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings
 STR_LONG = 100  # length of long strings
@@ -988,6 +987,13 @@ class Person(
         self.is_active = False
         self.occupation = ""
         self.orcid = ""
+        self.secondary_email = ""
+        self.gender = GenderMixin.UNDISCLOSED
+        self.gender_other = ""
+        # TODO(lb): Remove references to agreements when Consents project is launched
+        self.data_privacy_agreement = False
+        self.may_contact = False
+        self.publish_profile = False
         self.save()
         person_archived_signal.send(
             sender=self.__class__,

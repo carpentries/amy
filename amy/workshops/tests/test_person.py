@@ -13,10 +13,11 @@ from django_comments.models import Comment
 from social_django.models import UserSocialAuth
 import webtest
 from webtest.forms import Upload
-from consents.models import Consent, Term
 
+from consents.models import Consent, Term
 from workshops.filters import filter_taught_workshops
 from workshops.forms import PersonForm, PersonsMergeForm
+from workshops.mixins import GenderMixin
 from workshops.models import (
     Award,
     Badge,
@@ -1384,6 +1385,12 @@ class TestArchivePerson(TestBase):
             password="pass",
         )
         self.user.data_privacy_agreement = True
+        self.user.may_contact = True
+        self.user.publish_profile = True
+        self.user.is_active = True
+        self.user.secondary_email = "user@second_example.org"
+        self.user.gender = GenderMixin.OTHER
+        self.user.other_gender = "Agender"
         self.user.save()
         # folks don't have any tasks by default, so let's add one
         self.harry.task_set.create(event=self.event, role=self.role)
@@ -1452,6 +1459,7 @@ class TestArchivePerson(TestBase):
         Asserts that all personal data about the user has been removed.
         """
         self.assertIsNone(archived_profile.email)
+        self.assertEqual(archived_profile.secondary_email, "")
         self.assertEqual(archived_profile.country, "")
         self.assertIsNone(archived_profile.airport)
         self.assertIsNone(archived_profile.github)
@@ -1462,6 +1470,14 @@ class TestArchivePerson(TestBase):
         self.assertFalse(archived_profile.is_active)
         self.assertEqual(archived_profile.occupation, "")
         self.assertEqual(archived_profile.orcid, "")
+        self.assertEqual(archived_profile.gender, GenderMixin.UNDISCLOSED)
+        self.assertEqual(archived_profile.gender_other, "")
+
+        # Old-style consents should be unset
+        self.assertFalse(archived_profile.data_privacy_agreement)
+        self.assertFalse(archived_profile.may_contact)
+        self.assertFalse(archived_profile.publish_profile)
+
         # All Consents should be unset
         consents = Consent.objects.filter(person=archived_profile).active()
         self.assertEqual(len(self.active_terms), len(consents))
