@@ -996,6 +996,10 @@ class Person(
         self.data_privacy_agreement = False
         self.may_contact = False
         self.publish_profile = False
+        # Remove permissions
+        self.is_superuser = False
+        self.groups.clear()
+        self.user_permissions.clear()
         self.save()
 
         # This deletes all pre-existing Versions of the object.
