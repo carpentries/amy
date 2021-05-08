@@ -43,6 +43,7 @@ from workshops.mixins import (
     HostResponsibilitiesMixin,
     InstructorAvailabilityMixin,
     SecondaryEmailMixin,
+    StateExtendedMixin,
     StateMixin,
 )
 from workshops.signals import person_archived_signal
@@ -1861,7 +1862,7 @@ class TrainingRequest(
     CreatedUpdatedMixin,
     DataPrivacyAgreementMixin,
     COCAgreementMixin,
-    StateMixin,
+    StateExtendedMixin,
     SecondaryEmailMixin,
     models.Model,
 ):

@@ -149,6 +149,27 @@ class StateMixin(models.Model):
         return self.state == "p"
 
 
+class StateExtendedMixin(models.Model):
+    """State field with representation of 'Withdrawn' state, for now only used in
+    TrainingRequest.
+
+    This was rewritten instead of inherited from `StateMixin` - there were some
+    issues with `get_state_display` method for "withdrawn" state."""
+
+    STATE_CHOICES = StateMixin.STATE_CHOICES + (("w", "Withdrawn"),)
+
+    state = models.CharField(
+        max_length=1, choices=STATE_CHOICES, null=False, blank=False, default="p"
+    )
+
+    class Meta:
+        abstract = True
+
+    @property
+    def active(self):
+        return self.state == "p"
+
+
 class GenderMixin(models.Model):
     """Gender mixin for including gender fields in various models."""
 
