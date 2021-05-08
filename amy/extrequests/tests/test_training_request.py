@@ -325,6 +325,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
+            "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
@@ -383,6 +384,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.second_req.pk],
+            "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 

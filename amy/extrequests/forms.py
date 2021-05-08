@@ -118,11 +118,13 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="membership-lookup"),
     )
 
-    seat_public = forms.BooleanField(
-        label=Task._meta.get_field("seat_public").verbose_name,
-        required=False,
+    seat_public = forms.TypedChoiceField(
+        coerce=bool,
+        choices=Task.SEAT_PUBLIC_CHOICES,
         initial=Task._meta.get_field("seat_public").default,
-        widget=forms.RadioSelect(choices=Task.SEAT_PUBLIC_CHOICES),
+        required=False,
+        label=Task._meta.get_field("seat_public").verbose_name,
+        widget=forms.RadioSelect(),
     )
 
     seat_open_training = forms.BooleanField(
