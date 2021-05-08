@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='membership',
             name='public_status',
-            field=models.CharField(choices=[('public', 'Public'), ('private', 'Private')], default='public', max_length=20,
+            field=models.CharField(choices=[('public', 'Public'), ('private', 'Private')], default='private', max_length=20,
                                    verbose_name="Can this membership be publicized on The carpentries websites?",
                                    help_text="Public memberships may be listed on any of The Carpentries websites."
             ),

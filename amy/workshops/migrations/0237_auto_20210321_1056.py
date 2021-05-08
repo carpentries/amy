@@ -82,9 +82,4 @@ class Migration(migrations.Migration):
             model_name='membership',
             name='self_organized_workshops_rolled_over',
         ),
-        migrations.AlterField(
-            model_name='membership',
-            name='public_status',
-            field=models.CharField(choices=[('public', 'Public'), ('private', 'Private')], default='private', help_text='Public memberships may be listed on any of The Carpentries websites.', max_length=20, verbose_name='Can this membership be publicized on The carpentries websites?'),
-        ),
     ]
