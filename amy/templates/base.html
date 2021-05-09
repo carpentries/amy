@@ -1,4 +1,3 @@
-{% load compress %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -6,7 +5,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-    {% compress css %}
     <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
     <link rel="stylesheet" href="{% static 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.css' %}" />
     <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.css' %}" />
@@ -14,10 +12,8 @@
     <link rel="stylesheet" href="{% static 'select2/dist/css/select2.css' %}" />
     <link rel="stylesheet" href="{% static '@ttskch/select2-bootstrap4-theme/dist/select2-bootstrap4.css' %}" />
     <link rel="stylesheet" href="{% static 'css/amy.css' %}" />
-    {% endcompress %}
     {% block extrastyle %}{% endblock extrastyle %}
 
-    {% compress js %}
     <script src="{% static 'jquery/dist/jquery.js' %}"></script>
     <script src="{% static 'popper.js/dist/umd/popper.js' %}"></script>
     <script src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
@@ -30,7 +26,6 @@
     <script src="{% static '@github/time-elements/dist/time-elements-legacy.js' %}"></script>
     <script src="{% static 'calendar_popup.js' %}"></script>
     <script src="{% static 'amy_utils.js' %}"></script>
-    {% endcompress %}
 
     <title>AMY{% if title %}: {{ title }}{% endif %}</title>
   </head>

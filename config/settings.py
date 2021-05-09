@@ -6,7 +6,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 import environ
 
-
 ROOT_DIR = environ.Path(__file__) - 2  # (amy/config/settings.py - 2 = amy/)
 BASE_DIR = ROOT_DIR()
 APPS_DIR = ROOT_DIR.path("amy")
@@ -94,6 +93,9 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
+    # for whitenoise during development:
+    # http://whitenoise.evans.io/en/stable/django.html#using-whitenoise-in-development
+    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     # Handy template tags
     "django.contrib.humanize",
@@ -111,7 +113,6 @@ THIRD_PARTY_APPS = [
     "reversion_compare",
     "rest_framework",
     "captcha",
-    "compressor",
     "social_django",
     "debug_toolbar",
     "django_extensions",
@@ -236,12 +237,6 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     },
-    "compressor": {
-        # TODO: in future, either switch to offline compression or
-        #       install Memcached
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        # 'LOCATION': 'templates-media',  # required if >1 LocMemCache used
-    },
 }
 
 # MIDDLEWARE
@@ -249,9 +244,10 @@ CACHES = {
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 CONSENTS = env.bool("CONSENTS", False)
 MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
-    "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -280,31 +276,8 @@ STATICFILES_DIRS = [
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "compressor.finders.CompressorFinder",
 ]
-
-# DJANGO-COMPRESSOR
-# -----------------------------------------------------------------------------
-# https://django-compressor.readthedocs.io/en/stable/settings/
-COMPRESS_ENABLED = not CONTINUOUS_INTEGRATION
-
-COMPRESS_FILTERS = {
-    "css": [
-        "compressor.filters.css_default.CssAbsoluteFilter",
-        "compressor.filters.cssmin.rCSSMinFilter",
-    ],
-    "js": [
-        "compressor.filters.jsmin.JSMinFilter",
-    ],
-}
-
-# DB-backend cache is very slow when we're using SQLite. Therefore it is
-# advised to use a different cache, like MemCached. By default, AMY sets
-# LocMemCache for Django-Compressor. It has some drawbacks, biggest one
-# this cache being available only for one process. Therefore, for more
-# processes Django-Compressor will start regenerating the cache.
-# TODO: switch to Redis / Memcached once they're in place.
-COMPRESS_CACHE_BACKEND = "compressor"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # MEDIA
 # -----------------------------------------------------------------------------
