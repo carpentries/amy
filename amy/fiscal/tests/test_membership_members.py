@@ -1,8 +1,25 @@
+from django.db import IntegrityError
 from django.urls import reverse
 
 from fiscal.forms import MemberForm
 from workshops.models import Member, MemberRole, Membership
 from workshops.tests.base import TestBase
+
+
+class MembershipTestMixin:
+    def setUpMembership(self, consortium: bool):
+        self.membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=consortium,
+            public_status="public",
+            variant="partner",
+            agreement_start="2021-02-14",
+            agreement_end="2022-02-14",
+            contribution_type="financial",
+            public_instructor_training_seats=0,
+            additional_public_instructor_training_seats=0,
+        )
+        self.member_role = MemberRole.objects.first()
 
 
 class TestMemberFormLayout(TestBase):
@@ -25,24 +42,10 @@ class TestMemberFormLayout(TestBase):
         self.assertEqual(form.helper_empty_form.layout[3].fields, ["DELETE"])
 
 
-class TestMembershipMembers(TestBase):
+class TestMembershipMembers(MembershipTestMixin, TestBase):
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
-
-    def setUpMembership(self, consortium: bool):
-        self.membership = Membership.objects.create(
-            name="Test Membership",
-            consortium=consortium,
-            public_status="public",
-            variant="partner",
-            agreement_start="2021-02-14",
-            agreement_end="2022-02-14",
-            contribution_type="financial",
-            public_instructor_training_seats=0,
-            additional_public_instructor_training_seats=0,
-        )
-        self.member_role = MemberRole.objects.first()
 
     def test_adding_new_member_to_nonconsortium(self):
         """Ensure only 1 member can be added to non-consortium membership."""
@@ -294,3 +297,55 @@ class TestMembershipMembers(TestBase):
             response, reverse("membership_details", args=[self.membership.pk])
         )
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
+
+
+class TestMemberUnique(MembershipTestMixin, TestBase):
+    def test_duplicate_members_with_the_same_role_fail(self):
+        """Duplicate Member & Role should fail for given membership."""
+        # Arrange
+        self.setUpMembership(consortium=True)
+        member1 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        member2 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        # Act
+        member1.save()
+
+        # Assert
+        with self.assertRaises(IntegrityError):
+            member2.save()
+
+    def test_distinct_members_for_the_same_membership(self):
+        """Distinct Member & Role should work for given membership."""
+        # Arrange
+        self.setUpMembership(consortium=True)
+        member1 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        member2 = Member(
+            organization=self.org_beta,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        member3 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=MemberRole.objects.last(),
+        )
+
+        # Act & Assert
+        member1.save()
+        member2.save()
+        member3.save()

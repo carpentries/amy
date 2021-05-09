@@ -114,6 +114,14 @@ class Member(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
     role = models.ForeignKey(MemberRole, on_delete=models.PROTECT)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["membership", "organization", "role"],
+                name="unique_member_role_in_membership",
+            )
+        ]
+
 
 @reversion.register
 class Membership(models.Model):
