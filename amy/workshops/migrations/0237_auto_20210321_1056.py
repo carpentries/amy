@@ -82,4 +82,17 @@ class Migration(migrations.Migration):
             model_name='membership',
             name='self_organized_workshops_rolled_over',
         ),
+
+        # The following migration is a no-op as a result of
+        # https://github.com/carpentries/amy/pull/1949
+        # Previously 0228 introduced `public_status` field with default value of `public`,
+        # and this migration changed the default value to `private`. This is however
+        # incorrect as the existing memberships need to be migrated with default value
+        # of `private` first, thus 0228 was amended to have default value as `private`,
+        # and this migration became no-op.
+        # migrations.AlterField(
+        #     model_name='membership',
+        #     name='public_status',
+        #     field=models.CharField(choices=[('public', 'Public'), ('private', 'Private')], default='private', help_text='Public memberships may be listed on any of The Carpentries websites.', max_length=20, verbose_name='Can this membership be publicized on The carpentries websites?'),
+        # ),
     ]
