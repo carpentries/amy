@@ -105,3 +105,15 @@ class TestOrganization(TestBase):
         comment = Comment.objects.first()
         self.assertEqual(comment.comment, "This is a test comment.")
         self.assertIn(comment, Comment.objects.for_model(obj))
+
+    def test_symmetrical_affiliations(self):
+        """Make sure adding an affiliation in one organisation, automatically reveals
+        this relationship in the other organisation."""
+        # Arrange - `setUp()` creates 2 organisations we can use
+
+        # Act
+        self.org_alpha.affiliated_organizations.add(self.org_beta)
+
+        # Assert
+        self.assertIn(self.org_beta, self.org_alpha.affiliated_organizations.all())
+        self.assertIn(self.org_alpha, self.org_beta.affiliated_organizations.all())
