@@ -843,7 +843,6 @@ class TestMembershipExtension(TestBase):
             variant="partner",
             agreement_start="2020-03-01",
             agreement_end="2021-03-01",
-            extended=None,
             contribution_type="financial",
             public_instructor_training_seats=0,
             additional_public_instructor_training_seats=0,
@@ -865,7 +864,7 @@ class TestMembershipExtension(TestBase):
             response, reverse("membership_details", args=[membership.pk])
         )
         membership.refresh_from_db()
-        self.assertEqual(membership.extended, 30)
+        self.assertEqual(membership.extensions, [30])
         self.assertEqual(membership.agreement_end, date(2021, 3, 31))
 
 
@@ -896,7 +895,6 @@ class TestMembershipCreateRollOver(TestBase):
             variant="partner",
             agreement_start="2020-03-01",
             agreement_end="2021-03-01",
-            extended=None,
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             public_instructor_training_seats=12,

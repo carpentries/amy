@@ -7,6 +7,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models, transaction
@@ -148,11 +149,12 @@ class Membership(models.Model):
         help_text="If an extension is being granted, do not manually edit the end date."
         ' Use the "Extend" button on membership details page instead.'
     )
-    extended = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Number of days the agreement was extended with. If this value was"
-        " provided, then the agreement end has been moved.",
+    extensions = ArrayField(
+        models.PositiveIntegerField(),
+        help_text="Number of days the agreement was extended with. The field stores "
+        "multiple extensions. The agreement end date has been moved by a cumulative "
+        "number of days from this field.",
+        default=list,
     )
     CONTRIBUTION_CHOICES = (
         ("financial", "Financial"),

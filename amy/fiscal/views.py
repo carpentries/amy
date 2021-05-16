@@ -174,6 +174,7 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "{0}".format(self.object)
+        context["membership_extensions_sum"] = sum(self.object.extensions)
         return context
 
 
@@ -320,7 +321,7 @@ class MembershipExtend(
         days = form.cleaned_data["extension"]
         extension = timedelta(days=days)
         self.membership.agreement_end += extension
-        self.membership.extended = days
+        self.membership.extensions.append(days)
         self.membership.save()
 
         return super().form_valid(form)
