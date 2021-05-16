@@ -311,10 +311,17 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
     class Meta:
         model = Member
         fields = [
+            # The membership field is required for uniqueness validation. We're making
+            # it hidden from user to not confuse them, and to discourage from changing
+            # field's value. The downside of this approach is that a) user can provide
+            # different ID if they try hard enough, and b) tests get a little bit
+            # harder as additional value has to be provided.
+            "membership",
             "organization",
             "role",
         ]
         widgets = {
+            "membership": forms.HiddenInput,
             "organization": ModelSelect2Widget(data_view="organization-lookup"),
             "role": ModelSelect2Widget(data_view="memberrole-lookup"),
         }
@@ -350,10 +357,17 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
     class Meta:
         model = MembershipTask
         fields = [
+            # The membership field is required for uniqueness validation. We're making
+            # it hidden from user to not confuse them, and to discourage from changing
+            # field's value. The downside of this approach is that a) user can provide
+            # different ID if they try hard enough, and b) tests get a little bit
+            # harder as additional value has to be provided.
+            "membership",
             "person",
             "role",
         ]
         widgets = {
+            "membership": forms.HiddenInput,
             "person": ModelSelect2Widget(data_view="person-lookup"),
             "role": ModelSelect2Widget(data_view="membershippersonrole-lookup"),
         }

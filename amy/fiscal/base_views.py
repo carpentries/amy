@@ -31,25 +31,16 @@ class MembershipFormsetView(GetMembershipMixin, FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["queryset"] = self.get_formset_queryset(self.membership)
+        kwargs["form_kwargs"] = dict(initial={"membership": self.membership})
         return kwargs
 
     def get_context_data(self, **kwargs):
         kwargs["formset"] = self.get_form()
         return super().get_context_data(**kwargs)
 
-    def form_valid(self, form):
-        instances = form.save(commit=False)
-
-        # assign membership to any new/changed instance
-        for instance in instances:
-            instance.membership = self.membership
-            instance.save()
-
-        # remove deleted objects
-        for instance in form.deleted_objects:
-            instance.delete()
-
-        return super().form_valid(form)
+    def form_valid(self, formset):
+        formset.save()  # handles adding, updating and deleting instances
+        return super().form_valid(formset)
 
     def get_success_url(self):
         return self.membership.get_absolute_url()

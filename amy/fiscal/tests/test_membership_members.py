@@ -28,18 +28,18 @@ class TestMemberFormLayout(TestBase):
 
         self.assertEqual(
             list(form.helper.layout),
-            ["organization", "role", "EDITABLE", "id", "DELETE"],
+            ["membership", "organization", "role", "EDITABLE", "id", "DELETE"],
         )
 
     def test_empty_helper_layout(self):
         form = MemberForm()
 
-        self.assertEqual(len(form.helper_empty_form.layout), 4)
+        self.assertEqual(len(form.helper_empty_form.layout), 5)
         self.assertEqual(
-            list(form.helper_empty_form.layout)[:3],
-            ["organization", "role", "id"],
+            list(form.helper_empty_form.layout)[:-1],
+            ["membership", "organization", "role", "id"],
         )
-        self.assertEqual(form.helper_empty_form.layout[3].fields, ["DELETE"])
+        self.assertEqual(form.helper_empty_form.layout[-1].fields, ["DELETE"])
 
 
 class TestMembershipMembers(MembershipTestMixin, TestBase):
@@ -58,6 +58,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 0,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
@@ -81,10 +82,12 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 0,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": "",
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
             "form-0-EDITABLE": True,
+            "form-1-membership": "",
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
@@ -106,10 +109,12 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 0,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
             "form-0-EDITABLE": True,
+            "form-1-membership": self.membership.pk,
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
@@ -144,6 +149,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": "",
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
@@ -177,11 +183,13 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 2,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": "",
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
             "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
+            "form-1-membership": "",
             "form-1-organization": m2.organization.pk,
             "form-1-role": m2.role.pk,
             "form-1-id": m2.pk,
@@ -214,11 +222,13 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
             "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
+            "form-1-membership": self.membership.pk,
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
@@ -251,6 +261,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": self.org_beta.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
@@ -283,6 +294,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
