@@ -4,6 +4,33 @@ import django_comments
 
 from workshops.models import Organization, Person
 
+from .utils import add_comment_for_object
+
+
+class TestCommentForObjectUtil(TestCase):
+    def test_util(self):
+        # Arrange
+        person = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            username="rw",
+            is_active=True,
+            email="",
+            data_privacy_agreement=True,
+        )
+        organization = Organization.objects.create(
+            domain="example.org",
+            fullname="Example Organisation",
+        )
+        content = "Test comment"
+        CommentModel = django_comments.get_model()
+
+        # Act
+        comment = add_comment_for_object(organization, person, content)
+
+        # Assert
+        self.assertEqual(list(CommentModel.objects.for_model(organization)), [comment])
+
 
 class TestEmailFieldRequiredness(TestCase):
     def test_email_field_requiredness(self):
