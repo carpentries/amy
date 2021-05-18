@@ -212,10 +212,10 @@
       <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
       <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
       {% endif %}
-      {% if perms.workshops.create_membership and perms.workshops.change_membership %}
+      {% if perms.workshops.create_membership and perms.workshops.change_membership and membership.rolled_to_membership is None %}
       <a href="{% url 'membership_create_roll_over' membership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
       {% else %}
-      <a class="btn btn-secondary disabled" aria-disabled="true">Create new &amp; roll-over</a>
+      <a class="btn btn-success disabled" aria-disabled="true">Create new &amp; roll-over</a>
       {% endif %}
     </div>
   </div>

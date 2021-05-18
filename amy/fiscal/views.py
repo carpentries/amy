@@ -352,6 +352,10 @@ class MembershipCreateRollOver(
         'membership "{new_membership}"'
     )
 
+    def membership_queryset_kwargs(self):
+        # Prevents already rolled-over memberships from rolling-over again.
+        return dict(rolled_to_membership__isnull=True)
+
     def get_success_message(self, cleaned_data):
         return self.success_message.format(
             cleaned_data,

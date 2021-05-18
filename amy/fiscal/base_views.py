@@ -7,8 +7,15 @@ from workshops.models import Membership
 
 
 class GetMembershipMixin:
+    def membership_queryset_kwargs(self):
+        return {}
+
     def dispatch(self, request, *args, **kwargs):
-        self.membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
+        self.membership = get_object_or_404(
+            Membership,
+            pk=self.kwargs["membership_id"],
+            **self.membership_queryset_kwargs(),
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

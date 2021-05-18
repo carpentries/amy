@@ -1170,11 +1170,12 @@ class TestMembershipCreateRollOver(TestBase):
         )
 
     def test_new_membership_consortium_created(self):
-        self.setUpMembership(consortium=True)
-
         test_data = [True, False]
 
         for copy_members in test_data:
+            # Membership needs to be created for each subtest.
+            self.setUpMembership(consortium=True)
+
             with self.subTest(copy_members=copy_members):
                 data = {
                     "copy_members": copy_members,
@@ -1204,11 +1205,12 @@ class TestMembershipCreateRollOver(TestBase):
                     self.assertEqual(last_membership.member_set.count(), 0)
 
     def test_new_membership_persons_copied(self):
-        self.setUpMembership()
-
         test_data = [True, False]
 
         for copy_membership_tasks in test_data:
+            # Membership needs to be created for each subtest.
+            self.setUpMembership()
+
             with self.subTest(copy_membership_tasks=copy_membership_tasks):
                 data = {
                     "copy_membership_tasks": copy_membership_tasks,
@@ -1315,3 +1317,32 @@ class TestMembershipCreateRollOver(TestBase):
         )
         self.assertEqual(last_membership.rolled_from_membership, self.membership)
         self.assertEqual(last_membership.rolled_to_membership, None)
+
+    def test_membership_cannot_be_rolled_over_multiple_times(self):
+        # Arrange
+        self.setUpMembership()
+        second_membership = Membership.objects.create(
+            name="Test Membership2",
+            consortium=False,
+            public_status="public",
+            variant="partner",
+            agreement_start="2020-03-01",
+            agreement_end="2021-03-01",
+            extended=None,
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=12,
+            additional_public_instructor_training_seats=0,
+            inhouse_instructor_training_seats=9,
+            additional_inhouse_instructor_training_seats=0,
+        )
+        self.membership.rolled_to_membership = second_membership
+        self.membership.save()
+
+        # Act
+        response = self.client.get(
+            reverse("membership_create_roll_over", args=[self.membership.pk])
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 404)
