@@ -347,6 +347,17 @@ class MembershipCreateRollOver(
     model = Membership
     form_class = MembershipRollOverForm
     pk_url_kwarg = "membership_id"
+    success_message = (
+        'Membership "{membership}" was successfully rolled-over to a new '
+        'membership "{new_membership}"'
+    )
+
+    def get_success_message(self, cleaned_data):
+        return self.success_message.format(
+            cleaned_data,
+            membership=str(self.membership),
+            new_membership=str(self.object),
+        )
 
     def get_initial(self) -> Dict[str, Any]:
         return {
@@ -389,6 +400,9 @@ class MembershipCreateRollOver(
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
+        # create new membership, available in self.object
+        result = super().form_valid(form)
+
         # save values rolled over in membership
         self.membership.workshops_without_admin_fee_rolled_over = (
             form.instance.workshops_without_admin_fee_rolled_from_previous
@@ -399,9 +413,8 @@ class MembershipCreateRollOver(
         self.membership.inhouse_instructor_training_seats_rolled_over = (
             form.instance.inhouse_instructor_training_seats_rolled_from_previous
         )
+        self.membership.rolled_to_membership = self.object
         self.membership.save()
-
-        result = super().form_valid(form)
 
         # duplicate members and membership tasks from old membership to the new one
         if form.cleaned_data["copy_members"]:

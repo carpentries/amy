@@ -1281,6 +1281,14 @@ class TestMembershipCreateRollOver(TestBase):
         self.assertEqual(
             self.membership.inhouse_instructor_training_seats_rolled_over, 1
         )
+        self.assertEqual(self.membership.rolled_to_membership, last_membership)
+
+        # Special behavior of OneToOneField: will throw exception upon access if
+        # the related object is not set. This means simple for `is None` won't work.
+        with self.assertRaises(
+            Membership.rolled_from_membership.RelatedObjectDoesNotExist
+        ):
+            self.membership.rolled_from_membership
 
         self.assertEqual(last_membership.workshops_without_admin_fee_per_agreement, 10)
         self.assertEqual(last_membership.public_instructor_training_seats, 12)
@@ -1305,3 +1313,5 @@ class TestMembershipCreateRollOver(TestBase):
         self.assertEqual(
             last_membership.inhouse_instructor_training_seats_rolled_over, None
         )
+        self.assertEqual(last_membership.rolled_from_membership, self.membership)
+        self.assertEqual(last_membership.rolled_to_membership, None)

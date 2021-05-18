@@ -2,9 +2,22 @@
 
 {% load links %}
 {% load revisions %}
+{% load attrs %}
 
 {% block content %}
 {% last_modified membership %}
+
+{% comment %} To check if "rolled_from_membership" exists we have to use a custom filter `one2one_exists`. {% endcomment %}
+{% if membership|one2one_exists:"rolled_from_membership" %}
+<div class="alert alert-info" role="alert">
+  Rolled over from <a href="{{ membership.rolled_from_membership.get_absolute_url }}">{{ membership.rolled_from_membership }}</a>.
+</div>
+{% endif %}
+{% if membership.rolled_to_membership %}
+<div class="alert alert-info" role="alert">
+  Rolled over to <a href="{{ membership.rolled_to_membership.get_absolute_url }}">{{ membership.rolled_to_membership }}</a>.
+</div>
+{% endif %}
 
 <p class="edit-object">
   {% if perms.workshops.change_membership %}

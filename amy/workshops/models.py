@@ -289,6 +289,13 @@ class Membership(models.Model):
         through="fiscal.MembershipTask",
     )
 
+    rolled_to_membership = models.OneToOneField(
+        "Membership",
+        on_delete=models.PROTECT,
+        related_name="rolled_from_membership",
+        null=True,
+    )
+
     def __str__(self):
         from workshops.util import human_daterange
 
