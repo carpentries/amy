@@ -151,7 +151,7 @@ class Membership(models.Model):
     )
     extensions = ArrayField(
         models.PositiveIntegerField(),
-        help_text="Number of days the agreement was extended with. The field stores "
+        help_text="Number of days the agreement was extended. The field stores "
         "multiple extensions. The agreement end date has been moved by a cumulative "
         "number of days from this field.",
         default=list,

@@ -26,14 +26,14 @@ def undo_extensions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workshops', '0243_auto_20210508_1954'),
+        ('workshops', '0244_auto_20210509_2051'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='membership',
             name='extensions',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.PositiveIntegerField(), default=list, help_text='Number of days the agreement was extended with. The field stores multiple extensions. The agreement end date has been moved by a cumulative number of days from this field.', size=None),
+            field=django.contrib.postgres.fields.ArrayField(base_field=models.PositiveIntegerField(), default=list, help_text='Number of days the agreement was extended. The field stores multiple extensions. The agreement end date has been moved by a cumulative number of days from this field.', size=None),
         ),
         migrations.RunPython(move_extensions, undo_extensions),
         migrations.RemoveField(

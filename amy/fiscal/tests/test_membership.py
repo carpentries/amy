@@ -869,6 +869,35 @@ class TestMembershipExtension(TestBase):
         self.assertEqual(membership.extensions, [30])
         self.assertEqual(membership.agreement_end, date(2021, 3, 31))
 
+    def test_membership_extended_multiple_times(self):
+        membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=False,
+            public_status="public",
+            variant="partner",
+            agreement_start="2020-03-01",
+            agreement_end="2021-03-01",
+            contribution_type="financial",
+            public_instructor_training_seats=0,
+            additional_public_instructor_training_seats=0,
+        )
+        Member.objects.create(
+            organization=self.org_alpha,
+            membership=membership,
+            role=MemberRole.objects.first(),
+        )
+        data1 = {"extension": 30}
+        data2 = {"extension": 40}
+        data3 = {"extension": 50}
+
+        self.client.post(reverse("membership_extend", args=[membership.pk]), data=data1)
+        self.client.post(reverse("membership_extend", args=[membership.pk]), data=data2)
+        self.client.post(reverse("membership_extend", args=[membership.pk]), data=data3)
+
+        membership.refresh_from_db()
+        self.assertEqual(membership.extensions, [30, 40, 50])
+        self.assertEqual(membership.agreement_end, date(2021, 6, 29))
+
     def test_comment_added(self):
         # Arrange
         membership = Membership.objects.create(
