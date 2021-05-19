@@ -150,7 +150,7 @@
     </td>
   </tr>
   <tr>
-    <th>Public instructor training seats &mdash; tasks:</th>
+    <th>Instructor training seats:</th>
     <td colspan="2">
       {% if membership.task_set.all %}
       <table class="w-100">
@@ -158,6 +158,7 @@
           <th>Event</th>
           <th>Person</th>
           <th>Awards</th>
+          <th>Type</th>
         </tr>
         {% for t in membership.task_set.all %}
         <tr>
@@ -169,6 +170,7 @@
             {% empty %}&mdash;
             {% endfor %}
           </td>
+          <td>{{ t.get_seat_public_display }}</td>
         </tr>
         {% endfor %}
       </table>
