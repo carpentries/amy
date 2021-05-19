@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from typing import List
 
 from django.urls import reverse
-from django_comments.models import Comment
+import django_comments
 
 from fiscal.forms import (
     MembershipCreateForm,
@@ -22,6 +22,8 @@ from workshops.models import (
     Task,
 )
 from workshops.tests.base import TestBase
+
+CommentModel = django_comments.get_model()
 
 
 class TestMembership(TestBase):
@@ -514,7 +516,7 @@ class TestMembershipForms(TestBase):
     def test_creating_membership_with_no_comment(self):
         """Ensure that no comment is added when MembershipCreateForm without
         comment content is saved."""
-        self.assertEqual(Comment.objects.count(), 0)
+        self.assertEqual(CommentModel.objects.count(), 0)
         data = {
             "main_organization": self.org_alpha.pk,
             "name": "Test Membership",
@@ -532,12 +534,12 @@ class TestMembershipForms(TestBase):
         }
         form = MembershipCreateForm(data)
         form.save()
-        self.assertEqual(Comment.objects.count(), 0)
+        self.assertEqual(CommentModel.objects.count(), 0)
 
     def test_creating_membership_with_comment(self):
         """Ensure that a comment is added when MembershipCreateForm with
         comment content is saved."""
-        self.assertEqual(Comment.objects.count(), 0)
+        self.assertEqual(CommentModel.objects.count(), 0)
         data = {
             "main_organization": self.org_alpha.pk,
             "name": "Test Membership",
@@ -555,10 +557,10 @@ class TestMembershipForms(TestBase):
         }
         form = MembershipCreateForm(data)
         obj = form.save()
-        self.assertEqual(Comment.objects.count(), 1)
-        comment = Comment.objects.first()
+        self.assertEqual(CommentModel.objects.count(), 1)
+        comment = CommentModel.objects.first()
         self.assertEqual(comment.comment, "This is a test comment.")
-        self.assertIn(comment, Comment.objects.for_model(obj))
+        self.assertIn(comment, CommentModel.objects.for_model(obj))
 
     def test_membership_edit_form_no_comment(self):
         """Ensure membership edit form works and doesn't provide `comment` field.
@@ -590,7 +592,7 @@ class TestMembershipForms(TestBase):
 
         self.assertNotIn("comment", MembershipForm.Meta.fields)
 
-        self.assertEqual(Comment.objects.count(), 0)
+        self.assertEqual(CommentModel.objects.count(), 0)
         data = {
             "main_organization": self.org_alpha.pk,
             "name": "Test Membership",
@@ -607,7 +609,7 @@ class TestMembershipForms(TestBase):
         }
         form = MembershipForm(data, instance=membership)
         form.save()
-        self.assertEqual(Comment.objects.count(), 0)
+        self.assertEqual(CommentModel.objects.count(), 0)
 
     def test_membership_agreement_dates_validation(self):
         """Validate invalid agreement end date (can't be sooner than start date)."""
@@ -843,7 +845,6 @@ class TestMembershipExtension(TestBase):
             variant="partner",
             agreement_start="2020-03-01",
             agreement_end="2021-03-01",
-            extended=None,
             contribution_type="financial",
             public_instructor_training_seats=0,
             additional_public_instructor_training_seats=0,
@@ -865,8 +866,69 @@ class TestMembershipExtension(TestBase):
             response, reverse("membership_details", args=[membership.pk])
         )
         membership.refresh_from_db()
-        self.assertEqual(membership.extended, 30)
+        self.assertEqual(membership.extensions, [30])
         self.assertEqual(membership.agreement_end, date(2021, 3, 31))
+
+    def test_membership_extended_multiple_times(self):
+        membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=False,
+            public_status="public",
+            variant="partner",
+            agreement_start="2020-03-01",
+            agreement_end="2021-03-01",
+            contribution_type="financial",
+            public_instructor_training_seats=0,
+            additional_public_instructor_training_seats=0,
+        )
+        Member.objects.create(
+            organization=self.org_alpha,
+            membership=membership,
+            role=MemberRole.objects.first(),
+        )
+        data1 = {"extension": 30}
+        data2 = {"extension": 40}
+        data3 = {"extension": 50}
+
+        self.client.post(reverse("membership_extend", args=[membership.pk]), data=data1)
+        self.client.post(reverse("membership_extend", args=[membership.pk]), data=data2)
+        self.client.post(reverse("membership_extend", args=[membership.pk]), data=data3)
+
+        membership.refresh_from_db()
+        self.assertEqual(membership.extensions, [30, 40, 50])
+        self.assertEqual(membership.agreement_end, date(2021, 6, 29))
+
+    def test_comment_added(self):
+        # Arrange
+        membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=False,
+            public_status="public",
+            variant="partner",
+            agreement_start="2020-03-01",
+            agreement_end="2021-03-01",
+            contribution_type="financial",
+            public_instructor_training_seats=0,
+            additional_public_instructor_training_seats=0,
+        )
+        Member.objects.create(
+            organization=self.org_alpha,
+            membership=membership,
+            role=MemberRole.objects.first(),
+        )
+        extension = 30
+        data = {"extension": extension}
+        today = date.today()
+
+        # Act
+        self.client.post(reverse("membership_extend", args=[membership.pk]), data=data)
+
+        # Assert
+        self.assertEqual(CommentModel.objects.for_model(membership).count(), 1)
+        comment = CommentModel.objects.for_model(membership).first()
+        self.assertEqual(
+            comment.comment, f"Extended membership by {extension} days on {today}."
+        )
 
 
 class TestMembershipCreateRollOver(TestBase):
@@ -896,7 +958,6 @@ class TestMembershipCreateRollOver(TestBase):
             variant="partner",
             agreement_start="2020-03-01",
             agreement_end="2021-03-01",
-            extended=None,
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             public_instructor_training_seats=12,

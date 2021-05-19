@@ -9,6 +9,7 @@ from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
+from extcomments.utils import add_comment_for_object
 from fiscal.base_views import (
     GetMembershipMixin,
     MembershipFormsetView,
@@ -174,6 +175,7 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "{0}".format(self.object)
+        context["membership_extensions_sum"] = sum(self.object.extensions)
         return context
 
 
@@ -302,6 +304,7 @@ class MembershipExtend(
     form_class = MembershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "workshops.change_membership"
+    comment = "Extended membership by {days} days on {date}."
 
     def get_initial(self):
         return {
@@ -320,8 +323,15 @@ class MembershipExtend(
         days = form.cleaned_data["extension"]
         extension = timedelta(days=days)
         self.membership.agreement_end += extension
-        self.membership.extended = days
+        self.membership.extensions.append(days)
         self.membership.save()
+
+        # Add a comment "Extended membership by X days on DATE" on user's behalf.
+        add_comment_for_object(
+            self.membership,
+            self.request.user,
+            self.comment.format(days=days, date=date.today()),
+        )
 
         return super().form_valid(form)
 

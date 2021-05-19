@@ -35,8 +35,14 @@
   <tr><th>End date:</th>
       <td colspan="2">
         {{ membership.agreement_end }}
-        {% if membership.extended %}
-        <p class="small">Includes {{ membership.extended }} day extension.</p>
+        {% if membership.extensions %}
+        <p class="small m-0">Includes extensions:</p>
+        <ul class="small m-0">
+          {% for extension in membership.extensions %}
+          <li>{{ extension }} day(s)</li>
+          {% endfor %}
+        </ul>
+        <p class="small">...for cumulative value of {{ membership_extensions_sum }} days.</p>
         {% endif %}
       </td></tr>
   <tr><th>Contribution type:</th><td colspan="2">{{ membership.get_contribution_type_display }}</td></tr>
