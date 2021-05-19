@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.urls import reverse
 
 from fiscal.forms import MemberForm
@@ -5,31 +6,7 @@ from workshops.models import Member, MemberRole, Membership
 from workshops.tests.base import TestBase
 
 
-class TestMemberFormLayout(TestBase):
-    def test_main_helper_layout(self):
-        form = MemberForm()
-
-        self.assertEqual(
-            list(form.helper.layout),
-            ["organization", "role", "EDITABLE", "id", "DELETE"],
-        )
-
-    def test_empty_helper_layout(self):
-        form = MemberForm()
-
-        self.assertEqual(len(form.helper_empty_form.layout), 4)
-        self.assertEqual(
-            list(form.helper_empty_form.layout)[:3],
-            ["organization", "role", "id"],
-        )
-        self.assertEqual(form.helper_empty_form.layout[3].fields, ["DELETE"])
-
-
-class TestMembershipMembers(TestBase):
-    def setUp(self):
-        super().setUp()
-        self._setUpUsersAndLogin()
-
+class MembershipTestMixin:
     def setUpMembership(self, consortium: bool):
         self.membership = Membership.objects.create(
             name="Test Membership",
@@ -44,6 +21,32 @@ class TestMembershipMembers(TestBase):
         )
         self.member_role = MemberRole.objects.first()
 
+
+class TestMemberFormLayout(TestBase):
+    def test_main_helper_layout(self):
+        form = MemberForm()
+
+        self.assertEqual(
+            list(form.helper.layout),
+            ["membership", "organization", "role", "EDITABLE", "id", "DELETE"],
+        )
+
+    def test_empty_helper_layout(self):
+        form = MemberForm()
+
+        self.assertEqual(len(form.helper_empty_form.layout), 5)
+        self.assertEqual(
+            list(form.helper_empty_form.layout)[:-1],
+            ["membership", "organization", "role", "id"],
+        )
+        self.assertEqual(form.helper_empty_form.layout[-1].fields, ["DELETE"])
+
+
+class TestMembershipMembers(MembershipTestMixin, TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
     def test_adding_new_member_to_nonconsortium(self):
         """Ensure only 1 member can be added to non-consortium membership."""
         self.setUpMembership(consortium=False)
@@ -55,6 +58,7 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 0,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
@@ -78,10 +82,12 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 0,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": "",
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
             "form-0-EDITABLE": True,
+            "form-1-membership": "",
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
@@ -103,10 +109,12 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 0,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": self.org_alpha.pk,
             "form-0-role": self.member_role.pk,
             "form-0-id": "",
             "form-0-EDITABLE": True,
+            "form-1-membership": self.membership.pk,
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
@@ -141,6 +149,7 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": "",
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
@@ -174,11 +183,13 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 2,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": "",
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
             "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
+            "form-1-membership": "",
             "form-1-organization": m2.organization.pk,
             "form-1-role": m2.role.pk,
             "form-1-id": m2.pk,
@@ -211,11 +222,13 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
             "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
+            "form-1-membership": self.membership.pk,
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
             "form-1-id": "",
@@ -248,6 +261,7 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": self.org_beta.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
@@ -280,6 +294,7 @@ class TestMembershipMembers(TestBase):
             "form-INITIAL_FORMS": 1,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-organization": m1.organization.pk,
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
@@ -294,3 +309,55 @@ class TestMembershipMembers(TestBase):
             response, reverse("membership_details", args=[self.membership.pk])
         )
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
+
+
+class TestMemberUnique(MembershipTestMixin, TestBase):
+    def test_duplicate_members_with_the_same_role_fail(self):
+        """Duplicate Member & Role should fail for given membership."""
+        # Arrange
+        self.setUpMembership(consortium=True)
+        member1 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        member2 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        # Act
+        member1.save()
+
+        # Assert
+        with self.assertRaises(IntegrityError):
+            member2.save()
+
+    def test_distinct_members_for_the_same_membership(self):
+        """Distinct Member & Role should work for given membership."""
+        # Arrange
+        self.setUpMembership(consortium=True)
+        member1 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        member2 = Member(
+            organization=self.org_beta,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        member3 = Member(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=MemberRole.objects.last(),
+        )
+
+        # Act & Assert
+        member1.save()
+        member2.save()
+        member3.save()

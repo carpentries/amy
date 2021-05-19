@@ -7,6 +7,8 @@
   <form method="POST">
     <div id="formset" data-formset-prefix="{{ formset.prefix }}">
       {% csrf_token %}
+      {% if formset.errors %}<p class="text-danger">Fix the error(s) in forms below.</p>{% endif %}
+      {% if formset.initial_form_count %}<hr>{% endif %}
       {{ formset.media }}
       {{ formset.management_form }}
 

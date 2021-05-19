@@ -248,6 +248,9 @@ class MembershipMembers(
 ):
     permission_required = "workshops.change_membership"
 
+    def get_formset(self, *args, **kwargs):
+        return modelformset_factory(Member, MemberForm, *args, **kwargs)
+
     def get_formset_kwargs(self):
         kwargs = super().get_formset_kwargs()
         if not self.membership.consortium:
@@ -255,9 +258,6 @@ class MembershipMembers(
             kwargs["max_num"] = 1
             kwargs["validate_max"] = True
         return kwargs
-
-    def get_formset(self, *args, **kwargs):
-        return modelformset_factory(Member, MemberForm, *args, **kwargs)
 
     def get_formset_queryset(self, object):
         return object.member_set.select_related(

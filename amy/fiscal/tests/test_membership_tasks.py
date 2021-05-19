@@ -12,18 +12,18 @@ class TestMembershipTaskFormLayout(TestBase):
 
         self.assertEqual(
             list(form.helper.layout),
-            ["person", "role", "EDITABLE", "id", "DELETE"],
+            ["membership", "person", "role", "EDITABLE", "id", "DELETE"],
         )
 
     def test_empty_helper_layout(self):
         form = MembershipTaskForm()
 
-        self.assertEqual(len(form.helper_empty_form.layout), 4)
+        self.assertEqual(len(form.helper_empty_form.layout), 5)
         self.assertEqual(
-            list(form.helper_empty_form.layout)[:3],
-            ["person", "role", "id"],
+            list(form.helper_empty_form.layout)[:-1],
+            ["membership", "person", "role", "id"],
         )
-        self.assertEqual(form.helper_empty_form.layout[3].fields, ["DELETE"])
+        self.assertEqual(form.helper_empty_form.layout[-1].fields, ["DELETE"])
 
 
 class TestMembershipTasks(TestBase):
@@ -49,10 +49,12 @@ class TestMembershipTasks(TestBase):
             "form-INITIAL_FORMS": 0,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-person": self.hermione.pk,
             "form-0-role": self.membership_person_role.pk,
             "form-0-id": "",
             "form-0-EDITABLE": True,
+            "form-1-membership": self.membership.pk,
             "form-1-person": self.harry.pk,
             "form-1-role": self.membership_person_role.pk,
             "form-1-id": "",
@@ -89,11 +91,13 @@ class TestMembershipTasks(TestBase):
             "form-INITIAL_FORMS": 2,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-person": mt1.person.pk,
             "form-0-role": mt1.role.pk,
             "form-0-id": mt1.pk,
             "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
+            "form-1-membership": self.membership.pk,
             "form-1-person": mt2.person.pk,
             "form-1-role": mt2.role.pk,
             "form-1-id": mt2.pk,
@@ -129,16 +133,19 @@ class TestMembershipTasks(TestBase):
             "form-INITIAL_FORMS": 2,
             "form-MIN_NUM_FORMS": 0,
             "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
             "form-0-person": mt1.person.pk,
             "form-0-role": mt1.role.pk,
             "form-0-id": mt1.pk,
             "form-0-EDITABLE": True,
             "form-0-DELETE": "on",
+            "form-1-membership": self.membership.pk,
             "form-1-person": mt2.person.pk,
             "form-1-role": mt2.role.pk,
             "form-1-id": mt2.pk,
             "form-1-EDITABLE": True,
             "form-1-DELETE": "on",
+            "form-2-membership": self.membership.pk,
             "form-2-person": self.ron.pk,
             "form-2-role": self.membership_person_role.pk,
             "form-2-id": "",
