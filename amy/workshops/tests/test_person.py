@@ -1035,14 +1035,16 @@ def github_username_to_uid_mock(username):
         "username": "1",
         "changed": "2",
         "changedagain": "3",
+        "user-github": "4",
+        "admin-github": "5",
     }
     return username2uid[username]
 
 
+@patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
 class TestPersonAndUserSocialAuth(TestBase):
     """ Test Person.synchronize_usersocialauth and Person.save."""
 
-    @patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
     def test_basic(self):
         user = Person.objects.create_user(
             username="user",
@@ -1373,6 +1375,7 @@ class TestRegression1076(TestBase):
 class TestArchivePerson(TestBase):
     """ Test cases for person archive endpoint. """
 
+    @patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
