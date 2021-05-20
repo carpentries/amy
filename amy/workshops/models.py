@@ -312,7 +312,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
         return (
             Event.objects.filter(during_membership)
-            .filter(sponsor__in=self.organizations.all())
+            .filter(membership=self)
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
@@ -424,7 +424,7 @@ class Membership(models.Model):
         )
         return (
             Event.objects.filter(during_membership)
-            .filter(sponsor__in=self.organizations.all())
+            .filter(membership=self)
             .filter(self_organized)
             .exclude(cancelled)
             .distinct()
@@ -1268,6 +1268,13 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         blank=False,
         related_name="sponsored_events",
         help_text="Institution that is funding or organising the workshop.",
+    )
+    membership = models.ForeignKey(
+        Membership,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="A membership this event should be counted towards.",
     )
     administrator = models.ForeignKey(
         Organization,
