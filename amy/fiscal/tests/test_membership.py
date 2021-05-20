@@ -1328,7 +1328,6 @@ class TestMembershipCreateRollOver(TestBase):
             variant="partner",
             agreement_start="2020-03-01",
             agreement_end="2021-03-01",
-            extended=None,
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             public_instructor_training_seats=12,
