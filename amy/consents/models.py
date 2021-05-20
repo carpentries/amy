@@ -9,17 +9,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 
 from autoemails.mixins import RQJobsMixin
-from workshops.mixins import CreatedUpdatedMixin
+from workshops.mixins import CreatedUpdatedArchivedMixin
 from workshops.models import STR_MED, Person
-
-
-class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
-    """This mixin adds an archived timestamp to the CreatedUpdatedMixin."""
-
-    archived_at = models.DateTimeField(blank=True, null=True)
-
-    class Meta:
-        abstract = True
 
 
 class TermQuerySet(models.query.QuerySet):

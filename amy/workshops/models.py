@@ -23,6 +23,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Greatest
 from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
@@ -37,6 +38,7 @@ from workshops.mixins import (
     ActiveMixin,
     AssignmentMixin,
     COCAgreementMixin,
+    CreatedUpdatedArchivedMixin,
     CreatedUpdatedMixin,
     DataPrivacyAgreementMixin,
     EventLinkMixin,
@@ -661,7 +663,7 @@ class Person(
     AbstractBaseUser,
     PermissionsMixin,
     DataPrivacyAgreementMixin,
-    CreatedUpdatedMixin,
+    CreatedUpdatedArchivedMixin,
     GenderMixin,
     SecondaryEmailMixin,
 ):
@@ -1013,6 +1015,7 @@ class Person(
         self.is_superuser = False
         self.groups.clear()
         self.user_permissions.clear()
+        self.archived_at = timezone.now()
         self.save()
 
         # This deletes all pre-existing Versions of the object.
