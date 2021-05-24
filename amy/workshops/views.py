@@ -276,15 +276,6 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
         )
         .select_related("airport")
         .order_by("family", "personal")
-        .prefetch_related(
-            Prefetch(
-                "consent_set",
-                # to_attr="training_tasks",
-                queryset=Consent.objects.filter(
-                    archived_at=None,
-                ).select_related("term", "term_option"),
-            ),
-        )
     )
 
     def get_context_data(self, **kwargs):
