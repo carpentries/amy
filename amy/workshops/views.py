@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin,
@@ -53,6 +52,7 @@ from autoemails.actions import (
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from consents.forms import ActiveTermConsentsForm
+from consents.models import Consent
 from dashboard.forms import AssignmentForm
 from fiscal.models import MembershipTask
 from workshops.base_views import (
@@ -276,6 +276,15 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
         )
         .select_related("airport")
         .order_by("family", "personal")
+        .prefetch_related(
+            Prefetch(
+                "consent_set",
+                # to_attr="training_tasks",
+                queryset=Consent.objects.filter(
+                    archived_at=None,
+                ).select_related("term", "term_option"),
+            ),
+        )
     )
 
     def get_context_data(self, **kwargs):
@@ -286,7 +295,22 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
 
         is_usersocialauth_in_sync = len(self.object.github_usersocialauth) > 0
         context["is_usersocialauth_in_sync"] = is_usersocialauth_in_sync
+        consents = (
+            Consent.objects.filter(person=self.object)
+            .active()
+            .select_related("term", "term_option")
+        )
 
+        context["consents"] = {
+            "May contact": consents.filter(term__slug="may-contact")[0],
+            "Consent to publish profile": consents.filter(term__slug="public-profile")[
+                0
+            ],
+            "Consent to include name when publishing lessons": consents.filter(
+                term__slug="may-publish-name"
+            )[0],
+            "Privacy policy agreement": consents.filter(term__slug="privacy-policy")[0],
+        }
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
         return context
