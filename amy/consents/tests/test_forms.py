@@ -92,7 +92,20 @@ class TestRequiredConsentsForm(ConsentTestBase):
             archived_at=timezone.now(),
             required_type=Term.PROFILE_REQUIRE_TYPE,
         )
+        answered_required_term = Term.objects.create(
+            content="answered_required_term",
+            slug="answered_required_term",
+            required_type=Term.PROFILE_REQUIRE_TYPE,
+        )
+        answered_required_term_yes = TermOption.objects.create(
+            term=answered_required_term,
+            option_type=TermOption.AGREE,
+            content="Yes",
+        )
+        self.reconsent(self.person, answered_required_term, answered_required_term_yes)
         form = RequiredConsentsForm(initial={"person": self.person})
         self.assertIn(required_term.slug, form.fields)
         self.assertNotIn(not_required_term.slug, form.fields)
         self.assertNotIn(archived_term.slug, form.fields)
+        # Already answered terms are filtered out
+        self.assertNotIn(answered_required_term.slug, form.fields)
