@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import (
     LoginRequiredMixin,
     PermissionRequiredMixin,
@@ -964,6 +963,7 @@ def event_details(request, slug):
                 "host",
                 "administrator",
                 "sponsor",
+                "membership",
             )
             .get(slug=slug)
         )

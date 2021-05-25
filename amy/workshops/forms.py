@@ -419,6 +419,7 @@ class EventForm(forms.ModelForm):
             "end",
             "host",
             "sponsor",
+            "membership",
             "administrator",
             "assigned_to",
             "tags",
@@ -443,6 +444,7 @@ class EventForm(forms.ModelForm):
         widgets = {
             "host": ModelSelect2Widget(data_view="organization-lookup"),
             "sponsor": ModelSelect2Widget(data_view="organization-lookup"),
+            "membership": ModelSelect2Widget(data_view="membership-lookup"),
             "manual_attendance": TextInput,
             "latitude": TextInput,
             "longitude": TextInput,
@@ -471,6 +473,7 @@ class EventForm(forms.ModelForm):
             Field("end", placeholder="YYYY-MM-DD"),
             "host",
             "sponsor",
+            "membership",
             "administrator",
             "public_status",
             "assigned_to",
