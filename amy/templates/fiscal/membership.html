@@ -2,9 +2,22 @@
 
 {% load links %}
 {% load revisions %}
+{% load attrs %}
 
 {% block content %}
 {% last_modified membership %}
+
+{% comment %} To check if "rolled_from_membership" exists we have to use a custom filter `one2one_exists`. {% endcomment %}
+{% if membership|one2one_exists:"rolled_from_membership" %}
+<div class="alert alert-info" role="alert">
+  Rolled over from <a href="{{ membership.rolled_from_membership.get_absolute_url }}">{{ membership.rolled_from_membership }}</a>.
+</div>
+{% endif %}
+{% if membership.rolled_to_membership %}
+<div class="alert alert-info" role="alert">
+  Rolled over to <a href="{{ membership.rolled_to_membership.get_absolute_url }}">{{ membership.rolled_to_membership }}</a>.
+</div>
+{% endif %}
 
 <p class="edit-object">
   {% if perms.workshops.change_membership %}
@@ -199,10 +212,10 @@
       <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
       <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
       {% endif %}
-      {% if perms.workshops.create_membership and perms.workshops.change_membership %}
+      {% if perms.workshops.create_membership and perms.workshops.change_membership and membership.rolled_to_membership is None %}
       <a href="{% url 'membership_create_roll_over' membership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
       {% else %}
-      <a class="btn btn-secondary disabled" aria-disabled="true">Create new &amp; roll-over</a>
+      <a class="btn btn-success disabled" aria-disabled="true">Create new &amp; roll-over</a>
       {% endif %}
     </div>
   </div>
