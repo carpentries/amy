@@ -31,10 +31,10 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
-        person = kwargs["initial"]["person"]
+        self.person = kwargs["initial"]["person"]
         super().__init__(*args, **kwargs)
         self.terms = self.get_terms()
-        self._build_form(person)
+        self._build_form(self.person)
         self.helper = BootstrapHelper(
             add_cancel_button=False,
             form_tag=form_tag,
@@ -108,6 +108,19 @@ class RequiredConsentsForm(BaseTermConsentsForm):
     """
     Builds form shown on login when there are missing required consents.
     """
+
+    def _build_form(self, person: Person) -> None:
+        """
+        Construct a Form of terms with the
+        consent answers added as initial.
+
+        Filter terms to only those that have not been answered by the person.
+        """
+        term_ids = Consent.objects.filter(
+            archived_at=None, term__in=self.terms, person=person, term_option=None
+        ).values_list("term_id", flat=True)
+        self.terms = [term for term in self.terms if term.id in term_ids]
+        super()._build_form(person)
 
     @classmethod
     def get_terms(cls) -> Iterable[Term]:
