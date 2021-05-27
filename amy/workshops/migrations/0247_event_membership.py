@@ -39,10 +39,13 @@ def select_membership_for_events(apps, schema_editor):
         # that expires the soonest.
         if len(memberships) > 1:
             membership = memberships.order_by("agreement_end").first()
-        else:
+        elif len(memberships) == 1:
             membership = memberships[0]
+        else:
+            continue
 
         event.membership = membership
+        event.save()
 
 
 class Migration(migrations.Migration):
