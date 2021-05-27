@@ -60,12 +60,16 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         consent = self.term_id_by_consent.get(term.id, None)
         options = [(opt.id, option_display_value(opt)) for opt in term.options]
         required = term.required_type != Term.OPTIONAL_REQUIRE_TYPE
+        initial = consent.term_option_id if consent else None
+        attrs = {"class": "border border-warning"} if initial is None else {}
+
         field = forms.ChoiceField(
             choices=BLANK_CHOICE_DASH + options,
             label=term.content,
             required=required,
-            initial=consent.term_option_id if consent else None,
+            initial=initial,
             help_text=term.help_text,
+            widget=forms.Select(attrs=attrs),
         )
         return field
 
