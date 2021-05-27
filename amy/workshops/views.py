@@ -291,16 +291,14 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
             .active()
             .select_related("term", "term_option")
         )
-
+        consent_by_term_slug = {consent.term.slug: consent for consent in consents}
         context["consents"] = {
-            "May contact": consents.filter(term__slug="may-contact")[0],
-            "Consent to publish profile": consents.filter(term__slug="public-profile")[
-                0
+            "May contact": consent_by_term_slug["may-contact"],
+            "Consent to publish profile": consent_by_term_slug["public-profile"],
+            "Consent to include name when publishing lessons": consent_by_term_slug[
+                "may-publish-name"
             ],
-            "Consent to include name when publishing lessons": consents.filter(
-                term__slug="may-publish-name"
-            )[0],
-            "Privacy policy agreement": consents.filter(term__slug="privacy-policy")[0],
+            "Privacy policy agreement": consent_by_term_slug["privacy-policy"],
         }
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
