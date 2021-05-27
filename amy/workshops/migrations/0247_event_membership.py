@@ -31,7 +31,7 @@ def select_membership_for_events(apps, schema_editor):
             continue
 
         # Find memberships for selected sponsor where event start lies.
-        memberships = event.sponsor.memberships(
+        memberships = event.sponsor.memberships.filter(
             agreement_start__lte=start, agreement_end__gte=start
         )
 
