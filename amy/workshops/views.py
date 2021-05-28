@@ -52,6 +52,7 @@ from autoemails.actions import (
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from consents.forms import ActiveTermConsentsForm
+from consents.models import Consent
 from dashboard.forms import AssignmentForm
 from fiscal.models import MembershipTask
 from workshops.base_views import (
@@ -285,7 +286,20 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
 
         is_usersocialauth_in_sync = len(self.object.github_usersocialauth) > 0
         context["is_usersocialauth_in_sync"] = is_usersocialauth_in_sync
-
+        consents = (
+            Consent.objects.filter(person=self.object)
+            .active()
+            .select_related("term", "term_option")
+        )
+        consent_by_term_slug = {consent.term.slug: consent for consent in consents}
+        context["consents"] = {
+            "May contact": consent_by_term_slug["may-contact"],
+            "Consent to publish profile": consent_by_term_slug["public-profile"],
+            "Consent to include name when publishing lessons": consent_by_term_slug[
+                "may-publish-name"
+            ],
+            "Privacy policy agreement": consent_by_term_slug["privacy-policy"],
+        }
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
         return context

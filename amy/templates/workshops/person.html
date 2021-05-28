@@ -31,10 +31,9 @@
   <tr><th>Personal:</th><td id="personal">{{ person.personal|default:"—" }}</td></tr>
   <tr><th>Middle:</th><td id="middle">{{ person.middle|default:"—" }}</td></tr>
   <tr><th>Family:</th><td id="family">{{ person.family|default:"—" }}</td></tr>
-  <tr><th>May contact:</th><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
-  <tr><th>Consent to publish profile:</th><td id="publish_profile">{{ person.publish_profile|yesno }}</td></tr>
-  <tr><th>Consent to include name when publishing lessons:</th><td id="lesson_publication_consent">{{ person.get_lesson_publication_consent_display }}</td></tr>
-  <tr><th>Privacy policy agreement:</th><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
+  {% for label, consent in consents.items %}
+  <tr><th>{{ label }}:</th><td id="{{ consent.term.slug }}">{{ consent.term_option|default:"—" }}</td></tr>
+  {% endfor %}
   <tr><th>Archived timestamp:</th><td id="archived_at">{{ person.archived_at|default:"—" }}</td></tr>
   <tr><th>Email:</th><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
   <tr><th>Secondary email:</th><td id="secondary_email">{{ person.secondary_email|default:"&mdash;"|urlize }}</td></tr>
