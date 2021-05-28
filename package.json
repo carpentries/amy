@@ -1,5 +1,5 @@
 {
-  "name": "AMY",
+  "name": "amy",
   "version": "v3.0.0-dev",
   "description": "A web-based workshop administration application for The Carpentries",
   "main": "index.js",
