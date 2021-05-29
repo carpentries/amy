@@ -43,6 +43,12 @@ lupa = "*"
 mkdocs = "*"
 requests-mock = "*"
 tblib = "*"
+flake8 = "*"
+mypy = "*"
+black = "*"
 
 [requires]
 python_version = "3.9"
+
+[pipenv]
+allow_prereleases = true
