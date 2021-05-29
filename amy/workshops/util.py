@@ -1,5 +1,5 @@
 # coding: utf-8
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 import csv
 import datetime
 from functools import wraps
@@ -7,46 +7,33 @@ from hashlib import sha1
 from itertools import chain
 import logging
 import re
-from typing import Optional, Union, Tuple
+from typing import Optional, Union
 
-import requests
-import yaml
-from django.contrib.auth.decorators import (
-    user_passes_test,
-    login_required as django_login_required,
-)
 from django.conf import settings
+from django.contrib.auth.decorators import login_required as django_login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import (
-    EmptyPage,
-    PageNotAnInteger,
-    Paginator as DjangoPaginator,
-)
+from django.core.paginator import EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator as DjangoPaginator
 from django.core.validators import ValidationError
-from django.db import IntegrityError, transaction, models
+from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.http import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.utils.http import is_safe_url
 from django_comments.models import Comment
 import django_rq
+import requests
+import yaml
 
 from autoemails.actions import NewInstructorAction, NewSupportingInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from dashboard.models import Criterium
-from workshops.models import (
-    Event,
-    Role,
-    Person,
-    Task,
-    Badge,
-    STR_MED,
-    STR_LONG,
-)
+from workshops.models import STR_LONG, STR_MED, Badge, Event, Person, Role, Task
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -491,7 +478,8 @@ def update_manual_score(cleaned_data):
                 score_manual = item["score_manual"]
                 score_notes = item["score_notes"]
                 records += TrainingRequest.objects.filter(pk=obj.pk).update(
-                    score_manual=score_manual, score_notes=score_notes,
+                    score_manual=score_manual,
+                    score_notes=score_notes,
                 )
             except (IntegrityError, ValueError, TypeError, ObjectDoesNotExist) as e:
                 raise e
@@ -566,12 +554,16 @@ class Paginator(DjangoPaginator):
 
         L = items[0:5]
 
+        four_after_index = index + 4
+        one_after_index = index + 1
         if index - 3 == 5:
             # Fix when two sets, L_s and M_s, are disjoint but make a sequence
             # [... 3 4, 5 6 ...], then there should not be dots between them
-            M = items[index - 4:index + 4] or items[0:index + 1]
+            four_before_index = index - 4
+            M = items[four_before_index:four_after_index] or items[0:one_after_index]
         else:
-            M = items[index - 3:index + 4] or items[0:index + 1]
+            three_before_index = index - 3
+            M = items[three_before_index:four_after_index] or items[0:one_after_index]
 
         if index + 4 == length - 5:
             # Fix when two sets, M_s and R_s, are disjoint but make a sequence
@@ -676,14 +668,18 @@ def fetch_workshop_metadata(event_url, timeout=5):
     return metadata
 
 
-class WrongWorkshopURL(ValueError):
+class WrongWorkshopURL(Exception):
     """Raised when we fall back to reading metadata from event's YAML front
     matter, which requires a link to GitHub raw hosted file, but we can't get
-    that link because provided URL doesn't match Event.WEBSITE_REGEX
+    that link because provided URL doesn't match Event.WEBSITE_REGEX or Event.REPO_REGEX
     (see `generate_url_to_event_index` below)."""
 
-    def __str__(self):
-        return "Event's URL doesn't match Github website or repo format."
+    def __init__(self, msg: str):
+        # Store the error message in class field so that it can be retrieved later.
+        # This circumvents CodeQL error when the exception instance `e` was stringified
+        # `str(e)` - now the code addresses `e.msg` directly.
+        self.msg = msg
+        super().__init__()
 
 
 def generate_url_to_event_index(website_url):
@@ -695,7 +691,7 @@ def generate_url_to_event_index(website_url):
         results = regex.match(website_url)
         if results:
             return template.format(**results.groupdict()), results.group("repo")
-    raise WrongWorkshopURL()
+    raise WrongWorkshopURL("URL doesn't match Github website or repo format.")
 
 
 def find_workshop_YAML_metadata(content):
@@ -825,7 +821,8 @@ def validate_workshop_metadata(metadata):
     warnings = []
 
     Requirement = namedtuple(
-        "Requirement", ["name", "display", "required", "match_format"],
+        "Requirement",
+        ["name", "display", "required", "match_format"],
     )
 
     DATE_FMT = r"^\d{4}-\d{2}-\d{2}$"
@@ -1135,7 +1132,8 @@ def merge_objects(
                 # WARNING: sequence of operations is important here!
                 comments_b.update(is_removed=True)
                 comments_a.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
 
             elif value == "obj_b":
@@ -1144,17 +1142,20 @@ def merge_objects(
                 # WARNING: sequence of operations is important here!
                 comments_a.update(is_removed=True)
                 comments_b.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
 
             elif value == "combine":
                 # we're making comments from either of the objects point to
                 # the new base object
                 comments_a.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
                 comments_b.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
 
         merging_obj.delete()
@@ -1211,7 +1212,7 @@ def redirect_with_next_support(request, *args, **kwargs):
     """Works in the same way as `redirect` except when there is GET parameter
     named "next". In that case, user is redirected to the URL from that
     parameter. If you have a class-based view, use RedirectSupportMixin that
-    does the same. """
+    does the same."""
 
     next_url = request.GET.get("next", None)
     if next_url is not None and is_safe_url(
@@ -1257,7 +1258,11 @@ def choice_field_with_other(choices, default, verbose_name=None, help_text=None)
         default=default,
     )
     other_field = models.CharField(
-        max_length=STR_LONG, verbose_name=" ", null=False, blank=True, default="",
+        max_length=STR_LONG,
+        verbose_name=" ",
+        null=False,
+        blank=True,
+        default="",
     )
     return field, other_field
 

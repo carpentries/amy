@@ -2,6 +2,7 @@
 
 {% load links %}
 {% load revisions %}
+{% load dates %}
 
 {% block content %}
 {% last_modified person %}
@@ -30,10 +31,10 @@
   <tr><th>Personal:</th><td id="personal">{{ person.personal|default:"—" }}</td></tr>
   <tr><th>Middle:</th><td id="middle">{{ person.middle|default:"—" }}</td></tr>
   <tr><th>Family:</th><td id="family">{{ person.family|default:"—" }}</td></tr>
-  <tr><th>May contact:</th><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
-  <tr><th>Consent to publish profile:</th><td id="publish_profile">{{ person.publish_profile|yesno }}</td></tr>
-  <tr><th>Consent to include name when publishing lessons:</th><td id="lesson_publication_consent">{{ person.get_lesson_publication_consent_display }}</td></tr>
-  <tr><th>Privacy policy agreement:</th><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
+  {% for label, consent in consents.items %}
+  <tr><th>{{ label }}:</th><td id="{{ consent.term.slug }}">{{ consent.term_option|default:"—" }}</td></tr>
+  {% endfor %}
+  <tr><th>Archived timestamp:</th><td id="archived_at">{{ person.archived_at|default:"—" }}</td></tr>
   <tr><th>Email:</th><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
   <tr><th>Secondary email:</th><td id="secondary_email">{{ person.secondary_email|default:"&mdash;"|urlize }}</td></tr>
   <tr><th>Gender:</th><td id="gender">{{ person.get_gender_display }}{{ person.gender_other }}</td></tr>
@@ -178,6 +179,28 @@
     <th>Instructor Training progress:</th>
     <td>{% include "includes/training_progresses_inline.html" with person=person %}</td>
   </tr>
+  <tr>
+    <th>Membership roles:</th>
+    <td>
+      {% with membership_tasks=person.membershiptask_set.all %}
+      {% if membership_tasks %}
+      <table class="table table-sm">
+        <tr><th>Role</th><th>Membership</th><th>Dates</th><th>Consortium?</th></tr>
+        {% for task in membership_tasks %}
+        <tr>
+          <td>{{ task.role }}</td>
+          <td><a href="{{ task.membership.get_absolute_url }}">{{ task.membership.name }}</a></td>
+          <td>{% human_daterange task.membership.agreement_start task.membership.agreement_end %}</td>
+          <td>{{ task.membership.consortium|yesno }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No related membership roles.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
 </table>
 
 <div class="edit-object">
@@ -202,11 +225,21 @@
     To ensure that the form-button is a part of the btn-group,
     add css class "btn-group" to the form tag.
     {% endcomment %}
+    <form 
+      class="btn-group" 
+      action="{% url 'person_archive' person_id=person.pk %}" 
+      onsubmit='return confirm("Are you sure you wish to archive \"{{ person }}\"? All personaly identifiable information will be PERMANENTLY DELETED and the user will no longer be able to log in.")' 
+      method="POST"
+    >
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Archive person</button>
+    </form>
     <form class="btn-group" action="{% url 'person_delete' person.pk %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ person }}\"?")' method="POST">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger">Delete person</button>
     </form>
     {% else %}
+    <button class="btn btn-danger disabled">Archive person</button>
     <button class="btn btn-danger disabled">Delete person</button>
     {% endif %}
   </div>

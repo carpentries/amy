@@ -1,18 +1,18 @@
-from django_select2.forms import (
-    Select2Widget as DS2_Select2Widget,
-    Select2MultipleWidget as DS2_Select2MultipleWidget,
-    ModelSelect2Widget as DS2_ModelSelect2Widget,
-    ModelSelect2MultipleWidget as DS2_ModelSelect2MultipleWidget,
-    Select2TagWidget as DS2_Select2TagWidget,
-)
-from django.core.validators import RegexValidator, MaxLengthValidator
-from django.db import models
 from django import forms
+from django.core.validators import MaxLengthValidator, RegexValidator
+from django.db import models
 from django.utils.safestring import mark_safe
+from django_select2.forms import (
+    ModelSelect2MultipleWidget as DS2_ModelSelect2MultipleWidget,
+)
+from django_select2.forms import ModelSelect2Widget as DS2_ModelSelect2Widget
+from django_select2.forms import Select2MultipleWidget as DS2_Select2MultipleWidget
+from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
+from django_select2.forms import Select2Widget as DS2_Select2Widget
 
-
-GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(39,
-    message='Maximum allowed username length is 39 characters.',
+GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(
+    39,
+    message="Maximum allowed username length is 39 characters.",
 )
 # according to https://stackoverflow.com/q/30281026,
 # GH username can only contain alphanumeric characters and
@@ -20,18 +20,18 @@ GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(39,
 # a hyphen, and can't be longer than 39 characters
 GHUSERNAME_REGEX_VALIDATOR = RegexValidator(
     # regex inspired by above StackOverflow thread
-    regex=r'^([a-zA-Z\d](?:-?[a-zA-Z\d])*)$',
-    message='This is not a valid GitHub username.',
+    regex=r"^([a-zA-Z\d](?:-?[a-zA-Z\d])*)$",
+    message="This is not a valid GitHub username.",
 )
 
 
 class NullableGithubUsernameField(models.CharField):
     def __init__(self, **kwargs):
-        kwargs.setdefault('null', True)
-        kwargs.setdefault('blank', True)
-        kwargs.setdefault('default', '')
+        kwargs.setdefault("null", True)
+        kwargs.setdefault("blank", True)
+        kwargs.setdefault("default", "")
         # max length of the GH username is 39 characters
-        kwargs.setdefault('max_length', 39)
+        kwargs.setdefault("max_length", 39)
         super().__init__(**kwargs)
 
     default_validators = [
@@ -40,14 +40,15 @@ class NullableGithubUsernameField(models.CharField):
     ]
 
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
+
 
 class FakeRequiredMixin:
     def __init__(self, *args, **kwargs):
         # Intercept "fake_required" attribute that's used for marking field
         # with "*" (asterisk) even though it's not required.
         # Additionally `fake_required` doesn't trigger any validation.
-        self.fake_required = kwargs.pop('fake_required', False)
+        self.fake_required = kwargs.pop("fake_required", False)
         super().__init__(*args, **kwargs)
 
 
@@ -87,6 +88,7 @@ class RadioSelectFakeMultiple(FakeRequiredMixin, forms.RadioSelect):
     """Pretend to be a radio-select with multiple selection possible. This
     is intended to 'fool' Django into thinking that user selected 1 item on
     a multi-select item list."""
+
     allow_multiple_selected = True
 
 
@@ -99,8 +101,9 @@ class SafeModelChoiceField(SafeLabelFromInstanceMixin, forms.ModelChoiceField):
     pass
 
 
-class SafeModelMultipleChoiceField(SafeLabelFromInstanceMixin,
-                                   forms.ModelMultipleChoiceField):
+class SafeModelMultipleChoiceField(
+    SafeLabelFromInstanceMixin, forms.ModelMultipleChoiceField
+):
     pass
 
 
@@ -111,18 +114,20 @@ class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
         # popover by clicking will automatically select the clicked item)
         data = (
             '<a tabindex="0" role="button" data-toggle="tooltip" '
-            'data-placement="top" title="{description}">{obj}</a>'
-            .format(obj=obj, description=obj.description)
+            'data-placement="top" title="{description}">{obj}</a>'.format(
+                obj=obj, description=obj.description
+            )
         )
         return super().label_from_instance(data)
 
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
+
 
 class Select2BootstrapMixin:
     def build_attrs(self, *args, **kwargs):
         attrs = super().build_attrs(*args, **kwargs)
-        attrs.setdefault('data-theme', 'bootstrap4')
+        attrs.setdefault("data-theme", "bootstrap4")
         return attrs
 
 
@@ -131,13 +136,12 @@ class Select2NoMinimumInputLength:
         # Let's set up the minimum input length first!
         # It will overwrite `setdefault('data-minimum-input-length')` from
         # other mixins.
-        self.attrs.setdefault('data-minimum-input-length', 0)
+        self.attrs.setdefault("data-minimum-input-length", 0)
         attrs = super().build_attrs(*args, **kwargs)
         return attrs
 
 
-class Select2Widget(FakeRequiredMixin, Select2BootstrapMixin,
-                    DS2_Select2Widget):
+class Select2Widget(FakeRequiredMixin, Select2BootstrapMixin, DS2_Select2Widget):
     pass
 
 
@@ -145,18 +149,19 @@ class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):
     pass
 
 
-class ModelSelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength,
-                         DS2_ModelSelect2Widget):
+class ModelSelect2Widget(
+    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2Widget
+):
     pass
 
 
-class ModelSelect2MultipleWidget(Select2BootstrapMixin,
-                                 Select2NoMinimumInputLength,
-                                 DS2_ModelSelect2MultipleWidget):
+class ModelSelect2MultipleWidget(
+    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2MultipleWidget
+):
     pass
 
 
-TAG_SEPARATOR = ';'
+TAG_SEPARATOR = ";"
 
 
 class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
@@ -164,11 +169,11 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
         """Select2's tag attributes. By default other token separators are
         used, but we want to use "," and ";"."""
         default_attrs = {
-            'data-minimum-input-length': 1,
-            'data-tags': 'true',
-            'data-token-separators': '[",", ";"]'
+            "data-minimum-input-length": 1,
+            "data-tags": "true",
+            "data-token-separators": '[",", ";"]',
         }
-        assert TAG_SEPARATOR in default_attrs['data-token-separators']
+        assert TAG_SEPARATOR in default_attrs["data-token-separators"]
 
         default_attrs.update(base_attrs)
         return super().build_attrs(default_attrs, extra_attrs=extra_attrs)
@@ -182,13 +187,13 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
         except AttributeError:
             data_mutable = data
 
-        data_mutable.setdefault(name, '')
+        data_mutable.setdefault(name, "")
         values = super().value_from_datadict(data_mutable, files, name)
         return TAG_SEPARATOR.join(values)
 
     def optgroups(self, name, value, attrs=None):
         """Example from
-        https://django-select2.readthedocs.io/en/latest/django_select2.html#django_select2.forms.Select2TagWidget"""
+        https://django-select2.readthedocs.io/en/latest/django_select2.html#django_select2.forms.Select2TagWidget"""  # noqa
         try:
             values = value[0].split(TAG_SEPARATOR)
         except (IndexError, AttributeError):
@@ -196,7 +201,6 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
 
         selected = set(values)
         subgroup = [
-            self.create_option(name, v, v, selected, i)
-            for i, v in enumerate(values)
+            self.create_option(name, v, v, selected, i) for i, v in enumerate(values)
         ]
         return [(None, subgroup, 0)]

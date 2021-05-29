@@ -1,47 +1,48 @@
-import itertools
 from datetime import timedelta
-from random import (
-    random,
-    choice,
-    uniform,
-    sample as random_sample,
-    randint,
-)
+import itertools
+from random import choice, randint, random
+from random import sample as random_sample
+from random import uniform
+from typing import List
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
+from django.utils import timezone
 from django_countries import countries as Countries
 from faker import Faker
 from faker.providers import BaseProvider
 
+from consents.models import Consent, Term
 from extrequests.models import (
     DataVariant,
-    WorkshopInquiryRequest,
     SelfOrganisedSubmission,
+    WorkshopInquiryRequest,
 )
 from workshops.models import (
+    AcademicLevel,
     Airport,
+    Award,
+    Badge,
+    ComputingExperienceLevel,
+    Curriculum,
+    Event,
+    InfoSource,
+    KnowledgeDomain,
+    Language,
+    Lesson,
+    Member,
+    MemberRole,
+    Membership,
+    Organization,
+    Person,
+    Qualification,
     Role,
     Tag,
-    Badge,
-    Lesson,
-    Person,
-    Award,
-    Qualification,
-    Organization,
-    Event,
     Task,
-    TrainingRequirement,
     TrainingProgress,
     TrainingRequest,
-    KnowledgeDomain,
-    Membership,
-    AcademicLevel,
-    ComputingExperienceLevel,
-    Language,
-    Curriculum,
-    InfoSource,
+    TrainingRequirement,
     WorkshopRequest,
 )
 from workshops.util import create_username
@@ -80,7 +81,7 @@ class UniqueUrlProvider(BaseProvider):
 
 
 class Command(BaseCommand):
-    help = 'Add fake data to the database.'
+    help = "Add fake data to the database."
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -89,42 +90,41 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--seed', action='store', default=None,
-            help='Provide an initial seed for randomization mechanism.',
+            "--seed",
+            action="store",
+            default=None,
+            help="Provide an initial seed for randomization mechanism.",
         )
 
     def fake_airports(self):
         """Add some airports."""
         # we're not doing anything here, since data migrations already add some
         # airports
-        self.stdout.write('Generating 0 fake airports...')
+        self.stdout.write("Generating 0 fake airports...")
 
     def fake_roles(self):
         """Provide fixed roles."""
         roles = [
-            ('helper', 'Helper'),
-            ('instructor', 'Instructor'),
-            ('host', 'Workshop host'),
-            ('learner', 'Learner'),
-            ('organizer', 'Workshop organizer'),
-            ('contributor', 'Contributed to lesson materials')
+            ("helper", "Helper"),
+            ("instructor", "Instructor"),
+            ("host", "Workshop host"),
+            ("learner", "Learner"),
+            ("organizer", "Workshop organizer"),
+            ("contributor", "Contributed to lesson materials"),
         ]
 
-        self.stdout.write('Generating {} fake roles...'.format(len(roles)))
+        self.stdout.write("Generating {} fake roles...".format(len(roles)))
 
         for name, verbose_name in roles:
             Role.objects.get_or_create(
-                name=name,
-                defaults=dict(verbose_name=verbose_name)
+                name=name, defaults=dict(verbose_name=verbose_name)
             )
 
     def fake_groups(self):
         """Provide authentication groups."""
-        groups = ['administrators', 'invoicing', 'steering committee',
-                  'trainers']
+        groups = ["administrators", "invoicing", "steering committee", "trainers"]
 
-        self.stdout.write(
-            'Generating {} auth groups...'.format(len(groups)))
+        self.stdout.write("Generating {} auth groups...".format(len(groups)))
 
         for group in groups:
             Group.objects.get_or_create(name=group)
@@ -142,62 +142,103 @@ class Command(BaseCommand):
             ("TTT", 70, "Train the Trainers"),
             ("ITT", 80, "Instructor Trainer Training (Trainer Training)"),
             ("Pilot", 90, "To use for pilots of new or revamped curricula"),
-            ("for-profit", 100, "Corporate or for-profit institutions that may be paying higher fees"),
-            ("scholarship", 110, "Events that have been granted a scholarship and have fees waived"),
-            ("private-event", 120, "Workshops with this tag will not be displayed in our feeds and websites"),
-            ("cancelled", 130, "Events that were supposed to happen but due to some circumstances got cancelled"),
-            ("unresponsive", 140, "Events whose hosts and/or organizers aren't going to send attendance data"),
-            ("stalled", 150, "Events with lost contact with the host or TTT events that aren't running."),
+            (
+                "for-profit",
+                100,
+                "Corporate or for-profit institutions that may be paying higher fees",
+            ),
+            (
+                "scholarship",
+                110,
+                "Events that have been granted a scholarship and have fees waived",
+            ),
+            (
+                "private-event",
+                120,
+                "Workshops with this tag will not be displayed in our feeds and "
+                "websites",
+            ),
+            (
+                "cancelled",
+                130,
+                "Events that were supposed to happen but due to some circumstances got "
+                "cancelled",
+            ),
+            (
+                "unresponsive",
+                140,
+                "Events whose hosts and/or organizers aren't going to send attendance "
+                "data",
+            ),
+            (
+                "stalled",
+                150,
+                "Events with lost contact with the host or TTT events that aren't "
+                "running.",
+            ),
             ("LMO", 160, "Lesson Maintainer Onboarding"),
             ("LSO", 170, "Lesson Specific Onboarding"),
             ("hackathon", 180, "Event is a hackathon"),
             ("WiSE", 190, "Women in Science and Engineering"),
         ]
 
-        self.stdout.write('Generating {} fake tags...'.format(len(tags)))
+        self.stdout.write("Generating {} fake tags...".format(len(tags)))
 
         for tag, priority, details in tags:
-            Tag.objects.get_or_create(name=tag, defaults=dict(priority=priority, details=details))
+            Tag.objects.get_or_create(
+                name=tag, defaults=dict(priority=priority, details=details)
+            )
 
     def fake_badges(self):
         """Provide fixed badges."""
         badges = [
-            ('creator', 'Creator', 'Creating learning materials and other '
-                                   'content'),
-            ('swc-instructor', 'Software Carpentry Instructor',
-             'Teaching at Software Carpentry workshops or online'),
-            ('member', 'Member', 'Software Carpentry Foundation member'),
-            ('organizer', 'Organizer', 'Organizing workshops and learning '
-                                       'groups'),
-            ('dc-instructor', 'Data Carpentry Instructor',
-             'Teaching at Data Carpentry workshops or online'),
-            ('maintainer', 'Maintainer', 'Maintainer of Software or Data '
-             'Carpentry lesson'),
-            ('trainer', 'Trainer', 'Teaching instructor training workshops'),
-            ('mentor', 'Mentor', 'Mentor of Carpentry Instructors'),
-            ('mentee', 'Mentee', 'Mentee in Carpentry Mentorship Program'),
-            ('lc-instructor', 'Library Carpentry Instructor',
-             'Teaching at Library Carpentry workshops or online'),
+            ("creator", "Creator", "Creating learning materials and other " "content"),
+            (
+                "swc-instructor",
+                "Software Carpentry Instructor",
+                "Teaching at Software Carpentry workshops or online",
+            ),
+            ("member", "Member", "Software Carpentry Foundation member"),
+            ("organizer", "Organizer", "Organizing workshops and learning " "groups"),
+            (
+                "dc-instructor",
+                "Data Carpentry Instructor",
+                "Teaching at Data Carpentry workshops or online",
+            ),
+            (
+                "maintainer",
+                "Maintainer",
+                "Maintainer of Software or Data " "Carpentry lesson",
+            ),
+            ("trainer", "Trainer", "Teaching instructor training workshops"),
+            ("mentor", "Mentor", "Mentor of Carpentry Instructors"),
+            ("mentee", "Mentee", "Mentee in Carpentry Mentorship Program"),
+            (
+                "lc-instructor",
+                "Library Carpentry Instructor",
+                "Teaching at Library Carpentry workshops or online",
+            ),
         ]
 
-        self.stdout.write('Generating {} fake badges...'.format(len(badges)))
+        self.stdout.write("Generating {} fake badges...".format(len(badges)))
 
         for name, title, criteria in badges:
             Badge.objects.get_or_create(
-                name=name, defaults=dict(title=title, criteria=criteria))
+                name=name, defaults=dict(title=title, criteria=criteria)
+            )
 
     def fake_instructors(self, count=30):
-        self.stdout.write('Generating {} fake instructors...'.format(count))
+        self.stdout.write("Generating {} fake instructors...".format(count))
         for _ in range(count):
             self.fake_person(is_instructor=True)
 
     def fake_trainers(self, count=10):
-        self.stdout.write('Generating {} fake trainers...'.format(count))
+        self.stdout.write("Generating {} fake trainers...".format(count))
         for _ in range(count):
             self.fake_person(is_instructor=True, is_trainer=True)
 
     def fake_admins(self, count=10):
-        self.stdout.write('Generating {} fake admins...'.format(count))
+        self.stdout.write("Generating {} fake admins...".format(count))
         for _ in range(count):
             person = self.fake_person(is_instructor=randbool(0.5))
             person.groups.add(choice(Group.objects.all()))
@@ -206,29 +247,39 @@ class Command(BaseCommand):
             person.save()
 
     def fake_trainees(self, count=30):
-        self.stdout.write('Generating {} fake trainees (and their training '
-                          'progresses and training requests)...'.format(count))
+        self.stdout.write(
+            "Generating {} fake trainees (and their training "
+            "progresses and training requests)...".format(count)
+        )
         for _ in range(count):
             p = self.fake_person(is_instructor=randbool(0.1))
             training = choice(Event.objects.ttt())
-            Task.objects.create(person=p, event=training,
-                                role=Role.objects.get(name='learner'))
+            Task.objects.create(
+                person=p, event=training, role=Role.objects.get(name="learner")
+            )
 
             self.fake_training_request(p)
             self.fake_training_progresses(p, training)
 
     def fake_training_progresses(self, p, training):
-        trainers = Person.objects.filter(award__badge__name='trainer')
+        trainers = Person.objects.filter(award__badge__name="trainer")
         for r in TrainingRequirement.objects.all():
             if randbool(0.4):
-                if 'Homework' in r.name and randbool(0.5):
-                    state = 'n'
+                notes = ""
+                if "Homework" in r.name and randbool(0.5):
+                    state = "n"
                 else:
-                    state = 'p' if randbool(0.95) else 'f'
+                    if randbool(0.90):
+                        state = "p"
+                    elif randbool(0.50):
+                        state = "a"
+                    else:
+                        state = "f"
+                        notes = "Failed"
 
-                evaluated_by = None if state == 'n' else choice(trainers)
-                event = training if r.name == 'Training' else None
-                url = self.faker.url() if 'Homework' in r.name else None
+                evaluated_by = None if state == "n" else choice(trainers)
+                event = training if r.name == "Training" else None
+                url = self.faker.url() if "Homework" in r.name else None
                 TrainingProgress.objects.create(
                     trainee=p,
                     requirement=r,
@@ -237,64 +288,64 @@ class Command(BaseCommand):
                     discarded=randbool(0.05),
                     event=event,
                     url=url,
-                    notes='',
+                    notes=notes,
                 )
 
     def fake_training_request(self, person_or_None):
         if person_or_None is None:
-            state = 'p' if randbool(0.5) else 'd'
+            state = "p" if randbool(0.5) else "d"
             person = self.fake_person(is_instructor=False)
         else:
-            state = 'a'
+            state = "a"
             person = person_or_None
 
-        registration_code = self.faker.city() if randbool(0.1) else ''
-        occupation = choice(TrainingRequest._meta.get_field('occupation')
-                                           .choices)[0]
+        registration_code = self.faker.city() if randbool(0.1) else ""
+        occupation = choice(TrainingRequest._meta.get_field("occupation").choices)[0]
         training_completion_agreement = randbool(0.5)
-        underrepresented_choices = (
-            TrainingRequest._meta.get_field('underrepresented').choices
-        )
+        underrepresented_choices = TrainingRequest._meta.get_field(
+            "underrepresented"
+        ).choices
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
-            review_process='preapproved' if registration_code else 'open',
+            review_process="preapproved" if registration_code else "open",
             group_name=registration_code,
             personal=person.personal,
-            middle='',
+            middle="",
             family=person.family,
             email=person.email,
             github=person.github,
             occupation=occupation,
-            occupation_other=self.faker.job() if occupation == '' else '',
+            occupation_other=self.faker.job() if occupation == "" else "",
             affiliation=person.affiliation,
             location=self.faker.city(),
             country=choice(Countries)[0],
             underresourced=randbool(0.6),
-            domains_other='',
+            domains_other="",
             underrepresented=choice(underrepresented_choices)[0],
-            underrepresented_details=choice(
-                ['', self.faker.paragraph(nb_sentences=1)]
-            ),
-            nonprofit_teaching_experience='',
-            previous_training=choice(
-                TrainingRequest.PREVIOUS_TRAINING_CHOICES)[0],
-            previous_training_other='',
+            underrepresented_details=choice(["", self.faker.paragraph(nb_sentences=1)]),
+            nonprofit_teaching_experience="",
+            previous_training=choice(TrainingRequest.PREVIOUS_TRAINING_CHOICES)[0],
+            previous_training_other="",
             previous_training_explanation=self.faker.text(),
-            previous_experience=choice(
-                TrainingRequest.PREVIOUS_EXPERIENCE_CHOICES)[0],
-            previous_experience_other='',
+            previous_experience=choice(TrainingRequest.PREVIOUS_EXPERIENCE_CHOICES)[0],
+            previous_experience_other="",
             programming_language_usage_frequency=choice(
-                TrainingRequest.PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES)[0],
+                TrainingRequest.PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES
+            )[0],
             teaching_frequency_expectation=choice(
-                TrainingRequest.TEACHING_FREQUENCY_EXPECTATION_CHOICES)[0],
-            teaching_frequency_expectation_other='',
+                TrainingRequest.TEACHING_FREQUENCY_EXPECTATION_CHOICES
+            )[0],
+            teaching_frequency_expectation_other="",
             max_travelling_frequency=choice(
-                TrainingRequest.MAX_TRAVELLING_FREQUENCY_CHOICES)[0],
-            max_travelling_frequency_other='',
+                TrainingRequest.MAX_TRAVELLING_FREQUENCY_CHOICES
+            )[0],
+            max_travelling_frequency_other="",
             reason=self.faker.text(),
             training_completion_agreement=training_completion_agreement,
-            workshop_teaching_agreement=randbool(0.5) if training_completion_agreement else False,
+            workshop_teaching_agreement=randbool(0.5)
+            if training_completion_agreement
+            else False,
         )
         req.domains.set(sample(KnowledgeDomain.objects.all()))
         req.previous_involvement.set(sample(Role.objects.all()))
@@ -305,25 +356,29 @@ class Command(BaseCommand):
     def fake_person(self, *, is_instructor, is_trainer=False):
         airport = choice(Airport.objects.all())
 
-        email = choice([self.faker.email(),
-                        self.faker.safe_email(),
-                        self.faker.free_email(),
-                        self.faker.company_email()])
+        email = choice(
+            [
+                self.faker.email(),
+                self.faker.safe_email(),
+                self.faker.free_email(),
+                self.faker.company_email(),
+            ]
+        )
 
         gender = choice(Person.GENDER_CHOICES)[0]
 
-        if gender == 'F':
+        if gender == "F":
             personal_name = self.faker.first_name_female()
             family_name = self.faker.last_name_female()
-        elif gender == 'M':
+        elif gender == "M":
             personal_name = self.faker.first_name_male()
             family_name = self.faker.last_name_male()
         else:
             personal_name = self.faker.first_name()
             family_name = self.faker.last_name()
 
-        gender_other = ''
-        if gender == 'O':
+        gender_other = ""
+        if gender == "O":
             gender_other = self.faker.word().title()
 
         social_username = self.faker.user_name()
@@ -337,7 +392,7 @@ class Command(BaseCommand):
 
         github = social_username
         twitter = social_username
-        url = self.faker.url() if randbool(0.5) else ''
+        url = self.faker.url() if randbool(0.5) else ""
 
         person = Person.objects.create(
             personal=personal_name,
@@ -360,7 +415,7 @@ class Command(BaseCommand):
             awards = []
             badges = sample(Badge.objects.instructor_badges())
             for badge in badges:
-                date = self.faker.date_time_between(start_date='-5y').date()
+                date = self.faker.date_time_between(start_date="-5y").date()
                 awards.append(Award(person=person, badge=badge, awarded=date))
             Award.objects.bulk_create(awards)
 
@@ -372,15 +427,15 @@ class Command(BaseCommand):
                 )
 
         if is_trainer:
-            date = self.faker.date_time_between(start_date='-5y').date()
-            trainer = Badge.objects.get(name='trainer')
+            date = self.faker.date_time_between(start_date="-5y").date()
+            trainer = Badge.objects.get(name="trainer")
             Award.objects.create(person=person, badge=trainer, awarded=date)
 
         return person
 
     def fake_organizations(self, count=10):
         """Add some organizations that host events."""
-        self.stdout.write('Generating {} fake organizations...'.format(count))
+        self.stdout.write("Generating {} fake organizations...".format(count))
 
         for _ in range(count):
             Organization.objects.create(
@@ -391,7 +446,7 @@ class Command(BaseCommand):
 
     def real_organizations(self):
         """Add real Carpentries organizations."""
-        self.stdout.write('Adding real organizations.')
+        self.stdout.write("Adding real organizations.")
         orgs = [
             ("self-organized", "self-organized"),
             ("Software Carpentry", "software-carpentry.org"),
@@ -408,23 +463,35 @@ class Command(BaseCommand):
                 self.stdout.write('Added "{}" organization.'.format(domain))
 
     def fake_memberships(self, count=10):
-        self.stdout.write('Generating {} fake memberships...'.format(count))
+        self.stdout.write("Generating {} fake memberships...".format(count))
 
         for _ in range(count):
-            start = self.faker.date_time_between(start_date='-5y').date()
-            Membership.objects.create(
+            start = self.faker.date_time_between(start_date="-5y").date()
+            organization_count = randint(1, 4)
+            membership = Membership.objects.create(
+                name=self.faker.company(),
+                consortium=organization_count > 1,
                 variant=choice(Membership.MEMBERSHIP_CHOICES)[0],
                 agreement_start=start,
                 agreement_end=start + timedelta(days=365),
                 contribution_type=choice(Membership.CONTRIBUTION_CHOICES)[0],
                 workshops_without_admin_fee_per_agreement=randint(5, 15),
-                self_organized_workshops_per_agreement=randint(5, 15),
-                organization=choice(Organization.objects.all()),
+                public_instructor_training_seats=randint(5, 15),
+                inhouse_instructor_training_seats=randint(5, 15),
             )
+            members = [
+                Member(
+                    membership=membership,
+                    organization=choice(Organization.objects.all()),
+                    role=choice(MemberRole.objects.all()),
+                )
+                for _ in range(organization_count)
+            ]
+            Member.objects.bulk_create(members)
 
     def fake_current_events(self, count=5, **kwargs):
         """Ongoing and upcoming events."""
-        self.stdout.write('Generating {} fake current events...'.format(count))
+        self.stdout.write("Generating {} fake current events...".format(count))
 
         for _ in range(count):
             self.fake_event(future_date=True, **kwargs)
@@ -432,16 +499,14 @@ class Command(BaseCommand):
     def fake_unpublished_events(self, count=5):
         """Events with missing location data (which is required for publishing
         them)."""
-        self.stdout.write(
-            'Generating {} fake unpublished events...'.format(count))
+        self.stdout.write("Generating {} fake unpublished events...".format(count))
 
         for _ in range(count):
             self.fake_event(location_data=False)
 
     def fake_self_organized_events(self, count=5):
         """Full-blown events with 'self-organized' host."""
-        self.stdout.write(
-            'Generating {} fake self organized events...'.format(count))
+        self.stdout.write("Generating {} fake self organized events...".format(count))
 
         for _ in range(count):
             e = self.fake_event(self_organized=True)
@@ -449,26 +514,34 @@ class Command(BaseCommand):
 
     def fake_ttt_events(self, count=10):
         self.stdout.write(
-            'Generating {} fake train-the-trainer events...'.format(count))
+            "Generating {} fake train-the-trainer events...".format(count)
+        )
 
         for _ in range(count):
             e = self.fake_event()
-            e.slug += '-ttt'
-            e.tags.set([Tag.objects.get(name='TTT')])
+            e.slug += "-ttt"
+            e.tags.set([Tag.objects.get(name="TTT")])
             e.save()
 
-    def fake_event(self, *, location_data=True, self_organized=False,
-                   add_tags=True, future_date=False):
+    def fake_event(
+        self,
+        *,
+        location_data=True,
+        self_organized=False,
+        add_tags=True,
+        future_date=False,
+    ):
         if future_date:
-            start = self.faker.date_time_between(start_date='now',
-                                                 end_date='+120d').date()
+            start = self.faker.date_time_between(
+                start_date="now", end_date="+120d"
+            ).date()
         else:
-            start = self.faker.date_time_between(start_date='-120d').date()
-        city = self.faker.city().replace(' ', '-').lower()
+            start = self.faker.date_time_between(start_date="-120d").date()
+        city = self.faker.city().replace(" ", "-").lower()
         if self_organized:
-            org = Organization.objects.get(domain='self-organized')
+            org = Organization.objects.get(domain="self-organized")
         else:
-            org = choice(Organization.objects.exclude(domain='self-organized'))
+            org = choice(Organization.objects.exclude(domain="self-organized"))
 
         # The following line may result in IntegrityError from time to time,
         # because we don't guarantee that the url is unique. In that case,
@@ -476,25 +549,25 @@ class Command(BaseCommand):
         # (python manage.py fake_database). Be aware that recreating a database
         # deletes all data in the existing database!
         e = Event.objects.create(
-            slug='{:%Y-%m-%d}-{}'.format(start, city),
+            slug="{:%Y-%m-%d}-{}".format(start, city),
             start=start,
             end=start + timedelta(days=2),
             url=self.faker.unique_url(),
             host=org,
             # needed in order for event to be published
             country=choice(Countries)[0] if location_data else None,
-            venue=self.faker.word().title() if location_data else '',
-            address=self.faker.street_address() if location_data else '',
+            venue=self.faker.word().title() if location_data else "",
+            address=self.faker.street_address() if location_data else "",
             latitude=uniform(-90, 90) if location_data else None,
             longitude=uniform(0, 180) if location_data else None,
             metadata_changed=randbool(0.1),
         )
         if add_tags:
-            e.tags.set(sample(Tag.objects.exclude(name='TTT'), 2))
+            e.tags.set(sample(Tag.objects.exclude(name="TTT"), 2))
         return e
 
     def fake_tasks(self, count=120):
-        self.stdout.write('Generating {} fake tasks...'.format(count))
+        self.stdout.write("Generating {} fake tasks...".format(count))
 
         events = Event.objects.all()
         persons = Person.objects.all()
@@ -506,24 +579,27 @@ class Command(BaseCommand):
                 event=event,
                 person=person,
                 role=role,
-                title=(self.faker.sentence(nb_words=4, variable_nb_words=True)
-                       if randbool(0.2) else ''),
-                url=self.faker.url() if randbool(0.2) else '',
+                title=(
+                    self.faker.sentence(nb_words=4, variable_nb_words=True)
+                    if randbool(0.2)
+                    else ""
+                ),
+                url=self.faker.url() if randbool(0.2) else "",
             )
 
     def fake_unmatched_training_requests(self, count=20):
-        self.stdout.write('Generating {} fake unmatched '
-                          'training requests...'.format(count))
+        self.stdout.write(
+            "Generating {} fake unmatched " "training requests...".format(count)
+        )
 
         for _ in range(count):
             self.fake_training_request(None)
 
     def fake_duplicated_people(self, count=5):
-        self.stdout.write('Generating {} fake '
-                          'people duplications...'.format(count))
+        self.stdout.write("Generating {} fake " "people duplications...".format(count))
 
         for _ in range(count):
-            p = Person.objects.order_by('?').first()
+            p = Person.objects.order_by("?").first()
             p.id = None
 
             # avoid integrity errors due to unique constraints
@@ -535,102 +611,84 @@ class Command(BaseCommand):
             p.save()
 
     def fake_workshop_requests(self, count=10):
-        self.stdout.write('Generating {} fake '
-                          'workshop requests...'.format(count))
+        self.stdout.write("Generating {} fake " "workshop requests...".format(count))
 
         curricula = Curriculum.objects.filter(active=True)
         organizations = Organization.objects.all()
 
         for _ in range(count):
             if randbool(0.5):
-                language = Language.objects.get(subtag='en')
+                language = Language.objects.get(subtag="en")
             else:
                 language = choice(Language.objects.all())
 
             if randbool(0.3):
                 org = choice(organizations)
-                org_name = ''
-                org_url = ''
+                org_name = ""
+                org_url = ""
             else:
                 org = None
                 org_name = self.faker.company()
                 org_url = self.faker.url()
 
-
-
             public_event = choice(WorkshopRequest.PUBLIC_EVENT_CHOICES)[0]
             public_event_other = (
-                self.faker.sentence() if public_event == 'other'
-                else ""
+                self.faker.sentence() if public_event == "other" else ""
             )
 
-            online_inperson = choice(
-                WorkshopRequest.ONLINE_INPERSON_CHOICES)[0]
+            online_inperson = choice(WorkshopRequest.ONLINE_INPERSON_CHOICES)[0]
 
             administrative_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
             scholarship_circumstances = (
-                self.faker.sentence() if administrative_fee == 'waiver'
-                else ""
+                self.faker.sentence() if administrative_fee == "waiver" else ""
             )
             travel_expences_management = choice(
-                WorkshopRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
+                WorkshopRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES
+            )[0]
             travel_expences_management_other = (
-                self.faker.sentence() if travel_expences_management == ''
-                else ""
+                self.faker.sentence() if travel_expences_management == "" else ""
             )
-            institution_restrictions = choice(
-                WorkshopRequest.RESTRICTION_CHOICES)[0]
+            institution_restrictions = choice(WorkshopRequest.RESTRICTION_CHOICES)[0]
             institution_restrictions_other = (
-                self.faker.sentence() if institution_restrictions == ''
-                else ""
+                self.faker.sentence() if institution_restrictions == "" else ""
             )
 
             req = WorkshopRequest.objects.create(
-                state=choice(['p', 'd', 'a']),
+                state=choice(["p", "d", "a"]),
                 data_privacy_agreement=randbool(0.5),
                 code_of_conduct_agreement=randbool(0.5),
                 host_responsibilities=randbool(0.5),
-
                 personal=self.faker.first_name(),
                 family=self.faker.last_name(),
                 email=self.faker.email(),
-
                 institution=org,
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
-                institution_department='',
-
+                institution_department="",
                 online_inperson=online_inperson,
-
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>;'  # use ";" as separator
-                    'Another Person <person@example.com>'
+                    "Test Person <email@email.com>;"  # use ";" as separator
+                    "Another Person <person@example.com>"
                 ),
-
                 location=self.faker.city(),
                 country=choice(Countries)[0],
-
                 preferred_dates=self.faker.date_time_between(
-                    start_date='now', end_date='+1y').date(),
-                other_preferred_dates='Alternatively: soon',
-
+                    start_date="now", end_date="+1y"
+                ).date(),
+                other_preferred_dates="Alternatively: soon",
                 language=language,
-                number_attendees=choice(
-                    WorkshopRequest.ATTENDEES_NUMBER_CHOICES)[0],
+                number_attendees=choice(WorkshopRequest.ATTENDEES_NUMBER_CHOICES)[0],
                 audience_description=self.faker.sentence(),
-
                 administrative_fee=administrative_fee,
                 scholarship_circumstances=scholarship_circumstances,
                 travel_expences_agreement=True,
                 travel_expences_management=travel_expences_management,
                 travel_expences_management_other=travel_expences_management_other,
-
                 institution_restrictions=institution_restrictions,
                 institution_restrictions_other=institution_restrictions_other,
-
-                carpentries_info_source_other='',
+                carpentries_info_source_other="",
                 user_notes=self.faker.sentence(),
             )
 
@@ -639,100 +697,86 @@ class Command(BaseCommand):
             req.save()
 
     def fake_workshop_inquiries(self, count=10):
-        self.stdout.write('Generating {} fake '
-                          'workshop inquiries...'.format(count))
+        self.stdout.write("Generating {} fake " "workshop inquiries...".format(count))
 
         curricula = Curriculum.objects.filter(active=True)
         organizations = Organization.objects.all()
 
         for _ in range(count):
             if randbool(0.5):
-                language = Language.objects.get(subtag='en')
+                language = Language.objects.get(subtag="en")
             else:
                 language = choice(Language.objects.all())
 
             if randbool(0.3):
                 org = choice(organizations)
-                org_name = ''
-                org_url = ''
+                org_name = ""
+                org_url = ""
             else:
                 org = None
                 org_name = self.faker.company()
                 org_url = self.faker.url()
 
-            public_event = choice(
-                WorkshopInquiryRequest.PUBLIC_EVENT_CHOICES)[0]
+            public_event = choice(WorkshopInquiryRequest.PUBLIC_EVENT_CHOICES)[0]
             public_event_other = (
-                self.faker.sentence() if public_event == 'other'
-                else ""
+                self.faker.sentence() if public_event == "other" else ""
             )
 
-            online_inperson = choice(
-                WorkshopInquiryRequest.ONLINE_INPERSON_CHOICES)[0]
+            online_inperson = choice(WorkshopInquiryRequest.ONLINE_INPERSON_CHOICES)[0]
 
             administrative_fee = choice(WorkshopInquiryRequest.FEE_CHOICES)[0]
             travel_expences_management = choice(
-                WorkshopInquiryRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
+                WorkshopInquiryRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES
+            )[0]
             travel_expences_management_other = (
-                self.faker.sentence() if travel_expences_management == ''
-                else ""
+                self.faker.sentence() if travel_expences_management == "" else ""
             )
             institution_restrictions = choice(
-                WorkshopInquiryRequest.RESTRICTION_CHOICES)[0]
+                WorkshopInquiryRequest.RESTRICTION_CHOICES
+            )[0]
             institution_restrictions_other = (
-                self.faker.sentence() if institution_restrictions == ''
-                else ""
+                self.faker.sentence() if institution_restrictions == "" else ""
             )
 
             req = WorkshopInquiryRequest.objects.create(
-                state=choice(['p', 'd', 'a']),
+                state=choice(["p", "d", "a"]),
                 data_privacy_agreement=randbool(0.5),
                 code_of_conduct_agreement=randbool(0.5),
                 host_responsibilities=randbool(0.5),
-
                 personal=self.faker.first_name(),
                 family=self.faker.last_name(),
                 email=self.faker.email(),
-
                 institution=org,
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
-                institution_department='',
-
+                institution_department="",
                 online_inperson=online_inperson,
-
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>;'  # use ";" as separator
-                    'Another Person <person@example.com>'
+                    "Test Person <email@email.com>;"  # use ";" as separator
+                    "Another Person <person@example.com>"
                 ),
-
                 location=self.faker.city(),
                 country=choice(Countries)[0],
-
-                routine_data_other='',
-                domains_other='',
-
+                routine_data_other="",
+                domains_other="",
                 audience_description=self.faker.sentence(),
-
                 preferred_dates=self.faker.date_time_between(
-                    start_date='now', end_date='+1y').date(),
-                other_preferred_dates='Alternatively: soon',
-
+                    start_date="now", end_date="+1y"
+                ).date(),
+                other_preferred_dates="Alternatively: soon",
                 language=language,
                 number_attendees=choice(
-                    WorkshopInquiryRequest.ATTENDEES_NUMBER_CHOICES)[0],
-
+                    WorkshopInquiryRequest.ATTENDEES_NUMBER_CHOICES
+                )[0],
                 administrative_fee=administrative_fee,
                 travel_expences_agreement=True,
                 travel_expences_management=travel_expences_management,
                 travel_expences_management_other=travel_expences_management_other,
-
                 institution_restrictions=institution_restrictions,
                 institution_restrictions_other=institution_restrictions_other,
-
-                carpentries_info_source_other='',
+                carpentries_info_source_other="",
                 user_notes=self.faker.sentence(),
             )
 
@@ -745,92 +789,103 @@ class Command(BaseCommand):
             req.save()
 
     def fake_selforganised_submissions(self, count=10):
-        self.stdout.write('Generating {} fake '
-                          'self-organised submissions...'.format(count))
+        self.stdout.write(
+            "Generating {} fake " "self-organised submissions...".format(count)
+        )
 
         curricula = Curriculum.objects.filter(active=True)
         organizations = Organization.objects.all()
 
         for _ in range(count):
             if randbool(0.5):
-                language = Language.objects.get(subtag='en')
+                language = Language.objects.get(subtag="en")
             else:
                 language = choice(Language.objects.all())
 
             if randbool(0.3):
                 org = choice(organizations)
-                org_name = ''
-                org_url = ''
+                org_name = ""
+                org_url = ""
             else:
                 org = None
                 org_name = self.faker.company()
                 org_url = self.faker.url()
 
-            public_event = choice(
-                SelfOrganisedSubmission.PUBLIC_EVENT_CHOICES)[0]
+            public_event = choice(SelfOrganisedSubmission.PUBLIC_EVENT_CHOICES)[0]
             public_event_other = (
-                self.faker.sentence() if public_event == 'other'
-                else ""
+                self.faker.sentence() if public_event == "other" else ""
             )
 
-            online_inperson = choice(
-                SelfOrganisedSubmission.ONLINE_INPERSON_CHOICES)[0]
+            online_inperson = choice(SelfOrganisedSubmission.ONLINE_INPERSON_CHOICES)[0]
 
             workshop_format = choice(SelfOrganisedSubmission.FORMAT_CHOICES)[0]
             workshop_format_other = (
-                self.faker.sentence() if workshop_format == ''
-                else ""
+                self.faker.sentence() if workshop_format == "" else ""
             )
             if randbool(0.5):
                 workshop_types = curricula.filter(mix_match=True)
-                workshop_types_explain = "\n".join([
-                    str(lesson) for lesson in Lesson.objects.order_by("?")[:10]
-                ])
+                workshop_types_explain = "\n".join(
+                    [str(lesson) for lesson in Lesson.objects.order_by("?")[:10]]
+                )
             else:
                 workshop_types = sample(curricula)
                 workshop_types_explain = ""
 
             req = SelfOrganisedSubmission.objects.create(
-                state=choice(['p', 'd', 'a']),
+                state=choice(["p", "d", "a"]),
                 data_privacy_agreement=randbool(0.5),
                 code_of_conduct_agreement=randbool(0.5),
                 host_responsibilities=randbool(0.5),
-
                 personal=self.faker.first_name(),
                 family=self.faker.last_name(),
                 email=self.faker.email(),
-
                 institution=org,
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
-                institution_department='',
-
+                institution_department="",
                 online_inperson=online_inperson,
-
-
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>;'  # use ";" as separator
-                    'Another Person <person@example.com>'
+                    "Test Person <email@email.com>;"  # use ";" as separator
+                    "Another Person <person@example.com>"
                 ),
-
                 workshop_url=self.faker.url(),
                 workshop_format=workshop_format,
                 workshop_format_other=workshop_format_other,
-                workshop_types_other='',
+                workshop_types_other="",
                 workshop_types_other_explain=workshop_types_explain,
-
                 language=language,
             )
 
             req.workshop_types.set(workshop_types)
             req.save()
 
+    def fake_consents(self):
+        terms = Term.objects.active().prefetch_active_options()
+        count = Person.objects.all().count() * len(
+            terms
+        )  # all persons * number of consents generated
+        self.stdout.write("Generating {} fake consents...".format(count))
+
+        consents: List[Consent] = []
+        people = Person.objects.all()
+        for person in people:
+            for term in terms:
+                consents.append(
+                    Consent(person=person, term_option=choice(term.options), term=term)
+                )
+        # Archive unset old consents before adding new ones
+        Consent.objects.filter(
+            person__in=people,
+            term__in=terms,
+        ).active().update(archived_at=timezone.now())
+        Consent.objects.bulk_create(consents)
+
     def handle(self, *args, **options):
-        seed = options['seed']
+        seed = options["seed"]
         if seed is not None:
-            self.faker.seed(seed)
+            Faker.seed(seed)
 
         try:
             self.fake_groups()
@@ -855,6 +910,7 @@ class Command(BaseCommand):
             self.fake_workshop_requests()
             self.fake_workshop_inquiries()
             self.fake_selforganised_submissions()
+            self.fake_consents()
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")

@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 
-from workshops.tests.base import TestBase
 from workshops.fields import NullableGithubUsernameField, Select2TagWidget
+from workshops.tests.base import TestBase
 
 
 class TestNullableGHUsernameField(TestBase):
@@ -50,7 +50,14 @@ class TestSelect2TagWidget(TestBase):
         # correct input (1 value)
         option1 = self.widget.create_option("name", "Harry", "Harry", set(["Harry"]), 0)
         self.assertEqual(
-            self.widget.optgroups("name", ["Harry"]), [(None, [option1], 0,)],
+            self.widget.optgroups("name", ["Harry"]),
+            [
+                (
+                    None,
+                    [option1],
+                    0,
+                )
+            ],
         )
 
         # correct input (2 values)
@@ -62,5 +69,11 @@ class TestSelect2TagWidget(TestBase):
         )
         self.assertEqual(
             self.widget.optgroups("name", ["Harry;Ron"]),
-            [(None, [option1, option2], 0,)],
+            [
+                (
+                    None,
+                    [option1, option2],
+                    0,
+                )
+            ],
         )

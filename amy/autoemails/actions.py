@@ -1,21 +1,18 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 import logging
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
-from django.template.exceptions import (
-    TemplateSyntaxError,
-    TemplateDoesNotExist,
-)
+from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 import django_rq
 
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from autoemails.utils import compare_emails
+from consents.models import Term
 from workshops.fields import TAG_SEPARATOR
-from workshops.models import Event, Task, Person
-
+from workshops.models import Event, Person, Task
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -257,10 +254,7 @@ class NewInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import (
-            human_daterange,
-            match_notification_email,
-        )
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -342,10 +336,7 @@ class NewSupportingInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import (
-            human_daterange,
-            match_notification_email,
-        )
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -516,9 +507,7 @@ class PostWorkshopAction(BaseAction):
             Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
         )
         context["hosts"] = list(
-            Person.objects.filter(
-                task__in=event.task_set.filter(role__name="host")
-            )
+            Person.objects.filter(task__in=event.task_set.filter(role__name="host"))
         )
 
         # querying over Person.objects lets us get rid of duplicates
@@ -615,7 +604,7 @@ class SelfOrganisedRequestAction(BaseAction):
             return False
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event and request
         event = objects["event"]
@@ -734,7 +723,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -888,7 +877,7 @@ class AskForWebsiteAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -1022,7 +1011,7 @@ class RecruitHelpersAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # refresh related event
         event = objects["event"]
@@ -1086,7 +1075,7 @@ class GenericAction(BaseAction):
             return ""
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import human_daterange, match_notification_email
 
         # prepare context
         context = dict()
@@ -1135,3 +1124,54 @@ class GenericAction(BaseAction):
             )
 
         return context
+
+
+class NewConsentRequiredAction(BaseAction):
+    """
+    Action for asking users to consent to newly required terms. This email
+    should be sent when a new required Term is created.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='consent-required')
+    >>> for trigger in triggers:
+    ...     action = NewConsentRequiredAction(
+    ...         trigger=trigger,
+    ...         objects=dict(terms=terms),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def get_launch_at(self):
+        return self.launch_at
+
+    def recipients(self) -> Optional[str]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context["all_emails"]
+        except (AttributeError, KeyError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            person_email = self.context_objects["person_email"]
+            return person_email
+        except (KeyError, AttributeError):
+            return ""
+
+    @staticmethod
+    def check(term: Term):
+        """Conditions for creating a NewConsentRequiredAction."""
+        return (
+            term.archived_at is None
+            and term.required_type != Term.OPTIONAL_REQUIRE_TYPE
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        return dict()

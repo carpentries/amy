@@ -36,6 +36,15 @@ class CreatedUpdatedMixin(models.Model):
         abstract = True
 
 
+class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
+    """This mixin adds an archived timestamp to the CreatedUpdatedMixin."""
+
+    archived_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+
 class DataPrivacyAgreementMixin(models.Model):
     """This mixin provides a data privacy agreement. Instead of being in the
     forms only (as a additional and required input), we're switching to having
@@ -100,8 +109,8 @@ class InstructorAvailabilityMixin(models.Model):
         blank=True,  # special condition check in the form
         default=False,
         verbose_name="I understand that if my workshop is less than two months away,"
-                     " The Carpentries can not guarantee availability of Instructors"
-                     " and I may not be able to hold my workshop as scheduled.",
+        " The Carpentries can not guarantee availability of Instructors"
+        " and I may not be able to hold my workshop as scheduled.",
     )
 
     class Meta:
@@ -149,6 +158,27 @@ class StateMixin(models.Model):
         return self.state == "p"
 
 
+class StateExtendedMixin(models.Model):
+    """State field with representation of 'Withdrawn' state, for now only used in
+    TrainingRequest.
+
+    This was rewritten instead of inherited from `StateMixin` - there were some
+    issues with `get_state_display` method for "withdrawn" state."""
+
+    STATE_CHOICES = StateMixin.STATE_CHOICES + (("w", "Withdrawn"),)
+
+    state = models.CharField(
+        max_length=1, choices=STATE_CHOICES, null=False, blank=False, default="p"
+    )
+
+    class Meta:
+        abstract = True
+
+    @property
+    def active(self):
+        return self.state == "p"
+
+
 class GenderMixin(models.Model):
     """Gender mixin for including gender fields in various models."""
 
@@ -173,7 +203,10 @@ class GenderMixin(models.Model):
         default=UNDISCLOSED,
     )
     gender_other = models.CharField(
-        max_length=100, verbose_name="Other gender", blank=True, null=False,
+        max_length=100,
+        verbose_name="Other gender",
+        blank=True,
+        null=False,
     )
 
     class Meta:

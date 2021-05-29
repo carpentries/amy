@@ -1,18 +1,17 @@
 from django.contrib import messages
 from django.urls import reverse
 from django.utils.html import format_html
+from django_rq.queues import DjangoScheduler
 from rq.exceptions import NoSuchJobError
 
+from autoemails.models import Trigger
+
 from .job import Job
-from .utils import (
-    check_status,
-    scheduled_execution_time,
-)
+from .utils import check_status, scheduled_execution_time
 
 
 class ActionManageMixin:
-    """Mixin used for adding/removing Actions related to an object.
-    """
+    """Mixin used for adding/removing Actions related to an object."""
 
     def get_logger(self):
         raise NotImplementedError()
@@ -96,12 +95,12 @@ class ActionManageMixin:
                 messages.info(
                     request,
                     format_html(
-                        'New email ({}) was scheduled to run '
+                        "New email ({}) was scheduled to run "
                         '<relative-time datetime="{}">{}</relative-time>: '
                         '<a href="{}">{}</a>.',
                         trigger.get_action_display(),
                         scheduled_at.isoformat(),
-                        '{:%Y-%m-%d %H:%M}'.format(scheduled_at),
+                        "{:%Y-%m-%d %H:%M}".format(scheduled_at),
                         reverse("admin:autoemails_rqjob_preview", args=[rqj.pk]),
                         job.id,
                     ),
@@ -111,8 +110,36 @@ class ActionManageMixin:
         return created_jobs, created_rqjobs
 
     @staticmethod
+    def bulk_schedule_message(
+        request, num_emails: int, trigger: Trigger, job: Job, scheduler: DjangoScheduler
+    ) -> None:
+        scheduled_at = scheduled_execution_time(
+            job.get_id(), scheduler=scheduler, naive=False
+        )
+        messages.info(
+            request,
+            format_html(
+                "{} New emails ({}) were scheduled to run "
+                '<relative-time datetime="{}">{}</relative-time>: '
+                '<a href="{}">Autoemails RQJobs</a>.',
+                num_emails,
+                trigger.get_action_display(),
+                scheduled_at.isoformat(),
+                "{:%Y-%m-%d %H:%M}".format(scheduled_at),
+                reverse("admin:autoemails_rqjob_changelist"),
+            ),
+            fail_silently=True,
+        )
+
+    @staticmethod
     def remove(
-        action_class, logger, scheduler, connection, jobs, object_, request=None,
+        action_class,
+        logger,
+        scheduler,
+        connection,
+        jobs,
+        object_,
+        request=None,
     ):
         Action = action_class
         action_name = Action.__name__

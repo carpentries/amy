@@ -1,13 +1,13 @@
-from django.urls import path, include
-from rest_framework_nested import routers
+from django.urls import include, path
 from rest_framework.urlpatterns import format_suffix_patterns
+from rest_framework_nested import routers
 
 from api import views
 
 app_name = 'api'
 
 # routers generate URLs for methods like `.list` or `.retrieve`
-router = routers.SimpleRouter()
+router = routers.SimpleRouter(trailing_slash=False)
 router.register('persons', views.PersonViewSet)
 awards_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
 awards_router.register('awards', views.AwardViewSet, basename='person-awards')
@@ -15,6 +15,8 @@ person_task_router = routers.NestedSimpleRouter(router, 'persons',
                                                 lookup='person')
 person_task_router.register('tasks', views.PersonTaskViewSet,
                             basename='person-tasks')
+training_progress_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
+training_progress_router.register('trainingprogress', views.TrainingProgressViewSet, basename='person-training-progress')
 router.register('events', views.EventViewSet)
 tasks_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
 tasks_router.register('tasks', views.TaskViewSet, basename='event-tasks')
@@ -36,6 +38,7 @@ urlpatterns = [
     path('', include(awards_router.urls)),
     path('', include(person_task_router.urls)),
     path('', include(tasks_router.urls)),
+    path('', include(training_progress_router.urls)),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)  # allow to specify format

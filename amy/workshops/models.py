@@ -1,51 +1,55 @@
 import datetime
 import re
+from urllib.parse import quote
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
 )
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models import (
-    Q,
+    Case,
+    Count,
     F,
     IntegerField,
     PositiveIntegerField,
+    Q,
     Sum,
-    Case,
     When,
-    Count,
 )
 from django.db.models.functions import Greatest
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
-from django.urls import reverse, reverse_lazy
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
+from reversion.models import Version
 from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
-
 from workshops import github_auth
+from workshops.fields import NullableGithubUsernameField
 from workshops.mixins import (
     ActiveMixin,
     AssignmentMixin,
-    CreatedUpdatedMixin,
     COCAgreementMixin,
+    CreatedUpdatedArchivedMixin,
+    CreatedUpdatedMixin,
     DataPrivacyAgreementMixin,
     EventLinkMixin,
     GenderMixin,
     HostResponsibilitiesMixin,
-    SecondaryEmailMixin,
-    StateMixin,
     InstructorAvailabilityMixin,
+    SecondaryEmailMixin,
+    StateExtendedMixin,
+    StateMixin,
 )
-from workshops.fields import NullableGithubUsernameField
-
+from workshops.signals import person_archived_signal
 
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings
@@ -77,22 +81,56 @@ class Organization(models.Model):
     fullname = models.CharField(max_length=STR_LONG, unique=True)
     country = CountryField(null=True, blank=True)
 
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+
+    affiliated_organizations = models.ManyToManyField(
+        "Organization", blank=True, symmetrical=True
+    )
+
     objects = OrganizationManager()
 
     def __str__(self):
         return "{} <{}>".format(self.fullname, self.domain)
 
+    @property
+    def domain_quoted(self):
+        return quote(self.domain, safe="")
+
     def get_absolute_url(self):
-        return reverse("organization_details", args=[str(self.domain)])
+        return reverse("organization_details", args=[self.domain_quoted])
 
     class Meta:
         ordering = ("domain",)
+
+
+class MemberRole(models.Model):
+    name = models.CharField(max_length=STR_MED)
+    verbose_name = models.CharField(max_length=STR_LONG, blank=True, default="")
+
+    def __str__(self):
+        return self.verbose_name if self.verbose_name else self.name
+
+
+class Member(models.Model):
+    membership = models.ForeignKey("Membership", on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
+    role = models.ForeignKey(MemberRole, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["membership", "organization", "role"],
+                name="unique_member_role_in_membership",
+            )
+        ]
 
 
 @reversion.register
 class Membership(models.Model):
     """Represent a details of Organization's membership."""
 
+    name = models.CharField(max_length=STR_LONG)
     MEMBERSHIP_CHOICES = (
         ("partner", "Partner"),
         ("affiliate", "Affiliate"),
@@ -103,17 +141,33 @@ class Membership(models.Model):
         ("platinum", "Platinum"),
     )
     variant = models.CharField(
-        max_length=STR_MED, null=False, blank=False, choices=MEMBERSHIP_CHOICES,
+        max_length=STR_MED,
+        null=False,
+        blank=False,
+        choices=MEMBERSHIP_CHOICES,
     )
     agreement_start = models.DateField()
-    agreement_end = models.DateField()
+    agreement_end = models.DateField(
+        help_text="If an extension is being granted, do not manually edit the end date."
+        ' Use the "Extend" button on membership details page instead.'
+    )
+    extensions = ArrayField(
+        models.PositiveIntegerField(),
+        help_text="Number of days the agreement was extended. The field stores "
+        "multiple extensions. The agreement end date has been moved by a cumulative "
+        "number of days from this field.",
+        default=list,
+    )
     CONTRIBUTION_CHOICES = (
         ("financial", "Financial"),
         ("person-days", "Person-days"),
         ("other", "Other"),
     )
     contribution_type = models.CharField(
-        max_length=STR_MED, null=False, blank=False, choices=CONTRIBUTION_CHOICES,
+        max_length=STR_MED,
+        null=False,
+        blank=False,
+        choices=CONTRIBUTION_CHOICES,
     )
     workshops_without_admin_fee_per_agreement = models.PositiveIntegerField(
         null=True,
@@ -121,30 +175,73 @@ class Membership(models.Model):
         help_text="Acceptable number of workshops without admin fee per "
         "agreement duration",
     )
-    self_organized_workshops_per_agreement = models.PositiveIntegerField(
+    workshops_without_admin_fee_rolled_from_previous = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Expected number of self-organized workshops per agreement "
-        "duration",
+        help_text="Workshops without admin fee rolled over from previous membership.",
+    )
+    workshops_without_admin_fee_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Workshops without admin fee rolled over into next membership.",
     )
     # according to Django docs, PositiveIntegerFields accept 0 as valid as well
-    seats_instructor_training = models.PositiveIntegerField(
+    public_instructor_training_seats = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=0,
-        verbose_name="Instructor training seats",
-        help_text="Number of seats in instructor trainings",
+        verbose_name="Public instructor training seats",
+        help_text="Number of public seats in instructor trainings",
     )
-    additional_instructor_training_seats = models.PositiveIntegerField(
+    additional_public_instructor_training_seats = models.PositiveIntegerField(
         null=False,
         blank=False,
         default=0,
-        verbose_name="Additional instructor training seats",
-        help_text="Use this field if you want to grant more seats than "
+        verbose_name="Additional public instructor training seats",
+        help_text="Use this field if you want to grant more public seats than "
         "the agreement provides for.",
     )
-    organization = models.ForeignKey(
-        Organization, null=False, blank=False, on_delete=models.PROTECT
+    public_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Public instructor training seats rolled over from previous "
+        "membership.",
+    )
+    public_instructor_training_seats_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Public instructor training seats rolled over into next membership.",
+    )
+    inhouse_instructor_training_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="In-house instructor training seats",
+        help_text="Number of in-house seats in instructor trainings",
+    )
+    additional_inhouse_instructor_training_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="Additional in-house instructor training seats",
+        help_text="Use this field if you want to grant more in-house seats than "
+        "the agreement provides for.",
+    )
+    inhouse_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(  # noqa
+        null=True,
+        blank=True,
+        help_text="In-house instructor training seats rolled over from previous membership.",  # noqa
+    )
+    inhouse_instructor_training_seats_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="In-house instructor training seats rolled over into next membership.",  # noqa
+    )
+    organizations = models.ManyToManyField(
+        Organization,
+        blank=False,
+        related_name="memberships",
+        through=Member,
     )
 
     registration_code = models.CharField(
@@ -164,78 +261,189 @@ class Membership(models.Model):
         help_text="Link to member agreement document or folder in Google Drive",
     )
 
+    PUBLIC_STATUS_CHOICES = (
+        ("public", "Public"),
+        ("private", "Private"),
+    )
+    public_status = models.CharField(
+        max_length=20,
+        choices=PUBLIC_STATUS_CHOICES,
+        default=PUBLIC_STATUS_CHOICES[1][0],
+        verbose_name="Can this membership be publicized on The carpentries websites?",
+        help_text="Public memberships may be listed on any of The Carpentries "
+        "websites.",
+    )
+
+    emergency_contact = models.TextField(blank=True)
+
+    consortium = models.BooleanField(
+        default=False,
+        help_text="Determines whether this is a group of organisations working "
+        "together under a consortium.",
+    )
+
+    persons = models.ManyToManyField(
+        "Person",
+        blank=True,
+        related_name="memberships",
+        through="fiscal.MembershipTask",
+    )
+
+    rolled_to_membership = models.OneToOneField(
+        "Membership",
+        on_delete=models.PROTECT,
+        related_name="rolled_from_membership",
+        null=True,
+    )
+
     def __str__(self):
         from workshops.util import human_daterange
 
         dates = human_daterange(self.agreement_start, self.agreement_end)
-        return "{} membership: {} ({})".format(
-            self.variant.title(), self.organization, dates
-        )
+        variant = self.variant.title()
+
+        if self.consortium:
+            return f"{self.name} {variant} membership {dates} (consortium)"
+        else:
+            return f"{self.name} {variant} membership {dates}"
 
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
-    @cached_property
-    def workshops_without_admin_fee_completed(self):
-        """Count centrally-organised workshops already hosted during the agreement."""
-        date_started = Q(
+    def _workshops_without_admin_fee_queryset(self):
+        """Provide universal queryset for looking up centrally-organised workshops for
+        this membership."""
+        during_membership = Q(
             start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__lt=datetime.date.today())
+        )
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
-
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(during_membership)
+            .filter(membership=self)
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
-            .count()
+            .distinct()
+        )
+
+    def _workshops_without_admin_fee_completed_queryset(self):
+        return self._workshops_without_admin_fee_queryset().filter(
+            start__lt=datetime.date.today()
+        )
+
+    def _workshops_without_admin_fee_planned_queryset(self):
+        return self._workshops_without_admin_fee_queryset().filter(
+            start__gte=datetime.date.today()
+        )
+
+    @property
+    def workshops_without_admin_fee_total_allowed(self) -> int:
+        """Available for counting, "contracted" centrally-organised workshops.
+
+        This number represents the real number of available workshops for counting
+        completed / planned / remaining no-fee workshops.
+
+        Because the data may be entered incorrectly, a sharp cutoff at 0 was introduced,
+        meaning this value won't be ever negative."""
+        a = self.workshops_without_admin_fee_per_agreement or 0
+        b = self.workshops_without_admin_fee_rolled_from_previous or 0
+        return a + b
+
+    @property
+    def workshops_without_admin_fee_available(self) -> int:
+        """Available for counting, "contracted" centrally-organised workshops.
+
+        This number represents the real number of available workshops for counting
+        completed / planned / remaining no-fee workshops.
+
+        Because the data may be entered incorrectly, a sharp cutoff at 0 was introduced,
+        meaning this value won't be ever negative."""
+        a = self.workshops_without_admin_fee_total_allowed
+        b = self.workshops_without_admin_fee_rolled_over or 0
+        return max(a - b, 0)
+
+    @cached_property
+    def workshops_without_admin_fee_completed(self) -> int:
+        """Count centrally-organised workshops already hosted during the agreement.
+
+        This value must not be higher than "contracted" (or available for counting)
+        no-fee workshops.
+
+        Excess is counted towards discounted-fee completed workshops."""
+        return min(
+            self._workshops_without_admin_fee_completed_queryset().count(),
+            self.workshops_without_admin_fee_available,
         )
 
     @cached_property
-    def workshops_without_admin_fee_planned(self):
-        """Count centrally-organised workshops hosted in future during the agreement."""
-        date_started = Q(
-            start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__gte=datetime.date.today())
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
+    def workshops_without_admin_fee_planned(self) -> int:
+        """Count centrally-organised workshops hosted in future during the agreement.
 
-        return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
-            .filter(administrator__in=Organization.objects.administrators())
-            .exclude(administrator__domain="self-organized")
-            .exclude(cancelled)
-            .count()
+        This value must not be higher than "contracted" (or available for counting)
+        no-fee workshops reduced by already completed no-fee workshops.
+
+        Excess is counted towards discounted-fee planned workshops."""
+        return min(
+            self._workshops_without_admin_fee_planned_queryset().count(),
+            self.workshops_without_admin_fee_available
+            - self.workshops_without_admin_fee_completed,
         )
 
-    @cached_property
-    def workshops_without_admin_fee_remaining(self):
+    @property
+    def workshops_without_admin_fee_remaining(self) -> int:
         """Count remaining centrally-organised workshops for the agreement."""
-        if not self.workshops_without_admin_fee_per_agreement:
-            return None
-        a = self.workshops_without_admin_fee_per_agreement
+        a = self.workshops_without_admin_fee_available
         b = self.workshops_without_admin_fee_completed
         c = self.workshops_without_admin_fee_planned
-        return a - b - c
+
+        # can't get below 0, that's when discounted workshops kick in
+        return max(a - b - c, 0)
+
+    @cached_property
+    def workshops_discounted_completed(self) -> int:
+        """Any centrally-organised workshops exceeding the workshops without fee allowed
+        number - already completed."""
+        return max(
+            self._workshops_without_admin_fee_completed_queryset().count()
+            - self.workshops_without_admin_fee_available,
+            0,
+        )
+
+    @cached_property
+    def workshops_discounted_planned(self) -> int:
+        """Any centrally-organised workshops exceeding the workshops without fee allowed
+        number - to happen in future."""
+        return max(
+            self._workshops_without_admin_fee_planned_queryset().count()
+            - self.workshops_without_admin_fee_available,
+            0,
+        )
+
+    def _self_organized_workshops_queryset(self):
+        """Provide universal queryset for looking up self-organised events for this
+        membership."""
+        during_membership = Q(
+            start__gte=self.agreement_start, start__lt=self.agreement_end
+        )
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
+        self_organized = Q(administrator=None) | Q(
+            administrator__domain="self-organized"
+        )
+        return (
+            Event.objects.filter(during_membership)
+            .filter(membership=self)
+            .filter(self_organized)
+            .exclude(cancelled)
+            .distinct()
+        )
 
     @cached_property
     def self_organized_workshops_completed(self):
         """Count self-organized workshops hosted the year agreement started (completed,
         ie. in past)."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        date_started = Q(
-            start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__lt=datetime.date.today())
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
-
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
-            .filter(self_organized)
-            .exclude(cancelled)
+            self._self_organized_workshops_queryset()
+            .filter(start__lt=datetime.date.today())
             .count()
         )
 
@@ -243,79 +451,61 @@ class Membership(models.Model):
     def self_organized_workshops_planned(self):
         """Count self-organized workshops hosted the year agreement started (planned,
         ie. in future)."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        date_started = Q(
-            start__gte=self.agreement_start, start__lt=self.agreement_end
-        ) & Q(start__gte=datetime.date.today())
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
-
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
-            .filter(self_organized)
-            .exclude(cancelled)
+            self._self_organized_workshops_queryset()
+            .filter(start__gte=datetime.date.today())
             .count()
         )
 
+    @property
+    def public_instructor_training_seats_total(self):
+        """Calculate combined public instructor training seats total.
+
+        Unlike workshops w/o admin fee, instructor training seats have two numbers
+        combined to calculate total of allowed instructor training seats in ITT events.
+        """
+        a = self.public_instructor_training_seats
+        b = self.additional_public_instructor_training_seats
+        c = self.public_instructor_training_seats_rolled_from_previous or 0
+        return a + b + c
+
     @cached_property
-    def self_organized_workshops_remaining(self):
-        """Count remaining self-organized workshops for the year agreement
-        started."""
-        if not self.self_organized_workshops_per_agreement:
-            return None
-        a = self.self_organized_workshops_per_agreement
-        b = self.self_organized_workshops_completed
-        c = self.self_organized_workshops_planned
+    def public_instructor_training_seats_utilized(self):
+        """Count number of learner tasks that point to this membership."""
+        return self.task_set.filter(role__name="learner", seat_public=True).count()
+
+    @property
+    def public_instructor_training_seats_remaining(self):
+        """Count remaining public seats for instructor training."""
+        a = self.public_instructor_training_seats_total
+        b = self.public_instructor_training_seats_utilized
+        c = self.public_instructor_training_seats_rolled_over or 0
         return a - b - c
 
-    @cached_property
-    def seats_instructor_training_total(self):
-        return (
-            self.additional_instructor_training_seats + self.seats_instructor_training
-        )
+    @property
+    def inhouse_instructor_training_seats_total(self):
+        """Calculate combined in-house instructor training seats total.
+
+        Unlike workshops w/o admin fee, instructor training seats have two numbers
+        combined to calculate total of allowed instructor training seats in ITT events.
+        """
+        a = self.inhouse_instructor_training_seats
+        b = self.additional_inhouse_instructor_training_seats
+        c = self.inhouse_instructor_training_seats_rolled_from_previous or 0
+        return a + b + c
 
     @cached_property
-    def seats_instructor_training_utilized(self):
-        # count number of tasks that have this membership
-        return self.task_set.filter(role__name="learner").count()
+    def inhouse_instructor_training_seats_utilized(self):
+        """Count number of learner tasks that point to this membership."""
+        return self.task_set.filter(role__name="learner", seat_public=False).count()
 
-    @cached_property
-    def seats_instructor_training_remaining(self):
-        return (
-            self.seats_instructor_training_total
-            - self.seats_instructor_training_utilized
-        )
-
-
-class Sponsorship(models.Model):
-    """Represent sponsorship from a host for an event."""
-
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE,
-        help_text="Organization sponsoring the event",
-    )
-    event = models.ForeignKey("Event", on_delete=models.CASCADE,)
-    amount = models.DecimalField(
-        max_digits=8,
-        decimal_places=2,
-        blank=True,
-        null=True,
-        validators=[MinValueValidator(0)],
-        verbose_name="Sponsorship amount",
-        help_text="e.g. 1992.33",
-    )
-    contact = models.ForeignKey(
-        "Person", on_delete=models.SET_NULL, null=True, blank=True,
-    )
-
-    class Meta:
-        unique_together = ("organization", "event", "amount")
-
-    def __str__(self):
-        return "{}: {}".format(self.organization, self.amount)
+    @property
+    def inhouse_instructor_training_seats_remaining(self):
+        """Count remaining in-house seats for instructor training."""
+        a = self.inhouse_instructor_training_seats_total
+        b = self.inhouse_instructor_training_seats_utilized
+        c = self.inhouse_instructor_training_seats_rolled_over or 0
+        return a - b - c
 
 
 # ------------------------------------------------------------
@@ -480,7 +670,7 @@ class Person(
     AbstractBaseUser,
     PermissionsMixin,
     DataPrivacyAgreementMixin,
-    CreatedUpdatedMixin,
+    CreatedUpdatedArchivedMixin,
     GenderMixin,
     SecondaryEmailMixin,
 ):
@@ -499,13 +689,20 @@ class Person(
     ]
 
     personal = models.CharField(
-        max_length=STR_LONG, verbose_name="Personal (first) name",
+        max_length=STR_LONG,
+        verbose_name="Personal (first) name",
     )
     middle = models.CharField(
-        max_length=STR_LONG, blank=True, default="", verbose_name="Middle name",
+        max_length=STR_LONG,
+        blank=True,
+        default="",
+        verbose_name="Middle name",
     )
     family = models.CharField(
-        max_length=STR_LONG, blank=True, default="", verbose_name="Family (last) name",
+        max_length=STR_LONG,
+        blank=True,
+        default="",
+        verbose_name="Family (last) name",
     )
     email = models.CharField(  # emailfield?
         max_length=STR_LONG,
@@ -529,7 +726,10 @@ class Person(
         " not be posted.",
     )
     country = CountryField(
-        null=False, blank=True, default="", help_text="Person's country of residence.",
+        null=False,
+        blank=True,
+        default="",
+        help_text="Person's country of residence.",
     )
     airport = models.ForeignKey(
         Airport,
@@ -553,7 +753,9 @@ class Person(
         verbose_name="Twitter username",
     )
     url = models.CharField(
-        max_length=STR_LONG, blank=True, verbose_name="Personal website",
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name="Personal website",
     )
     username = models.CharField(
         max_length=STR_LONG,
@@ -590,7 +792,10 @@ class Person(
         help_text="Please check all that apply.",
         blank=True,
     )
-    languages = models.ManyToManyField("Language", blank=True,)
+    languages = models.ManyToManyField(
+        "Language",
+        blank=True,
+    )
 
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
@@ -602,7 +807,10 @@ class Person(
         default="",
     )
     orcid = models.CharField(
-        max_length=STR_LONG, verbose_name="ORCID ID", blank=True, default="",
+        max_length=STR_LONG,
+        verbose_name="ORCID ID",
+        blank=True,
+        default="",
     )
 
     LESSON_PUBLICATION_CHOICES = (
@@ -784,6 +992,51 @@ class Person(
         self.twitter = self.twitter or None
         super().save(*args, **kwargs)
 
+    def archive(self) -> None:
+        """
+        Archives the Person.
+
+        When archiving all personal information associated with the user profile
+        should be deleted except for first name, last name and their teaching history.
+        """
+        # Remove personal information from an archived profile
+        self.email = None
+        self.country = ""
+        self.airport = None
+        self.github = None
+        self.twitter = None
+        self.url = ""
+        self.user_notes = ""
+        self.affiliation = ""
+        self.is_active = False
+        self.occupation = ""
+        self.orcid = ""
+        self.secondary_email = ""
+        self.gender = GenderMixin.UNDISCLOSED
+        self.gender_other = ""
+        # TODO(lb): Remove references to agreements when Consents project is launched
+        self.data_privacy_agreement = False
+        self.may_contact = False
+        self.publish_profile = False
+        # Remove permissions
+        self.is_superuser = False
+        self.groups.clear()
+        self.user_permissions.clear()
+        self.archived_at = timezone.now()
+        # Disconnect all social auth
+        self.social_auth.all().delete()
+        self.save()
+
+        # This deletes all pre-existing Versions of the object.
+        versions = Version.objects.get_for_object(self)
+        versions.delete()
+
+        # Send a signal that the profile has been archived
+        person_archived_signal.send(
+            sender=self.__class__,
+            person=self,
+        )
+
 
 # ------------------------------------------------------------
 
@@ -919,6 +1172,15 @@ class EventQuerySet(models.query.QuerySet):
 
         return queryset
 
+    def current_events(self):
+        """Return current events.
+
+        Current events are active ongoing events and active upcoming events
+        (see `ongoing_events` and `upcoming_events` above).
+        """
+        queryset = (self.upcoming_events() | self.ongoing_events()).active()
+        return queryset
+
     def unpublished_conditional(self):
         """Return conditional for events without: start OR country OR venue OR
         url OR are marked as 'cancelled' (ie. unpublished events). This will be
@@ -981,7 +1243,9 @@ class EventQuerySet(models.query.QuerySet):
         """
         return self.annotate(
             learner_tasks_count=Count("task", filter=Q(task__role__name="learner"))
-        ).annotate(attendance=Greatest("manual_attendance", "learner_tasks_count"),)
+        ).annotate(
+            attendance=Greatest("manual_attendance", "learner_tasks_count"),
+        )
 
 
 @reversion.register
@@ -1001,7 +1265,33 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
     host = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
-        help_text="Organization hosting the event.",
+        null=False,
+        blank=False,
+        related_name="hosted_events",
+        help_text="Organisation hosting the event.",
+    )
+    sponsor = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=False,
+        related_name="sponsored_events",
+        help_text="Institution that is funding or organising the workshop.",
+    )
+    membership = models.ForeignKey(
+        Membership,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="A membership this event should be counted towards.",
+    )
+    administrator = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=False,
+        related_name="administered_events",
+        help_text="Lesson Program administered for this workshop.",
     )
     tags = models.ManyToManyField(
         Tag,
@@ -1012,17 +1302,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         "<li><i>cancelled</i> — for events that were supposed to "
         "happen, but due to some circumstances got cancelled.</li>"
         "</ul>",
-    )
-    administrator = models.ForeignKey(
-        Organization,
-        related_name="administrator",
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        help_text="Lesson Program administered for this workshop.",
-    )
-    sponsors = models.ManyToManyField(
-        Organization, related_name="sponsored_events", blank=True, through=Sponsorship,
     )
     start = models.DateField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT)
     end = models.DateField(null=True, blank=True)
@@ -1076,16 +1355,35 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
     country = CountryField(
         null=True,
         blank=True,
-        help_text=PUBLISHED_HELP_TEXT + "<br />Use <b>Online</b> for online events.",
+        help_text=PUBLISHED_HELP_TEXT
+        + "<br />For Data, Library, or Software Carpentry workshops, always "
+        + "use the country of the host organisation. <br />For Instructor "
+        + "Training, use the country only for in-person events, and use "
+        + "<b>Online</b> for online events. <br />Be sure to use the "
+        + "<b>online tag</b> above for all online events.",
     )
     venue = models.CharField(
-        max_length=STR_LONGEST, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=STR_LONGEST,
+        default="",
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
     address = models.CharField(
-        max_length=350, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=350,
+        default="",
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
-    latitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
-    longitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
+    latitude = models.FloatField(
+        null=True,
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
+    )
+    longitude = models.FloatField(
+        null=True,
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
+    )
 
     completed = models.BooleanField(
         default=False,
@@ -1351,6 +1649,18 @@ class Task(RQJobsMixin, models.Model):
         "membership instructor training seats, a correct membership "
         "entry needs to be selected.",
     )
+    SEAT_PUBLIC_CHOICES = (
+        (True, "Public seat"),
+        (False, "In-house seat"),
+    )
+    seat_public = models.BooleanField(
+        null=False,
+        blank=True,
+        default=True,
+        choices=SEAT_PUBLIC_CHOICES,
+        verbose_name="Count seat as public or in-house?",
+        help_text="Ignored if the task is not for membership seat.",
+    )
     seat_open_training = models.BooleanField(
         null=False,
         blank=True,
@@ -1416,6 +1726,24 @@ class Task(RQJobsMixin, models.Model):
         ) and self.role.name != "learner":
             errors["role"] = ValidationError(
                 "Seat (open / membership) can be assigned only to a workshop learner."
+            )
+
+        if (
+            self.seat_membership
+            and self.seat_public
+            and not self.seat_membership.public_instructor_training_seats_remaining
+        ):
+            errors["seat_public"] = ValidationError(
+                "This membership doesn't have any remaining public seats."
+            )
+
+        if (
+            self.seat_membership
+            and not self.seat_public
+            and not self.seat_membership.inhouse_instructor_training_seats_remaining
+        ):
+            errors["seat_public"] = ValidationError(
+                "This membership doesn't have any remaining in-house seats."
             )
 
         if errors:
@@ -1565,7 +1893,7 @@ class TrainingRequest(
     CreatedUpdatedMixin,
     DataPrivacyAgreementMixin,
     COCAgreementMixin,
-    StateMixin,
+    StateExtendedMixin,
     SecondaryEmailMixin,
     models.Model,
 ):
@@ -1587,15 +1915,25 @@ class TrainingRequest(
     )
 
     REVIEW_CHOICES = (
-        ("preapproved", "Pre-approved Registration"),
+        ("preapproved", "Profile Creation for Pre-approved Trainees"),
         ("open", "Open Training Application"),
     )
     REVIEW_CHOICES_NOTES = {
-        "preapproved": "If you have been invited to apply through an "
-        "institutional membership or other agreement "
-        "with The Carpentries.",
-        "open": "Submit application for review to receive a scholarship for "
-        "Instructor Training through our Open Application Program.",
+        "preapproved": (
+            "Use this if you have been invited to apply through an"
+            " institutional membership or other agreement with The"
+            " Carpentries. Please note your application materials and"
+            " information about your progress towards The Carpentries"
+            " Instructor certification may be shared with our contacts at your"
+            " member site."
+        ),
+        "open": (
+            "Submit application for review to receive a scholarship for"
+            " Instructor Training through our Open Application Program. Please"
+            " note your application materials may be shared with The"
+            " Carpentries Trainers in order to review and accept your"
+            " application."
+        ),
     }
     review_process = models.CharField(
         blank=False,
@@ -1618,16 +1956,25 @@ class TrainingRequest(
     )
 
     personal = models.CharField(
-        max_length=STR_LONG, verbose_name="Personal (given) name", blank=False,
+        max_length=STR_LONG,
+        verbose_name="Personal (given) name",
+        blank=False,
     )
     middle = models.CharField(
-        max_length=STR_LONG, verbose_name="Middle name", blank=True,
+        max_length=STR_LONG,
+        verbose_name="Middle name",
+        blank=True,
     )
     family = models.CharField(
-        max_length=STR_LONG, verbose_name="Family name (surname)", blank=False,
+        max_length=STR_LONG,
+        verbose_name="Family name (surname)",
+        blank=False,
     )
 
-    email = models.EmailField(verbose_name="Email address", blank=False,)
+    email = models.EmailField(
+        verbose_name="Email address",
+        blank=False,
+    )
     github = NullableGithubUsernameField(
         verbose_name="GitHub username",
         help_text="Please put only a single username here.",
@@ -1663,7 +2010,10 @@ class TrainingRequest(
     )
 
     affiliation = models.CharField(
-        max_length=STR_LONG, verbose_name="Affiliation", null=False, blank=False,
+        max_length=STR_LONG,
+        verbose_name="Affiliation",
+        null=False,
+        blank=False,
     )
 
     location = models.CharField(
@@ -2067,6 +2417,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         ("n", "Not evaluated yet"),
         ("f", "Failed"),
         ("p", "Passed"),
+        ("a", "Asked to repeat"),
     )
     state = models.CharField(choices=STATES, default="p", max_length=1)
 
@@ -2113,6 +2464,10 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                 self.requirement
             )
             raise ValidationError({"event": msg})
+
+        if self.state == "f" and not self.notes:
+            msg = "In the case of a Failed state, this field is required."
+            raise ValidationError({"notes": msg})
 
         super().clean()
 
@@ -2341,7 +2696,11 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         default="",
         verbose_name="Family (last) name",
     )
-    email = models.EmailField(blank=False, null=False, verbose_name="Email address",)
+    email = models.EmailField(
+        blank=False,
+        null=False,
+        verbose_name="Email address",
+    )
     institution = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
@@ -2488,7 +2847,11 @@ class WorkshopRequest(
         verbose_name="Workshop location",
         help_text="City, state, or province.",
     )
-    country = CountryField(null=False, blank=False, verbose_name="Country",)
+    country = CountryField(
+        null=False,
+        blank=False,
+        verbose_name="Country",
+    )
     # This field is no longer needed, and is hidden in the form and templates.
     conference_details = models.CharField(
         max_length=STR_LONGEST,
@@ -2606,7 +2969,10 @@ class WorkshopRequest(
     # This field is no longer needed, and should be hidden in the form and
     # templates.
     domains_other = models.CharField(
-        max_length=STR_LONGEST, blank=True, default="", verbose_name="Other domains",
+        max_length=STR_LONGEST,
+        blank=True,
+        default="",
+        verbose_name="Other domains",
     )
     # MISSING
     # This field is no longer needed, and should be hidden in the form and

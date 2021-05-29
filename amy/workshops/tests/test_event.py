@@ -1,7 +1,5 @@
-from datetime import datetime, timedelta, date, timezone
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlencode
-import unittest
-import sys
 
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
@@ -12,29 +10,29 @@ from django.urls import reverse
 from django_comments.models import Comment
 
 from autoemails.actions import (
-    PostWorkshopAction,
-    InstructorsHostIntroductionAction,
     AskForWebsiteAction,
+    InstructorsHostIntroductionAction,
+    PostWorkshopAction,
     RecruitHelpersAction,
 )
-from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
+from workshops.forms import EventCreateForm, EventForm, EventsMergeForm
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
 from workshops.models import (
-    Event,
-    Organization,
-    Tag,
-    Role,
-    Person,
-    Task,
     Award,
     Badge,
     Curriculum,
+    Event,
+    Organization,
+    Person,
+    Role,
+    Tag,
+    Task,
 )
-from workshops.forms import EventForm, EventCreateForm, EventsMergeForm
-from workshops.tests.base import TestBase, SuperuserMixin
+from workshops.tests.base import SuperuserMixin, TestBase
 import workshops.views
 
 
@@ -239,7 +237,12 @@ class TestEvent(TestBase):
         assert event.website_url == link
 
     def test_open_TTT_applications_validation(self):
-        event = Event.objects.create(slug="test-event", host=self.org_alpha,)
+        event = Event.objects.create(
+            slug="test-event",
+            host=self.org_alpha,
+            sponsor=self.org_alpha,
+            administrator=self.org_alpha,
+        )
 
         # without TTT tag, the validation fails
         event.open_TTT_applications = True
@@ -267,6 +270,7 @@ class TestEventFormComments(TestBase):
         data = {
             "slug": "2018-12-28-test-event",
             "host": self.org_alpha.id,
+            "sponsor": self.org_alpha.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "comment": "",
@@ -282,6 +286,7 @@ class TestEventFormComments(TestBase):
         data = {
             "slug": "2018-12-28-test-event",
             "host": self.org_alpha.id,
+            "sponsor": self.org_alpha.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "comment": "This is a test comment.",
@@ -342,6 +347,7 @@ class TestEventViews(TestBase):
                 start=event_start,
                 slug="test_event_{0}".format(i),
                 host=self.test_host,
+                sponsor=self.test_host,
             )
 
     def test_events_view_paginated(self):
@@ -365,10 +371,7 @@ class TestEventViews(TestBase):
         view_events = response.context["all_events"]
         all_events = list(Event.objects.all())
 
-        if sys.version_info >= (3,):
-            self.assertCountEqual(view_events, all_events)
-        else:
-            self.assertItemsEqual(view_events, all_events)
+        self.assertCountEqual(view_events, all_events)
 
     def test_invalid_items_per_page_gives_default_pagination(self):
 
@@ -420,6 +423,7 @@ class TestEventViews(TestBase):
             {
                 "slug": "2012-12-21-event-final",
                 "host": host.id,
+                "sponsor": host.id,
                 "tags": [self.test_tag.id],
                 "administrator": admin.id,
             },
@@ -446,9 +450,13 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/427"""
-        Event.objects.create(host=self.test_host, slug="testing-unique-slug")
+        Event.objects.create(
+            host=self.test_host, sponsor=self.test_host, slug="testing-unique-slug"
+        )
         with self.assertRaises(IntegrityError):
-            Event.objects.create(host=self.test_host, slug="testing-unique-slug")
+            Event.objects.create(
+                host=self.test_host, sponsor=self.test_host, slug="testing-unique-slug"
+            )
 
     def test_assign_to_field_populated(self):
         """Ensure that we can assign an admin to an event
@@ -456,6 +464,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2016-07-09-test",
             "host": self.test_host.id,
+            "sponsor": self.test_host.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "assigned_to": self.admin.pk,
@@ -463,15 +472,16 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse("event_add"), data, follow=True)
         event = Event.objects.get(slug="2016-07-09-test")
         self.assertRedirects(
-            response, reverse("event_details", kwargs={"slug": event.slug}),
+            response,
+            reverse("event_details", kwargs={"slug": event.slug}),
         )
         self.assertEqual(event.assigned_to, self.admin)
 
     def test_unique_non_empty_slug(self):
-        """Ensure events with no slugs are *not* saved to the DB.
-        """
+        """Ensure events with no slugs are *not* saved to the DB."""
         data = {
             "host": self.test_host.id,
+            "sponsor": self.test_host.id,
             "tags": [self.test_tag.id],
             "slug": "",
         }
@@ -485,6 +495,7 @@ class TestEventViews(TestBase):
         https://github.com/swcarpentry/amy/issues/436"""
         data = {
             "host": self.test_host.id,
+            "sponsor": self.test_host.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
@@ -498,6 +509,7 @@ class TestEventViews(TestBase):
 
         data = {
             "host": self.test_host.id,
+            "sponsor": self.test_host.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
@@ -509,6 +521,7 @@ class TestEventViews(TestBase):
 
         data = {
             "host": self.test_host.id,
+            "sponsor": self.test_host.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event2",
@@ -527,6 +540,7 @@ class TestEventViews(TestBase):
 
         data = {
             "host": self.test_host.id,
+            "sponsor": self.test_host.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
@@ -557,6 +571,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2016-06-30-test-event",
             "host": self.test_host.id,
+            "sponsor": self.test_host.id,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "manual_attendance": "",
@@ -594,6 +609,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "",
             "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
             "tags": Tag.objects.all(),
         }
 
@@ -613,6 +629,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "",
             "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
             "tags": [Tag.objects.first().pk],
         }
 
@@ -648,6 +665,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "",
             "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [Tag.objects.first().pk],
         }
@@ -684,7 +702,9 @@ class TestEventViews(TestBase):
         This is a regression test against that bug.
         The error happened when "".format encountered None instead of
         datetime."""
-        event = Event.objects.create(slug="regression_event_0", host=self.test_host)
+        event = Event.objects.create(
+            slug="regression_event_0", host=self.test_host, sponsor=self.test_host
+        )
         rv = self.client.get(reverse("event_details", args=[event.slug]))
         assert rv.status_code == 200
 
@@ -693,6 +713,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2018-09-02-open-applications",
             "host": self.org_alpha.pk,
+            "sponsor": self.org_alpha.pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [Tag.objects.get(name="SWC").pk],
             "open_TTT_applications": True,
@@ -711,6 +732,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2018-10-28-curriculum",
             "host": self.org_alpha.pk,
+            "sponsor": self.org_alpha.pk,
             "tags": [
                 Tag.objects.get(name="TTT").pk,
                 Tag.objects.get(name="online").pk,
@@ -747,6 +769,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2018-10-28-curriculum",
             "host": self.org_alpha.pk,
+            "sponsor": self.org_alpha.pk,
             # there has to be some tag
             "tags": [Tag.objects.get(name="DC").pk],
             "curricula": [
@@ -795,7 +818,9 @@ class TestEventMerging(TestBase):
             start=today,
             end=tomorrow,
             host=self.org_alpha,
+            sponsor=self.org_alpha,
             administrator=self.org_alpha,
+            public_status="public",
             url="http://reichel.com/event-a",
             language=self.french,
             reg_key="123456",
@@ -832,7 +857,9 @@ class TestEventMerging(TestBase):
             start=today,
             end=tomorrow + timedelta(days=1),
             host=self.org_beta,
+            sponsor=self.org_beta,
             administrator=self.org_beta,
+            public_status="private",
             url="http://www.cummings.biz/event-b",
             language=self.english,
             reg_key="654321",
@@ -871,7 +898,9 @@ class TestEventMerging(TestBase):
             "start": "obj_b",
             "end": "obj_a",
             "host": "obj_b",
+            "sponsor": "obj_b",
             "administrator": "obj_a",
+            "public_status": "obj_a",
             "url": "obj_b",
             "language": "obj_b",
             "reg_key": "obj_a",
@@ -910,7 +939,9 @@ class TestEventMerging(TestBase):
             "start": "combine",
             "end": "combine",
             "host": "combine",
+            "sponsor": "combine",
             "administrator": "combine",
+            "public_status": "combine",
             "url": "combine",
             "language": "combine",
             "reg_key": "combine",
@@ -973,7 +1004,9 @@ class TestEventMerging(TestBase):
             "start": self.event_b.start,
             "end": self.event_a.end,
             "host": self.event_b.host,
+            "sponsor": self.event_b.sponsor,
             "administrator": self.event_a.administrator,
+            "public_status": self.event_a.public_status,
             "url": self.event_b.url,
             "language": self.event_b.language,
             "reg_key": self.event_a.reg_key,
@@ -1207,7 +1240,11 @@ class TestEventAttendance(TestBase):
 
         self.slug = "2019-03-19-simple-event"
         self.event = Event.objects.create(
-            slug=self.slug, country="US", host=Organization.objects.first()
+            slug=self.slug,
+            country="US",
+            host=Organization.objects.first(),
+            sponsor=Organization.objects.first(),
+            administrator=Organization.objects.first(),
         )
         self.event.tags.set(Tag.objects.filter(name__in=["LC", "DC"]))
 
@@ -1292,7 +1329,8 @@ class TestEventCreatePostWorkshopAction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         template = EmailTemplate.objects.create(
@@ -1306,7 +1344,8 @@ class TestEventCreatePostWorkshopAction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
 
     def test_job_scheduled(self):
@@ -1324,6 +1363,7 @@ class TestEventCreatePostWorkshopAction(
         data = {
             "slug": "2020-02-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": date.today(),
             "end": date.today() + timedelta(days=2),
             "administrator": self.LC_org.pk,
@@ -1388,7 +1428,8 @@ class TestEventUpdatePostWorkshopAction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         template = EmailTemplate.objects.create(
@@ -1402,7 +1443,8 @@ class TestEventUpdatePostWorkshopAction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
 
     def test_job_scheduled(self):
@@ -1413,6 +1455,7 @@ class TestEventUpdatePostWorkshopAction(
         event = Event.objects.create(
             slug="2020-02-07-test-event",
             host=Organization.objects.first(),
+            sponsor=Organization.objects.first(),
             start=None,
             end=None,
             administrator=self.LC_org,
@@ -1430,6 +1473,7 @@ class TestEventUpdatePostWorkshopAction(
         data = {
             "slug": "2020-02-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": date.today(),
             "end": date.today() + timedelta(days=2),
             "administrator": self.LC_org.pk,
@@ -1470,6 +1514,7 @@ class TestEventUpdatePostWorkshopAction(
         event = Event.objects.create(
             slug="2020-02-07-test-event",
             host=Organization.objects.first(),
+            sponsor=Organization.objects.first(),
             start=None,
             end=None,
             administrator=self.LC_org,
@@ -1487,6 +1532,7 @@ class TestEventUpdatePostWorkshopAction(
         data = {
             "slug": "2020-02-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": date.today(),
             "end": date.today() + timedelta(days=2),
             "administrator": self.LC_org.pk,
@@ -1523,6 +1569,7 @@ class TestEventUpdatePostWorkshopAction(
         data = {
             "slug": "2020-02-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": "",
             "end": "",
             "administrator": self.LC_org.pk,
@@ -1576,7 +1623,8 @@ class TestEventDeletePostWorkshopAction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         template = EmailTemplate.objects.create(
@@ -1590,7 +1638,8 @@ class TestEventDeletePostWorkshopAction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
 
     def test_job_unscheduled(self):
@@ -1606,6 +1655,7 @@ class TestEventDeletePostWorkshopAction(
         data = {
             "slug": "2020-02-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": date.today(),
             "end": date.today() + timedelta(days=2),
             "administrator": self.LC_org.pk,
@@ -1693,7 +1743,8 @@ class TestEventUpdateInstructorsHostIntroduction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         self.instructor = Role.objects.create(name="instructor")
@@ -1710,7 +1761,8 @@ class TestEventUpdateInstructorsHostIntroduction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="instructors-host-introduction", template=template,
+            action="instructors-host-introduction",
+            template=template,
         )
 
         self.instructor1 = Person.objects.create(
@@ -1740,6 +1792,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         event = Event.objects.create(
             slug="2020-06-07-test-event",
             host=Organization.objects.first(),
+            sponsor=Organization.objects.first(),
             start=None,
             end=None,
             administrator=self.LC_org,
@@ -1764,6 +1817,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         data = {
             "slug": "2020-06-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": self.LC_org.pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=9),
@@ -1805,6 +1859,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         event = Event.objects.create(
             slug="2020-06-07-test-event",
             host=Organization.objects.first(),
+            sponsor=Organization.objects.first(),
             start=None,
             end=None,
             administrator=self.LC_org,
@@ -1829,6 +1884,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         data = {
             "slug": "2020-06-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=9),
             "administrator": self.LC_org.pk,
@@ -1866,6 +1922,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         data = {
             "slug": "2020-06-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": "",
             "end": "",
             "administrator": self.LC_org.pk,
@@ -1919,7 +1976,8 @@ class TestEventDeleteInstructorsHostIntroduction(
         )
 
         self.LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry",
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
         )
 
         self.instructor = Role.objects.create(name="instructor")
@@ -1936,7 +1994,8 @@ class TestEventDeleteInstructorsHostIntroduction(
             body_template="# Welcome",
         )
         Trigger.objects.create(
-            action="instructors-host-introduction", template=template,
+            action="instructors-host-introduction",
+            template=template,
         )
 
         self.instructor1 = Person.objects.create(
@@ -1970,6 +2029,7 @@ class TestEventDeleteInstructorsHostIntroduction(
         event = Event.objects.create(
             slug="2020-06-07-test-event",
             host=Organization.objects.first(),
+            sponsor=Organization.objects.first(),
             start=None,
             end=None,
             administrator=self.LC_org,
@@ -1986,6 +2046,7 @@ class TestEventDeleteInstructorsHostIntroduction(
         data = {
             "slug": "2020-06-07-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=9),
             "administrator": self.LC_org.pk,
@@ -2048,9 +2109,7 @@ class TestEventCreateAskForWebsite(TestCase):
     pass
 
 
-class TestEventUpdateAskForWebsite(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2101,13 +2160,16 @@ class TestEventUpdateAskForWebsite(
         event = Event.objects.create(
             slug="2020-08-15-test-event",
             host=self.host_org,
+            sponsor=self.host_org,
             administrator=self.self_organized_org,
             start=None,
             end=None,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(AskForWebsiteAction.check(event))
 
@@ -2121,6 +2183,7 @@ class TestEventUpdateAskForWebsite(
         data = {
             "slug": "2020-08-15-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.self_organized_org.pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=8),
@@ -2161,13 +2224,16 @@ class TestEventUpdateAskForWebsite(
         event = Event.objects.create(
             slug="2020-08-15-test-event",
             host=self.host_org,
+            sponsor=self.host_org,
             administrator=self.self_organized_org,
             start=None,
             end=None,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(AskForWebsiteAction.check(event))
 
@@ -2181,6 +2247,7 @@ class TestEventUpdateAskForWebsite(
         data = {
             "slug": "2020-08-15-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.self_organized_org.pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=8),
@@ -2217,6 +2284,7 @@ class TestEventUpdateAskForWebsite(
         data = {
             "slug": "2020-08-15-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.self_organized_org.pk,
             "start": "",
             "end": "",
@@ -2241,9 +2309,7 @@ class TestEventUpdateAskForWebsite(
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestEventDeleteAskForWebsite(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2294,13 +2360,16 @@ class TestEventDeleteAskForWebsite(
         event = Event.objects.create(
             slug="2020-08-15-test-event",
             host=self.host_org,
+            sponsor=self.host_org,
             administrator=self.self_organized_org,
             start=None,
             end=None,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(AskForWebsiteAction.check(event))
 
@@ -2314,6 +2383,7 @@ class TestEventDeleteAskForWebsite(
         data = {
             "slug": "2020-08-15-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.self_organized_org.pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=8),
@@ -2374,9 +2444,7 @@ class TestEventCreateRecruitHelpers(TestCase):
     pass
 
 
-class TestEventUpdateRecruitHelpers(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2430,13 +2498,16 @@ class TestEventUpdateRecruitHelpers(
         event = Event.objects.create(
             slug="2020-08-18-test-event",
             host=self.host_org,
+            sponsor=self.host_org,
             administrator=self.host_org,
             start=None,
             end=None,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(RecruitHelpersAction.check(event))
 
@@ -2450,6 +2521,7 @@ class TestEventUpdateRecruitHelpers(
         data = {
             "slug": "2020-08-18-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.host_org.pk,
             "start": date.today() + timedelta(days=40),
             "end": date.today() + timedelta(days=41),
@@ -2491,13 +2563,16 @@ class TestEventUpdateRecruitHelpers(
         event = Event.objects.create(
             slug="2020-08-18-test-event",
             host=self.host_org,
+            sponsor=self.host_org,
             administrator=self.host_org,
             start=None,
             end=None,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(RecruitHelpersAction.check(event))
 
@@ -2511,6 +2586,7 @@ class TestEventUpdateRecruitHelpers(
         data = {
             "slug": "2020-08-18-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.host_org.pk,
             "start": date.today() + timedelta(days=40),
             "end": date.today() + timedelta(days=41),
@@ -2548,6 +2624,7 @@ class TestEventUpdateRecruitHelpers(
         data = {
             "slug": "2020-08-18-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.host_org.pk,
             "start": "",
             "end": "",
@@ -2573,9 +2650,7 @@ class TestEventUpdateRecruitHelpers(
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestEventDeleteRecruitHelpers(
-    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
-):
+class TestEventDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -2629,13 +2704,16 @@ class TestEventDeleteRecruitHelpers(
         event = Event.objects.create(
             slug="2020-08-18-test-event",
             host=self.host_org,
+            sponsor=self.host_org,
             administrator=self.host_org,
             start=None,
             end=None,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         Task.objects.create(
-            event=event, person=self.instructor, role=self.instructor_role,
+            event=event,
+            person=self.instructor,
+            role=self.instructor_role,
         )
         self.assertFalse(RecruitHelpersAction.check(event))
 
@@ -2649,6 +2727,7 @@ class TestEventDeleteRecruitHelpers(
         data = {
             "slug": "2020-08-18-test-event",
             "host": self.host_org.pk,
+            "sponsor": self.host_org.pk,
             "administrator": self.host_org.pk,
             "start": date.today() + timedelta(days=40),
             "end": date.today() + timedelta(days=41),

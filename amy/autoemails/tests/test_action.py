@@ -7,7 +7,7 @@ from django.template.exceptions import TemplateSyntaxError
 from django.test import TestCase, override_settings
 
 from autoemails.actions import BaseAction
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 
 
 @override_settings(AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS=None)
@@ -79,7 +79,8 @@ Sincerely,
     def prepare_trigger(self):
         """Create a sample trigger using our sample template."""
         self.trigger = Trigger.objects.create(
-            action="new-instructor", template=self.template,
+            action="new-instructor",
+            template=self.template,
         )
 
     def prepare_context(self):

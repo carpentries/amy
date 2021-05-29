@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 from functools import partial
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 def remove_old_contentype(content_type, apps, schema_editor):

@@ -1,23 +1,25 @@
 import datetime
-import itertools
+from typing import Iterable
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django_webtest import WebTest
 import webtest.forms
+from consents.models import Consent, Term, TermOption
 
 from workshops.models import (
     Airport,
     Award,
     Badge,
     Event,
+    KnowledgeDomain,
+    Language,
     Lesson,
+    Organization,
     Person,
     Qualification,
-    Organization,
     Role,
     Tag,
-    Language,
 )
 from workshops.util import universal_date_format
 
@@ -98,7 +100,10 @@ class TestBase(
         """Set up airport objects."""
 
         self.airport_0_10 = Airport.objects.create(
-            iata="ZZZ", fullname="Airport 0x10", latitude=0.0, longitude=10.0,
+            iata="ZZZ",
+            fullname="Airport 0x10",
+            latitude=0.0,
+            longitude=10.0,
         )
         self.airport_0_0 = Airport.objects.create(
             iata="AAA",
@@ -132,9 +137,22 @@ class TestBase(
     def _setUpLanguages(self):
         """Set up language objects."""
 
-        self.english, _ = Language.objects.get_or_create(name="English",)
-        self.french, _ = Language.objects.get_or_create(name="French",)
-        self.latin, _ = Language.objects.get_or_create(name="Latin",)
+        self.english, _ = Language.objects.get_or_create(name="English")
+        self.french, _ = Language.objects.get_or_create(name="French")
+        self.latin, _ = Language.objects.get_or_create(name="Latin")
+
+    def _setUpDomains(self):
+        """Set up knowledge domain objects."""
+
+        self.chemistry, _ = KnowledgeDomain.objects.get_or_create(
+            name="Chemistry",
+        )
+        self.medicine, _ = KnowledgeDomain.objects.get_or_create(
+            name="Medicine",
+        )
+        self.humanities, _ = KnowledgeDomain.objects.get_or_create(
+            name="Humanities",
+        )
 
     def _setUpBadges(self):
         """Set up badge objects."""
@@ -436,6 +454,22 @@ class TestBase(
                 Role(name="tutor", verbose_name="Tutor"),
             ]
         )
+
+    @staticmethod
+    def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
+        consent = Consent.objects.get(
+            person=person, term=term, archived_at__isnull=True
+        )
+        consent.archive()
+        return Consent.objects.create(term_option=term_option, term=term, person=person)
+
+    def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
+        for term in terms:
+            self.reconsent(person=person, term_option=term.options[0], term=term)
+
+    def person_consent_active_terms(self, person: Person) -> None:
+        terms = Term.objects.active().prefetch_active_options()
+        self.person_agree_to_terms(person, terms)
 
     def saveResponse(self, response, filename="error.html"):
         content = response.content.decode("utf-8")

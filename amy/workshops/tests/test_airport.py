@@ -11,7 +11,7 @@ class TestAirport(TestBase):
 
     def test_airport_details(self):
         """Regression test: ensure airport details page renders correctly."""
-        rv = self.client.get(reverse('airport_details', args=['AAA']))
+        rv = self.client.get(reverse("airport_details", args=["AAA"]))
         self.assertEqual(rv.status_code, 200)
 
     def test_airport_delete(self):
@@ -42,13 +42,20 @@ class TestAirport(TestBase):
         # airports 0_0, 0_50, 50_100, 55_105 cannot be removed because they're
         # referenced by instructors and/or non-instructors
         for iata, remove in zip(airports, can_be_removed):
-            rv = self.client.post(reverse('airport_delete', args=[iata, ]))
+            rv = self.client.post(
+                reverse(
+                    "airport_delete",
+                    args=[
+                        iata,
+                    ],
+                )
+            )
             if remove:
                 self.assertEqual(rv.status_code, 302)
             else:
                 self.assertEqual(rv.status_code, 200)
-                content = rv.content.decode('utf-8')
-                self.assertIn('Failed to delete', content)
+                content = rv.content.decode("utf-8")
+                self.assertIn("Failed to delete", content)
 
         # unassign airports from people
         Person.objects.filter(pk__in=people).update(airport=None)
@@ -59,7 +66,14 @@ class TestAirport(TestBase):
             if remove:
                 continue
 
-            rv = self.client.post(reverse('airport_delete', args=[iata, ]))
+            rv = self.client.post(
+                reverse(
+                    "airport_delete",
+                    args=[
+                        iata,
+                    ],
+                )
+            )
             self.assertEqual(rv.status_code, 302)
 
             with self.assertRaises(Airport.DoesNotExist):
@@ -69,4 +83,4 @@ class TestAirport(TestBase):
         """Make sure that airports are listed in alphabetical order.
         See #1193."""
         first_airport = Airport.objects.all()[0]
-        assert first_airport.iata == 'AAA'
+        assert first_airport.iata == "AAA"

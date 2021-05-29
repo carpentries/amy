@@ -6,8 +6,8 @@ from django.db.models import TextField
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
-from django.utils.html import format_html
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.views.decorators.http import require_POST
 import django_rq
 from markdownx.widgets import AdminMarkdownxWidget
@@ -15,13 +15,9 @@ from rq.exceptions import NoSuchJobError
 
 from autoemails.forms import RescheduleForm, TemplateForm
 from autoemails.job import Job
-from autoemails.models import EmailTemplate, Trigger, RQJob
-from autoemails.utils import (
-    check_status,
-    scheduled_execution_time,
-)
+from autoemails.models import EmailTemplate, RQJob, Trigger
+from autoemails.utils import check_status, scheduled_execution_time
 from workshops.util import admin_required
-
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

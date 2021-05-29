@@ -1,6 +1,6 @@
 {
-  "name": "AMY",
-  "version": "v2.16.1",
+  "name": "amy",
+  "version": "v3.0.0",
   "description": "A web-based workshop administration application for The Carpentries",
   "main": "index.js",
   "repository": "git@github.com:carpentries/amy.git",
@@ -20,6 +20,6 @@
     "metrics-graphics": "^2.15.6",
     "popper.js": "^1.16.1",
     "select2": "^4.0.10",
-    "urijs": "^1.19.4"
+    "urijs": "^1.19.6"
   }
 }

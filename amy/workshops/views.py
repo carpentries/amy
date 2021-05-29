@@ -1,97 +1,95 @@
-from typing import Optional
-
 import csv
 import datetime
 from functools import partial
 import io
 import logging
+from typing import Optional
 
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-    PermissionDenied,
-)
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
 from django.db.models import (
     Case,
-    When,
-    Value,
-    IntegerField,
     Count,
-    Q,
     F,
-    ProtectedError,
-    Sum,
+    IntegerField,
     Prefetch,
+    ProtectedError,
+    Q,
+    Sum,
+    Value,
+    When,
 )
 from django.forms import HiddenInput
-from django.http import Http404, HttpResponse, JsonResponse
-from django.http import HttpResponseBadRequest
-from django.shortcuts import redirect, render, get_object_or_404
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 import django_rq
 from github.GithubException import GithubException
-from reversion.models import Version, Revision
+import requests
+from reversion.models import Revision, Version
 from reversion_compare.forms import SelectDiffForm
 
 from autoemails.actions import (
+    AskForWebsiteAction,
+    InstructorsHostIntroductionAction,
     NewInstructorAction,
     NewSupportingInstructorAction,
     PostWorkshopAction,
-    InstructorsHostIntroductionAction,
-    AskForWebsiteAction,
     RecruitHelpersAction,
 )
-from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
+from autoemails.models import Trigger
+from consents.forms import ActiveTermConsentsForm
+from consents.models import Consent
 from dashboard.forms import AssignmentForm
-from fiscal.forms import SponsorshipForm
+from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
-    AMYUpdateView,
     AMYDeleteView,
-    AMYListView,
-    RedirectSupportMixin,
-    PrepopulationSupportMixin,
     AMYDetailView,
+    AMYListView,
+    AMYUpdateView,
     AssignView,
+    PrepopulationSupportMixin,
+    RedirectSupportMixin,
 )
 from workshops.filters import (
+    AirportFilter,
+    BadgeAwardsFilter,
     EventFilter,
     PersonFilter,
     TaskFilter,
-    AirportFilter,
-    BadgeAwardsFilter,
     WorkshopStaffFilter,
 )
 from workshops.forms import (
-    WorkshopStaffForm,
-    PersonForm,
-    BulkUploadCSVForm,
-    EventForm,
-    EventCreateForm,
-    TaskForm,
-    AwardForm,
-    PersonPermissionsForm,
-    PersonsSelectionForm,
-    BootstrapHelper,
-    AdminLookupForm,
-    EventsSelectionForm,
-    EventsMergeForm,
-    PersonsMergeForm,
-    PersonCreateForm,
     ActionRequiredPrivacyForm,
+    AdminLookupForm,
+    AwardForm,
+    BootstrapHelper,
+    BulkUploadCSVForm,
+    EventCreateForm,
+    EventForm,
+    EventsMergeForm,
+    EventsSelectionForm,
+    PersonCreateForm,
+    PersonForm,
+    PersonPermissionsForm,
+    PersonsMergeForm,
+    PersonsSelectionForm,
+    TaskForm,
+    WorkshopStaffForm,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -101,34 +99,33 @@ from workshops.models import (
     Award,
     Badge,
     Event,
-    Qualification,
-    Person,
-    Role,
     Membership,
-    Sponsorship,
+    Person,
+    Qualification,
+    Role,
     Tag,
     Task,
+    TrainingProgress,
 )
 from workshops.signals import create_comment_signal
 from workshops.util import (
-    upload_person_task_csv,
-    verify_upload_person_task,
-    create_uploaded_persons_tasks,
     InternalError,
-    WrongWorkshopURL,
-    fetch_workshop_metadata,
-    parse_workshop_metadata,
-    validate_workshop_metadata,
-    get_pagination_items,
-    failed_to_delete,
-    merge_objects,
-    create_username,
-    admin_required,
     OnlyForAdminsMixin,
-    login_required,
+    WrongWorkshopURL,
     add_comment,
+    admin_required,
+    create_uploaded_persons_tasks,
+    create_username,
+    failed_to_delete,
+    fetch_workshop_metadata,
+    get_pagination_items,
+    login_required,
+    merge_objects,
+    parse_workshop_metadata,
+    upload_person_task_csv,
+    validate_workshop_metadata,
+    verify_upload_person_task,
 )
-
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -243,7 +240,6 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
                     output_field=IntegerField(),
                 )
             ),
-
             num_supporting=Count(
                 Case(
                     When(task__role__name="supporting-instructor", then=Value(1)),
@@ -252,17 +248,30 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
             ),
         )
         .prefetch_related(
-            "award_set__badge",
-            "award_set__awarded_by",
-            "award_set__event",
-            "task_set__role",
-            "task_set__event",
+            "badges",
+            "lessons",
+            "domains",
+            "languages",
+            Prefetch(
+                "award_set",
+                queryset=Award.objects.select_related("badge", "event", "awarded_by"),
+            ),
+            Prefetch(
+                "task_set",
+                queryset=Task.objects.select_related("role", "event"),
+            ),
             Prefetch(
                 "task_set",
                 to_attr="training_tasks",
                 queryset=Task.objects.filter(
                     role__name="learner", event__tags__name="TTT"
-                ),
+                ).select_related("role", "event"),
+            ),
+            "trainingrequest_set",
+            "trainingprogress_set",
+            Prefetch(
+                "membershiptask_set",
+                queryset=MembershipTask.objects.select_related("role", "membership"),
             ),
         )
         .select_related("airport")
@@ -272,11 +281,27 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["title"] = "Person {0}".format(self.object)
+        title = "Person {0}".format(self.object)
+        context["title"] = title
 
         is_usersocialauth_in_sync = len(self.object.github_usersocialauth) > 0
         context["is_usersocialauth_in_sync"] = is_usersocialauth_in_sync
-
+        consents = (
+            Consent.objects.filter(person=self.object)
+            .active()
+            .select_related("term", "term_option")
+        )
+        consent_by_term_slug = {consent.term.slug: consent for consent in consents}
+        context["consents"] = {
+            "May contact": consent_by_term_slug["may-contact"],
+            "Consent to publish profile": consent_by_term_slug["public-profile"],
+            "Consent to include name when publishing lessons": consent_by_term_slug[
+                "may-publish-name"
+            ],
+            "Privacy policy agreement": consent_by_term_slug["privacy-policy"],
+        }
+        if not self.object.is_active:
+            messages.info(self.request, f"{title} is not active.")
         return context
 
 
@@ -602,10 +627,14 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        failed_trainings = TrainingProgress.objects.filter(
+            state="f", trainee=self.object
+        ).exists()
         kwargs = {
             "initial": {"person": self.object},
             "widgets": {"person": HiddenInput()},
         }
+
         context.update(
             {
                 "awards": self.object.award_set.select_related(
@@ -614,8 +643,23 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 "tasks": self.object.task_set.select_related("role", "event").order_by(
                     "-event__slug"
                 ),
-                "award_form": AwardForm(form_tag=False, prefix="award", **kwargs),
-                "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
+                "consents_form": ActiveTermConsentsForm(
+                    form_tag=False,
+                    prefix="consents",
+                    **kwargs,
+                ),
+                "award_form": AwardForm(
+                    form_tag=False,
+                    prefix="award",
+                    failed_trainings=failed_trainings,
+                    **kwargs,
+                ),
+                "task_form": TaskForm(
+                    form_tag=False,
+                    prefix="task",
+                    failed_trainings=failed_trainings,
+                    **kwargs,
+                ),
             }
         )
         return context
@@ -635,6 +679,33 @@ class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     permission_required = "workshops.delete_person"
     success_url = reverse_lazy("all_persons")
     pk_url_kwarg = "person_id"
+
+
+class PersonArchive(PermissionRequiredMixin, LoginRequiredMixin, AMYDeleteView):
+    model = Person
+    permission_required = "workshops.delete_person"
+    pk_url_kwarg = "person_id"
+    success_message = "{} was archived successfully."
+
+    def perform_destroy(self, *args, **kwargs):
+        self.object.archive()
+
+    def get_success_url(self) -> str:
+        """
+        If the user archived their own profile,
+        send them to the login page.
+
+        Otherwise send the user back to the page they're currently on.
+        """
+        if self.request.user.pk == self.object.pk:
+            return reverse("login")
+        return self.object.get_absolute_url()
+
+    def has_permission(self):
+        """If the user is archiving their own profile, the user has permission."""
+        user_id_being_archived = self.kwargs.get(self.pk_url_kwarg)
+        user_archiving_own_profile = self.request.user.pk == user_id_being_archived
+        return super(PersonArchive, self).has_permission() or user_archiving_own_profile
 
 
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
@@ -885,9 +956,6 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     """List details of a particular event."""
     try:
-        sponsorship_prefetch = Prefetch(
-            "sponsorship_set", queryset=Sponsorship.objects.select_related("contact")
-        )
         task_prefetch = Prefetch(
             "task_set",
             to_attr="contacts",
@@ -903,11 +971,13 @@ def event_details(request, slug):
         )
         event = (
             Event.objects.attendance()
-            .prefetch_related(sponsorship_prefetch, task_prefetch)
+            .prefetch_related(task_prefetch)
             .select_related(
                 "assigned_to",
                 "host",
                 "administrator",
+                "sponsor",
+                "membership",
             )
             .get(slug=slug)
         )
@@ -973,7 +1043,7 @@ def validate_event(request, slug):
         error_messages, warning_messages = validate_workshop_metadata(metadata)
 
     except WrongWorkshopURL as e:
-        error_messages.append(str(e))
+        error_messages.append(f"URL error: {e.msg}")
 
     except requests.exceptions.HTTPError as e:
         error_messages.append(
@@ -1046,13 +1116,14 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     permission_required = [
         "workshops.change_event",
         "workshops.add_task",
-        "workshops.add_sponsorship",
     ]
     queryset = Event.objects.select_related(
         "assigned_to",
+        "host",
         "administrator",
+        "sponsor",
         "language",
-    ).prefetch_related("sponsorship_set")
+    )
     slug_field = "slug"
     template_name = "workshops/event_edit_form.html"
 
@@ -1068,9 +1139,6 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
                 .task_set.select_related("person", "role")
                 .order_by("role__name"),
                 "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
-                "sponsor_form": SponsorshipForm(
-                    form_tag=False, prefix="sponsor", **kwargs
-                ),
             }
         )
         return context
@@ -1292,7 +1360,7 @@ def event_import(request):
         return HttpResponseBadRequest("Network connection error.")
 
     except WrongWorkshopURL as e:
-        return HttpResponseBadRequest(str(e))
+        return HttpResponseBadRequest(f"URL error: {e.msg}")
 
     except KeyError:
         return HttpResponseBadRequest('Missing or wrong "url" parameter.')
@@ -1357,7 +1425,9 @@ def events_merge(request):
                 "start",
                 "end",
                 "host",
+                "sponsor",
                 "administrator",
+                "public_status",
                 "url",
                 "language",
                 "reg_key",
@@ -1432,7 +1502,7 @@ def events_metadata_changed(request):
     context = {
         "title": "Events with metadata changed",
         "events": events,
-        'assignment_form': assignment_form,
+        "assignment_form": assignment_form,
         "assigned_to": assigned_to,
     }
     return render(request, "workshops/events_metadata_changed.html", context)
@@ -1575,7 +1645,10 @@ class TaskDetails(OnlyForAdminsMixin, AMYDetailView):
 
 
 class TaskCreate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    RedirectSupportMixin,
+    AMYCreateView,
 ):
     permission_required = "workshops.add_task"
     model = Task
@@ -1599,6 +1672,7 @@ class TaskCreate(
         """
 
         seat_membership = form.cleaned_data["seat_membership"]
+        seat_public = form.cleaned_data["seat_public"]
         event = form.cleaned_data["event"]
         check_ihia_old = InstructorsHostIntroductionAction.check(event)
         check_afwa_old = AskForWebsiteAction.check(event)
@@ -1606,18 +1680,23 @@ class TaskCreate(
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
+            remaining = (
+                seat_membership.public_instructor_training_seats_remaining
+                if seat_public
+                else seat_membership.inhouse_instructor_training_seats_remaining
+            )
             # check number of available seats
-            if seat_membership.seats_instructor_training_remaining == 1:
+            if remaining == 1:
                 messages.warning(
                     self.request,
-                    'Membership "{}" has 0 instructor training seats'
-                    " available.".format(str(seat_membership)),
+                    f'Membership "{seat_membership}" has 0 instructor training seats '
+                    "available.",
                 )
-            if seat_membership.seats_instructor_training_remaining < 1:
+            if remaining < 1:
                 messages.warning(
                     self.request,
-                    'Membership "{}" is using more training seats'
-                    " than it's been allowed.".format(str(seat_membership)),
+                    f'Membership "{seat_membership}" is using more training seats than '
+                    "it's been allowed.",
                 )
 
             today = datetime.date.today()
@@ -1629,7 +1708,7 @@ class TaskCreate(
             ):
                 messages.warning(
                     self.request,
-                    'Membership "{}" is not active.'.format(str(seat_membership)),
+                    f'Membership "{seat_membership}" is not active.',
                 )
 
             # show warning if training falls out of agreement dates
@@ -1641,10 +1720,8 @@ class TaskCreate(
             ):
                 messages.warning(
                     self.request,
-                    'Training "{}" has start or end date outside '
-                    'membership "{}" agreement dates.'.format(
-                        str(event), str(seat_membership),
-                    ),
+                    f'Training "{event}" has start or end date outside '
+                    f'membership "{seat_membership}" agreement dates.',
                 )
 
         # save the object
@@ -1677,9 +1754,8 @@ class TaskCreate(
             )
 
         # check conditions for running a InstructorsHostIntroductionAction
-        if (
-            not check_ihia_old
-            and InstructorsHostIntroductionAction.check(self.object.event)
+        if not check_ihia_old and InstructorsHostIntroductionAction.check(
+            self.object.event
         ):
             triggers = Trigger.objects.filter(
                 active=True, action="instructors-host-introduction"
@@ -1695,10 +1771,7 @@ class TaskCreate(
             )
 
         # check conditions for running an AskForWebsiteAction
-        if (
-            not check_afwa_old
-            and AskForWebsiteAction.check(self.object.event)
-        ):
+        if not check_afwa_old and AskForWebsiteAction.check(self.object.event):
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
@@ -1711,10 +1784,7 @@ class TaskCreate(
             )
 
         # check conditions for running a RecruitHelpersAction
-        if (
-            not check_rha_old
-            and RecruitHelpersAction.check(self.object.event)
-        ):
+        if not check_rha_old and RecruitHelpersAction.check(self.object.event):
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
@@ -1728,10 +1798,7 @@ class TaskCreate(
 
         # When someone adds a helper, then the condition will no longer be met and we
         # have to remove the job.
-        elif (
-            check_rha_old
-            and not RecruitHelpersAction.check(self.object.event)
-        ):
+        elif check_rha_old and not RecruitHelpersAction.check(self.object.event):
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
@@ -1748,7 +1815,9 @@ class TaskCreate(
 
 
 class TaskUpdate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYUpdateView,
 ):
     permission_required = "workshops.change_task"
     model = Task
@@ -1916,7 +1985,10 @@ class TaskUpdate(
 
 
 class TaskDelete(
-    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYDeleteView,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    RedirectSupportMixin,
+    AMYDeleteView,
 ):
     model = Task
     permission_required = "workshops.delete_task"
@@ -1976,9 +2048,7 @@ class TaskDelete(
 
         # AskForWebsiteAction conditions were met, but aren't anymore
         if self.check_afwa_old and not self.check_afwa_new:
-            jobs = self.object.event.rq_jobs.filter(
-                trigger__action="ask-for-website"
-            )
+            jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
                 logger=logger,

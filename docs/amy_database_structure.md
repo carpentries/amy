@@ -36,7 +36,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 
 ## Persons
 
-`workshops_persons` - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.
+`workshops_person` - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.
 
 ### Commonly used fields
 
@@ -80,12 +80,59 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `id` Sequential, automatically assigned integer.
 * `variant` Membership type (Gold, Silver, etc.)
 * `agreement_start` and `agreement_end` Membership term start and end dates
+* `extended` Integer; number of days the membership term end date has been extended by; `NULL` value indicates no extension
 * `contribution_type` Financial, Person-days, or Other
 * `workshops_without_admin_fee_per_agreement` Integer; number of centrally organized workshops allowed
-* `self_organized_workshops_per_agreement` Integer; number of self organized workshops allowed. Typically unused as there is no cap on self-organized workshops
-* `organization_id` An integer representing the Member organization.  This is linked to the `workshops_organization` table
-* `seats_instructor_training` Integer; number of seats allowed in instructor training events in the original contract.
-* `additional_instructor_training_seats`  Integer; number of additional seats allowed in instructor training events beyond the original contract.
+* `workshops_without_admin_fee_rolled_from_previous` Integer; number of centrally-organised workshops allowed that was rolled over from previous membership. This should be the same as `workshops_without_admin_fee_rolled_over` in preceding membership
+* `workshops_without_admin_fee_rolled_over` Integer; number of centrally-organised workshops allowed that was rolled over to succeeding membership. The same number should be recorded in `workshops_without_admin_fee_rolled_from_previous` in succeeding membership
+* `public_instructor_training_seats` Integer; number of public seats allowed in instructor training events in the original contract.
+* `additional_public_instructor_training_seats`  Integer; number of additional public seats allowed in instructor training events beyond the original contract.
+* `public_instructor_training_seats_rolled_from_previous` Integer; number of public instructor training seats allowed that was rolled over from previous membership. This should be the same as `public_instructor_training_seats_rolled_over` in preceding membership
+* `public_instructor_training_seats_rolled_over` Integer; number of public instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in `public_instructor_training_seats_rolled_from_previous` in succeeding membership
+* `inhouse_instructor_training_seats` Integer; number of in-house seats allowed in instructor training events in the original contract.
+* `additional_inhouse_instructor_training_seats`  Integer; number of additional in-house seats allowed in instructor training events beyond the original contract.
+* `inhouse_instructor_training_seats_rolled_from_previous` Integer; number of in-house instructor training seats allowed that was rolled over from previous membership. This should be the same as `inhouse_instructor_training_seats_rolled_over` in preceding membership
+* `inhouse_instructor_training_seats_rolled_over` Integer; number of in-house instructor training seats allowed that was rolled over to succeeding membership. The same number should be recorded in `inhouse_instructor_training_seats_rolled_from_previous` in succeeding membership
+* `agreement_link` A link to the Member agreement in Google Drive
+* `registration_code` A string representing the code used by the Member site for Eventbrite registration and the instructor training application
+* `public_status` a string indicating agreement to publicising membership on The Carpentries websites
+* `emergency_contact` text with emergency contact data for the membership
+* `consortium` a boolean value indicating consortium (umbrella for more than one organisation member)
+
+## Member
+
+`workshops_member` - Stores information about organisations and their roles in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `membership_id` - Integer linking membership instance
+* `organization_id` - Integer linking organisation instance
+* `role_id` - Integer linking member role instance
+
+## MemberRole
+
+`workshops_memberrole` - Stores roles for organisations in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `name` string with role's name, e.g. `contact_signatory` - preferably a computer-friendly format
+* `verbose_name` string with role's name suitable for humans, e.g. `Contact Signatory`
+
+## MembershipTask
+
+`fiscal_membershiptask` - Stores information about persons and their roles in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `membership_id` - Integer linking membership instance
+* `person_id` - Integer linking person instance
+* `role_id` - Integer linking membership person role instance
+
+## MembershipPersonRole
+
+`fiscal_membershippersonrole` - Stores roles for persons in memberships.
+
+* `id` Sequential, automatically assigned integer.
+* `name` string with role's name - preferably a computer-friendly format
+* `verbose_name` string with role's name suitable for humans
+
 
 ## Organizations
 
@@ -95,40 +142,120 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `domain` Website of the organization
 * `fullname` Human friendly name of the organization
 * `country` Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+* `latitude` and `longitude` Stored as floating point (decimal) numbers
+* `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related.
+   For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".
 
 # Additional Tables in AMY
 
 ## Badges
 
 * `workshops_badge` Lists all available badges (SWC/DC/LC Instructor, Trainer, etc.)
+    * `id` Sequential, automatically assigned integer. This is used by `badge_id` in the `workshops_award` table.
+    * `criteria` Description of what this badge is
+    * `title` Verbose, human friendly name of badge (e.g., *Software Carpentry Instructor* or *Trainer*)
+    * `name` "back-end" badge name (e.g., *swc-instructor*, *trainer*)
+
 * `workshops_award` Connects `workshops_badge` and `workshops_person` tables to show what Badges have been awarded to what Persons
-
-More information to come
-
+    * `id` Sequential, automatically assigned integer.
+    * `awarded` Date the badge was awarded. This is usually the date it was recorded in AMY, not the date the person completed all requirements.
+    * `badge_id` An integer representing the badge.  This is linked to the `workshops_badge` table
+    * `event_id` An integer representing the event the badge came from.  This is linked to the `workshops_event` table
+    * `person_id` An integer representing the person who got the badge.  This is linked to the `workshops_person` table
+    * `awarded_by_id` An integer representing the person who awarded the badge (entered it in AMY).  This is linked to the `workshops_person` table
 
 ## Roles
 
 * `workshops_role` Lists all available roles (Instructor, Helper, Learner, etc.)
-* `workshops_task` Connects `workshops_role`, `workshops_event`, and `workshops_person` tables to show what what Persons have served in what Roles at what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `verbose_name`  Verbose, human friendly name of role (e.g., *Workshop host*, *Supporting Instructor*)
+    * `name`  "back end" task name (e.g., *workshop-host*, *supporting-instructor*)
 
-More information to come
+* `workshops_task` Connects `workshops_role`, `workshops_event`, and `workshops_person` tables to show what what Persons have served in what Roles at what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `event_id` An integer representing the event the person was at.  This is linked to the `workshops_event` table
+    * `person_id` An integer representing the person who was at the event.  This is linked to the `workshops_person` table
+    * `role_id` An integer representing the person's role.  This is linked to the `workshops_person` table
+    * `seat_membership_id` Used for Instructor Training Learner role only.  An integer representing the membership this seat was assigned to.
+    * `seat_public` Used for Instructor Training Learner role only.  Determines if the seat counts as public or in-house for the specific membership.
+    * `seat_open_training` Used for Instructor Training Learner role only. Boolean field noting whether this was an open (non-member) training seat.
+    * `title` and`url` are not used.
 
 ## Tags
 
 * `workshops_tag` Lists all availabe tags for an Event (SWC, DC, LC, Online, Pilot, Circuits, etc.)
-* `workshops_event_tags` Connects `workshops_tag` and `workshops_event` to show what Tags have been applied to what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `name`  "back end" tag name
+    * `details` Description of what tag is used for
+    * `priority` Used to control the sort order in the AMY web interface. Not relevant for any other queries.
 
-More information to come
+* `workshops_event_tags` Connects `workshops_tag` and `workshops_event` to show what Tags have been applied to what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `event_id` An integer representing the event that got that tag.  This is linked to the `workshops_event` table
+    * `tag_id` An integer representing the tag that was assigned to that event.  This is linked to the `workshops_tag` table.
 
 
 ## Training progress
 
 * `workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Discussion, etc.)
-* `workshops_training_progress` Connects `workshops_trainingrequirement` and `workshops_person` to show what Persons have completed what steps of the checkout process.
+    * `id`  Sequential, automatically assigned integer.
+    * `name` Name of requirement (*DC Homework*, *LC Demo*, etc.)
+    * `url_required` Notes whether a URL is required for this type of training requirement.  This only applies to the *Homework* (lesson contribution) requirements.
+    * `event_required` Notes whether an event is required for this type of training requirement.  This only applies to the *Training* (the actual event they attended).
 
-More information to come
+* `workshops_trainingprogress` Connects `workshops_trainingrequirement` and `workshops_person` to show what Persons have completed what steps of the checkout process.
+    * `id`  Sequential, automatically assigned integer.
+    * `created_at` and `last_updated_at`  Dates the record was created and last updated. Automatically generated by database.
+    * `state` State of the trainee's progress. Options are *pass*, *fail*, *not evaluated yet*
+    * `url` Only for *Homework* (lesson contribution) requirement; links to the trainee's GitHub contribution
+    * `notes` Any human generated notes
+    * `evaluated_by_id` id of the user entering this record.  This is linked to the `workshops_person` table
+    * `event_id` id of the event this trainee was at.  This is linked to the `workshops_event` table
+    * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table*
+    * `trainee_id` id of the trainee being evaluated.  This is linked to the `workshops_person` table
 
+## Term
 
+`consents_term` - Stores all Terms in AMY (i.e. the privary policy). 
 
+### Archive Behavior
 
+When `Terms` are archived (`archived_at` timestamp is set), that `Term`'s `TermOptions` and `Consents` are archived as well. If the `Term` was required, once archived it is no longer required in AMY.
 
+### Commonly used fields
+
+* `slug` slug of the term. Used to uniquely identify the term.
+* `content` content of the term. This text shown to users when they consent.
+* `required_type` determines whether or not a term is considered required for the user or not. If required it will be shown to the user when they log in to consent to.
+* `help_text` additional text shown to the user in order to give more context on the term.
+
+## TermOption
+
+`consents_termoption` - Stores all options for a stored `Term` in AMY. `TermOptions` are displayed when the user is asked to consent to a `Term`,
+and are considered answer choices for the `Term`.
+
+### Archive Behavior
+
+When TermOptions are archived (`archived_at` timestamp is set), any `Consents` that rely on that option are archived and a new unset `Consent` is created by AMY for the user. If the `Term` the option was attached to is required, archiving a `TermOption` may result in an email sent to any users who answered with this opition.
+
+### Commonly used fields
+
+* `term` a required foreign key to term. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
+* `option_type` determines whether or not a term option is considered an affirmative aggrement to the term or the user has declined the term.
+* `content` the text displayed to the user when the term is rendered.
+* `archived_at` - a nullable timestamp
+
+## Consent
+
+`consents_consent` - Stores all consents for all users in AMY. 
+
+### Archive Behavior
+
+When `Consents` are archived (`archived_at` timestamp is set), a new unset consent is created by AMY.
+
+### Commonly used fields
+
+* `person` - required foreign key to `Person`.
+* `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option` - a nullable foreign key to TermOption. When this field is null, the Consent is unset.
+* `archived_at` - a nullable timestamp

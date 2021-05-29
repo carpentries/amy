@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 AIRPORTS = [
     ('ALC', 'Alicante', 'ES', 38.2821999, -0.558156),

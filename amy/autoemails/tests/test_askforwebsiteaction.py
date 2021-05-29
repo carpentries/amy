@@ -1,10 +1,10 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.test import TestCase
 
 from autoemails.actions import AskForWebsiteAction
-from autoemails.models import Trigger, EmailTemplate
-from workshops.models import Task, Role, Person, Event, Tag, Organization
+from autoemails.models import EmailTemplate, Trigger
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestAskForWebsiteAction(TestCase):
@@ -276,9 +276,13 @@ class TestAskForWebsiteAction(TestCase):
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
-        a = AskForWebsiteAction(trigger=trigger, objects=dict(event=e),)
+        a = AskForWebsiteAction(
+            trigger=trigger,
+            objects=dict(event=e),
+        )
         email = a._email()
         self.assertEqual(email.to, [p1.email, p2.email])
 
@@ -339,5 +343,6 @@ class TestAskForWebsiteAction(TestCase):
         )
 
         self.assertEqual(
-            a.all_recipients(), "hg@magic.uk, hp@magic.uk",
+            a.all_recipients(),
+            "hg@magic.uk, hp@magic.uk",
         )

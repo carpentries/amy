@@ -1,0 +1,56 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags formset_tags %}
+
+{% block content %}
+
+  <form method="POST">
+    <div id="formset" data-formset-prefix="{{ formset.prefix }}">
+      {% csrf_token %}
+      {% if formset.errors %}<p class="text-danger">Fix the error(s) in forms below.</p>{% endif %}
+      {% if formset.initial_form_count %}<hr>{% endif %}
+      {{ formset.media }}
+      {{ formset.management_form }}
+
+      <div data-formset-body>
+        {% for form in formset %}
+        <fieldset data-formset-form>
+          {% if form.errors %}<p class="text-danger">Errors in the form.</p>{% endif %}
+          {% crispy form %}
+        </fieldset>
+        {% if not forloop.last %}<hr>{% endif %}
+        {% endfor %}
+      </div>
+
+      <script type="form-template" data-formset-empty-form>
+        {% escapescript %}
+        <fieldset data-formset-form>
+          <hr>
+          {% crispy formset.empty_form formset.empty_form.helper_empty_form %}
+          <div class="form-group row">
+            <div class="offset-12 offset-lg-2 col-12 col-lg-10">
+              <input type="hidden" name="form-__prefix__-EDITABLE" value="1">
+              <button type="button" class="btn btn-secondary" data-formset-delete-button>Discard</button>
+            </div>
+          </div>
+        </fieldset>
+        {% endescapescript %}
+      </script>
+
+      <div class="form-group row">
+        <div class="col-12 col-lg-2">
+          {% if add_another_help_text %}
+          <small class="form-text text-muted">{{ add_another_help_text }}</small>
+          {% endif %}
+          <input type="button" value="Add another" class="btn btn-success" data-formset-add>
+          <input type="submit" value="Save" class="btn btn-primary">
+        </div>
+      </div>
+
+    </div>
+  </form>
+
+
+<script src="{{ STATIC_URL }}js/jquery.formset.js"></script>
+
+{% endblock %}

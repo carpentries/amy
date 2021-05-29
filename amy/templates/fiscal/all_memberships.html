@@ -11,20 +11,34 @@
   {% if all_memberships %}
     <table class="table table-striped">
       <tr>
-        <th>Organization</th>
+        <th>Name</th>
+        <th>Consortium</th>
+        <th>Organisations</th>
         <th>Variant</th>
-        <th>Start date</th>
-        <th>End date</th>
+        <th>Dates</th>
         <th>Contribution</th>
-        <th>Remaining instructor training seats</th>
+        <th>Remaining public instructor training seats</th>
         <th class="additional-links"></th>
       </tr>
       {% for membership in all_memberships %}
         <tr>
-          <td><a href="{{ membership.organization.get_absolute_url }}">{{ membership.organization.fullname }}</a></td>
-          <td>{{ membership.get_variant_display }}</td>
-          <td>{{ membership.agreement_start|date:'Y-m-d' }}</td>
-          <td>{{ membership.agreement_end|date:'Y-m-d'}}</td>
+          <td>
+            <a href="{{ membership.get_absolute_url }}">{{ membership.name }}</a>
+          </td>
+          <td>{{ membership.consortium|yesno|title }}</td>
+          <td>
+            {% if membership.organizations.all %}
+              {% for organization in membership.organizations.all %}
+              <a href="{{ organization.get_absolute_url }}">{{ organization.fullname }}</a>{% if not forloop.last %},<br>{% endif %}
+              {% endfor %}
+            {% else %}
+              <em>No organisation added.</em>
+            {% endif %}
+          </td>
+          <td>
+            {{ membership.get_variant_display }}
+          </td>
+          <td>{{ membership.agreement_start|date:"Y-m-d" }} &mdash; {{ membership.agreement_end|date:"Y-m-d" }}</td>
           <td>{{ membership.get_contribution_type_display }}</td>
           <td {% if membership.instructor_training_seats_remaining <= 0 and membership.instructor_training_seats_total > 0 or membership.instructor_training_seats_remaining < 0 and membership.instructor_training_seats_total == 0 %}class="table-danger"{% endif %}>{{ membership.instructor_training_seats_remaining }}</td>
           <td>

@@ -1,7 +1,7 @@
 import datetime
 
 from crispy_forms.bootstrap import FormActions
-from crispy_forms.layout import Layout, Div, HTML, Submit
+from crispy_forms.layout import HTML, Div, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
@@ -9,30 +9,31 @@ from django.db.models import Case, When
 from extrequests.models import (
     DataVariant,
     InfoSource,
-    WorkshopInquiryRequest,
     SelfOrganisedSubmission,
+    WorkshopInquiryRequest,
+)
+from workshops.fields import (
+    CheckboxSelectMultipleWithOthers,
+    CurriculumModelMultipleChoiceField,
+    ModelSelect2Widget,
+    RadioSelectFakeMultiple,
+    RadioSelectWithOther,
+    SafeModelMultipleChoiceField,
+    Select2TagWidget,
+    Select2Widget,
 )
 from workshops.forms import BootstrapHelper
 from workshops.models import (
     AcademicLevel,
-    Event,
-    Person,
-    Organization,
-    Membership,
-    TrainingRequest,
-    KnowledgeDomain,
-    WorkshopRequest,
     Curriculum,
-)
-from workshops.fields import (
-    Select2Widget,
-    Select2TagWidget,
-    ModelSelect2Widget,
-    RadioSelectWithOther,
-    CheckboxSelectMultipleWithOthers,
-    RadioSelectFakeMultiple,
-    SafeModelMultipleChoiceField,
-    CurriculumModelMultipleChoiceField,
+    Event,
+    KnowledgeDomain,
+    Membership,
+    Organization,
+    Person,
+    Task,
+    TrainingRequest,
+    WorkshopRequest,
 )
 
 
@@ -117,6 +118,15 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="membership-lookup"),
     )
 
+    seat_public = forms.TypedChoiceField(
+        coerce=bool,
+        choices=Task.SEAT_PUBLIC_CHOICES,
+        initial=Task._meta.get_field("seat_public").default,
+        required=False,
+        label=Task._meta.get_field("seat_public").verbose_name,
+        widget=forms.RadioSelect(),
+    )
+
     seat_open_training = forms.BooleanField(
         label="Open training seat",
         required=False,
@@ -127,7 +137,12 @@ class BulkMatchTrainingRequestForm(forms.Form):
     helper = BootstrapHelper(
         add_submit_button=False, form_tag=False, add_cancel_button=False
     )
-    helper.layout = Layout("event", "seat_membership", "seat_open_training",)
+    helper.layout = Layout(
+        "event",
+        "seat_membership",
+        "seat_public",
+        "seat_open_training",
+    )
     helper.add_input(
         Submit(
             "match",
@@ -409,11 +424,13 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         hr_fields_before = ("carpentries_info_source",)
         for field in hr_fields_after:
             self.helper.layout.insert(
-                self.helper.layout.fields.index(field) + 1, HTML(self.helper.hr()),
+                self.helper.layout.fields.index(field) + 1,
+                HTML(self.helper.hr()),
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
-                self.helper.layout.fields.index(field), HTML(self.helper.hr()),
+                self.helper.layout.fields.index(field),
+                HTML(self.helper.hr()),
             )
 
     @staticmethod
@@ -830,11 +847,13 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         )
         for field in hr_fields_after:
             self.helper.layout.insert(
-                self.helper.layout.fields.index(field) + 1, HTML(self.helper.hr()),
+                self.helper.layout.fields.index(field) + 1,
+                HTML(self.helper.hr()),
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
-                self.helper.layout.fields.index(field), HTML(self.helper.hr()),
+                self.helper.layout.fields.index(field),
+                HTML(self.helper.hr()),
             )
 
         AGREEMENTS_TEXT = (
@@ -895,7 +914,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         academic_levels = self.cleaned_data.get("academic_levels", None)
         computing_levels = self.cleaned_data.get("computing_levels", None)
         requested_workshop_types = self.cleaned_data.get(
-            "requested_workshop_types", None,
+            "requested_workshop_types",
+            None,
         )
 
         if routine_data and routine_data.filter(unknown=True):
@@ -1002,7 +1022,10 @@ class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta(WorkshopInquiryRequestBaseForm.Meta):
-        fields = ("state", "event",) + WorkshopInquiryRequestBaseForm.Meta.fields
+        fields = (
+            "state",
+            "event",
+        ) + WorkshopInquiryRequestBaseForm.Meta.fields
 
         widgets = WorkshopInquiryRequestBaseForm.Meta.widgets.copy()
         widgets.update({"event": Select2Widget})
@@ -1098,6 +1121,9 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "additional_contact": Select2TagWidget,
         }
 
+    class Media:
+        js = ("selforganisedsubmission_form.js",)
+
     @staticmethod
     def institution_label_from_instance(obj):
         """Static method that overrides ModelChoiceField choice labels,
@@ -1145,12 +1171,49 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         hr_fields_before = []
         for field in hr_fields_after:
             self.helper.layout.insert(
-                self.helper.layout.fields.index(field) + 1, HTML(self.helper.hr()),
+                self.helper.layout.fields.index(field) + 1,
+                HTML(self.helper.hr()),
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
-                self.helper.layout.fields.index(field), HTML(self.helper.hr()),
+                self.helper.layout.fields.index(field),
+                HTML(self.helper.hr()),
             )
+
+        # add warning alert for workshop URL
+        REPO_WARNING = (
+            "Would you be able to update the name of the workshop webpage prior to "
+            "submitting this notification? If so, we recommend using the following "
+            "name: YEAR-MM-DD-site-online. If not, that's okay and please feel free "
+            "to submit the form."
+        )
+        URL_WARNING = (
+            "Please adjust the URL format so that it points to the workshop website. "
+            "The format for this is: https://username.github.io/repo"
+        )
+        pos_index = self.helper.layout.fields.index("workshop_url")
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML(REPO_WARNING),
+                    css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
+                ),
+                id="workshop_url_repo_warning",
+                css_class="form-group row d-none",
+            ),
+        )
+        self.helper.layout.insert(
+            pos_index + 2,
+            Div(
+                Div(
+                    HTML(URL_WARNING),
+                    css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
+                ),
+                id="workshop_url_warning",
+                css_class="form-group row d-none",
+            ),
+        )
 
     def clean(self):
         super().clean()
@@ -1242,7 +1305,10 @@ class SelfOrganisedSubmissionAdminForm(SelfOrganisedSubmissionBaseForm):
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta(SelfOrganisedSubmissionBaseForm.Meta):
-        fields = ("state", "event",) + SelfOrganisedSubmissionBaseForm.Meta.fields
+        fields = (
+            "state",
+            "event",
+        ) + SelfOrganisedSubmissionBaseForm.Meta.fields
 
         widgets = SelfOrganisedSubmissionBaseForm.Meta.widgets.copy()
         widgets.update({"event": Select2Widget})
@@ -1322,106 +1388,172 @@ class TrainingRequestsMergeForm(forms.Form):
     state = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     person = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     group_name = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     personal = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     middle = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     family = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     email = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     secondary_email = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     github = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     occupation = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     occupation_other = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     affiliation = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     location = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     country = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     underresourced = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     domains = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=THREE,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     domains_other = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     underrepresented = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     underrepresented_details = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     nonprofit_teaching_experience = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     previous_involvement = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=THREE,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     previous_training = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     previous_training_other = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     previous_training_explanation = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     previous_experience = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     previous_experience_other = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     previous_experience_explanation = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     programming_language_usage_frequency = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     teaching_frequency_expectation = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     teaching_frequency_expectation_other = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     max_travelling_frequency = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     max_travelling_frequency_other = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     reason = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=THREE,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     user_notes = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=THREE,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     training_completion_agreement = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     workshop_teaching_agreement = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     data_privacy_agreement = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     code_of_conduct_agreement = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     created_at = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )
     comments = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+        choices=THREE,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
     )

@@ -2,37 +2,50 @@ from django.contrib import admin
 
 from workshops.models import (
     AcademicLevel,
-    ComputingExperienceLevel,
-)
-from workshops.models import (
-    Tag,
-    Role,
-    Lesson,
-    KnowledgeDomain,
     Badge,
-    TrainingRequirement,
-    TrainingRequest,
+    ComputingExperienceLevel,
     Curriculum,
     InfoSource,
+    KnowledgeDomain,
+    Lesson,
+    MemberRole,
+    Role,
+    Tag,
+    TrainingRequest,
+    TrainingRequirement,
 )
+
+
+class MemberRoleAdmin(admin.ModelAdmin):
+    list_display = ("name", "verbose_name")
 
 
 class RoleAdmin(admin.ModelAdmin):
-    list_display = ('name', 'verbose_name')
+    list_display = ("name", "verbose_name")
 
 
 class CurriculumAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'carpentry', 'slug', 'name', 'description',
-                    'active', 'other', 'unknown')
+    list_display = (
+        "__str__",
+        "carpentry",
+        "slug",
+        "name",
+        "description",
+        "active",
+        "other",
+        "unknown",
+    )
 
 
 class InfoSourceAdmin(admin.ModelAdmin):
-    list_display = ('name', )
+    list_display = ("name",)
 
 
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'priority', 'details')
+    list_display = ("name", "priority", "details")
 
+
+admin.site.register(MemberRole, MemberRoleAdmin)
 
 admin.site.register(AcademicLevel)
 admin.site.register(ComputingExperienceLevel)

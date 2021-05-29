@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
 import django.core.validators
+from django.db import migrations, models
 
 
 def switch_invoice_ni_to_na(apps, schema_editor):

@@ -2,16 +2,16 @@ from rest_framework import serializers
 
 from autoemails.models import EmailTemplate
 from workshops.models import (
-    Badge,
     Airport,
-    Person,
+    Award,
+    Badge,
     Event,
     Organization,
+    Person,
     Task,
-    Award,
+    TrainingProgress,
     TrainingRequest,
     TrainingRequirement,
-    TrainingProgress,
 )
 
 

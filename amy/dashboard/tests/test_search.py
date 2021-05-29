@@ -1,11 +1,18 @@
-from datetime import datetime, timezone, date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django_comments.models import Comment
 
+from workshops.models import (
+    Member,
+    MemberRole,
+    Membership,
+    Organization,
+    Person,
+    TrainingRequest,
+)
 from workshops.tests.base import TestBase
-from workshops.models import Organization, Person, TrainingRequest, Membership
 
 
 class TestSearch(TestBase):
@@ -153,22 +160,65 @@ class TestSearch(TestBase):
         response = self.search_for("Alpha", no_redirect=False, follow=True)
         self.assertEqual(response.request.path, self.org_alpha.get_absolute_url())
 
-    def test_search_for_memberships(self):
-        """Make sure that finding memberships works."""
-        Membership.objects.create(
+    def test_search_for_memberships_code(self):
+        """Make sure that finding memberships by registration code works."""
+        membership = Membership.objects.create(
             variant="partner",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=20,
-            seats_instructor_training=25,
-            additional_instructor_training_seats=3,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
+        )
+        Member.objects.create(
+            membership=membership,
             organization=self.org_beta,
+            role=MemberRole.objects.first(),
         )
 
         response = self.search_for("BETA-code")  # case-insensitive
 
         self.assertEqual(len(response.context["memberships"]), 1)
         self.assertEqual(len(response.context["organisations"]), 0)
+
+    def test_search_for_memberships_name(self):
+        """Make sure that finding memberships by name works."""
+        membership = Membership.objects.create(
+            name="alpha-name",
+            variant="partner",
+            registration_code="test-beta-code-test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=self.org_beta,
+            role=MemberRole.objects.first(),
+        )
+
+        response = self.search_for("ALPHA-name")  # case-insensitive
+
+        self.assertEqual(len(response.context["memberships"]), 1)
+        self.assertEqual(len(response.context["organisations"]), 0)
+
+    def test_search_redirect_two_single_results(self):
+        """Regression test: make sure redirect doesn't happen if two single results are
+        present."""
+        Comment.objects.create(
+            content_object=self.org_alpha,
+            user=self.hermione,
+            comment="Testing commenting system for Alpha Organization",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
+
+        response = self.search_for("Alpha", no_redirect=False, follow=False)
+        self.assertEqual(response.status_code, 200)  # doesn't redirect
+        self.assertEqual(len(response.context["organisations"]), 1)
+        self.assertEqual(len(response.context["comments"]), 1)

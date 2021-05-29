@@ -1,11 +1,11 @@
 from collections import namedtuple
-from typing import Optional, List
+from typing import List, Optional
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
-from django.template import engines, Template, TemplateSyntaxError
+from django.template import Template, TemplateSyntaxError, engines
 from django.urls import reverse
 import markdown
 
@@ -289,6 +289,10 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ("workshop-request-response1", "Response to Workshop Request 1"),
         ("workshop-request-response2", "Response to Workshop Request 2"),
         ("workshop-request-response3", "Response to Workshop Request 3"),
+        (
+            "consent-required",
+            "There is a new or updated term added that the users should consent to",
+        ),
     )
     action = models.CharField(
         max_length=50,
@@ -320,7 +324,10 @@ class RQJob(CreatedUpdatedMixin, models.Model):
     """Simple class for storing Redis Queue job's ID."""
 
     job_id = models.CharField(
-        max_length=100, blank=False, null=False, verbose_name="RQ Job ID",
+        max_length=100,
+        blank=False,
+        null=False,
+        verbose_name="RQ Job ID",
     )
 
     trigger = models.ForeignKey(

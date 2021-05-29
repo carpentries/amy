@@ -9,14 +9,16 @@ services:
       POSTGRES_DB: amy
     ports:
       - "5432:5432"
+    # volumes:
+    #   - ../docker/database:/var/lib/postgresql/data
 
-  redis_cache:
+  redis:
     command: redis-server --appendonly yes
     image: redis:latest
     ports:
       - "6379:6379"
     # volumes:
-    #   - ./redis:/data
+    #   - ../docker/redis:/data
 
   amy:
     # building with docker-compose didn't work on my machine,
@@ -33,26 +35,27 @@ services:
     ports:
       - "8000:80"
     depends_on:
-      - redis_cache
+      - database
+      - redis
 
-  redis_worker:
+  rqworker:
     image: amy:latest
     environment:
-      - AMY_REDIS_URL=redis://redis_cache:6379/
+      - AMY_REDIS_URL=redis://redis:6379/
     command: python manage.py rqworker -v 2
     depends_on:
-      - redis_cache
+      - redis
       - amy
 
-  redis_scheduler:
+  rqscheduler:
     image: amy:latest
     environment:
-      - AMY_REDIS_URL=redis://redis_cache:6379/
+      - AMY_REDIS_URL=redis://redis:6379/
     command: python manage.py rqscheduler -v 2
     depends_on:
-      - redis_cache
+      - redis
       - amy
-      - redis_worker
+      - rqworker
 
 networks:
   default:

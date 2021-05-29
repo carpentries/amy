@@ -36,9 +36,11 @@ test_db*
 DB_backups/*
 
 # log file
-amy.log
-amy_debug.log
-worker_debug.log
+logs/*
 
-# Redis Docker local volume
-redis/*
+# Docker local volumes
+docker/database/*
+docker/redis/*
+
+# mkdocs output folder
+site/

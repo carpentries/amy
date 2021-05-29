@@ -1,31 +1,21 @@
 from django.contrib import messages
-from django.db.models import (
-    Case,
-    When,
-    IntegerField,
-    Count,
-    F,
-    Sum,
-    Prefetch,
-)
-from django.shortcuts import render, redirect
+from django.db.models import Case, Count, F, IntegerField, Prefetch, Sum, When
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
-from trainings.filters import (
-    TraineeFilter,
-)
+from trainings.filters import TraineeFilter
 from trainings.forms import (
-    TrainingProgressForm,
     BulkAddTrainingProgressForm,
     BulkDiscardProgressesForm,
+    TrainingProgressForm,
 )
 from workshops.base_views import (
     AMYCreateView,
-    AMYUpdateView,
     AMYDeleteView,
     AMYListView,
-    RedirectSupportMixin,
+    AMYUpdateView,
     PrepopulationSupportMixin,
+    RedirectSupportMixin,
 )
 from workshops.models import (
     Badge,
@@ -35,101 +25,110 @@ from workshops.models import (
     TrainingProgress,
     TrainingRequirement,
 )
-from workshops.util import (
-    get_pagination_items,
-    admin_required,
-    OnlyForAdminsMixin,
-)
+from workshops.util import OnlyForAdminsMixin, admin_required, get_pagination_items
 
 
 class AllTrainings(OnlyForAdminsMixin, AMYListView):
-    context_object_name = 'all_trainings'
-    template_name = 'trainings/all_trainings.html'
-    queryset = Event.objects.filter(tags__name='TTT').annotate(
-        trainees=Count(Case(When(task__role__name='learner',
-                                 then=F('task__person__id')),
-                            output_field=IntegerField()),
-                       distinct=True),
-        finished=Count(Case(When(task__role__name='learner',
-                                 task__person__badges__in=Badge.objects.instructor_badges(),
-                                 then=F('task__person__id')),
-                            output_field=IntegerField()),
-                       distinct=True),
-    ).exclude(trainees=0).order_by('-start')
-    title = 'All Instructor Trainings'
+    context_object_name = "all_trainings"
+    template_name = "trainings/all_trainings.html"
+    queryset = (
+        Event.objects.filter(tags__name="TTT")
+        .annotate(
+            trainees=Count(
+                Case(
+                    When(task__role__name="learner", then=F("task__person__id")),
+                    output_field=IntegerField(),
+                ),
+                distinct=True,
+            ),
+            finished=Count(
+                Case(
+                    When(
+                        task__role__name="learner",
+                        task__person__badges__in=Badge.objects.instructor_badges(),
+                        then=F("task__person__id"),
+                    ),
+                    output_field=IntegerField(),
+                ),
+                distinct=True,
+            ),
+        )
+        .exclude(trainees=0)
+        .order_by("-start")
+    )
+    title = "All Instructor Trainings"
 
 
 # ------------------------------------------------------------
 # Instructor Training related views
 
-class TrainingProgressCreate(RedirectSupportMixin,
-                             PrepopulationSupportMixin,
-                             OnlyForAdminsMixin,
-                             AMYCreateView):
+
+class TrainingProgressCreate(
+    RedirectSupportMixin, PrepopulationSupportMixin, OnlyForAdminsMixin, AMYCreateView
+):
     model = TrainingProgress
     form_class = TrainingProgressForm
-    populate_fields = ['trainee']
+    populate_fields = ["trainee"]
 
     def get_initial(self):
         initial = super().get_initial()
-        initial['evaluated_by'] = self.request.user
+        initial["evaluated_by"] = self.request.user
         return initial
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'].helper = context['form'].create_helper
+        context["form"].helper = context["form"].create_helper
         return context
 
 
-class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
-                             AMYUpdateView):
+class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
-    template_name = 'trainings/trainingprogress_form.html'
+    template_name = "trainings/trainingprogress_form.html"
 
 
-class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
-                             AMYDeleteView):
+class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin, AMYDeleteView):
     model = TrainingProgress
-    success_url = reverse_lazy('all_trainees')
+    success_url = reverse_lazy("all_trainees")
 
 
 def all_trainees_queryset():
     def has_badge(badge):
-        return Sum(Case(When(badges__name=badge, then=1),
-                        default=0,
-                        output_field=IntegerField()))
+        return Sum(
+            Case(
+                When(badges__name=badge, then=1), default=0, output_field=IntegerField()
+            )
+        )
 
     return (
-        Person.objects
-        .annotate_with_instructor_eligibility()
+        Person.objects.annotate_with_instructor_eligibility()
         .prefetch_related(
             Prefetch(
-                'task_set',
-                to_attr='training_tasks',
-                queryset=Task.objects.filter(role__name='learner',
-                                             event__tags__name='TTT')
+                "task_set",
+                to_attr="training_tasks",
+                queryset=Task.objects.filter(
+                    role__name="learner", event__tags__name="TTT"
+                ),
             ),
-            'training_tasks__event',
-            'trainingrequest_set',
-            'trainingprogress_set',
-            'trainingprogress_set__requirement',
-            'trainingprogress_set__evaluated_by',
-        ).annotate(
-            is_swc_instructor=has_badge('swc-instructor'),
-            is_dc_instructor=has_badge('dc-instructor'),
-            is_lc_instructor=has_badge('lc-instructor'),
+            "training_tasks__event",
+            "trainingrequest_set",
+            "trainingprogress_set",
+            "trainingprogress_set__requirement",
+            "trainingprogress_set__evaluated_by",
+        )
+        .annotate(
+            is_swc_instructor=has_badge("swc-instructor"),
+            is_dc_instructor=has_badge("dc-instructor"),
+            is_lc_instructor=has_badge("lc-instructor"),
             is_instructor=Sum(
                 Case(
-                    When(
-                        badges__name__in=Badge.INSTRUCTOR_BADGES,
-                        then=1
-                    ),
+                    When(badges__name__in=Badge.INSTRUCTOR_BADGES, then=1),
                     default=0,
-                    output_field=IntegerField()
+                    output_field=IntegerField(),
                 )
             ),
-        ).order_by('family', 'personal')
+        )
+        .order_by("family", "personal")
     )
 
 
@@ -141,51 +140,52 @@ def all_trainees(request):
     )
     trainees = get_pagination_items(request, filter.qs)
 
-    if request.method == 'POST' and 'discard' in request.POST:
+    if request.method == "POST" and "discard" in request.POST:
         # Bulk discard progress of selected trainees
         form = BulkAddTrainingProgressForm()
         discard_form = BulkDiscardProgressesForm(request.POST)
         if discard_form.is_valid():
-            for trainee in discard_form.cleaned_data['trainees']:
-                TrainingProgress.objects.filter(trainee=trainee)\
-                                        .update(discarded=True)
-            messages.success(request, 'Successfully discarded progress of '
-                                      'all selected trainees.')
+            for trainee in discard_form.cleaned_data["trainees"]:
+                TrainingProgress.objects.filter(trainee=trainee).update(discarded=True)
+            messages.success(
+                request, "Successfully discarded progress of " "all selected trainees."
+            )
 
             # Raw uri contains GET parameters from django filters. We use it
             # to preserve filter settings.
             return redirect(request.get_raw_uri())
 
-    elif request.method == 'POST' and 'submit' in request.POST:
+    elif request.method == "POST" and "submit" in request.POST:
         # Bulk add progress to selected trainees
         instance = TrainingProgress(evaluated_by=request.user)
         form = BulkAddTrainingProgressForm(request.POST, instance=instance)
         discard_form = BulkDiscardProgressesForm()
         if form.is_valid():
-            for trainee in form.cleaned_data['trainees']:
+            for trainee in form.cleaned_data["trainees"]:
                 TrainingProgress.objects.create(
                     trainee=trainee,
                     evaluated_by=request.user,
-                    requirement=form.cleaned_data['requirement'],
-                    state=form.cleaned_data['state'],
+                    requirement=form.cleaned_data["requirement"],
+                    state=form.cleaned_data["state"],
                     discarded=False,
-                    event=form.cleaned_data['event'],
-                    url=form.cleaned_data['url'],
-                    notes=form.cleaned_data['notes'],
+                    event=form.cleaned_data["event"],
+                    url=form.cleaned_data["url"],
+                    notes=form.cleaned_data["notes"],
                 )
-            messages.success(request, 'Successfully changed progress of '
-                                      'all selected trainees.')
+            messages.success(
+                request, "Successfully changed progress of " "all selected trainees."
+            )
 
             return redirect(request.get_raw_uri())
 
     else:  # GET request
         # If the user filters by training, we want to set initial values for
         # "requirement" and "training" fields.
-        training_id = request.GET.get('training', None) or None
+        training_id = request.GET.get("training", None) or None
         try:
             initial = {
-                'event': Event.objects.get(pk=training_id),
-                'requirement': TrainingRequirement.objects.get(name='Training')
+                "event": Event.objects.get(pk=training_id),
+                "requirement": TrainingRequirement.objects.get(name="Training"),
             }
         except Event.DoesNotExist:  # or there is no `training` GET parameter
             initial = None
@@ -193,12 +193,14 @@ def all_trainees(request):
         form = BulkAddTrainingProgressForm(initial=initial)
         discard_form = BulkDiscardProgressesForm()
 
-    context = {'title': 'Trainees',
-               'all_trainees': trainees,
-               'swc': Badge.objects.get(name='swc-instructor'),
-               'dc': Badge.objects.get(name='dc-instructor'),
-               'lc': Badge.objects.get(name='lc-instructor'),
-               'filter': filter,
-               'form': form,
-               'discard_form': discard_form}
-    return render(request, 'trainings/all_trainees.html', context)
+    context = {
+        "title": "Trainees",
+        "all_trainees": trainees,
+        "swc": Badge.objects.get(name="swc-instructor"),
+        "dc": Badge.objects.get(name="dc-instructor"),
+        "lc": Badge.objects.get(name="lc-instructor"),
+        "filter": filter,
+        "form": form,
+        "discard_form": discard_form,
+    }
+    return render(request, "trainings/all_trainees.html", context)

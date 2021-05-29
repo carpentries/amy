@@ -1,15 +1,12 @@
 from datetime import date
 
-from django.core import mail
 from django.conf import settings
+from django.core import mail
 from django.urls import reverse
 
 from extforms.forms import SelfOrganisedSubmissionExternalForm
 from extrequests.models import SelfOrganisedSubmission
-from workshops.models import (
-    Language,
-    Curriculum,
-)
+from workshops.models import Curriculum, Language
 from workshops.tests.base import TestBase
 
 
@@ -119,7 +116,8 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
         # test email for admins
         msg = mail.outbox[1]
         self.assertEqual(
-            msg.subject, "New self-organised submission: Ministry of Magic",
+            msg.subject,
+            "New self-organised submission: Ministry of Magic",
         )
         self.assertEqual(msg.recipients(), ["admin-uk@carpentries.org"])
         self.assertNotIn(

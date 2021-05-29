@@ -5,22 +5,14 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from requests_mock import Mocker
 
-from autoemails.models import Trigger, EmailTemplate, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import SelfOrganisedSubmissionBaseForm
 from extrequests.models import SelfOrganisedSubmission
 import extrequests.views
 from workshops.forms import EventCreateForm
-from workshops.models import (
-    Task,
-    Role,
-    Event,
-    Organization,
-    Language,
-    Curriculum,
-    Tag,
-)
-from workshops.tests.base import TestBase, FormTestHelper
+from workshops.models import Curriculum, Event, Language, Organization, Role, Tag, Task
+from workshops.tests.base import FormTestHelper, TestBase
 
 
 class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
@@ -335,6 +327,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         data = {
             "slug": "2018-10-28-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -472,6 +465,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         data = {
             "slug": "2018-10-28-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -493,6 +487,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         data = {
             "slug": "2019-08-18-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -617,7 +612,9 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         """
         # setup mock to "fake" the response from non-existing URL
         mock.get(
-            self.sos1.workshop_url, text=html, status_code=200,
+            self.sos1.workshop_url,
+            text=html,
+            status_code=200,
         )
 
         view_url = reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk])
@@ -716,10 +713,12 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailActions(
             body_template="Sample text.",
         )
         self.trigger1 = Trigger.objects.create(
-            action="self-organised-request-form", template=template1,
+            action="self-organised-request-form",
+            template=template1,
         )
         self.trigger2 = Trigger.objects.create(
-            action="week-after-workshop-completion", template=template2,
+            action="week-after-workshop-completion",
+            template=template2,
         )
 
         self.url = reverse("selforganisedsubmission_accept_event", args=[self.sos.pk])
@@ -740,6 +739,7 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailActions(
         data = {
             "slug": "xxxx-xx-xx-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.get(domain="self-organized").pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=8),

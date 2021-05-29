@@ -129,7 +129,12 @@
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.url|default:"&mdash;"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
-    <td>{% if t.seat_membership %}<a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+    <td>
+      {% if t.seat_membership %}
+        <a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a><br>
+        <small>{{ t.get_seat_public_display }}</small>
+      {% else %}&mdash;{% endif %}
+    </td>
     <td>{{ t.seat_open_training|yesno }}</td>
     <td>
       <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
@@ -147,34 +152,6 @@
 {% endif %}
 
 <hr>
-
-{% block sponsorships %}
-{% with sponsorships=event.sponsorship_set.all %}
-{% if sponsorships %}
-<h3>Sponsors</h3>
-<table class="table table-striped">
-  <tr>
-    <th>Organization</th>
-    <th>Amount</th>
-    <th>Contact</th>
-  </tr>
-  {% for sponsorship in sponsorships %}
-  <tr>
-    <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a></td>
-    <td>{{ sponsorship.amount|default:"—" }}</td>
-    <td>
-    {% if sponsorship.contact %}
-        <a href="{{ sponsorship.contact.get_absolute_url }}">{{ sponsorship.contact }}</a>
-    {% else %}—{% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>No sponsors.</p>
-{% endif %}
-{% endwith %}
-{% endblock sponsorships %}
 
 <div class="clearfix">
   <div class="edit-object float-left">

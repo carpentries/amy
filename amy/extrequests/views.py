@@ -8,57 +8,44 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import (
-    IntegrityError,
-    transaction,
-)
-from django.db.models import (
-    Prefetch,
-    Q,
-    ProtectedError,
-)
-from django.shortcuts import redirect, render, get_object_or_404
+from django.db import IntegrityError, transaction
+from django.db.models import Prefetch, ProtectedError, Q
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.actions import (
-    SelfOrganisedRequestAction,
-    PostWorkshopAction,
-)
+from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
-    TrainingRequestFilter,
-    WorkshopRequestFilter,
-    WorkshopInquiryFilter,
     SelfOrganisedSubmissionFilter,
+    TrainingRequestFilter,
+    WorkshopInquiryFilter,
+    WorkshopRequestFilter,
 )
 from extrequests.forms import (
-    MatchTrainingRequestForm,
-    BulkMatchTrainingRequestForm,
     BulkChangeTrainingRequestForm,
-    TrainingRequestUpdateForm,
-    TrainingRequestsSelectionForm,
-    TrainingRequestsMergeForm,
-    WorkshopRequestAdminForm,
-    WorkshopInquiryRequestAdminForm,
+    BulkMatchTrainingRequestForm,
+    MatchTrainingRequestForm,
     SelfOrganisedSubmissionAdminForm,
+    TrainingRequestsMergeForm,
+    TrainingRequestsSelectionForm,
+    TrainingRequestUpdateForm,
+    WorkshopInquiryRequestAdminForm,
+    WorkshopRequestAdminForm,
 )
-from extrequests.models import (
-    WorkshopInquiryRequest,
-    SelfOrganisedSubmission,
-)
+from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from workshops.base_views import (
-    AMYUpdateView,
-    AMYListView,
     AMYDetailView,
-    StateFilterMixin,
-    RedirectSupportMixin,
-    ChangeRequestStateView,
+    AMYListView,
+    AMYUpdateView,
     AssignView,
+    ChangeRequestStateView,
+    RedirectSupportMixin,
+    StateFilterMixin,
 )
 from workshops.forms import (
     AdminLookupForm,
@@ -68,28 +55,28 @@ from workshops.forms import (
 )
 from workshops.models import (
     Event,
-    TrainingRequest,
-    WorkshopRequest,
-    Task,
-    Role,
-    Person,
     Language,
     Organization,
+    Person,
+    Role,
+    Task,
+    TrainingRequest,
+    WorkshopRequest,
 )
 from workshops.util import (
-    OnlyForAdminsMixin,
-    admin_required,
-    redirect_with_next_support,
-    upload_trainingrequest_manual_score_csv,
-    clean_upload_trainingrequest_manual_score,
-    update_manual_score,
-    create_username,
-    merge_objects,
-    failed_to_delete,
     InternalError,
-    fetch_workshop_metadata,
-    parse_workshop_metadata,
+    OnlyForAdminsMixin,
     WrongWorkshopURL,
+    admin_required,
+    clean_upload_trainingrequest_manual_score,
+    create_username,
+    failed_to_delete,
+    fetch_workshop_metadata,
+    merge_objects,
+    parse_workshop_metadata,
+    redirect_with_next_support,
+    update_manual_score,
+    upload_trainingrequest_manual_score_csv,
 )
 
 logger = logging.getLogger("amy.signals")
@@ -196,7 +183,8 @@ class WorkshopRequestAcceptEvent(
                 logger=logger,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
-                    active=True, action="week-after-workshop-completion",
+                    active=True,
+                    action="week-after-workshop-completion",
                 ),
                 context_objects=objs,
                 object_=event,
@@ -313,7 +301,8 @@ class WorkshopInquiryAcceptEvent(
                 logger=logger,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
-                    active=True, action="week-after-workshop-completion",
+                    active=True,
+                    action="week-after-workshop-completion",
                 ),
                 context_objects=objs,
                 object_=event,
@@ -508,7 +497,8 @@ class SelfOrganisedSubmissionAcceptEvent(
                 logger=logger,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
-                    active=True, action="week-after-workshop-completion",
+                    active=True,
+                    action="week-after-workshop-completion",
                 ),
                 context_objects=objs,
                 object_=event,
@@ -555,7 +545,8 @@ def all_trainingrequests(request):
 
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]
-            member_site = match_form.cleaned_data["seat_membership"]
+            membership = match_form.cleaned_data["seat_membership"]
+            seat_public = match_form.cleaned_data["seat_public"]
             open_seat = match_form.cleaned_data["seat_open_training"]
 
             # Perform bulk match
@@ -566,54 +557,57 @@ def all_trainingrequests(request):
 
                 # assign to an event
                 Task.objects.get_or_create(
+                    event=event,
                     person=r.person,
                     role=Role.objects.get(name="learner"),
-                    event=event,
-                    seat_membership=member_site,
-                    seat_open_training=open_seat,
+                    defaults=dict(
+                        seat_membership=membership,
+                        seat_public=seat_public,
+                        seat_open_training=open_seat,
+                    ),
                 )
 
             requests_count = len(match_form.cleaned_data["requests"])
             today = datetime.date.today()
 
-            if member_site:
-                if (
-                    member_site.seats_instructor_training_remaining - requests_count
-                    <= 0
-                ):
+            if membership:
+                remaining = (
+                    membership.public_instructor_training_seats_remaining
+                    if seat_public
+                    else membership.inhouse_instructor_training_seats_remaining
+                )
+                if remaining - requests_count <= 0:
                     messages.warning(
                         request,
-                        'Membership "{}" is using more training seats than '
-                        "it's been allowed.".format(str(member_site)),
+                        f'Membership "{membership}" is using more training seats than '
+                        "it's been allowed.",
                     )
 
                 # check if membership is active
                 if not (
-                    member_site.agreement_start <= today <= member_site.agreement_end
+                    membership.agreement_start <= today <= membership.agreement_end
                 ):
                     messages.warning(
                         request,
-                        'Membership "{}" is not active.'.format(str(member_site)),
+                        f'Membership "{membership}" is not active.',
                     )
 
                 # show warning if training falls out of agreement dates
                 if (
                     event.start
-                    and event.start < member_site.agreement_start
+                    and event.start < membership.agreement_start
                     or event.end
-                    and event.end > member_site.agreement_end
+                    and event.end > membership.agreement_end
                 ):
                     messages.warning(
                         request,
-                        'Training "{}" has start or end date outside '
-                        'membership "{}" agreement dates.'.format(
-                            str(event), str(member_site),
-                        ),
+                        f'Training "{event}" has start or end date outside '
+                        f'membership "{membership}" agreement dates.',
                     )
 
             messages.success(
                 request,
-                "Successfully accepted and matched " "selected people to training.",
+                "Successfully accepted and matched selected people to training.",
             )
 
     elif request.method == "POST" and "accept" in request.POST:
@@ -961,7 +955,9 @@ def bulk_upload_training_request_scores(request):
         "charset": settings.DEFAULT_CHARSET,
     }
     return render(
-        request, "requests/trainingrequest_bulk_upload_manual_score_form.html", context,
+        request,
+        "requests/trainingrequest_bulk_upload_manual_score_form.html",
+        context,
     )
 
 
@@ -1010,7 +1006,8 @@ def bulk_upload_training_request_scores_confirmation(request):
                     return redirect("bulk_upload_training_request_scores")
             else:
                 messages.warning(
-                    request, "Please fix the data according to error messages below.",
+                    request,
+                    "Please fix the data according to error messages below.",
                 )
 
         else:
@@ -1022,7 +1019,8 @@ def bulk_upload_training_request_scores_confirmation(request):
         errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
         if errors:
             messages.warning(
-                request, "Please fix errors in the provided CSV file and re-upload.",
+                request,
+                "Please fix errors in the provided CSV file and re-upload.",
             )
 
     context = {

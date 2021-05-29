@@ -1,16 +1,14 @@
 from django import template
-from django.db.models import Q
 from django.utils.safestring import mark_safe
-
-from reversion_compare.helpers import html_diff, SEMANTIC
+from reversion_compare.helpers import SEMANTIC, html_diff
 
 register = template.Library()
 
 
 @register.simple_tag
 def semantic_diff(left, right, field):
-    left_txt = left.field_dict[field] or ''
-    right_txt = right.field_dict[field] or ''
+    left_txt = left.field_dict[field] or ""
+    right_txt = right.field_dict[field] or ""
     return mark_safe(html_diff(left_txt, right_txt, cleanup=SEMANTIC))
 
 
@@ -55,22 +53,22 @@ def relation_diff(left, right, field):
     deletions = [obj for obj in left_PKs if obj not in right_PKs]
     # Relations that exist only in both versions
     consistent = [obj for obj in left_PKs if obj in right_PKs]
-    add_label = ''.join('<a class="label label-success" href="{}">+{}</a>'.format(
-            obj.get_absolute_url() if hasattr(obj, 'get_absolute_url') else '#',
-            obj
+    add_label = "".join(
+        '<a class="label label-success" href="{}">+{}</a>'.format(
+            obj.get_absolute_url() if hasattr(obj, "get_absolute_url") else "#", obj
         )
         for obj in additions
     )
-    delete_label = ''.join('<a class="label label-danger" href="{}">-{}</a>'.format(
-            obj.get_absolute_url() if hasattr(obj, 'get_absolute_url') else '#',
-            obj
+    delete_label = "".join(
+        '<a class="label label-danger" href="{}">-{}</a>'.format(
+            obj.get_absolute_url() if hasattr(obj, "get_absolute_url") else "#", obj
         )
         for obj in deletions
     )
-    consistent_label = ''.join('<a class="label label-default" href="{}">{}</a>'.format(
-            obj.get_absolute_url() if hasattr(obj, 'get_absolute_url') else '#',
-            obj
+    consistent_label = "".join(
+        '<a class="label label-default" href="{}">{}</a>'.format(
+            obj.get_absolute_url() if hasattr(obj, "get_absolute_url") else "#", obj
         )
         for obj in consistent
     )
-    return mark_safe(''.join([consistent_label, add_label,delete_label]))
+    return mark_safe("".join([consistent_label, add_label, delete_label]))

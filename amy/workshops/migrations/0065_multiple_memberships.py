@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 import django.db.models.deletion
 
 
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             name='host',
             # the default value of 1 here doesn't break anything, because
             # migrations 0064-0065 should be applied together
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, default=1, to='workshops.Host'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, default=1, to='workshops.Host', null=True),
             preserve_default=False,
         ),
     ]

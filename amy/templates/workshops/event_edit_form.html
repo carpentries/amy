@@ -8,7 +8,6 @@
   <ul class="nav nav-tabs" role="tablist" id="tabs">
     <li role="presentation" class="nav-item"><a class="nav-link active" href="#event" role="tab" data-toggle="tab" aria-controls="event" aria-selected="true" id="event-tab">Event</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks" aria-selected="false" id="tasks-tab">Tasks</a></li>
-    <li role="presentation" class="nav-item"><a class="nav-link" href="#sponsors" role="tab" data-toggle="tab" aria-controls="sponsors" aria-selected="false" id="sponsors-tab">Sponsors</a></li>
   </ul>
 </nav>
 <div class="col-12 tab-content">
@@ -39,7 +38,12 @@
       <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
       <td>{{ t.url|default:"—"|urlize_newtab }}</td>
       <td>{{ t.role.name }}</td>
-      <td>{% if t.seat_membership %}<a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+      <td>
+        {% if t.seat_membership %}
+          <a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a><br>
+          <small>{{ t.get_seat_public_display }}</small>
+        {% else %}&mdash;{% endif %}
+      </td>
       <td>{{ t.seat_open_training|yesno }}</td>
       <td>
         <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
@@ -60,45 +64,6 @@
     {% endif %}
     {% endblock task_tab %}
   </div>
-  <div class="tab-pane" role="tabpanel" aria-labelledby="sponsors-tab" id="sponsors">
-    {% block sponsor_tab %}
-    <form class="form-horizontal" role="form" method="POST" action="{% url 'sponsorship_add' %}">
-      {% crispy sponsor_form %}
-    </form>
-
-    {% if object.sponsorship_set.all %}
-    {% block sponsor_list %}
-    <table class="table table-striped">
-    <tr>
-      <th>Organization</th>
-      <th>Amount</th>
-      <th>Contact</th>
-      <th>Actions</th>
-    </tr>
-    {% for sponsorship in object.sponsorship_set.all %}
-    <tr>
-      <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a></td>
-      <td>{{ sponsorship.amount|default:"—" }}</td>
-      <td>
-      {% if sponsorship.contact %}
-        <a href="{{ sponsorship.contact.get_absolute_url }}">{{ sponsorship.contact }}</a>
-      {% else %}—{% endif %}
-      </td>
-      <td>
-        <form action="{% url 'sponsorship_delete' pk=sponsorship.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ sponsorship }}\" from {{ object }}?")' method="POST">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-    </table>
-    {% endblock sponsor_list %}
-    {% else %}
-    <p>No sponsors.</p>
-    {% endif %}
-    {% endblock sponsor_tab %}
-  </div>
 </div>
 
 {% include "includes/comments.html" with object=event %}
@@ -109,6 +74,18 @@
 <script type="text/javascript">
   $(function() {
     $('#tabs').stickyTabs();
+  });
+  $('select[name="task-person"]').on('change', function() {
+    var person_id = $(this).val();
+    var url = `/api/v1/persons/${person_id}/trainingprogress`;
+    $.get(url, function (training_progresses) {   
+      for (training of training_progresses){
+        if (training.state === "Failed"){
+          alert("Warning: Trainee failed previous training(s). Are you sure you want to continue?");
+          break;
+        }
+      }
+    });
   });
 </script>
 {% endblock extrajs %}

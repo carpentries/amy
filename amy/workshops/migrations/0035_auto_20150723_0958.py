@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 from functools import partial
 
-from django.db import models, migrations
+from django.db import migrations, models
 
 
 def switch_host_to_tag(host_domain, new_host_domain, tag_name, tag_desc,

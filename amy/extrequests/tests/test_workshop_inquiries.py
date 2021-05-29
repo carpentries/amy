@@ -3,25 +3,25 @@ from datetime import date, timedelta
 from django.conf import settings
 from django.urls import reverse
 
-from autoemails.models import Trigger, EmailTemplate, RQJob
+from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import WorkshopInquiryRequestBaseForm
-from extrequests.models import WorkshopInquiryRequest, DataVariant
+from extrequests.models import DataVariant, WorkshopInquiryRequest
 import extrequests.views
 from workshops.forms import EventCreateForm
 from workshops.models import (
-    Tag,
-    Task,
-    Role,
-    Event,
-    Organization,
-    Language,
-    KnowledgeDomain,
     AcademicLevel,
     ComputingExperienceLevel,
     Curriculum,
+    Event,
+    KnowledgeDomain,
+    Language,
+    Organization,
+    Role,
+    Tag,
+    Task,
 )
-from workshops.tests.base import TestBase, FormTestHelper
+from workshops.tests.base import FormTestHelper, TestBase
 
 
 class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
@@ -445,6 +445,7 @@ class TestWorkshopInquiryViews(TestBase):
         data = {
             "slug": "2018-10-28-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -567,6 +568,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
         data = {
             "slug": "2018-10-28-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -587,6 +589,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
         data = {
             "slug": "2019-08-18-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
@@ -654,7 +657,8 @@ class TestAcceptWorkshopInquiryAddsEmailAction(FakeRedisTestCaseMixin, TestBase)
             body_template="Sample text.",
         )
         self.trigger1 = Trigger.objects.create(
-            action="week-after-workshop-completion", template=template1,
+            action="week-after-workshop-completion",
+            template=template1,
         )
 
         self.url = reverse("workshopinquiry_accept_event", args=[self.wi1.pk])
@@ -675,6 +679,7 @@ class TestAcceptWorkshopInquiryAddsEmailAction(FakeRedisTestCaseMixin, TestBase)
         data = {
             "slug": "xxxx-xx-xx-test-event",
             "host": Organization.objects.first().pk,
+            "sponsor": Organization.objects.first().pk,
             "administrator": Organization.objects.get(domain="self-organized").pk,
             "start": date.today() + timedelta(days=7),
             "end": date.today() + timedelta(days=8),

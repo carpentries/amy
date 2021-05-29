@@ -1,18 +1,12 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.test import TestCase
 
 from autoemails.actions import SelfOrganisedRequestAction
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from extrequests.models import SelfOrganisedSubmission
 from workshops.fields import TAG_SEPARATOR
-from workshops.models import (
-    Event,
-    Tag,
-    Organization,
-    Curriculum,
-    Language,
-)
+from workshops.models import Curriculum, Event, Language, Organization, Tag
 
 
 class TestSelfOrganisedRequestAction(TestCase):
@@ -223,10 +217,12 @@ class TestSelfOrganisedRequestAction(TestCase):
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action="self-organised-request-form", template=template,
+            action="self-organised-request-form",
+            template=template,
         )
         a = SelfOrganisedRequestAction(
-            trigger=trigger, objects=dict(event=e, request=r),
+            trigger=trigger,
+            objects=dict(event=e, request=r),
         )
         email = a._email()
         self.assertEqual(email.to, ["harry@hogwarts.edu", "hg@magic.uk", "rw@magic.uk"])

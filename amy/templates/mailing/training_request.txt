@@ -1,7 +1,7 @@
 
 Dear {{object.personal}} {{object.family}},
 
-Thank you for applying for The Carpentries Instructor Training program. We’re excited to have you as part of our community! If you selected "Pre-approved Registration" in your application, you will receive more information approximately one week before your scheduled training. You may disregard the remainder of this email. If you selected Open Training Application, please read on.
+Thank you for applying for The Carpentries Instructor Training program. We’re excited to have you as part of our community! If you selected "Profile Creation for Pre-approved Trainees" in your application, please be sure you have registered for an event via Eventbrite (https://carpentries.github.io/instructor-training/training_calendar/index.html) or directly with your affiliated institution.  You will receive more information approximately one week before your scheduled training. You may disregard the remainder of this email. If you selected "Open Training Application" please read on.
 
 Open Training applications are placed in an application queue to be considered for Instructor Training sponsorship by The Carpentries. We rank applications on a rolling basis. We are working to increase our capacity and reduce wait times, but at present expect a delay of at least 1-3 months. If your application is accepted, you will be given a registration code and invited to join an upcoming online instructor training event. 
 

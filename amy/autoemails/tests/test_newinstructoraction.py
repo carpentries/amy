@@ -1,10 +1,10 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.test import TestCase
 
 from autoemails.actions import NewInstructorAction
-from autoemails.models import Trigger, EmailTemplate
-from workshops.models import Task, Role, Person, Event, Tag, Organization
+from autoemails.models import EmailTemplate, Trigger
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestNewInstructorAction(TestCase):
@@ -181,7 +181,7 @@ class TestNewInstructorAction(TestCase):
                 role=r,
                 task=t,
                 assignee="Regional Coordinator",
-                tags=['SWC'],
+                tags=["SWC"],
             ),
         )
 

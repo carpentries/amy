@@ -1,21 +1,19 @@
 import logging
 
 from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.html import format_html
-from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 import django_rq
 
 from workshops.models import WorkshopRequest
 from workshops.util import admin_required
+
 from .actions import GenericAction
 from .forms import GenericEmailScheduleForm
 from .models import EmailTemplate, Trigger
-from .utils import (
-    check_status,
-    scheduled_execution_time,
-)
+from .utils import check_status, scheduled_execution_time
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -29,9 +27,7 @@ def generic_schedule_email(request, pk):
     Generic view for scheduling an email to be sent.
     """
     template_slug = request.POST.get("slug", "")
-    original_template = get_object_or_404(
-        EmailTemplate, slug=template_slug
-    )
+    original_template = get_object_or_404(EmailTemplate, slug=template_slug)
     # Hardcoded, maybe in future respond to other requests, like
     # SelfOrganizedSubmission or WorkshopInquiry
     trigger = get_object_or_404(
@@ -107,8 +103,7 @@ def generic_schedule_email(request, pk):
         )
 
         return redirect(
-            request.POST.get("next", "")
-            or workshop_request.get_absolute_url()
+            request.POST.get("next", "") or workshop_request.get_absolute_url()
         )
 
     else:
@@ -119,6 +114,5 @@ def generic_schedule_email(request, pk):
         )
 
         return redirect(
-            request.POST.get("next", "")
-            or workshop_request.get_absolute_url()
+            request.POST.get("next", "") or workshop_request.get_absolute_url()
         )

@@ -1,18 +1,11 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
 
 from django.test import TestCase
 
 from autoemails.actions import InstructorsHostIntroductionAction
-from autoemails.models import Trigger, EmailTemplate
+from autoemails.models import EmailTemplate, Trigger
 from workshops.fields import TAG_SEPARATOR
-from workshops.models import (
-    Task,
-    Role,
-    Person,
-    Event,
-    Tag,
-    Organization,
-)
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestInstructorsHostIntroductionAction(TestCase):
@@ -37,13 +30,22 @@ class TestInstructorsHostIntroductionAction(TestCase):
         self.supporting_instructor = Role.objects.create(name="supporting-instructor")
 
         self.person1 = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk", username="hp",
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="hp",
         )
         self.person2 = Person.objects.create(
-            personal="Ron", family="Weasley", email="rw@magic.uk", username="rw",
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="rw",
         )
         self.person3 = Person.objects.create(
-            personal="Hermione", family="Granger", email="hg@magic.uk", username="hg",
+            personal="Hermione",
+            family="Granger",
+            email="hg@magic.uk",
+            username="hg",
         )
         self.person4 = Person.objects.create(
             personal="Peter",
@@ -52,7 +54,10 @@ class TestInstructorsHostIntroductionAction(TestCase):
             username="spiderman",
         )
         self.person5 = Person.objects.create(
-            personal="Tony", family="Stark", email="me@stark.com", username="ironman",
+            personal="Tony",
+            family="Stark",
+            email="me@stark.com",
+            username="ironman",
         )
 
     def testLaunchAt(self):
@@ -75,12 +80,20 @@ class TestInstructorsHostIntroductionAction(TestCase):
         e.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
         e2 = Event.objects.create(slug="bogus-event", host=Organization.objects.first())
         # tasks
-        host = Task.objects.create(person=self.person1, role=self.host, event=e,)
+        host = Task.objects.create(
+            person=self.person1,
+            role=self.host,
+            event=e,
+        )
         instructor1 = Task.objects.create(
-            person=self.person2, role=self.instructor, event=e,
+            person=self.person2,
+            role=self.instructor,
+            event=e,
         )
         instructor2 = Task.objects.create(
-            person=self.person3, role=self.instructor, event=e,
+            person=self.person3,
+            role=self.instructor,
+            event=e,
         )
 
         # 1st case: everything is good
@@ -140,7 +153,9 @@ class TestInstructorsHostIntroductionAction(TestCase):
 
         # 7th case: more than 2 instructors - should still work
         Task.objects.create(
-            person=self.person1, role=self.instructor, event=e,
+            person=self.person1,
+            role=self.instructor,
+            event=e,
         )
         self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
 
@@ -148,13 +163,17 @@ class TestInstructorsHostIntroductionAction(TestCase):
         e.tags.add(Tag.objects.get(name="online"))
         self.assertEqual(InstructorsHostIntroductionAction.check(e), False)
         Task.objects.create(
-            person=self.person4, role=self.supporting_instructor, event=e,
+            person=self.person4,
+            role=self.supporting_instructor,
+            event=e,
         )
         self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
 
         # 9th case: for online, more than 1 supporting instructors should still work
         Task.objects.create(
-            person=self.person5, role=self.supporting_instructor, event=e,
+            person=self.person5,
+            role=self.supporting_instructor,
+            event=e,
         )
         self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
 
@@ -186,16 +205,24 @@ class TestInstructorsHostIntroductionAction(TestCase):
         # tasks
         host = Task.objects.create(person=self.person1, role=self.host, event=e)
         instructor1 = Task.objects.create(
-            person=self.person2, role=self.instructor, event=e,
+            person=self.person2,
+            role=self.instructor,
+            event=e,
         )
         instructor2 = Task.objects.create(
-            person=self.person3, role=self.instructor, event=e,
+            person=self.person3,
+            role=self.instructor,
+            event=e,
         )
         supporting_instructor1 = Task.objects.create(
-            person=self.person4, role=self.supporting_instructor, event=e,
+            person=self.person4,
+            role=self.supporting_instructor,
+            event=e,
         )
         supporting_instructor2 = Task.objects.create(
-            person=self.person5, role=self.supporting_instructor, event=e,
+            person=self.person5,
+            role=self.supporting_instructor,
+            event=e,
         )
 
         ctx = a.get_additional_context(objects=dict(event=e))
@@ -250,10 +277,14 @@ class TestInstructorsHostIntroductionAction(TestCase):
         # tasks
         Task.objects.create(person=self.person1, role=self.host, event=e)
         Task.objects.create(
-            person=self.person2, role=self.instructor, event=e,
+            person=self.person2,
+            role=self.instructor,
+            event=e,
         )
         Task.objects.create(
-            person=self.person3, role=self.instructor, event=e,
+            person=self.person3,
+            role=self.instructor,
+            event=e,
         )
 
         template = EmailTemplate.objects.create(
@@ -267,9 +298,13 @@ class TestInstructorsHostIntroductionAction(TestCase):
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action="self-organised-request-form", template=template,
+            action="self-organised-request-form",
+            template=template,
         )
-        a = InstructorsHostIntroductionAction(trigger=trigger, objects=dict(event=e),)
+        a = InstructorsHostIntroductionAction(
+            trigger=trigger,
+            objects=dict(event=e),
+        )
         email = a._email()
         self.assertEqual(
             email.to,
@@ -315,10 +350,14 @@ class TestInstructorsHostIntroductionAction(TestCase):
         # tasks
         Task.objects.create(person=self.person1, role=self.host, event=e)
         Task.objects.create(
-            person=self.person2, role=self.instructor, event=e,
+            person=self.person2,
+            role=self.instructor,
+            event=e,
         )
         Task.objects.create(
-            person=self.person3, role=self.instructor, event=e,
+            person=self.person3,
+            role=self.instructor,
+            event=e,
         )
 
         a = InstructorsHostIntroductionAction(
@@ -354,10 +393,14 @@ class TestInstructorsHostIntroductionAction(TestCase):
         self.person1.save()
         Task.objects.create(person=self.person1, role=self.host, event=e)
         Task.objects.create(
-            person=self.person2, role=self.instructor, event=e,
+            person=self.person2,
+            role=self.instructor,
+            event=e,
         )
         Task.objects.create(
-            person=self.person3, role=self.instructor, event=e,
+            person=self.person3,
+            role=self.instructor,
+            event=e,
         )
 
         ctx = a.get_additional_context(objects=dict(event=e))

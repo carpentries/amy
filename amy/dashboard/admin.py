@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from .models import Criterium, Continent
+from .models import Continent, Criterium
 
 
 class CriteriumAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'get_countries')
+    list_display = ("name", "email", "get_countries")
 
     def get_countries(self, obj):
         if len(obj.countries) > 10:
@@ -12,12 +12,12 @@ class CriteriumAdmin(admin.ModelAdmin):
         else:
             return ", ".join([x.name for x in obj.countries])
 
-    get_countries.short_description = 'Matching countries'
-    get_countries.admin_order_field = 'countries'
+    get_countries.short_description = "Matching countries"
+    get_countries.admin_order_field = "countries"
 
 
 class ContinentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'get_countries')
+    list_display = ("name", "get_countries")
 
     def get_countries(self, obj):
         if len(obj.countries) > 10:
@@ -25,8 +25,8 @@ class ContinentAdmin(admin.ModelAdmin):
         else:
             return ", ".join([x.name for x in obj.countries])
 
-    get_countries.short_description = 'Matching countries'
-    get_countries.admin_order_field = 'countries'
+    get_countries.short_description = "Matching countries"
+    get_countries.admin_order_field = "countries"
 
 
 admin.site.register(Criterium, CriteriumAdmin)

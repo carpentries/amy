@@ -4,6 +4,7 @@ from markdownx.fields import MarkdownxFormField
 from markdownx.widgets import AdminMarkdownxWidget
 
 from workshops.forms import BootstrapHelper
+
 from .models import EmailTemplate
 
 
@@ -18,13 +19,17 @@ class RescheduleForm(forms.Form):
 
 class TemplateForm(forms.Form):
     template = MarkdownxFormField(
-        label="Markdown body", widget=AdminMarkdownxWidget, required=True,
+        label="Markdown body",
+        widget=AdminMarkdownxWidget,
+        required=True,
     )
 
 
 class GenericEmailScheduleForm(forms.ModelForm):
     body_template = MarkdownxFormField(
-        label="Markdown body", widget=AdminMarkdownxWidget, required=True,
+        label="Markdown body",
+        widget=AdminMarkdownxWidget,
+        required=True,
     )
     helper = BootstrapHelper(
         wider_labels=True,

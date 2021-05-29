@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import include, path
 
 from workshops import views
 
@@ -37,6 +37,7 @@ urlpatterns = [
     path('person/<int:person_id>/', include([
         path('', views.PersonDetails.as_view(), name='person_details'),
         path('edit/', views.PersonUpdate.as_view(), name='person_edit'),
+        path('archive/', views.PersonArchive.as_view(), name='person_archive'),
         path('delete/', views.PersonDelete.as_view(), name='person_delete'),
         path('permissions/', views.PersonPermissions.as_view(), name='person_permissions'),
         path('password/', views.person_password, name='person_password'),

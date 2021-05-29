@@ -1,37 +1,41 @@
 # coding: utf-8
 
-from datetime import datetime, timezone, date
-from social_django.models import UserSocialAuth
+from datetime import date, datetime, timezone
 from unittest.mock import patch
 from urllib.parse import urlencode
-import webtest
 
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import Permission, Group
+from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django.core.validators import ValidationError
 from django.urls import reverse
 from django_comments.models import Comment
+from reversion.models import Version
+from reversion.revisions import create_revision
+from social_django.models import UserSocialAuth
+import webtest
 from webtest.forms import Upload
 
+from consents.models import Consent, Term
 from workshops.filters import filter_taught_workshops
-from workshops.tests.base import TestBase
+from workshops.forms import PersonForm, PersonsMergeForm
+from workshops.mixins import GenderMixin
 from workshops.models import (
-    Person,
-    Task,
-    Qualification,
     Award,
-    Role,
+    Badge,
     Event,
     KnowledgeDomain,
-    Badge,
-    Organization,
     Language,
+    Organization,
+    Person,
+    Qualification,
+    Role,
     Tag,
-    TrainingRequirement,
+    Task,
     TrainingProgress,
+    TrainingRequirement,
 )
-from workshops.forms import PersonForm, PersonsMergeForm
+from workshops.tests.base import TestBase
 
 
 @patch("workshops.github_auth.github_username_to_uid", lambda username: None)
@@ -56,7 +60,7 @@ class TestPerson(TestBase):
         self.assertEqual(p2.family, "")
 
     def test_login_with_email(self):
-        """ Make sure we can login with user's email too, not only with the
+        """Make sure we can login with user's email too, not only with the
         username."""
         self.client.logout()
         email = "sudo@example.org"  # admin's email
@@ -137,6 +141,41 @@ class TestPerson(TestBase):
         self.assertEqual(self.spiderman.award_set.count(), 1)
         self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
 
+    def test_person_failed_training_warning(self):
+        """
+        Ensure that the form warns the admin if the person
+        has a failed training, and an award or task is added
+        """
+        warning_popup = (
+            'return confirm("Warning: Trainee failed previous training(s).'
+            ' Are you sure you want to continue?");'
+        )
+        # No failed training, so no warning should show
+        url = reverse("person_edit", args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user="admin")
+        award_form = person_edit.forms[2]
+        task_form = person_edit.forms[3]
+        self.assertNotEqual(
+            award_form.fields["submit"][0].attrs.get("onclick"), warning_popup
+        )
+        self.assertNotEqual(
+            task_form.fields["submit"][0].attrs.get("onclick"), warning_popup
+        )
+
+        # Spiderman failed a training
+        training = TrainingRequirement.objects.get(name="Training")
+        TrainingProgress.objects.create(
+            trainee=self.spiderman, state="f", requirement=training, notes="Failed"
+        )
+
+        # A warning should be shown
+        url = reverse("person_edit", args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user="admin")
+        award_form = person_edit.forms[2]
+        task_form = person_edit.forms[3]
+        self.assertEqual(award_form.fields["submit"][0].attrs["onclick"], warning_popup)
+        self.assertEqual(task_form.fields["submit"][0].attrs["onclick"], warning_popup)
+
     def test_person_add_task(self):
         """Ensure that we can add a task from `person_edit` view"""
         self._setUpEvents()  # set up some events for us
@@ -176,7 +215,8 @@ class TestPerson(TestBase):
         }
 
         response = self.client.post(
-            reverse("person_permissions", args=[self.hermione.id]), data,
+            reverse("person_permissions", args=[self.hermione.id]),
+            data,
         )
 
         assert response.status_code == 302
@@ -239,8 +279,8 @@ class TestPerson(TestBase):
         assert set(self.hermione.lessons.all()) == {self.git}
 
     def test_person_add_lessons(self):
-        """ Check if it's still possible to add lessons via PersonCreate
-        view. """
+        """Check if it's still possible to add lessons via PersonCreate
+        view."""
         data = {
             "username": "test",
             "personal": "Test",
@@ -283,7 +323,9 @@ class TestPerson(TestBase):
         for username in invalid_usernames:
             with self.subTest(username=username):
                 person = Person.objects.create(
-                    personal="Testing", family="Testing", username=username,
+                    personal="Testing",
+                    family="Testing",
+                    username=username,
                 )
                 with self.assertRaises(ValidationError) as cm:
                     person.clean_fields(exclude=["password"])
@@ -291,7 +333,9 @@ class TestPerson(TestBase):
 
         valid_username = "blanking-crush_andy"
         person = Person.objects.create(
-            personal="Andy", family="Blanking-Crush", username=valid_username,
+            personal="Andy",
+            family="Blanking-Crush",
+            username=valid_username,
         )
         person.clean_fields(exclude=["password"])
 
@@ -352,7 +396,8 @@ class TestPerson(TestBase):
         }
 
         response = self.client.post(
-            reverse("person_permissions", args=[str(p.id)]), data,
+            reverse("person_permissions", args=[str(p.id)]),
+            data,
         )
         assert response.status_code == 302
 
@@ -990,14 +1035,16 @@ def github_username_to_uid_mock(username):
         "username": "1",
         "changed": "2",
         "changedagain": "3",
+        "user-github": "4",
+        "admin-github": "5",
     }
     return username2uid[username]
 
 
+@patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
 class TestPersonAndUserSocialAuth(TestBase):
     """ Test Person.synchronize_usersocialauth and Person.save."""
 
-    @patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
     def test_basic(self):
         user = Person.objects.create_user(
             username="user",
@@ -1280,14 +1327,16 @@ class TestPersonUpdateViewPermissions(TestBase):
 
     def test_trainer_can_edit_self_profile(self):
         profile_edit = self.app.get(
-            reverse("person_edit", args=[self.trainer.pk]), user=self.trainer,
+            reverse("person_edit", args=[self.trainer.pk]),
+            user=self.trainer,
         )
         self.assertEqual(profile_edit.status_code, 200)
 
     def test_trainer_cannot_edit_stray_profile(self):
         with self.assertRaises(webtest.app.AppError):
             self.app.get(
-                reverse("person_edit", args=[self.trainee.pk]), user=self.trainer,
+                reverse("person_edit", args=[self.trainee.pk]),
+                user=self.trainer,
             )
 
 
@@ -1321,3 +1370,256 @@ class TestRegression1076(TestBase):
         self.assertIn("Successfully created 1 persons and 1 tasks", info_page)
         john_created = Person.objects.filter(personal="John", family="").exists()
         self.assertTrue(john_created)
+
+
+class TestArchivePerson(TestBase):
+    """ Test cases for person archive endpoint. """
+
+    @patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+        self.role = Role.objects.create(name="instructor")
+        self.event = Event.objects.create(slug="test-event", host=self.org_alpha)
+        # create a normal user
+        self.user = Person.objects.create_user(
+            username="user",
+            personal="",
+            family="",
+            email="user@example.org",
+            password="pass",
+        )
+        self.user.data_privacy_agreement = True
+        self.user.may_contact = True
+        self.user.publish_profile = True
+        self.user.is_active = True
+        self.user.secondary_email = "user@second_example.org"
+        self.user.gender = GenderMixin.OTHER
+        self.user.other_gender = "Agender"
+        self.user.github = "user-github"
+        self.user.is_active = True
+        self.user.save()
+        self.user.synchronize_usersocialauth()
+        assert self.user.social_auth.all()
+
+        # Add social auth to admin
+        self.admin.github = "admin-github"
+        self.admin.is_active = True
+        self.admin.synchronize_usersocialauth()
+        assert self.admin.social_auth.all()
+
+        # folks don't have any tasks by default, so let's add one
+        self.harry.task_set.create(event=self.event, role=self.role)
+        self.ron.task_set.create(event=self.event, role=self.role)
+        self.hermione.task_set.create(event=self.event, role=self.role)
+        self.admin.task_set.create(event=self.event, role=self.role)
+
+        # Consent to active terms
+        self.person_consent_active_terms(self.harry)
+        self.person_consent_active_terms(self.ron)
+        self.person_consent_active_terms(self.hermione)
+        self.person_consent_active_terms(self.admin)
+        self.active_terms = Term.objects.active()
+
+    def assert_cannot_archive(self, person: Person) -> None:
+        awards = person.award_set.all()
+        qualifications = person.qualification_set.all()
+        tasks = person.task_set.all()
+        domains = person.domains.all()
+        consents = Consent.objects.filter(person=person).active()
+        social_auth = person.social_auth.all()
+
+        rv = self.client.post(reverse("person_archive", args=[person.pk]))
+        self.assertNotEqual(rv.status_code, 302)
+
+        archived_profile = Person.objects.get(pk=person.pk)
+        self.assertEqual(person, archived_profile)
+
+        # Awards, tasks, and qualifications should be unchanged
+        self.assertCountEqual(awards, archived_profile.award_set.all())
+        self.assertCountEqual(tasks, archived_profile.task_set.all())
+        self.assertCountEqual(qualifications, archived_profile.qualification_set.all())
+        self.assertCountEqual(domains, archived_profile.domains.all())
+        self.assertCountEqual(
+            consents, Consent.objects.filter(person=archived_profile).active()
+        )
+        # social auth should be unchanged
+        self.assertCountEqual(social_auth, archived_profile.social_auth.all())
+
+    def assert_person_archive(self, person: Person) -> None:
+        """
+        Calls the Person Archive endpoint and asserts that the
+        given Person has been archived.
+        """
+        awards = person.award_set.all()
+        qualifications = person.qualification_set.all()
+        tasks = person.task_set.all()
+        domains = person.domains.all()
+
+        rv = self.client.post(reverse("person_archive", args=[person.pk]))
+        self.assertEqual(rv.status_code, 302)
+
+        archived_profile = Person.objects.get(pk=person.pk)
+        self._assert_personal_info_removed(archived_profile)
+
+        # Archived_at timestamp should be set
+        self.assertIsNotNone(archived_profile.archived_at)
+
+        # First name, last name, Awards, tasks, and qualifications should be unchanged
+        self.assertEqual(archived_profile.personal, person.personal)
+        self.assertEqual(archived_profile.family, person.family)
+        self.assertEqual(archived_profile.middle, person.middle)
+        self.assertEqual(archived_profile.username, person.username)
+        self.assertCountEqual(awards, archived_profile.award_set.all())
+        self.assertCountEqual(tasks, archived_profile.task_set.all())
+        self.assertCountEqual(qualifications, archived_profile.qualification_set.all())
+        self.assertCountEqual(domains, archived_profile.domains.all())
+
+    def _assert_personal_info_removed(self, archived_profile: Person) -> None:
+        """
+        Used after calling person.archive()
+        Asserts that all personal data about the user has been removed.
+        """
+        self.assertIsNone(archived_profile.email)
+        self.assertEqual(archived_profile.secondary_email, "")
+        self.assertEqual(archived_profile.country, "")
+        self.assertIsNone(archived_profile.airport)
+        self.assertIsNone(archived_profile.github)
+        self.assertIsNone(archived_profile.twitter)
+        self.assertEqual(archived_profile.url, "")
+        self.assertEqual(archived_profile.user_notes, "")
+        self.assertEqual(archived_profile.affiliation, "")
+        self.assertFalse(archived_profile.is_active)
+        self.assertEqual(archived_profile.occupation, "")
+        self.assertEqual(archived_profile.orcid, "")
+        self.assertEqual(archived_profile.gender, GenderMixin.UNDISCLOSED)
+        self.assertEqual(archived_profile.gender_other, "")
+
+        # Old-style consents should be unset
+        self.assertFalse(archived_profile.data_privacy_agreement)
+        self.assertFalse(archived_profile.may_contact)
+        self.assertFalse(archived_profile.publish_profile)
+
+        # All Consents should be unset
+        consents = Consent.objects.filter(person=archived_profile).active()
+        self.assertEqual(len(self.active_terms), len(consents))
+        self.assertFalse(consents.filter(term_option__isnull=False).exists())
+        # social auth should be removed
+        self.assertEqual(len(archived_profile.social_auth.all()), 0)
+
+    def test_archive_by_super_user(self):
+        """
+        Superusers should be able to archive any user.
+        """
+        # Login as Admin
+        self.assertTrue(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+
+        # Admin should be able to archive other user's profile
+        self.assert_person_archive(self.harry)
+        self.assert_person_archive(self.ron)
+        self.assert_person_archive(self.hermione)
+        self.assert_person_archive(self.user)
+
+        # Admin should be able to archive their own profile
+        self.assert_person_archive(self.admin)
+
+        # Archived admin should not be able to log in.
+        self.assert_person_archive(self.admin)
+        self.assertFalse(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+
+    def test_archive_by_non_admin(self):
+        """
+        Non-Admin users should be able to archive their own profiles.
+        """
+        # Login as a normal user
+        assert not self.user.is_superuser
+        self.assertTrue(self.client.login(username=self.user.username, password="pass"))
+
+        # User (non-admin) should not be able to archive anyone else's profile
+        self.assert_cannot_archive(self.ron)
+        self.assert_cannot_archive(self.hermione)
+        self.assert_cannot_archive(self.harry)
+        self.assert_cannot_archive(self.admin)
+
+        # User (non-admin) should be able to archive his own profile
+        self.assert_person_archive(self.user)
+
+        # Archived User should not be able to log in.
+        self.assertFalse(
+            self.client.login(username=self.user.username, password="pass")
+        )
+
+    def test_version_history_removed_when_archived(self) -> None:
+        # Create the person and change their information a few times.
+        with create_revision():
+            person = Person.objects.create(
+                personal="Draco",
+                family="Malfoy",
+                username="dmalfoy",
+                email="draco@malfoy.com",
+            )
+        with create_revision():
+            person.twitter = "dmalfoy"
+            person.save()
+        with create_revision():
+            person.github = "dmalfoy"
+            person.save()
+
+        # get the current profile change history
+        original_versions = Version.objects.get_for_object(person)
+        self.assertEqual(len(original_versions), 3)
+
+        # Login as a normal user (non-admin)
+        # This user should not be able to archive anyone else's profile
+        # Profile edit history should be unchanged
+        assert not self.user.is_superuser
+        self.assertTrue(self.client.login(username=self.user.username, password="pass"))
+        self.assert_cannot_archive(person)
+        self.assertCountEqual(original_versions, Version.objects.get_for_object(person))
+
+        # Login as the admin user and archive the profile
+        # All profile change history after archival
+        # should be removed but the current one
+        self.assertTrue(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+        self.assert_person_archive(person)
+        archived_profile = Person.objects.get(pk=person.pk)
+        versions_after_archive = Version.objects.get_for_object(archived_profile)
+        self.assertEqual(len(versions_after_archive), 1)
+    
+    def test_permissions_removed_when_archived(self):
+        # add permissions to the admin user
+        groups = Group.objects.all()
+        permissions = Permission.objects.filter(content_type__app_label="admin")
+        assert groups
+        assert permissions
+        self.admin.groups.set(groups)
+        self.admin.user_permissions.set(permissions)
+        self.admin.save()
+
+        # Login as the non-admin user and try to archive
+        assert not self.user.is_superuser
+        self.assertTrue(self.client.login(username=self.user.username, password="pass"))
+        self.assert_cannot_archive(self.admin)
+
+        # No permissions should be changed
+        self.assertCountEqual(self.admin.groups.all(), groups)
+        self.assertCountEqual(self.admin.user_permissions.all(), permissions)
+
+        # Login as Admin and archive
+        assert self.admin.is_superuser
+        self.assertTrue(
+            self.client.login(username=self.admin.username, password="admin")
+        )
+        self.assert_person_archive(self.admin)
+        self.admin.refresh_from_db()
+
+        # Permissions are unset
+        self.assertEqual(len(self.admin.user_permissions.all()), 0)
+        self.assertEqual(len(self.admin.groups.all()), 0)
+        self.assertFalse(self.admin.is_superuser)
