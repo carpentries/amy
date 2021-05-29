@@ -1,31 +1,27 @@
-FROM python:3.8-alpine as base
-
+FROM python:3.9-slim-buster as base
 
 # `.` is for the current build context
 # use this command to build (from project root):
-# docker build -t amy:latest -f docker/Dockerfile .
+# $ GIT_COMMIT=$(git rev-parse --short HEAD)
+# $ docker build -t amy:latest --label commit=$GIT_COMMIT -f docker/Dockerfile .
 
-ENV INSTALL_PATH /amy
-RUN mkdir -p $INSTALL_PATH
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends build-essential gcc libpq-dev python3-dev
 
-COPY ./requirements.txt /app/requirements.txt
+RUN python3 -m venv /venv
+RUN /venv/bin/pip3 install pipenv
 
-RUN apk update
-RUN apk add --no-cache postgresql-dev
-RUN apk add --no-cache --virtual .build-deps \
-    python3-dev gcc g++ unixodbc-dev linux-headers \
-    libffi-dev jpeg-dev zlib-dev \
-    && pip3 install --upgrade pip \
-    && pip3 install -r /app/requirements.txt --no-cache \
-    && apk del --no-cache .build-deps
-
+RUN mkdir /app
+WORKDIR /app
+COPY ./Pipfile* .
+RUN /venv/bin/pipenv sync
 
 COPY . /app
 
-WORKDIR $INSTALL_PATH
-
 FROM base AS release
+
+COPY --from=base /venv /venv
 
 EXPOSE 80
 
-CMD python manage.py runserver 0.0.0.0:80
+CMD /venv/bin/pipenv run ./manage.py runserver 0.0.0.0:80
