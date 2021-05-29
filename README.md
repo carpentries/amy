@@ -36,18 +36,24 @@ before starting work on new features.
 
     ~~~
     $ git config blame.ignoreRevsFile .git-blame-ignore-revs
-    ~~~  
-
-1.  Install Django and other dependencies:
-
-    ~~~
-    $ python -m pip install --user -r requirements.txt
     ~~~
 
-    **Recommended:**
-    If you're experienced Python programmer, feel free to create a
-    Python3-compatible [virtualenv][virtualenv] / [venv][venv] for AMY and install
-    dependencies from `requirements.txt`.
+1.  Install [Pipenv](https://pipenv.pypa.io/en/latest/):
+
+    ~~~
+    $ python -m pip install --user pipenv
+    ~~~
+
+1.  Install Python dependencies:
+
+    ~~~
+    $ pipenv sync --dev
+    ~~~
+
+    **Note:**
+    Pipenv will create a new virtual environment for this installation, so you don't
+    have to create one yourself.
+    The `--dev` flag installs development dependencies, required e.g. for testing.
 
 1.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
 
