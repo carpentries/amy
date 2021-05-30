@@ -46,6 +46,7 @@ tblib = "*"
 flake8 = "*"
 mypy = "*"
 black = "*"
+pre-commit = "*"
 
 [requires]
 python_version = "3.9"
