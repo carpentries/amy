@@ -1,27 +1,40 @@
-FROM python:3.9-slim-buster as base
-
-# `.` is for the current build context
-# use this command to build (from project root):
 # $ GIT_COMMIT=$(git rev-parse --short HEAD)
 # $ docker build -t amy:latest --label commit=$GIT_COMMIT -f docker/Dockerfile .
 
-RUN apt-get update
-RUN apt-get install -y --no-install-recommends build-essential gcc libpq-dev python3-dev
+# ----------------------------------
+FROM python:3.9-slim-buster as base
 
-RUN python3 -m venv /venv
-RUN /venv/bin/pip3 install pipenv
+# security updates; libpq5 is required in runtime by psycopg2
+RUN apt-get update \
+    && apt-get -y upgrade \
+    && apt-get install -y --no-install-recommends libpq5
 
-RUN mkdir /app
+# ----------------------------------
+FROM base AS compilation
+
+# some dependencies require compilation
+# TODO: remove compilation dependencies:
+#       * django-compressor requires rcssmin, which requires python3-dev (and gcc?)
+#       * python3-dev installs python3.7 (no dev pkg for 3.9)
+#       * use psycopg2-binary instead of psycopg2 (gcc+libpq-dev required)
+RUN apt-get install -y --no-install-recommends gcc libpq-dev python3-dev \
+    && python3 -m pip install pipenv \
+    && mkdir /app
+
+# venv will exist in /app/.venv
+ENV PIPENV_VENV_IN_PROJECT=true
 WORKDIR /app
 COPY ./Pipfile* .
-RUN /venv/bin/pipenv sync
+# install runtime dependencies
+RUN pipenv sync
 
-COPY . /app
+COPY . .
 
+# ----------------------------------
 FROM base AS release
 
-COPY --from=base /venv /venv
+COPY --from=compilation /app /app
+WORKDIR /app
 
 EXPOSE 80
-
-CMD /venv/bin/pipenv run ./manage.py runserver 0.0.0.0:80
+CMD .venv/bin/python ./manage.py runserver 0.0.0.0:80
