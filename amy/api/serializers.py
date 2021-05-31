@@ -69,9 +69,6 @@ class TermSerializer(serializers.ModelSerializer):
 
 
 class ConsentSerializer(serializers.ModelSerializer):
-    # term = serializers.HyperlinkedRelatedField(
-    #     read_only=True, view_name="api:term-detail"
-    # )
     term = TermSerializer(
         read_only=True,
     )
