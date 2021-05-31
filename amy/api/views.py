@@ -19,17 +19,20 @@ from api.renderers import (
 from api.serializers import (
     AirportSerializer,
     AwardSerializer,
+    ConsentSerializer,
     EmailTemplateSerializer,
     EventSerializer,
     OrganizationSerializer,
     PersonSerializer,
     PersonSerializerAllData,
     TaskSerializer,
+    TermSerializer,
     TrainingProgressSerializer,
     TrainingRequestForManualScoringSerializer,
     TrainingRequestWithPersonSerializer,
 )
 from autoemails.models import EmailTemplate
+from consents.models import Consent, Term
 from workshops.models import (
     Airport,
     Award,
@@ -124,6 +127,10 @@ class ApiRoot(APIView):
                         reverse(
                             "api:emailtemplate-list", request=request, format=format
                         ),
+                    ),
+                    (
+                        "term-list",
+                        reverse("api:term-list", request=request, format=format),
                     ),
                 ]
             )
@@ -236,6 +243,15 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
         return super().retrieve(request, pk=pk)
 
 
+class TermViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many active terms or retrieve only one active term."""
+
+    permission_classes = (IsAuthenticated, IsAdmin)
+    queryset = Term.objects.active()
+    serializer_class = TermSerializer
+    pagination_class = StandardResultsSetPagination
+
+
 class PersonViewSet(viewsets.ReadOnlyModelViewSet):
     """List many people or retrieve only one person."""
 
@@ -282,6 +298,28 @@ class PersonTaskViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = Task.objects.all()
+        if self._person_pk:
+            qs = qs.filter(person=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)
+
+
+class PersonConsentViewSet(viewsets.ReadOnlyModelViewSet):
+    """List consents agreed to by a specific person."""
+
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = ConsentSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = Consent.objects.active()
         if self._person_pk:
             qs = qs.filter(person=self._person_pk)
         return qs

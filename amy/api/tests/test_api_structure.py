@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from consents.models import Consent, Term
 from workshops.models import (
     Airport,
     Award,
@@ -38,6 +39,14 @@ class TestAPIStructure(APITestCase):
             badge=Badge.objects.first(),
             event=self.event,
         )
+        self.term = Term.objects.active().prefetch_active_options()[0]
+        old_consent = Consent.objects.filter(
+            person=self.admin,
+            term=self.term,
+        ).active()[0]
+        self.consent = Consent.reconsent(
+            consent=old_consent, term_option=self.term.options[0]
+        )
 
         self.instructor_role = Role.objects.create(name="instructor")
 
@@ -60,6 +69,7 @@ class TestAPIStructure(APITestCase):
         index = self.client.get(reverse("api:root"))
         index_links = {
             "person-list": reverse("api:person-list"),
+            "term-list": reverse("api:term-list"),
             "event-list": reverse("api:event-list"),
             "organization-list": reverse("api:organization-list"),
             "airport-list": reverse("api:airport-list"),
@@ -93,6 +103,9 @@ class TestAPIStructure(APITestCase):
         #   → airport-detail
         #   → award-list
         #   → task-list
+        #   → consent-list
+        # consent
+        #   → person-detail
         # airport (no links)
         # award
         #   → event-detail
@@ -124,6 +137,7 @@ class TestAPIStructure(APITestCase):
             "airport": reverse("api:airport-detail", args=[self.admin.airport.iata]),
             "awards": reverse("api:person-awards-list", args=[self.admin.pk]),
             "tasks": reverse("api:person-tasks-list", args=[self.admin.pk]),
+            "consents": reverse("api:person-consents-list", args=[self.admin.pk]),
         }
         for attr, link in person_links.items():
             self.assertIn(link, person.data[attr])
@@ -136,3 +150,12 @@ class TestAPIStructure(APITestCase):
         }
         for attr, link in award_links.items():
             self.assertIn(link, award.data[attr])
+
+        consent = self.client.get(
+            reverse("api:person-consents-detail", args=[self.admin.pk, self.consent.pk])
+        )
+        consent_links = {
+            "person": reverse("api:person-detail", args=[self.term.pk]),
+        }
+        for attr, link in consent_links.items():
+            self.assertIn(link, consent.data[attr])

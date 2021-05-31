@@ -5,8 +5,8 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django_webtest import WebTest
 import webtest.forms
-from consents.models import Consent, Term, TermOption
 
+from consents.models import Consent, Term, TermOption
 from workshops.models import (
     Airport,
     Award,
@@ -460,8 +460,7 @@ class TestBase(
         consent = Consent.objects.get(
             person=person, term=term, archived_at__isnull=True
         )
-        consent.archive()
-        return Consent.objects.create(term_option=term_option, term=term, person=person)
+        return Consent.reconsent(consent, term_option)
 
     def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
         for term in terms:
