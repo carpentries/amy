@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Dict, Optional
 
 from django.contrib import messages
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
@@ -9,6 +9,7 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from consents.models import Consent, TermOption
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
@@ -114,10 +115,20 @@ def trainee_dashboard(request):
     )
     user = get_object_or_404(qs, id=request.user.id)
 
-    context = {
-        "title": "Your profile",
-        "user": user,
-    }
+    consents = (
+        Consent.objects.active()
+        .filter(
+            term__slug__in=["may-contact", "public-profile", "may-publish-name"],
+            person=user,
+        )
+        .select_related("term", "term_option")
+    )
+    consent_by_term_slug_label: Dict[str, TermOption] = {}
+    for consent in consents:
+        label = consent.term.slug.replace("-", "_")
+        consent_by_term_slug_label[label] = consent.term_option
+
+    context = {"title": "Your profile", "user": user, **consent_by_term_slug_label}
     return render(request, "dashboard/trainee_dashboard.html", context)
 
 
