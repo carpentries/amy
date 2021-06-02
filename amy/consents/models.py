@@ -220,3 +220,12 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         ]
         consents.update(archived_at=timezone.now())
         cls.objects.bulk_create(new_consents)
+
+    @classmethod
+    def reconsent(cls, consent: Consent, term_option: TermOption) -> Consent:
+        consent.archive()
+        return Consent.objects.create(
+            term_id=term_option.term_id,
+            term_option=term_option,
+            person_id=consent.person_id,
+        )
