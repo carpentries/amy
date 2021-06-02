@@ -1,5 +1,6 @@
 from django_filters import rest_framework as filters
 
+from consents.models import Consent, TermOption
 from extrequests.filters import TrainingRequestFilter
 from workshops.filters import NamesOrderingFilter
 from workshops.models import Badge, Event, Person, Tag, Task
@@ -59,9 +60,41 @@ def filter_instructors(queryset, name, value):
         return queryset
 
 
+def filter_consent(queryset, name, value):
+    if name == "may_contact":
+        slug = "may-contact"
+    elif name == "publish_profile":
+        slug = "public-profile"
+    else:
+        raise NotImplementedError(f"Filter consent {name} not implemented")
+    consents = Consent.objects.active().filter(
+        term__slug=slug,
+        person__in=queryset,
+    )
+    if value is True:
+        option = TermOption.AGREE
+    elif value is False:
+        option = TermOption.DECLINE
+    else:
+        people_ids = consents.filter(term_option__isnull=True).values_list(
+            "person_id", flat=True
+        )
+        return queryset.filter(person_id__in=people_ids)
+
+    people_ids = consents.filter(term_option__option_type=option).values_list(
+        "person_id", flat=True
+    )
+    return queryset.filter(pk__in=people_ids)
+
+
 class PersonFilter(filters.FilterSet):
     is_instructor = filters.BooleanFilter(
         method=filter_instructors, label="Is instructor?"
+    )
+
+    may_contact = filters.BooleanFilter(method=filter_consent, label="May contact")
+    publish_profile = filters.BooleanFilter(
+        method=filter_consent, label="Consent to making profile public"
     )
 
     order_by = NamesOrderingFilter(
@@ -77,8 +110,6 @@ class PersonFilter(filters.FilterSet):
             "middle",
             "family",
             "email",
-            "may_contact",
-            "publish_profile",
             "github",
             "country",
         )
