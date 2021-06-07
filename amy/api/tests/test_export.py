@@ -1,8 +1,10 @@
 import datetime
+from typing import List
 
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from consents.models import Consent, Term
 from workshops.models import (
     Airport,
     Award,
@@ -194,6 +196,20 @@ class TestExportingPersonData(BaseExportingTest):
             discarded=False,
             url="http://example.org/homework",
         )
+        terms = (
+            Term.objects.active()
+            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
+            .prefetch_active_options()
+        )
+        consents = Consent.objects.filter(person=self.user).active()
+        consents_by_term_id = {consent.term_id: consent for consent in consents}
+        self.user_consents: List[Consent] = []
+        for term in terms:
+            self.user_consents.append(
+                Consent.reconsent(
+                    consent=consents_by_term_id[term.pk], term_option=term.options[0]
+                )
+            )
 
     def test_unauthorized_access(self):
         """Make sure only authenticated users can access."""
@@ -257,15 +273,12 @@ class TestExportingPersonData(BaseExportingTest):
 
         # simple (non-relational) fields expected in API output
         expected_fields = [
-            "data_privacy_agreement",
             "personal",
             "middle",
             "family",
             "email",
             "username",
             "gender",
-            "may_contact",
-            "publish_profile",
             "github",
             "twitter",
             "url",
@@ -286,6 +299,7 @@ class TestExportingPersonData(BaseExportingTest):
             "awards",  # renamed in serializer (was: award_set)
             "training_requests",  # renamed from "trainingrequest_set"
             "training_progresses",  # renamed from "trainingprogress_set"
+            "consents",  # renamed from "consent_set"
         ]
 
         # ensure missing fields are not to be found in API output
@@ -322,6 +336,25 @@ class TestExportingPersonData(BaseExportingTest):
         }
         self.assertEqual(data["airport"], expected["airport"])
 
+        # test expected Consents output
+        user_data_term_slugs = [consent["term"]["slug"] for consent in data["consents"]]
+        for consent in self.user_consents:
+            self.assertIn(consent.term.slug, user_data_term_slugs)
+        # assert consent format
+        self.assertIn(
+            {
+                "person": f"http://testserver/api/v1/persons/{self.user.id}",
+                "term": {
+                    "content": "May contact",
+                    "help_text": "Allow to contact from The Carpentries according to "
+                    "the Privacy Policy.",
+                    "required_type": "profile",
+                    "slug": "may-contact",
+                },
+                "term_option": None,
+            },
+            data["consents"],
+        )
         # test expected Badges output
         expected["badges"] = [
             {
