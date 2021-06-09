@@ -69,17 +69,12 @@ class TermSerializer(serializers.ModelSerializer):
 
 
 class ConsentSerializer(serializers.ModelSerializer):
-    term = TermSerializer(
-        read_only=True,
-    )
+    term = TermSerializer(read_only=True)
     term_option = serializers.StringRelatedField()
-    person = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:person-detail"
-    )
 
     class Meta:
         model = Consent
-        fields = ("term", "person", "term_option")
+        fields = ("term", "term_option")
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -459,7 +454,7 @@ class PersonSerializerAllData(PersonSerializer):
     training_progresses = TrainingProgressSerializer(
         many=True, read_only=True, source="trainingprogress_set"
     )
-    consents = ConsentSerializer(many=True, read_only=True, source="consent_set")
+    consents = serializers.SerializerMethodField("get_consents")
 
     class Meta:
         model = Person
@@ -491,6 +486,11 @@ class PersonSerializerAllData(PersonSerializer):
             "training_progresses",
             "consents",
         )
+
+    def get_consents(self, person):
+        queryset = Consent.objects.filter(person=person).active()
+        serializer = ConsentSerializer(instance=queryset, many=True)
+        return serializer.data
 
 
 class EmailTemplateSerializer(serializers.ModelSerializer):

@@ -337,21 +337,44 @@ class TestExportingPersonData(BaseExportingTest):
         self.assertEqual(data["airport"], expected["airport"])
 
         # test expected Consents output
-        user_data_term_slugs = [consent["term"]["slug"] for consent in data["consents"]]
-        for consent in self.user_consents:
-            self.assertIn(consent.term.slug, user_data_term_slugs)
-        # assert consent format
+        user_consents = Consent.objects.active().filter(person=self.user)
+        self.assertCountEqual(
+            [consent.term.slug for consent in user_consents],
+            [consent["term"]["slug"] for consent in data["consents"]],
+        )
+        may_publish_name = [
+            consent
+            for consent in user_consents
+            if consent.term.slug == "may-publish-name"
+        ][0]
+        public_profile = [
+            consent
+            for consent in user_consents
+            if consent.term.slug == "public-profile"
+        ][0]
+        # assert consent format -- no term option
         self.assertIn(
             {
-                "person": f"http://testserver/api/v1/persons/{self.user.id}",
                 "term": {
-                    "content": "May contact",
-                    "help_text": "Allow to contact from The Carpentries according to "
-                    "the Privacy Policy.",
-                    "required_type": "profile",
-                    "slug": "may-contact",
+                    "content": may_publish_name.term.content,
+                    "help_text": may_publish_name.term.help_text,
+                    "required_type": may_publish_name.term.required_type,
+                    "slug": may_publish_name.term.slug,
                 },
                 "term_option": None,
+            },
+            data["consents"],
+        )
+        # assert consent format -- with term option
+        self.assertIn(
+            {
+                "term": {
+                    "content": public_profile.term.content,
+                    "help_text": public_profile.term.help_text,
+                    "required_type": public_profile.term.required_type,
+                    "slug": public_profile.term.slug,
+                },
+                "term_option": str(public_profile.term_option),
             },
             data["consents"],
         )
