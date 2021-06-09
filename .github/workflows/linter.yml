@@ -23,9 +23,10 @@ jobs:
         env:
           DEFAULT_BRANCH: develop
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PYTHON_BLACK_CONFIG_FILE: ../../pyproject.toml
-          PYTHON_ISORT_CONFIG_FILE: ../../pyproject.toml
-          PYTHON_FLAKE8_CONFIG_FILE: ../../.flake8
+          LINTER_RULES_PATH: /
+          PYTHON_BLACK_CONFIG_FILE: pyproject.toml
+          PYTHON_ISORT_CONFIG_FILE: pyproject.toml
+          PYTHON_FLAKE8_CONFIG_FILE: .flake8
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_PYTHON_BLACK: true
           VALIDATE_PYTHON_FLAKE8: true
