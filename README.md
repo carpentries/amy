@@ -145,16 +145,16 @@ before starting work on new features.
 
 1. Make sure you have Redis running. See instructions above.
 
-1. Install required objects in database:
-
-    ~~~
-    $ pipenv run python manage.py loaddata amy/autoemails/fixtures/templates_triggers.json
-    ~~~
-
 1. Create dev database (it will add a super user, too!):
 
     ~~~
     $ pipenv run make dev_database
+    ~~~
+
+1. Install required objects in database:
+
+    ~~~
+    $ pipenv run python manage.py loaddata amy/autoemails/fixtures/templates_triggers.json
     ~~~
 
 1. Run the server:
