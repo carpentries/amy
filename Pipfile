@@ -34,6 +34,8 @@ rq = "*"
 rq-scheduler = "*"
 social-auth-core = "*"
 social-auth-app-django = "*"
+gunicorn = "*"
+boto3 = "*"
 
 [dev-packages]
 django-webtest = "*"
