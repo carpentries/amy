@@ -150,12 +150,3 @@ class TestAPIStructure(APITestCase):
         }
         for attr, link in award_links.items():
             self.assertIn(link, award.data[attr])
-
-        consent = self.client.get(
-            reverse("api:person-consents-detail", args=[self.admin.pk, self.consent.pk])
-        )
-        consent_links = {
-            "person": reverse("api:person-detail", args=[self.term.pk]),
-        }
-        for attr, link in consent_links.items():
-            self.assertIn(link, consent.data[attr])
