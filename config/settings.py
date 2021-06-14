@@ -246,7 +246,6 @@ CACHES = {
 # MIDDLEWARE
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
-CONSENTS = env.bool("CONSENTS", False)
 MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
@@ -259,10 +258,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "workshops.github_auth.GithubAuthMiddleware",
 ]
-if CONSENTS:
-    MIDDLEWARE += ["consents.middleware.TermsMiddleware"]
-else:
-    MIDDLEWARE += ["workshops.action_required.PrivacyPolicy"]
+MIDDLEWARE += ["consents.middleware.TermsMiddleware"]
 
 # STATIC
 # -----------------------------------------------------------------------------

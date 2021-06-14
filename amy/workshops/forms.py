@@ -1168,30 +1168,6 @@ class EventsMergeForm(forms.Form):
 
 
 # ----------------------------------------------------------
-# Action required forms
-
-
-class ActionRequiredPrivacyForm(forms.ModelForm):
-    data_privacy_agreement = forms.BooleanField(
-        label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
-        ' target="_blank" rel="noreferrer">'
-        "the data privacy policy of The Carpentries</a>.",
-        required=True,
-    )
-
-    helper = BootstrapHelper(add_cancel_button=False)
-
-    class Meta:
-        model = Person
-        fields = [
-            "data_privacy_agreement",
-            "may_contact",
-            "publish_profile",
-        ]
-
-
-# ----------------------------------------------------------
 # Signals
 
 
