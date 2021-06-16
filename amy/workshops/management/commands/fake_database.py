@@ -468,6 +468,7 @@ class Command(BaseCommand):
         for _ in range(count):
             start = self.faker.date_time_between(start_date="-5y").date()
             organization_count = randint(1, 4)
+            organization_generator = iter(Organization.objects.all().order_by("?"))
             membership = Membership.objects.create(
                 name=self.faker.company(),
                 consortium=organization_count > 1,
@@ -482,7 +483,7 @@ class Command(BaseCommand):
             members = [
                 Member(
                     membership=membership,
-                    organization=choice(Organization.objects.all()),
+                    organization=next(organization_generator),
                     role=choice(MemberRole.objects.all()),
                 )
                 for _ in range(organization_count)

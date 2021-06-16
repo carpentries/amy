@@ -57,7 +57,7 @@ before starting work on new features.
     $ docker-compose -f docker/docker-compose.yml -p amy up -d database redis
     ~~~
 
-1.  Set up your local database with fake (development-ready) data with:
+1.  Set up your local database with fake (development-ready) data.  This will create a superuser with "admin" as both the username and password.
 
     ~~~
     $ make dev_database
@@ -77,9 +77,7 @@ before starting work on new features.
 
     **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
 
-1.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
-
-    Use the administrator account that you created.
+1.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking. Use the default "admin" as username and password.
 
 
 1. Shut down the local server by typing `Ctrl-C`.  Shut down the Docker Redis instance with:

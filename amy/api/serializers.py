@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from autoemails.models import EmailTemplate
+from consents.models import Consent, Term
 from workshops.models import (
     Airport,
     Award,
@@ -61,6 +62,21 @@ class AwardSerializer(serializers.ModelSerializer):
         fields = ("badge", "awarded", "event")
 
 
+class TermSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Term
+        fields = ("slug", "content", "required_type", "help_text")
+
+
+class ConsentSerializer(serializers.ModelSerializer):
+    term = TermSerializer(read_only=True)
+    term_option = serializers.StringRelatedField()
+
+    class Meta:
+        model = Consent
+        fields = ("term", "term_option")
+
+
 class PersonSerializer(serializers.ModelSerializer):
     airport = serializers.HyperlinkedRelatedField(
         read_only=True, view_name="api:airport-detail", lookup_field="iata"
@@ -79,6 +95,11 @@ class PersonSerializer(serializers.ModelSerializer):
         lookup_field="pk",
         lookup_url_kwarg="person_pk",
     )
+    consents = serializers.HyperlinkedIdentityField(
+        view_name="api:person-consents-list",
+        lookup_field="pk",
+        lookup_url_kwarg="person_pk",
+    )
 
     class Meta:
         model = Person
@@ -91,10 +112,6 @@ class PersonSerializer(serializers.ModelSerializer):
             "secondary_email",
             "gender",
             "gender_other",
-            "may_contact",
-            "publish_profile",
-            "lesson_publication_consent",
-            "data_privacy_agreement",
             "airport",
             "country",
             "github",
@@ -109,6 +126,7 @@ class PersonSerializer(serializers.ModelSerializer):
             "domains",
             "awards",
             "tasks",
+            "consents",
         )
 
 
@@ -436,6 +454,7 @@ class PersonSerializerAllData(PersonSerializer):
     training_progresses = TrainingProgressSerializer(
         many=True, read_only=True, source="trainingprogress_set"
     )
+    consents = serializers.SerializerMethodField("get_consents")
 
     class Meta:
         model = Person
@@ -448,10 +467,6 @@ class PersonSerializerAllData(PersonSerializer):
             "secondary_email",
             "gender",
             "gender_other",
-            "may_contact",
-            "publish_profile",
-            "lesson_publication_consent",
-            "data_privacy_agreement",
             "airport",
             "country",
             "github",
@@ -469,7 +484,13 @@ class PersonSerializerAllData(PersonSerializer):
             "tasks",
             "training_requests",
             "training_progresses",
+            "consents",
         )
+
+    def get_consents(self, person):
+        queryset = Consent.objects.filter(person=person).active()
+        serializer = ConsentSerializer(instance=queryset, many=True)
+        return serializer.data
 
 
 class EmailTemplateSerializer(serializers.ModelSerializer):

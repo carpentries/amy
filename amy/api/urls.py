@@ -15,6 +15,10 @@ person_task_router = routers.NestedSimpleRouter(router, 'persons',
                                                 lookup='person')
 person_task_router.register('tasks', views.PersonTaskViewSet,
                             basename='person-tasks')
+person_consent_router = routers.NestedSimpleRouter(router, 'persons',
+                                                lookup='person')
+person_consent_router.register('consents', views.PersonConsentViewSet,
+                            basename='person-consents')
 training_progress_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
 training_progress_router.register('trainingprogress', views.TrainingProgressViewSet, basename='person-training-progress')
 router.register('events', views.EventViewSet)
@@ -24,6 +28,7 @@ router.register('organizations', views.OrganizationViewSet)
 router.register('airports', views.AirportViewSet)
 router.register('emailtemplates', views.EmailTemplateViewSet,
                 basename='emailtemplate')
+router.register('terms', views.TermViewSet)
 
 urlpatterns = [
     path('', views.ApiRoot.as_view(), name='root'),
@@ -37,6 +42,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(awards_router.urls)),
     path('', include(person_task_router.urls)),
+    path('', include(person_consent_router.urls)),
     path('', include(tasks_router.urls)),
     path('', include(training_progress_router.urls)),
 ]
