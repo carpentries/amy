@@ -9,6 +9,7 @@ from django.utils import timezone
 AGREE = "agree"
 DECLINE = "decline"
 
+
 def reconsent(Consent, old_consent, term_option):
     old_consent.archived_at = timezone.now()
     old_consent.save()
@@ -18,17 +19,22 @@ def reconsent(Consent, old_consent, term_option):
         person_id=old_consent.person_id,
     )
 
+
 def copy_privacy_policy(apps, schema_editor):
     Consent = apps.get_model("consents", "Consent")
     TermOption = apps.get_model("consents", "TermOption")
 
     term_slug = "privacy-policy"
     try:
-        privacy_policy_agree = TermOption.objects.get(term__slug=term_slug, archived_at=None)
+        privacy_policy_agree = TermOption.objects.get(
+            term__slug=term_slug, archived_at=None
+        )
     except TermOption.DoesNotExist:
         return
-    
-    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+
+    for old_consent in Consent.objects.filter(
+        term__slug=term_slug, archived_at=None
+    ).select_related("person"):
         if old_consent.person.data_privacy_agreement:
             reconsent(Consent, old_consent, privacy_policy_agree)
 
@@ -40,16 +46,23 @@ def copy_may_contact(apps, schema_editor):
     term_slug = "may-contact"
     try:
         options = TermOption.objects.filter(term__slug=term_slug, archived_at=None)
-        may_contact_agree = [option for option in options if option.option_type == AGREE][0]
-        may_contact_disagree = [option for option in options if option.option_type == DECLINE][0]
+        may_contact_agree = [
+            option for option in options if option.option_type == AGREE
+        ][0]
+        may_contact_disagree = [
+            option for option in options if option.option_type == DECLINE
+        ][0]
     except IndexError:
         return
-    
-    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+
+    for old_consent in Consent.objects.filter(
+        term__slug=term_slug, archived_at=None
+    ).select_related("person"):
         if old_consent.person.may_contact:
             reconsent(Consent, old_consent, may_contact_agree)
         else:
             reconsent(Consent, old_consent, may_contact_disagree)
+
 
 def copy_public_profile(apps, schema_editor):
     Consent = apps.get_model("consents", "Consent")
@@ -58,17 +71,24 @@ def copy_public_profile(apps, schema_editor):
     term_slug = "public-profile"
     try:
         options = TermOption.objects.filter(term__slug=term_slug, archived_at=None)
-        public_profile_agree = [option for option in options if option.option_type == AGREE][0]
-        public_profile_disagree = [option for option in options if option.option_type == DECLINE][0]
+        public_profile_agree = [
+            option for option in options if option.option_type == AGREE
+        ][0]
+        public_profile_disagree = [
+            option for option in options if option.option_type == DECLINE
+        ][0]
     except IndexError:
         return
-    
-    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+
+    for old_consent in Consent.objects.filter(
+        term__slug=term_slug, archived_at=None
+    ).select_related("person"):
         if old_consent.person.publish_profile:
             reconsent(Consent, old_consent, public_profile_agree)
         else:
             reconsent(Consent, old_consent, public_profile_disagree)
-    
+
+
 def copy_may_publish_name(apps, schema_editor):
     Consent = apps.get_model("consents", "Consent")
     TermOption = apps.get_model("consents", "TermOption")
@@ -76,14 +96,30 @@ def copy_may_publish_name(apps, schema_editor):
     term_slug = "may-publish-name"
     try:
         options = TermOption.objects.filter(term__slug=term_slug, archived_at=None)
-        may_publish_name_github = [option for option in options if "only use my GitHub Handle" in option.content][0]
-        may_publish_name_profile = [option for option in options if "use the name associated with my profile" in option.content][0]
-        may_publish_name_orcid = [option for option in options if "use the name associated with my ORCID profile" in option.content][0]
-        may_publish_name_disagree = [option for option in options if option.option_type == DECLINE][0]
+        may_publish_name_github = [
+            option
+            for option in options
+            if "only use my GitHub Handle" in option.content
+        ][0]
+        may_publish_name_profile = [
+            option
+            for option in options
+            if "use the name associated with my profile" in option.content
+        ][0]
+        may_publish_name_orcid = [
+            option
+            for option in options
+            if "use the name associated with my ORCID profile" in option.content
+        ][0]
+        may_publish_name_disagree = [
+            option for option in options if option.option_type == DECLINE
+        ][0]
     except IndexError:
         return
-    
-    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+
+    for old_consent in Consent.objects.filter(
+        term__slug=term_slug, archived_at=None
+    ).select_related("person"):
         old_option = old_consent.person.lesson_publication_consent
         option: Optional[TermOption] = None
         if old_option == "yes-profile":
@@ -94,10 +130,11 @@ def copy_may_publish_name(apps, schema_editor):
             option = may_publish_name_github
         if old_option == "no":
             option = may_publish_name_disagree
-        
+
         if option:
             reconsent(Consent, old_consent, option)
-    
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
