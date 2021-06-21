@@ -19,8 +19,8 @@ def reconsent(Consent, old_consent, term_option):
     )
 
 def copy_privacy_policy(apps, schema_editor):
-    Consent = apps.get_model('consents', 'Consent')
-    TermOption = apps.get_model('consents', 'TermOption')
+    Consent = apps.get_model("consents", "Consent")
+    TermOption = apps.get_model("consents", "TermOption")
 
     term_slug = "privacy-policy"
     try:
@@ -34,8 +34,8 @@ def copy_privacy_policy(apps, schema_editor):
 
 
 def copy_may_contact(apps, schema_editor):
-    Consent = apps.get_model('consents', 'Consent')
-    TermOption = apps.get_model('consents', 'TermOption')
+    Consent = apps.get_model("consents", "Consent")
+    TermOption = apps.get_model("consents", "TermOption")
 
     term_slug = "may-contact"
     try:
@@ -52,8 +52,8 @@ def copy_may_contact(apps, schema_editor):
             reconsent(Consent, old_consent, may_contact_disagree)
 
 def copy_public_profile(apps, schema_editor):
-    Consent = apps.get_model('consents', 'Consent')
-    TermOption = apps.get_model('consents', 'TermOption')
+    Consent = apps.get_model("consents", "Consent")
+    TermOption = apps.get_model("consents", "TermOption")
 
     term_slug = "public-profile"
     try:
@@ -70,8 +70,8 @@ def copy_public_profile(apps, schema_editor):
             reconsent(Consent, old_consent, public_profile_disagree)
     
 def copy_may_publish_name(apps, schema_editor):
-    Consent = apps.get_model('consents', 'Consent')
-    TermOption = apps.get_model('consents', 'TermOption')
+    Consent = apps.get_model("consents", "Consent")
+    TermOption = apps.get_model("consents", "TermOption")
 
     term_slug = "may-publish-name"
     try:
@@ -101,7 +101,7 @@ def copy_may_publish_name(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('consents', '0005_auto_20210411_2325'),
+        ("consents", "0005_auto_20210411_2325"),
     ]
 
     operations = [
