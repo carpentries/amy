@@ -4,94 +4,100 @@ from collections import defaultdict
 from typing import Optional
 
 from django.db import migrations
+from django.utils import timezone
 
-from consents.models import TermOption
+AGREE = "agree"
+DECLINE = "decline"
 
+def reconsent(Consent, old_consent, term_option):
+    old_consent.archived_at = timezone.now()
+    old_consent.save()
+    Consent.objects.create(
+        term_id=term_option.term_id,
+        term_option=term_option,
+        person_id=old_consent.person_id,
+    )
 
-def copy_may_contact(Consent, old_consent, may_contact_agree, may_contact_disagree):
-    option = may_contact_agree if old_consent.person.may_contact else may_contact_disagree
-    Consent.reconsent(old_consent, option)
-
-def copy_public_profile(Consent, old_consent, public_profile_agree, public_profile_disagree):
-    option = public_profile_agree if old_consent.person.publish_profile else public_profile_disagree
-    Consent.reconsent(old_consent, option)
-
-def copy_privacy_policy(Consent, old_consent, privacy_policy_agree):
-    if old_consent.person.data_privacy_agreement:
-        Consent.reconsent(old_consent, privacy_policy_agree)
-
-def copy_privacy_policy(Consent, old_consent, may_publish_name_disagree, may_publish_name_github, may_publish_name_profile, may_publish_name_orcid):
-    old_option = old_consent.person.lesson_publication_consent
-    option: Optional[TermOption] = None
-    if old_option == "yes-profile":
-        option = may_publish_name_profile
-    if old_option == "yes-orcid":
-        option = may_publish_name_orcid
-    if old_option == "yes-github":
-        option = may_publish_name_github
-    if old_option == "no":
-        option = may_publish_name_disagree
-    
-    if option:
-        Consent.reconsent(old_consent, option)
-
-
-def copy_old_consent_data(apps, schema_editor):
-    """
-    Copy consent information from the Person model
-    to the Consent model.
-    """
-    Person = apps.get_model('workshops', 'Person')
+def copy_privacy_policy(apps, schema_editor):
     Consent = apps.get_model('consents', 'Consent')
-    Term = apps.get_model('consents', 'Term')
     TermOption = apps.get_model('consents', 'TermOption')
-    people = Person.objects.all() # TODO should just be the same
-    consents = Consent.objects.active().filter(person__in=people).select_related("person")
+
+    term_slug = "privacy-policy"
+    try:
+        privacy_policy_agree = TermOption.objects.get(term__slug=term_slug, archived_at=None)
+    except TermOption.DoesNotExist:
+        return
     
-
-    terms = Term.objects.active().filter(slug__in=["may-contact"]).prefetch_active_options()
-    term_slug_by_terms = {term.slug: term for term in terms}
-
-
-    privacy_policy = term_slug_by_terms["privacy-policy"]
-    privacy_policy_agree = privacy_policy.options[0]
+    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+        if old_consent.person.data_privacy_agreement:
+            reconsent(Consent, old_consent, privacy_policy_agree)
 
 
-    may_contact = term_slug_by_terms["may_contact"]
-    for option in may_contact.options:
-        if option.option_type == TermOption.AGREE:
-            may_contact_agree = option
-        if option.option_type == TermOption.DECLINE:
-            may_contact_disagree = option
+def copy_may_contact(apps, schema_editor):
+    Consent = apps.get_model('consents', 'Consent')
+    TermOption = apps.get_model('consents', 'TermOption')
 
-    public_profile = term_slug_by_terms["public-profile"]
-    for option in public_profile.options:
-        if option.option_type == TermOption.AGREE:
-            public_profile_agree = option
-        if option.option_type == TermOption.DECLINE:
-            public_profile_disagree = option
+    term_slug = "may-contact"
+    try:
+        options = TermOption.objects.filter(term__slug=term_slug, archived_at=None)
+        may_contact_agree = [option for option in options if option.option_type == AGREE][0]
+        may_contact_disagree = [option for option in options if option.option_type == DECLINE][0]
+    except IndexError:
+        return
+    
+    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+        if old_consent.person.may_contact:
+            reconsent(Consent, old_consent, may_contact_agree)
+        else:
+            reconsent(Consent, old_consent, may_contact_disagree)
 
-    may_publish_name = term_slug_by_terms["may-publish-name"]
-    for option in may_publish_name.options:
-        if option.option_type ==  TermOption.DECLINE:
-            may_publish_name_disagree = option
-        if "only use my GitHub Handle" in option.content:
-            may_publish_name_github = option
-        if "use the name associated with my profile" in option.content:
-            may_publish_name_profile = option
-        if "use the name associated with my ORCID profile" in option.content:
-            may_publish_name_orcid = option
+def copy_public_profile(apps, schema_editor):
+    Consent = apps.get_model('consents', 'Consent')
+    TermOption = apps.get_model('consents', 'TermOption')
 
-    for old_consent in consents:
-        if old_consent.term_id == may_contact.id:
-            copy_may_contact(Consent, old_consent, may_contact_agree, may_contact_disagree)
-        if old_consent.term_id == public_profile.id:
-            copy_public_profile(Consent, old_consent, public_profile_agree, public_profile_disagree)
-        if old_consent.term_id == privacy_policy.id:
-            copy_privacy_policy(Consent, old_consent, privacy_policy_agree)
-        if old_consent.term_id == may_publish_name.id:
-            copy_privacy_policy(Consent, old_consent, may_publish_name_disagree, may_publish_name_github, may_publish_name_profile, may_publish_name_orcid)
-   
+    term_slug = "public-profile"
+    try:
+        options = TermOption.objects.filter(term__slug=term_slug, archived_at=None)
+        public_profile_agree = [option for option in options if option.option_type == AGREE][0]
+        public_profile_disagree = [option for option in options if option.option_type == DECLINE][0]
+    except IndexError:
+        return
+    
+    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+        if old_consent.person.publish_profile:
+            reconsent(Consent, old_consent, public_profile_agree)
+        else:
+            reconsent(Consent, old_consent, public_profile_disagree)
+    
+def copy_may_publish_name(apps, schema_editor):
+    Consent = apps.get_model('consents', 'Consent')
+    TermOption = apps.get_model('consents', 'TermOption')
+
+    term_slug = "may-publish-name"
+    try:
+        options = TermOption.objects.filter(term__slug=term_slug, archived_at=None)
+        may_publish_name_github = [option for option in options if "only use my GitHub Handle" in option.content][0]
+        may_publish_name_profile = [option for option in options if "use the name associated with my profile" in option.content][0]
+        may_publish_name_orcid = [option for option in options if "use the name associated with my ORCID profile" in option.content][0]
+        may_publish_name_disagree = [option for option in options if option.option_type == DECLINE][0]
+    except IndexError:
+        return
+    
+    for old_consent in Consent.objects.filter(term__slug=term_slug, archived_at=None).select_related("person"):
+        old_option = old_consent.person.lesson_publication_consent
+        option: Optional[TermOption] = None
+        if old_option == "yes-profile":
+            option = may_publish_name_profile
+        if old_option == "yes-orcid":
+            option = may_publish_name_orcid
+        if old_option == "yes-github":
+            option = may_publish_name_github
+        if old_option == "no":
+            option = may_publish_name_disagree
+        
+        if option:
+            reconsent(Consent, old_consent, option)
+    
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -99,5 +105,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(copy_old_consent_data),
+        migrations.RunPython(copy_privacy_policy, migrations.RunPython.noop),
+        migrations.RunPython(copy_may_contact, migrations.RunPython.noop),
+        migrations.RunPython(copy_public_profile, migrations.RunPython.noop),
+        migrations.RunPython(copy_may_publish_name, migrations.RunPython.noop),
     ]
