@@ -36,18 +36,24 @@ before starting work on new features.
 
     ~~~
     $ git config blame.ignoreRevsFile .git-blame-ignore-revs
-    ~~~  
-
-1.  Install Django and other dependencies:
-
-    ~~~
-    $ python -m pip install --user -r requirements.txt
     ~~~
 
-    **Recommended:**
-    If you're experienced Python programmer, feel free to create a
-    Python3-compatible [virtualenv][virtualenv] / [venv][venv] for AMY and install
-    dependencies from `requirements.txt`.
+1.  Install [Pipenv](https://pipenv.pypa.io/en/latest/):
+
+    ~~~
+    $ python -m pip install --user pipenv
+    ~~~
+
+1.  Install Python dependencies:
+
+    ~~~
+    $ pipenv sync --dev
+    ~~~
+
+    **Note:**
+    Pipenv will create a new virtual environment for this installation, so you don't
+    have to create one yourself.
+    The `--dev` flag installs development dependencies, required e.g. for testing.
 
 1.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
 
@@ -60,19 +66,19 @@ before starting work on new features.
 1.  Set up your local database with fake (development-ready) data.  This will create a superuser with "admin" as both the username and password.
 
     ~~~
-    $ make dev_database
+    $ pipenv run make dev_database
     ~~~
 
 1. Create cache tables for use with the database cache backend.
 
     ~~~
-    $ python manage.py createcachetable
+    $ pipenv run python manage.py createcachetable
     ~~~
 
 1.  Start a local Django development server by running:
 
     ~~~
-    $ make serve
+    $ pipenv run make serve
     ~~~
 
     **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
@@ -111,13 +117,13 @@ before starting work on new features.
 1.  Update dependencies front-end and back-end dependencies:
 
     ~~~
-    $ make upgrade
+    $ pipenv run make upgrade
     ~~~
 
 1.  (Optional) make fresh development-ready database:
 
     ~~~
-    $ make dev_database
+    $ pipenv run make dev_database
     ~~~
 
     **Note**:  this command requires removing (by hand) the old database file.
@@ -125,13 +131,13 @@ before starting work on new features.
 1.  Run database migrations:
 
     ~~~~
-    $ python manage.py migrate
+    $ pipenv run python manage.py migrate
     ~~~~
 
 1.  Enjoy your new version of AMY:
 
     ~~~
-    $ make serve
+    $ pipenv run make serve
     ~~~
 
 
@@ -139,22 +145,22 @@ before starting work on new features.
 
 1. Make sure you have Redis running. See instructions above.
 
-1. Install required objects in database:
-
-    ~~~
-    $ python manage.py loaddata amy/autoemails/fixtures/templates_triggers.json
-    ~~~
-
 1. Create dev database (it will add a super user, too!):
 
     ~~~
-    $ make dev_database
+    $ pipenv run make dev_database
+    ~~~
+
+1. Install required objects in database:
+
+    ~~~
+    $ pipenv run python manage.py loaddata amy/autoemails/fixtures/templates_triggers.json
     ~~~
 
 1. Run the server:
 
     ~~~
-    $ python manage.py runserver
+    $ pipenv run python manage.py runserver
     ~~~
 
 1. Check if you have a Tag `automated-email` available. If not, create one (you can use
@@ -165,8 +171,8 @@ before starting work on new features.
    each command):
 
     ~~~
-    $ python manage.py rqworker
-    $ python manage.py rqscheduler
+    $ pipenv run python manage.py rqworker
+    $ pipenv run python manage.py rqscheduler
     ~~~
 
 
