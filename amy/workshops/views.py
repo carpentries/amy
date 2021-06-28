@@ -74,7 +74,6 @@ from workshops.filters import (
     WorkshopStaffFilter,
 )
 from workshops.forms import (
-    ActionRequiredPrivacyForm,
     AdminLookupForm,
     AwardForm,
     BootstrapHelper,
@@ -2426,38 +2425,3 @@ def object_changes(request, version_id):
         "comparable": len(action_list) >= 2,
     }
     return render(request, "workshops/object_diff.html", context)
-
-
-# ------------------------------------------------------------
-# "Action required" views
-
-
-@login_required
-def action_required_privacy(request):
-    person = request.user
-
-    # disable the view for users who already agreed
-    if person.data_privacy_agreement:
-        raise Http404("This view is disabled.")
-
-    form = ActionRequiredPrivacyForm(instance=person)
-
-    if request.method == "POST":
-        form = ActionRequiredPrivacyForm(request.POST, instance=person)
-
-        if form.is_valid() and form.instance == person:
-            person = form.save()
-            messages.success(request, "Agreement successfully saved.")
-
-            if "next" in request.GET:
-                return redirect(request.GET["next"])
-            else:
-                return redirect(reverse("dispatch"))
-        else:
-            messages.error(request, "Fix errors below.")
-
-    context = {
-        "title": "Action required: privacy policy agreement",
-        "form": form,
-    }
-    return render(request, "workshops/action_required_privacy.html", context)

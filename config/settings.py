@@ -257,8 +257,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "workshops.github_auth.GithubAuthMiddleware",
+    "consents.middleware.TermsMiddleware",
 ]
-MIDDLEWARE += ["consents.middleware.TermsMiddleware"]
 
 # STATIC
 # -----------------------------------------------------------------------------
