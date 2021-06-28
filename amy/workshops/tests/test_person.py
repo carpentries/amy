@@ -115,7 +115,7 @@ class TestPerson(TestBase):
         )
         can_change_person = Permission.objects.get(codename="change_person")
         manager.user_permissions.add(can_change_person)
-        manager.data_privacy_agreement = True
+        self.person_consent_required_terms(manager)
         manager.save()
         bob = Person.objects.create_user(
             username="bob",
@@ -1591,7 +1591,7 @@ class TestArchivePerson(TestBase):
         archived_profile = Person.objects.get(pk=person.pk)
         versions_after_archive = Version.objects.get_for_object(archived_profile)
         self.assertEqual(len(versions_after_archive), 1)
-    
+
     def test_permissions_removed_when_archived(self):
         # add permissions to the admin user
         groups = Group.objects.all()
