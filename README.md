@@ -1,7 +1,8 @@
 ![](amy/static/amy-logo.png)
 
-![](https://travis-ci.com/carpentries/amy.svg?branch=main)
-[![](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+![main branch](https://github.com/carpentries/amy/actions/workflows/python-test.yml/badge.svg?branch=main)
+![develop branch](https://github.com/carpentries/amy/actions/workflows/python-test.yml/badge.svg?branch=develop)
+[![](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![](https://img.shields.io/badge/django-2.2+-blue.svg)](https://www.djangoproject.com/)
 [![](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE.md)
 
