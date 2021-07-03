@@ -1,0 +1,57 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "~=2.2"
+argon2-cffi = "*"
+django-anymail = "*"
+django-compressor = "*"
+django-contrib-comments = "*"
+django-countries = "*"
+django-crispy-forms = "*"
+django-debug-toolbar = "*"
+django-environ = "*"
+django-extensions = "*"
+django-filter = "*"
+django-markdownx = "*"
+django-recaptcha = "*"
+django-reversion = "*"
+django-reversion-compare = "*"
+django-redis = "*"
+django-rq = "*"
+django-select2 = "*"
+djangorestframework = "~=3.12"
+djangorestframework-csv = "*"
+drf-nested-routers = "*"
+django-formset-js-improved = "*"
+psycopg2 = "*"
+pygithub = "*"
+pyyaml = "*"
+requests = "*"
+rq = "*"
+rq-scheduler = "*"
+social-auth-core = "*"
+social-auth-app-django = "*"
+gunicorn = "*"
+boto3 = "*"
+
+[dev-packages]
+django-webtest = "*"
+faker = "*"
+fakeredis = "*"
+lupa = "*"
+mkdocs = "*"
+requests-mock = "*"
+tblib = "*"
+flake8 = "*"
+mypy = "*"
+black = "*"
+pre-commit = "*"
+
+[requires]
+python_version = "3.9"
+
+[pipenv]
+allow_prereleases = true

@@ -6,7 +6,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 import environ
 
-
 ROOT_DIR = environ.Path(__file__) - 2  # (amy/config/settings.py - 2 = amy/)
 BASE_DIR = ROOT_DIR()
 APPS_DIR = ROOT_DIR.path("amy")
@@ -514,7 +513,7 @@ LOGGING = {
             "class": "logging.FileHandler",
             "formatter": "verbose",
             "filename": env.path(
-                "AMY_SERVER_LOGFILE", default=ROOT_DIR("logs/amy.log")
+                "AMY_SERVER_LOGFILE", default=ROOT_DIR("logs", "amy.log")
             ),
         },
         "debug_log_file": {
@@ -522,7 +521,7 @@ LOGGING = {
             "class": "logging.FileHandler",
             "formatter": "verbose",
             "filename": env.path(
-                "AMY_DEBUG_LOGFILE", default=ROOT_DIR("logs/amy_debug.log")
+                "AMY_DEBUG_LOGFILE", default=ROOT_DIR("logs", "amy_debug.log")
             ),
         },
         "worker_log_file": {
@@ -530,7 +529,7 @@ LOGGING = {
             "class": "logging.FileHandler",
             "formatter": "verbose",
             "filename": env.path(
-                "AMY_WORKER_LOGFILE", default=ROOT_DIR("logs/worker_debug.log")
+                "AMY_WORKER_LOGFILE", default=ROOT_DIR("logs", "worker_debug.log")
             ),
         },
     },

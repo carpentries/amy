@@ -1,31 +1,40 @@
-FROM python:3.8-alpine as base
+# $ GIT_COMMIT=$(git rev-parse --short HEAD)
+# $ docker build -t amy:latest --label commit=$GIT_COMMIT -f docker/Dockerfile .
 
+# ----------------------------------
+FROM python:3.9-slim-buster as base
 
-# `.` is for the current build context
-# use this command to build (from project root):
-# docker build -t amy:latest -f docker/Dockerfile .
+# security updates; libpq5 is required in runtime by psycopg2
+RUN apt-get update \
+    && apt-get -y upgrade \
+    && apt-get install -y --no-install-recommends libpq5
 
-ENV INSTALL_PATH /amy
-RUN mkdir -p $INSTALL_PATH
+# ----------------------------------
+FROM base AS compilation
 
-COPY ./requirements.txt /app/requirements.txt
+# some dependencies require compilation
+# TODO: remove compilation dependencies:
+#       * django-compressor requires rcssmin, which requires python3-dev (and gcc?)
+#       * python3-dev installs python3.7 (no dev pkg for 3.9)
+#       * use psycopg2-binary instead of psycopg2 (gcc+libpq-dev required)
+RUN apt-get install -y --no-install-recommends gcc libpq-dev python3-dev \
+    && python3 -m pip install pipenv \
+    && mkdir /app
 
-RUN apk update
-RUN apk add --no-cache postgresql-dev
-RUN apk add --no-cache --virtual .build-deps \
-    python3-dev gcc g++ unixodbc-dev linux-headers \
-    libffi-dev jpeg-dev zlib-dev \
-    && pip3 install --upgrade pip \
-    && pip3 install -r /app/requirements.txt --no-cache \
-    && apk del --no-cache .build-deps
+# venv will exist in /app/.venv
+ENV PIPENV_VENV_IN_PROJECT=true
+WORKDIR /app
+COPY ./Pipfile* .
+# install runtime dependencies
+RUN pipenv sync
 
+COPY . .
 
-COPY . /app
-
-WORKDIR $INSTALL_PATH
-
+# ----------------------------------
 FROM base AS release
 
-EXPOSE 80
+COPY --from=compilation /app /app
+WORKDIR /app
 
-CMD python manage.py runserver 0.0.0.0:80
+EXPOSE 80
+CMD .venv/bin/python ./manage.py runserver 0.0.0.0:80
