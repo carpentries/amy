@@ -139,6 +139,7 @@ class Membership(models.Model):
         ("silver", "Silver"),
         ("gold", "Gold"),
         ("platinum", "Platinum"),
+        ("alacarte", "A la carte",)
     )
     variant = models.CharField(
         max_length=STR_MED,
