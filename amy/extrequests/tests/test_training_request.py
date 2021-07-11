@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 from django.contrib.messages import WARNING
@@ -16,6 +16,9 @@ from extrequests.views import _match_training_request_to_person
 from workshops.models import (
     Event,
     KnowledgeDomain,
+    Member,
+    MemberRole,
+    Membership,
     Organization,
     Person,
     Role,
@@ -262,18 +265,20 @@ class TestTrainingRequestsListView(TestBase):
         self.first_req = create_training_request(state="d", person=self.spiderman)
         self.second_req = create_training_request(state="p", person=None)
         self.third_req = create_training_request(state="a", person=self.ironman)
-        org = Organization.objects.create(
+        self.org = Organization.objects.create(
             domain="example.com", fullname="Test Organization"
         )
         self.learner = Role.objects.get(name="learner")
         self.ttt = Tag.objects.get(name="TTT")
 
-        self.first_training = Event.objects.create(slug="ttt-event", host=org)
+        self.first_training = Event.objects.create(slug="ttt-event", host=self.org)
         self.first_training.tags.add(self.ttt)
         Task.objects.create(
             person=self.spiderman, role=self.learner, event=self.first_training
         )
-        self.second_training = Event.objects.create(slug="second-ttt-event", host=org)
+        self.second_training = Event.objects.create(
+            slug="second-ttt-event", host=self.org
+        )
         self.second_training.tags.add(self.ttt)
 
     def test_view_loads(self):
@@ -475,6 +480,75 @@ class TestTrainingRequestsListView(TestBase):
             ),
             {self.first_training},
         )
+
+    def test_matching_no_remaining__no_message(self):
+        """Regression test for
+        https://github.com/carpentries/amy/issues/1946#issuecomment-875806218.
+
+        Basically when matching the steps were:
+        1. create N tasks
+        2. check if remaining is less than or equal to N
+           (remaining - requests_count <= 0)
+
+        This was prone to error since remaining already was reduced by N - when tasks
+        were created."""
+        # Arrange
+        # create 2 memberships with various number of seats
+        # (2 memberships are required because of @cached_property used in one of the
+        # fields)
+        membership1 = Membership.objects.create(
+            variant="partner",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=3,
+        )
+        membership2 = Membership.objects.create(
+            variant="partner",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=1,
+        )
+        Member.objects.create(
+            membership=membership1,
+            organization=self.org,
+            role=MemberRole.objects.first(),
+        )
+        data1 = {
+            "match": "",
+            "requests": [self.first_req.pk, self.third_req.pk],
+            "event": self.second_training.pk,
+            "seat_membership": membership1.pk,
+            "seat_public": True,
+        }
+        msg1 = (
+            f"Membership &quot;{membership1}&quot; is using more training seats "
+            "than it&#39;s been allowed."
+        )
+        self.second_req.person = self.blackwidow
+        self.second_req.save()
+        data2 = {
+            "match": "",
+            "requests": [self.second_req.pk],
+            "event": self.second_training.pk,
+            "seat_membership": membership2.pk,
+            "seat_public": True,
+        }
+        msg2 = (
+            f"Membership &quot;{membership2}&quot; is using more training seats "
+            "than it&#39;s been allowed."
+        )
+
+        # Act
+        rv1 = self.client.post(reverse("all_trainingrequests"), data1, follow=True)
+        rv2 = self.client.post(reverse("all_trainingrequests"), data2, follow=True)
+
+        # Assert
+        self.assertEqual(membership1.public_instructor_training_seats_remaining, 1)
+        self.assertNotContains(rv1, msg1)
+        self.assertEqual(membership2.public_instructor_training_seats_remaining, 0)
+        self.assertContains(rv2, msg2)
 
 
 class TestMatchingTrainingRequestAndDetailedView(TestBase):
