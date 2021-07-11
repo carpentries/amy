@@ -1,3 +1,6 @@
+from typing import Any, Sequence, Union
+
+from django.conf import settings
 from django.db.models import Q
 from django.forms import widgets
 from django_countries import Countries
@@ -26,6 +29,26 @@ from workshops.models import (
 )
 
 
+def extend_country_choices(
+    choices: Sequence[str], countries_override: dict[str, Any]
+) -> list[Union[str, tuple[str, Any]]]:
+    """Update countries with overrides from settings.
+
+    This is useful in case we're setting `only` for list of countries in
+    Django-Countries. Then custom choices provided need to have a tuple (code, name)
+    format, which is grabbed from COUNTRIES_OVERRIDE setting.
+
+    For example this: ['AZ', 'BA', 'BY', 'FM', 'GD', 'W3']  # W3 is custom
+    will be changes to this: ['AZ', 'BA', 'BY', 'FM', 'GD', ('W3', 'Online')]
+    """
+    countries: list = list(choices)
+    common: set[str] = countries_override.keys() & set(choices)
+    for country in common:
+        countries.remove(country)
+        countries.append((country, countries_override[country]))
+    return countries
+
+
 class AllCountriesFilter(django_filters.ChoiceFilter):
     @property
     def field(self):
@@ -33,8 +56,9 @@ class AllCountriesFilter(django_filters.ChoiceFilter):
         qs = qs.order_by(self.field_name).values_list(self.field_name, flat=True)
 
         choices = [o for o in qs if o]
+        overrides = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
         countries = Countries()
-        countries.only = choices
+        countries.only = overrides
 
         self.extra["choices"] = list(countries)
         return super().field
@@ -47,8 +71,9 @@ class AllCountriesMultipleFilter(django_filters.MultipleChoiceFilter):
         qs = qs.order_by(self.field_name).values_list(self.field_name, flat=True)
 
         choices = [o for o in qs if o]
+        overrides = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
         countries = Countries()
-        countries.only = choices
+        countries.only = overrides
 
         self.extra["choices"] = list(countries)
         return super().field
