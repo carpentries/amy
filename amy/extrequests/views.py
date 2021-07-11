@@ -567,7 +567,6 @@ def all_trainingrequests(request):
                     ),
                 )
 
-            requests_count = len(match_form.cleaned_data["requests"])
             today = datetime.date.today()
 
             if membership:
@@ -576,7 +575,7 @@ def all_trainingrequests(request):
                     if seat_public
                     else membership.inhouse_instructor_training_seats_remaining
                 )
-                if remaining - requests_count <= 0:
+                if remaining <= 0:
                     messages.warning(
                         request,
                         f'Membership "{membership}" is using more training seats than '
