@@ -50,12 +50,15 @@ def extend_country_choices(
 
 
 class AllCountriesFilter(django_filters.ChoiceFilter):
-    @property
-    def field(self):
+    def _get_countries(self):
         qs = self.model._default_manager.distinct()
         qs = qs.order_by(self.field_name).values_list(self.field_name, flat=True)
-
         choices = [o for o in qs if o]
+        return choices
+
+    @property
+    def field(self):
+        choices = self._get_countries()
         overrides = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
         countries = Countries()
         countries.only = overrides
@@ -65,12 +68,15 @@ class AllCountriesFilter(django_filters.ChoiceFilter):
 
 
 class AllCountriesMultipleFilter(django_filters.MultipleChoiceFilter):
-    @property
-    def field(self):
+    def _get_countries(self):
         qs = self.model._default_manager.distinct()
         qs = qs.order_by(self.field_name).values_list(self.field_name, flat=True)
-
         choices = [o for o in qs if o]
+        return choices
+
+    @property
+    def field(self):
+        choices = self._get_countries()
         overrides = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
         countries = Countries()
         countries.only = overrides
