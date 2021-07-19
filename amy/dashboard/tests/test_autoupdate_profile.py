@@ -18,8 +18,7 @@ class TestAutoUpdateProfile(TestBase):
             password="pass",
         )
 
-        self.user.data_privacy_agreement = True
-        self.user.save()
+        self.person_consent_required_terms(self.user)
 
         Qualification.objects.create(person=self.user, lesson=self.git)
         Qualification.objects.create(person=self.user, lesson=self.sql)

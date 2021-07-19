@@ -17,8 +17,7 @@ class TestTraineeDashboard(TestBase):
             email="user@example.org",
             password="pass",
         )
-        self.user.data_privacy_agreement = True
-        self.user.save()
+        self.person_consent_required_terms(self.user)
         self.client.login(username="user", password="pass")
 
     def test_dashboard_loads(self):

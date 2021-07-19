@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Group
 from django.urls import reverse
 
+from amy.workshops.tests.base import consent_to_all_required_consents
 from workshops.models import Event, Organization, Person, Tag
 from workshops.tests.base import TestBase
 
@@ -131,8 +132,7 @@ class TestAdminDashboard(TestBase):
             email="other_sudo@example.org",
             password="admin",
         )
-        other_admin.data_privacy_agreement = True  # TODO does this need to be here?
-        other_admin.save()
+        consent_to_all_required_consents(other_admin)
 
         # Add an upcoming event to the logged in admin (self.admin)
         # and one to other_admin
@@ -182,8 +182,7 @@ class TestDispatch(TestBase):
             email="admin@example.org",
             password="pass",
         )
-        person.data_privacy_agreement = True
-        person.save()
+        consent_to_all_required_consents(person)
 
         rv = self.client.post(
             reverse("login"), {"username": "admin", "password": "pass"}, follow=True
@@ -201,8 +200,7 @@ class TestDispatch(TestBase):
         )
         admins = Group.objects.get(name="administrators")
         mentor.groups.add(admins)
-        mentor.data_privacy_agreement = True
-        mentor.save()
+        self.person_consent_required_terms(mentor)
 
         rv = self.client.post(
             reverse("login"), {"username": "user", "password": "pass"}, follow=True
@@ -220,8 +218,7 @@ class TestDispatch(TestBase):
         )
         steering_committee = Group.objects.get(name="steering committee")
         mentor.groups.add(steering_committee)
-        mentor.data_privacy_agreement = True
-        mentor.save()
+        self.person_consent_required_terms(mentor)
 
         rv = self.client.post(
             reverse("login"), {"username": "user", "password": "pass"}, follow=True
@@ -237,8 +234,7 @@ class TestDispatch(TestBase):
             email="trainee@example.org",
             password="pass",
         )
-        self.trainee.data_privacy_agreement = True
-        self.trainee.save()
+        self.person_consent_required_terms(self.trainee)
 
         rv = self.client.post(
             reverse("login"), {"username": "trainee", "password": "pass"}, follow=True

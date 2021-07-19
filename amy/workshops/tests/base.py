@@ -51,7 +51,6 @@ class SuperuserMixin:
             email="sudo@example.org",
             password=password,
         )
-        self.admin.data_privacy_agreement = True
         self._superUserConsent()
         self.admin.save()
 

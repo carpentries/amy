@@ -563,8 +563,7 @@ class TestPersonPassword(TestBase):
             email="sudo@example.org",
             password="admin",
         )
-        self.admin.data_privacy_agreement = True
-        self.admin.save()
+        self.person_consent_required_terms(self.admin)
 
         # create a normal user
         self.user = Person.objects.create_user(
@@ -574,8 +573,7 @@ class TestPersonPassword(TestBase):
             email="undo@example.org",
             password="user",
         )
-        self.user.data_privacy_agreement = True
-        self.user.save()
+        self.person_consent_required_terms(self.user)
         self.user.groups.add(admins)
 
     def test_edit_password_by_superuser(self):
@@ -1316,8 +1314,7 @@ class TestPersonUpdateViewPermissions(TestBase):
         self.trainer = Person.objects.create_user(
             "trainer", "Severus", "Snape", "ss@mail.com", "ss"
         )
-        self.trainer.data_privacy_agreement = True
-        self.trainer.save()
+        self.person_consent_required_terms(self.trainer)
         trainer_group, _ = Group.objects.get_or_create(name="trainers")
         self.trainer.groups.add(trainer_group)
 
@@ -1389,7 +1386,7 @@ class TestArchivePerson(TestBase):
             email="user@example.org",
             password="pass",
         )
-        self.user.data_privacy_agreement = True
+        self.person_consent_required_terms(self.user)
         self.user.may_contact = True
         self.user.publish_profile = True
         self.user.is_active = True
