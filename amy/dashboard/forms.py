@@ -67,8 +67,6 @@ class AutoUpdateProfileForm(forms.ModelForm):
         widget=ModelSelect2MultipleWidget(data_view="language-lookup"),
     )
 
-    helper = BootstrapHelper(add_cancel_button=False)
-
     class Meta:
         model = Person
         fields = [
@@ -79,9 +77,6 @@ class AutoUpdateProfileForm(forms.ModelForm):
             "secondary_email",
             "gender",
             "gender_other",
-            "may_contact",
-            "publish_profile",
-            "lesson_publication_consent",
             "country",
             "airport",
             "github",
@@ -107,7 +102,14 @@ class AutoUpdateProfileForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        form_tag = kwargs.pop("form_tag", True)
+        add_submit_button = kwargs.pop("add_submit_button", True)
         super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(
+            add_cancel_button=False,
+            form_tag=form_tag,
+            add_submit_button=add_submit_button,
+        )
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)

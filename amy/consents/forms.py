@@ -89,8 +89,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
             )
         Consent.objects.bulk_create(new_consents)
 
-    @classmethod
-    def get_terms(cls) -> Iterable[Term]:
+    def get_terms(self) -> Iterable[Term]:
         return Term.objects.all().prefetch_active_options()
 
 
@@ -99,8 +98,7 @@ class ActiveTermConsentsForm(BaseTermConsentsForm):
     Builds form with all active terms.
     """
 
-    @classmethod
-    def get_terms(cls) -> Iterable[Term]:
+    def get_terms(self) -> Iterable[Term]:
         return Term.objects.active().prefetch_active_options()
 
 
@@ -122,10 +120,22 @@ class RequiredConsentsForm(BaseTermConsentsForm):
         self.terms = [term for term in self.terms if term.id in term_ids]
         super()._build_form(person)
 
-    @classmethod
-    def get_terms(cls) -> Iterable[Term]:
+    def get_terms(self) -> Iterable[Term]:
         return (
             Term.objects.active()
             .prefetch_active_options()
             .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
+        )
+
+
+class TermBySlugsForm(BaseTermConsentsForm):
+    def __init__(self, *args, **kwargs):
+        self.term_slugs = kwargs.pop("term_slugs")
+        super().__init__(*args, **kwargs)
+
+    def get_terms(self) -> Iterable[Term]:
+        return (
+            Term.objects.active()
+            .prefetch_active_options()
+            .filter(slug__in=self.term_slugs)
         )
