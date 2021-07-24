@@ -235,6 +235,8 @@ class MembershipRollOverForm(MembershipCreateForm):
         fields = [
             "name",
             "consortium",
+            "copy_members",
+            "copy_membership_tasks",
             "public_status",
             "variant",
             "agreement_start",
@@ -252,8 +254,6 @@ class MembershipRollOverForm(MembershipCreateForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
-            "copy_members",
-            "copy_membership_tasks",
         ]
 
     def __init__(self, *args, **kwargs):
