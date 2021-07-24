@@ -248,7 +248,12 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
 class MembershipMembers(
     OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
 ):
-    permission_required = "workshops.change_membership"
+    permission_required = (
+        "workshops.change_membership",
+        "workshops.add_member",
+        "workshops.change_member",
+        "workshops.delete_member",
+    )
 
     def get_formset(self, *args, **kwargs):
         return modelformset_factory(Member, MemberForm, *args, **kwargs)
@@ -277,6 +282,42 @@ class MembershipMembers(
                 "membership view."
             )
         return super().get_context_data(**kwargs)
+
+    def form_valid(self, formset):
+        result = super().form_valid(formset)
+
+        # Figure out changes in members and add comment listing them.
+        comment = "Changed members on {date}:\n\n{comments}"
+        added = "* Added {organization}"
+        removed = "* Removed {organization}"
+        changed = "* Replaced with {organization}"
+
+        comments = (
+            [
+                added.format(organization=member.organization)
+                for member in formset.new_objects
+            ]
+            + [
+                removed.format(organization=member.organization)
+                for member in formset.deleted_objects
+            ]
+            + [
+                # it's difficult to figure out previous value of member.organization,
+                # so the comment will only contain the new version
+                changed.format(organization=member.organization)
+                for member, fields in formset.changed_objects
+                if "organization" in fields
+            ]
+        )
+
+        if comments:
+            add_comment_for_object(
+                self.membership,
+                self.request.user,
+                comment.format(date=date.today(), comments="\n".join(comments)),
+            )
+
+        return result
 
 
 class MembershipTasks(
