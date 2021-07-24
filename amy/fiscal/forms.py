@@ -399,6 +399,16 @@ class MembershipExtensionForm(forms.Form):
         help_text="Number of days the agreement should be extended.",
     )
     new_agreement_end = forms.DateField(disabled=True, required=False)
+    comment = MarkdownxFormField(
+        label="Comment",
+        help_text=(
+            "This will be added to comments after the membership is extended. Beginning"
+            " of the comment will be prefixed with information about length of the "
+            "extension."
+        ),
+        widget=forms.Textarea,
+        required=False,
+    )
 
     helper = BootstrapHelper()
 

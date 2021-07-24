@@ -304,7 +304,7 @@ class MembershipExtend(
     form_class = MembershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "workshops.change_membership"
-    comment = "Extended membership by {days} days on {date}."
+    comment = "Extended membership by {days} days on {date}.\n\n----\n\n{comment}"
 
     def get_initial(self):
         return {
@@ -321,6 +321,7 @@ class MembershipExtend(
 
     def form_valid(self, form):
         days = form.cleaned_data["extension"]
+        comment = form.cleaned_data["comment"]
         extension = timedelta(days=days)
         self.membership.agreement_end += extension
         self.membership.extensions.append(days)
@@ -330,7 +331,7 @@ class MembershipExtend(
         add_comment_for_object(
             self.membership,
             self.request.user,
-            self.comment.format(days=days, date=date.today()),
+            self.comment.format(days=days, date=date.today(), comment=comment),
         )
 
         return super().form_valid(form)
