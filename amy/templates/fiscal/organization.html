@@ -69,6 +69,7 @@
 <table class="table table-striped">
   <tr>
     <th>Slug</th>
+    <th>Type</th>
     <th>Tags</th>
     <th>Start date</th>
     <th>End date</th>
@@ -77,6 +78,17 @@
   {% for e in all_events %}
   <tr>
     <td><a href="{{ e.get_absolute_url }}">{{ e.slug }}</a></td>
+    <td>
+    {% if e.host == organization %}
+    <span class="badge badge-pill badge-primary">Hosted</span>
+    {% endif %}
+    {% if e.sponsor == organization %}
+    <span class="badge badge-pill badge-secondary">Sponsored</span>
+    {% endif %}
+    {% if e.membership in main_organisation_memberships %}
+    <span class="badge badge-pill badge-success">Affiliated</span>
+    {% endif %}
+    </td>
     <td>{{ e.tags.all | join:", " }}</td>
     <td>{{ e.start }}</td>
     <td>{{ e.end }}</td>
