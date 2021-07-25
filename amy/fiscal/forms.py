@@ -302,11 +302,20 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
-        add_cancel_button=False, form_tag=False, add_submit_button=False
+        add_cancel_button=False,
+        form_tag=False,
+        add_submit_button=False,
+        # formset gathers media, so there's no need to include them in every individual
+        # form (plus this prevents an unnecessary bug when multiple handlers are
+        # attached to the same element)
+        include_media=False,
     )
     helper_empty_form = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
+
+    class Media:
+        js = ("member_form.js",)
 
     class Meta:
         model = Member
