@@ -11,7 +11,8 @@ jQuery(function() {
         }
     });
 
-    $('#id_variant').on('change', (e) => {
+    // prepopulate some fields based on selected variant
+    const variantChange = (e) => {
         const parameters = {
             bronze: {
                 it_seats_public: 0,
@@ -31,10 +32,12 @@ jQuery(function() {
         const workshopsWithoutAdminFee = $("#id_workshops_without_admin_fee_per_agreement");
         const changedFieldValues = $("#standard_packages_prepopulation_warning");
 
-        if (e.target.value in parameters) {
+        const variant = e ? $(e.target) : $("#id_variant");
+
+        if (variant.val() in parameters) {
             // set values from parameters
-            publicInstructorTrainingSeats.val(parameters[e.target.value].it_seats_public);
-            workshopsWithoutAdminFee.val(parameters[e.target.value].workshops);
+            publicInstructorTrainingSeats.val(parameters[variant.val()].it_seats_public);
+            workshopsWithoutAdminFee.val(parameters[variant.val()].workshops);
 
             // set visual indication
             publicInstructorTrainingSeats.addClass('border-warning');
@@ -46,5 +49,9 @@ jQuery(function() {
             workshopsWithoutAdminFee.removeClass('border-warning');
             changedFieldValues.addClass('d-none');
         }
+    };
+    variantChange();  // on load
+    $('#id_variant').on('change', (e) => {
+        variantChange(e);
     });
 });
