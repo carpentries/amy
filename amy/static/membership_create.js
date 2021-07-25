@@ -29,11 +29,22 @@ jQuery(function() {
 
         const publicInstructorTrainingSeats = $("#id_public_instructor_training_seats");
         const workshopsWithoutAdminFee = $("#id_workshops_without_admin_fee_per_agreement");
+        const changedFieldValues = $("#standard_packages_prepopulation_warning");
 
         if (e.target.value in parameters) {
             // set values from parameters
             publicInstructorTrainingSeats.val(parameters[e.target.value].it_seats_public);
             workshopsWithoutAdminFee.val(parameters[e.target.value].workshops);
+
+            // set visual indication
+            publicInstructorTrainingSeats.addClass('border-warning');
+            workshopsWithoutAdminFee.addClass('border-warning');
+            changedFieldValues.removeClass('d-none');
+        } else {
+            // remove visual indication (if any set)
+            publicInstructorTrainingSeats.removeClass('border-warning');
+            workshopsWithoutAdminFee.removeClass('border-warning');
+            changedFieldValues.addClass('d-none');
         }
     });
 });

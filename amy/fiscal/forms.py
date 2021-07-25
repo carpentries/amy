@@ -201,6 +201,28 @@ class MembershipCreateForm(MembershipForm):
             "membership."
         ).format(reverse("organization_add"))
 
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # add warning alert for dates falling within next 2-3 months
+        STANDARD_PACKAGES_PREPOPULATION_WARNING = (
+            "<b>Workshops without admin fee per agreement</b> and "
+            "<b>Public instructor training seats</b> were adjusted according to "
+            "standard membership packages."
+        )
+        pos_index = self.helper.layout.fields.index("variant")
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML(STANDARD_PACKAGES_PREPOPULATION_WARNING),
+                    css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
+                ),
+                id="standard_packages_prepopulation_warning",
+                css_class="form-group row d-none",
+            ),
+        )
+
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
 
