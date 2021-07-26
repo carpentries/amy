@@ -7,7 +7,6 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from amy.workshops.tests.base import consent_to_all_required_consents
 from api.views import TrainingRequests
 from workshops.models import (
     Badge,
@@ -19,6 +18,7 @@ from workshops.models import (
     Tag,
     TrainingRequest,
 )
+from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestListingTrainingRequests(APITestCase):

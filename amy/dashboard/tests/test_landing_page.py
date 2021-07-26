@@ -1,9 +1,8 @@
 from django.contrib.auth.models import Group
 from django.urls import reverse
 
-from amy.workshops.tests.base import consent_to_all_required_consents
 from workshops.models import Event, Organization, Person, Tag
-from workshops.tests.base import TestBase
+from workshops.tests.base import TestBase, consent_to_all_required_consents
 
 
 class TestAdminDashboard(TestBase):
