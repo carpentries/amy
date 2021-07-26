@@ -2,8 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 import django_comments
 
-from amy.workshops.tests.base import consent_to_all_required_consents
 from workshops.models import Organization, Person
+from workshops.tests.base import consent_to_all_required_consents
 
 from .utils import add_comment_for_object
 
