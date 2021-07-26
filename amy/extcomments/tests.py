@@ -3,6 +3,7 @@ from django.urls import reverse
 import django_comments
 
 from workshops.models import Organization, Person
+from workshops.tests.base import consent_to_all_required_consents
 
 from .utils import add_comment_for_object
 
@@ -16,8 +17,8 @@ class TestCommentForObjectUtil(TestCase):
             username="rw",
             is_active=True,
             email="",
-            data_privacy_agreement=True,
         )
+        consent_to_all_required_consents(person)
         organization = Organization.objects.create(
             domain="example.org",
             fullname="Example Organisation",
@@ -72,8 +73,8 @@ class TestEmailFieldRequiredness(TestCase):
             username="rw",
             is_active=True,
             email="",
-            data_privacy_agreement=True,
         )
+        consent_to_all_required_consents(person)
 
         organization = Organization.objects.create(
             domain="example.org",

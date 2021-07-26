@@ -18,6 +18,7 @@ from workshops.models import (
     Tag,
     TrainingRequest,
 )
+from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestListingTrainingRequests(APITestCase):
@@ -34,8 +35,7 @@ class TestListingTrainingRequests(APITestCase):
             email="sudo@example.org",
             password="admin",
         )
-        self.admin.data_privacy_agreement = True
-        self.admin.save()
+        consent_to_all_required_consents(self.admin)
 
         # some roles don't exist
         self.learner = Role.objects.create(name="learner", verbose_name="Learner")

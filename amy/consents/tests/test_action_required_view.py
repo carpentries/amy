@@ -20,10 +20,6 @@ class TestActionRequiredTermView(ConsentTestBase):
             username="longbottom_neville",
             airport=self.airport_0_0,
             is_active=True,
-            # Setting old terms to True to ensure it doesn't affect anything.
-            may_contact=True,
-            publish_profile=True,
-            data_privacy_agreement=True,
         )
 
     def test_agreement_already_set(self):
@@ -108,10 +104,6 @@ class TestTermsMiddleware(ConsentTestBase):
             username="longbottom_neville",
             airport=self.airport_0_0,
             is_active=True,
-            # Setting old terms to True to ensure it doesn't affect anything.
-            may_contact=True,
-            publish_profile=True,
-            data_privacy_agreement=True,
         )
         self.form_url = reverse("action_required_terms")
 

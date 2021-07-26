@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from amy.workshops.tests.base import consent_to_all_required_consents
 from consents.models import Consent, Term
 from workshops.models import (
     Airport,
@@ -23,7 +24,7 @@ class TestAPIStructure(APITestCase):
             email="sudo@example.org",
             password="admin",
         )
-        self.admin.data_privacy_agreement = True
+        consent_to_all_required_consents(self.admin)
         self.admin.airport = Airport.objects.first()
         self.admin.save()
 

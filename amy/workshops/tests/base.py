@@ -24,6 +24,22 @@ from workshops.models import (
 from workshops.util import universal_date_format
 
 
+def consent_to_all_required_consents(person: Person) -> None:
+    """
+    Helper function shared by SuperuserMixin and TestBase
+    """
+    terms = (
+        Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
+        .active()
+        .prefetch_active_options()
+    )
+    old_consents = Consent.objects.filter(person=person, term__in=terms).active()
+    old_consents_by_term_id = {consent.term_id: consent for consent in old_consents}
+    for term in terms:
+        old_consent = old_consents_by_term_id[term.id]
+        Consent.reconsent(old_consent, term.options[0])
+
+
 class SuperuserMixin:
     def _setUpSuperuser(self):
         """Set up admin account that can log into the website."""
@@ -35,8 +51,12 @@ class SuperuserMixin:
             email="sudo@example.org",
             password=password,
         )
-        self.admin.data_privacy_agreement = True
+        self._superUserConsent()
         self.admin.save()
+
+    def _superUserConsent(self):
+        """Super user consents to required Terms"""
+        consent_to_all_required_consents(self.admin)
 
     def _logSuperuserIn(self):
         """Log in superuser (administrator) account."""
@@ -469,6 +489,9 @@ class TestBase(
     def person_consent_active_terms(self, person: Person) -> None:
         terms = Term.objects.active().prefetch_active_options()
         self.person_agree_to_terms(person, terms)
+
+    def person_consent_required_terms(self, person: Person) -> None:
+        consent_to_all_required_consents(person)
 
     def saveResponse(self, response, filename="error.html"):
         content = response.content.decode("utf-8")
