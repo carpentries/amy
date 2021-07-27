@@ -10,7 +10,7 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
-from amy.consents.forms import TermBySlugsForm
+from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
 from dashboard.forms import (
     AssignmentForm,

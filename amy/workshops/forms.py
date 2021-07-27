@@ -859,21 +859,6 @@ class PersonsMergeForm(forms.Form):
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )
-    may_contact = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    publish_profile = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    data_privacy_agreement = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
     gender = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
@@ -961,6 +946,11 @@ class PersonsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     comments = forms.ChoiceField(
+        choices=THREE,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
+    consent_set = forms.ChoiceField(
         choices=THREE,
         initial=DEFAULT,
         widget=forms.RadioSelect,

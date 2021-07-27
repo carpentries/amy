@@ -23,6 +23,7 @@ from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.http import is_safe_url
 from django_comments.models import Comment
 import django_rq
@@ -32,6 +33,7 @@ import yaml
 from autoemails.actions import NewInstructorAction, NewSupportingInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
+from consents.models import Consent
 from dashboard.models import Criterium
 from workshops.models import STR_LONG, STR_MED, Badge, Event, Person, Role, Task
 
@@ -994,6 +996,42 @@ def assign(request, obj, person_id):
         raise Http404("No person found matching the query.")
 
 
+def prepare_consents_to_combine(object_a, object_b):
+    """
+    There is a unique database constraint on consents that only allows
+    (person, term) when archived_at is null.
+
+    This method archives one of the two active terms so
+    that the combine merge method will be successful.
+    """
+    # special case: consents made regarding these objects
+    consents = Consent.objects.filter(person__in=[object_a, object_b])
+    # Identify and group the active consents by term id
+    active_consents_by_term_id = defaultdict(list)
+    for consent in consents:
+        if consent.archived_at is None:
+            active_consents_by_term_id[consent.term_id].append(consent)
+    # archive least recent active consents
+    consents_to_archive = []
+    for term_consents in active_consents_by_term_id.values():
+        if len(term_consents) < 2:
+            continue
+        consent_a, consent_b = term_consents[0], term_consents[1]
+        if consent_a.created_at < consent_b.created_at:
+            consents_to_archive.append(consent_a)
+        elif consent_b.created_at < consent_a.created_at:
+            consents_to_archive.append(consent_b)
+        else:
+            # If they were created at the same time rather than being
+            # nondeterministic archive both and when the user logs in again
+            # they can consent to the term once more.
+            consents_to_archive.append(consent_a)
+            consents_to_archive.append(consent_b)
+    Consent.objects.filter(pk__in=[c.pk for c in consents_to_archive]).update(
+        archived_at=timezone.now()
+    )
+
+
 def merge_objects(
     object_a, object_b, easy_fields, difficult_fields, choices, base_a=True
 ):
@@ -1097,6 +1135,8 @@ def merge_objects(
 
             elif value == "combine":
                 to_add = None
+                if attr == "consent_set":
+                    prepare_consents_to_combine(object_a, object_b)
 
                 if manager == related_a:
                     to_add = related_b.all()
