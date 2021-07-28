@@ -3,9 +3,9 @@ from typing import Any, Dict
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from amy.workshops.tests.base import consent_to_all_required_consents
 from consents.models import Consent, Term, TermOption
 from workshops.models import Airport, Person
+from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestFilter(APITestCase):

@@ -1,11 +1,14 @@
 # coding: utf-8
 import datetime
+from datetime import timedelta
 
 from django.http import Http404
 from django.test import RequestFactory
+from django.utils import timezone
 import requests.exceptions
 import requests_mock
 
+from consents.models import Consent, Term
 from workshops.models import (
     Award,
     Badge,
@@ -21,6 +24,7 @@ from workshops.tests.base import TestBase
 from workshops.util import (
     InternalError,
     Paginator,
+    archive_least_recent_active_consents,
     assign,
     create_username,
     default_membership_cutoff,
@@ -1237,3 +1241,63 @@ class TestReportsLink(TestBase):
             parts = link.split(".")
             self.assertEqual(parts[0], self.slug)
             self.assertEqual(parts[1], reports_link_hash(self.slug))
+
+
+class TestArchiveLeastRecentActiveConsents(TestBase):
+    def setUp(self):
+        super().setUp()
+        self.person_a = Person.objects.create(
+            personal="A",
+            family="Person",
+            username="testing-A",
+        )
+        self.person_b = Person.objects.create(
+            personal="B",
+            family="Person",
+            username="testing-B",
+        )
+        self.time_in_past = timezone.now() - timedelta(days=1)
+        self.term_slugs = [term.slug for term in Term.objects.active()]
+        self.base_obj = self.person_a
+
+    def test_archive_least_recent_active_consents(self) -> None:
+        """
+        Archive the least recent consents that are
+        currently active for the people given.
+        """
+        Consent.objects.filter(person=self.person_a).active().update(
+            created_at=self.time_in_past
+        )
+        expected_consents = Consent.objects.filter(person=self.person_b).active()
+        archive_least_recent_active_consents(
+            self.person_a, self.person_b, self.base_obj
+        )
+        consents = (
+            Consent.objects.filter(person__in=[self.person_a, self.person_b])
+            .active()
+            .select_related("term")
+        )
+        # Assert we have all the consents we were expecting.
+        self.assertCountEqual(self.term_slugs, [c.term.slug for c in consents])
+        self.assertCountEqual(consents, expected_consents)
+
+    def test_archive_least_recent_active_consents_equal_create(self) -> None:
+        """
+        When the created_at timestamp from both people are equal,
+        archive both Consents and create a new one with term_option set to none
+        and person set to base_object
+        """
+        Consent.objects.filter(
+            person__in=[self.person_a, self.person_b]
+        ).active().update(created_at=self.time_in_past)
+        archive_least_recent_active_consents(
+            self.person_a, self.person_b, self.base_obj
+        )
+        consents = Consent.objects.filter(
+            person__in=[self.person_a, self.person_b]
+        ).active()
+        # Assert we have all the consents we were expecting.
+        self.assertCountEqual(self.term_slugs, [c.term.slug for c in consents])
+        for consent in consents:
+            self.assertIsNone(consent.term_option)
+            self.assertEqual(consent.person, self.base_obj)

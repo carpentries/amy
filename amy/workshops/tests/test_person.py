@@ -711,7 +711,6 @@ class TestPersonMerging(TestBase):
             orcid="0000-0000-0000",
             is_active=True,
         )
-        self.person_consent_active_terms(self.person_a)
         self.person_a.award_set.create(
             badge=self.swc_instructor, awarded=date(2016, 2, 16)
         )
@@ -741,28 +740,27 @@ class TestPersonMerging(TestBase):
             submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
-        term_by_term_slug = {
-            term.slug: term for term in Term.objects.active().prefetch_active_options()
+        term_options_by_term_slug = {
+            term.slug: iter(term.options)
+            for term in Term.objects.active().prefetch_active_options()
         }
 
-        # # consents for this person
-        # # -- no privacy policy consent
-        # person_a_consents_by_term_slug = {
-        #     self.person_agree_to_terms(self.person_a,
-        # MERGE_PERSON_TERMS_SLUGS)
-        # }
-        # self.person_a_privacy_policy =
-        # person_a_consents_by_term_slug["privacy-policy"]
-        # self.person_a_may_contact = Consent.reconsent(
-        #     person_a_consents_by_term_slug["may-contact"],
-        #     term_by_term_slug["may-contact"].term_options[0]
-        # )
-        # self.person_a_public_profile = Consent.reconsent(
-        #     person_a_consents_by_term_slug["public-profile"],
-        #     term_by_term_slug["public-profile"].term_options[0]
-        # )
-        # self.person_a_consents = [self.person_a_privacy_policy,
-        # self.person_a_may_contact, self.person_a_public_profile]
+        # consents for person_a
+        person_a_consents_by_term_slug = {
+            consent.term.slug: consent
+            for consent in Consent.objects.filter(person=self.person_a)
+            .active()
+            .select_related("term", "term_option")
+        }
+        # no privacy policy consent
+        Consent.reconsent(
+            person_a_consents_by_term_slug["may-contact"],
+            next(term_options_by_term_slug["may-contact"]),
+        )
+        Consent.reconsent(
+            person_a_consents_by_term_slug["public-profile"],
+            next(term_options_by_term_slug["public-profile"]),
+        )
 
         # create second person
         self.person_b = Person.objects.create(
@@ -809,30 +807,25 @@ class TestPersonMerging(TestBase):
             site=Site.objects.get_current(),
         )
 
-        # consents for this person
+        # consents for person_b
         person_b_consents_by_term_slug = {
             consent.term.slug: consent
             for consent in Consent.objects.filter(person=self.person_b)
             .active()
             .select_related("term", "term_option")
         }
-        self.person_b_privacy_policy = Consent.reconsent(
+        Consent.reconsent(
             person_b_consents_by_term_slug["privacy-policy"],
-            term_by_term_slug["privacy-policy"].options[0],
+            next(term_options_by_term_slug["privacy-policy"]),
         )
-        self.person_b_may_contact = Consent.reconsent(
+        Consent.reconsent(
             person_b_consents_by_term_slug["may-contact"],
-            term_by_term_slug["may-contact"].options[1],
+            next(term_options_by_term_slug["may-contact"]),
         )
-        self.person_b_public_profile = Consent.reconsent(
+        Consent.reconsent(
             person_b_consents_by_term_slug["public-profile"],
-            term_by_term_slug["public-profile"].options[1],
+            next(term_options_by_term_slug["public-profile"]),
         )
-        self.person_b_consents = [
-            self.person_b_privacy_policy,
-            self.person_b_may_contact,
-            self.person_b_public_profile,
-        ]
 
         # set up a strategy
         self.strategy = {
@@ -884,9 +877,6 @@ class TestPersonMerging(TestBase):
             "family": "combine",
             "email": "combine",
             "secondary_email": "combine",
-            "may_contact": "combine",
-            "publish_profile": "combine",
-            "data_privacy_agreement": "combine",
             "gender": "combine",
             "gender_other": "combine",
             "airport": "combine",
@@ -908,6 +898,7 @@ class TestPersonMerging(TestBase):
             "trainingprogress_set": "combine",
             "comment_comments": "combine",
             "comments": "combine",
+            "consent_set": "combine",
         }
         data = hidden.copy()
         data.update(failing)

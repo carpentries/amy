@@ -996,7 +996,7 @@ def assign(request, obj, person_id):
         raise Http404("No person found matching the query.")
 
 
-def prepare_consents_to_combine(object_a, object_b):
+def archive_least_recent_active_consents(object_a, object_b, base_obj):
     """
     There is a unique database constraint on consents that only allows
     (person, term) when archived_at is null.
@@ -1004,15 +1004,16 @@ def prepare_consents_to_combine(object_a, object_b):
     This method archives one of the two active terms so
     that the combine merge method will be successful.
     """
-    # special case: consents made regarding these objects
     consents = Consent.objects.filter(person__in=[object_a, object_b])
     # Identify and group the active consents by term id
     active_consents_by_term_id = defaultdict(list)
     for consent in consents:
         if consent.archived_at is None:
             active_consents_by_term_id[consent.term_id].append(consent)
+
     # archive least recent active consents
     consents_to_archive = []
+    consents_to_recreate = []
     for term_consents in active_consents_by_term_id.values():
         if len(term_consents) < 2:
             continue
@@ -1027,9 +1028,17 @@ def prepare_consents_to_combine(object_a, object_b):
             # they can consent to the term once more.
             consents_to_archive.append(consent_a)
             consents_to_archive.append(consent_b)
+            consents_to_recreate.append(
+                Consent(
+                    person=base_obj,
+                    term=consent_a.term,
+                    term_option=None,
+                )
+            )
     Consent.objects.filter(pk__in=[c.pk for c in consents_to_archive]).update(
         archived_at=timezone.now()
     )
+    Consent.objects.bulk_create(consents_to_recreate)
 
 
 def merge_objects(
@@ -1136,7 +1145,7 @@ def merge_objects(
             elif value == "combine":
                 to_add = None
                 if attr == "consent_set":
-                    prepare_consents_to_combine(object_a, object_b)
+                    archive_least_recent_active_consents(object_a, object_b, base_obj)
 
                 if manager == related_a:
                     to_add = related_b.all()

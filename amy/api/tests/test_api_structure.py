@@ -1,7 +1,6 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from amy.workshops.tests.base import consent_to_all_required_consents
 from consents.models import Consent, Term
 from workshops.models import (
     Airport,
@@ -13,6 +12,7 @@ from workshops.models import (
     Role,
     Task,
 )
+from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestAPIStructure(APITestCase):
