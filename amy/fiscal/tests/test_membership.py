@@ -926,8 +926,14 @@ class TestMembershipExtension(TestBase):
             role=MemberRole.objects.first(),
         )
         extension = 30
-        data = {"extension": extension}
+        comment = "Everything is awesome."
+        data = {"extension": extension, "comment": comment}
         today = date.today()
+        expected_comment = f"""Extended membership by {extension} days on {today}.
+
+----
+
+{comment}"""
 
         # Act
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data)
@@ -935,9 +941,7 @@ class TestMembershipExtension(TestBase):
         # Assert
         self.assertEqual(CommentModel.objects.for_model(membership).count(), 1)
         comment = CommentModel.objects.for_model(membership).first()
-        self.assertEqual(
-            comment.comment, f"Extended membership by {extension} days on {today}."
-        )
+        self.assertEqual(comment.comment, expected_comment)
 
 
 class TestMembershipCreateRollOver(TestBase):
