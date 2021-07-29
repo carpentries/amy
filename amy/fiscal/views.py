@@ -382,7 +382,6 @@ class MembershipCreateRollOver(
             ),
             "contribution_type": self.membership.contribution_type,
             "registration_code": self.membership.registration_code,
-            "agreement_link": self.membership.agreement_link,
             "workshops_without_admin_fee_per_agreement": self.membership.workshops_without_admin_fee_per_agreement,  # noqa
             "workshops_without_admin_fee_rolled_from_previous": 0,
             "public_instructor_training_seats": self.membership.public_instructor_training_seats,  # noqa
