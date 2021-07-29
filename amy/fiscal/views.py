@@ -70,13 +70,17 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Organization {0}".format(self.object)
+        related = ["host", "sponsor", "membership"]
         context["all_events"] = (
-            self.object.hosted_events.all()
+            self.object.hosted_events.select_related(*related)
             .union(
-                self.object.sponsored_events.all(),
-                self.object.administered_events.all(),
+                self.object.sponsored_events.select_related(*related),
+                self.object.administered_events.select_related(*related),
             )
             .prefetch_related("tags")
+        )
+        context["main_organisation_memberships"] = Membership.objects.filter(
+            member__role__name="main", member__organization=self.object
         )
         return context
 

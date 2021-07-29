@@ -68,18 +68,30 @@
 <h2>Events</h2>
 <table class="table table-striped">
   <tr>
-    <th>tags</th>
-    <th>start date</th>
-    <th>end date</th>
-    <th>slug</th>
-    <th>url</th>
+    <th>Slug</th>
+    <th>Type</th>
+    <th>Tags</th>
+    <th>Start date</th>
+    <th>End date</th>
+    <th>URL</th>
   </tr>
   {% for e in all_events %}
   <tr>
+    <td><a href="{{ e.get_absolute_url }}">{{ e.slug }}</a></td>
+    <td>
+    {% if e.host == organization %}
+    <span class="badge badge-pill badge-primary">Hosted</span>
+    {% endif %}
+    {% if e.sponsor == organization %}
+    <span class="badge badge-pill badge-secondary">Sponsored</span>
+    {% endif %}
+    {% if e.membership in main_organisation_memberships %}
+    <span class="badge badge-pill badge-success">Affiliated</span>
+    {% endif %}
+    </td>
     <td>{{ e.tags.all | join:", " }}</td>
     <td>{{ e.start }}</td>
     <td>{{ e.end }}</td>
-    <td><a href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></td>
     <td>{{ e.url|urlize_newtab }}</td>
   </tr>
   {% endfor %}
