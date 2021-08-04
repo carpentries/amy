@@ -1235,3 +1235,52 @@ class NewConsentRequiredAction(BaseAction):
     def reply_to(self) -> Optional[Tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
         return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
+class ProfileArchivalWarningAction(BaseAction):
+    """
+    Action for asking users to login. This email
+    should be sent when a new required Term is created.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='consent-required')
+    >>> for trigger in triggers:
+    ...     action = NewConsentRequiredAction(
+    ...         trigger=trigger,
+    ...         objects=dict(terms=terms),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def get_launch_at(self):
+        return self.launch_at
+
+    def recipients(self) -> Optional[str]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context["all_emails"]
+        except (AttributeError, KeyError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            person_email = self.context_objects["person_email"]
+            return person_email
+        except (KeyError, AttributeError):
+            return ""
+
+    @staticmethod
+    def check(term: Term):
+        """Conditions for creating a NewConsentRequiredAction."""
+        return (
+            term.archived_at is None
+            and term.required_type != Term.OPTIONAL_REQUIRE_TYPE
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        return dict()
