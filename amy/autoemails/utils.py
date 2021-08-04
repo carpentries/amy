@@ -1,3 +1,5 @@
+from datetime import datetime
+import logging
 from typing import Union
 
 import django_rq
@@ -7,8 +9,6 @@ from rq.job import Job
 from rq_scheduler.utils import from_unix
 
 from autoemails.models import Trigger
-from datetime import datetime
-import logging
 
 logger = logging.getLogger("amy.signals")
 
@@ -73,15 +73,17 @@ def check_status(job: Union[str, Job], scheduler=None):
     else:
         return job.get_status() or "cancelled"
 
+
 def schedule_repeated_jobs(scheduler=None):
     from autoemails.actions import ProfileArchivalWarningAction
     from consents.models import Term
+
     _scheduler = scheduler
     if not scheduler:
         _scheduler = django_rq.get_scheduler("default")
     breakpoint()
     list_of_job_instances = list(scheduler.get_jobs())
-    triggers = Trigger.objects.filter(active=True, action='archive-warning')
+    triggers = Trigger.objects.filter(active=True, action="archive-warning")
     for trigger in triggers:
         action_name = ProfileArchivalWarningAction.__name__
         action = ProfileArchivalWarningAction(
@@ -99,11 +101,12 @@ def schedule_repeated_jobs(scheduler=None):
             context=None,
         )
         job = _scheduler.schedule(
-            scheduled_time=datetime.utcnow() + launch_at, # Time for first execution, in UTC timezone
-            func=action,                     # Function to be queued
-            interval=86400,                   # Time before the function is called again, 1 day in seconds 
-            repeat=None, 
-            meta=meta                    # Repeat this number of times (None means repeat forever)
+            scheduled_time=datetime.utcnow()
+            + launch_at,  # Time for first execution, in UTC timezone
+            func=action,  # Function to be queued
+            interval=86400,  # Time before the function is called again, 1 day in seconds
+            repeat=None,
+            meta=meta,  # Repeat this number of times (None means repeat forever)
         )
 
         scheduled_at = scheduled_execution_time(
@@ -119,7 +122,7 @@ def schedule_repeated_jobs(scheduler=None):
             scheduled_execution=scheduled_at,
             status=check_status(job),
             mail_status="",
-            interval=job.meta.get('interval'),
+            interval=job.meta.get("interval"),
             result_ttl=job.result_ttl,
             # event_slug=action.event_slug(),
             # recipients=action.all_recipients(),
