@@ -686,6 +686,7 @@ class TestPersonMerging(TestBase):
         self._setUpLessons()
         self._setUpRoles()
         self._setUpEvents()
+        self._setupSites()
         self._setUpUsersAndLogin()
 
         # create training requirement
@@ -701,7 +702,6 @@ class TestPersonMerging(TestBase):
             email="purdy.kelsi@example.com",
             secondary_email="notused@amy.org",
             gender="F",
-            may_contact=True,
             airport=self.airport_0_0,
             github="purdy_kelsi",
             twitter="purdy_kelsi",
@@ -740,6 +740,27 @@ class TestPersonMerging(TestBase):
             submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
+        term_options_by_term_slug = {
+            term.slug: iter(term.options)
+            for term in Term.objects.active().prefetch_active_options()
+        }
+
+        # consents for person_a
+        person_a_consents_by_term_slug = {
+            consent.term.slug: consent
+            for consent in Consent.objects.filter(person=self.person_a)
+            .active()
+            .select_related("term", "term_option")
+        }
+        # no privacy policy consent
+        Consent.reconsent(
+            person_a_consents_by_term_slug["may-contact"],
+            next(term_options_by_term_slug["may-contact"]),
+        )
+        Consent.reconsent(
+            person_a_consents_by_term_slug["public-profile"],
+            next(term_options_by_term_slug["public-profile"]),
+        )
 
         # create second person
         self.person_b = Person.objects.create(
@@ -750,7 +771,6 @@ class TestPersonMerging(TestBase):
             email="deckow.jayden@example.com",
             secondary_email="notused@example.org",
             gender="M",
-            may_contact=True,
             airport=self.airport_0_50,
             github="deckow_jayden",
             twitter="deckow_jayden",
@@ -760,6 +780,7 @@ class TestPersonMerging(TestBase):
             orcid="0000-0000-0001",
             is_active=True,
         )
+        self.person_consent_active_terms(self.person_b)
         self.person_b.award_set.create(
             badge=self.dc_instructor, awarded=date(2016, 2, 16)
         )
@@ -786,6 +807,26 @@ class TestPersonMerging(TestBase):
             site=Site.objects.get_current(),
         )
 
+        # consents for person_b
+        person_b_consents_by_term_slug = {
+            consent.term.slug: consent
+            for consent in Consent.objects.filter(person=self.person_b)
+            .active()
+            .select_related("term", "term_option")
+        }
+        Consent.reconsent(
+            person_b_consents_by_term_slug["privacy-policy"],
+            next(term_options_by_term_slug["privacy-policy"]),
+        )
+        Consent.reconsent(
+            person_b_consents_by_term_slug["may-contact"],
+            next(term_options_by_term_slug["may-contact"]),
+        )
+        Consent.reconsent(
+            person_b_consents_by_term_slug["public-profile"],
+            next(term_options_by_term_slug["public-profile"]),
+        )
+
         # set up a strategy
         self.strategy = {
             "person_a": self.person_a.pk,
@@ -797,9 +838,6 @@ class TestPersonMerging(TestBase):
             "family": "obj_a",
             "email": "obj_b",
             "secondary_email": "obj_b",
-            "may_contact": "obj_a",
-            "publish_profile": "obj_a",
-            "data_privacy_agreement": "obj_b",
             "gender": "obj_b",
             "gender_other": "obj_b",
             "airport": "obj_a",
@@ -818,6 +856,7 @@ class TestPersonMerging(TestBase):
             "trainingprogress_set": "combine",
             "comment_comments": "combine",  # made by this person
             "comments": "combine",  # regarding this person
+            "consent_set": "combine",
         }
         base_url = reverse("persons_merge")
         query = urlencode({"person_a": self.person_a.pk, "person_b": self.person_b.pk})
@@ -838,9 +877,6 @@ class TestPersonMerging(TestBase):
             "family": "combine",
             "email": "combine",
             "secondary_email": "combine",
-            "may_contact": "combine",
-            "publish_profile": "combine",
-            "data_privacy_agreement": "combine",
             "gender": "combine",
             "gender_other": "combine",
             "airport": "combine",
@@ -862,6 +898,7 @@ class TestPersonMerging(TestBase):
             "trainingprogress_set": "combine",
             "comment_comments": "combine",
             "comments": "combine",
+            "consent_set": "combine",
         }
         data = hidden.copy()
         data.update(failing)
@@ -1025,6 +1062,59 @@ class TestPersonMerging(TestBase):
         self.assertEqual(
             set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),
             set(comments),
+        )
+
+    def test_merging_consents_combine(self):
+        """Ensure consents regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 1 (combine)."""
+        self.strategy["consent_set"] = "combine"
+        expected_consents = list(
+            Consent.objects.filter(person__in=[self.person_a, self.person_b])
+        )
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertCountEqual(
+            [
+                (c.term, c.term_option, c.person)
+                for c in Consent.objects.filter(person=self.person_b)
+            ],
+            [(c.term, c.term_option, self.person_b) for c in expected_consents],
+        )
+
+    def test_merging_consents_obj_a(self):
+        """Ensure consents regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 2 (object a)."""
+        self.strategy["consent_set"] = "obj_a"
+        expected_consents = list(Consent.objects.filter(person=self.person_a))
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertCountEqual(
+            [
+                (c.term, c.term_option, c.person)
+                for c in Consent.objects.filter(person=self.person_b)
+            ],
+            [(c.term, c.term_option, self.person_b) for c in expected_consents],
+        )
+
+    def test_merging_consents_obj_b(self):
+        """Ensure consents regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 3 (object b)."""
+        self.strategy["consent_set"] = "obj_b"
+        expected_consents = list(Consent.objects.filter(person=self.person_b))
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertCountEqual(
+            [
+                (c.term, c.term_option, c.person)
+                for c in Consent.objects.filter(person=self.person_b)
+            ],
+            [(c.term, c.term_option, self.person_b) for c in expected_consents],
         )
 
 

@@ -81,6 +81,15 @@ class TestBase(
         self._setUpNonInstructors()
         self._setUpPermissions()
 
+        self._setupSites()
+
+    def clear_sites_cache(self):
+        # we need to clear Sites' cache, because after post_migration signal,
+        # there's some junk in the cache that prevents from adding comments
+        # (the site in CACHE is not a real Site)
+        Site.objects.clear_cache()
+
+    def _setupSites(self):
         from django.conf import settings
 
         Site.objects.clear_cache()
@@ -88,12 +97,6 @@ class TestBase(
             pk=settings.SITE_ID,
             defaults=dict(domain="amy.carpentries.org", name="AMY server"),
         )
-
-    def clear_sites_cache(self):
-        # we need to clear Sites' cache, because after post_migration signal,
-        # there's some junk in the cache that prevents from adding comments
-        # (the site in CACHE is not a real Site)
-        Site.objects.clear_cache()
 
     def _setUpLessons(self):
         """Set up lesson objects."""

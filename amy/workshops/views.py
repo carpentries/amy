@@ -851,6 +851,7 @@ def persons_merge(request):
                 "trainingprogress_set",
                 "comment_comments",  # made by this person
                 "comments",  # made by others regarding this person
+                "consent_set",
             )
 
             try:
