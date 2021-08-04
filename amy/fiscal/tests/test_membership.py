@@ -694,6 +694,106 @@ class TestMembershipForms(TestBase):
         form = MembershipForm(data, instance=membership)
         self.assertTrue(form.is_valid())
 
+    def test_edit_membership_rolled_fields(self):
+        # Arrange
+        membership1 = Membership.objects.create(
+            name="Test Membership 1",
+            consortium=False,
+            variant="partner",
+            agreement_start=date(2021, 8, 1),
+            agreement_end=date(2022, 7, 31),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=10,
+            inhouse_instructor_training_seats=10,
+        )
+        membership2 = Membership.objects.create(
+            name="Test Membership 2",
+            consortium=False,
+            variant="partner",
+            agreement_start=date(2022, 8, 1),
+            agreement_end=date(2023, 7, 31),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=10,
+            inhouse_instructor_training_seats=10,
+        )
+        membership3 = Membership.objects.create(
+            name="Test Membership 3",
+            consortium=False,
+            variant="partner",
+            agreement_start=date(2023, 8, 1),
+            agreement_end=date(2024, 7, 31),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=10,
+            inhouse_instructor_training_seats=10,
+        )
+        # 1st roll-over (only central workshops)
+        membership1.rolled_to_membership = membership2
+        membership1.workshops_without_admin_fee_rolled_over = 5
+        membership2.workshops_without_admin_fee_rolled_from_previous = 5
+
+        # 2nd roll-over (training seats of both kinds)
+        membership2.rolled_to_membership = membership3
+        membership2.public_instructor_training_seats_rolled_over = 6
+        membership2.inhouse_instructor_training_seats_rolled_over = 7
+        membership3.public_instructor_training_seats_rolled_from_previous = 6
+        membership3.inhouse_instructor_training_seats_rolled_from_previous = 7
+
+        membership1.save()
+        membership2.save()
+        membership3.save()
+
+        # Act
+        data = {
+            "name": membership2.name,
+            "public_status": membership2.public_status,
+            "variant": membership2.variant,
+            "agreement_start": membership2.agreement_start,
+            "agreement_end": membership2.agreement_end,
+            "contribution_type": membership2.contribution_type,
+            "public_instructor_training_seats": membership2.public_instructor_training_seats,  # noqa
+            "additional_public_instructor_training_seats": membership2.additional_public_instructor_training_seats,  # noqa
+            "inhouse_instructor_training_seats": membership2.inhouse_instructor_training_seats,  # noqa
+            "additional_inhouse_instructor_training_seats": membership2.additional_inhouse_instructor_training_seats,  # noqa
+            "workshops_without_admin_fee_rolled_from_previous": 6,  # was 5
+            "public_instructor_training_seats_rolled_over": 7,  # was 6
+            "inhouse_instructor_training_seats_rolled_over": 8,  # was 7
+        }
+        self.client.post(reverse("membership_edit", args=[membership2.id]), data=data)
+        membership1.refresh_from_db()
+        membership2.refresh_from_db()
+        membership3.refresh_from_db()
+
+        # Assert
+        self.assertEqual(
+            membership1.workshops_without_admin_fee_rolled_over,
+            6,
+        )
+        self.assertEqual(
+            membership2.workshops_without_admin_fee_rolled_from_previous,
+            6,
+        )
+
+        self.assertEqual(
+            membership2.public_instructor_training_seats_rolled_over,
+            7,
+        )
+        self.assertEqual(
+            membership3.public_instructor_training_seats_rolled_from_previous,
+            7,
+        )
+
+        self.assertEqual(
+            membership2.inhouse_instructor_training_seats_rolled_over,
+            8,
+        )
+        self.assertEqual(
+            membership3.inhouse_instructor_training_seats_rolled_from_previous,
+            8,
+        )
+
 
 class TestNewMembershipWorkflow(TestBase):
     def setUp(self):

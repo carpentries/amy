@@ -239,6 +239,77 @@ class MembershipUpdate(
     pk_url_kwarg = "membership_id"
     template_name = "generic_form_with_comments.html"
 
+    def get_form_kwargs(self) -> Dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+
+        show_rolled_over = False
+        show_rolled_from_previous = False
+        if self.object.rolled_to_membership:
+            show_rolled_over = True
+
+        try:
+            if self.object.rolled_from_membership:
+                show_rolled_from_previous = True
+        except Membership.DoesNotExist:
+            pass
+
+        kwargs["show_rolled_over"] = show_rolled_over
+        kwargs["show_rolled_from_previous"] = show_rolled_from_previous
+        return kwargs
+
+    def form_valid(self, form):
+        result = super().form_valid(form)
+        data = form.cleaned_data
+
+        # see if updated "rolled" values are available, and update related memberships
+        pairs = (
+            (
+                "workshops_without_admin_fee_rolled_over",
+                "workshops_without_admin_fee_rolled_from_previous",
+            ),
+            (
+                "public_instructor_training_seats_rolled_over",
+                "public_instructor_training_seats_rolled_from_previous",
+            ),
+            (
+                "inhouse_instructor_training_seats_rolled_over",
+                "inhouse_instructor_training_seats_rolled_from_previous",
+            ),
+        )
+        save_rolled_to = False
+        try:
+            for rolled_over, rolled_from in pairs:
+                if rolled_over in data:
+                    setattr(
+                        self.object.rolled_to_membership,
+                        rolled_from,
+                        data[rolled_over],
+                    )
+                    save_rolled_to = True
+
+            if save_rolled_to:
+                self.object.rolled_to_membership.save()
+        except Membership.DoesNotExist:
+            pass
+
+        save_rolled_from = False
+        try:
+            for rolled_over, rolled_from in pairs:
+                if rolled_from in data:
+                    setattr(
+                        self.object.rolled_from_membership,
+                        rolled_over,
+                        data[rolled_from],
+                    )
+                    save_rolled_from = True
+
+            if save_rolled_from:
+                self.object.rolled_from_membership.save()
+        except Membership.DoesNotExist:
+            pass
+
+        return result
+
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Membership

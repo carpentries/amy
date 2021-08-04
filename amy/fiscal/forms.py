@@ -111,10 +111,29 @@ class MembershipForm(forms.ModelForm):
             "inhouse_instructor_training_seats",
             "additional_inhouse_instructor_training_seats",
             "emergency_contact",
+            "workshops_without_admin_fee_rolled_over",
+            "workshops_without_admin_fee_rolled_from_previous",
+            "public_instructor_training_seats_rolled_over",
+            "public_instructor_training_seats_rolled_from_previous",
+            "inhouse_instructor_training_seats_rolled_over",
+            "inhouse_instructor_training_seats_rolled_from_previous",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self, *args, show_rolled_over=False, show_rolled_from_previous=False, **kwargs
+    ):
         super().__init__(*args, **kwargs)
+
+        # When editing membership, allow to edit rolled_over or rolled_from_previous
+        # values when membership was rolled over or rolled from other membership.
+        if not show_rolled_over:
+            del self.fields["workshops_without_admin_fee_rolled_over"]
+            del self.fields["public_instructor_training_seats_rolled_over"]
+            del self.fields["inhouse_instructor_training_seats_rolled_over"]
+        if not show_rolled_from_previous:
+            del self.fields["workshops_without_admin_fee_rolled_from_previous"]
+            del self.fields["public_instructor_training_seats_rolled_from_previous"]
+            del self.fields["inhouse_instructor_training_seats_rolled_from_previous"]
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -258,7 +277,9 @@ class MembershipRollOverForm(MembershipCreateForm):
 
     def __init__(self, *args, **kwargs):
         max_values = kwargs.pop("max_values", {})
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args, show_rolled_over=True, show_rolled_from_previous=True, **kwargs
+        )
 
         # don't allow values over the limit imposed by the view using this form
         fields = [
