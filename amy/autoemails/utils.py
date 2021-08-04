@@ -6,6 +6,12 @@ from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
 
+from autoemails.models import Trigger
+from datetime import datetime
+import logging
+
+logger = logging.getLogger("amy.signals")
+
 
 def scheduled_execution_time(job_id, scheduler=None, naive=True):
     """Get RQ-Scheduler scheduled execution time for specific job."""
@@ -66,3 +72,56 @@ def check_status(job: Union[str, Job], scheduler=None):
         return job.get_status() or "scheduled"
     else:
         return job.get_status() or "cancelled"
+
+def schedule_repeated_jobs(scheduler=None):
+    from autoemails.actions import ProfileArchivalWarningAction
+    from consents.models import Term
+    _scheduler = scheduler
+    if not scheduler:
+        _scheduler = django_rq.get_scheduler("default")
+    breakpoint()
+    list_of_job_instances = list(scheduler.get_jobs())
+    triggers = Trigger.objects.filter(active=True, action='archive-warning')
+    for trigger in triggers:
+        action_name = ProfileArchivalWarningAction.__name__
+        action = ProfileArchivalWarningAction(
+            trigger=trigger,
+            objects=dict(),
+        )
+        # TODO: this doesn't make sense
+        object_ = Term.objects.active()[0]
+        launch_at = action.get_launch_at()
+        meta = dict(
+            action=action,
+            template=trigger.template,
+            launch_at=launch_at,
+            email=None,
+            context=None,
+        )
+        job = _scheduler.schedule(
+            scheduled_time=datetime.utcnow() + launch_at, # Time for first execution, in UTC timezone
+            func=action,                     # Function to be queued
+            interval=86400,                   # Time before the function is called again, 1 day in seconds 
+            repeat=None, 
+            meta=meta                    # Repeat this number of times (None means repeat forever)
+        )
+
+        scheduled_at = scheduled_execution_time(
+            job.get_id(), scheduler=scheduler, naive=False
+        )
+        logger.debug("%s: job created [%r]", action_name, job)
+
+        # save job ID in the object
+        logger.debug("%s: saving job in [%r] object", action_name, object_)
+        rqj = object_.rq_jobs.create(
+            job_id=job.get_id(),
+            trigger=trigger,
+            scheduled_execution=scheduled_at,
+            status=check_status(job),
+            mail_status="",
+            interval=job.meta.get('interval'),
+            result_ttl=job.result_ttl,
+            # event_slug=action.event_slug(),
+            # recipients=action.all_recipients(),
+        )
+    list_of_job_instances = list(scheduler.get_jobs())

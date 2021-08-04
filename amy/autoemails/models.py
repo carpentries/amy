@@ -293,6 +293,10 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "consent-required",
             "There is a new or updated term added that the users should consent to",
         ),
+        (
+            "archive-warning",
+            "Warning to the user to log in if they have not in a significant period of time",
+        ),
     )
     action = models.CharField(
         max_length=50,

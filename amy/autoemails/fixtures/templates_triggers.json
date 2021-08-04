@@ -303,5 +303,33 @@
             "action": "consent-required",
             "template": 11
         }
+    },
+    {
+        "model": "autoemails.trigger",
+        "pk": 11,
+        "fields": {
+            "active": true,
+            "created_at": "2020-08-15T14:30:16.081Z",
+            "last_updated_at": "2020-08-15T14:30:16.081Z",
+            "action": "archive-warning",
+            "template": 12
+        }
+    },
+    {
+        "model": "autoemails.emailtemplate",
+        "pk": 12,
+        "fields": {
+            "active": true,
+            "created_at": "2020-09-14T20:35:29.650Z",
+            "last_updated_at": "2020-09-14T20:35:29.650Z",
+            "slug": "archive-warning",
+            "subject": "Profile Archive Warning",
+            "to_header": "{{ request.email }}",
+            "from_header": "amy-no-reply@carpentries.org",
+            "cc_header": "",
+            "bcc_header": "",
+            "reply_to_header": "{{ regional_coordinator_email.0 }}",
+            "body_template": "Yearly login is required in order to keep an active account. Please [sign in](https://carpentries.org/) to keep your account active."
+        }
     }
 ]
