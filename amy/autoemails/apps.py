@@ -1,14 +1,17 @@
+import datetime
+
 from django.apps import AppConfig
 import django_rq
-import datetime
+
 
 class AutoemailsConfig(AppConfig):
     name = "autoemails"
 
     def ready(self):
-        from autoemails.actions import ProfileArchivalWarningAction
         from amy.autoemails.utils import schedule_repeated_jobs
-        scheduler = django_rq.get_scheduler('default')
+        from autoemails.actions import ProfileArchivalWarningAction
+
+        scheduler = django_rq.get_scheduler("default")
 
         # Delete any existing jobs in the scheduler when the app starts up
         jobs = scheduler.get_jobs()

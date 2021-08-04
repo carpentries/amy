@@ -5,13 +5,15 @@ from django.test import RequestFactory, TestCase
 from rq.exceptions import NoSuchJobError
 from rq_scheduler.utils import to_unix
 
+from amy.autoemails.utils import schedule_repeated_jobs
 from autoemails.actions import ProfileArchivalWarningAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.job import Job
 from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.models import Event, Organization, Person, Role, Tag, Task
-from amy.autoemails.utils import schedule_repeated_jobs
+
+
 class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()
