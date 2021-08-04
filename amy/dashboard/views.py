@@ -273,37 +273,40 @@ def search(request):
     airports = None
     training_requests = None
     comments = None
-    single_results = []
 
     if request.method == "GET" and "term" in request.GET:
         form = SearchForm(request.GET)
         if form.is_valid():
-            term = form.cleaned_data.get("term", "")
+            term = form.cleaned_data.get("term", "").strip()
             tokens = re.split(r"\s+", term)
+            results_combined = []
 
-            organizations = Organization.objects.filter(
-                Q(domain__icontains=term) | Q(fullname__icontains=term)
-            ).order_by("fullname")
-            if len(organizations) == 1:
-                single_results.append(organizations[0])
+            organizations = list(
+                Organization.objects.filter(
+                    Q(domain__icontains=term) | Q(fullname__icontains=term)
+                ).order_by("fullname")
+            )
+            results_combined += organizations
 
-            memberships = Membership.objects.filter(
-                Q(name__icontains=term) | Q(registration_code__icontains=term)
-            ).order_by("-agreement_start")
-            if len(memberships) == 1:
-                single_results.append(memberships[0])
+            memberships = list(
+                Membership.objects.filter(
+                    Q(name__icontains=term) | Q(registration_code__icontains=term)
+                ).order_by("-agreement_start")
+            )
+            results_combined += memberships
 
-            events = Event.objects.filter(
-                Q(slug__icontains=term)
-                | Q(host__domain__icontains=term)
-                | Q(host__fullname__icontains=term)
-                | Q(url__icontains=term)
-                | Q(contact__icontains=term)
-                | Q(venue__icontains=term)
-                | Q(address__icontains=term)
-            ).order_by("-slug")
-            if len(events) == 1:
-                single_results.append(events[0])
+            events = list(
+                Event.objects.filter(
+                    Q(slug__icontains=term)
+                    | Q(host__domain__icontains=term)
+                    | Q(host__fullname__icontains=term)
+                    | Q(url__icontains=term)
+                    | Q(contact__icontains=term)
+                    | Q(venue__icontains=term)
+                    | Q(address__icontains=term)
+                ).order_by("-slug")
+            )
+            results_combined += events
 
             # if user searches for two words, assume they mean a person
             # name
@@ -316,52 +319,56 @@ def search(request):
                     | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
                 )
-                persons = Person.objects.filter(complex_q)
+                persons = list(Person.objects.filter(complex_q))
             else:
-                persons = Person.objects.filter(
-                    Q(personal__icontains=term)
+                persons = list(
+                    Person.objects.filter(
+                        Q(personal__icontains=term)
+                        | Q(family__icontains=term)
+                        | Q(email__icontains=term)
+                        | Q(secondary_email__icontains=term)
+                        | Q(github__icontains=term)
+                    ).order_by("family")
+                )
+
+            results_combined += persons
+
+            airports = list(
+                Airport.objects.filter(
+                    Q(iata__icontains=term) | Q(fullname__icontains=term)
+                ).order_by("iata")
+            )
+            results_combined += airports
+
+            training_requests = list(
+                TrainingRequest.objects.filter(
+                    Q(group_name__icontains=term)
                     | Q(family__icontains=term)
                     | Q(email__icontains=term)
-                    | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
-                ).order_by("family")
-
-            if len(persons) == 1:
-                single_results.append(persons[0])
-
-            airports = Airport.objects.filter(
-                Q(iata__icontains=term) | Q(fullname__icontains=term)
-            ).order_by("iata")
-            if len(airports) == 1:
-                single_results.append(airports[0])
-
-            training_requests = TrainingRequest.objects.filter(
-                Q(group_name__icontains=term)
-                | Q(family__icontains=term)
-                | Q(email__icontains=term)
-                | Q(github__icontains=term)
-                | Q(affiliation__icontains=term)
-                | Q(location__icontains=term)
-                | Q(user_notes__icontains=term)
+                    | Q(affiliation__icontains=term)
+                    | Q(location__icontains=term)
+                    | Q(user_notes__icontains=term)
+                )
             )
-            if len(training_requests) == 1:
-                single_results.append(training_requests[0])
+            results_combined += training_requests
 
-            comments = Comment.objects.filter(
-                Q(comment__icontains=term)
-                | Q(user_name__icontains=term)
-                | Q(user_email__icontains=term)
-                | Q(user__personal__icontains=term)
-                | Q(user__family__icontains=term)
-                | Q(user__email__icontains=term)
-                | Q(user__github__icontains=term)
-            ).prefetch_related("content_object")
-            if len(comments) == 1:
-                single_results.append(comments[0])
+            comments = list(
+                Comment.objects.filter(
+                    Q(comment__icontains=term)
+                    | Q(user_name__icontains=term)
+                    | Q(user_email__icontains=term)
+                    | Q(user__personal__icontains=term)
+                    | Q(user__family__icontains=term)
+                    | Q(user__email__icontains=term)
+                    | Q(user__github__icontains=term)
+                ).prefetch_related("content_object")
+            )
+            results_combined += comments
 
             # only 1 record found? Let's move to it immediately
-            if len(single_results) == 1 and not form.cleaned_data["no_redirect"]:
-                result = single_results[0]
+            if len(results_combined) == 1 and not form.cleaned_data["no_redirect"]:
+                result = results_combined[0]
                 msg = format_html(
                     "You were moved to this page, because your search <i>{}</i> "
                     "yields only this result.",
