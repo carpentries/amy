@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import IntegrityError
 from django.urls import reverse
 import django_comments
@@ -352,7 +354,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         comment = CommentModel.objects.first()
         self.assertEqual(
             comment.comment,
-            """Changed members on 2021-07-24:
+            f"""Changed members on {date.today():%Y-%m-%d}:
 
 * Added Beta Organization <beta.com>
 * Removed Alpha Organization <alpha.edu>""",
