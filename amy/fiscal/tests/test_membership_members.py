@@ -333,11 +333,11 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             "form-0-role": m1.role.pk,
             "form-0-id": m1.pk,
             "form-0-EDITABLE": True,
-            "form-0-DELETE": "on",
+            "form-0-DELETE": "on",  # marks org_alpha member for removal
             "form-1-membership": self.membership.pk,
             "form-1-organization": self.org_beta.pk,
             "form-1-role": self.member_role.pk,
-            "form-1-id": "",
+            "form-1-id": "",  # no ID, so a new member for org_beta will be created
             "form-1-EDITABLE": True,
         }
         response = self.client.post(
