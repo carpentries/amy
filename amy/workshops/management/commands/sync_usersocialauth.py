@@ -24,8 +24,8 @@ class Command(BaseCommand):
                 person = Person.objects.get(username=username)
                 person.synchronize_usersocialauth()
             except Person.DoesNotExist:
-                print("{} -- no such person".format(username))
-            except GithubException:
-                print("{} -- failed due to errors with GitHub API".format(username))
+                print("Person not found")  # not disclosing username
+            except GithubException as e:
+                print(f"GitHub API exception {e}")  # not disclosing username
             else:
-                print("{} -- success; UserSocialAuth is now in sync".format(username))
+                print("Success")  # not disclosing username

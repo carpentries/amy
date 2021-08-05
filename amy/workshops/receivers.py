@@ -11,10 +11,8 @@ logger = logging.getLogger("amy.server_logs")
 # a receiver for "failed login attempt" signal
 @receiver(user_login_failed)
 def log_user_login_failed(sender, **kwargs):
-    credentials = kwargs.get("credentials") or dict()
     request = kwargs.get("request") or HttpRequest()
 
     ip = request.META.get("REMOTE_ADDR") or "UNKNOWN"
-    username = credentials.get("username") or "UNKNOWN"
-    msg = "Login failure from IP {} for user '{}'".format(ip, username)
+    msg = f"Login failure from IP {ip}"
     logger.error(msg)
