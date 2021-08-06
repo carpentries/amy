@@ -261,6 +261,20 @@ class MembershipUpdate(
         result = super().form_valid(form)
         data = form.cleaned_data
 
+        if form.initial["extensions"] != data["extensions"]:
+            # Since the extensions have changed, the end date needs to be recalculated.
+            changed_days = sum(data["extensions"]) - sum(form.initial["extensions"])
+            self.object.agreement_end += timedelta(days=changed_days)
+            self.object.save()
+
+            # User changed extensions values, let's add a comment indicating the change.
+            str_ext = ", ".join(str(extension) for extension in data["extensions"])
+            comment = (
+                f"Extension days changed to following: {str_ext} days. New agreement "
+                f"end date: {self.object.agreement_end}."
+            )
+            add_comment_for_object(self.object, self.request.user, comment)
+
         # see if updated "rolled" values are available, and update related memberships
         pairs = (
             (
