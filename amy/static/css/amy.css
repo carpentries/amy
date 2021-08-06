@@ -177,3 +177,9 @@ select[readonly].select2-hidden-accessible + .select2-container
 .select2-selection__clear {
     display: none;
 }
+
+/* Special case: multiple inputs in one form row (e.g. extensions in membership form on
+   membership edit page) */
+.form-group.row input + input {
+    margin-top: 0.25em;
+}
