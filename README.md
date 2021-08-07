@@ -60,7 +60,7 @@ before starting work on new features.
 1. Start running a local instance of Postgres and Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
 
     ~~~
-    $ docker-compose -f docker/docker-compose.yml -p amy up -d database redis
+    $ docker compose -f docker/docker-compose.yml -p amy up -d database redis
     ~~~
 
 1.  Set up your local database with fake (development-ready) data.  This will create a superuser with "admin" as both the username and password.
@@ -89,7 +89,7 @@ before starting work on new features.
 1. Shut down the local server by typing `Ctrl-C`.  Shut down the Docker Redis instance with:
 
     ~~~
-    $ docker-compose -f docker/docker-compose.yml -p amy down
+    $ docker compose -f docker/docker-compose.yml -p amy down
     ~~~
 
 ## Upgrading
