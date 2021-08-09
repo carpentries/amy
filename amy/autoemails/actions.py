@@ -145,9 +145,9 @@ class BaseAction:
         Action."""
         return None
 
-    def reply_to(self) -> Tuple[str]:
+    def reply_to(self) -> Optional[Tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
-        return ("",)
+        return None
 
     def email_text(self) -> str:
         """Overwrite in order to set own email text body from descending
@@ -1232,7 +1232,7 @@ class NewConsentRequiredAction(BaseAction):
         # if you want to send an individual email to each recipient
         # but have no per-user configuration
         return {}
-    
-    def reply_to(self) -> Tuple[str]:
+
+    def reply_to(self) -> Optional[Tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
         return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)

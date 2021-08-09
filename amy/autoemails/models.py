@@ -156,7 +156,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         )
 
     def get_reply_to(
-        self, reply_to: List[str] = None, context: Optional[dict] = None
+        self, reply_to: Optional[List[str]] = None, context: Optional[dict] = None
     ) -> List[str]:
         context = context or {}
         return reply_to or [self.render_template(self.reply_to_header, context)] or [""]
