@@ -276,6 +276,206 @@ class TestTask(TestBase):
         task4.full_clean()
         task5.full_clean()
 
+    def test_no_remaining_seats_warnings_when_adding(self):
+        """Ensure warnings about memberships with no remaining instructor training
+        seats appear when new tasks are added."""
+        # Arrange
+        # `self.membership` is set up with only 1 seat for both public
+        # and in-house instructor training seats
+
+        data1 = {
+            "task-event": self.ttt_event_open.pk,
+            "task-person": self.test_person_1.pk,
+            "task-role": self.learner.pk,
+            "task-seat_membership": self.membership.pk,
+            "task-seat_public": True,
+        }
+        data2 = {
+            "task-event": self.ttt_event_open.pk,
+            "task-person": self.test_person_2.pk,
+            "task-role": self.learner.pk,
+            "task-seat_membership": self.membership.pk,
+            "task-seat_public": False,
+        }
+
+        # Act
+        response1 = self.client.post(reverse("task_add"), data1, follow=True)
+        response2 = self.client.post(reverse("task_add"), data2, follow=True)
+
+        # Assert
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        self.assertContains(
+            response1,
+            f"Membership &quot;{self.membership}&quot; has no public instructor "
+            "training seats remaining.",
+        )
+        self.assertContains(
+            response2,
+            f"Membership &quot;{self.membership}&quot; has no in-house instructor "
+            "training seats remaining.",
+        )
+
+    def test_exceeded_seats_warnings_when_adding(self):
+        """Ensure warnings about memberships with exceeded instructor training
+        seats appear when new tasks are added."""
+        # Arrange
+        self.membership.public_instructor_training_seats = 0
+        self.membership.inhouse_instructor_training_seats = 0
+        self.membership.save()
+
+        data1 = {
+            "task-event": self.ttt_event_open.pk,
+            "task-person": self.test_person_1.pk,
+            "task-role": self.learner.pk,
+            "task-seat_membership": self.membership.pk,
+            "task-seat_public": True,
+        }
+        data2 = {
+            "task-event": self.ttt_event_open.pk,
+            "task-person": self.test_person_2.pk,
+            "task-role": self.learner.pk,
+            "task-seat_membership": self.membership.pk,
+            "task-seat_public": False,
+        }
+
+        # Act
+        response1 = self.client.post(reverse("task_add"), data1, follow=True)
+        response2 = self.client.post(reverse("task_add"), data2, follow=True)
+
+        # Assert
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        self.assertContains(
+            response1,
+            f"Membership &quot;{self.membership}&quot; is using more public "
+            "training seats than it&#39;s been allowed.",
+        )
+        self.assertContains(
+            response2,
+            f"Membership &quot;{self.membership}&quot; is using more in-house "
+            "training seats than it&#39;s been allowed.",
+        )
+
+    def test_no_remaining_seats_warnings_when_updating(self):
+        """Ensure warnings about memberships with no remaining instructor training
+        seats appear when existing tasks are edited."""
+        # Arrange
+        # `self.membership` is set up with only 1 seat for both public
+        # and in-house instructor training seats
+
+        task1 = Task.objects.create(
+            event=self.ttt_event_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=True,
+        )
+        task2 = Task.objects.create(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=False,
+        )
+
+        data1 = {
+            "event": task1.event.pk,
+            "person": task1.person.pk,
+            "role": task1.role.pk,
+            "seat_membership": task1.seat_membership.pk,
+            "seat_public": task1.seat_public,
+        }
+        data2 = {
+            "event": task2.event.pk,
+            "person": task2.person.pk,
+            "role": task2.role.pk,
+            "seat_membership": task2.seat_membership.pk,
+            "seat_public": task2.seat_public,
+        }
+
+        # Act
+        response1 = self.client.post(
+            reverse("task_edit", args=[task1.pk]), data1, follow=True
+        )
+        response2 = self.client.post(
+            reverse("task_edit", args=[task2.pk]), data2, follow=True
+        )
+
+        # Assert
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        self.assertContains(
+            response1,
+            f"Membership &quot;{self.membership}&quot; has no public instructor "
+            "training seats remaining.",
+        )
+        self.assertContains(
+            response2,
+            f"Membership &quot;{self.membership}&quot; has no in-house instructor "
+            "training seats remaining.",
+        )
+
+    def test_exceeded_seats_warnings_when_updating(self):
+        """Ensure warnings about memberships with exceeded instructor training
+        seats appear when existing tasks are edited."""
+        # Arrange
+        self.membership.public_instructor_training_seats = 0
+        self.membership.inhouse_instructor_training_seats = 0
+        self.membership.save()
+
+        task1 = Task.objects.create(
+            event=self.ttt_event_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=True,
+        )
+        task2 = Task.objects.create(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=False,
+        )
+
+        data1 = {
+            "event": task1.event.pk,
+            "person": task1.person.pk,
+            "role": task1.role.pk,
+            "seat_membership": task1.seat_membership.pk,
+            "seat_public": task1.seat_public,
+        }
+        data2 = {
+            "event": task2.event.pk,
+            "person": task2.person.pk,
+            "role": task2.role.pk,
+            "seat_membership": task2.seat_membership.pk,
+            "seat_public": task2.seat_public,
+        }
+
+        # Act
+        response1 = self.client.post(
+            reverse("task_edit", args=[task1.pk]), data1, follow=True
+        )
+        response2 = self.client.post(
+            reverse("task_edit", args=[task2.pk]), data2, follow=True
+        )
+
+        # Assert
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        self.assertContains(
+            response1,
+            f"Membership &quot;{self.membership}&quot; is using more public "
+            "training seats than it&#39;s been allowed.",
+        )
+        self.assertContains(
+            response2,
+            f"Membership &quot;{self.membership}&quot; is using more in-house "
+            "training seats than it&#39;s been allowed.",
+        )
+
     def test_open_applications_TTT(self):
         """Ensure events with TTT tag but without open application flag raise
         ValidationError on `seat_open_training` field."""
@@ -370,58 +570,6 @@ class TestTask(TestBase):
         )
         task3.full_clean()
         task4.full_clean()
-
-    def test_seat_public_validation(self):
-        # zero public seats in membership
-        self.membership.public_instructor_training_seats = 0
-        self.membership.save()
-
-        # invalid task
-        task1 = Task(
-            event=self.ttt_event_open,
-            person=self.test_person_1,
-            role=self.learner,
-            seat_membership=self.membership,
-            seat_public=True,
-        )
-
-        with self.assertRaises(ValidationError) as cm:
-            task1.full_clean()
-        exception = cm.exception
-        self.assertEqual({"seat_public"}, exception.error_dict.keys())
-
-        # reset seats in membership
-        self.membership.public_instructor_training_seats = 1
-        self.membership.save()
-        # refresh the cached properties
-        del self.membership.__dict__["public_instructor_training_seats_utilized"]
-        task1.full_clean()
-
-    def test_seat_inhouse_validation(self):
-        # zero inhouse seats in membership
-        self.membership.inhouse_instructor_training_seats = 0
-        self.membership.save()
-
-        # invalid task
-        task1 = Task(
-            event=self.ttt_event_open,
-            person=self.test_person_2,
-            role=self.learner,
-            seat_membership=self.membership,
-            seat_public=False,
-        )
-
-        with self.assertRaises(ValidationError) as cm:
-            task1.full_clean()
-        exception = cm.exception
-        self.assertEqual({"seat_public"}, exception.error_dict.keys())
-
-        # reset seats in membership
-        self.membership.inhouse_instructor_training_seats = 1
-        self.membership.save()
-        # refresh the cached properties
-        del self.membership.__dict__["inhouse_instructor_training_seats_utilized"]
-        task1.full_clean()
 
 
 class TestTaskCreateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):

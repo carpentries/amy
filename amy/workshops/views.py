@@ -1689,13 +1689,16 @@ class TaskCreate(
             if remaining == 1:
                 messages.warning(
                     self.request,
-                    f'Membership "{seat_membership}" has 0 instructor training seats '
-                    "available.",
+                    # after the form is saved there will be 0 remaining seats
+                    f'Membership "{seat_membership}" has no '
+                    f'{"public" if seat_public else "in-house"} instructor training '
+                    "seats remaining.",
                 )
-            if remaining < 1:
+            if remaining <= 0:
                 messages.warning(
                     self.request,
-                    f'Membership "{seat_membership}" is using more training seats than '
+                    f'Membership "{seat_membership}" is using more '
+                    f'{"public" if seat_public else "in-house"} training seats than '
                     "it's been allowed.",
                 )
 
@@ -1842,6 +1845,31 @@ class TaskUpdate(
         check_ihia_new = InstructorsHostIntroductionAction.check(new.event)
         check_afwa_new = AskForWebsiteAction.check(new.event)
         check_rha_new = RecruitHelpersAction.check(new.event)
+
+        seat_membership = form.cleaned_data["seat_membership"]
+        seat_public = form.cleaned_data["seat_public"]
+        # check associated membership remaining seats and validity
+        if hasattr(self, "request") and seat_membership is not None:
+            remaining = (
+                seat_membership.public_instructor_training_seats_remaining
+                if seat_public
+                else seat_membership.inhouse_instructor_training_seats_remaining
+            )
+            # check number of available seats
+            if remaining == 0:
+                messages.warning(
+                    self.request,
+                    f'Membership "{seat_membership}" has no '
+                    f'{"public" if seat_public else "in-house"} instructor training '
+                    "seats remaining.",
+                )
+            if remaining < 0:
+                messages.warning(
+                    self.request,
+                    f'Membership "{seat_membership}" is using more '
+                    f'{"public" if seat_public else "in-house"} training seats than '
+                    "it's been allowed.",
+                )
 
         # NewInstructorAction conditions are met, but weren't before
         if not check_nia_old and check_nia_new:
