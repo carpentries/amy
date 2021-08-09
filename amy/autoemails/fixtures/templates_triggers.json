@@ -311,7 +311,7 @@
             "active": true,
             "created_at": "2020-08-15T14:30:16.081Z",
             "last_updated_at": "2020-08-15T14:30:16.081Z",
-            "action": "archive-warning",
+            "action": "profile-update",
             "template": 12
         }
     },
@@ -322,14 +322,14 @@
             "active": true,
             "created_at": "2020-09-14T20:35:29.650Z",
             "last_updated_at": "2020-09-14T20:35:29.650Z",
-            "slug": "archive-warning",
-            "subject": "Profile Archive Warning",
+            "slug": "profile-update",
+            "subject": "Profile Update Reminder",
             "to_header": "{{ request.email }}",
             "from_header": "amy-no-reply@carpentries.org",
             "cc_header": "",
             "bcc_header": "",
             "reply_to_header": "{{ regional_coordinator_email.0 }}",
-            "body_template": "Yearly login is required in order to keep an active account. Please [sign in](https://carpentries.org/) to keep your account active."
+            "body_template": "Please [sign in](https://carpentries.org/) and update your profile information."
         }
     }
 ]

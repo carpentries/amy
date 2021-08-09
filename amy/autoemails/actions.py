@@ -1235,17 +1235,20 @@ class NewConsentRequiredAction(BaseAction):
     def reply_to(self) -> Optional[Tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
         return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
-class ProfileArchivalWarningAction(BaseAction):
+
+
+class ProfileUpdateReminderAction(BaseAction):
     """
-    Action for asking users to login. This email
-    should be sent when a new required Term is created.
+    Action for asking users to login and update their profile information.
+    This email should be sent on the anniversary of the date the user's
+    profile was created.
 
     How to use it:
 
     >>> triggers = Trigger.objects.filter(active=True,
-                                          action='consent-required')
+                                          action='profile-update')
     >>> for trigger in triggers:
-    ...     action = NewConsentRequiredAction(
+    ...     action = ProfileUpdateReminderAction(
     ...         trigger=trigger,
     ...         objects=dict(terms=terms),
     ...     )

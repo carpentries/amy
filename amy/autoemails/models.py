@@ -301,8 +301,8 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "There is a new or updated term added that the users should consent to",
         ),
         (
-            "archive-warning",
-            "Warning to the user to log in if they have not in a significant period of time",
+            "profile-update",
+            "Reminder to for the user to update the information in their profile.",
         ),
     )
     action = models.CharField(
@@ -389,6 +389,16 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         null=False,
         default="",
         verbose_name="Mail recipients",
+    )
+    interval = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Time in seconds between function calls",
+    )
+    result_ttl = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Result TTL",
     )
 
     def __str__(self):
