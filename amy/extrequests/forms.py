@@ -119,7 +119,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     )
 
     seat_public = forms.TypedChoiceField(
-        coerce=bool,
+        coerce=lambda x: x == "True",
         choices=Task.SEAT_PUBLIC_CHOICES,
         initial=Task._meta.get_field("seat_public").default,
         required=False,
