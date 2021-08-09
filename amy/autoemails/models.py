@@ -228,6 +228,8 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
             # https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data
             # When set the recipients in the two column each get an individual message
             msg.merge_data = merge_data
+            if merge_data:
+                assert len(msg.to) <= settings.BULK_EMAIL_LIMIT
 
         return msg
 
@@ -379,8 +381,7 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         help_text="Related event's slug.",
     )
 
-    recipients = models.CharField(
-        max_length=300,
+    recipients = models.TextField(
         blank=True,
         null=False,
         default="",

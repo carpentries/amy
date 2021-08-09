@@ -2,6 +2,7 @@ import logging
 from typing import Any, Iterable
 from urllib.parse import unquote
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
 from django.core.exceptions import ValidationError
@@ -34,18 +35,24 @@ def send_consent_email(request, term: Term) -> None:
         active=True,
         action="consent-required",
     )
+
+    emails_to_send = []
     for email in emails:
-        jobs, rqjobs = ActionManageMixin.add(
-            action_class=NewConsentRequiredAction,
-            logger=logger,
-            scheduler=scheduler,
-            triggers=triggers,
-            context_objects={
-                "term": term,
-                "person_email": email,
-            },
-            object_=term,
-        )
+        if len(emails_to_send) < settings.BULK_EMAIL_LIMIT:
+            emails_to_send.append(email)
+        else:
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=NewConsentRequiredAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects={
+                    "term": term,
+                    "person_email": emails_to_send,
+                },
+                object_=term,
+            )
+            emails_to_send = []
     if triggers and jobs:
         ActionManageMixin.bulk_schedule_message(
             request=request,
