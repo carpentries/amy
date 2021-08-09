@@ -190,7 +190,7 @@
             "from_header": "amy-no-reply@carpentries.org",
             "cc_header": "",
             "bcc_header": "",
-            "reply_to_header": "{{ regional_coordinator_email.0 }}",
+            "reply_to_header": "",
             "body_template": "A new term is available to consent to. Please [sign in](https://carpentries.org/) to consent to it."
         }
     },

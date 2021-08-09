@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 import logging
-from typing import Any, Dict, List, Mapping, Optional, Type
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Type
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -145,9 +145,9 @@ class BaseAction:
         Action."""
         return None
 
-    def reply_to(self) -> str:
+    def reply_to(self) -> Tuple[str]:
         """Overwrite in order to set own reply-to from descending Action."""
-        return ""
+        return ("",)
 
     def email_text(self) -> str:
         """Overwrite in order to set own email text body from descending
@@ -1195,7 +1195,7 @@ class NewConsentRequiredAction(BaseAction):
     ...     job = scheduler.enqueue_in(launch_at, action)
     """
 
-    launch_at = timedelta(hours=1)
+    launch_at = timedelta(seconds=1)
 
     def get_launch_at(self):
         return self.launch_at
@@ -1204,15 +1204,15 @@ class NewConsentRequiredAction(BaseAction):
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
-            return self.context["all_emails"]
-        except (AttributeError, KeyError):
+            person_email = self.context_objects["person_emails"]
+            return (person_email,)
+        except (KeyError, AttributeError):
             return None
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
         try:
-            person_email = self.context_objects["person_emails"]
-            return person_email
+            return ", ".join(self.recipients())
         except (KeyError, AttributeError):
             return ""
 
@@ -1232,3 +1232,7 @@ class NewConsentRequiredAction(BaseAction):
         # if you want to send an individual email to each recipient
         # but have no per-user configuration
         return {}
+    
+    def reply_to(self) -> Tuple[str]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
