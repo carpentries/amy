@@ -1195,7 +1195,7 @@ class NewConsentRequiredAction(BaseAction):
     ...     job = scheduler.enqueue_in(launch_at, action)
     """
 
-    launch_at = timedelta(seconds=1)
+    launch_at = timedelta(hours=1)
 
     def get_launch_at(self):
         return self.launch_at
