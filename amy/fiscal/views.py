@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from typing import Any, Dict
 
 from django.contrib import messages
@@ -379,7 +379,10 @@ class MembershipExtend(
     form_class = MembershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "workshops.change_membership"
-    comment = "Extended membership by {days} days on {date}.\n\n----\n\n{comment}"
+    comment = (
+        "Extended membership by {days} days on {date} (new end date: {new_date})."
+        "\n\n----\n\n{comment}"
+    )
 
     def get_initial(self):
         return {
@@ -395,10 +398,11 @@ class MembershipExtend(
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
-        days = form.cleaned_data["extension"]
+        agreement_end = form.cleaned_data["agreement_end"]
+        new_agreement_end = form.cleaned_data["new_agreement_end"]
+        days = (new_agreement_end - agreement_end).days
         comment = form.cleaned_data["comment"]
-        extension = timedelta(days=days)
-        self.membership.agreement_end += extension
+        self.membership.agreement_end = new_agreement_end
         self.membership.extensions.append(days)
         self.membership.save()
 
@@ -406,7 +410,12 @@ class MembershipExtend(
         add_comment_for_object(
             self.membership,
             self.request.user,
-            self.comment.format(days=days, date=date.today(), comment=comment),
+            self.comment.format(
+                days=days,
+                date=date.today(),
+                new_date=new_agreement_end,
+                comment=comment,
+            ),
         )
 
         return super().form_valid(form)

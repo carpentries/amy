@@ -923,9 +923,9 @@ class TestMembershipExtension(TestBase):
             # fields ignored
             "agreement_start": "invalid value",
             "agreement_end": "invalid value",
-            "new_agreement_end": "invalid value",
+            "extension": "invalid value",
             # field accepted
-            "extension": "1",
+            "new_agreement_end": "2021-08-10",
         }
 
         form = MembershipExtensionForm(data)
@@ -936,14 +936,16 @@ class TestMembershipExtension(TestBase):
         data = [
             ("string", False),
             ("", False),
-            ("-1", False),
-            ("0", False),
-            ("1", True),
-            ("2", True),
+            ("2020-01-01", False),
+            ("2021-01-01", False),
+            ("2022-01-01", True),
         ]
-        for extension, valid in data:
-            with self.subTest(extension=extension, valid=valid):
-                form = MembershipExtensionForm(dict(extension=extension))
+        for end_date, valid in data:
+            with self.subTest(date=end_date, valid=valid):
+                form = MembershipExtensionForm(
+                    dict(new_agreement_end=end_date),
+                    initial=dict(agreement_end="2021-01-01"),
+                )
                 self.assertEqual(form.is_valid(), valid)
 
     def test_membership_extended(self):
@@ -963,7 +965,7 @@ class TestMembershipExtension(TestBase):
             membership=membership,
             role=MemberRole.objects.first(),
         )
-        data = {"extension": 30}
+        data = {"new_agreement_end": date(2021, 3, 31)}
 
         response = self.client.post(
             reverse("membership_extend", args=[membership.pk]),
@@ -995,9 +997,9 @@ class TestMembershipExtension(TestBase):
             membership=membership,
             role=MemberRole.objects.first(),
         )
-        data1 = {"extension": 30}
-        data2 = {"extension": 40}
-        data3 = {"extension": 50}
+        data1 = {"new_agreement_end": date(2021, 3, 31)}
+        data2 = {"new_agreement_end": date(2021, 5, 10)}
+        data3 = {"new_agreement_end": date(2021, 6, 29)}
 
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data1)
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data2)
@@ -1025,11 +1027,10 @@ class TestMembershipExtension(TestBase):
             membership=membership,
             role=MemberRole.objects.first(),
         )
-        extension = 30
         comment = "Everything is awesome."
-        data = {"extension": extension, "comment": comment}
+        data = {"new_agreement_end": date(2021, 3, 31), "comment": comment}
         today = date.today()
-        expected_comment = f"""Extended membership by {extension} days on {today}.
+        expected_comment = f"""Extended membership by 30 days on {today} (new end date: 2021-03-31).
 
 ----
 

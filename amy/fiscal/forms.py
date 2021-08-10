@@ -445,12 +445,12 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
 class MembershipExtensionForm(forms.Form):
     agreement_start = forms.DateField(disabled=True, required=False)
     agreement_end = forms.DateField(disabled=True, required=False)
+    new_agreement_end = forms.DateField(required=True)
     extension = forms.IntegerField(
-        min_value=1,
-        required=True,
-        help_text="Number of days the agreement should be extended.",
+        disabled=True,
+        required=False,
+        help_text="Number of days the agreement will be extended.",
     )
-    new_agreement_end = forms.DateField(disabled=True, required=False)
     comment = MarkdownxFormField(
         label="Comment",
         help_text=(
@@ -466,6 +466,25 @@ class MembershipExtensionForm(forms.Form):
 
     class Media:
         js = ("membership_extend.js", "date_yyyymmdd.js")
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # validate new agreement end date is later than original agreement end date
+        agreement_end = self.cleaned_data.get("agreement_end")
+        new_agreement_end = self.cleaned_data.get("new_agreement_end")
+        try:
+            if new_agreement_end <= agreement_end:
+                errors["new_agreement_end"] = ValidationError(
+                    "New agreement end date must be later than original agreement "
+                    "end date."
+                )
+        except TypeError:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
 
 
 # ----------------------------------------------------------
