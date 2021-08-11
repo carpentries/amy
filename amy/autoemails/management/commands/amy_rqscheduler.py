@@ -5,30 +5,35 @@ import django_rq
 from django_rq.management.commands import rqscheduler
 
 from amy.autoemails.utils import check_status, scheduled_execution_time
-from autoemails.actions import BulkEmailJob, ProfileUpdateReminderAction
+from autoemails.actions import (
+    BaseRepeatedAction,
+    ProfileArchivalWarningRepeatedAction,
+    UpdateProfileReminderRepeatedAction,
+)
 from autoemails.models import RQJob, Trigger
 
 scheduler = django_rq.get_scheduler()
 logger = logging.getLogger("amy.signals")
-REPEATED_JOBS = {"profile-update": ProfileUpdateReminderAction}
+REPEATED_JOBS_BY_TRIGGER = {
+    "profile-update": UpdateProfileReminderRepeatedAction,
+    "profile-archival-warning": ProfileArchivalWarningRepeatedAction,
+}
 DAY_IN_SECONDS = 86400
 
 
 def clear_scheduled_jobs():
     # Delete any existing repeated jobs in the scheduler
-    repated_job_classes = list(REPEATED_JOBS.values()) + [BulkEmailJob]
+    # repeated_job_classes = list(REPEATED_JOBS.values())
     for job in scheduler.get_jobs():
-        if job.meta["action"].__class__ in repated_job_classes:
+        if isinstance(job.meta["action"].__class__, BaseRepeatedAction):
             logger.debug("Deleting scheduled job %s", job)
             job.delete()
 
 
-def schedule_repeating_job(trigger, action_class, _scheduler=None):
+def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler=None):
     action_name = action_class.__name__
-    action = BulkEmailJob(
-        trigger=trigger,
-        email_action_class=action_class,
-        objects=dict(),
+    action = action_class(
+        trigger=trigger, interval=action_class.INTERVAL, repeated=action_class.REPEATED
     )
     launch_at = action.get_launch_at()
     meta = dict(
@@ -37,7 +42,7 @@ def schedule_repeating_job(trigger, action_class, _scheduler=None):
         launch_at=launch_at,
         email=None,
         context=None,
-        email_action_class=action_class,
+        email_action_class=action_class.EMAIL_ACTION_CLASS,
     )
     job = _scheduler.schedule(
         scheduled_time=datetime.utcnow()
@@ -72,9 +77,13 @@ def schedule_repeating_job(trigger, action_class, _scheduler=None):
 
 
 def register_scheduled_jobs():
-    triggers = Trigger.objects.filter(active=True, action__in=REPEATED_JOBS.keys())
+    triggers = Trigger.objects.filter(
+        active=True, action__in=REPEATED_JOBS_BY_TRIGGER.keys()
+    )
     for trigger in triggers:
-        schedule_repeating_job(trigger, REPEATED_JOBS[trigger.action], scheduler)
+        schedule_repeating_job(
+            trigger, REPEATED_JOBS_BY_TRIGGER[trigger.action], scheduler
+        )
 
 
 class Command(rqscheduler.Command):

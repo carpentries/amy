@@ -1,14 +1,13 @@
-<<<<<<< HEAD
 from __future__ import annotations
 
 from datetime import date, timedelta
 import logging
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Type
-=======
+
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 import logging
 from typing import Dict, List, Optional
->>>>>>> 6d39b340 (Saving place)
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -20,6 +19,11 @@ import django_rq
 
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import EmailTemplate, Trigger
+from django.db.models import Q
+from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
+import django_rq
+
+from autoemails.models import EmailReminder, EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
 from workshops.fields import TAG_SEPARATOR
@@ -27,6 +31,7 @@ from workshops.models import Event, Person, Task
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
+DAY_IN_SECONDS = 86400
 
 
 def send_bulk_email(
@@ -1302,70 +1307,117 @@ class ProfileUpdateReminderAction(BaseAction):
         return emails
 
 
-class BulkEmailJob:
-    # Keeps the default timestamp for the job to run
-    launch_at = timedelta(seconds=1)  # TODO: CHANGE BACK
-    # Stores additional contextual data for the trigger/template
-    additional_context: Optional[Dict] = None
+@dataclass
+class BaseRepeatedAction:
+    """
+    Base class for repeated jobs in the Redis.
+    """
 
-    def __init__(
-        self,
-        trigger: Trigger,
-        email_action_class: BaseAction,
-        objects: Optional[Dict] = None,
-    ):
-        self.trigger = trigger
-        self.email_action = email_action_class(
-            trigger=self.trigger,
-            objects=objects,
-        )
-        # TODO: perhaps save in dict?
-        self.template = trigger.template
-        try:
-            self.context_objects = objects.copy()
-        except AttributeError:
-            self.context_objects = dict()
-
-        # prepare logger
-        self.logger = logger
+    EMAIL_ACTION_CLASS: BaseAction
+    INTERVAL: int = DAY_IN_SECONDS  # time between repeats
+    REPEATED: Optional[int] = None  # number of times the job is repeated
+    trigger: Trigger
 
     def __call__(self, *args, **kwargs):
-        # gather context and schedule emails
-        from amy.autoemails.base_views import ActionManageMixin
+        raise NotImplementedError
 
-        emails = self.email_action.repeated_job_emails()
-        emails_to_send = []
-        for email in emails:
-            if len(emails_to_send) < settings.BULK_EMAIL_LIMIT:
-                emails_to_send.append(email)
+
+class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
+    """
+    Daily job that runs determining what emails to send out to people
+    to remind them when they should log in and update their profile.
+    """
+
+    LAST_LOGGED_IN_DELTA = timedelta(years=1)
+    EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
+
+    def __call__(self, *args, **kwargs):
+        from autoemails.base_views import ActionManageMixin
+
+        # Pull all people whose created_at anniversary is today
+        today = datetime.today()
+        people = Person.objects.filter(
+            is_active=True,
+            created_at__month=today.month,
+            created_at__day=today.day,
+        )
+        # emails = ("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
+        # Send the emails
+        triggers = Trigger.objects.filter(
+            active=True,
+            action="consent-required",
+        )
+        for person in people:
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=ProfileUpdateReminderAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects={
+                    "person_email": person.email,
+                },
+                object_=person,
+            )
+
+
+class ProfileArchivalWarningAction(BaseAction):
+    """"""
+
+
+class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
+    """"""
+
+    REMINDER_LIMIT = 3
+    EMAIL_ACTION_CLASS = ProfileArchivalWarningAction
+
+    def __call__(self, *args, **kwargs):
+        from autoemails.base_views import ActionManageMixin
+
+        # Pulls people who last logged in 3 years ago or more
+        today = datetime.today()
+        people = Person.objects.filter(
+            Q(is_active=True) & Q(last_login__year__gte=today.month)
+        )
+        triggers = Trigger.objects.filter(
+            active=True,
+            action="profile-archival-warning",
+        )
+        email_reminders = EmailReminder.objects.filter(
+            archived_at=None,
+            trigger__action="profile-archival-warning",
+        ).select_related("person")
+
+        people_ids = set([person.id for person in people])
+        reminders_to_archive = []
+        for reminder in email_reminders:
+            if reminder.person not in people_ids:
+                # if there is an email reminder that is not in people above
+                # archive the email reminder they have logged in
+                reminders_to_archive.append(reminder)
+            elif reminder.number_times_sent == self.REMINDER_LIMIT:
+                # Hit the reminder limit
+                # Archive the person and archive the reminder
+                reminder.person.archive()
+                reminders_to_archive.append(reminder)
             else:
+                # send email
                 jobs, rqjobs = ActionManageMixin.add(
-                    action_class=self.email_action.__class__,
+                    action_class=ProfileUpdateReminderAction,
                     logger=logger,
                     scheduler=scheduler,
-                    triggers=self.trigger,
+                    triggers=triggers,
                     context_objects={
-                        "person_email": emails_to_send,
+                        "person_email": reminder.person.email,
+                        "email_reminder": reminder,
                     },
+                    object_=reminder.person,
                 )
-                emails_to_send = []
+                # Update the reminder
+                # TODO this might have to happen only if the email is successfully sent
+                reminder.remind_again_date = today + timedelta(days=30)
+                reminder.number_times_sent += 1
+                reminder.save()
 
-    def __eq__(self, b):
-        try:
-            return (
-                self.trigger == b.trigger
-                and self.template == b.template
-                and self.context_objects == b.context_objects
-                and self.context == b.context
-                and compare_emails(self.email, b.email)
-                and self.get_launch_at() == b.get_launch_at()
-            )
-        except AttributeError:
-            return False
-
-    def get_launch_at(self, *args, **kwargs) -> Optional[timedelta]:
-        return self.launch_at
-
-
-class ProfileUpdateReminderRepeatedJob(BulkEmailJob):
-    pass
+        EmailReminder.objects.filter(
+            id__in=[r.id for r in reminders_to_archive]
+        ).update(archived_at=today)
