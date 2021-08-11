@@ -223,12 +223,20 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
             body=body.text,
         )
         msg.attach_alternative(body.html, "text/html")
+<<<<<<< HEAD
         # https://anymail.readthedocs.io/en/stable/sending/templates/#batch-sending-with-merge-data
         # https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data
         # When set the recipients in the "to" field each get an individual message
         msg.merge_data = merge_data
         if merge_data is not None:
             assert len(msg.to) <= settings.BULK_EMAIL_LIMIT
+=======
+
+        # https://anymail.readthedocs.io/en/stable/sending/templates/#batch-sending-with-merge-data
+        # https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data
+        # When set the recipients in the two column each get an individual message
+        msg.merge_data = merge_data
+>>>>>>> 6d39b340 (Saving place)
 
         return msg
 
@@ -393,7 +401,7 @@ class RQJob(CreatedUpdatedMixin, models.Model):
     interval = models.IntegerField(
         blank=True,
         null=True,
-        verbose_name="Time in seconds between function calls",
+        verbose_name="Interval in seconds",
     )
     result_ttl = models.IntegerField(
         blank=True,

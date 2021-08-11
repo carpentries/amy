@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 from __future__ import annotations
 
 from datetime import date, timedelta
 import logging
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Type
+=======
+from datetime import date, datetime, timedelta
+import logging
+from typing import Dict, List, Optional
+>>>>>>> 6d39b340 (Saving place)
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -198,6 +204,7 @@ class BaseAction:
 
         # build email
         self.logger.debug("Building email with provided context...")
+
         email = self.template.build_email(
             subject=self.subject(),
             sender=self.sender(),
@@ -242,6 +249,13 @@ class BaseAction:
         ) as e:
             self.logger.debug("Error occurred: {}", str(e))
             return False
+
+    def repeated_job_emails(self) -> Optional[List[str]]:
+        """
+        For repeated jobs, do a query for
+        the emails needed to send at this time.
+        """
+        return None
 
 
 class NewInstructorAction(BaseAction):
@@ -1243,20 +1257,11 @@ class ProfileUpdateReminderAction(BaseAction):
     This email should be sent on the anniversary of the date the user's
     profile was created.
 
-    How to use it:
-
-    >>> triggers = Trigger.objects.filter(active=True,
-                                          action='profile-update')
-    >>> for trigger in triggers:
-    ...     action = ProfileUpdateReminderAction(
-    ...         trigger=trigger,
-    ...         objects=dict(terms=terms),
-    ...     )
-    ...     launch_at = action.get_launch_at()
-    ...     job = scheduler.enqueue_in(launch_at, action)
+    This action is added during the RQ scheduler startup.
+    See amy.autoemails.management.commands.amy_rqscheduler
     """
 
-    launch_at = timedelta(hours=1)
+    launch_at = timedelta(seconds=1)  # TODO: CHANGE BACK
 
     def get_launch_at(self):
         return self.launch_at
@@ -1271,19 +1276,96 @@ class ProfileUpdateReminderAction(BaseAction):
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
+
         try:
             person_email = self.context_objects["person_email"]
             return person_email
         except (KeyError, AttributeError):
             return ""
 
-    @staticmethod
-    def check(term: Term):
-        """Conditions for creating a NewConsentRequiredAction."""
-        return (
-            term.archived_at is None
-            and term.required_type != Term.OPTIONAL_REQUIRE_TYPE
-        )
-
     def get_additional_context(self, objects, *args, **kwargs):
         return dict()
+
+    def repeated_job_emails(self) -> List[str]:
+        """
+        For repeated jobs, do a query for
+        the emails needed to send at this time.
+        """
+        today = datetime.today()
+        emails = Person.objects.filter(
+            is_active=True,
+            created_at__year=today.year,
+            created_at__month=today.month,
+            created_at__day=today.day,
+        ).values_list("email", flat=True)
+        emails = ("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
+        return emails
+
+
+class BulkEmailJob:
+    # Keeps the default timestamp for the job to run
+    launch_at = timedelta(seconds=1)  # TODO: CHANGE BACK
+    # Stores additional contextual data for the trigger/template
+    additional_context: Optional[Dict] = None
+
+    def __init__(
+        self,
+        trigger: Trigger,
+        email_action_class: BaseAction,
+        objects: Optional[Dict] = None,
+    ):
+        self.trigger = trigger
+        self.email_action = email_action_class(
+            trigger=self.trigger,
+            objects=objects,
+        )
+        # TODO: perhaps save in dict?
+        self.template = trigger.template
+        try:
+            self.context_objects = objects.copy()
+        except AttributeError:
+            self.context_objects = dict()
+
+        # prepare logger
+        self.logger = logger
+
+    def __call__(self, *args, **kwargs):
+        # gather context and schedule emails
+        from amy.autoemails.base_views import ActionManageMixin
+
+        emails = self.email_action.repeated_job_emails()
+        emails_to_send = []
+        for email in emails:
+            if len(emails_to_send) < settings.BULK_EMAIL_LIMIT:
+                emails_to_send.append(email)
+            else:
+                jobs, rqjobs = ActionManageMixin.add(
+                    action_class=self.email_action.__class__,
+                    logger=logger,
+                    scheduler=scheduler,
+                    triggers=self.trigger,
+                    context_objects={
+                        "person_email": emails_to_send,
+                    },
+                )
+                emails_to_send = []
+
+    def __eq__(self, b):
+        try:
+            return (
+                self.trigger == b.trigger
+                and self.template == b.template
+                and self.context_objects == b.context_objects
+                and self.context == b.context
+                and compare_emails(self.email, b.email)
+                and self.get_launch_at() == b.get_launch_at()
+            )
+        except AttributeError:
+            return False
+
+    def get_launch_at(self, *args, **kwargs) -> Optional[timedelta]:
+        return self.launch_at
+
+
+class ProfileUpdateReminderRepeatedJob(BulkEmailJob):
+    pass

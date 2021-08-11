@@ -68,6 +68,8 @@ class RQJobAdmin(admin.ModelAdmin):
         "mail_status",
         "event_slug",
         "recipients",
+        "interval",
+        "result_ttl",
     ]
     date_hierarchy = "created_at"
     readonly_fields = [
@@ -76,6 +78,8 @@ class RQJobAdmin(admin.ModelAdmin):
         "mail_status",
         "event_slug",
         "recipients",
+        "interval",
+        "result_ttl",
     ]
     actions = [
         "action_refresh_state",

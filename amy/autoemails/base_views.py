@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from django_rq.queues import DjangoScheduler
 from rq.exceptions import NoSuchJobError
 
-from autoemails.models import Trigger
+from autoemails.models import RQJob, Trigger
 
 from .job import Job
 from .utils import check_status, scheduled_execution_time
@@ -38,7 +38,7 @@ class ActionManageMixin:
         scheduler,
         triggers,
         context_objects,
-        object_,
+        object_=None,
         request=None,
     ):
         Action = action_class
@@ -75,17 +75,30 @@ class ActionManageMixin:
             )
             logger.debug("%s: job created [%r]", action_name, job)
 
-            # save job ID in the object
-            logger.debug("%s: saving job in [%r] object", action_name, object_)
-            rqj = object_.rq_jobs.create(
-                job_id=job.get_id(),
-                trigger=trigger,
-                scheduled_execution=scheduled_at,
-                status=check_status(job),
-                mail_status="",
-                event_slug=action.event_slug(),
-                recipients=action.all_recipients(),
-            )
+            if object_:
+                # save job ID in the object
+                logger.debug("%s: saving job in [%r] object", action_name, object_)
+                rqj = object_.rq_jobs.create(
+                    job_id=job.get_id(),
+                    trigger=trigger,
+                    scheduled_execution=scheduled_at,
+                    status=check_status(job),
+                    mail_status="",
+                    event_slug=action.event_slug(),
+                    recipients=action.all_recipients(),
+                )
+            else:
+                # save directly in the table
+                logger.debug("%s: saving job in job table", action_name)
+                rqj = RQJob.objects.create(
+                    job_id=job.get_id(),
+                    trigger=trigger,
+                    scheduled_execution=scheduled_at,
+                    status=check_status(job),
+                    mail_status="",
+                    event_slug=action.event_slug(),
+                    recipients=action.all_recipients(),
+                )
 
             created_jobs.append(job)
             created_rqjobs.append(rqj)

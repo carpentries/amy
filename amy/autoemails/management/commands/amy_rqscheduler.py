@@ -5,7 +5,7 @@ import django_rq
 from django_rq.management.commands import rqscheduler
 
 from amy.autoemails.utils import check_status, scheduled_execution_time
-from autoemails.actions import ProfileUpdateReminderAction
+from autoemails.actions import BulkEmailJob, ProfileUpdateReminderAction
 from autoemails.models import RQJob, Trigger
 
 scheduler = django_rq.get_scheduler()
@@ -16,7 +16,7 @@ DAY_IN_SECONDS = 86400
 
 def clear_scheduled_jobs():
     # Delete any existing repeated jobs in the scheduler
-    repated_job_classes = REPEATED_JOBS.values()
+    repated_job_classes = list(REPEATED_JOBS.values()) + [BulkEmailJob]
     for job in scheduler.get_jobs():
         if job.meta["action"].__class__ in repated_job_classes:
             logger.debug("Deleting scheduled job %s", job)
@@ -25,8 +25,9 @@ def clear_scheduled_jobs():
 
 def schedule_repeating_job(trigger, action_class, _scheduler=None):
     action_name = action_class.__name__
-    action = action_class(
+    action = BulkEmailJob(
         trigger=trigger,
+        email_action_class=action_class,
         objects=dict(),
     )
     launch_at = action.get_launch_at()
@@ -36,6 +37,7 @@ def schedule_repeating_job(trigger, action_class, _scheduler=None):
         launch_at=launch_at,
         email=None,
         context=None,
+        email_action_class=action_class,
     )
     job = _scheduler.schedule(
         scheduled_time=datetime.utcnow()
@@ -49,10 +51,13 @@ def schedule_repeating_job(trigger, action_class, _scheduler=None):
     scheduled_at = scheduled_execution_time(
         job.get_id(), scheduler=scheduler, naive=False
     )
-    logger.debug("%s: job created [%r]", action_name, job)
+    logger.debug("BulkEmailJob[%s]: job created [%r]", action_name, job)
 
     # save job ID in the object
-    logger.debug("%s: saving job in jobs table", action_name)
+    logger.debug(
+        "BulkEmailJob[%s]: saving job in jobs table",
+        action_name,
+    )
     rqj = RQJob.objects.create(
         job_id=job.get_id(),
         trigger=trigger,
@@ -61,7 +66,7 @@ def schedule_repeating_job(trigger, action_class, _scheduler=None):
         mail_status="",
         interval=job.meta.get("interval"),
         result_ttl=job.result_ttl,
-        recipients=action.all_recipients(),
+        # recipients=action.all_recipients(),
     )
     return rqj
 
