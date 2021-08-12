@@ -427,11 +427,13 @@ class EmailReminder(CreatedUpdatedArchivedMixin, models.Model):
         Person,
         blank=False,
         null=False,
+        on_delete=models.CASCADE,
     )
     trigger = models.ForeignKey(
         Trigger,
         blank=False,
         null=False,
+        on_delete=models.PROTECT,
     )
     number_times_sent = models.IntegerField(
         blank=False,

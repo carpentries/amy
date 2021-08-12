@@ -673,6 +673,7 @@ class Person(
     DataPrivacyAgreementMixin,
     CreatedUpdatedArchivedMixin,
     GenderMixin,
+    RQJobsMixin,
     SecondaryEmailMixin,
 ):
     """Represent a single person."""

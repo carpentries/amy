@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple, Type
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -1271,55 +1271,51 @@ class ProfileUpdateReminderAction(BaseAction):
     def get_launch_at(self):
         return self.launch_at
 
-    def recipients(self) -> Optional[str]:
+    def recipients(self) -> Optional[Tuple[str]]:
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
-            return self.context["all_emails"]
-        except (AttributeError, KeyError):
+            person_email = self.context_objects["person_email"]
+            return (person_email,)
+        except (KeyError, AttributeError):
             return None
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
+        recipients = self.recipients()
+        if recipients is not None:
+            return ", ".join(recipients)
+        return ""
 
-        try:
-            person_email = self.context_objects["person_email"]
-            return person_email
-        except (KeyError, AttributeError):
-            return ""
-
-    def get_additional_context(self, objects, *args, **kwargs):
-        return dict()
-
-    def repeated_job_emails(self) -> List[str]:
-        """
-        For repeated jobs, do a query for
-        the emails needed to send at this time.
-        """
-        today = datetime.today()
-        emails = Person.objects.filter(
-            is_active=True,
-            created_at__year=today.year,
-            created_at__month=today.month,
-            created_at__day=today.day,
-        ).values_list("email", flat=True)
-        emails = ("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
-        return emails
+    def reply_to(self) -> Optional[Tuple[str]]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
 
 
-@dataclass
 class BaseRepeatedAction:
     """
     Base class for repeated jobs in the Redis.
     """
 
+    trigger: Trigger
+    launch_at: Optional[timedelta] = None
     EMAIL_ACTION_CLASS: BaseAction
     INTERVAL: int = DAY_IN_SECONDS  # time between repeats
-    REPEATED: Optional[int] = None  # number of times the job is repeated
-    trigger: Trigger
+    REPEAT: Optional[int] = None  # number of times the job is repeated
+
+    def __init__(self, trigger: Trigger):
+        super().__init__()
+        self.trigger = trigger
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
+
+    def get_launch_at(self, *args, **kwargs) -> Optional[timedelta]:
+        return self.launch_at
+
+    @property
+    def template(self):
+        return self.trigger.template
 
 
 class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
@@ -1328,11 +1324,14 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     to remind them when they should log in and update their profile.
     """
 
-    LAST_LOGGED_IN_DELTA = timedelta(years=1)
+    launch_at = timedelta(seconds=1)
+    LAST_LOGGED_IN_DELTA = timedelta(days=365)
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
 
     def __call__(self, *args, **kwargs):
         from autoemails.base_views import ActionManageMixin
+
+        logger.debug("HERE!!!")
 
         # Pull all people whose created_at anniversary is today
         today = datetime.today()
@@ -1341,12 +1340,16 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
             created_at__month=today.month,
             created_at__day=today.day,
         )
-        # emails = ("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
+        people = Person.objects.filter(
+            email__in=("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
+        )
+        logger.debug("PEOEPLE %s", people)
         # Send the emails
         triggers = Trigger.objects.filter(
             active=True,
-            action="consent-required",
+            action="profile-update",
         )
+        logger.debug("TRIGGER %s", triggers)
         for person in people:
             jobs, rqjobs = ActionManageMixin.add(
                 action_class=ProfileUpdateReminderAction,
@@ -1367,6 +1370,7 @@ class ProfileArchivalWarningAction(BaseAction):
 class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
     """"""
 
+    launch_at = timedelta(seconds=1)
     REMINDER_LIMIT = 3
     EMAIL_ACTION_CLASS = ProfileArchivalWarningAction
 
