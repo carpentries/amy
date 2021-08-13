@@ -1729,24 +1729,6 @@ class Task(RQJobsMixin, models.Model):
                 "Seat (open / membership) can be assigned only to a workshop learner."
             )
 
-        if (
-            self.seat_membership
-            and self.seat_public
-            and not self.seat_membership.public_instructor_training_seats_remaining
-        ):
-            errors["seat_public"] = ValidationError(
-                "This membership doesn't have any remaining public seats."
-            )
-
-        if (
-            self.seat_membership
-            and not self.seat_public
-            and not self.seat_membership.inhouse_instructor_training_seats_remaining
-        ):
-            errors["seat_public"] = ValidationError(
-                "This membership doesn't have any remaining in-house seats."
-            )
-
         if errors:
             raise ValidationError(errors)
 

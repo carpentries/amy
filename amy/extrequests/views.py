@@ -548,6 +548,7 @@ def all_trainingrequests(request):
             membership = match_form.cleaned_data["seat_membership"]
             seat_public = match_form.cleaned_data["seat_public"]
             open_seat = match_form.cleaned_data["seat_open_training"]
+            role = Role.objects.get(name="learner")
 
             # Perform bulk match
             for r in match_form.cleaned_data["requests"]:
@@ -559,7 +560,7 @@ def all_trainingrequests(request):
                 Task.objects.get_or_create(
                     event=event,
                     person=r.person,
-                    role=Role.objects.get(name="learner"),
+                    role=role,
                     defaults=dict(
                         seat_membership=membership,
                         seat_public=seat_public,
