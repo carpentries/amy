@@ -18,7 +18,7 @@ def progress_label(progress):
         switch = {
             "n": "warning",
             "f": "danger",
-            "a": "warning",
+            "a": "info",
             "p": "success",
         }
         additional_label = switch[progress.state]
