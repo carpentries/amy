@@ -2906,12 +2906,14 @@ class WorkshopRequest(
         blank=True,
         null=True,
         verbose_name="Preferred dates",
-        help_text="Our workshops typically run two full days. Please select "
-        "your preferred first day for the workshop. If you do not "
-        "have exact dates or are interested in an alternative "
-        "schedule, please indicate so below. Because we need to "
-        "coordinate with instructors, a minimum of 2-3 months lead "
-        "time is required for workshop planning.",
+        help_text="Please select your preferred first day for the workshop. If you do "
+        "not have exact dates or are interested in an alternative schedule, please "
+        "indicate so below. Because we need to coordinate with instructors, a minimum "
+        "of 2-3 months lead time is required for workshop planning.<br>The preferred "
+        "dates are not a guarantee. We do our best to schedule your workshop for the "
+        "dates that you have requested, however, a high volume of workshops on a given "
+        "date may prevent us from fulfilling your request. Please prepare alternative "
+        "dates in the event that we can not accommodate your request.",
     )
     other_preferred_dates = models.CharField(
         max_length=STR_LONGEST,
