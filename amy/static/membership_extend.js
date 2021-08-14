@@ -6,11 +6,10 @@ window.addEventListener("load", (e) => {
 
     const one_day = 1000 * 60 * 60 * 24;
 
-    if (!!extension_input) {
-        let new_agreement_end_date = new Date();
-        extension_input.addEventListener("change", ({target}) => {
-            new_agreement_end_date.setTime(agreement_end_date.getTime() + target.value * one_day);
-            new_agreement_end_input.value = new_agreement_end_date.yyyymmdd();
+    if (!!new_agreement_end_input) {
+        $(new_agreement_end_input).on("changeDate", (event) => {
+            const new_agreement_end_date = new Date(event.target.value);
+            extension_input.value = (new_agreement_end_date - agreement_end_date) / one_day;
         });
     }
 });
