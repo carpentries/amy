@@ -225,7 +225,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         msg.attach_alternative(body.html, "text/html")
         # https://anymail.readthedocs.io/en/stable/sending/templates/#batch-sending-with-merge-data
         # https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data
-        # When set the recipients in the two column each get an individual message
+        # When set the recipients in the "to" field each get an individual message
         msg.merge_data = merge_data
         if merge_data is not None:
             assert len(msg.to) <= settings.BULK_EMAIL_LIMIT

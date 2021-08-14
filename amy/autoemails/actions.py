@@ -129,7 +129,12 @@ class BaseAction:
 
     def get_merge_data(self) -> Optional[Dict]:
         """If available return a dict containing per user customizations
-        See https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data"""  # noqa
+        See https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data # noqa
+
+        Note Returning an empty dictionary is necessary if
+        you want to send an individual email to each recipient
+        but have no per-user configuration
+        """
         return None
 
     def _context(self, additional_context: Optional[Dict] = None) -> Dict:
