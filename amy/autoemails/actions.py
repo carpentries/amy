@@ -1211,10 +1211,10 @@ class NewConsentRequiredAction(BaseAction):
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
-        try:
-            return ", ".join(self.recipients())
-        except (KeyError, AttributeError):
+        recipients = self.recipients()
+        if recipients is None:
             return ""
+        return ", ".join(recipients)
 
     @staticmethod
     def check(term: Term):
