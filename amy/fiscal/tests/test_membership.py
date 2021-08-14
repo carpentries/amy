@@ -794,6 +794,67 @@ class TestMembershipForms(TestBase):
             8,
         )
 
+    def test_membership_edit_extensions(self):
+        for increment in (10, -5):  # +10 days, -5 days per extension
+            with self.subTest(increment=increment):
+                # Arrange
+                agreement_end = date(2022, 7, 31)
+                extensions = [10, 20, 30]
+                membership = Membership.objects.create(
+                    name="Test Membership 1",
+                    consortium=False,
+                    variant="partner",
+                    agreement_start=date(2021, 8, 1),
+                    agreement_end=agreement_end,
+                    extensions=extensions,
+                    contribution_type="financial",
+                    workshops_without_admin_fee_per_agreement=10,
+                    public_instructor_training_seats=10,
+                    inhouse_instructor_training_seats=10,
+                )
+                data = {
+                    "name": membership.name,
+                    "public_status": membership.public_status,
+                    "variant": membership.variant,
+                    "agreement_start": membership.agreement_start,
+                    "agreement_end": membership.agreement_end,
+                    "extensions_0": extensions[0] + increment,
+                    "extensions_1": extensions[1] + increment,
+                    "extensions_2": extensions[2] + increment,
+                    "contribution_type": membership.contribution_type,
+                    "workshops_without_admin_fee_per_agreement": membership.workshops_without_admin_fee_per_agreement,  # noqa
+                    "public_instructor_training_seats": membership.public_instructor_training_seats,  # noqa
+                    "additional_public_instructor_training_seats": membership.additional_public_instructor_training_seats,  # noqa
+                    "inhouse_instructor_training_seats": membership.inhouse_instructor_training_seats,  # noqa
+                    "additional_inhouse_instructor_training_seats": membership.additional_inhouse_instructor_training_seats,  # noqa
+                }
+                str_ext = ", ".join(str(ext + increment) for ext in extensions)
+                new_agreement_end = agreement_end + timedelta(days=3 * increment)
+                msg = (
+                    f"Extension days changed to following: {str_ext} days. New "
+                    f"agreement end date: {new_agreement_end}."
+                )
+
+                # Act
+                result = self.client.post(
+                    reverse("membership_edit", args=[membership.id]),
+                    data=data,
+                    follow=False,
+                )
+
+                # Assert
+                self.assertEqual(result.status_code, 302)  # form saved
+                membership.refresh_from_db()
+                self.assertEqual(
+                    membership.extensions,
+                    [extension + increment for extension in extensions],
+                )
+                self.assertEqual(membership.agreement_end, new_agreement_end)
+
+                # check if comment was added
+                comment = CommentModel.objects.for_model(membership).last()
+                self.assertEqual(comment.comment, msg)
+
 
 class TestNewMembershipWorkflow(TestBase):
     def setUp(self):

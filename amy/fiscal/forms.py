@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
+from fiscal.fields import FlexibleSplitArrayField
 from fiscal.models import MembershipTask
 
 # this is used instead of Django Autocomplete Light widgets
@@ -92,6 +93,14 @@ class OrganizationCreateForm(OrganizationForm):
 
 class MembershipForm(forms.ModelForm):
     helper = BootstrapHelper(add_cancel_button=False)
+    extensions = FlexibleSplitArrayField(
+        forms.IntegerField(),
+        size=0,
+        help_text="Extensions are available for edit only if the membership has "
+        "been extended.<br><b>Warning:</b> changing these will change the agreement "
+        "end date.",
+        required=False,
+    )
 
     class Meta:
         model = Membership
@@ -102,6 +111,7 @@ class MembershipForm(forms.ModelForm):
             "variant",
             "agreement_start",
             "agreement_end",
+            "extensions",
             "contribution_type",
             "registration_code",
             "agreement_link",
@@ -123,6 +133,11 @@ class MembershipForm(forms.ModelForm):
         self, *args, show_rolled_over=False, show_rolled_from_previous=False, **kwargs
     ):
         super().__init__(*args, **kwargs)
+        instance = kwargs.get("instance")
+
+        if instance and "extensions" in self.fields:
+            # Recalculate number of subwidgets for each of the extensions.
+            self.fields["extensions"].change_size(len(instance.extensions))
 
         # When editing membership, allow to edit rolled_over or rolled_from_previous
         # values when membership was rolled over or rolled from other membership.
@@ -205,6 +220,7 @@ class MembershipCreateForm(MembershipForm):
     class Meta(MembershipForm.Meta):
         fields = MembershipForm.Meta.fields.copy()
         fields.insert(0, "main_organization")
+        fields.remove("extensions")
         fields.append("comment")
 
     class Media:

@@ -99,6 +99,7 @@ DJANGO_APPS = [
     # for TemplatesSetting form template renderer
     # https://docs.djangoproject.com/en/dev/ref/forms/renderers/
     "django.forms",
+    "django.contrib.postgres",
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
