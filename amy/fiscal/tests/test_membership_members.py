@@ -1,9 +1,14 @@
+from datetime import date
+
 from django.db import IntegrityError
 from django.urls import reverse
+import django_comments
 
 from fiscal.forms import MemberForm
 from workshops.models import Member, MemberRole, Membership
 from workshops.tests.base import TestBase
+
+CommentModel = django_comments.get_model()
 
 
 class MembershipTestMixin:
@@ -309,6 +314,51 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             response, reverse("membership_details", args=[self.membership.pk])
         )
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
+
+    def test_mix_adding_removing_members_leaves_comment(self):
+        """Ensure a mixed-content formset for consortium membership members leaves
+        correct message in the comments."""
+        self.setUpMembership(consortium=True)
+        m1 = Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        data = {
+            "form-TOTAL_FORMS": 2,
+            "form-INITIAL_FORMS": 1,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-membership": self.membership.pk,
+            "form-0-organization": m1.organization.pk,
+            "form-0-role": m1.role.pk,
+            "form-0-id": m1.pk,
+            "form-0-EDITABLE": True,
+            "form-0-DELETE": "on",  # marks org_alpha member for removal
+            "form-1-membership": self.membership.pk,
+            "form-1-organization": self.org_beta.pk,
+            "form-1-role": self.member_role.pk,
+            "form-1-id": "",  # no ID, so a new member for org_beta will be created
+            "form-1-EDITABLE": True,
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response, reverse("membership_details", args=[self.membership.pk])
+        )
+        comment = CommentModel.objects.first()
+        self.assertEqual(
+            comment.comment,
+            f"""Changed members on {date.today():%Y-%m-%d}:
+
+* Added Beta Organization <beta.com>
+* Removed Alpha Organization <alpha.edu>""",
+        )
 
 
 class TestMemberUnique(MembershipTestMixin, TestBase):
