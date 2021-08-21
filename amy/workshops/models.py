@@ -1592,8 +1592,8 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             # enforce location data for 'Online' country
             self.venue = "Internet"
             self.address = "Internet"
-            self.latitude = -48.876667
-            self.longitude = -123.393333
+            self.latitude = None
+            self.longitude = None
 
         super().save(*args, **kwargs)
 
