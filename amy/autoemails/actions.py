@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 from datetime import date, timedelta
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, List, Mapping, Optional, Type
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
+from django.db.models.query import QuerySet
+from django.http.request import HttpRequest
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 import django_rq
 
+from autoemails.base_views import ActionManageMixin
 from autoemails.models import EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
@@ -16,6 +21,41 @@ from workshops.models import Event, Person, Task
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
+
+
+def send_bulk_email(
+    request: HttpRequest,
+    action_class: Type[BaseAction],
+    triggers: QuerySet[Trigger],
+    emails: List[str],
+    additional_context_objects: Mapping[Any, Any],
+    object_: Any,
+):
+    emails_to_send = [
+        emails[i : i + settings.BULK_EMAIL_LIMIT]  # noqa
+        for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)
+    ]
+    for emails in emails_to_send:
+        jobs, rqjobs = ActionManageMixin.add(
+            action_class=action_class,
+            logger=logger,
+            scheduler=scheduler,
+            triggers=triggers,
+            context_objects=dict(
+                person_emails=emails,
+                **additional_context_objects,
+            ),
+            object_=object_,
+        )
+        if triggers and jobs:
+            ActionManageMixin.bulk_schedule_message(
+                request=request,
+                num_emails=len(emails),
+                trigger=triggers[0],
+                job=jobs[0],
+                scheduler=scheduler,
+            )
+    return jobs, rqjobs
 
 
 class BaseAction:
@@ -1171,7 +1211,7 @@ class NewConsentRequiredAction(BaseAction):
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
         try:
-            person_email = self.context_objects["person_email"]
+            person_email = self.context_objects["person_emails"]
             return person_email
         except (KeyError, AttributeError):
             return ""

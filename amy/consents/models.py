@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -222,7 +222,7 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         cls.objects.bulk_create(new_consents)
 
     @classmethod
-    def reconsent(cls, consent: Consent, term_option: TermOption) -> Consent:
+    def reconsent(cls, consent: Consent, term_option: Optional[TermOption]) -> Consent:
         consent.archive()
         return Consent.objects.create(
             term_id=term_option.term_id,
