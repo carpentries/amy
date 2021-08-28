@@ -421,6 +421,10 @@ if not DEBUG and (
 # -----------------------------------------------------------------------------
 ADMIN_NOTIFICATION_CRITERIA_DEFAULT = "workshops@carpentries.org"
 
+# Number of emails that can be sent at one time using
+# The Email provider's (Mailgun) bulk email functionality
+BULK_EMAIL_LIMIT = 1000
+
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL.
