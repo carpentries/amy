@@ -1204,8 +1204,8 @@ class NewConsentRequiredAction(BaseAction):
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
-            person_email = self.context_objects["person_emails"]
-            return (person_email,)
+            person_emails = self.context_objects["person_emails"]
+            return person_emails
         except (KeyError, AttributeError):
             return None
 
