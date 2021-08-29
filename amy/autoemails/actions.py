@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 import logging
-from typing import Any, Dict, List, Mapping, Optional, Type
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Type
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -55,7 +55,6 @@ def send_bulk_email(
                 job=jobs[0],
                 scheduler=scheduler,
             )
-    return jobs, rqjobs
 
 
 class BaseAction:
@@ -145,9 +144,9 @@ class BaseAction:
         Action."""
         return None
 
-    def reply_to(self) -> str:
+    def reply_to(self) -> Optional[Tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
-        return ""
+        return None
 
     def email_text(self) -> str:
         """Overwrite in order to set own email text body from descending
@@ -1204,17 +1203,17 @@ class NewConsentRequiredAction(BaseAction):
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
-            return self.context["all_emails"]
-        except (AttributeError, KeyError):
+            person_emails = self.context_objects["person_emails"]
+            return person_emails
+        except (KeyError, AttributeError):
             return None
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
-        try:
-            person_email = self.context_objects["person_emails"]
-            return person_email
-        except (KeyError, AttributeError):
+        recipients = self.recipients()
+        if recipients is None:
             return ""
+        return ", ".join(recipients)
 
     @staticmethod
     def check(term: Term):
@@ -1232,3 +1231,7 @@ class NewConsentRequiredAction(BaseAction):
         # if you want to send an individual email to each recipient
         # but have no per-user configuration
         return {}
+
+    def reply_to(self) -> Optional[Tuple[str]]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
