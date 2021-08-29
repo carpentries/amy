@@ -55,7 +55,6 @@ def send_bulk_email(
                 job=jobs[0],
                 scheduler=scheduler,
             )
-    return jobs, rqjobs
 
 
 class BaseAction:
