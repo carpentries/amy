@@ -12,7 +12,7 @@ class TestNewConsentRequiredAction(TestCase):
         self.user_email = "admin@admin.com"
         self.action = NewConsentRequiredAction(
             trigger=Trigger(action="test-action", template=EmailTemplate()),
-            objects={"person_email": self.user_email},
+            objects={"person_emails": (self.user_email,)},
         )
 
     def test_launched_at(self):
