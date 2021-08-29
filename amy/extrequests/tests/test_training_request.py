@@ -4,7 +4,6 @@ from urllib.parse import urlencode
 from django.contrib.messages import WARNING
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from django.test import RequestFactory
@@ -791,6 +790,7 @@ class TestTrainingRequestMerging(TestBase):
         self._setUpRoles()
         self._setUpTags()
         self._setUpUsersAndLogin()
+        self._setUpSites()
 
         self.first_req = create_training_request(state="d", person=self.spiderman)
         self.first_req.secondary_email = "notused@example.org"
@@ -804,7 +804,7 @@ class TestTrainingRequestMerging(TestBase):
             user=self.spiderman,
             comment="Comment from admin on first_req",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
         # comments regarding second request
         self.cb = Comment.objects.create(
@@ -812,7 +812,7 @@ class TestTrainingRequestMerging(TestBase):
             user=self.ironman,
             comment="Comment from admin on second_req",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
 
         # assign roles (previous involvement with The Carpentries) and

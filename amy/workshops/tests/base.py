@@ -72,7 +72,6 @@ class TestBase(
     def setUp(self):
         """Create standard objects."""
 
-        # self.clear_sites_cache()
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
@@ -80,20 +79,23 @@ class TestBase(
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
+        self._setUpSites()
 
-        self._setupSites()
+    def _setUpSites(self):
+        """Sometimes (depending on the test execution order) tests, using
+        `Site.objects.get_current()`, would throw error:
 
-    def clear_sites_cache(self):
-        # we need to clear Sites' cache, because after post_migration signal,
-        # there's some junk in the cache that prevents from adding comments
-        # (the site in CACHE is not a real Site)
-        Site.objects.clear_cache()
+          ValueError: Cannot assign "<Site: Site object (2)>": "Comment.site" must be
+          a "Site" instance.
 
-    def _setupSites(self):
+        Possibly some junk site was residing in the cache. Since the test execution
+        order may not be a deterministic one (especially when running tests in parallel)
+        we need to clear the cache whenever Sites framework is used.
+        """
         from django.conf import settings
 
         Site.objects.clear_cache()
-        Site.objects.get_or_create(
+        self.current_site, _ = Site.objects.get_or_create(
             pk=settings.SITE_ID,
             defaults=dict(domain="amy.carpentries.org", name="AMY server"),
         )
