@@ -12,7 +12,6 @@ scheduler = django_rq.get_scheduler()
 logger = logging.getLogger("amy.signals")
 REPEATED_JOBS_BY_TRIGGER = {
     "profile-update": UpdateProfileReminderRepeatedAction,
-    # "profile-archival-warning": ProfileArchivalWarningRepeatedAction,
 }
 DAY_IN_SECONDS = 86400
 

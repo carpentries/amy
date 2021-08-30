@@ -9,12 +9,7 @@ from django.template import Template, TemplateSyntaxError, engines
 from django.urls import reverse
 import markdown
 
-from workshops.mixins import (
-    ActiveMixin,
-    CreatedUpdatedArchivedMixin,
-    CreatedUpdatedMixin,
-)
-from workshops.models import Person
+from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
 
 EmailBody = namedtuple("EmailBody", ["text", "html"])
 
@@ -228,7 +223,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
             body=body.text,
         )
         msg.attach_alternative(body.html, "text/html")
-        
+
         # https://anymail.readthedocs.io/en/stable/sending/templates/#batch-sending-with-merge-data
         # https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data
         # When set the recipients in the "to" field each get an individual message
@@ -406,6 +401,14 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         null=True,
         verbose_name="Result TTL",
     )
+    action_class = models.CharField(
+        max_length=100,
+        blank=True,
+        null=False,
+        default="",
+        verbose_name="Action Class",
+        help_text="Action class that will be executed.",
+    )
 
     def __str__(self):
         return "<RQJob [{}]>".format(self.job_id)
@@ -419,23 +422,3 @@ class RQJob(CreatedUpdatedMixin, models.Model):
 
         # add index on job_id for faster retrieval
         indexes = [models.Index(fields=["job_id"])]
-
-
-class EmailReminder(CreatedUpdatedArchivedMixin, models.Model):
-    remind_again_date = models.DateTimeField()
-    person = models.ForeignKey(
-        Person,
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
-    )
-    trigger = models.ForeignKey(
-        Trigger,
-        blank=False,
-        null=False,
-        on_delete=models.PROTECT,
-    )
-    number_times_sent = models.IntegerField(
-        blank=False,
-        null=False,
-    )

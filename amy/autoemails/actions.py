@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
-import logging
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Type
-
-from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -19,11 +14,6 @@ import django_rq
 
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import EmailTemplate, Trigger
-from django.db.models import Q
-from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
-import django_rq
-
-from autoemails.models import EmailReminder, EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
 from workshops.fields import TAG_SEPARATOR
@@ -1268,8 +1258,8 @@ class ProfileUpdateReminderAction(BaseAction):
 
     launch_at = timedelta(seconds=1)  # TODO: CHANGE BACK
 
-    def get_launch_at(self):
-        return self.launch_at
+    # def get_launch_at(self):
+    #     return self.launch_at
 
     def recipients(self) -> Optional[Tuple[str]]:
         """Assuming self.context is ready, overwrite email's recipients
@@ -1329,30 +1319,15 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
 
     def __call__(self, *args, **kwargs):
-        from autoemails.base_views import ActionManageMixin
-
-        logger.debug("HERE!!!")
-
-        # Pull all people whose created_at anniversary is today
-        today = datetime.today()
-        people = Person.objects.filter(
-            is_active=True,
-            created_at__month=today.month,
-            created_at__day=today.day,
-        )
-        people = Person.objects.filter(
-            email__in=("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
-        )
-        logger.debug("PEOEPLE %s", people)
-        # Send the emails
+        people = self.get_people_with_anniversary()
         triggers = Trigger.objects.filter(
             active=True,
             action="profile-update",
         )
         logger.debug("TRIGGER %s", triggers)
         for person in people:
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=ProfileUpdateReminderAction,
+            ActionManageMixin.add(
+                action_class=self.EMAIL_ACTION_CLASS,
                 logger=logger,
                 scheduler=scheduler,
                 triggers=triggers,
@@ -1362,66 +1337,18 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
                 object_=person,
             )
 
-
-class ProfileArchivalWarningAction(BaseAction):
-    """"""
-
-
-class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
-    """"""
-
-    launch_at = timedelta(seconds=1)
-    REMINDER_LIMIT = 3
-    EMAIL_ACTION_CLASS = ProfileArchivalWarningAction
-
-    def __call__(self, *args, **kwargs):
-        from autoemails.base_views import ActionManageMixin
-
-        # Pulls people who last logged in 3 years ago or more
+    @staticmethod
+    def get_people_with_anniversary() -> Iterable[Person]:
+        """
+        Pull all people whose created_at anniversary is today
+        """
         today = datetime.today()
         people = Person.objects.filter(
-            Q(is_active=True) & Q(last_login__year__gte=today.month)
+            is_active=True,
+            created_at__month=today.month,
+            created_at__day=today.day,
         )
-        triggers = Trigger.objects.filter(
-            active=True,
-            action="profile-archival-warning",
-        )
-        email_reminders = EmailReminder.objects.filter(
-            archived_at=None,
-            trigger__action="profile-archival-warning",
-        ).select_related("person")
-
-        people_ids = set([person.id for person in people])
-        reminders_to_archive = []
-        for reminder in email_reminders:
-            if reminder.person not in people_ids:
-                # if there is an email reminder that is not in people above
-                # archive the email reminder they have logged in
-                reminders_to_archive.append(reminder)
-            elif reminder.number_times_sent == self.REMINDER_LIMIT:
-                # Hit the reminder limit
-                # Archive the person and archive the reminder
-                reminder.person.archive()
-                reminders_to_archive.append(reminder)
-            else:
-                # send email
-                jobs, rqjobs = ActionManageMixin.add(
-                    action_class=ProfileUpdateReminderAction,
-                    logger=logger,
-                    scheduler=scheduler,
-                    triggers=triggers,
-                    context_objects={
-                        "person_email": reminder.person.email,
-                        "email_reminder": reminder,
-                    },
-                    object_=reminder.person,
-                )
-                # Update the reminder
-                # TODO this might have to happen only if the email is successfully sent
-                reminder.remind_again_date = today + timedelta(days=30)
-                reminder.number_times_sent += 1
-                reminder.save()
-
-        EmailReminder.objects.filter(
-            id__in=[r.id for r in reminders_to_archive]
-        ).update(archived_at=today)
+        # people = Person.objects.filter(
+        #     email__in=("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
+        # )
+        return people
