@@ -81,7 +81,7 @@ def register_scheduled_jobs():
 
 class Command(BaseCommand):
     """
-    Subclassing rqsceduler so that the desired jobs can be created.
+    Deletes then Re-creates repeated jobs.
     """
 
     def handle(self, *args, **kwargs):
