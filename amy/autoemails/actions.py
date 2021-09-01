@@ -1253,7 +1253,7 @@ class ProfileUpdateReminderAction(BaseAction):
     profile was created.
 
     This action is added during the RQ scheduler startup.
-    See amy.autoemails.management.commands.amy_rqscheduler
+    See amy.autoemails.management.commands.repeated_jobs
     """
 
     launch_at = timedelta(hours=1)
