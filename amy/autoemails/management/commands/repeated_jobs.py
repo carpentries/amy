@@ -5,6 +5,12 @@ from django.core.management.base import BaseCommand
 import django_rq
 
 from autoemails.actions import BaseRepeatedAction, UpdateProfileReminderRepeatedAction
+from autoemails.utils import check_status, scheduled_execution_time
+from autoemails.actions import (
+    BaseRepeatedAction,
+    ProfileArchivalWarningRepeatedAction,
+    UpdateProfileReminderRepeatedAction,
+)
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 
@@ -12,6 +18,7 @@ scheduler = django_rq.get_scheduler()
 logger = logging.getLogger("amy.signals")
 REPEATED_JOBS_BY_TRIGGER = {
     "profile-update": UpdateProfileReminderRepeatedAction,
+    "profile-archival-warning": ProfileArchivalWarningRepeatedAction,
 }
 DAY_IN_SECONDS = 86400
 

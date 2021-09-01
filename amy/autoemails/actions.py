@@ -7,13 +7,14 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.http.request import HttpRequest
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 import django_rq
 
 from autoemails.base_views import ActionManageMixin
-from autoemails.models import EmailTemplate, Trigger
+from autoemails.models import EmailReminder, EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
 from workshops.fields import TAG_SEPARATOR
@@ -1341,3 +1342,133 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
             created_at__day=today.day,
         )
         return people
+
+
+class ProfileArchivalWarningAction(BaseAction):
+    """
+    Action for asking users to login or their profile will be archived.
+    This email should be sent if the user is active and has not logged in
+    in the last 3 years.
+
+    This action is added during the RQ scheduler startup.
+    See amy.autoemails.management.commands.repeated_jobs
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def recipients(self) -> Optional[Tuple[str]]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            person_email = self.context_objects["person_email"]
+            return (person_email,)
+        except (KeyError, AttributeError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        recipients = self.recipients()
+        if recipients is not None:
+            return ", ".join(recipients)
+        return ""
+
+    def reply_to(self) -> Optional[Tuple[str]]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
+
+
+class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
+    """"""
+
+    launch_at = timedelta(hours=1)
+    REMINDER_LIMIT = 3
+    EMAIL_ACTION_CLASS = ProfileArchivalWarningAction
+
+    def __call__(self, *args, **kwargs):
+        # Pulls people who last logged in 3 years ago or more
+        today = datetime.today()
+        people = Person.objects.filter(
+            Q(is_active=True)
+            & Q(last_login__year__gte=today.year - 3)
+            & Q(last_login__month__gte=today.month)
+            & Q(last_login__month__gte=today.day)
+        )
+        triggers = Trigger.objects.filter(
+            active=True,
+            action="profile-archival-warning",
+        )
+        email_reminders = EmailReminder.objects.filter(
+            archived_at=None,
+            trigger__action="profile-archival-warning",
+        ).select_related("person")
+        self.handle_existing_email_reminders(triggers, email_reminders, people)
+        self.create_new_email_reminders(triggers[0], people)
+
+    def handle_existing_email_reminders(
+        self,
+        triggers: Iterable[Trigger],
+        email_reminders: Iterable[EmailReminder],
+        people: Iterable[Person],
+    ) -> None:
+        people_ids = set([person.id for person in people])
+        reminders_to_archive = []
+        today = datetime.now()
+        for reminder in email_reminders:
+            if reminder.person_id not in people_ids:
+                # if there is an email reminder that is not in people above
+                # archive the email reminder they have logged in
+                reminders_to_archive.append(reminder)
+            elif reminder.number_times_sent == self.REMINDER_LIMIT:
+                # Hit the reminder limit
+                # Archive the person and archive the reminder
+                reminder.person.archive()
+                reminders_to_archive.append(reminder)
+            else:
+                # send email
+                self.schedule_rqjob(reminder, triggers)
+                # Update the reminder
+                # TODO this might have to happen only if the email is successfully sent
+                reminder.remind_again_date = today + timedelta(days=30)
+                reminder.number_times_sent += 1
+                reminder.save()
+        EmailReminder.objects.filter(
+            id__in=[r.id for r in reminders_to_archive]
+        ).update(archived_at=today)
+
+    def create_new_email_reminders(
+        self,
+        triggers: Iterable[Trigger],
+        email_reminders: Iterable[EmailReminder],
+        people: Iterable[Person],
+    ) -> None:
+        thirty_days_from_now = date.today() + timedelta(days=30)
+        people_already_sent_emails = set([er.person for er in email_reminders])
+        people_new_email_reminders = set(people) - people_already_sent_emails
+        email_reminders = []
+        for person in people_new_email_reminders:
+            email_reminders.append(
+                EmailReminder(
+                    remind_again_date=thirty_days_from_now,
+                    person=person,
+                    trigger=triggers[
+                        0
+                    ],  # TODO what does it mean to have multiple triggers?
+                )
+            )
+            self.schedule_rqjob(email_reminders[-1])
+        EmailReminder.bulk_create(email_reminders)
+
+    def schedule_rqjob(
+        self, reminder: EmailReminder, triggers: Iterable[Trigger]
+    ) -> None:
+        ActionManageMixin.add(
+            action_class=ProfileUpdateReminderAction,
+            logger=logger,
+            scheduler=scheduler,
+            triggers=triggers,
+            context_objects={
+                "person_email": reminder.person.email,
+                "email_reminder": reminder,
+            },
+            object_=reminder.person,
+        )

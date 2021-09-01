@@ -9,7 +9,12 @@ from django.template import Template, TemplateSyntaxError, engines
 from django.urls import reverse
 import markdown
 
-from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
+from workshops.mixins import (
+    ActiveMixin,
+    CreatedUpdatedArchivedMixin,
+    CreatedUpdatedMixin,
+)
+from workshops.models import Person
 
 EmailBody = namedtuple("EmailBody", ["text", "html"])
 
@@ -305,6 +310,11 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "profile-update",
             "Reminder to for the user to update the information in their profile.",
         ),
+        (
+            "profile-archival-warning",
+            "Warning for the user to login before their profile will be archived"
+            " due to inactivity.",
+        ),
     )
     action = models.CharField(
         max_length=50,
@@ -422,3 +432,20 @@ class RQJob(CreatedUpdatedMixin, models.Model):
 
         # add index on job_id for faster retrieval
         indexes = [models.Index(fields=["job_id"])]
+
+
+class EmailReminder(CreatedUpdatedArchivedMixin, models.Model):
+    remind_again_date = models.DateTimeField()
+    person = models.ForeignKey(
+        Person,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
+    )
+    trigger = models.ForeignKey(
+        Trigger,
+        blank=False,
+        null=False,
+        on_delete=models.PROTECT,
+    )
+    number_times_sent = models.IntegerField(blank=False, null=False, default=0)
