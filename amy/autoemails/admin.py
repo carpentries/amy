@@ -60,7 +60,7 @@ class TriggerAdmin(admin.ModelAdmin):
 class RQJobAdmin(admin.ModelAdmin):
     list_display = [
         "job_id",
-        "action_class",
+        "action_name",
         "manage_links",
         "created_at",
         "scheduled_execution",
@@ -75,7 +75,7 @@ class RQJobAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     readonly_fields = [
         "scheduled_execution",
-        "action_class",
+        "action_name",
         "status",
         "mail_status",
         "event_slug",

@@ -1,8 +1,8 @@
 from datetime import datetime
 import logging
 
+from django.core.management.base import BaseCommand
 import django_rq
-from django_rq.management.commands import rqscheduler
 
 from amy.autoemails.utils import check_status, scheduled_execution_time
 from autoemails.actions import BaseRepeatedAction, UpdateProfileReminderRepeatedAction
@@ -65,6 +65,7 @@ def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler
         mail_status="",
         interval=job.meta.get("interval"),
         result_ttl=job.result_ttl,
+        action_name=action_name,
     )
     return rqj
 
@@ -79,7 +80,7 @@ def register_scheduled_jobs():
         )
 
 
-class Command(rqscheduler.Command):
+class Command(BaseCommand):
     """
     Subclassing rqsceduler so that the desired jobs can be created.
     """
@@ -87,4 +88,3 @@ class Command(rqscheduler.Command):
     def handle(self, *args, **kwargs):
         clear_scheduled_jobs()  # This is necessary to prevent dupes
         register_scheduled_jobs()
-        super(Command, self).handle(*args, **kwargs)
