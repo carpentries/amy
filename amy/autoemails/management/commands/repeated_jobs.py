@@ -18,7 +18,6 @@ DAY_IN_SECONDS = 86400
 
 def clear_scheduled_jobs():
     # Delete any existing repeated jobs in the scheduler
-    # repeated_job_classes = list(REPEATED_JOBS.values())
     for job in scheduler.get_jobs():
         if issubclass(job.meta["action"].__class__, BaseRepeatedAction):
             logger.debug("Deleting scheduled job %s", job)
