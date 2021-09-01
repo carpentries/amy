@@ -86,7 +86,7 @@ class ActionManageMixin:
                     mail_status="",
                     event_slug=action.event_slug(),
                     recipients=action.all_recipients(),
-                    action_class=str(action.__class__),
+                    action_name=action_name,
                 )
             else:
                 # save directly in the table
@@ -99,7 +99,7 @@ class ActionManageMixin:
                     mail_status="",
                     event_slug=action.event_slug(),
                     recipients=action.all_recipients(),
-                    action_class=str(action.__class__),
+                    action_name=action_name,
                 )
 
             created_jobs.append(job)

@@ -1256,7 +1256,7 @@ class ProfileUpdateReminderAction(BaseAction):
     See amy.autoemails.management.commands.amy_rqscheduler
     """
 
-    launch_at = timedelta(seconds=1)  # TODO: CHANGE BACK
+    launch_at = timedelta(hours=1)
 
     def recipients(self) -> Optional[Tuple[str]]:
         """Assuming self.context is ready, overwrite email's recipients
@@ -1311,7 +1311,7 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     to remind them when they should log in and update their profile.
     """
 
-    launch_at = timedelta(seconds=1)
+    launch_at = timedelta(hours=1)
     LAST_LOGGED_IN_DELTA = timedelta(days=365)
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
 
@@ -1345,7 +1345,4 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
             created_at__month=today.month,
             created_at__day=today.day,
         )
-        # people = Person.objects.filter(
-        #     email__in=("lauryndbrown@gmail.com", "lb@lauryndbrown.com")  # TODO REMOVE
-        # )
         return people

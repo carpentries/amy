@@ -401,7 +401,7 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         null=True,
         verbose_name="Result TTL",
     )
-    action_class = models.CharField(
+    action_name = models.CharField(
         max_length=100,
         blank=True,
         null=False,
