@@ -1,5 +1,4 @@
-from amy.autoemails.actions import send_bulk_email
-from autoemails.actions import NewConsentRequiredAction
+from autoemails.actions import NewConsentRequiredAction, send_bulk_email
 from autoemails.models import Trigger
 from consents.models import Consent, Term
 from workshops.models import Person

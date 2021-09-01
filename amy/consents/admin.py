@@ -8,9 +8,9 @@ from django.core.exceptions import ValidationError
 from django.http.response import HttpResponseRedirect
 import django_rq
 
-from amy.consents.util import send_consent_email
 from autoemails.actions import NewConsentRequiredAction
 from consents.models import Consent, Term, TermOption
+from consents.util import send_consent_email
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
