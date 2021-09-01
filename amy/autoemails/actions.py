@@ -1258,9 +1258,6 @@ class ProfileUpdateReminderAction(BaseAction):
 
     launch_at = timedelta(seconds=1)  # TODO: CHANGE BACK
 
-    # def get_launch_at(self):
-    #     return self.launch_at
-
     def recipients(self) -> Optional[Tuple[str]]:
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
