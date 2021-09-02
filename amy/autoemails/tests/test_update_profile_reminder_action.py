@@ -43,4 +43,4 @@ class TestUpdateProfileRepeatedAction(TestCase):
         rq_jobs = RQJob.objects.filter(trigger=self.action.trigger)
         self.assertCountEqual([job.recipients for job in rq_jobs], [p1.email, p2.email])
         for job in rq_jobs:
-            self.assertEqual(job.action_name, ProfileUpdateReminderAction)
+            self.assertEqual(job.action_name, ProfileUpdateReminderAction.__name__)
