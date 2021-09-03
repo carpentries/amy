@@ -4,8 +4,6 @@ import logging
 from django.core.management.base import BaseCommand
 import django_rq
 
-from autoemails.actions import BaseRepeatedAction, UpdateProfileReminderRepeatedAction
-from autoemails.utils import check_status, scheduled_execution_time
 from autoemails.actions import (
     BaseRepeatedAction,
     ProfileArchivalWarningRepeatedAction,
