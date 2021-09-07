@@ -7,10 +7,10 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
-from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.http.request import HttpRequest
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
+from django.utils import timezone
 import django_rq
 
 from autoemails.base_views import ActionManageMixin
@@ -1378,7 +1378,10 @@ class ProfileArchivalWarningAction(BaseAction):
 
 
 class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
-    """"""
+    """
+    Emails a warning up to three times over a 90 day period
+    to remind the active user to login otherwise they will be archived.
+    """
 
     launch_at = timedelta(hours=1)
     REMINDER_LIMIT = 3
@@ -1386,13 +1389,8 @@ class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
 
     def __call__(self, *args, **kwargs):
         # Pulls people who last logged in 3 years ago or more
-        today = datetime.today()
-        people = Person.objects.filter(
-            Q(is_active=True)
-            & Q(last_login__year__gte=today.year - 3)
-            & Q(last_login__month__gte=today.month)
-            & Q(last_login__month__gte=today.day)
-        )
+        three_years_ago = timezone.now() - timedelta(days=365 * 3)
+        people = Person.objects.filter(is_active=True, last_login__lte=three_years_ago)
         triggers = Trigger.objects.filter(
             active=True,
             action="profile-archival-warning",
@@ -1402,7 +1400,7 @@ class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
             trigger__action="profile-archival-warning",
         ).select_related("person")
         self.handle_existing_email_reminders(triggers, email_reminders, people)
-        self.create_new_email_reminders(triggers[0], people)
+        self.create_new_email_reminders(triggers, email_reminders, people)
 
     def handle_existing_email_reminders(
         self,
@@ -1410,9 +1408,15 @@ class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
         email_reminders: Iterable[EmailReminder],
         people: Iterable[Person],
     ) -> None:
+        """
+        Update existing email reminders doing the following:
+        - Archive the email reminder where the users have logged in.
+        - Send another reminder if the user has not yet hit the REMINDER_LIMIT
+        - If the user hasn't logged in and they have hit the REMINDER_LIMIT,
+          archive the user and the email reminder.
+        """
         people_ids = set([person.id for person in people])
         reminders_to_archive = []
-        today = datetime.now()
         for reminder in email_reminders:
             if reminder.person_id not in people_ids:
                 # if there is an email reminder that is not in people above
@@ -1425,15 +1429,12 @@ class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
                 reminders_to_archive.append(reminder)
             else:
                 # send email
+                self._update_email_reminder(reminder)
                 self.schedule_rqjob(reminder, triggers)
-                # Update the reminder
-                # TODO this might have to happen only if the email is successfully sent
-                reminder.remind_again_date = today + timedelta(days=30)
-                reminder.number_times_sent += 1
                 reminder.save()
         EmailReminder.objects.filter(
             id__in=[r.id for r in reminders_to_archive]
-        ).update(archived_at=today)
+        ).update(archived_at=timezone.now())
 
     def create_new_email_reminders(
         self,
@@ -1441,28 +1442,30 @@ class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
         email_reminders: Iterable[EmailReminder],
         people: Iterable[Person],
     ) -> None:
-        thirty_days_from_now = date.today() + timedelta(days=30)
+        """
+        Creates an email reminder and sends an email
+        for users who have not received a reminder previously.
+        """
+        thirty_days_from_now = timezone.now() + timedelta(days=30)
         people_already_sent_emails = set([er.person for er in email_reminders])
         people_new_email_reminders = set(people) - people_already_sent_emails
         email_reminders = []
         for person in people_new_email_reminders:
-            email_reminders.append(
-                EmailReminder(
-                    remind_again_date=thirty_days_from_now,
-                    person=person,
-                    trigger=triggers[
-                        0
-                    ],  # TODO what does it mean to have multiple triggers?
-                )
+            email_reminder = EmailReminder(
+                remind_again_date=thirty_days_from_now,
+                person=person,
+                trigger=triggers[0],
             )
-            self.schedule_rqjob(email_reminders[-1])
-        EmailReminder.bulk_create(email_reminders)
+            self._update_email_reminder(email_reminder)
+            self.schedule_rqjob(email_reminder, triggers)
+            email_reminders.append(email_reminder)
+        EmailReminder.objects.bulk_create(email_reminders)
 
     def schedule_rqjob(
         self, reminder: EmailReminder, triggers: Iterable[Trigger]
     ) -> None:
         ActionManageMixin.add(
-            action_class=ProfileUpdateReminderAction,
+            action_class=self.EMAIL_ACTION_CLASS,
             logger=logger,
             scheduler=scheduler,
             triggers=triggers,
@@ -1472,3 +1475,11 @@ class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
             },
             object_=reminder.person,
         )
+
+    def _update_email_reminder(self, reminder: EmailReminder) -> None:
+        """
+        Updates the date and number of times sent for the email reminder.
+        """
+        # TODO this might have to happen only if the email is successfully sent
+        reminder.remind_again_date = timezone.now() + timedelta(days=30)
+        reminder.number_times_sent += 1
