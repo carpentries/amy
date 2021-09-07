@@ -331,5 +331,33 @@
             "reply_to_header": "",
             "body_template": "Please [sign in](https://carpentries.org/) and update your profile information."
         }
+    },
+    {
+        "model": "autoemails.emailtemplate",
+        "pk": 13,
+        "fields": {
+            "active": true,
+            "created_at": "2020-09-14T20:35:29.650Z",
+            "last_updated_at": "2020-09-14T20:35:29.650Z",
+            "slug": "profile-archival-warning",
+            "subject": "Profile Archival Warning",
+            "to_header": "{{ request.email }}",
+            "from_header": "amy-no-reply@carpentries.org",
+            "cc_header": "",
+            "bcc_header": "",
+            "reply_to_header": "",
+            "body_template": "Please [sign in](https://carpentries.org/) and update your profile information; if you do not your profile may be archived."
+        }
+    },
+    {
+        "model": "autoemails.trigger",
+        "pk": 14,
+        "fields": {
+            "active": true,
+            "created_at": "2020-08-15T14:30:16.081Z",
+            "last_updated_at": "2020-08-15T14:30:16.081Z",
+            "action": "profile-archival-warning",
+            "template": 13
+        }
     }
 ]
