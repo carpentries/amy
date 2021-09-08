@@ -4,20 +4,21 @@ from django.test import TestCase
 from django.utils import timezone
 
 from autoemails.actions import (
-    ProfileArchivalWarningAction,
-    ProfileArchivalWarningRepeatedAction,
+    InactiveProfileArchivalWarningAction,
+    InactiveProfileArchivalWarningRepeatedAction,
 )
 from autoemails.models import EmailReminder, EmailTemplate, RQJob, Trigger
 from workshops.models import Person
 
 
-class TestProfileArchivalWarningRepeatedAction(TestCase):
+class TestInactiveProfileArchivalWarningRepeatedAction(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.trigger = Trigger.objects.create(
-            action="profile-archival-warning", template=EmailTemplate.objects.create()
+            action="profile-archival-warning-inactivity",
+            template=EmailTemplate.objects.create(),
         )
-        self.action = ProfileArchivalWarningRepeatedAction(trigger=self.trigger)
+        self.action = InactiveProfileArchivalWarningRepeatedAction(trigger=self.trigger)
         self.today = timezone.now()
         self.thirty_days_from_now = self.today + timedelta(days=30)
 
@@ -92,7 +93,9 @@ class TestProfileArchivalWarningRepeatedAction(TestCase):
         rq_jobs = RQJob.objects.filter(trigger=self.action.trigger)
         self.assertCountEqual([job.recipients for job in rq_jobs], [p1.email])
         for job in rq_jobs:
-            self.assertEqual(job.action_name, ProfileArchivalWarningAction.__name__)
+            self.assertEqual(
+                job.action_name, InactiveProfileArchivalWarningAction.__name__
+            )
             self.assertIsNone(job.interval)
             self.assertIsNone(job.result_ttl)
         # person 1 should also have an email reminder in the database
