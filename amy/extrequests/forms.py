@@ -1038,14 +1038,13 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         instructor_availability: bool = self.cleaned_data.get("instructor_availability")
         two_months_away = datetime.date.today() + datetime.timedelta(days=60)
         if (
-            preferred_dates and preferred_dates <= two_months_away
-        ) or not preferred_dates:
-            if not instructor_availability:
-                errors["instructor_availability"] = ValidationError(
-                    "Please confirm instructor availability, since the workshop is "
-                    'planned for less than 2 months away or "Other" arrangements '
-                    "were selected."
-                )
+            not preferred_dates or preferred_dates <= two_months_away
+        ) and not instructor_availability:
+            errors["instructor_availability"] = ValidationError(
+                "Please confirm instructor availability, since the workshop is "
+                'planned for less than 2 months away or "Other" arrangements '
+                "were selected."
+            )
 
         # raise errors if any present
         if errors:
