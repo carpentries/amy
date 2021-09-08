@@ -1,12 +1,9 @@
-# coding: utf-8
-
 from datetime import date, datetime, timezone
 from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
-from django.contrib.sites.models import Site
 from django.core.validators import ValidationError
 from django.urls import reverse
 from django_comments.models import Comment
@@ -40,7 +37,7 @@ from workshops.tests.base import TestBase
 
 @patch("workshops.github_auth.github_username_to_uid", lambda username: None)
 class TestPerson(TestBase):
-    """ Test cases for persons. """
+    """Test cases for persons."""
 
     def setUp(self):
         super().setUp()
@@ -193,7 +190,7 @@ class TestPerson(TestBase):
         self.assertEqual(self.spiderman.task_set.first().role, role)
 
     def test_edit_person_permissions(self):
-        """ Make sure we can set up user permissions correctly. """
+        """Make sure we can set up user permissions correctly."""
 
         # make sure Hermione does not have any perms, nor groups
         assert not self.hermione.is_superuser
@@ -686,7 +683,7 @@ class TestPersonMerging(TestBase):
         self._setUpLessons()
         self._setUpRoles()
         self._setUpEvents()
-        self._setupSites()
+        self._setUpSites()
         self._setUpUsersAndLogin()
 
         # create training requirement
@@ -730,7 +727,7 @@ class TestPersonMerging(TestBase):
             user=self.person_a,
             comment="Comment from person_a on admin",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
         # comments regarding this person
         self.ca_2 = Comment.objects.create(
@@ -738,7 +735,7 @@ class TestPersonMerging(TestBase):
             user=self.admin,
             comment="Comment from admin on person_a",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
         term_options_by_term_slug = {
             term.slug: iter(term.options)
@@ -796,7 +793,7 @@ class TestPersonMerging(TestBase):
             user=self.person_b,
             comment="Comment from person_b on admin",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
         # comments regarding this person
         self.cb_2 = Comment.objects.create(
@@ -804,7 +801,7 @@ class TestPersonMerging(TestBase):
             user=self.admin,
             comment="Comment from admin on person_b",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
 
         # consents for person_b
@@ -1131,7 +1128,7 @@ def github_username_to_uid_mock(username):
 
 @patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
 class TestPersonAndUserSocialAuth(TestBase):
-    """ Test Person.synchronize_usersocialauth and Person.save."""
+    """Test Person.synchronize_usersocialauth and Person.save."""
 
     def test_basic(self):
         user = Person.objects.create_user(
@@ -1460,7 +1457,7 @@ class TestRegression1076(TestBase):
 
 
 class TestArchivePerson(TestBase):
-    """ Test cases for person archive endpoint. """
+    """Test cases for person archive endpoint."""
 
     @patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
     def setUp(self):

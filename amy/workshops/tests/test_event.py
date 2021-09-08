@@ -1,7 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlencode
 
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.db.utils import IntegrityError
@@ -804,6 +803,7 @@ class TestEventMerging(TestBase):
         self._setUpUsersAndLogin()
         self._setUpTags()
         self._setUpLanguages()
+        self._setUpSites()
 
         today = date.today()
         tomorrow = today + timedelta(days=1)
@@ -847,7 +847,7 @@ class TestEventMerging(TestBase):
             user=self.harry,
             comment="Comment from admin on event_a",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
 
         self.event_b = Event.objects.create(
@@ -884,7 +884,7 @@ class TestEventMerging(TestBase):
             user=self.hermione,
             comment="Comment from admin on event_b",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
 
         # some "random" strategy for testing
