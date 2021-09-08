@@ -315,6 +315,11 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "Warning for the user to login before their profile will be archived"
             " due to inactivity.",
         ),
+        (
+            "profile-archival-warning-consents",
+            "Warning for the user to agree to required consents, otherwise their"
+            " profile will be archived.",
+        ),
     )
     action = models.CharField(
         max_length=50,

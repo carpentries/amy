@@ -16,7 +16,7 @@ import django_rq
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import EmailReminder, EmailTemplate, Trigger
 from autoemails.utils import compare_emails
-from consents.models import Term
+from consents.models import Consent, Term
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Person, Task
 
@@ -1524,4 +1524,64 @@ class InactiveProfileArchivalWarningRepeatedAction(
         """
         three_years_ago = timezone.now() - timedelta(days=365 * 3)
         people = Person.objects.filter(is_active=True, last_login__lte=three_years_ago)
+        return people
+
+
+class ConsentProfileArchivalWarningAction(BaseAction):
+    """
+    Action for asking users to login or their profile will be archived.
+    This email should be sent if the user is active and has not logged in
+    in the last 3 years.
+
+    This action is added during the RQ scheduler startup.
+    See amy.autoemails.management.commands.repeated_jobs
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def recipients(self) -> Optional[Tuple[str]]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            person_email = self.context_objects["person_email"]
+            return (person_email,)
+        except (KeyError, AttributeError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        recipients = self.recipients()
+        if recipients is not None:
+            return ", ".join(recipients)
+        return ""
+
+    def reply_to(self) -> Optional[Tuple[str]]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
+
+
+class ConsentsProfileArchivalWarningRepeatedAction(
+    BaseProfileArchivalWarningRepeatedAction
+):
+    """
+    Emails a warning up to three times over a 90 day period
+    to remind the active user to consent to required consents
+    otherwise they will be archived.
+    """
+
+    launch_at = timedelta(hours=1)
+    EMAIL_ACTION_CLASS = ConsentProfileArchivalWarningAction
+    ACTION_NAME = "profile-archival-warning-consents"
+
+    def get_people(self) -> None:
+        """
+        Retrieves people who have not agreed to required consents within a year
+        """
+        one_year_ago = timezone.now() - timedelta(days=365)
+        terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active()
+        people = (
+            Consent.objects.active()
+            .filter(term__in=terms, term_option=None, created_at__lte=one_year_ago)
+            .values_list("person", flat=True)
+        )
         return people
