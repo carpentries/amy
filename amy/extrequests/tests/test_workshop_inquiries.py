@@ -347,6 +347,57 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
             blank=True,
         )
 
+    def test_instructor_availability_required(self):
+        """Test requiredness of `instructor_availability` depending on selected
+        preferred dates."""
+        # Arrange
+        data1 = {
+            "preferred_dates": date.today() + timedelta(days=30),
+            "other_preferred_dates": "",
+            "instructor_availability": "",
+        }
+        data2 = {
+            "preferred_dates": "",
+            "other_preferred_dates": "sometime in future",
+            "instructor_availability": "",
+        }
+        # Act
+        form1 = WorkshopInquiryRequestBaseForm(data1)
+        form2 = WorkshopInquiryRequestBaseForm(data2)
+        # Assert
+        for form in (form1, form2):
+            self.assertNotIn("preferred_dates", form.errors)
+            self.assertNotIn("other_preferred_dates", form.errors)
+            self.assertIn("instructor_availability", form.errors)
+
+    def test_instructor_availability_not_required(self):
+        """Test `instructor_availability` not required in some circumstances."""
+        # Arrange
+        data1 = {
+            "preferred_dates": date.today() + timedelta(days=30),
+            "other_preferred_dates": "",
+            "instructor_availability": "1",
+        }
+        data2 = {
+            "preferred_dates": "",
+            "other_preferred_dates": "sometime in future",
+            "instructor_availability": "1",
+        }
+        data3 = {
+            "preferred_dates": date.today() + timedelta(days=61),
+            "other_preferred_dates": "",
+            "instructor_availability": "",
+        }
+        # Act
+        form1 = WorkshopInquiryRequestBaseForm(data1)
+        form2 = WorkshopInquiryRequestBaseForm(data2)
+        form3 = WorkshopInquiryRequestBaseForm(data3)
+        # Assert
+        for form in (form1, form2, form3):
+            self.assertNotIn("preferred_dates", form.errors)
+            self.assertNotIn("other_preferred_dates", form.errors)
+            self.assertNotIn("instructor_availability", form.errors)
+
 
 class TestWorkshopInquiryViews(TestBase):
     def setUp(self):

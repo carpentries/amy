@@ -262,7 +262,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         label=WorkshopRequest._meta.get_field("host_responsibilities").verbose_name,
     )
     instructor_availability = forms.BooleanField(
-        required=True,
+        required=False,
         label=WorkshopRequest._meta.get_field("instructor_availability").verbose_name,
     )
 
@@ -285,6 +285,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
+
+    class Media:
+        js = ("instructor_availability_checkbox.js",)
 
     class Meta:
         model = WorkshopRequest
@@ -548,6 +551,20 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 'If you entered data in "Other" field, please select that ' "option."
             )
 
+        # 7: if workshop is less than 2mo away, or if the dates are unknown, require the
+        # confirmation in `instructor_availability`:
+        instructor_availability: bool = self.cleaned_data.get("instructor_availability")
+        two_months_away = datetime.date.today() + datetime.timedelta(days=60)
+        if (
+            preferred_dates and preferred_dates <= two_months_away
+        ) or not preferred_dates:
+            if not instructor_availability:
+                errors["instructor_availability"] = ValidationError(
+                    "Please confirm instructor availability, since the workshop is "
+                    'planned for less than 2 months away or "Other" arrangements '
+                    "were selected."
+                )
+
         # raise errors if any present
         if errors:
             raise ValidationError(errors)
@@ -628,7 +645,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         ).verbose_name,
     )
     instructor_availability = forms.BooleanField(
-        required=True,
+        required=False,
         label=WorkshopInquiryRequest._meta.get_field(
             "instructor_availability"
         ).verbose_name,
@@ -670,6 +687,9 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
+
+    class Media:
+        js = ("instructor_availability_checkbox.js",)
 
     class Meta:
         model = WorkshopInquiryRequest
@@ -1011,6 +1031,19 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         elif public_event != "other" and public_event_other:
             errors["public_event"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
+            )
+
+        # 7: if workshop is less than 2mo away, or if the dates are unknown, require the
+        # confirmation in `instructor_availability`:
+        instructor_availability: bool = self.cleaned_data.get("instructor_availability")
+        two_months_away = datetime.date.today() + datetime.timedelta(days=60)
+        if (
+            not preferred_dates or preferred_dates <= two_months_away
+        ) and not instructor_availability:
+            errors["instructor_availability"] = ValidationError(
+                "Please confirm instructor availability, since the workshop is "
+                'planned for less than 2 months away or "Other" arrangements '
+                "were selected."
             )
 
         # raise errors if any present
