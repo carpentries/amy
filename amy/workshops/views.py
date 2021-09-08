@@ -1016,6 +1016,12 @@ def event_details(request, slug):
         .values_list("person__email", flat=True),
         "today": datetime.date.today(),
         "admin_lookup_form": admin_lookup_form,
+        "event_location": {
+            "venue": event.venue,
+            "humandate": event.human_readable_date,
+            "latitude": event.latitude,
+            "longitude": event.longitude,
+        },
     }
     return render(request, "workshops/event.html", context)
 

@@ -69,7 +69,7 @@
         <td class="text-success">&#10003;</td>
         {% endif %}
         <!-- LOCATION -->
-        {% if not event.address or not event.venue or not event.country or not event.latitude or not event.longitude %}
+        {% if not event.address or not event.venue or not event.country or event.latitude is None or event.longitude is None %}
         <td class="text-danger">&times;</td>
         {% else %}
         <td class="text-success">&#10003;</td>

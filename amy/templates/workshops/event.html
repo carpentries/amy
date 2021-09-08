@@ -178,6 +178,7 @@
 {% endblock %}
 
 {% block extrajs %}
+{{ event_location|json_script:"event-location" }}
 <script src="https://maps.googleapis.com/maps/api/js?api=AIzaSyC2WQkpSyrmJhXRcBdqsonpcQjyy8BtPrA&v=3.exp"></script>
 <script type="text/javascript">
   var gmap = null;
@@ -189,23 +190,24 @@
     });
 
     // draw a pin on the map in website preview
-    var mapOptions = {
+    const mapOptions = {
       zoom: 1,
       // by trial and error, these values lets us see the most w/o scrolling
       center: {lat: 0, lng: 0},
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
-    gmap = new google.maps.Map(document.getElementById("map_canvas"),
-                               mapOptions);
-    {% if event.latitude and event.longitude %}
-    var marker = new google.maps.Marker({
-      position: new google.maps.LatLng({{ event.latitude }},
-                                       {{ event.longitude }}),
-      map: gmap,
-      title: "{{ event.venue|escapejs }}: {{ event.humandate|escapejs }}",
-      visible: true   // marker shown directly, not clustered
-    });
-    {% endif %}
+    gmap = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+
+    const eventLocation = JSON.parse(document.getElementById('event-location').textContent);
+
+    if (eventLocation.latitude !== null && eventLocation.longitude !== null) {
+      const marker = new google.maps.Marker({
+        position: new google.maps.LatLng(eventLocation.latitude, eventLocation.longitude),
+        map: gmap,
+        title: `${eventLocation.venue}: ${eventLocation.humandate}`,
+        visible: true  // marker shown directly, not clustered
+      });
+    }
 
     // https://github.com/select2/select2/issues/1645#issuecomment-24296615
     $.fn.modal.Constructor.prototype.enforceFocus = function() {};

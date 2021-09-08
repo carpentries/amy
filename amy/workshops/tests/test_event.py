@@ -66,8 +66,8 @@ class TestEvent(TestBase):
         )
         self.assertEqual(e.venue, "Internet")
         self.assertEqual(e.address, "Internet")
-        self.assertAlmostEqual(e.latitude, -48.876667)
-        self.assertAlmostEqual(e.longitude, -123.393333)
+        self.assertEqual(e.latitude, None)
+        self.assertEqual(e.longitude, None)
 
         e = Event.objects.create(
             slug="offline-event", country="US", host=Organization.objects.first()
