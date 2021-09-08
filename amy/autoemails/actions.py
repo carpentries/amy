@@ -1349,7 +1349,7 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
         return people
 
 
-class ProfileArchivalWarningAction(BaseAction):
+class InactiveProfileArchivalWarningAction(BaseAction):
     """
     Action for asking users to login or their profile will be archived.
     This email should be sent if the user is active and has not logged in
@@ -1382,30 +1382,46 @@ class ProfileArchivalWarningAction(BaseAction):
         return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
 
 
-class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
+class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
     """
-    Emails a warning up to three times over a 90 day period
-    to remind the active user to login otherwise they will be archived.
+    Base class for emails related to profile archival.
     """
 
-    launch_at = timedelta(hours=1)
-    REMINDER_LIMIT = 3
-    EMAIL_ACTION_CLASS = ProfileArchivalWarningAction
+    launch_at: Optional[timedelta] = None
+    REMINDER_LIMIT: int = 3
+    EMAIL_ACTION_CLASS: Optional[Type[BaseAction]] = None
+    ACTION_NAME: Optional[str] = None
 
     def __call__(self, *args, **kwargs):
-        # Pulls people who last logged in 3 years ago or more
-        three_years_ago = timezone.now() - timedelta(days=365 * 3)
-        people = Person.objects.filter(is_active=True, last_login__lte=three_years_ago)
-        triggers = Trigger.objects.filter(
-            active=True,
-            action="profile-archival-warning",
-        )
-        email_reminders = EmailReminder.objects.filter(
-            archived_at=None,
-            trigger__action="profile-archival-warning",
-        ).select_related("person")
+        people = self.get_people()
+        triggers = self.get_triggers()
+        email_reminders = self.get_email_reminders()
         self.handle_existing_email_reminders(triggers, email_reminders, people)
         self.create_new_email_reminders(triggers, email_reminders, people)
+
+    def get_people(self) -> Iterable[Person]:
+        """
+        Retrieves the affected users from the database.
+        """
+        return []
+
+    def get_triggers(self) -> Iterable[Trigger]:
+        """
+        Retrieves the related triggers from the database.
+        """
+        return Trigger.objects.filter(
+            active=True,
+            action=self.ACTION_NAME,
+        )
+
+    def get_email_reminders(self) -> Iterable[Trigger]:
+        """
+        Retrieves the related email reminders from the database.
+        """
+        return EmailReminder.objects.filter(
+            archived_at=None,
+            trigger__action=self.ACTION_NAME,
+        ).select_related("person")
 
     def handle_existing_email_reminders(
         self,
@@ -1488,3 +1504,24 @@ class ProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
         # TODO this might have to happen only if the email is successfully sent
         reminder.remind_again_date = timezone.now() + timedelta(days=30)
         reminder.number_times_sent += 1
+
+
+class InactiveProfileArchivalWarningRepeatedAction(
+    BaseProfileArchivalWarningRepeatedAction
+):
+    """
+    Emails a warning up to three times over a 90 day period
+    to remind the active user to login otherwise they will be archived.
+    """
+
+    launch_at = timedelta(hours=1)
+    EMAIL_ACTION_CLASS = InactiveProfileArchivalWarningAction
+    ACTION_NAME = "profile-archival-warning-inactivity"
+
+    def get_people(self) -> Iterable[Person]:
+        """
+        Retrieves people who last logged in 3 years ago or more.
+        """
+        three_years_ago = timezone.now() - timedelta(days=365 * 3)
+        people = Person.objects.filter(is_active=True, last_login__lte=three_years_ago)
+        return people

@@ -311,7 +311,7 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "Reminder to for the user to update the information in their profile.",
         ),
         (
-            "profile-archival-warning",
+            "profile-archival-warning-inactivity",
             "Warning for the user to login before their profile will be archived"
             " due to inactivity.",
         ),
