@@ -1,4 +1,3 @@
-import logging
 from typing import Union
 
 import django_rq
@@ -6,8 +5,6 @@ import pytz
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
-
-logger = logging.getLogger("amy.signals")
 
 
 def scheduled_execution_time(job_id, scheduler=None, naive=True):
