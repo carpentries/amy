@@ -70,13 +70,17 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Organization {0}".format(self.object)
+        related = ["host", "sponsor", "membership"]
         context["all_events"] = (
-            self.object.hosted_events.all()
+            self.object.hosted_events.select_related(*related)
             .union(
-                self.object.sponsored_events.all(),
-                self.object.administered_events.all(),
+                self.object.sponsored_events.select_related(*related),
+                self.object.administered_events.select_related(*related),
             )
             .prefetch_related("tags")
+        )
+        context["main_organisation_memberships"] = Membership.objects.filter(
+            member__role__name="main", member__organization=self.object
         )
         return context
 
@@ -235,6 +239,91 @@ class MembershipUpdate(
     pk_url_kwarg = "membership_id"
     template_name = "generic_form_with_comments.html"
 
+    def get_form_kwargs(self) -> Dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+
+        show_rolled_over = False
+        show_rolled_from_previous = False
+        if self.object.rolled_to_membership:
+            show_rolled_over = True
+
+        try:
+            if self.object.rolled_from_membership:
+                show_rolled_from_previous = True
+        except Membership.DoesNotExist:
+            pass
+
+        kwargs["show_rolled_over"] = show_rolled_over
+        kwargs["show_rolled_from_previous"] = show_rolled_from_previous
+        return kwargs
+
+    def form_valid(self, form):
+        result = super().form_valid(form)
+        data = form.cleaned_data
+
+        if form.initial["extensions"] != data["extensions"]:
+            # Since the extensions have changed, the end date needs to be recalculated.
+            changed_days = sum(data["extensions"]) - sum(form.initial["extensions"])
+            self.object.agreement_end += timedelta(days=changed_days)
+            self.object.save()
+
+            # User changed extensions values, let's add a comment indicating the change.
+            str_ext = ", ".join(str(extension) for extension in data["extensions"])
+            comment = (
+                f"Extension days changed to following: {str_ext} days. New agreement "
+                f"end date: {self.object.agreement_end}."
+            )
+            add_comment_for_object(self.object, self.request.user, comment)
+
+        # see if updated "rolled" values are available, and update related memberships
+        pairs = (
+            (
+                "workshops_without_admin_fee_rolled_over",
+                "workshops_without_admin_fee_rolled_from_previous",
+            ),
+            (
+                "public_instructor_training_seats_rolled_over",
+                "public_instructor_training_seats_rolled_from_previous",
+            ),
+            (
+                "inhouse_instructor_training_seats_rolled_over",
+                "inhouse_instructor_training_seats_rolled_from_previous",
+            ),
+        )
+        save_rolled_to = False
+        try:
+            for rolled_over, rolled_from in pairs:
+                if rolled_over in data:
+                    setattr(
+                        self.object.rolled_to_membership,
+                        rolled_from,
+                        data[rolled_over],
+                    )
+                    save_rolled_to = True
+
+            if save_rolled_to:
+                self.object.rolled_to_membership.save()
+        except Membership.DoesNotExist:
+            pass
+
+        save_rolled_from = False
+        try:
+            for rolled_over, rolled_from in pairs:
+                if rolled_from in data:
+                    setattr(
+                        self.object.rolled_from_membership,
+                        rolled_over,
+                        data[rolled_from],
+                    )
+                    save_rolled_from = True
+
+            if save_rolled_from:
+                self.object.rolled_from_membership.save()
+        except Membership.DoesNotExist:
+            pass
+
+        return result
+
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Membership
@@ -248,7 +337,12 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
 class MembershipMembers(
     OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
 ):
-    permission_required = "workshops.change_membership"
+    permission_required = (
+        "workshops.change_membership",
+        "workshops.add_member",
+        "workshops.change_member",
+        "workshops.delete_member",
+    )
 
     def get_formset(self, *args, **kwargs):
         return modelformset_factory(Member, MemberForm, *args, **kwargs)
@@ -278,6 +372,42 @@ class MembershipMembers(
             )
         return super().get_context_data(**kwargs)
 
+    def form_valid(self, formset):
+        result = super().form_valid(formset)
+
+        # Figure out changes in members and add comment listing them.
+        comment = "Changed members on {date}:\n\n{comments}"
+        added = "* Added {organization}"
+        removed = "* Removed {organization}"
+        changed = "* Replaced with {organization}"
+
+        comments = (
+            [
+                added.format(organization=member.organization)
+                for member in formset.new_objects
+            ]
+            + [
+                removed.format(organization=member.organization)
+                for member in formset.deleted_objects
+            ]
+            + [
+                # it's difficult to figure out previous value of member.organization,
+                # so the comment will only contain the new version
+                changed.format(organization=member.organization)
+                for member, fields in formset.changed_objects
+                if "organization" in fields
+            ]
+        )
+
+        if comments:
+            add_comment_for_object(
+                self.membership,
+                self.request.user,
+                comment.format(date=date.today(), comments="\n".join(comments)),
+            )
+
+        return result
+
 
 class MembershipTasks(
     OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
@@ -304,7 +434,10 @@ class MembershipExtend(
     form_class = MembershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "workshops.change_membership"
-    comment = "Extended membership by {days} days on {date}."
+    comment = (
+        "Extended membership by {days} days on {date} (new end date: {new_date})."
+        "\n\n----\n\n{comment}"
+    )
 
     def get_initial(self):
         return {
@@ -320,9 +453,11 @@ class MembershipExtend(
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
-        days = form.cleaned_data["extension"]
-        extension = timedelta(days=days)
-        self.membership.agreement_end += extension
+        agreement_end = form.cleaned_data["agreement_end"]
+        new_agreement_end = form.cleaned_data["new_agreement_end"]
+        days = (new_agreement_end - agreement_end).days
+        comment = form.cleaned_data["comment"]
+        self.membership.agreement_end = new_agreement_end
         self.membership.extensions.append(days)
         self.membership.save()
 
@@ -330,7 +465,12 @@ class MembershipExtend(
         add_comment_for_object(
             self.membership,
             self.request.user,
-            self.comment.format(days=days, date=date.today()),
+            self.comment.format(
+                days=days,
+                date=date.today(),
+                new_date=new_agreement_end,
+                comment=comment,
+            ),
         )
 
         return super().form_valid(form)
@@ -377,7 +517,6 @@ class MembershipCreateRollOver(
             ),
             "contribution_type": self.membership.contribution_type,
             "registration_code": self.membership.registration_code,
-            "agreement_link": self.membership.agreement_link,
             "workshops_without_admin_fee_per_agreement": self.membership.workshops_without_admin_fee_per_agreement,  # noqa
             "workshops_without_admin_fee_rolled_from_previous": 0,
             "public_instructor_training_seats": self.membership.public_instructor_training_seats,  # noqa

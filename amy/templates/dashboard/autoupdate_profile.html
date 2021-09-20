@@ -8,6 +8,8 @@
 {% block content %}
 
 Your email address and GitHub id can not be updated here, as they are tied to your login id. Please contact us at <a href="mailto:team@carpentries.org">team@carpentries.org</a> if you would like to update this information.  <br> <br>
-
+<form class="form-horizontal" role="form" method="POST" action="{% url 'autoupdate_profile' %}">
 {% crispy form %}
+{% crispy consents_form %}
+</form>
 {% endblock %}

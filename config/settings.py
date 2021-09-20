@@ -99,6 +99,7 @@ DJANGO_APPS = [
     # for TemplatesSetting form template renderer
     # https://docs.djangoproject.com/en/dev/ref/forms/renderers/
     "django.forms",
+    "django.contrib.postgres",
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
@@ -246,7 +247,6 @@ CACHES = {
 # MIDDLEWARE
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
-CONSENTS = env.bool("CONSENTS", False)
 MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
@@ -258,11 +258,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "workshops.github_auth.GithubAuthMiddleware",
+    "consents.middleware.TermsMiddleware",
 ]
-if CONSENTS:
-    MIDDLEWARE += ["consents.middleware.TermsMiddleware"]
-else:
-    MIDDLEWARE += ["workshops.action_required.PrivacyPolicy"]
 
 # STATIC
 # -----------------------------------------------------------------------------
@@ -423,6 +420,10 @@ if not DEBUG and (
 # NOTIFICATIONS
 # -----------------------------------------------------------------------------
 ADMIN_NOTIFICATION_CRITERIA_DEFAULT = "workshops@carpentries.org"
+
+# Number of emails that can be sent at one time using
+# The Email provider's (Mailgun) bulk email functionality
+BULK_EMAIL_LIMIT = 1000
 
 # ADMIN
 # ------------------------------------------------------------------------------

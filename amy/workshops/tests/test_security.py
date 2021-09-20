@@ -59,8 +59,7 @@ class TestViews(TestBase):
             email="superuser@example.org",
             password="superuser",
         )
-        self.admin.data_privacy_agreement = True
-        self.admin.save()
+        self.person_consent_required_terms(self.admin)
         assert admins not in self.admin.groups.all()
 
         # user belonging to Admin group should have access to admin dashboard
@@ -71,8 +70,7 @@ class TestViews(TestBase):
             email="admin@example.org",
             password="admin",
         )
-        self.mentor.data_privacy_agreement = True
-        self.mentor.save()
+        self.person_consent_required_terms(self.mentor)
         self.mentor.groups.add(admins)
 
         # steering committee members should have access to admin dashboard too
@@ -83,8 +81,7 @@ class TestViews(TestBase):
             email="committee@example.org",
             password="committee",
         )
-        self.committee.data_privacy_agreement = True
-        self.committee.save()
+        self.person_consent_required_terms(self.committee)
         self.committee.groups.add(steering_committee)
 
         # members of invoicing group should have access to admin dashboard too
@@ -95,8 +92,7 @@ class TestViews(TestBase):
             email="invoicing@example.org",
             password="invoicing",
         )
-        self.invoicing.data_privacy_agreement = True
-        self.invoicing.save()
+        self.person_consent_required_terms(self.invoicing)
         self.invoicing.groups.add(invoicing_group)
 
         # trainers should have access to admin dashboard too
@@ -107,8 +103,7 @@ class TestViews(TestBase):
             email="trainer@example.org",
             password="trainer",
         )
-        self.trainer.data_privacy_agreement = True
-        self.trainer.save()
+        self.person_consent_required_terms(self.trainer)
         self.trainer.groups.add(trainer_group)
 
         # user with access only to trainee dashboard
@@ -119,8 +114,7 @@ class TestViews(TestBase):
             email="trainee@example.org",
             password="trainee",
         )
-        self.trainee.data_privacy_agreement = True
-        self.trainee.save()
+        self.person_consent_required_terms(self.trainee)
         assert admins not in self.trainee.groups.all()
         assert steering_committee not in self.trainee.groups.all()
 

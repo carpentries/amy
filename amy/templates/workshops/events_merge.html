@@ -109,12 +109,12 @@
   </tr>
   <tr>
     <th scope="row">Latitude</th>
-    <td>{{ obj_a.latitude|default:"—" }}</td><td>{{ obj_b.latitude|default:"—" }}</td>
+    <td>{{ obj_a.latitude|default_if_none:"&mdash;" }}</td><td>{{ obj_b.latitude|default_if_none:"&mdash;" }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.latitude %}</th>
   </tr>
   <tr>
     <th scope="row">Longitude</th>
-    <td>{{ obj_a.longitude|default:"—" }}</td><td>{{ obj_b.longitude|default:"—" }}</td>
+    <td>{{ obj_a.longitude|default_if_none:"&mdash;" }}</td><td>{{ obj_b.longitude|default_if_none:"&mdash;" }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.longitude %}</th>
   </tr>
   <tr>

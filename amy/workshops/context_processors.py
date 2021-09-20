@@ -1,4 +1,4 @@
-from . import __version__
+from amy import __version__
 
 
 def version(request):

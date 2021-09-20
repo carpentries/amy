@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
+from fiscal.fields import FlexibleSplitArrayField
 from fiscal.models import MembershipTask
 
 # this is used instead of Django Autocomplete Light widgets
@@ -92,6 +93,14 @@ class OrganizationCreateForm(OrganizationForm):
 
 class MembershipForm(forms.ModelForm):
     helper = BootstrapHelper(add_cancel_button=False)
+    extensions = FlexibleSplitArrayField(
+        forms.IntegerField(),
+        size=0,
+        help_text="Extensions are available for edit only if the membership has "
+        "been extended.<br><b>Warning:</b> changing these will change the agreement "
+        "end date.",
+        required=False,
+    )
 
     class Meta:
         model = Membership
@@ -102,6 +111,7 @@ class MembershipForm(forms.ModelForm):
             "variant",
             "agreement_start",
             "agreement_end",
+            "extensions",
             "contribution_type",
             "registration_code",
             "agreement_link",
@@ -111,10 +121,34 @@ class MembershipForm(forms.ModelForm):
             "inhouse_instructor_training_seats",
             "additional_inhouse_instructor_training_seats",
             "emergency_contact",
+            "workshops_without_admin_fee_rolled_over",
+            "workshops_without_admin_fee_rolled_from_previous",
+            "public_instructor_training_seats_rolled_over",
+            "public_instructor_training_seats_rolled_from_previous",
+            "inhouse_instructor_training_seats_rolled_over",
+            "inhouse_instructor_training_seats_rolled_from_previous",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self, *args, show_rolled_over=False, show_rolled_from_previous=False, **kwargs
+    ):
         super().__init__(*args, **kwargs)
+        instance = kwargs.get("instance")
+
+        if instance and "extensions" in self.fields:
+            # Recalculate number of subwidgets for each of the extensions.
+            self.fields["extensions"].change_size(len(instance.extensions))
+
+        # When editing membership, allow to edit rolled_over or rolled_from_previous
+        # values when membership was rolled over or rolled from other membership.
+        if not show_rolled_over:
+            del self.fields["workshops_without_admin_fee_rolled_over"]
+            del self.fields["public_instructor_training_seats_rolled_over"]
+            del self.fields["inhouse_instructor_training_seats_rolled_over"]
+        if not show_rolled_from_previous:
+            del self.fields["workshops_without_admin_fee_rolled_from_previous"]
+            del self.fields["public_instructor_training_seats_rolled_from_previous"]
+            del self.fields["inhouse_instructor_training_seats_rolled_from_previous"]
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -186,6 +220,7 @@ class MembershipCreateForm(MembershipForm):
     class Meta(MembershipForm.Meta):
         fields = MembershipForm.Meta.fields.copy()
         fields.insert(0, "main_organization")
+        fields.remove("extensions")
         fields.append("comment")
 
     class Media:
@@ -200,6 +235,28 @@ class MembershipCreateForm(MembershipForm):
             "organisation (<a href='{}'>here</a>) before applying it to this "
             "membership."
         ).format(reverse("organization_add"))
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # add warning alert for dates falling within next 2-3 months
+        STANDARD_PACKAGES_PREPOPULATION_WARNING = (
+            "<b>Workshops without admin fee per agreement</b> and "
+            "<b>Public instructor training seats</b> were adjusted according to "
+            "standard membership packages."
+        )
+        pos_index = self.helper.layout.fields.index("variant")
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML(STANDARD_PACKAGES_PREPOPULATION_WARNING),
+                    css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
+                ),
+                id="standard_packages_prepopulation_warning",
+                css_class="form-group row d-none",
+            ),
+        )
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
@@ -235,6 +292,8 @@ class MembershipRollOverForm(MembershipCreateForm):
         fields = [
             "name",
             "consortium",
+            "copy_members",
+            "copy_membership_tasks",
             "public_status",
             "variant",
             "agreement_start",
@@ -252,13 +311,13 @@ class MembershipRollOverForm(MembershipCreateForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
-            "copy_members",
-            "copy_membership_tasks",
         ]
 
     def __init__(self, *args, **kwargs):
         max_values = kwargs.pop("max_values", {})
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args, show_rolled_over=True, show_rolled_from_previous=True, **kwargs
+        )
 
         # don't allow values over the limit imposed by the view using this form
         fields = [
@@ -302,11 +361,20 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
-        add_cancel_button=False, form_tag=False, add_submit_button=False
+        add_cancel_button=False,
+        form_tag=False,
+        add_submit_button=False,
+        # formset gathers media, so there's no need to include them in every individual
+        # form (plus this prevents an unnecessary bug when multiple handlers are
+        # attached to the same element)
+        include_media=False,
     )
     helper_empty_form = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
+
+    class Media:
+        js = ("member_form.js",)
 
     class Meta:
         model = Member
@@ -393,17 +461,46 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
 class MembershipExtensionForm(forms.Form):
     agreement_start = forms.DateField(disabled=True, required=False)
     agreement_end = forms.DateField(disabled=True, required=False)
+    new_agreement_end = forms.DateField(required=True)
     extension = forms.IntegerField(
-        min_value=1,
-        required=True,
-        help_text="Number of days the agreement should be extended.",
+        disabled=True,
+        required=False,
+        help_text="Number of days the agreement will be extended.",
     )
-    new_agreement_end = forms.DateField(disabled=True, required=False)
+    comment = MarkdownxFormField(
+        label="Comment",
+        help_text=(
+            "This will be added to comments after the membership is extended. Beginning"
+            " of the comment will be prefixed with information about length of the "
+            "extension."
+        ),
+        widget=forms.Textarea,
+        required=False,
+    )
 
     helper = BootstrapHelper()
 
     class Media:
         js = ("membership_extend.js", "date_yyyymmdd.js")
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # validate new agreement end date is later than original agreement end date
+        agreement_end = self.cleaned_data.get("agreement_end")
+        new_agreement_end = self.cleaned_data.get("new_agreement_end")
+        try:
+            if new_agreement_end <= agreement_end:
+                errors["new_agreement_end"] = ValidationError(
+                    "New agreement end date must be later than original agreement "
+                    "end date."
+                )
+        except TypeError:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
 
 
 # ----------------------------------------------------------

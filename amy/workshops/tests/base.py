@@ -1,5 +1,5 @@
 import datetime
-from typing import Iterable
+from typing import Iterable, Optional
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
@@ -24,6 +24,22 @@ from workshops.models import (
 from workshops.util import universal_date_format
 
 
+def consent_to_all_required_consents(person: Person) -> None:
+    """
+    Helper function shared by SuperuserMixin and TestBase
+    """
+    terms = (
+        Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
+        .active()
+        .prefetch_active_options()
+    )
+    old_consents = Consent.objects.filter(person=person, term__in=terms).active()
+    old_consents_by_term_id = {consent.term_id: consent for consent in old_consents}
+    for term in terms:
+        old_consent = old_consents_by_term_id[term.id]
+        Consent.reconsent(old_consent, term.options[0])
+
+
 class SuperuserMixin:
     def _setUpSuperuser(self):
         """Set up admin account that can log into the website."""
@@ -35,8 +51,12 @@ class SuperuserMixin:
             email="sudo@example.org",
             password=password,
         )
-        self.admin.data_privacy_agreement = True
+        self._superUserConsent()
         self.admin.save()
+
+    def _superUserConsent(self):
+        """Super user consents to required Terms"""
+        consent_to_all_required_consents(self.admin)
 
     def _logSuperuserIn(self):
         """Log in superuser (administrator) account."""
@@ -52,7 +72,6 @@ class TestBase(
     def setUp(self):
         """Create standard objects."""
 
-        # self.clear_sites_cache()
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
@@ -60,20 +79,26 @@ class TestBase(
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
+        self._setUpSites()
 
+    def _setUpSites(self):
+        """Sometimes (depending on the test execution order) tests, using
+        `Site.objects.get_current()`, would throw error:
+
+          ValueError: Cannot assign "<Site: Site object (2)>": "Comment.site" must be
+          a "Site" instance.
+
+        Possibly some junk site was residing in the cache. Since the test execution
+        order may not be a deterministic one (especially when running tests in parallel)
+        we need to clear the cache whenever Sites framework is used.
+        """
         from django.conf import settings
 
         Site.objects.clear_cache()
-        Site.objects.get_or_create(
+        self.current_site, _ = Site.objects.get_or_create(
             pk=settings.SITE_ID,
             defaults=dict(domain="amy.carpentries.org", name="AMY server"),
         )
-
-    def clear_sites_cache(self):
-        # we need to clear Sites' cache, because after post_migration signal,
-        # there's some junk in the cache that prevents from adding comments
-        # (the site in CACHE is not a real Site)
-        Site.objects.clear_cache()
 
     def _setUpLessons(self):
         """Set up lesson objects."""
@@ -456,7 +481,9 @@ class TestBase(
         )
 
     @staticmethod
-    def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
+    def reconsent(
+        person: Person, term: Term, term_option: Optional[TermOption]
+    ) -> Consent:
         consent = Consent.objects.get(
             person=person, term=term, archived_at__isnull=True
         )
@@ -469,6 +496,9 @@ class TestBase(
     def person_consent_active_terms(self, person: Person) -> None:
         terms = Term.objects.active().prefetch_active_options()
         self.person_agree_to_terms(person, terms)
+
+    def person_consent_required_terms(self, person: Person) -> None:
+        consent_to_all_required_consents(person)
 
     def saveResponse(self, response, filename="error.html"):
         content = response.content.decode("utf-8")

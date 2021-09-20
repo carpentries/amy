@@ -74,7 +74,6 @@ from workshops.filters import (
     WorkshopStaffFilter,
 )
 from workshops.forms import (
-    ActionRequiredPrivacyForm,
     AdminLookupForm,
     AwardForm,
     BootstrapHelper,
@@ -852,6 +851,7 @@ def persons_merge(request):
                 "trainingprogress_set",
                 "comment_comments",  # made by this person
                 "comments",  # made by others regarding this person
+                "consent_set",
             )
 
             try:
@@ -1016,6 +1016,12 @@ def event_details(request, slug):
         .values_list("person__email", flat=True),
         "today": datetime.date.today(),
         "admin_lookup_form": admin_lookup_form,
+        "event_location": {
+            "venue": event.venue,
+            "humandate": event.human_readable_date,
+            "latitude": event.latitude,
+            "longitude": event.longitude,
+        },
     }
     return render(request, "workshops/event.html", context)
 
@@ -1689,13 +1695,16 @@ class TaskCreate(
             if remaining == 1:
                 messages.warning(
                     self.request,
-                    f'Membership "{seat_membership}" has 0 instructor training seats '
-                    "available.",
+                    # after the form is saved there will be 0 remaining seats
+                    f'Membership "{seat_membership}" has no '
+                    f'{"public" if seat_public else "in-house"} instructor training '
+                    "seats remaining.",
                 )
-            if remaining < 1:
+            if remaining <= 0:
                 messages.warning(
                     self.request,
-                    f'Membership "{seat_membership}" is using more training seats than '
+                    f'Membership "{seat_membership}" is using more '
+                    f'{"public" if seat_public else "in-house"} training seats than '
                     "it's been allowed.",
                 )
 
@@ -1842,6 +1851,31 @@ class TaskUpdate(
         check_ihia_new = InstructorsHostIntroductionAction.check(new.event)
         check_afwa_new = AskForWebsiteAction.check(new.event)
         check_rha_new = RecruitHelpersAction.check(new.event)
+
+        seat_membership = form.cleaned_data["seat_membership"]
+        seat_public = form.cleaned_data["seat_public"]
+        # check associated membership remaining seats and validity
+        if hasattr(self, "request") and seat_membership is not None:
+            remaining = (
+                seat_membership.public_instructor_training_seats_remaining
+                if seat_public
+                else seat_membership.inhouse_instructor_training_seats_remaining
+            )
+            # check number of available seats
+            if remaining == 0:
+                messages.warning(
+                    self.request,
+                    f'Membership "{seat_membership}" has no '
+                    f'{"public" if seat_public else "in-house"} instructor training '
+                    "seats remaining.",
+                )
+            if remaining < 0:
+                messages.warning(
+                    self.request,
+                    f'Membership "{seat_membership}" is using more '
+                    f'{"public" if seat_public else "in-house"} training seats than '
+                    "it's been allowed.",
+                )
 
         # NewInstructorAction conditions are met, but weren't before
         if not check_nia_old and check_nia_new:
@@ -2426,38 +2460,3 @@ def object_changes(request, version_id):
         "comparable": len(action_list) >= 2,
     }
     return render(request, "workshops/object_diff.html", context)
-
-
-# ------------------------------------------------------------
-# "Action required" views
-
-
-@login_required
-def action_required_privacy(request):
-    person = request.user
-
-    # disable the view for users who already agreed
-    if person.data_privacy_agreement:
-        raise Http404("This view is disabled.")
-
-    form = ActionRequiredPrivacyForm(instance=person)
-
-    if request.method == "POST":
-        form = ActionRequiredPrivacyForm(request.POST, instance=person)
-
-        if form.is_valid() and form.instance == person:
-            person = form.save()
-            messages.success(request, "Agreement successfully saved.")
-
-            if "next" in request.GET:
-                return redirect(request.GET["next"])
-            else:
-                return redirect(reverse("dispatch"))
-        else:
-            messages.error(request, "Fix errors below.")
-
-    context = {
-        "title": "Action required: privacy policy agreement",
-        "form": form,
-    }
-    return render(request, "workshops/action_required_privacy.html", context)

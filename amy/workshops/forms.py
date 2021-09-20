@@ -859,21 +859,6 @@ class PersonsMergeForm(forms.Form):
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )
-    may_contact = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    publish_profile = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    data_privacy_agreement = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
     gender = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
@@ -961,6 +946,11 @@ class PersonsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     comments = forms.ChoiceField(
+        choices=THREE,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
+    consent_set = forms.ChoiceField(
         choices=THREE,
         initial=DEFAULT,
         widget=forms.RadioSelect,
@@ -1165,30 +1155,6 @@ class EventsMergeForm(forms.Form):
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )
-
-
-# ----------------------------------------------------------
-# Action required forms
-
-
-class ActionRequiredPrivacyForm(forms.ModelForm):
-    data_privacy_agreement = forms.BooleanField(
-        label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
-        ' target="_blank" rel="noreferrer">'
-        "the data privacy policy of The Carpentries</a>.",
-        required=True,
-    )
-
-    helper = BootstrapHelper(add_cancel_button=False)
-
-    class Meta:
-        model = Person
-        fields = [
-            "data_privacy_agreement",
-            "may_contact",
-            "publish_profile",
-        ]
 
 
 # ----------------------------------------------------------

@@ -139,6 +139,7 @@ class Membership(models.Model):
         ("silver", "Silver"),
         ("gold", "Gold"),
         ("platinum", "Platinum"),
+        ("alacarte", "A la carte"),
     )
     variant = models.CharField(
         max_length=STR_MED,
@@ -1591,8 +1592,8 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             # enforce location data for 'Online' country
             self.venue = "Internet"
             self.address = "Internet"
-            self.latitude = -48.876667
-            self.longitude = -123.393333
+            self.latitude = None
+            self.longitude = None
 
         super().save(*args, **kwargs)
 
@@ -1726,24 +1727,6 @@ class Task(RQJobsMixin, models.Model):
         ) and self.role.name != "learner":
             errors["role"] = ValidationError(
                 "Seat (open / membership) can be assigned only to a workshop learner."
-            )
-
-        if (
-            self.seat_membership
-            and self.seat_public
-            and not self.seat_membership.public_instructor_training_seats_remaining
-        ):
-            errors["seat_public"] = ValidationError(
-                "This membership doesn't have any remaining public seats."
-            )
-
-        if (
-            self.seat_membership
-            and not self.seat_public
-            and not self.seat_membership.inhouse_instructor_training_seats_remaining
-        ):
-            errors["seat_public"] = ValidationError(
-                "This membership doesn't have any remaining in-house seats."
             )
 
         if errors:
@@ -2905,12 +2888,14 @@ class WorkshopRequest(
         blank=True,
         null=True,
         verbose_name="Preferred dates",
-        help_text="Our workshops typically run two full days. Please select "
-        "your preferred first day for the workshop. If you do not "
-        "have exact dates or are interested in an alternative "
-        "schedule, please indicate so below. Because we need to "
-        "coordinate with instructors, a minimum of 2-3 months lead "
-        "time is required for workshop planning.",
+        help_text="Please select your preferred first day for the workshop. If you do "
+        "not have exact dates or are interested in an alternative schedule, please "
+        "indicate so below. Because we need to coordinate with instructors, a minimum "
+        "of 2-3 months lead time is required for workshop planning.<br>The preferred "
+        "dates are not a guarantee. We do our best to schedule your workshop for the "
+        "dates that you have requested, however, a high volume of workshops on a given "
+        "date may prevent us from fulfilling your request. Please prepare alternative "
+        "dates in the event that we can not accommodate your request.",
     )
     other_preferred_dates = models.CharField(
         max_length=STR_LONGEST,

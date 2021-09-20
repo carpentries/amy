@@ -4,7 +4,6 @@ from urllib.parse import urlencode
 from django.contrib.messages import WARNING
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from django.test import RequestFactory
@@ -550,6 +549,38 @@ class TestTrainingRequestsListView(TestBase):
         self.assertEqual(membership2.public_instructor_training_seats_remaining, 0)
         self.assertContains(rv2, msg2)
 
+    def test_inhouse_created_successfully(self):
+        """Regression test: in-house seat can be created successfully."""
+        # Arrange
+        membership = Membership.objects.create(
+            variant="partner",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=1,
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=self.org,
+            role=MemberRole.objects.first(),
+        )
+        data = {
+            "match": "",
+            "requests": [self.first_req.pk],
+            "event": self.second_training.pk,
+            "seat_membership": membership.pk,
+            "seat_public": False,  # this should create an in-house seat
+        }
+
+        # Act
+        self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        task = Task.objects.get(
+            person=self.first_req.person, event=self.second_training
+        )
+        self.assertEqual(task.seat_public, data["seat_public"])
+
 
 class TestMatchingTrainingRequestAndDetailedView(TestBase):
     def setUp(self):
@@ -759,6 +790,7 @@ class TestTrainingRequestMerging(TestBase):
         self._setUpRoles()
         self._setUpTags()
         self._setUpUsersAndLogin()
+        self._setUpSites()
 
         self.first_req = create_training_request(state="d", person=self.spiderman)
         self.first_req.secondary_email = "notused@example.org"
@@ -772,7 +804,7 @@ class TestTrainingRequestMerging(TestBase):
             user=self.spiderman,
             comment="Comment from admin on first_req",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
         # comments regarding second request
         self.cb = Comment.objects.create(
@@ -780,7 +812,7 @@ class TestTrainingRequestMerging(TestBase):
             user=self.ironman,
             comment="Comment from admin on second_req",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
 
         # assign roles (previous involvement with The Carpentries) and

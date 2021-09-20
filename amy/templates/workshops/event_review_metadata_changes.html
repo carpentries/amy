@@ -52,13 +52,13 @@
     </tr>
     <tr>
       <th>Latitude</th>
-      <td>{{ event.latitude }}</td>
-      <td>{{ metadata.latitude }}</td>
+      <td>{{ event.latitude|default_if_none:"&mdash;" }}</td>
+      <td>{{ metadata.latitude|default_if_none:"&mdash;" }}</td>
     </tr>
     <tr>
       <th>Longitude</th>
-      <td>{{ event.longitude }}</td>
-      <td>{{ metadata.longitude }}</td>
+      <td>{{ event.longitude|default_if_none:"&mdash;" }}</td>
+      <td>{{ metadata.longitude|default_if_none:"&mdash;" }}</td>
     </tr>
     <tr>
       <th>Eventbrite key</th>

@@ -8,52 +8,13 @@ from django.core.exceptions import ValidationError
 from django.http.response import HttpResponseRedirect
 import django_rq
 
+from amy.consents.util import send_consent_email
 from autoemails.actions import NewConsentRequiredAction
-from autoemails.base_views import ActionManageMixin
-from autoemails.models import Trigger
 from consents.models import Consent, Term, TermOption
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
-
-
-def send_consent_email(request, term: Term) -> None:
-    """
-    Sending consent emails individually to each user to avoid
-    exposing email addresses.
-    """
-    # TODO: There is a way to do this on Mailgun's side
-    # see https://github.com/carpentries/amy/pull/1872/files#r615271469
-    emails = (
-        Consent.objects.filter(term=term, term_option__isnull=True)
-        .active()
-        .values_list("person__email", flat=True)
-    )
-    triggers = Trigger.objects.filter(
-        active=True,
-        action="consent-required",
-    )
-    for email in emails:
-        jobs, rqjobs = ActionManageMixin.add(
-            action_class=NewConsentRequiredAction,
-            logger=logger,
-            scheduler=scheduler,
-            triggers=triggers,
-            context_objects={
-                "term": term,
-                "person_email": email,
-            },
-            object_=term,
-        )
-    if triggers and jobs:
-        ActionManageMixin.bulk_schedule_message(
-            request=request,
-            num_emails=len(emails),
-            trigger=triggers[0],
-            job=jobs[0],
-            scheduler=scheduler,
-        )
 
 
 class ArchiveActionMixin:

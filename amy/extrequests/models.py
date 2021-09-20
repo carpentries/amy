@@ -449,10 +449,11 @@ class SelfOrganisedSubmission(
         null=False,
         default="",
         verbose_name="Please share your workshop URL",
-        help_text="Use the link to the website, not the repository. This is "
-        "typically in the format <a>https://username.github.io/"
-        "YYYY-MM-DD-sitename</a>.  If you are running an online workshop, "
-        "please use the format YYYY-MM-DD-sitename-online.",
+        help_text="Please share the link to the public-facing workshop website. If you "
+        "are using our template, this is typically in the format of https://username."
+        "github.io/YYYY-MM-DD-sitename or https://username.github.io/"
+        "YYYY-MM-DD-sitename-online. We do not need links to a separate registration "
+        "page, GitHub repo, or any other related pages.",
     )
     FORMAT_CHOICES = (
         ("standard", "Standard two-day Carpentries workshop"),

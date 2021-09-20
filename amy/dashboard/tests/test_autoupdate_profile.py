@@ -1,5 +1,6 @@
 from django.urls import reverse
 
+from consents.models import Consent, Term
 from workshops.models import KnowledgeDomain, Person, Qualification
 from workshops.tests.base import TestBase
 
@@ -18,8 +19,7 @@ class TestAutoUpdateProfile(TestBase):
             password="pass",
         )
 
-        self.user.data_privacy_agreement = True
-        self.user.save()
+        self.person_consent_required_terms(self.user)
 
         Qualification.objects.create(person=self.user, lesson=self.git)
         Qualification.objects.create(person=self.user, lesson=self.sql)
@@ -38,13 +38,27 @@ class TestAutoUpdateProfile(TestBase):
         self.assertEqual(rv.status_code, 200)
 
     def test_update_profile(self):
+        term_slugs = [
+            "may-contact",
+            "may-publish-name",
+            "public-profile",
+        ]
+        terms_by_term_slug = {
+            term.slug: term
+            for term in Term.objects.filter(slug__in=term_slugs)
+            .active()
+            .prefetch_active_options()
+        }
+        consent_data = {
+            f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk
+            for slug in term_slugs
+        }
         data = {
             "personal": "admin",
             "middle": "",
             "family": "Smith",
             "email": "admin@example.org",
             "gender": Person.UNDISCLOSED,
-            "may_contact": True,
             "airport": self.airport_0_0.pk,
             "github": "changed",
             "twitter": "",
@@ -54,7 +68,8 @@ class TestAutoUpdateProfile(TestBase):
             "languages": [self.latin.pk, self.french.pk],
             "domains": [self.chemistry.pk],
             "lessons": [self.git.pk, self.matlab.pk],
-            "privacy_consent": True,
+            "consents-person": self.user.pk,
+            **consent_data,
         }
 
         rv = self.client.post(reverse("autoupdate_profile"), data, follow=True)
@@ -69,3 +84,17 @@ class TestAutoUpdateProfile(TestBase):
         self.assertEqual(set(self.user.lessons.all()), {self.git, self.matlab})
         self.assertEqual(list(self.user.domains.all()), [self.chemistry])
         self.assertEqual(set(self.user.languages.all()), {self.french, self.latin})
+
+        updated_consents_by_term_slug = {
+            consent.term.slug: consent
+            for consent in Consent.objects.filter(
+                term__slug__in=term_slugs, person=self.user
+            )
+            .active()
+            .select_related("term")
+        }
+        for slug in term_slugs:
+            self.assertEqual(
+                updated_consents_by_term_slug[slug].term_option.pk,
+                consent_data[f"consents-{slug}"],
+            )

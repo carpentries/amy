@@ -1,6 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
 
-from django.contrib.sites.models import Site
 from django.urls import reverse
 from django_comments.models import Comment
 
@@ -147,7 +146,7 @@ class TestSearch(TestBase):
             user=self.hermione,
             comment="Testing commenting system for Alpha Organization",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
 
         response = self.search_for("Alpha")
@@ -215,10 +214,37 @@ class TestSearch(TestBase):
             user=self.hermione,
             comment="Testing commenting system for Alpha Organization",
             submit_date=datetime.now(tz=timezone.utc),
-            site=Site.objects.get_current(),
+            site=self.current_site,
         )
 
         response = self.search_for("Alpha", no_redirect=False, follow=False)
         self.assertEqual(response.status_code, 200)  # doesn't redirect
         self.assertEqual(len(response.context["organisations"]), 1)
         self.assertEqual(len(response.context["comments"]), 1)
+
+    def test_search_redirect_one_single_result(self):
+        """Regression test: make sure redirect doesn't happen if there's a singular
+        result in one of the groups, but other groups contain >= 2 elements.
+
+        https://github.com/carpentries/amy/issues/2014
+        """
+        Comment.objects.create(
+            content_object=self.org_alpha,
+            user=self.hermione,
+            comment="Testing commenting system for Alpha Organization",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=self.current_site,
+        )
+
+        Comment.objects.create(
+            content_object=self.org_beta,
+            user=self.hermione,
+            comment="Cross-posting an Alpha comment on Beta Organization page.",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=self.current_site,
+        )
+
+        response = self.search_for("Alpha", no_redirect=False, follow=False)
+        self.assertEqual(response.status_code, 200)  # doesn't redirect
+        self.assertEqual(len(response.context["organisations"]), 1)
+        self.assertEqual(len(response.context["comments"]), 2)

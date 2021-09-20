@@ -231,6 +231,31 @@
   </div>
 </div>
 
+
+{% if membership.event_set.all %}
+<h2>Events</h2>
+<table class="table table-striped">
+  <tr>
+    <th>Slug</th>
+    <th>Tags</th>
+    <th>Start date</th>
+    <th>End date</th>
+    <th>URL</th>
+  </tr>
+  {% for e in membership.event_set.all %}
+  <tr>
+    <td><a href="{{ e.get_absolute_url }}">{{ e.slug }}</a></td>
+    <td>{{ e.tags.all | join:", " }}</td>
+    <td>{{ e.start }}</td>
+    <td>{{ e.end }}</td>
+    <td>{{ e.url|urlize_newtab }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No events.</p>
+{% endif %}
+
 {% include "includes/comments.html" with object=membership %}
 
 {% endblock %}

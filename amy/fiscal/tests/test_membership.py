@@ -694,6 +694,167 @@ class TestMembershipForms(TestBase):
         form = MembershipForm(data, instance=membership)
         self.assertTrue(form.is_valid())
 
+    def test_edit_membership_rolled_fields(self):
+        # Arrange
+        membership1 = Membership.objects.create(
+            name="Test Membership 1",
+            consortium=False,
+            variant="partner",
+            agreement_start=date(2021, 8, 1),
+            agreement_end=date(2022, 7, 31),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=10,
+            inhouse_instructor_training_seats=10,
+        )
+        membership2 = Membership.objects.create(
+            name="Test Membership 2",
+            consortium=False,
+            variant="partner",
+            agreement_start=date(2022, 8, 1),
+            agreement_end=date(2023, 7, 31),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=10,
+            inhouse_instructor_training_seats=10,
+        )
+        membership3 = Membership.objects.create(
+            name="Test Membership 3",
+            consortium=False,
+            variant="partner",
+            agreement_start=date(2023, 8, 1),
+            agreement_end=date(2024, 7, 31),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=10,
+            inhouse_instructor_training_seats=10,
+        )
+        # 1st roll-over (only central workshops)
+        membership1.rolled_to_membership = membership2
+        membership1.workshops_without_admin_fee_rolled_over = 5
+        membership2.workshops_without_admin_fee_rolled_from_previous = 5
+
+        # 2nd roll-over (training seats of both kinds)
+        membership2.rolled_to_membership = membership3
+        membership2.public_instructor_training_seats_rolled_over = 6
+        membership2.inhouse_instructor_training_seats_rolled_over = 7
+        membership3.public_instructor_training_seats_rolled_from_previous = 6
+        membership3.inhouse_instructor_training_seats_rolled_from_previous = 7
+
+        membership1.save()
+        membership2.save()
+        membership3.save()
+
+        # Act
+        data = {
+            "name": membership2.name,
+            "public_status": membership2.public_status,
+            "variant": membership2.variant,
+            "agreement_start": membership2.agreement_start,
+            "agreement_end": membership2.agreement_end,
+            "contribution_type": membership2.contribution_type,
+            "public_instructor_training_seats": membership2.public_instructor_training_seats,  # noqa
+            "additional_public_instructor_training_seats": membership2.additional_public_instructor_training_seats,  # noqa
+            "inhouse_instructor_training_seats": membership2.inhouse_instructor_training_seats,  # noqa
+            "additional_inhouse_instructor_training_seats": membership2.additional_inhouse_instructor_training_seats,  # noqa
+            "workshops_without_admin_fee_rolled_from_previous": 6,  # was 5
+            "public_instructor_training_seats_rolled_over": 7,  # was 6
+            "inhouse_instructor_training_seats_rolled_over": 8,  # was 7
+        }
+        self.client.post(reverse("membership_edit", args=[membership2.id]), data=data)
+        membership1.refresh_from_db()
+        membership2.refresh_from_db()
+        membership3.refresh_from_db()
+
+        # Assert
+        self.assertEqual(
+            membership1.workshops_without_admin_fee_rolled_over,
+            6,
+        )
+        self.assertEqual(
+            membership2.workshops_without_admin_fee_rolled_from_previous,
+            6,
+        )
+
+        self.assertEqual(
+            membership2.public_instructor_training_seats_rolled_over,
+            7,
+        )
+        self.assertEqual(
+            membership3.public_instructor_training_seats_rolled_from_previous,
+            7,
+        )
+
+        self.assertEqual(
+            membership2.inhouse_instructor_training_seats_rolled_over,
+            8,
+        )
+        self.assertEqual(
+            membership3.inhouse_instructor_training_seats_rolled_from_previous,
+            8,
+        )
+
+    def test_membership_edit_extensions(self):
+        for increment in (10, -5):  # +10 days, -5 days per extension
+            with self.subTest(increment=increment):
+                # Arrange
+                agreement_end = date(2022, 7, 31)
+                extensions = [10, 20, 30]
+                membership = Membership.objects.create(
+                    name="Test Membership 1",
+                    consortium=False,
+                    variant="partner",
+                    agreement_start=date(2021, 8, 1),
+                    agreement_end=agreement_end,
+                    extensions=extensions,
+                    contribution_type="financial",
+                    workshops_without_admin_fee_per_agreement=10,
+                    public_instructor_training_seats=10,
+                    inhouse_instructor_training_seats=10,
+                )
+                data = {
+                    "name": membership.name,
+                    "public_status": membership.public_status,
+                    "variant": membership.variant,
+                    "agreement_start": membership.agreement_start,
+                    "agreement_end": membership.agreement_end,
+                    "extensions_0": extensions[0] + increment,
+                    "extensions_1": extensions[1] + increment,
+                    "extensions_2": extensions[2] + increment,
+                    "contribution_type": membership.contribution_type,
+                    "workshops_without_admin_fee_per_agreement": membership.workshops_without_admin_fee_per_agreement,  # noqa
+                    "public_instructor_training_seats": membership.public_instructor_training_seats,  # noqa
+                    "additional_public_instructor_training_seats": membership.additional_public_instructor_training_seats,  # noqa
+                    "inhouse_instructor_training_seats": membership.inhouse_instructor_training_seats,  # noqa
+                    "additional_inhouse_instructor_training_seats": membership.additional_inhouse_instructor_training_seats,  # noqa
+                }
+                str_ext = ", ".join(str(ext + increment) for ext in extensions)
+                new_agreement_end = agreement_end + timedelta(days=3 * increment)
+                msg = (
+                    f"Extension days changed to following: {str_ext} days. New "
+                    f"agreement end date: {new_agreement_end}."
+                )
+
+                # Act
+                result = self.client.post(
+                    reverse("membership_edit", args=[membership.id]),
+                    data=data,
+                    follow=False,
+                )
+
+                # Assert
+                self.assertEqual(result.status_code, 302)  # form saved
+                membership.refresh_from_db()
+                self.assertEqual(
+                    membership.extensions,
+                    [extension + increment for extension in extensions],
+                )
+                self.assertEqual(membership.agreement_end, new_agreement_end)
+
+                # check if comment was added
+                comment = CommentModel.objects.for_model(membership).last()
+                self.assertEqual(comment.comment, msg)
+
 
 class TestNewMembershipWorkflow(TestBase):
     def setUp(self):
@@ -823,9 +984,9 @@ class TestMembershipExtension(TestBase):
             # fields ignored
             "agreement_start": "invalid value",
             "agreement_end": "invalid value",
-            "new_agreement_end": "invalid value",
+            "extension": "invalid value",
             # field accepted
-            "extension": "1",
+            "new_agreement_end": "2021-08-10",
         }
 
         form = MembershipExtensionForm(data)
@@ -836,14 +997,16 @@ class TestMembershipExtension(TestBase):
         data = [
             ("string", False),
             ("", False),
-            ("-1", False),
-            ("0", False),
-            ("1", True),
-            ("2", True),
+            ("2020-01-01", False),
+            ("2021-01-01", False),
+            ("2022-01-01", True),
         ]
-        for extension, valid in data:
-            with self.subTest(extension=extension, valid=valid):
-                form = MembershipExtensionForm(dict(extension=extension))
+        for end_date, valid in data:
+            with self.subTest(date=end_date, valid=valid):
+                form = MembershipExtensionForm(
+                    dict(new_agreement_end=end_date),
+                    initial=dict(agreement_end="2021-01-01"),
+                )
                 self.assertEqual(form.is_valid(), valid)
 
     def test_membership_extended(self):
@@ -863,7 +1026,7 @@ class TestMembershipExtension(TestBase):
             membership=membership,
             role=MemberRole.objects.first(),
         )
-        data = {"extension": 30}
+        data = {"new_agreement_end": date(2021, 3, 31)}
 
         response = self.client.post(
             reverse("membership_extend", args=[membership.pk]),
@@ -895,9 +1058,9 @@ class TestMembershipExtension(TestBase):
             membership=membership,
             role=MemberRole.objects.first(),
         )
-        data1 = {"extension": 30}
-        data2 = {"extension": 40}
-        data3 = {"extension": 50}
+        data1 = {"new_agreement_end": date(2021, 3, 31)}
+        data2 = {"new_agreement_end": date(2021, 5, 10)}
+        data3 = {"new_agreement_end": date(2021, 6, 29)}
 
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data1)
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data2)
@@ -925,9 +1088,14 @@ class TestMembershipExtension(TestBase):
             membership=membership,
             role=MemberRole.objects.first(),
         )
-        extension = 30
-        data = {"extension": extension}
+        comment = "Everything is awesome."
+        data = {"new_agreement_end": date(2021, 3, 31), "comment": comment}
         today = date.today()
+        expected_comment = f"""Extended membership by 30 days on {today} (new end date: 2021-03-31).
+
+----
+
+{comment}"""
 
         # Act
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data)
@@ -935,9 +1103,7 @@ class TestMembershipExtension(TestBase):
         # Assert
         self.assertEqual(CommentModel.objects.for_model(membership).count(), 1)
         comment = CommentModel.objects.for_model(membership).first()
-        self.assertEqual(
-            comment.comment, f"Extended membership by {extension} days on {today}."
-        )
+        self.assertEqual(comment.comment, expected_comment)
 
 
 class TestMembershipCreateRollOver(TestBase):

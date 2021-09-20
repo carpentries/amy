@@ -77,7 +77,7 @@ class TestOrganization(TestBase):
                 self.assertIn("domain", form.cleaned_data)
                 self.assertEqual(form.cleaned_data["domain"], expected)
 
-    def test_creating_event_with_no_comment(self):
+    def test_creating_organization_with_no_comment(self):
         """Ensure that no comment is added when OrganizationCreateForm without
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -90,7 +90,7 @@ class TestOrganization(TestBase):
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
-    def test_creating_event_with_comment(self):
+    def test_creating_organization_with_comment(self):
         """Ensure that a comment is added when OrganizationCreateForm with
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)

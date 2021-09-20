@@ -19,6 +19,7 @@ from workshops.models import (
     TrainingRequest,
     TrainingRequirement,
 )
+from workshops.tests.base import consent_to_all_required_consents
 
 
 class BaseExportingTest(APITestCase):
@@ -36,8 +37,7 @@ class BaseExportingTest(APITestCase):
             email="sudo@example.org",
             password="admin",
         )
-        self.admin.data_privacy_agreement = True
-        self.admin.save()
+        consent_to_all_required_consents(self.admin)
 
     def login(self):
         if not hasattr(self, "admin"):
@@ -57,10 +57,10 @@ class TestExportingPersonData(BaseExportingTest):
             family="Primary",
             email="primary_user@amy.com",
             is_active=True,
-            data_privacy_agreement=True,
         )
         self.user.set_password("password")
         self.user.save()
+        consent_to_all_required_consents(self.user)
 
         # save API endpoint URL
         self.url = reverse("api:export-person-data")
@@ -232,10 +232,10 @@ class TestExportingPersonData(BaseExportingTest):
             family="Secondary",
             email="secondary_user@amy.com",
             is_active=True,
-            data_privacy_agreement=True,
         )
         self.second_user.set_password("password")
         self.second_user.save()
+        consent_to_all_required_consents(self.second_user)
 
         # login as first user
         self.client.login(username="primary_user", password="password")

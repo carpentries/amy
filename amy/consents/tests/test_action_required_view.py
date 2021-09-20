@@ -1,3 +1,4 @@
+from django.forms.widgets import HiddenInput
 from django.urls import reverse
 from django.utils.http import urlencode
 
@@ -19,10 +20,6 @@ class TestActionRequiredTermView(ConsentTestBase):
             username="longbottom_neville",
             airport=self.airport_0_0,
             is_active=True,
-            # Setting old terms to True to ensure it doesn't affect anything.
-            may_contact=True,
-            publish_profile=True,
-            data_privacy_agreement=True,
         )
 
     def test_agreement_already_set(self):
@@ -38,7 +35,13 @@ class TestActionRequiredTermView(ConsentTestBase):
         self.assertEqual(rv.status_code, 200)
 
         # Neville decided to agree to all terms on the page
-        self.person_agree_to_terms(self.neville, RequiredConsentsForm.get_terms())
+        kwargs = {
+            "initial": {"person": self.neville},
+            "widgets": {"person": HiddenInput()},
+        }
+        self.person_agree_to_terms(
+            self.neville, RequiredConsentsForm(**kwargs).get_terms()
+        )
 
         # form throws 404
         rv = self.client.get(url)
@@ -69,7 +72,11 @@ class TestActionRequiredTermView(ConsentTestBase):
     def test_required_agreement_submit(self):
         "Make sure the form passes only when required terms are set."
         # setup sample data
-        terms = RequiredConsentsForm.get_terms()
+        kwargs = {
+            "initial": {"person": self.neville},
+            "widgets": {"person": HiddenInput()},
+        }
+        terms = RequiredConsentsForm(**kwargs).get_terms()
         data = {
             term.slug: term.options[0].pk
             for term in terms.exclude(required_type=Term.PROFILE_REQUIRE_TYPE)
@@ -97,10 +104,6 @@ class TestTermsMiddleware(ConsentTestBase):
             username="longbottom_neville",
             airport=self.airport_0_0,
             is_active=True,
-            # Setting old terms to True to ensure it doesn't affect anything.
-            may_contact=True,
-            publish_profile=True,
-            data_privacy_agreement=True,
         )
         self.form_url = reverse("action_required_terms")
 

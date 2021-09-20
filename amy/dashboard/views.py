@@ -3,12 +3,14 @@ from typing import Dict, Optional
 
 from django.contrib import messages
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
+from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
 from dashboard.forms import (
     AssignmentForm,
@@ -31,6 +33,9 @@ from workshops.models import (
     TrainingRequest,
 )
 from workshops.util import admin_required, login_required
+
+# Terms shown on the trainee dashboard and can be updated by the user.
+TERM_SLUGS = ["may-contact", "public-profile", "may-publish-name"]
 
 
 @login_required
@@ -118,7 +123,7 @@ def trainee_dashboard(request):
     consents = (
         Consent.objects.active()
         .filter(
-            term__slug__in=["may-contact", "public-profile", "may-publish-name"],
+            term__slug__in=TERM_SLUGS,
             person=user,
         )
         .select_related("term", "term_option")
@@ -135,12 +140,23 @@ def trainee_dashboard(request):
 @login_required
 def autoupdate_profile(request):
     person = request.user
-    form = AutoUpdateProfileForm(instance=person)
+    consent_form_kwargs = {
+        "initial": {"person": person},
+        "widgets": {"person": HiddenInput()},
+        "form_tag": False,
+        "prefix": "consents",
+    }
+    form = AutoUpdateProfileForm(
+        instance=person, form_tag=False, add_submit_button=False
+    )
+    consent_form = TermBySlugsForm(term_slugs=TERM_SLUGS, **consent_form_kwargs)
 
     if request.method == "POST":
         form = AutoUpdateProfileForm(request.POST, instance=person)
-
-        if form.is_valid() and form.instance == person:
+        consent_form = TermBySlugsForm(
+            request.POST, term_slugs=TERM_SLUGS, **consent_form_kwargs
+        )
+        if form.is_valid() and form.instance == person and consent_form.is_valid():
             # save lessons
             person.lessons.clear()
             for lesson in form.cleaned_data["lessons"]:
@@ -152,6 +168,9 @@ def autoupdate_profile(request):
 
             person = form.save()
 
+            # save consents
+            consent_form.save()
+
             messages.success(request, "Your profile was updated.")
 
             return redirect(reverse("trainee-dashboard"))
@@ -161,6 +180,7 @@ def autoupdate_profile(request):
     context = {
         "title": "Update Your Profile",
         "form": form,
+        "consents_form": consent_form,
     }
     return render(request, "dashboard/autoupdate_profile.html", context)
 
@@ -253,37 +273,40 @@ def search(request):
     airports = None
     training_requests = None
     comments = None
-    single_results = []
 
     if request.method == "GET" and "term" in request.GET:
         form = SearchForm(request.GET)
         if form.is_valid():
-            term = form.cleaned_data.get("term", "")
+            term = form.cleaned_data.get("term", "").strip()
             tokens = re.split(r"\s+", term)
+            results_combined = []
 
-            organizations = Organization.objects.filter(
-                Q(domain__icontains=term) | Q(fullname__icontains=term)
-            ).order_by("fullname")
-            if len(organizations) == 1:
-                single_results.append(organizations[0])
+            organizations = list(
+                Organization.objects.filter(
+                    Q(domain__icontains=term) | Q(fullname__icontains=term)
+                ).order_by("fullname")
+            )
+            results_combined += organizations
 
-            memberships = Membership.objects.filter(
-                Q(name__icontains=term) | Q(registration_code__icontains=term)
-            ).order_by("-agreement_start")
-            if len(memberships) == 1:
-                single_results.append(memberships[0])
+            memberships = list(
+                Membership.objects.filter(
+                    Q(name__icontains=term) | Q(registration_code__icontains=term)
+                ).order_by("-agreement_start")
+            )
+            results_combined += memberships
 
-            events = Event.objects.filter(
-                Q(slug__icontains=term)
-                | Q(host__domain__icontains=term)
-                | Q(host__fullname__icontains=term)
-                | Q(url__icontains=term)
-                | Q(contact__icontains=term)
-                | Q(venue__icontains=term)
-                | Q(address__icontains=term)
-            ).order_by("-slug")
-            if len(events) == 1:
-                single_results.append(events[0])
+            events = list(
+                Event.objects.filter(
+                    Q(slug__icontains=term)
+                    | Q(host__domain__icontains=term)
+                    | Q(host__fullname__icontains=term)
+                    | Q(url__icontains=term)
+                    | Q(contact__icontains=term)
+                    | Q(venue__icontains=term)
+                    | Q(address__icontains=term)
+                ).order_by("-slug")
+            )
+            results_combined += events
 
             # if user searches for two words, assume they mean a person
             # name
@@ -296,52 +319,56 @@ def search(request):
                     | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
                 )
-                persons = Person.objects.filter(complex_q)
+                persons = list(Person.objects.filter(complex_q))
             else:
-                persons = Person.objects.filter(
-                    Q(personal__icontains=term)
+                persons = list(
+                    Person.objects.filter(
+                        Q(personal__icontains=term)
+                        | Q(family__icontains=term)
+                        | Q(email__icontains=term)
+                        | Q(secondary_email__icontains=term)
+                        | Q(github__icontains=term)
+                    ).order_by("family")
+                )
+
+            results_combined += persons
+
+            airports = list(
+                Airport.objects.filter(
+                    Q(iata__icontains=term) | Q(fullname__icontains=term)
+                ).order_by("iata")
+            )
+            results_combined += airports
+
+            training_requests = list(
+                TrainingRequest.objects.filter(
+                    Q(group_name__icontains=term)
                     | Q(family__icontains=term)
                     | Q(email__icontains=term)
-                    | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
-                ).order_by("family")
-
-            if len(persons) == 1:
-                single_results.append(persons[0])
-
-            airports = Airport.objects.filter(
-                Q(iata__icontains=term) | Q(fullname__icontains=term)
-            ).order_by("iata")
-            if len(airports) == 1:
-                single_results.append(airports[0])
-
-            training_requests = TrainingRequest.objects.filter(
-                Q(group_name__icontains=term)
-                | Q(family__icontains=term)
-                | Q(email__icontains=term)
-                | Q(github__icontains=term)
-                | Q(affiliation__icontains=term)
-                | Q(location__icontains=term)
-                | Q(user_notes__icontains=term)
+                    | Q(affiliation__icontains=term)
+                    | Q(location__icontains=term)
+                    | Q(user_notes__icontains=term)
+                )
             )
-            if len(training_requests) == 1:
-                single_results.append(training_requests[0])
+            results_combined += training_requests
 
-            comments = Comment.objects.filter(
-                Q(comment__icontains=term)
-                | Q(user_name__icontains=term)
-                | Q(user_email__icontains=term)
-                | Q(user__personal__icontains=term)
-                | Q(user__family__icontains=term)
-                | Q(user__email__icontains=term)
-                | Q(user__github__icontains=term)
-            ).prefetch_related("content_object")
-            if len(comments) == 1:
-                single_results.append(comments[0])
+            comments = list(
+                Comment.objects.filter(
+                    Q(comment__icontains=term)
+                    | Q(user_name__icontains=term)
+                    | Q(user_email__icontains=term)
+                    | Q(user__personal__icontains=term)
+                    | Q(user__family__icontains=term)
+                    | Q(user__email__icontains=term)
+                    | Q(user__github__icontains=term)
+                ).prefetch_related("content_object")
+            )
+            results_combined += comments
 
             # only 1 record found? Let's move to it immediately
-            if len(single_results) == 1 and not form.cleaned_data["no_redirect"]:
-                result = single_results[0]
+            if len(results_combined) == 1 and not form.cleaned_data["no_redirect"]:
+                result = results_combined[0]
                 msg = format_html(
                     "You were moved to this page, because your search <i>{}</i> "
                     "yields only this result.",

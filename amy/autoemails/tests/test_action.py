@@ -1,13 +1,17 @@
 from datetime import timedelta
+from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.db.models import ProtectedError
 from django.template.exceptions import TemplateSyntaxError
 from django.test import TestCase, override_settings
+from django.test.client import RequestFactory
 
-from autoemails.actions import BaseAction
-from autoemails.models import EmailTemplate, Trigger
+from autoemails.actions import BaseAction, send_bulk_email
+from autoemails.models import EmailTemplate, RQJob, Trigger
+from consents.models import Term
 
 
 @override_settings(AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS=None)
@@ -345,3 +349,51 @@ Regional Coordinator""",
         self.assertEqual(email.bcc, [])
         self.assertEqual(email.reply_to, ["reply-to@example.org"])
         self.assertEqual(email.from_email, "sender@example.org")
+
+
+class BulkEmailTest(TestCase):
+    class ExampleAction(BaseAction):
+        """
+        Example action class used exclusively for these tests
+        """
+
+        launch_at = timedelta(hours=1)
+
+        def all_recipients(self) -> str:
+            return ",".join(self.context_objects["person_emails"])
+
+    def test_send_bulk_email(self) -> None:
+        term = Term.objects.active()[0]
+        times_over_limit = 5
+        emails = [
+            f"test-address{i}@example.org"
+            for i in range(0, settings.BULK_EMAIL_LIMIT * times_over_limit)
+        ]
+        trigger = Trigger.objects.create(
+            action="test-trigger", template=EmailTemplate.objects.create()
+        )
+        with patch("amy.autoemails.base_views.messages.info") as mock_messages_info:
+            send_bulk_email(
+                request=RequestFactory(),
+                action_class=self.ExampleAction,
+                # Requires that triggers be a queryset
+                triggers=Trigger.objects.filter(action=trigger.action),
+                emails=emails,
+                additional_context_objects={"term": term},
+                object_=term,
+            )
+            self.assertEqual(mock_messages_info.call_count, 5)
+            for mock_call in mock_messages_info.call_args_list:
+                self.assertIn(
+                    "1000 New emails (test-trigger) were scheduled to run",
+                    mock_call[0][1],
+                )
+        # assert the correct jobs were created
+        rq_jobs = RQJob.objects.filter(trigger=trigger)
+        self.assertEqual(len(rq_jobs), times_over_limit)
+        expected_sent_emails = [
+            emails[i : i + settings.BULK_EMAIL_LIMIT]  # noqa
+            for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)
+        ]
+        for job, expected_emails in zip(rq_jobs, expected_sent_emails):
+            self.assertEqual(job.recipients.split(","), expected_emails)

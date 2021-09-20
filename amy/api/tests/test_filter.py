@@ -5,6 +5,7 @@ from rest_framework.test import APITestCase
 
 from consents.models import Consent, Term, TermOption
 from workshops.models import Airport, Person
+from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestFilter(APITestCase):
@@ -30,7 +31,7 @@ class TestFilter(APITestCase):
             email="sudo1@example.org",
             password="admin",
         )
-        self.admin_1.data_privacy_agreement = True
+        consent_to_all_required_consents(self.admin_1)
         self.admin_1.airport = Airport.objects.first()
         self.admin_1.save()
 
@@ -41,7 +42,7 @@ class TestFilter(APITestCase):
             email="sudo@example.org",
             password="admin",
         )
-        self.admin_2.data_privacy_agreement = True
+        consent_to_all_required_consents(self.admin_2)
         self.admin_2.airport = Airport.objects.first()
         self.admin_2.save()
 

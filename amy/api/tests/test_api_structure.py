@@ -12,6 +12,7 @@ from workshops.models import (
     Role,
     Task,
 )
+from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestAPIStructure(APITestCase):
@@ -23,7 +24,7 @@ class TestAPIStructure(APITestCase):
             email="sudo@example.org",
             password="admin",
         )
-        self.admin.data_privacy_agreement = True
+        consent_to_all_required_consents(self.admin)
         self.admin.airport = Airport.objects.first()
         self.admin.save()
 
