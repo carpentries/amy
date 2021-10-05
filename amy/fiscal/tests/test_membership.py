@@ -1109,6 +1109,8 @@ class TestMembershipExtension(TestBase):
 class TestMembershipCreateRollOver(TestBase):
     def setUp(self):
         super().setUp()
+        self._setUpRoles()
+        self.learner = Role.objects.get(name="learner")
         self._setUpUsersAndLogin()
         self.data = {
             "name": "Test Name",
@@ -1124,20 +1126,30 @@ class TestMembershipCreateRollOver(TestBase):
             "inhouse_instructor_training_seats": 9,
             "additional_inhouse_instructor_training_seats": 0,
         }
+        self.dc = Organization.objects.create(
+            domain="datacarpentry.org",
+            fullname="Data Carpentry",
+        )
 
-    def setUpMembership(self, consortium: bool = False):
+    def setUpMembership(
+        self,
+        consortium: bool = False,
+        workshops_without_admin_fee_per_agreement: int = 10,
+        public_instructor_training_seats: int = 12,
+        inhouse_instructor_training_seats: int = 9,
+    ):
         self.membership = Membership.objects.create(
             name="Test Membership",
             consortium=consortium,
             public_status="public",
             variant="partner",
-            agreement_start="2020-03-01",
-            agreement_end="2021-03-01",
+            agreement_start=date(2020, 3, 1),
+            agreement_end=date(2021, 3, 1),
             contribution_type="financial",
-            workshops_without_admin_fee_per_agreement=10,
-            public_instructor_training_seats=12,
+            workshops_without_admin_fee_per_agreement=workshops_without_admin_fee_per_agreement,  # noqa
+            public_instructor_training_seats=public_instructor_training_seats,  # noqa
             additional_public_instructor_training_seats=0,
-            inhouse_instructor_training_seats=9,
+            inhouse_instructor_training_seats=inhouse_instructor_training_seats,  # noqa
             additional_inhouse_instructor_training_seats=0,
         )
         Member.objects.create(
@@ -1483,6 +1495,100 @@ class TestMembershipCreateRollOver(TestBase):
         )
         self.assertEqual(last_membership.rolled_from_membership, self.membership)
         self.assertEqual(last_membership.rolled_to_membership, None)
+
+    def test_membership_rollover_negative_remaining_values(self):
+        """If current membership has used more seats/workshops than allowed, and
+        its remaining values are negative, the roll-over form should have max values
+        for rolled-over fields set to 0, instead of these negative values.
+
+        This is a regression test for https://github.com/carpentries/amy/issues/2056.
+        """
+        # Arrange
+
+        self.setUpMembership(
+            public_instructor_training_seats=0,
+            inhouse_instructor_training_seats=0,
+        )
+        # add two instructor training seats, so the remaining seats will be -1
+        event = Event.objects.create(
+            slug="event-centrally-organised",
+            host=self.org_beta,
+            sponsor=self.org_beta,
+            membership=self.membership,
+            start=self.membership.agreement_start,
+            end=self.membership.agreement_start + timedelta(days=1),
+            administrator=self.dc,
+        )
+        Task.objects.bulk_create(
+            [
+                # public seat
+                Task(
+                    event=event,
+                    person=self.hermione,
+                    role=self.learner,
+                    seat_membership=self.membership,
+                    seat_public=True,
+                ),
+                # inhouse seat
+                Task(
+                    event=event,
+                    person=self.harry,
+                    role=self.learner,
+                    seat_membership=self.membership,
+                    seat_public=False,
+                ),
+            ]
+        )
+
+        # even though the remaining values are -1 (see assertion down below), the min
+        # and max values will both be set to 0; previously the max value was set to the
+        # remaining value, even if it was negative
+        data = [
+            (-1, "Ensure this value is greater than or equal to 0."),
+            (1, "Ensure this value is less than or equal to 0."),
+        ]
+
+        for value, expected_msg in data:
+            with self.subTest(value=value):
+                payload = {
+                    "name": "Test Membership",
+                    # doesn't matter
+                    "workshops_without_admin_fee_rolled_from_previous": 3,
+                    "public_instructor_training_seats_rolled_from_previous": value,
+                    "inhouse_instructor_training_seats_rolled_from_previous": value,
+                    **self.data,
+                }
+
+                # Act
+                response = self.client.post(
+                    reverse("membership_create_roll_over", args=[self.membership.pk]),
+                    data=payload,
+                )
+
+                # Assert
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(
+                    self.membership.public_instructor_training_seats_remaining, -1
+                )
+                self.assertEqual(
+                    self.membership.inhouse_instructor_training_seats_remaining, -1
+                )
+                for field in (
+                    "public_instructor_training_seats_rolled_from_previous",
+                    "inhouse_instructor_training_seats_rolled_from_previous",
+                ):
+                    self.assertEqual(
+                        response.context["form"].fields[field].max_value,
+                        0,
+                    )
+                    self.assertEqual(
+                        response.context["form"].fields[field].min_value,
+                        0,
+                    )
+                    self.assertEqual(
+                        response.context["form"].errors[field],
+                        [expected_msg],
+                    )
 
     def test_membership_cannot_be_rolled_over_multiple_times(self):
         # Arrange

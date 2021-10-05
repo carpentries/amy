@@ -529,12 +529,20 @@ class MembershipCreateRollOver(
         }
 
     def get_form_kwargs(self) -> Dict[str, Any]:
+        # if any of the values is negative, use 0
+        max_values = {
+            "workshops_without_admin_fee_rolled_from_previous": max(
+                self.membership.workshops_without_admin_fee_remaining, 0
+            ),
+            "public_instructor_training_seats_rolled_from_previous": max(
+                self.membership.public_instructor_training_seats_remaining, 0
+            ),
+            "inhouse_instructor_training_seats_rolled_from_previous": max(
+                self.membership.inhouse_instructor_training_seats_remaining, 0
+            ),
+        }
         return {
-            "max_values": {
-                "workshops_without_admin_fee_rolled_from_previous": self.membership.workshops_without_admin_fee_remaining,  # noqa
-                "public_instructor_training_seats_rolled_from_previous": self.membership.public_instructor_training_seats_remaining,  # noqa
-                "inhouse_instructor_training_seats_rolled_from_previous": self.membership.inhouse_instructor_training_seats_remaining,  # noqa
-            },
+            "max_values": max_values,
             **super().get_form_kwargs(),
         }
 
