@@ -1498,9 +1498,8 @@ class TestMembershipCreateRollOver(TestBase):
 
     def test_membership_rollover_negative_remaining_values(self):
         """If current membership has used more seats/workshops than allowed, and
-        therefore its remaining values are negative, the roll-over form should
-        have max values for rolled-over fields set to 0, instead of these negative
-        values.
+        its remaining values are negative, the roll-over form should have max values
+        for rolled-over fields set to 0, instead of these negative values.
 
         This is a regression test for https://github.com/carpentries/amy/issues/2056.
         """
@@ -1510,7 +1509,7 @@ class TestMembershipCreateRollOver(TestBase):
             public_instructor_training_seats=0,
             inhouse_instructor_training_seats=0,
         )
-        # add two instructor training seats, so as the remainings will be -1
+        # add two instructor training seats, so the remaining seats will be -1
         event = Event.objects.create(
             slug="event-centrally-organised",
             host=self.org_beta,
@@ -1564,10 +1563,10 @@ class TestMembershipCreateRollOver(TestBase):
                 response = self.client.post(
                     reverse("membership_create_roll_over", args=[self.membership.pk]),
                     data=payload,
-                    follow=True,
                 )
 
                 # Assert
+                self.assertEqual(response.status_code, 200)
                 self.assertEqual(
                     self.membership.public_instructor_training_seats_remaining, -1
                 )
@@ -1578,6 +1577,14 @@ class TestMembershipCreateRollOver(TestBase):
                     "public_instructor_training_seats_rolled_from_previous",
                     "inhouse_instructor_training_seats_rolled_from_previous",
                 ):
+                    self.assertEqual(
+                        response.context["form"].fields[field].max_value,
+                        0,
+                    )
+                    self.assertEqual(
+                        response.context["form"].fields[field].min_value,
+                        0,
+                    )
                     self.assertEqual(
                         response.context["form"].errors[field],
                         [expected_msg],
