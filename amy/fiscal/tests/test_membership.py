@@ -172,8 +172,8 @@ class TestMembership(TestBase):
         self.setUpTasks()
         self.assertEqual(self.current.workshops_without_admin_fee_per_agreement, 10)
         self.assertEqual(self.current.workshops_without_admin_fee_total_allowed, 10)
-        self.assertEqual(self.current.workshops_without_admin_fee_completed, 6)
-        self.assertEqual(self.current.workshops_without_admin_fee_planned, 4)
+        self.assertEqual(self.current.workshops_without_admin_fee_completed, 7)
+        self.assertEqual(self.current.workshops_without_admin_fee_planned, 3)
         self.assertEqual(self.current.workshops_without_admin_fee_remaining, 0)
 
     def test_delete_membership(self):
