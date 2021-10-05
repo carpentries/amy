@@ -311,16 +311,18 @@ class Membership(models.Model):
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
+    def _base_queryset(self):
+        """Provide universal queryset for looking up workshops for this membership."""
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
+        return Event.objects.filter(membership=self).exclude(cancelled).distinct()
+
     def _workshops_without_admin_fee_queryset(self):
         """Provide universal queryset for looking up centrally-organised workshops for
         this membership."""
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
         return (
-            Event.objects.filter(membership=self)
+            self._base_queryset()
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
-            .exclude(cancelled)
-            .distinct()
         )
 
     def _workshops_without_admin_fee_completed_queryset(self):
@@ -419,16 +421,10 @@ class Membership(models.Model):
     def _self_organized_workshops_queryset(self):
         """Provide universal queryset for looking up self-organised events for this
         membership."""
-        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
         self_organized = Q(administrator=None) | Q(
             administrator__domain="self-organized"
         )
-        return (
-            Event.objects.filter(membership=self)
-            .filter(self_organized)
-            .exclude(cancelled)
-            .distinct()
-        )
+        return self._base_queryset().filter(self_organized)
 
     @cached_property
     def self_organized_workshops_completed(self):
