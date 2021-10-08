@@ -1292,8 +1292,8 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         "happen, but due to some circumstances got cancelled.</li>"
         "</ul>",
     )
-    start = models.DateField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT)
-    end = models.DateField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT)
+    end_date = models.DateField(null=True, blank=True)
     slug = models.SlugField(
         max_length=STR_LONG,
         unique=True,
