@@ -8,19 +8,16 @@
 
 ### AMY Dashboard
 
-All the menus and a search bar are displayed across the top. The main page has two columns, showing published workshops and unpublished workshops.
-
-This view can be filtered to show workshops assigned to the logged in administrator, unassigned workshops, or all workshops.
-
+All the menus and a search bar are displayed across the top. The main page has two columns, showing current workshops and in prograss workshops.  This view can be filtered to show workshops assigned to the logged in administrator, another administrator, unassigned workshops, or all workshops.
 
 ![AMY dashboard](images/amy_dashboard.png)
 
-* *Published workshops* have a complete start and end date, a valid url, and a complete location.
-* *Unpublished workshops* are all workshops that do not meet the criteria to be published.
+* *Current workshops* have a complete start and end date, a valid url, and a complete location.
+* *In progress workshops* are all workshops that do not meet the criteria to be published.
 
-Published workshops will show up on the Software Carpentry, Data Carpentry, or Library Carpentry website, depending on how they are tagged.
+Current workshops will be listed on The Carpentries website and the corresponding lesson program website if the box to publish the workshop is checked.
 
-From here you can also add new [persons](#adding-a-new-person), [events](#adding-a-new-event), [organisations](#adding-a-new-organization), or [airports](#adding-a-new-airport) to the database.
+From here you can also add new [persons](#adding-a-new-person), [events](#adding-a-new-event), [organisations](#adding-a-new-organisation), or [airports](#adding-a-new-airport) to the database.
 
 ![AMY add new elements](images/amy_add_new.png)
 
