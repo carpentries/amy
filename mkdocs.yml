@@ -1,5 +1,7 @@
 site_name: AMY documentation
 repo_url: https://github.com/carpentries/amy/
+edit_uri: 'edit/develop/docs/'
+
 theme: readthedocs
 nav:
     - 'Home': 'index.md'
