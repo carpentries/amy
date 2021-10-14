@@ -161,23 +161,23 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Additional people to contact**
 
-* Enter only email addresses for the main contact people for this event. Enter emails addresses, one at a time.  These individuals do not need a Person record in AMY.  They will be included on any automated emails.
+    * Enter only email addresses for the main contact people for this event. Enter emails addresses, one at a time.  These individuals do not need a Person record in AMY.  They will be included on any automated emails.
 
 ![AMY new event contact](images/amy_new_event_contact.png)
 
 * **Location details**
 
-* Add in the location including the country, venue name, address, and latitude/longitude coordinates.
+    * Add in the location including the country, venue name, address, and latitude/longitude coordinates.
 
 ![AMY new event location](images/amy_new_event_location.png)
 
 * **Comment**
 
-* Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
+    * Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
 
 ![AMY new event notes](images/amy_event_comment.png)
 
-Click "Submit" to save this event.
+**Click "Submit" to save this event.**
 
 #### Creating a New Event from URL
 
