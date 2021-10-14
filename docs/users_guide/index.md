@@ -131,6 +131,11 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY curricula taught](images/amy_curricula_taught.png)
 
+* **Lessons covered**
+* Placeholder section for lessons covered.
+
+
+
 * Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `username.github.io/YYYY-MM-DD-sitename`.
 
 ![AMY new event url](images/amy_new_event_url.png)
