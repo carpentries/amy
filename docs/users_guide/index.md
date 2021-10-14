@@ -138,8 +138,9 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
 
-
 ![AMY new event url](images/amy_new_event_url.png)
+
+* **Language**
 
 * Enter in the human language the workshop is taught in. This is especially important for The Carpentries to track workshops in languages other than English.
 
