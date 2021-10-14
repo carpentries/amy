@@ -122,7 +122,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event tags](images/amy_new_event_tags.png)
 
-* TTT Open applications. For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.
+* **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with `TTT` tag.
 
 
 ![AMY TTT Open Applications check box](images/amy_ttt_open_applications.png)
