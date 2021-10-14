@@ -23,3 +23,8 @@ nav:
         - 'Library Carpentry': 'https://librarycarpentry.org/'
         - 'Software Carpentry': 'https://software-carpentry.org/'
         - 'AMY': 'https://amy.carpentries.org'
+
+
+markdown_extensions:
+    - toc:
+        permalink: 
