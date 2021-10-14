@@ -127,7 +127,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY TTT Open Applications check box](images/amy_ttt_open_applications.png)
 
-* Select the curricula taught at this workshop.
+* **Curricula taught at the workshop** Select the curricula taught at this workshop.
 
 ![AMY curricula taught](images/amy_curricula_taught.png)
 
