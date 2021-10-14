@@ -165,6 +165,8 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event contact](images/amy_new_event_contact.png)
 
+* **Location details**
+
 * Add in the location including the country, venue name, address, and latitude/longitude coordinates.
 
 ![AMY new event location](images/amy_new_event_location.png)
