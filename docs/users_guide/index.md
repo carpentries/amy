@@ -179,9 +179,13 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 **Click "Submit" to save this event.**
 
+* Roles such as Instructor, Host, and helper can be [assigned](#assigning-people-to-events) after the event is created and saved.
+
 #### Creating a New Event from URL
 
-If you already have the event's URL with properly formatted metadata using [The Carpentries workshop template](https://github.com/carpentries/workshop-template), the following information can automatically be imported:
+If you already have the event's URL with properly formatted metadata using [The Carpentries workshop template](https://github.com/carpentries/workshop-template), some information can automatically be imported.  Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).  Click on the "Import from URL" button and enter the link to the workshop website OR GitHub URL.
+
+This will automatically populate the following fields:
 
 * Slug (created from GitHub repo name)
 * Start and end dates
@@ -189,7 +193,7 @@ If you already have the event's URL with properly formatted metadata using [The 
 
 Instructor and helper names will be in the notes field but not assigned in the database.  All people will need to be [assigned to the event](#assigning-people-to-events).
 
-All other information will need to be entered in as above.
+All other information will need to be [entered in as above](#creating-a-new-event-manually).
 
 #### Creating a New Event from a Workshop Request
 
