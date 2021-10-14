@@ -197,15 +197,19 @@ All other information will need to be [entered in as above](#creating-a-new-even
 
 #### Creating a New Event from a Workshop Request
 
-A workshop can be requested from a host site, and this information can be used to create an event in AMY. Select "Workshop requests" from the "Requests" menu.
+A workshop can be requested from a host site, and this information can be used to create an event in AMY. In the "Requests" menu, select one of the following options:
+
+* Workshop requests
+* Workshop inquiries
+* Self-Organised submissions
 
 ![AMY workshop requests](images/amy_workshop_request_menu.png)
 
-This page will show a list of all open workshop requests, with the name/email of the requestor, their affiliation, their preferred dates, the Carpentry type, and any other comments.  
+This will take you to a summary view of the workshop requests, workshop inquries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
 
 ![AMY workshop request list](images/amy_workshop_request_list.png)
 
-At the bottom of this page, the user has the option to accept or discard the request. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event.  Select "Accept and create a new event" to create a new event from this request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be marked as stalled or cancelled.
+At the bottom of this page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request. 
 
 This will open a page with a side by side view of the request details and view to create a new event. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above.
 
