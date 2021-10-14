@@ -87,6 +87,8 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Administrator** Select the administrator from the drop down menu.  This will always be  `Data Carpentry`, `Library Carpentry`, `Software Carpentry`,  `Instructor Training`, or `Self-Organised`.
 
+* **Is this workshop public** If the workshop Host consents, choose "Public." This will list the workshop on the websites for The Carpentries, the associated lesson programs, and The Carpentries data feeds.  If "Private" it will not be listed publicly anywhere.
+
 * **Membership** Select the Membership this event should be applied to, by membership term and membership dates.
 
 ![AMY new event organizations](#)
