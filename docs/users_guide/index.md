@@ -13,7 +13,7 @@ All the menus and a search bar are displayed across the top. The main page has t
 ![AMY dashboard](images/amy_dashboard.png)
 
 * *Current workshops* have a complete start and end date, a valid url, and a complete location.
-* *In progress workshops* are all workshops that do not meet the criteria to be published.
+* *In progress workshops* are all workshops that do not meet these criteria.
 
 Current workshops will be listed on The Carpentries website and the corresponding lesson program website if the box to publish the workshop is checked.
 
