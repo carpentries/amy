@@ -159,7 +159,9 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event attendance](images/amy_new_event_attendance.png)
 
-* Enter only the email address for the main contact person for this event.
+* **Additional people to contact**
+
+* Enter only email addresses for the main contact people for this event. Enter emails addresses, one at a time.  These individuals do not need a Person record in AMY.  They will be included on any automated emails.
 
 ![AMY new event contact](images/amy_new_event_contact.png)
 
