@@ -54,7 +54,7 @@ This will take you to a screen where you can verify each record, correct any err
 
 ### Adding a New Airport
 
-Airports are used as approximate geographic identifiers for our instructors. Each airport is identified by its three digit IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
+Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closed to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
 
 Enter in the airport's IATA code, full name, country, and latitude and longitude.
 
