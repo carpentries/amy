@@ -81,14 +81,16 @@ Create the workshop slug. This must be in the form `YYYY-MM-DD-sitename` (for ex
 
 ![AMY new event dates](images/amy_new_event_dates.png)
 
+* **Host** Select the Host name from the drop down menu. The Host is the institution where the workshop is actually being held (or would be held for online workshops). If the Host does not appear on the list, [create a new organisation](#adding-a-new-organization).
 
-* Select the host site name from the drop down menu. If the host site does not appear on the list, [create a new organisation](#adding-a-new-organization).
+* **Sponsor** Select the Sponsor name from the drop down menu.  The Sponsor is the institution responsible for funding or organising the workshop and is often the same as the Host.
 
-![AMY new event host](images/amy_new_event_host.png)
+* **Administrator** Select the administrator from the drop down menu.  This will always be  `Data Carpentry`, `Library Carpentry`, `Software Carpentry`,  `Instructor Training`, or `Self-Organised`.
 
-* Select the administrator from the drop down menu.  This will almost always be `Software Carpentry`, `Data Carpentry`, `Library Carpentry`, or `Self-Organised`.
+* **Membership** Select the Membership this event should be applied to, by membership term and membership dates.
 
-![AMY new event administrator](images/amy_new_event_administrator.png)
+![AMY new event organizations](#)
+
 
 * Select the name of The Carpentries Regional Coordinator responsible for managing this workshop.  
 
