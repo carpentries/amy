@@ -91,26 +91,34 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event organizations](#)
 
-
-* Select the name of The Carpentries Regional Coordinator responsible for managing this workshop.  
+* **Assigned to** Select the name of The Carpentries team member responsible for managing this workshop.  Only AMY admin users appear in this list.  This assignment is used in the views throught AMY.
 
 ![AMY new event assigned to](images/amy_new_event_assigned_to.png)
 
-* Assign all appropriate tags to the event.
+* **Event Tags**  Tags are used for several purposes.  They are used to several types of attributes as noted below, including event type, event status, lesson program, event status, and administrative attributes. Multiple tags can be selected for any event. 
 
-    - SWC: Software Carpentry
-    - DC: Data Carpentry
-    - LC: Library Carpentry
-    - WiSE: Women in Science and Engineering 
-    - TTT: Instructor Training 
-    - LSO: Lesson Specific Onboarding
-    - ITT: Trainer Training
-    - LMO: Lesson Maintainer Onboarding
-    - online: Online events
-    - stalled: When host stalled event planning before workshop occurred
-    - unresponsive: When host/instructors were unresponsive to requests for attendance data
-    - hackathon: Non-workshop events. Hackathons related to lesson development or other topics.
-    - cancelled: When a fully scheduled event gets cancelled
+    * **Assign all appropriate tags to the event.**
+
+        - automated-email:  Administrative. Automated emails are sent only for workshops with this tag.
+        - DC: Lesson Program.  Identifies workshops teaching from Data Carpentry curricula.
+        - LC: Lesson Program.  Identifies workshops teaching from Library Carpentry curricula.
+        - SWC: Lesson Program.  Identifies workshops teaching from Software Carpentry curricula.
+        - Circuits: Lesson Program.  Identifies "mix and match" workshops teaching across lesson programs.
+        - online: Administrative. Identifies workshops taking place on line.
+        - TTT: Event type. Identifies Instructor Training events.
+        - ITT: Event type. Identifies Trainer Training events.
+        - Pilot: Event type. Identifies workshops teaching pilot curricula.
+        - for-profit: Administrative. Identifies workshops run by for-profit institutions.
+        - Scholarship: Adminstrative. Identifies sponsored workshops. 
+        - private-event:
+        - cancelled: Event status. Identifies workshops that got canceled after they were fully scheduled.
+        - unresponsive: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.
+        - stalled: Event status. Identifies workshops where planning began but did not happen.
+        - LMO: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).
+        - LSO: Event type.  Identifies Lesson Specific Onboarding sessions (for Instrucotrs).
+        - hackathon: Event type. 
+        - WiSE: Event audience. Identifies workshops for Women in Science and Engineering.
+
 
 ![AMY new event tags](images/amy_new_event_tags.png)
 
