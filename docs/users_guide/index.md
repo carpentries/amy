@@ -147,7 +147,9 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event language](images/amy_new_event_language.png)
 
-* If the workshop is using **Carpentries** Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other internal system.
+* **Eventbrite**
+
+    * If the workshop is using **Carpentries** Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other registration system.
 
 ![AMY new event Eventbrite](images/amy_new_event_eventbritekey.png)
 
