@@ -153,7 +153,9 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event Eventbrite](images/amy_new_event_eventbritekey.png)
 
-* After the event is over, record the total number of learners who attended the workshop.
+* **Manual Attendance**
+
+    * After the event is over, record the total number of learners who attended the workshop.  This is compared to the count of learner tasks at that event.  In the end, the higher value will be displayed.  Note The Carpentries does not currently maintain attendance data on its workshops.
 
 ![AMY new event attendance](images/amy_new_event_attendance.png)
 
