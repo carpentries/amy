@@ -23,9 +23,11 @@ From here you can also add new [persons](#adding-a-new-person), [events](#adding
 
 ### Adding a New Organisation
 
-If the site name is not already in AMY, add a new one by selecting "New Organisation." Do not enter `http://` or any slashes in the domain name.
+If the site name is not already in AMY, add a new one by selecting "New Organisation."  Domain and Full Name are required fields.  Enter in the domain (full website, such as https://www.example.com/library).  When known, enter in the country and latitude/longitude of the main location.  There is also a text box for open ended comments.
 
-![AMY add new organisation](images/amy_new_organization.png)
+The "Affiliated Organization" field is not being used; always leave this blank.
+
+![AMY add new organisation](images/amy_new_organisation.png)
 
 
 ### Adding a New Person
