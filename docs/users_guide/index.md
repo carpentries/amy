@@ -64,6 +64,7 @@ Enter in the airport's IATA code, full name, country, and latitude and longitude
 ### Adding a New Event
 
 New events can be created one of several ways:
+
 * By manually entering all information on the [new event page](#creating-a-new-event-manually)
 * By importing from URL on the [new event page](#creating-a-new-event-from-url)
 * By accepting a [workshop request](#creating-a-new-event-from-a-workshop-request)
