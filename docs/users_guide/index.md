@@ -171,7 +171,9 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event location](images/amy_new_event_location.png)
 
-* Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.
+* **Comment**
+
+* Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
 
 ![AMY new event notes](images/amy_event_comment.png)
 
