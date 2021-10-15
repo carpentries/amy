@@ -307,7 +307,7 @@ An individual badge can be issued by going to a person's record and clicking the
 
 ![AMY edit person](images/amy_edit_person.png)
 
-Choose the `Awards` tab on the next screen.  Select the Badge type from the drop down menu, and fill in the date it was awarded. The associated event (such as a training event) and awarded by fields are optional.  Click `Submit` to save the entry.
+Choose the `Awards` tab on the next screen.  Select the Badge type from the drop down menu, and fill in the date it was awarded. The Event field should be filled if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding.  Click `Submit` to save the entry.
 
 ![AMY issue badge](images/amy_issue_badge.png)
 
@@ -315,16 +315,29 @@ Choose the `Awards` tab on the next screen.  Select the Badge type from the drop
 
 AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organization) in AMY.
 
-On the organisation's page, click the green "Add a membership" button.  Enter the following information:
+Select "Memberships" from the top menu bar to view a [list of all Memberships](https://amy.carpentries.org/fiscal/memberships/). Memberships can be searched by Organisation name, Consortium status, Public/Private listing, Variant, Contribution type, Active status, and allowed or remaining training seats.
 
-* Variant (membership type)
-* Agreement start and end dates
-* Contribution type (Financial, Person-days, or other)
-* Workshops without admin fee per agreement
-* Self-Organised workshops per agreement (can be left blank as this is typically unlimited)
-* Instructor training seats (actual number allotted in contract)
-* Additional instructor training seats (any additional seats allowed beyond contracted amount)
-* Notes.
+New Memberships can be created one of two ways:
+
+* If this is an entirely new membership, click on the "New Membership" button at the top of the [membership page](https://amy.carpentries.org/fiscal/memberships/). This will take you to a blank new membership form.
+* If this is a renewal of a current membership, select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
+
+* **Name** The name of the membership.  If this is a single organisation, it will be that organisation's name.  If it is a consortium of several organisations, it will be their collective name.
+* **Consortium**  If this box is checked, you will be able to assign multiple organisations to theat membership.  If not, you will only be able to assign one organisation to that membership.
+* **Can this membership be publicized on The Carpentries websites** If Public is selected, the membership will be listed on [The Carpentries Members page](https://carpentries.org/members/) and [data feeds](https://feeds.carpentries.org/all_public_memberships.json).  If Private is selected, it will not be listed.
+* **Variant** This lists all the membership levels (Gold, Silver, Bronze, etc.)
+* **Agreement start** and **Agreement end** Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.
+* **Extensions** Extensions are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.
+* **Contribution type** What the member contribution was (Financial, Person-days, or other)
+* **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar/index.html) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Applications using the member code are manually matched to this member and a training event.
+* **Link to member agreement** Link to the Google Drive folder with the member agreement.
+* **Workshops without admin fee per agreement** Number of workshops allowed in the terms of the agreement.
+* **Public instructor training seats** Number of public instructor training seats allowed in the terms of the agreement.
+* **Additional public instructor training seats** Number of additional public seats the member may have purchased beyond the standard agreement.
+* **In-house instructor training seats** Number of in-house instructor training seats allowed in the terms of the agreement. This will typically only apply to Platinum memberships.
+* **Additional in-house instructor training seats**  Number of additional in-house seats the member may have purchased beyond the standard agreement.  This will typically only apply to Platinum memberships.
+* **Emergency contact** Free text field to fill in emergency contact information.
+
 
 ### Reports
 
