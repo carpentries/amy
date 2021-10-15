@@ -291,21 +291,13 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 
 ![AMY training progress steps](images/amy_training_progress_steps.png)
 
-##### Recording Completion of Training Event
+* **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
+* **Evaluated by** This will default to the current admin user.
+* **Type** This will be the training event (Training), the discussion session (Discussion), the teaching demo (DC Demo, LC Demo, or SWC Demo), or the lesson contribution (DC Homework, LC Homework, SWC Homework).  The lesson contribution type requires a link to the GitHub issue or PR.
+* **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
+* **Discarded** This field is not currently used.
+* **Notes** Any free notes from the admin.
 
-On the screen above, select 'Training' and note whether they passed or failed.
-
-##### Recording Completion of Discussion Session
-
-On the screen above, select 'Discussion' and note whether they passed or failed.
-
-##### Recording Completion of Teaching Demo
-
-On the screen above, select 'DC Demo' or 'SWC Demo' depending on which lesson they used for their demo, and note whether they passed or failed.
-
-##### Recording Completion of Lesson Contribution
-
-On the screen above, select 'DC Homework' or 'SWC Homework' depending on which lesson they used for their contribution, and note whether they passed or failed.  In the notes section, link to their lesson contribution.  
 
 ### Issuing Badges
 
