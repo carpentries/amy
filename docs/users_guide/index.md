@@ -243,6 +243,7 @@ If this a learner role at an Instructor Training event, the following fields sho
 Click "Submit" to save your changes.
 
 Below this form, a list of all people assigned to this event is displayed, with three options at the end of the row.
+
 * **"i" icon** opens a detailed view of this Person's role at this event
 * **pencil icon** opens an edit view of this Person's role at this event
 * **red X icon** deletes this Person's role at this event
