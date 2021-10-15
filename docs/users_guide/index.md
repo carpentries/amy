@@ -222,21 +222,31 @@ This will open a page with a side by side view of the request details and view t
 
 Regardless of how events are created, adding the people associated with each event can not easily be automated. [Name matching is hard](http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/).
 
-People can be associated with events one by one or as a bulk upload.
+People can be associated with events one by one or as a bulk upload.  The person must already [be in AMY](#adding-a-new-person) before assigning them to a role at an event.
 
 #### Assigning People to Events, One by One
 
-Go to the event page and click the "Edit" button at the top of the page.  Select the "Tasks" tab. (Note the sponsor tab is not currently being used.)
+Go to the event page and click the "Edit" button at the top of the page.  Select the "Tasks" tab. Fill in the following fields:
 
-To add a new person to the event, start typing the person's name in the "Person" field. Auto-completed suggested names will appear.
+* **Person** Start typing in the person's name.  Auto-completed suggested names will appear.
+* **Role** Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.). 
+* **Title** and **URL** are not used in this context.
 
-Add the person's role in the event (Helper, Instructor, Workshop Host, Learner, Workshop Organiser). "Contributed to Lesson Materials" is not used in this context. "Title" and "URL" are also not used in this context.
+If a person's name does not appear in the dropdown, they will need to be [added to the database](#adding-a-new-person).
 
-If a person's name does not appear in the dropdown, they may need to be [added to the database](#adding-a-new-person).
+If this a learner role at an Instructor Training event, the following fields should also be filled in.  These fields apply only to Instructor Training, and can be left blank for other types of events.
 
-Below this form, a list of all people assigned to this event is displayed. A person's role can not be directly changed. Instead, delete the item and enter a new one.
+* **Associated member site in TTT event** Note the membership (instituion name and membership year) that this seat should be assigned to.
+* **Count seat as public or in-house?** Note whether the learner seat should be counted as public or inhouse.  Most seats will be public. Inhouse only applies to select Platinum level memberships.
+* **Open training seat** Note whether this learner came through our open program, and is not affiliated with a member site.
 
-When done, go back to the "Event" tab at the top of the page, and click "Submit" at the bottom of the event page to save changes. All people should now appear at the bottom of the event page.
+Click "Submit" to save your changes.
+
+Below this form, a list of all people assigned to this event is displayed, with three options at the end of the row.
+* **"i" icon** opens a detailed view of this Person's role at this event
+* **pencil icon** opens an edit view of this Person's role at this event
+* **red X icon** deletes this Person's role at this event
+
 
 #### Assigning People to Events in Bulk
 
