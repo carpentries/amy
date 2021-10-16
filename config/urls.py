@@ -20,10 +20,11 @@ from django.contrib.auth import views as auth_views
 from django.contrib.contenttypes.views import shortcut
 from django.urls import include, path, re_path
 from django.views.generic import RedirectView
-from django_comments.views.comments import post_comment, comment_done
+from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
-from workshops.views import logout_then_login_with_msg
+
 from workshops.util import login_required
+from workshops.views import logout_then_login_with_msg
 
 urlpatterns = [
     path('', RedirectView.as_view(pattern_name='dispatch')),
@@ -42,7 +43,7 @@ urlpatterns = [
     path('terms/', include('consents.urls')),
 
     # for webhooks from Mailgun
-    path('mail_hooks/', include('anymail.urls')),
+    # path('mail_hooks/', include('anymail.urls')),
 
     # django views for authentication
     path('account/login/',
