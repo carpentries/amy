@@ -404,7 +404,7 @@ ANYMAIL = {
     # This should be in format `long_random:another_long_random`, as it's used
     # for HTTP Basic Auth when Mailgun logs in to tell us about email tracking
     # event.
-    "WEBHOOK_SECRET": env("AMY_MAILGUN_WEBHOOK_SECRET", default=None),
+    # "WEBHOOK_SECRET": env("AMY_MAILGUN_WEBHOOK_SECRET", default=None),
     "SEND_DEFAULTS": {
         "tags": ["amy"],
     },
