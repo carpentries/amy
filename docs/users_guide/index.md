@@ -15,7 +15,7 @@ All the menus and a search bar are displayed across the top. The main page has t
 * *Current workshops* have a complete start and end date, a valid url, and a complete location.
 * *In progress workshops* are all workshops that do not meet these criteria.
 
-Current workshops will be listed on The Carpentries website and the corresponding lesson program website if the box to publish the workshop is checked.
+Current Data, Library, and Software Carpentry workshops will be listed on The Carpentries website and the corresponding lesson program website and The Carpentries data feeds if the box to publish the workshop is checked.  Instructor Training events are not publicly listed.
 
 From here you can also add new [persons](#adding-a-new-person), [events](#adding-a-new-event), [organisations](#adding-a-new-organisation), or [airports](#adding-a-new-airport) to the database.
 
