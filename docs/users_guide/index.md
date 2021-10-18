@@ -30,6 +30,49 @@ The "Affiliated Organization" field is not being used; always leave this blank.
 ![AMY add new organisation](images/amy_new_organisation.png)
 
 
+### Adding a New Membership
+
+AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organization) in AMY.
+
+Select "Memberships" from the top menu bar to view a [list of all Memberships](https://amy.carpentries.org/fiscal/memberships/). Memberships can be searched by Organisation name, Consortium status, Public/Private listing, Variant, Contribution type, Active status, and allowed or remaining training seats.
+
+New Memberships can be created one of two ways:
+
+* If this is an entirely new membership, click on the "New Membership" button at the top of the [membership page](https://amy.carpentries.org/fiscal/memberships/). This will take you to a blank new membership form.
+* If this is a renewal of a current membership, select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
+
+The following fields are included in the Member view:
+
+* **Name** The name of the membership.  If this is a single organisation, it will be that organisation's name.  If it is a consortium of several organisations, it will be their collective name.
+* **Consortium**  If this box is checked, you will be able to assign multiple organisations to theat membership.  If not, you will only be able to assign one organisation to that membership.
+* **Can this membership be publicized on The Carpentries websites** If Public is selected, the membership will be listed on [The Carpentries Members page](https://carpentries.org/members/) and [data feeds](https://feeds.carpentries.org/all_public_memberships.json).  If Private is selected, it will not be listed.
+* **Variant** This lists all the membership levels (Gold, Silver, Bronze, etc.)
+* **Agreement start** and **Agreement end** Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.
+* **Extensions** Extensions are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.
+* **Contribution type** What the member contribution was (Financial, Person-days, or other)
+* **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar/index.html) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Applications using the member code are manually matched to this member and a training event.
+* **Link to member agreement** Link to the Google Drive folder with the member agreement.
+* **Workshops without admin fee per agreement** Number of workshops allowed in the terms of the agreement.
+* **Public instructor training seats** Number of public instructor training seats allowed in the terms of the agreement.
+* **Additional public instructor training seats** Number of additional public seats the member may have purchased beyond the standard agreement.
+* **In-house instructor training seats** Number of in-house instructor training seats allowed in the terms of the agreement. This will typically only apply to Platinum memberships.
+* **Additional in-house instructor training seats**  Number of additional in-house seats the member may have purchased beyond the standard agreement.  This will typically only apply to Platinum memberships.
+* **Emergency contact** Free text field to fill in emergency contact information.
+
+#### Consortium Memberships
+
+If *Consortium* is checked, additional affiliated sites can be added to that membership.  These will display in the `Organisations (members)` line of the Member view. For single-site memberships, only the main site can be listed here.  For consortium memberships, additional member sites can be added in.  These sites must first be [listed as an organisation in AMY](#adding-a-new-organisation).
+
+#### Membership Contacts
+
+Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of two roles:
+
+* **Billing Contact** Person responsible for contracts and invoicing.
+* **Programmatic Contact** Person responsible for coordination of workshops and instructor training
+
+When a new membership is created, a new field called `Persons` will display. Click `Edit` in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. 
+
+
 ### Adding a New Person
 
 If a person's record does not exist in the database, it can be added individually or as part of a bulk upload.
@@ -310,48 +353,6 @@ An individual badge can be issued by going to a person's record and clicking the
 Choose the `Awards` tab on the next screen.  Select the Badge type from the drop down menu, and fill in the date it was awarded. The Event field should be filled if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding.  Click `Submit` to save the entry.
 
 ![AMY issue badge](images/amy_issue_badge.png)
-
-### Memberships
-
-AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organization) in AMY.
-
-Select "Memberships" from the top menu bar to view a [list of all Memberships](https://amy.carpentries.org/fiscal/memberships/). Memberships can be searched by Organisation name, Consortium status, Public/Private listing, Variant, Contribution type, Active status, and allowed or remaining training seats.
-
-New Memberships can be created one of two ways:
-
-* If this is an entirely new membership, click on the "New Membership" button at the top of the [membership page](https://amy.carpentries.org/fiscal/memberships/). This will take you to a blank new membership form.
-* If this is a renewal of a current membership, select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
-
-The following fields are included in the Member view:
-
-* **Name** The name of the membership.  If this is a single organisation, it will be that organisation's name.  If it is a consortium of several organisations, it will be their collective name.
-* **Consortium**  If this box is checked, you will be able to assign multiple organisations to theat membership.  If not, you will only be able to assign one organisation to that membership.
-* **Can this membership be publicized on The Carpentries websites** If Public is selected, the membership will be listed on [The Carpentries Members page](https://carpentries.org/members/) and [data feeds](https://feeds.carpentries.org/all_public_memberships.json).  If Private is selected, it will not be listed.
-* **Variant** This lists all the membership levels (Gold, Silver, Bronze, etc.)
-* **Agreement start** and **Agreement end** Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.
-* **Extensions** Extensions are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.
-* **Contribution type** What the member contribution was (Financial, Person-days, or other)
-* **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar/index.html) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Applications using the member code are manually matched to this member and a training event.
-* **Link to member agreement** Link to the Google Drive folder with the member agreement.
-* **Workshops without admin fee per agreement** Number of workshops allowed in the terms of the agreement.
-* **Public instructor training seats** Number of public instructor training seats allowed in the terms of the agreement.
-* **Additional public instructor training seats** Number of additional public seats the member may have purchased beyond the standard agreement.
-* **In-house instructor training seats** Number of in-house instructor training seats allowed in the terms of the agreement. This will typically only apply to Platinum memberships.
-* **Additional in-house instructor training seats**  Number of additional in-house seats the member may have purchased beyond the standard agreement.  This will typically only apply to Platinum memberships.
-* **Emergency contact** Free text field to fill in emergency contact information.
-
-#### Consortium Memberships
-
-If *Consortium* is checked, additional affiliated sites can be added to that membership.  These will display in the `Organisations (members)` line of the Member view. For single-site memberships, only the main site can be listed here.  For consortium memberships, additional member sites can be added in.  These sites must first be [listed as an organisation in AMY](#adding-a-new-organisation).
-
-#### Membership Contacts
-
-Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of two roles:
-
-* **Billing Contact** Person responsible for contracts and invoicing.
-* **Programmatic Contact** Person responsible for coordination of workshops and instructor training
-
-When a new membership is created, a new field called `Persons` will display. Click `Edit` in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. 
 
 
 ### Reports
