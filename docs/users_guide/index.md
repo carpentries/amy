@@ -356,20 +356,13 @@ When a new membership is created, a new field called `Persons` will display. Cli
 
 ### Reports
 
-AMY comes with several built in reporting features that can be accessed by clicking `Reports` in the top menu. Most reports include an api link for further analysis.
+AMY comes with several built in reporting features that can be accessed by clicking `Reports` in the top menu.
 
+* **Membership training statistics** Lists all memberships by variant, agreement dates, contribution type, and total/used/remaining instructor training seats (inhouse and public)
+* **Workshop issues** and **Instructor issues** identify specific workshops and instructors with gaps in data.
+* **Find duplicate persons** identifies persons that may be listed as duplicates due to having the same name or email address, and allows the user to merge them.
+* **Find duplicate training requests** identifies instructor training requests that may be duplications  due to having the same name or email address, and allows the user to merge them.
 
-* *List of instructors by time period* will generate a list of all instructors who have taught or will teach a workshop in a given time period and can be downloaded as a CSV file. This is especially useful when inviting instructors to discussion sessions.
-
-* *Workshops over time, Learners over time, Instructors over time* show cumulative numbers of workshops, learners, and instructors from the start of The Carpentries to present day.
-
-* *How often instructors have taught* returns a list of all instructors who have taught at least once with the number of workshops they have taught.  
-
-* *All activity over time* returns data on the number of workshops, number of instructors, number of learners, and identifies gaps in data.
-
-* *Workshop issues* and *Instructor issues* identify specific workshops and instructors with gaps in data.
-
-* *Find duplicates* identifies persons that may be listed as duplicates due to having the same name or email address, and allows the user to merge them.
 
 ### Roles in AMY
 What you are able to edit or view depends on your assigned role in AMY.
