@@ -72,6 +72,10 @@ Once a new membership has been created, contact people can be assigned to the me
 
 When a new membership is created, a new field called `Persons` will display. Click `Edit` in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. 
 
+#### Extending membership dates
+
+If a membership is granted an extension to the membership date terms, do not change the original membership end date.  Instead, click the gray "Extend" button at the bottom of the membership view. Enter in the new membership end date.  The number of days of the extension will automatically be calculated.  Add in any comments, such as the context for the extension or a link to more information. Multiple extensions can be granted. The duration of the extension can be edited in the membership's edit view.
+
 
 ### Adding a New Person
 
