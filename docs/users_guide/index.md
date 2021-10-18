@@ -199,45 +199,32 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
     * Placeholder section for lessons covered.
 
-* **URL** 
 
-    * Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
+* **URL** Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
 
 ![AMY new event url](images/amy_new_event_url.png)
 
-* **Language**
-
-    * Enter in the human language the workshop is taught in. This is especially important for The Carpentries to track workshops in languages other than English.
+* **Language**  Enter in the human language the workshop is taught in. This is especially important for The Carpentries to track workshops in languages other than English.
 
 ![AMY new event language](images/amy_new_event_language.png)
 
-* **Eventbrite**
-
-    * If the workshop is using **Carpentries** Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other registration system.
+* **Eventbrite**  If the workshop is using **Carpentries** Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other registration system.
 
 ![AMY new event Eventbrite](images/amy_new_event_eventbritekey.png)
 
-* **Manual Attendance**
-
-    * After the event is over, record the total number of learners who attended the workshop.  This is compared to the count of learner tasks at that event.  In the end, the higher value will be displayed.  Note The Carpentries does not currently maintain attendance data on its workshops.
+* **Manual Attendance**   After the event is over, record the total number of learners who attended the workshop.  This is compared to the count of learner tasks at that event.  In the end, the higher value will be displayed.  Note The Carpentries does not currently maintain attendance data on its workshops.
 
 ![AMY new event attendance](images/amy_new_event_attendance.png)
 
-* **Additional people to contact**
-
-    * Enter only email addresses for any additional contact people for this event. This is intended for people who do not have an official role (Host, Instructor, etc.) at the workshop.  Enter emails addresses, one at a time.  These individuals do not need a Person record in AMY.  They will be included on any automated emails.
+* **Additional people to contact**  Enter only email addresses for any additional contact people for this event. This is intended for people who do not have an official role (Host, Instructor, etc.) at the workshop.  Enter emails addresses, one at a time.  These individuals do not need a Person record in AMY.  They will be included on any automated emails.
 
 ![AMY new event contact](images/amy_new_event_contact.png)
 
-* **Location details**
-
-    * Add in the location including the country, venue name, address, and latitude/longitude coordinates.
+* **Location details**  Add in the location including the country, venue name, address, and latitude/longitude coordinates.
 
 ![AMY new event location](images/amy_new_event_location.png)
 
-* **Comment**
-
-    * Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
+* **Comment**  Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
 
 ![AMY new event notes](images/amy_event_comment.png)
 
