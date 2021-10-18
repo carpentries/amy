@@ -23,7 +23,7 @@ From here you can also add new [persons](#adding-a-new-person), [events](#adding
 
 ### Adding a New Organisation
 
-If the site name is not already in AMY, add a new one by selecting "New Organisation."  Domain and Full Name are required fields.  Enter in the domain (full website, such as https://www.example.com/library).  When known, enter in the country and latitude/longitude of the main location.  There is also a text box for open ended comments.
+If an organisation is not already in AMY, add a new one by selecting "New Organisation."  Domain and Full Name are required fields.  Enter in the domain (full website, such as https://www.example.com/library).  When known, enter in the country and latitude/longitude of the main location.  There is also a text box for open ended comments.
 
 The "Affiliated Organization" field is not being used; always leave this blank.
 
@@ -32,7 +32,7 @@ The "Affiliated Organization" field is not being used; always leave this blank.
 
 ### Adding a New Membership
 
-AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organization) in AMY.
+AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organisation) in AMY.
 
 Select "Memberships" from the top menu bar to view a [list of all Memberships](https://amy.carpentries.org/fiscal/memberships/). Memberships can be searched by Organisation name, Consortium status, Public/Private listing, Variant, Contribution type, Active status, and allowed or remaining training seats.
 
