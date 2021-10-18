@@ -360,9 +360,7 @@ AMY comes with several built in reporting features that can be accessed by click
 
 * **Membership training statistics** Lists all memberships by variant, agreement dates, contribution type, and total/used/remaining instructor training seats (inhouse and public)
 * **Workshop issues** and **Instructor issues** identify specific workshops and instructors with gaps in data.
-* **Find duplicate persons** identifies persons that may be listed as duplicates due to having the same name or email address, and allows the user to merge them.
-* **Find duplicate training requests** identifies instructor training requests that may be duplications  due to having the same name or email address, and allows the user to merge them.
-
+* **Find duplicate persons** and **Find duplicate training requests** identifies Persons or Training Requests that may be listed as duplicates due to having the same name or email address, and allows the user to merge them. [Read more on how to merge duplicates](#merging-duplicate-persons-training-requests-or-events)
 
 ### User and Administrator Roles
 
@@ -386,11 +384,11 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 ### Other Tasks
 
-#### Merging Duplicate Persons or Events
+#### Merging Duplicate Persons, Training Requests, or Events
 
-If duplicate persons or event records exists, they can be merged.  Select "Merge persons" or "Merge events" from the "More" menu. 
+If duplicate Person, Training Request, or Event records exists, they can be merged.  Select the appropriate option from the "More" menu.
 
-Choose the two Persons or Events to be merged, and click "Submit" to see merge options. Here you can choose to keep the value from Person/Event A, from Person/Event B, or to combine the values.
+Choose the two records to be merged, and click "Submit" to see merge options. Here you can choose to keep the value from Record A, from Record B, or to combine the values.  By default, keeping the value in Record A is checked.
 
 ### Searching
 
