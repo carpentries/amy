@@ -2,7 +2,7 @@
 
 ### Logging in
 
-* Log in to AMY [here](https://amy.carpentries.org).  Contact [The Carpentries Core Team](mailto:team@carpentries.org) if you are an administrative user who needs login credentials.
+* Log in to AMY [here](https://amy.carpentries.org). Administrative users may log in via GitHub or a user id.  Instructors should log in via GitHub.  Contact [The Carpentries Core Team](mailto:team@carpentries.org) if you have difficulty logging in.
 
 ![AMY login screen goes here](images/amy_login_screen.png)
 
@@ -461,4 +461,3 @@ Clicking "Persons" on the top menu bar will take you to a list of *all* recorded
 * **Ordering** Select sort order for returned list
 
  See the section above to search specifically for [qualified instructors](#searching-for-qualified-instructors).
- 
