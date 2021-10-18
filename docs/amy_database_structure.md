@@ -1,6 +1,6 @@
 # Primary Tables in AMY
 
-The primary tables used in AMY (that will likely appear in every query) are those that store information on events, persons, memberships, and organizations.  Additional tables provide more information about events, persons, memberships, and organizations.
+The primary tables used in AMY (that will appear in most queries) are those that store information on events, persons, memberships, and organizations.  Additional tables provide more information about events, persons, memberships, and organizations.  This information can be useful in writing [SQL queries in redash](https://redash.carpentries.org/queries).
 
 ## Events
 
