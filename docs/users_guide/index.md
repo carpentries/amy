@@ -8,7 +8,7 @@
 
 ### AMY Dashboard
 
-All the menus and a search bar are displayed across the top. The main page has two columns, showing current workshops and in prograss workshops.  This view can be filtered to show workshops assigned to the logged in administrator, another administrator, unassigned workshops, or all workshops.
+All the menus and a search bar are displayed across the top. The main page has two columns, showing current workshops and in progress workshops.  This view can be filtered to show workshops assigned to the logged in administrator, another administrator, unassigned workshops, or all workshops.
 
 ![AMY dashboard](images/amy_dashboard.png)
 
