@@ -340,6 +340,9 @@ The following fields are included in the Member view:
 * **Additional in-house instructor training seats**  Number of additional in-house seats the member may have purchased beyond the standard agreement.  This will typically only apply to Platinum memberships.
 * **Emergency contact** Free text field to fill in emergency contact information.
 
+#### Consortium Memberships
+
+If *Consortium* is checked, additional affiliated sites can be added to that membership.  These will display in the `Organisations (members)` line of the Member view. For single-site memberships, only the main site can be listed here.  For consortium memberships, additional member sites can be added in.  These sites must first be [listed as an organisation in AMY](#adding-a-new-organisation).
 
 #### Membership Contacts
 
