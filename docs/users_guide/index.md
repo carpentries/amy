@@ -430,9 +430,12 @@ Clicking "Events" on the top menu bar will take you to a list of *all* recorded 
 
 #### Searching for Organisations
 
-Clicking "Organisations" on the top menu bar will take you to a list of *all* recorded organisations, regardless of their involvement with The Carpentries.
+Clicking "Organisations" on the top menu bar will take you to a list of *all* recorded organisations, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
 
-Organisations can be searched by Country and Membership type.
+* **Country**: Country the organisation is based in
+* **Memberships (current or past)**: Whether they organisation has had any current or past membership, by selected membership variant
+* **Ordering** Select sort order for returned list
+
 
 #### Searching for Persons
 
