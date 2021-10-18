@@ -87,7 +87,7 @@ When a member site renews a membership, do not create a new member record. Inste
 * **Contribution type**: Same as previous
 * **Instructor training seats and workshops allowed**: Same as previous or standard amounts allowed for that membership
 
-This also includes the options to auomatically copy over member organisations (for consortiums only) and copy over associated persons and their roles.
+This also includes the options to automatically copy over member organisations (for consortiums only) and copy over associated persons and their roles.
 
 The number of workshops or instructor training seats rolled over from the previous membership should be manually entered.  These workshop/instructor training seats counts will be reflected in the available counts for both the new and previous memberships.
 
@@ -159,7 +159,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event assigned to](images/amy_new_event_assigned_to.png)
 
-* **Event Tags**  Tags are used for several purposes.  They are used to several types of attributes as noted below, including event type, event status, lesson program, event status, and administrative attributes. Multiple tags can be selected for any event. 
+* **Event Tags**  Tags are used for several purposes as noted below, including event type, event status, lesson program, event status, and administrative attributes. Multiple tags can be selected for any event. 
 
     * **Assign all appropriate tags to the event.**
 
@@ -173,20 +173,20 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
         - *ITT*: Event type. Identifies Trainer Training events.
         - *Pilot*: Event type. Identifies workshops teaching pilot curricula.
         - *for-profit*: Administrative. Identifies workshops run by for-profit institutions.
-        - *Scholarship*: Adminstrative. Identifies sponsored workshops. 
+        - *Scholarship*: Administrative. Identifies sponsored workshops. 
         - *private-event*: Deprecated. Formerly used before explicit private/public field existed.
         - *cancelled*: Event status. Identifies workshops that got canceled after they were fully scheduled.
         - *unresponsive*: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.
         - *stalled*: Event status. Identifies workshops where planning began but workshops did not happen.
         - *LMO*: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).
-        - *LSO*: Event type.  Identifies Lesson Specific Onboarding sessions (for Instrucotrs).
+        - *LSO*: Event type.  Identifies Lesson Specific Onboarding sessions (for Instructors).
         - *hackathon*: Event type. 
         - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.
 
 
 ![AMY new event tags](images/amy_new_event_tags.png)
 
-* **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with `TTT` tag.
+* **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
 
 
 ![AMY TTT Open Applications check box](images/amy_ttt_open_applications.png)
@@ -256,7 +256,7 @@ A workshop can be requested from a host site, and this information can be used t
 
 ![AMY workshop requests](images/amy_workshop_request_menu.png)
 
-This will take you to a summary view of the workshop requests, workshop inquries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
+This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
 
 ![AMY workshop request list](images/amy_workshop_request_list.png)
 
@@ -283,9 +283,9 @@ Go to the event page and click the "Edit" button at the top of the page.  Select
 
 If a person's name does not appear in the dropdown, they will need to be [added to the database](#adding-a-new-person).
 
-If this a learner role at an Instructor Training event, the following fields should also be filled in.  These fields apply only to Instructor Training, and can be left blank for other types of events.
+If this is a learner role at an Instructor Training event, the following fields should also be filled in.  These fields apply only to Instructor Training, and can be left blank for other types of events.
 
-* **Associated member site in TTT event** Note the membership (instituion name and membership year) that this seat should be assigned to.
+* **Associated member site in TTT event** Note the membership (institution name and membership year) that this seat should be assigned to.
 * **Count seat as public or in-house?** Note whether the learner seat should be counted as public or inhouse.  Most seats will be public. Inhouse only applies to select Platinum level memberships.
 * **Open training seat** Note whether this learner came through our open program, and is not affiliated with a member site.
 
@@ -310,7 +310,7 @@ In addition to tracking workshops, AMY also allows us to track applications to i
 
 Once an individual submits the form, they receive an email that confirms their application has been received and includes a copy of the individual's responses. An admin user can then view the record by going to Requests --> [Training Requests](https://amy.carpentries.org/requests/training_requests/).
 
-Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affliliation and location searches rely on text strings, so *UCLA* will not return *University of California Los Angeles* and *NYC* will not return *New York City*.
+Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affiliation and location searches rely on text strings, so *UCLA* will not return *University of California Los Angeles* and *NYC* will not return *New York City*.
 
 Some trainees will already be in AMY. If there is a record with a matching name and email address, they will show up with a "matched trainee" when you search for them.  If "matched trainee" is blank, you will need to create a new person record for them.
 
@@ -336,7 +336,7 @@ The above steps note that a trainee was accepted in to a training event. Complet
 
 ![AMY training progress](images/amy_training_progress.png)
 
-Click on the plus sign in the Training Progress line. This will go to a screen where you can track the all steps towards certification.
+Click on the plus sign in the Training Progress line. This will go to a screen where you can track all the steps towards certification.
 
 ![AMY training progress steps](images/amy_training_progress_steps.png)
 
@@ -393,7 +393,7 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 #### Merging Duplicate Persons, Training Requests, or Events
 
-If duplicate Person, Training Request, or Event records exists, they can be merged.  Select the appropriate option from the "More" menu.
+If duplicate Person, Training Request, or Event records exist, they can be merged.  Select the appropriate option from the "More" menu.
 
 Choose the two records to be merged, and click "Submit" to see merge options. Here you can choose to keep the value from Record A, from Record B, or to combine the values.  By default, keeping the value in Record A is checked.
 
@@ -431,7 +431,7 @@ Clicking "Events" on the top menu bar will take you to a list of *all* recorded 
 * **Completed** Whether the "completed" box has been checked, indicating all necessary work for that event is complete
 * **Country** Country from the event's location
 * **Continent** Continent based on the country
-* **Status** Whether the evnet is active, past, ongoing, upcoming, unpublished, published, detected changes in metadata
+* **Status** Whether the event is active, past, ongoing, upcoming, unpublished, published, detected changes in metadata
 * **Ordering** Select sort order for returned list
 
 
@@ -446,7 +446,7 @@ Clicking "Organisations" on the top menu bar will take you to a list of *all* re
 
 #### Searching for Memberships
 
-Clickiing "Memberships" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:
+Clicking "Memberships" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:
 
 * **Organisation Name**: For most memberships, this will be the name of the main organisation. For consortium memberships, this will be the name of the consortium.
 * **Consortium**:  Whether the membership is listed as a consortium
