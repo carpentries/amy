@@ -251,7 +251,7 @@ Below this form, a list of all people assigned to this event is displayed, with 
 
 #### Assigning People to Events in Bulk
 
-See [section above](amy_manual.html#adding-bulk-records).
+See [section above](#adding-bulk-person-records).
 
 ### Instructor Training
 
