@@ -147,11 +147,11 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Sponsor** Select the Sponsor name from the drop down menu.  The Sponsor is the institution responsible for funding or organising the workshop and is often the same as the Host.
 
+* **Membership** Select the Membership this event should be applied to, by membership term and membership dates.
+
 * **Administrator** Select the administrator from the drop down menu.  This will always be  `Data Carpentry`, `Library Carpentry`, `Software Carpentry`,  `Instructor Training`, or `Self-Organised`.
 
 * **Is this workshop public** If the workshop Host consents, choose "Public." This will list the workshop on the websites for The Carpentries, the associated lesson programs, and The Carpentries data feeds.  If "Private" it will not be listed publicly anywhere.
-
-* **Membership** Select the Membership this event should be applied to, by membership term and membership dates.
 
 ![AMY new event organizations](#)
 
@@ -163,25 +163,25 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
     * **Assign all appropriate tags to the event.**
 
-        - automated-email:  Administrative. Automated emails are sent only for workshops with this tag.
-        - DC: Lesson Program.  Identifies workshops teaching from Data Carpentry curricula.
-        - LC: Lesson Program.  Identifies workshops teaching from Library Carpentry curricula.
-        - SWC: Lesson Program.  Identifies workshops teaching from Software Carpentry curricula.
-        - Circuits: Lesson Program.  Identifies "mix and match" workshops teaching across lesson programs.
-        - online: Administrative. Identifies workshops taking place on line.
-        - TTT: Event type. Identifies Instructor Training events.
-        - ITT: Event type. Identifies Trainer Training events.
-        - Pilot: Event type. Identifies workshops teaching pilot curricula.
-        - for-profit: Administrative. Identifies workshops run by for-profit institutions.
-        - Scholarship: Adminstrative. Identifies sponsored workshops. 
-        - private-event:
-        - cancelled: Event status. Identifies workshops that got canceled after they were fully scheduled.
-        - unresponsive: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.
-        - stalled: Event status. Identifies workshops where planning began but did not happen.
-        - LMO: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).
-        - LSO: Event type.  Identifies Lesson Specific Onboarding sessions (for Instrucotrs).
-        - hackathon: Event type. 
-        - WiSE: Event audience. Identifies workshops for Women in Science and Engineering.
+        - *automated-email*: Administrative. Automated emails are sent only for workshops with this tag.
+        - *DC*: Lesson Program. Identifies workshops teaching from Data Carpentry curricula.
+        - *LC*: Lesson Program. Identifies workshops teaching from Library Carpentry curricula.
+        - *SWC*: Lesson Program. Identifies workshops teaching from Software Carpentry curricula.
+        - *Circuits*: Lesson Program.  Identifies "mix and match" workshops teaching across lesson programs.
+        - *online*: Administrative. Identifies workshops taking place on line.
+        - *TTT*: Event type. Identifies Instructor Training events.
+        - *ITT*: Event type. Identifies Trainer Training events.
+        - *Pilot*: Event type. Identifies workshops teaching pilot curricula.
+        - *for-profit*: Administrative. Identifies workshops run by for-profit institutions.
+        - *Scholarship*: Adminstrative. Identifies sponsored workshops. 
+        - *private-event*: Deprecated. Formerly used before explicit private/public field existed.
+        - *cancelled*: Event status. Identifies workshops that got canceled after they were fully scheduled.
+        - *unresponsive*: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.
+        - *stalled*: Event status. Identifies workshops where planning began but workshops did not happen.
+        - *LMO*: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).
+        - *LSO*: Event type.  Identifies Lesson Specific Onboarding sessions (for Instrucotrs).
+        - *hackathon*: Event type. 
+        - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.
 
 
 ![AMY new event tags](images/amy_new_event_tags.png)
