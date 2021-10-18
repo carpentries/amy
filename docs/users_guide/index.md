@@ -398,17 +398,19 @@ The quickest and easiest way to search is using the search box in the top menu b
 * `ola tes` will match `Nikola Tesla` and `Nolan Bates`
 * `stanford` will match any one with a `stanford` email address, with `stanford` in their name, any workshops with `stanford` in the slug, or the site `Stanford University`.
 
+If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Events, Persons, Airports, Training Requests, and Comments.
+
 
 #### Searching for Qualified Instructors
 
-Under the "More" menu, select "Find Workshop Core Team."  Here you can filter by the following criteria:
+Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the following criteria:
 
-* Airport: This returns a list of all Instructors beginning with those who list that airport as their closest airport, and then continues reaching farther out.
-* Country: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.
-* Latitude and Longitude: Like the *Airport* search, this begins with people whose listed airport is closest to that latitude and longitude, and then continues reaching farther out.
-* Badges: Selecting more than one Instructor badge will return a list of Instructors who have *any* of those badges. If no badge is selected, the search will return unbadged Persons.
-* *Was helper at least once before*, *Was organiser at least once before*, *Is an in-progress instructor trainee* are based on AMY's current records
-* *Languages*, *Gender*, and *Lessons* come from the Person record for that individual.
+* **Airport**: This returns a list of all Instructors beginning with those who list that airport as their closest airport, and then continues reaching farther out.
+* **Country**: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.
+* **Latitude** and **Longitude**: Like the *Airport* search, this begins with people whose listed airport is closest to that latitude and longitude, and then continues reaching farther out.
+* **Badges**: Selecting more than one Instructor badge will return a list of Instructors who have *any* of those badges. If no badge is selected, the search will return unbadged Persons.
+* **Was helper at least once before**, **Was organiser at least once before**, **Is an in-progress instructor trainee** are based on AMY's current records
+* **Languages**, **Knowledge Domains**, **Gender**, and **Lessons** come from the Person record for that individual.
 
 #### Searching for Events
 
