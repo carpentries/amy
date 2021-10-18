@@ -415,9 +415,18 @@ Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the
 
 #### Searching for Events
 
-Clicking "Events" on the top menu bar will take you to a list of *all* recorded events - past, present, and future, including those that were stalled or cancelled.
+Clicking "Events" on the top menu bar will take you to a list of *all* recorded events - past, present, and future, including those that were stalled or cancelled. Here you can filter by the following criteria:
 
-Events can be searched from the left side options by Assignee, Tags, Host, Administrator, Invoice status (deprecated), Completed, Country, and Status.
+* **Assigned to**: The admin user the event is assigned to
+* **Tags**: Any tags applied to that event
+* **Host**: The organisation hosting the event
+* **Administrator** The event administrator (A lesson program for centrally organised workshops, self organised, or Instructor Training)
+* **Completed** Whether the "completed" box has been checked, indicating all necessary work for that event is complete
+* **Country** Country from the event's location
+* **Continent** Continent based on the country
+* **Status** Whether the evnet is active, past, ongoing, upcoming, unpublished, published, detected changes in metadata
+* **Ordering** Select sort order for returned list
+
 
 #### Searching for Organisations
 
