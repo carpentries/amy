@@ -364,8 +364,9 @@ AMY comes with several built in reporting features that can be accessed by click
 * **Find duplicate training requests** identifies instructor training requests that may be duplications  due to having the same name or email address, and allows the user to merge them.
 
 
-### Roles in AMY
-What you are able to edit or view depends on your assigned role in AMY.
+### User and Administrator Roles
+
+What you are able to edit or view depends on your assigned role as a user or administrator in AMY.
 
 #### Instructor Login
 
