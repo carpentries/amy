@@ -454,6 +454,11 @@ Clickiing "Memberships" on the top menu bar will take you to a list of all Carpe
 
 #### Searching for Persons
 
-Clicking "Persons" on the top menu bar will take you to a list of *all* recorded persons, regardless of their involvement with The Carpentries.
+Clicking "Persons" on the top menu bar will take you to a list of *all* recorded persons, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
 
-Persons can be searched for by badges and by teaching history.  See the section above to search specifically for [qualified instructors](#searching-for-qualified-instructors).
+* **Badges** This will return Persons who have any of the selected badges
+* **Taught at workshops of type** This will list Persons who have taught at workshops with any of the selected tags
+* **Ordering** Select sort order for returned list
+
+ See the section above to search specifically for [qualified instructors](#searching-for-qualified-instructors).
+ 
