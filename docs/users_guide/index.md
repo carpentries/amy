@@ -322,6 +322,8 @@ New Memberships can be created one of two ways:
 * If this is an entirely new membership, click on the "New Membership" button at the top of the [membership page](https://amy.carpentries.org/fiscal/memberships/). This will take you to a blank new membership form.
 * If this is a renewal of a current membership, select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
 
+The following fields are included in the Member view:
+
 * **Name** The name of the membership.  If this is a single organisation, it will be that organisation's name.  If it is a consortium of several organisations, it will be their collective name.
 * **Consortium**  If this box is checked, you will be able to assign multiple organisations to theat membership.  If not, you will only be able to assign one organisation to that membership.
 * **Can this membership be publicized on The Carpentries websites** If Public is selected, the membership will be listed on [The Carpentries Members page](https://carpentries.org/members/) and [data feeds](https://feeds.carpentries.org/all_public_memberships.json).  If Private is selected, it will not be listed.
