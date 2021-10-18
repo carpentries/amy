@@ -257,9 +257,9 @@ See [section above](#adding-bulk-person-records).
 
 #### Accepting Trainee Applications
 
-In addition to tracking workshops, AMY also allows us to track applications to instructor training events. The public facing application is [here](https://amy.carpentries.org/forms/request_training/). Applicants are given a registration code if participating in a member training event and should select "Profile Creation for Pre-approved Trainees." Open applicants will not have a registration code.
+In addition to tracking workshops, AMY also allows us to track applications to instructor training events. [The public facing application is here](https://amy.carpentries.org/forms/request_training/). Applicants are given a registration code if participating in a member training event and should select "Profile Creation for Pre-approved Trainees" using this code. Open applicants will not have a registration code.
 
-Once an individual submits the form, the record can be viewed by going to Requests --> [Training Requests](https://amy.carpentries.org/requests/training_requests/).  
+Once an individual submits the form, they receive an email that confirms their application has been received and includes a copy of the individual's responses. An admin user can then view the record by going to Requests --> [Training Requests](https://amy.carpentries.org/requests/training_requests/).
 
 Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affliliation and location searches rely on text strings, so *UCLA* will not return *University of California Los Angeles* and *NYC* will not return *New York City*.
 
