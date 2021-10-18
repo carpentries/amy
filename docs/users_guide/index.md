@@ -437,6 +437,21 @@ Clicking "Organisations" on the top menu bar will take you to a list of *all* re
 * **Ordering** Select sort order for returned list
 
 
+#### Searching for Memberships
+
+Clickiing "Memberships" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:
+
+* **Organisation Name**: For most memberships, this will be the name of the main organisation. For consortium memberships, this will be the name of the consortium.
+* **Consortium**:  Whether the membership is listed as a consortium
+* **Can this membership be publicized on The carpentries websites?**: Whether public/private has been selected, allowing the membership to be listed on [The Carpentries website](https://carpentries.org/members/)
+* **Variant**: The membership level (bronze, silver, gold, etc.)
+* **Contribution type**: Financial, Person-days, etc.
+* **Only show active memberships**
+* **Only show memberships with non-zero allowed training seats**
+* **Only show memberships with zero or less remaining seats**
+* **Ordering** Select sort order for returned list
+
+
 #### Searching for Persons
 
 Clicking "Persons" on the top menu bar will take you to a list of *all* recorded persons, regardless of their involvement with The Carpentries.
