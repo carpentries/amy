@@ -400,6 +400,7 @@ The quickest and easiest way to search is using the search box in the top menu b
 
 If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Events, Persons, Airports, Training Requests, and Comments.
 
+[This search view can also be accessed directly from the More menu](https://amy.carpentries.org/dashboard/admin/search/).
 
 #### Searching for Qualified Instructors
 
