@@ -340,6 +340,15 @@ The following fields are included in the Member view:
 * **Additional in-house instructor training seats**  Number of additional in-house seats the member may have purchased beyond the standard agreement.  This will typically only apply to Platinum memberships.
 * **Emergency contact** Free text field to fill in emergency contact information.
 
+#### Membership Contacts
+
+Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of two roles:
+
+* **Billing Contact** Person responsible for contracts and invoicing.
+* **Programmatic Contact** Person responsible for coordination of workshops and instructor training
+
+When a new membership is created, a new field called `Persons` will display.  Existing contacts will be listed here.  Click `Edit` in this row to add or edit any contacts.
+
 
 ### Reports
 
