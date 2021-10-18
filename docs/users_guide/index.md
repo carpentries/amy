@@ -39,7 +39,7 @@ Select "Memberships" from the top menu bar to view a [list of all Memberships](h
 New Memberships can be created one of two ways:
 
 * If this is an entirely new membership, click on the "New Membership" button at the top of the [membership page](https://amy.carpentries.org/fiscal/memberships/). This will take you to a blank new membership form.
-* If this is a renewal of a current membership, select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
+* If this is a [renewal of a current membership](#renewing-memberships), select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
 
 The following fields are included in the Member view:
 
