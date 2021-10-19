@@ -217,7 +217,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `notes` Any human generated notes
     * `evaluated_by_id` id of the user entering this record.  This is linked to the `workshops_person` table
     * `event_id` id of the event this trainee was at.  This is linked to the `workshops_event` table
-    * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table*
+    * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table
     * `trainee_id` id of the trainee being evaluated.  This is linked to the `workshops_person` table
 
 ### Term
