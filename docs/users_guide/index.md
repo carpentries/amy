@@ -100,7 +100,6 @@ If a person's record does not exist in the database, it can be added individuall
 
 Select "New person" and enter in as much information as possible.  At minimum a personal name is required.  If the airport is not listed, it will need to be [added in](#adding-a-new-airport).
 
-The person's privacy settings can also be set here.  The person's profile will display on The Carpentries website only if the consent box is checked.
 
 ![AMY add new person](images/amy_new_person.png)
 
