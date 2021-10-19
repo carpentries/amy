@@ -126,7 +126,7 @@ By default, all consents have null values (i.e., neither yes nor no). After a Pe
 
 ### Adding a New Airport
 
-Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closed to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
+Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closest to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
 
 Enter in the airport's IATA code, full name, country, and latitude and longitude.
 
