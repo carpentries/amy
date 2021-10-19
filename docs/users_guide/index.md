@@ -70,7 +70,7 @@ Once a new membership has been created, contact people can be assigned to the me
 * **Billing Contact** Person responsible for contracts and invoicing.
 * **Programmatic Contact** Person responsible for coordination of workshops and instructor training
 
-When a new membership is created, a new field called `Persons` will display. Click `Edit` in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. 
+When a new membership is created, a new field called `Persons` will display. Click `Edit` in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. These Persons must first be [listed as a Person in AMY](#adding-a-new-person).
 
 #### Extending membership dates
 
