@@ -1,12 +1,14 @@
-# Primary Tables in AMY
+# AMY Database structure
 
 The primary tables used in AMY (that will appear in most queries) are those that store information on events, persons, memberships, and organizations.  Additional tables provide more information about events, persons, memberships, and organizations.  This information can be useful in writing [SQL queries in redash](https://redash.carpentries.org/queries).
 
-## Events
+## Primary Tables in AMY
+
+### Events
 
 `workshops_event` - Primary table for all event data.
 
-### Commonly used fields
+#### Commonly used fields
 
 * `id` Sequential, automatically assigned integer
 * `start` and `end` Event start and end dates
@@ -27,18 +29,18 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `reg_key` Eventbrite registration key
 
 
-### Unused fields
+#### Unused fields
 
 * `manual_attendance` We are no longer collecting or recording attendance
 * ~~`admin_fee`~~, ~~`invoice_status`~~ We are not recording financial data in AMY
 * `repository_last_commit_hash`, `repository_metadata`, `metadata_all_changes`, `metadata_changed` Previously used to store metadata changes
 * `instructors_post` `instructors_pre` `learners_longterm` `learners_post` `learners_pre` Previously used to store links to surveys.
 
-## Persons
+### Persons
 
 `workshops_person` - Primary table for all person data. This includes all individuals, regardless of their role with The Carpentries.
 
-### Commonly used fields
+#### Commonly used fields
 
 * `id` Sequential, automatically assigned integer
 * `personal` `middle` `family` Three fields to hold the individual's name.  Only `personal` is required.
@@ -59,7 +61,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `country` Self identified country of residence. Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
 * `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity.
 
-### Less commonly used fields
+#### Less commonly used fields
 
 * `last_login` When the user last logged in (regardless of their activity or permissions)
 * `is_superuser` Boolean field to note whether the person is a **superuser**, giving them all administrative privileges
@@ -69,11 +71,11 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `is_active` A boolean field.  Only active users are able to log in to AMY
 * `data_privacy_agreement` Acknowledges user has read our data policy. Required the first time any user logs in
 
-### Other fields
+#### Other fields
 
 * `password` Not stored as plain text. Do not use or modify this field for anything.
 
-## Memberships
+### Memberships
 
 `workshops_membership` - Stores information about each membership agreement.
 
@@ -99,7 +101,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `emergency_contact` text with emergency contact data for the membership
 * `consortium` a boolean value indicating consortium (umbrella for more than one organisation member)
 
-## Member
+### Member
 
 `workshops_member` - Stores information about organisations and their roles in memberships.
 
@@ -108,7 +110,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `organization_id` - Integer linking organisation instance
 * `role_id` - Integer linking member role instance
 
-## MemberRole
+### MemberRole
 
 `workshops_memberrole` - Stores roles for organisations in memberships.
 
@@ -116,7 +118,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `name` string with role's name, e.g. `contact_signatory` - preferably a computer-friendly format
 * `verbose_name` string with role's name suitable for humans, e.g. `Contact Signatory`
 
-## MembershipTask
+### MembershipTask
 
 `fiscal_membershiptask` - Stores information about persons and their roles in memberships.
 
@@ -125,7 +127,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `person_id` - Integer linking person instance
 * `role_id` - Integer linking membership person role instance
 
-## MembershipPersonRole
+### MembershipPersonRole
 
 `fiscal_membershippersonrole` - Stores roles for persons in memberships.
 
@@ -134,7 +136,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `verbose_name` string with role's name suitable for humans
 
 
-## Organizations
+### Organizations
 
 `workshops_organization` - Stores all organizations in AMY.
 
@@ -146,9 +148,9 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related.
    For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".
 
-# Additional Tables in AMY
+## Additional Tables in AMY
 
-## Badges
+### Badges
 
 * `workshops_badge` Lists all available badges (SWC/DC/LC Instructor, Trainer, etc.)
     * `id` Sequential, automatically assigned integer. This is used by `badge_id` in the `workshops_award` table.
@@ -164,7 +166,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `person_id` An integer representing the person who got the badge.  This is linked to the `workshops_person` table
     * `awarded_by_id` An integer representing the person who awarded the badge (entered it in AMY).  This is linked to the `workshops_person` table
 
-## Roles
+### Roles
 
 * `workshops_role` Lists all available roles (Instructor, Helper, Learner, etc.)
     * `id`  Sequential, automatically assigned integer.
@@ -181,7 +183,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `seat_open_training` Used for Instructor Training Learner role only. Boolean field noting whether this was an open (non-member) training seat.
     * `title` and`url` are not used.
 
-## Tags
+### Tags
 
 * `workshops_tag` Lists all availabe tags for an Event (SWC, DC, LC, Online, Pilot, Circuits, etc.)
     * `id`  Sequential, automatically assigned integer.
@@ -195,7 +197,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `tag_id` An integer representing the tag that was assigned to that event.  This is linked to the `workshops_tag` table.
 
 
-## Training progress
+### Training progress
 
 * `workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Discussion, etc.)
     * `id`  Sequential, automatically assigned integer.
@@ -214,46 +216,46 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table*
     * `trainee_id` id of the trainee being evaluated.  This is linked to the `workshops_person` table
 
-## Term
+### Term
 
 `consents_term` - Stores all Terms in AMY (i.e. the privary policy). 
 
-### Archive Behavior
+#### Archive Behavior
 
 When `Terms` are archived (`archived_at` timestamp is set), that `Term`'s `TermOptions` and `Consents` are archived as well. If the `Term` was required, once archived it is no longer required in AMY.
 
-### Commonly used fields
+#### Commonly used fields
 
 * `slug` slug of the term. Used to uniquely identify the term.
 * `content` content of the term. This text shown to users when they consent.
 * `required_type` determines whether or not a term is considered required for the user or not. If required it will be shown to the user when they log in to consent to.
 * `help_text` additional text shown to the user in order to give more context on the term.
 
-## TermOption
+### TermOption
 
 `consents_termoption` - Stores all options for a stored `Term` in AMY. `TermOptions` are displayed when the user is asked to consent to a `Term`,
 and are considered answer choices for the `Term`.
 
-### Archive Behavior
+#### Archive Behavior
 
 When TermOptions are archived (`archived_at` timestamp is set), any `Consents` that rely on that option are archived and a new unset `Consent` is created by AMY for the user. If the `Term` the option was attached to is required, archiving a `TermOption` may result in an email sent to any users who answered with this opition.
 
-### Commonly used fields
+#### Commonly used fields
 
 * `term` a required foreign key to term. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
 * `option_type` determines whether or not a term option is considered an affirmative aggrement to the term or the user has declined the term.
 * `content` the text displayed to the user when the term is rendered.
 * `archived_at` - a nullable timestamp
 
-## Consent
+### Consent
 
 `consents_consent` - Stores all consents for all users in AMY. 
 
-### Archive Behavior
+#### Archive Behavior
 
 When `Consents` are archived (`archived_at` timestamp is set), a new unset consent is created by AMY.
 
-### Commonly used fields
+#### Commonly used fields
 
 * `person` - required foreign key to `Person`.
 * `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
