@@ -19,7 +19,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `venue` The venue name of the event
     * `address` The street address of the event
     * `latitude` and `longitude` Stored as floating point (decimal) numbers
-    * `country` Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+    * `country` Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
 * `contact` A list of email addresses listed as contacts for that workshop
 * `completed` A Boolean field to note that all work (including workshop coordination and data entry) is complete.
 * `assigned_to_id` The id of the Regional Coordinator or other Carpentries Core Team member assigned to this event. This is linked to the `workshops_person` table.
@@ -58,7 +58,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `occupation` A free text field representing the person's self identified occupation
 * `user_notes` Free text field with notes from the individual
 * `publish_profile` A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the [Instructors](https://carpentries.org/instructors/), [Trainers](https://carpentries.org/trainers/), or [Maintainers](https://carpentries.org/maintainers/) pages
-* `country` Self identified country of residence. Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
+* `country` Self identified country of residence. Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
 * `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity.
 
 #### Less commonly used fields
@@ -143,7 +143,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `id` Sequential, automatically assigned integer.  This is used by the `host_id` and `administrator_id` fields in the `workshops_event` table, and the `organization_id` field in the `workshops_membership` table.
 * `domain` Website of the organization
 * `fullname` Human friendly name of the organization
-* `country` Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+* `country` Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
 * `latitude` and `longitude` Stored as floating point (decimal) numbers
 * `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related.
    For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".
