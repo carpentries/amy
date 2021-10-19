@@ -125,8 +125,6 @@ AMY asks all users to consent or agree to the following:
 
 By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances.
 
-
-
 ### Adding a New Airport
 
 Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closed to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
@@ -134,7 +132,6 @@ Airports are used as approximate geographic identifiers for our instructors.  In
 Enter in the airport's IATA code, full name, country, and latitude and longitude.
 
 ![AMY add airport](images/amy_add_airport.png)
-
 
 ### Adding a New Event
 
@@ -201,7 +198,6 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
 
-
 ![AMY TTT Open Applications check box](images/amy_ttt_open_applications.png)
 
 * **Curricula taught at the workshop** Select the curricula taught at this workshop.
@@ -210,8 +206,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Lessons covered**
 
-    * Placeholder section for lessons covered.
-
+    * Placeholder section for lessons covered.  <br><br>
 
 * **URL** Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
 
@@ -221,7 +216,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event language](images/amy_new_event_language.png)
 
-* **Eventbrite**  If the workshop is using **Carpentries** Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other registration system.
+* **Eventbrite**  If the workshop is using The Carpentries Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other registration system.
 
 ![AMY new event Eventbrite](images/amy_new_event_eventbritekey.png)
 
@@ -279,7 +274,6 @@ This will open a page with a side by side view of the request details and view t
 
 ![AMY workshop accept request](images/amy_workshop_request_accept.png)
 
-
 ### Assigning People to Events
 
 Regardless of how events are created, adding the people associated with each event can not easily be automated. [Name matching is hard](http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/).
@@ -309,7 +303,6 @@ Below this form, a list of all people assigned to this event is displayed, with 
 * **"i" icon** opens a detailed view of this Person's role at this event
 * **pencil icon** opens an edit view of this Person's role at this event
 * **red X icon** deletes this Person's role at this event
-
 
 #### Assigning People to Events in Bulk
 
@@ -360,7 +353,6 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 * **Discarded** This field is not currently used.
 * **Notes** Any free notes from the admin.
 
-
 ### Issuing Badges
 
 The Carpentries has various badges that can be issued, including Data Carpentry Instructor, Software Carpentry Instructor, Trainer, Maintainer, and more.  
@@ -372,7 +364,6 @@ An individual badge can be issued by going to a person's record and clicking the
 Choose the `Awards` tab on the next screen.  Select the Badge type from the drop down menu, and fill in the date it was awarded. The Event field should be filled if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding.  Click `Submit` to save the entry.
 
 ![AMY issue badge](images/amy_issue_badge.png)
-
 
 ### Reports
 
@@ -413,7 +404,9 @@ Choose the two records to be merged, and click "Submit" to see merge options. He
 ### Searching
 
 #### General Search
+
 The quickest and easiest way to search is using the search box in the top menu bar. This will perform a case insensitive search of any field in AMY, including searching for partial matches. For example:
+
 *  `12-12-` will match any workshop slug containing that string (essentially any workshop on December 12 of any year.)
 * `ola tes` will match `Nikola Tesla` and `Nolan Bates`
 * `stanford` will match any one with a `stanford` email address, with `stanford` in their name, any workshops with `stanford` in the slug, or the site `Stanford University`.
@@ -447,7 +440,6 @@ Clicking "Events" on the top menu bar will take you to a list of *all* recorded 
 * **Status** Whether the event is active, past, ongoing, upcoming, unpublished, published, detected changes in metadata
 * **Ordering** Select sort order for returned list
 
-
 #### Searching for Organisations
 
 Clicking "Organisations" on the top menu bar will take you to a list of *all* recorded organisations, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
@@ -455,7 +447,6 @@ Clicking "Organisations" on the top menu bar will take you to a list of *all* re
 * **Country**: Country the organisation is based in
 * **Memberships (current or past)**: Whether the organisation has had any current or past membership, by selected membership variant
 * **Ordering** Select sort order for returned list
-
 
 #### Searching for Memberships
 
@@ -470,7 +461,6 @@ Clicking "Memberships" on the top menu bar will take you to a list of all Carpen
 * **Only show memberships with non-zero allowed training seats**
 * **Only show memberships with zero or less remaining seats**
 * **Ordering** Select sort order for returned list
-
 
 #### Searching for Persons
 
