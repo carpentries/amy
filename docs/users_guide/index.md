@@ -114,6 +114,19 @@ The role must exactly match the [instructions here](https://amy.carpentries.org/
 
 This will take you to a screen where you can verify each record, correct any errors, and submit them for bulk upload.  If a person with the same name and email already exists in the database, you will be able to match the new entry to the existing record.  Otherwise a new person record will be created.
 
+#### Consents
+
+AMY asks all users to consent or agree to the following:
+
+* **I have read and agree to the data privacy policy of The Carpentries.**
+* **May contact**
+* **Consent to making profile public**
+* **Do you consent to have your name or identity associated with lesson publications?**
+
+By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances.
+
+
+
 ### Adding a New Airport
 
 Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closed to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).
