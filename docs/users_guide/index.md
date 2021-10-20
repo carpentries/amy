@@ -360,7 +360,12 @@ An individual badge can be issued by going to a person's record and clicking the
 
 ![AMY edit person](images/amy_edit_person.png)
 
-Choose the `Awards` tab on the next screen.  Select the Badge type from the drop down menu, and fill in the date it was awarded. The Event field should be filled if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding.  Click `Submit` to save the entry.
+Choose the `Awards` tab on the next screen.  
+
+* **Badge** The specific badge that is being awarded
+* **Awarded** The date the badge is being awarded on
+* **Event** Used only if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding
+* **Awarded by** The admin user awarding the badge
 
 ![AMY issue badge](images/amy_issue_badge.png)
 
