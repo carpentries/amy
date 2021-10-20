@@ -50,7 +50,7 @@ The following fields are included in the Member view:
 * **Agreement start** and **Agreement end** Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.
 * **Extensions** Extensions are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.
 * **Contribution type** What the member contribution was (Financial, Person-days, or other)
-* **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar/index.html) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Applications using the member code are manually matched to this member and a training event.
+* **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar/index.html) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Instructor training applications using the member code are [manually matched to this member and a training event](#accepting-trainee-applications).
 * **Link to member agreement** Link to the Google Drive folder with the member agreement.
 * **Workshops without admin fee per agreement** Number of workshops allowed in the terms of the agreement.
 * **Public instructor training seats** Number of public instructor training seats allowed in the terms of the agreement.
