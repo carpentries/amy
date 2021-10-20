@@ -8,7 +8,7 @@
 
 ### AMY Dashboard
 
-All the menus and a search bar are displayed across the top. The main page has two columns, showing current workshops and in progress workshops.  This view can be filtered to show workshops assigned to the logged in administrator, another administrator, or unassigned workshops.
+All menus and a search bar are displayed across the top. The main page has two columns, showing current workshops and in progress workshops.  This view can be filtered to show workshops assigned to the logged in administrator, another administrator, or unassigned workshops.
 
 ![AMY dashboard](images/amy_dashboard.png)
 
@@ -23,7 +23,7 @@ From here you can also add new [persons](#adding-a-new-person), [events](#adding
 
 ### Adding a New Organisation
 
-If an organisation is not already in AMY, add a new one by selecting "New Organisation."  Domain and Full Name are required fields.  Enter in the domain (full website, such as https://www.example.com/library).  When known, enter in the country and latitude/longitude of the main location.  There is also a text box for open ended comments.
+If an organisation is not already in AMY, add a new one by selecting "New Organisation."  Domain and Full Name are required fields.  Enter in the domain (full website, such as `https://www.example.com/library`).  When known, enter in the country and latitude/longitude of the main location.  There is also a text box for open ended comments.
 
 The "Affiliated Organization" field is not being used; always leave this blank.
 
@@ -44,7 +44,7 @@ New Memberships can be created one of two ways:
 The following fields are included in the Member view:
 
 * **Name** The name of the membership.  If this is a single organisation, it will be that organisation's name.  If it is a consortium of several organisations, it will be their collective name.
-* **Consortium**  If this box is checked, you will be able to assign multiple organisations to theat membership.  If not, you will only be able to assign one organisation to that membership.
+* **Consortium**  If this box is checked, you will be able to assign multiple organisations to that membership.  If not, you will only be able to assign one organisation to that membership.
 * **Can this membership be publicized on The Carpentries websites** If Public is selected, the membership will be listed on [The Carpentries Members page](https://carpentries.org/members/) and [data feeds](https://feeds.carpentries.org/all_public_memberships.json).  If Private is selected, it will not be listed.
 * **Variant** This lists all the membership levels (Gold, Silver, Bronze, etc.)
 * **Agreement start** and **Agreement end** Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.
