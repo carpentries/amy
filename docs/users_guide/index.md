@@ -113,7 +113,7 @@ If a person's record does not exist in the database, it can be added individuall
 Select "New person" and enter in as much information as possible.  At minimum a personal name is required.  If the airport is not listed, it will need to be [added in](#adding-a-new-airport).
 
 
-![AMY add new person](images/amy_new_person.png)
+![AMY add new person](images/new_person.png)
 
 #### Adding Bulk Person Records
 
