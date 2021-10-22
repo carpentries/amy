@@ -28,3 +28,5 @@ nav:
 markdown_extensions:
     - toc:
         permalink: 
+
+extra_css: [extra.css]
