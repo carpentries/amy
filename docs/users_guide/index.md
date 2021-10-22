@@ -265,7 +265,11 @@ People can be associated with events one by one or as a bulk upload.  The person
 
 #### Assigning People to Events, One by One
 
-Go to the event page and click the "Edit" button at the top of the page.  Select the "Tasks" tab. Fill in the following fields:
+Go to the event page and click the "Edit" button at the top of the page.  Select the "Tasks" tab. 
+
+![Assign person to task](images/assign_person_task.png)
+
+Fill in the following fields:
 
 * **Person** Start typing in the person's name.  Auto-completed suggested names will appear.
 * **Role** Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.). 
@@ -286,6 +290,8 @@ Below this form, a list of all people assigned to this event is displayed, with 
 * **"i" icon** opens a detailed view of this Person's role at this event
 * **pencil icon** opens an edit view of this Person's role at this event
 * **red X icon** deletes this Person's role at this event
+
+![Manage person tasks](images/manage_person_tasks.png)
 
 #### Assigning People to Events in Bulk
 
