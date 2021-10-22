@@ -156,6 +156,8 @@ New events can be created one of several ways:
 
 Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).
 
+![AMY new event](images/new_event.png)
+
 * **Slug** Create the workshop slug. This must be in the form `YYYY-MM-DD-sitename` (for example, `2018-01-01-hawkins`.  The same slug should be used for the workshop's GitHub page and any other place the workshop is identified. If the exact date is not known, `XX` can replace the month and/or day (for example, `2018-01-xx-starfleet`).
 
 * **Workshop Dates** If known, enter in the workshop start and dates.  Do not check the "Completed" box -- this will be checked after the workshop is over and all associated wrap up work is finished.
@@ -172,39 +174,35 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Assigned to** Select the name of The Carpentries team member responsible for managing this workshop.  Only AMY admin users appear in this list.  This assignment is used in the views throught AMY.
 
-* **Event Tags**  Tags are used for several purposes as noted below, including event type, event status, lesson program, event status, and administrative attributes. Multiple tags can be selected for any event. 
+* **Event Tags**  Tags are used for several purposes as noted below, including event type, event status, lesson program, event status, and administrative attributes. Multiple tags can be selected for any event.
 
-    * **Assign all appropriate tags to the event.**
-
-        - *automated-email*: Administrative. Automated emails are sent only for workshops with this tag.
-        - *DC*: Lesson Program. Identifies workshops teaching from Data Carpentry curricula.
-        - *LC*: Lesson Program. Identifies workshops teaching from Library Carpentry curricula.
-        - *SWC*: Lesson Program. Identifies workshops teaching from Software Carpentry curricula.
-        - *Circuits*: Lesson Program.  Identifies "mix and match" workshops teaching across lesson programs.
-        - *online*: Administrative. Identifies workshops taking place on line.
-        - *TTT*: Event type. Identifies Instructor Training events.
-        - *ITT*: Event type. Identifies Trainer Training events.
-        - *Pilot*: Event type. Identifies workshops teaching pilot curricula.
-        - *for-profit*: Administrative. Identifies workshops run by for-profit institutions.
-        - *Scholarship*: Administrative. Identifies sponsored workshops. 
-        - *private-event*: Deprecated. Formerly used before explicit private/public field existed.
-        - *cancelled*: Event status. Identifies workshops that got canceled after they were fully scheduled.
-        - *unresponsive*: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.
-        - *stalled*: Event status. Identifies workshops where planning began but workshops did not happen.
-        - *LMO*: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).
-        - *LSO*: Event type.  Identifies Lesson Specific Onboarding sessions (for Instructors).
-        - *hackathon*: Event type. 
-        - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.
-
+    - *automated-email*: Administrative. Automated emails are sent only for workshops with this tag.
+    - *DC*: Lesson Program. Identifies workshops teaching from Data Carpentry curricula.
+    - *LC*: Lesson Program. Identifies workshops teaching from Library Carpentry curricula.
+    - *SWC*: Lesson Program. Identifies workshops teaching from Software Carpentry curricula.
+    - *Circuits*: Lesson Program.  Identifies "mix and match" workshops teaching across lesson programs.
+    - *online*: Administrative. Identifies workshops taking place on line.
+    - *TTT*: Event type. Identifies Instructor Training events.
+    - *ITT*: Event type. Identifies Trainer Training events.
+    - *Pilot*: Event type. Identifies workshops teaching pilot curricula.
+    - *for-profit*: Administrative. Identifies workshops run by for-profit institutions.
+    - *Scholarship*: Administrative. Identifies sponsored workshops. 
+    - *private-event*: Deprecated. Formerly used before explicit private/public field existed.
+    - *cancelled*: Event status. Identifies workshops that got canceled after they were fully scheduled.
+    - *unresponsive*: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.
+    - *stalled*: Event status. Identifies workshops where planning began but workshops did not happen.
+    - *LMO*: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).
+    - *LSO*: Event type.  Identifies Lesson Specific Onboarding sessions (for Instructors).
+    - *hackathon*: Event type. 
+    - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.  
+    <br>  
 
 * **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
 
 
 * **Curricula taught at the workshop** Select the curricula taught at this workshop.
 
-* **Lessons covered**
-
-    * Placeholder section for lessons covered.  <br><br>
+* **Lessons covered** *Placeholder section for lessons covered*
 
 * **URL** Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
 
@@ -221,13 +219,13 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Comment**  Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
 
-**Click "Submit" to save this event.**
-
-* Roles such as Instructor, Host, and helper can be [assigned](#assigning-people-to-events) after the event is created and saved.
+**Click "Submit" to save this event.**  Roles such as Instructor, Host, and helper can be [assigned](#assigning-people-to-events) after the event is created and saved.
 
 #### Creating a New Event from URL
 
 If you already have the event's URL with properly formatted metadata using [The Carpentries workshop template](https://github.com/carpentries/workshop-template), some information can automatically be imported.  Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).  Click on the "Import from URL" button and enter the link to the workshop website OR GitHub URL.
+
+![AMY new event from URL](images/new_event_from_url.png)
 
 This will automatically populate the following fields:
 
@@ -247,11 +245,11 @@ A workshop can be requested from a host site, and this information can be used t
 * Workshop inquiries
 * Self-Organised submissions
 
-![AMY workshop requests](images/amy_workshop_request_menu.png)
+![AMY workshop requests](images/workshop_requests_menu.png)
 
 This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
 
-![AMY workshop request list](images/amy_workshop_request_list.png)
+![AMY workshop request list](images/workshop_requests.png)
 
 At the bottom of this page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request. 
 
