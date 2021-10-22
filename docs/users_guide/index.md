@@ -305,13 +305,17 @@ In addition to tracking workshops, AMY also allows us to track applications to i
 
 Once an individual submits the form, they receive an email that confirms their application has been received and includes a copy of the individual's responses. An admin user can then view the record by going to Requests --> [Training Requests](https://amy.carpentries.org/requests/training_requests/).
 
+![Training request menu](images/training_request_menu.png)
+
 Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affiliation and location searches rely on text strings, so *UCLA* will not return *University of California Los Angeles* and *Joburg ZA* will not return *Johannesburg* or *South Africa*.
 
-Some trainees will already be in AMY. If there is a record with a matching name and email address, they will show up with a "matched trainee" when you search for them.  If "matched trainee" is blank, you will need to create a new person record for them.
+Some trainees will already be in AMY. If there is a record with a matching name and email address, they will show up with a "matched trainee" when you search for them. You can match the application to this trainee, or if the match was incorrect, search for a different Person record or create a new Person.
 
-To create a trainee record, click on the "i" icon at the far right of the individual's line. If you know this person is in AMY under a different name or email address, look this person up here and click "Match to selected trainee account."  If this is a new person, click "Create new trainee account."
+![Match trainee to person](images/match_trainee.png)
 
-![AMY Match Trainee Record](images/amy_training_match_record.png)
+If "matched trainee" is blank, you will need to create a new person record for them.  To create a trainee record, click on the "i" icon at the far right of the individual's line. If you know this person is in AMY under a different name or email address, look this person up here and click "Match to selected trainee account."  If this is a new person, click "Create new trainee account."  This will create a new Person record for that trainee.
+
+![AMY Trainee no match](images/trainee_no_match.png)
 
 This will return you to the search screen, and this person's record will be updated with the new trainee account.
 
