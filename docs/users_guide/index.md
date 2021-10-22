@@ -350,18 +350,14 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 
 The Carpentries has various badges that can be issued, including Data Carpentry Instructor, Software Carpentry Instructor, Trainer, Maintainer, and more.  
 
-An individual badge can be issued by going to a person's record and clicking the `Edit` button.  
-
-![AMY edit person](images/amy_edit_person.png)
-
-Choose the `Awards` tab on the next screen.  
+An individual badge can be issued by going to a person's record and clicking the `Edit` button.  Choose the `Awards` tab on the next screen.  
 
 * **Badge** The specific badge that is being awarded
 * **Awarded** The date the badge is being awarded on
 * **Event** Used only if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding
 * **Awarded by** The admin user awarding the badge
 
-![AMY issue badge](images/amy_issue_badge.png)
+![AMY issue badge](images/issuing_badges.png)
 
 ### Reports
 
