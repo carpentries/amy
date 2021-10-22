@@ -317,7 +317,7 @@ If "matched trainee" is blank, you will need to create a new person record for t
 
 ![AMY Trainee no match](images/trainee_no_match.png)
 
-This will return you to the search screen, and this person's record will be updated with the new trainee account.
+This will return you to the [instructor training application search screen](https://amy.carpentries.org/requests/training_requests/), and this person's record will be updated with the new trainee account.
 
 Continue doing this until all relevant applications have a new trainee account. This must be done individually; it can not be done in bulk.
 
@@ -327,7 +327,7 @@ Check all the names to be assigned to the training event and membership, and the
 
 Click "Accept & match selected trainees to chosen training." The search screen will then update to show that the trainees have been matched to this event. The event page will also update to list these trainees as learners at that event.
 
-![Match trainees to instructor training event](images/amy_instructor_training_match.png)
+![Match trainees to instructor training event](images/assign_trainees_event_membership.png)
 
 #### Tracking Checkout Progress
 
