@@ -78,6 +78,8 @@ def migrate_notes(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('django_comments', '0001_initial'),
+        ('contenttypes', '0001_initial'),
         ('workshops', '0172_amy_sites'),
     ]
 
