@@ -142,7 +142,7 @@ Airports are used as approximate geographic identifiers for our instructors.  In
 
 Enter in the airport's IATA code, full name, country, and latitude and longitude.
 
-![AMY add airport](images/amy_add_airport.png)
+![AMY add airport](images/new_airport.png)
 
 ### Adding a New Event
 
@@ -158,11 +158,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Slug** Create the workshop slug. This must be in the form `YYYY-MM-DD-sitename` (for example, `2018-01-01-hawkins`.  The same slug should be used for the workshop's GitHub page and any other place the workshop is identified. If the exact date is not known, `XX` can replace the month and/or day (for example, `2018-01-xx-starfleet`).
 
-![AMY new event slug](images/amy_new_event_slug.png)
-
 * **Workshop Dates** If known, enter in the workshop start and dates.  Do not check the "Completed" box -- this will be checked after the workshop is over and all associated wrap up work is finished.
-
-![AMY new event dates](images/amy_new_event_dates.png)
 
 * **Host** Select the Host name from the drop down menu. The Host is the institution where the workshop is actually being held (or would be held for online workshops). If the Host does not appear on the list, [create a new organisation](#adding-a-new-organization).
 
@@ -174,11 +170,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Is this workshop public** If the workshop Host consents, choose "Public." This will list the workshop on the websites for The Carpentries, the associated lesson programs, and The Carpentries data feeds.  If "Private" it will not be listed publicly anywhere.
 
-![AMY new event organizations](#)
-
 * **Assigned to** Select the name of The Carpentries team member responsible for managing this workshop.  Only AMY admin users appear in this list.  This assignment is used in the views throught AMY.
-
-![AMY new event assigned to](images/amy_new_event_assigned_to.png)
 
 * **Event Tags**  Tags are used for several purposes as noted below, including event type, event status, lesson program, event status, and administrative attributes. Multiple tags can be selected for any event. 
 
@@ -205,15 +197,10 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
         - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.
 
 
-![AMY new event tags](images/amy_new_event_tags.png)
-
 * **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
 
-![AMY TTT Open Applications check box](images/amy_ttt_open_applications.png)
 
 * **Curricula taught at the workshop** Select the curricula taught at this workshop.
-
-![AMY curricula taught](images/amy_curricula_taught.png)
 
 * **Lessons covered**
 
@@ -221,31 +208,18 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **URL** Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
 
-![AMY new event url](images/amy_new_event_url.png)
 
 * **Language**  Enter in the human language the workshop is taught in. This is especially important for The Carpentries to track workshops in languages other than English.
 
-![AMY new event language](images/amy_new_event_language.png)
-
 * **Eventbrite**  If the workshop is using The Carpentries Eventbrite for registration, enter the Eventbrite key. This is not needed if the host site is using their own Eventbrite account or any other registration system.
-
-![AMY new event Eventbrite](images/amy_new_event_eventbritekey.png)
 
 * **Manual Attendance**   After the event is over, record the total number of learners who attended the workshop.  This is compared to the count of learner tasks at that event.  In the end, the higher value will be displayed.  Note The Carpentries does not currently maintain attendance data on its workshops.
 
-![AMY new event attendance](images/amy_new_event_attendance.png)
-
 * **Additional people to contact**  Enter only email addresses for any additional contact people for this event. This is intended for people who do not have an official role (Host, Instructor, etc.) at the workshop.  Enter emails addresses, one at a time.  These individuals do not need a Person record in AMY.  They will be included on any automated emails.
-
-![AMY new event contact](images/amy_new_event_contact.png)
 
 * **Location details**  Add in the location including the country, venue name, address, and latitude/longitude coordinates.
 
-![AMY new event location](images/amy_new_event_location.png)
-
 * **Comment**  Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
-
-![AMY new event notes](images/amy_event_comment.png)
 
 **Click "Submit" to save this event.**
 
