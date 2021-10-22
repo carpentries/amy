@@ -119,7 +119,7 @@ Select "New person" and enter in as much information as possible.  At minimum a 
 
 `Person` records can also be added in bulk from a `.csv` file using the `Bulk add persons` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.
 
-![AMY bulk add person menu](images/amy_bulk_add_person_menu.png)
+![AMY bulk add person menu](images/bulk_add_persons.png)
 
 The role must exactly match the [instructions here](https://amy.carpentries.org/workshops/persons/bulk_upload/). The event slug must exactly match the slug for the event recorded in AMY.
 
