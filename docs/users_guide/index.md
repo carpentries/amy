@@ -331,13 +331,13 @@ Click "Accept & match selected trainees to chosen training." The search screen w
 
 #### Tracking Checkout Progress
 
-The above steps note that a trainee was accepted in to a training event. Completion of the training event and three steps towards trainee checkout can be tracked in AMY.  Each person's record will have a line for Instructor Training Progress.
+The above steps note that a trainee was accepted in to a training event. Completion of the training event and three steps towards trainee checkout can be tracked in AMY.  Each person's record will have a line for Instructor Training Progress. Hover over any item to see more information.
 
-![AMY training progress](images/amy_training_progress.png)
+![AMY training progress](images/instructor_training_progress.png)
 
 Click on the plus sign in the Training Progress line. This will go to a screen where you can track all the steps towards certification.
 
-![AMY training progress steps](images/amy_training_progress_steps.png)
+![AMY training progress steps](images/new_training_progress.png)
 
 * **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
 * **Evaluated by** This will default to the current admin user.
