@@ -84,6 +84,9 @@ When a new membership is created, a new field called `Persons` will display. Cli
 
 If a membership is granted an extension to the membership date terms, do not change the original membership end date.  Instead, click the gray "Extend" button at the bottom of the membership view. Enter in the new membership end date.  The number of days of the extension will automatically be calculated.  Add in any comments, such as the context for the extension or a link to more information. Multiple extensions can be granted. The duration of the extension can be edited in the membership's edit view.  If a second extension is granted, do not edit the original. Instead, click on the gray "Extend" button again to enter in another extension.
 
+![AMY Membership Extension Button](images/membership_extension_button.png)  
+
+![Record Membership Extension](images/membership_extension.png)
 
 #### Renewing memberships
 
