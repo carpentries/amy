@@ -34,6 +34,7 @@ def remove_AMY_sites(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('sites', '0001_initial'),
         ('workshops', '0171_add_LC_instructor_badge'),
     ]
 
