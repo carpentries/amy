@@ -2,7 +2,7 @@ name: build docs
 on:
   push:
     branches:
-      - main
+      - develop
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
