@@ -29,9 +29,15 @@ class CommunityRoleConfig(CreatedUpdatedMixin, models.Model):
         "Should generic relation point to more than 1 items?",
     )
 
+    def __str__(self) -> str:
+        return self.display_name
+
 
 class CommunityRoleInactivation(CreatedUpdatedMixin, models.Model):
     name = models.CharField(max_length=150)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class CommunityRole(CreatedUpdatedMixin, models.Model):
@@ -51,3 +57,6 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
     # `CommunityRoleConfig.generic_relation_content_type` and here in the array field
     # are kept indices for related objects in this content type model.
     generic_relation_m2m = ArrayField(models.PositiveIntegerField(), default=list)
+
+    def __str__(self) -> str:
+        return f'Community Role "{self.config}" for {self.person}'
