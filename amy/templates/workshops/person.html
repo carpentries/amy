@@ -3,6 +3,7 @@
 {% load links %}
 {% load revisions %}
 {% load dates %}
+{% load content_types %}
 
 {% block content %}
 {% last_modified person %}
@@ -201,6 +202,69 @@
       {% endwith %}
     </td>
   </tr>
+  <tr>
+    <th>Community roles:</th>
+    <td>
+      {% with community_roles=person.communityrole_set.all %}
+      {% if community_roles %}
+      <table class="table table-sm">
+        <tr>
+          <th>Role</th>
+          <th>Dates</th>
+          <th>Award</th>
+          <th>Inactive?</th>
+          <th>Membership</th>
+          <th>URL</th>
+          <th>Related objects</th>
+        </tr>
+        {% for role in community_roles %}
+        <tr>
+          <td>{{ role.config }}</td>
+          <td>
+            {% if role.start or role.end %}
+            {% human_daterange role.start role.end %}
+            {% else %}
+            &mdash;
+            {% endif %}
+          </td>
+          <td>
+            {% if role.award %}
+            <a href="{{ role.award.get_absolute_url }}">{{ role.award }}</a>
+            {% else %}
+            &mdash;
+            {% endif %}
+          </td>
+          <td>{{ role.inactivation|default_if_none:"&mdash;" }}</td>
+          <td>
+            {% if role.membership %}
+            <a href="{{ role.membership.get_absolute_url }}">{{ role.membership }}</a>
+            {% else %}
+            &mdash;
+            {% endif %}
+          </td>
+          <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
+          <td>
+            {% if role.config.generic_relation_content_type and role.generic_relation_m2m %}
+            {{ role.config.generic_relation_content_type|title }}:
+            {% get_content_type_objects_by_ids role.config.generic_relation_content_type role.generic_relation_m2m as objects %}
+            <ul>
+            {% for obj in objects %}
+              <li>{{ obj }}</li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            &mdash;
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No related community roles.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
 </table>
 
 <div class="edit-object">
@@ -225,10 +289,10 @@
     To ensure that the form-button is a part of the btn-group,
     add css class "btn-group" to the form tag.
     {% endcomment %}
-    <form 
-      class="btn-group" 
-      action="{% url 'person_archive' person_id=person.pk %}" 
-      onsubmit='return confirm("Are you sure you wish to archive \"{{ person }}\"? All personaly identifiable information will be PERMANENTLY DELETED and the user will no longer be able to log in.")' 
+    <form
+      class="btn-group"
+      action="{% url 'person_archive' person_id=person.pk %}"
+      onsubmit='return confirm("Are you sure you wish to archive \"{{ person }}\"? All personaly identifiable information will be PERMANENTLY DELETED and the user will no longer be able to log in.")'
       method="POST"
     >
       {% csrf_token %}
