@@ -13,7 +13,6 @@ nav:
         - 'Database Models': 'design/database_models.md'
         - 'Template Hierarchy': 'design/template_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
-        - 'User Guide': 'user_guide.md'
         - 'Procedures': 'procedures.md'
         - 'Sending Mails': 'sending_mails.md'
         - 'Releases': 'releases'
