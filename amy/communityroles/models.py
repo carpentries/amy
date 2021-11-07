@@ -43,20 +43,24 @@ class CommunityRoleInactivation(CreatedUpdatedMixin, models.Model):
 class CommunityRole(CreatedUpdatedMixin, models.Model):
     config = models.ForeignKey(CommunityRoleConfig, on_delete=models.PROTECT)
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
-    award = models.ForeignKey(Award, on_delete=models.PROTECT, null=True)
+    award = models.ForeignKey(Award, on_delete=models.PROTECT, null=True, blank=True)
     start = models.DateField(null=True, blank=True)
     end = models.DateField(null=True, blank=True)
     inactivation = models.ForeignKey(
-        CommunityRoleInactivation, on_delete=models.PROTECT, null=True
+        CommunityRoleInactivation, on_delete=models.PROTECT, null=True, blank=True
     )
-    membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True)
+    membership = models.ForeignKey(
+        Membership, on_delete=models.PROTECT, null=True, blank=True
+    )
     url = models.URLField("URL", blank=True, default="")
 
     # Django doesn't support Generic Relation M2M, so to circumvent this issue
     # there's a generic relation Content Type field
     # `CommunityRoleConfig.generic_relation_content_type` and here in the array field
     # are kept indices for related objects in this content type model.
-    generic_relation_m2m = ArrayField(models.PositiveIntegerField(), default=list)
+    generic_relation_m2m = ArrayField(
+        models.PositiveIntegerField(), default=list, blank=True
+    )
 
     def __str__(self) -> str:
         return f'Community Role "{self.config}" for {self.person}'
