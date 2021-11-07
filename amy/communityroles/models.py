@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.urls import reverse
 
 from fiscal.models import Membership
 from workshops.mixins import CreatedUpdatedMixin
@@ -64,3 +65,6 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
 
     def __str__(self) -> str:
         return f'Community Role "{self.config}" for {self.person}'
+
+    def get_absolute_url(self):
+        return reverse("communityrole_details", kwargs={"pk": self.pk})
