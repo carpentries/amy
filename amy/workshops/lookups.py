@@ -312,6 +312,16 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        results = models.Award.objects.all()
+
+        if self.term:
+            results = results.filter(slug__icontains=self.term)
+
+        return results
+
+
 urlpatterns = [
     url(r"^tags/$", TagLookupView.as_view(), name="tag-lookup"),
     url(r"^badges/$", BadgeLookupView.as_view(), name="badge-lookup"),
@@ -349,4 +359,5 @@ urlpatterns = [
         TrainingRequestLookupView.as_view(),
         name="trainingrequest-lookup",
     ),
+    url(r"^awards/$", AwardLookupView.as_view(), name="award-lookup"),
 ]
