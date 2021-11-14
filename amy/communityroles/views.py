@@ -21,9 +21,9 @@ class CommunityRoleDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "role"
     template_name = "communityroles/communityrole.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        context["title"] = f"Community Role {self.object}"
+        context["title"] = str(self.object)
         return context
 
 

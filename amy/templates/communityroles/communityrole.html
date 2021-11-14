@@ -1,0 +1,98 @@
+{% extends "base_nav.html" %}
+{% load links dates content_types %}
+
+
+{% block content %}
+
+<div class="edit-object">
+  {% if perms.communityroles.change_communityrole %}
+  <a href="{% url 'communityrole_edit' role.pk %}" class="btn btn-primary">Edit</a>
+  {% else %}
+  <a href="" class="btn btn-primary disabled">Edit</a>
+  {% endif %}
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th>Person</th>
+    <td><a href="{{ role.person.get_absolute_url }}">{{ role.person }}</a></td>
+  </tr>
+  <tr>
+    <th>Role</th>
+    <td>{{ role.config }}</td>
+  </tr>
+  <tr>
+    <th>Dates</th>
+    <td>
+      {% if role.start or role.end %}
+      {% human_daterange role.start role.end %}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Award</th>
+    <td>
+      {% if role.award %}
+      <a href="{{ role.award.get_absolute_url }}">{{ role.award }}</a>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Inactive?</th>
+    <td>{{ role.inactivation|default_if_none:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Membership</th>
+    <td>
+      {% if role.membership %}
+      <a href="{{ role.membership.get_absolute_url }}">{{ role.membership }}</a>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>URL</th>
+    <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
+  </tr>
+  <tr>
+    <th>Related objects</th>
+    <td>
+      {% if role.config.generic_relation_content_type and role.generic_relation_m2m %}
+      {{ role.config.generic_relation_content_type|title }}:
+      {% get_content_type_objects_by_ids role.config.generic_relation_content_type role.generic_relation_m2m as objects %}
+      <ul>
+      {% for obj in objects %}
+        <li>{{ obj }}</li>
+      {% endfor %}
+      </ul>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<div class="clearfix">
+  {% if perms.communityroles.change_communityrole %}
+  <p class="edit-object float-left"><a href="{% url 'communityrole_edit' role.pk %}" class="btn btn-primary">Edit</a></p>
+  {% else %}
+  <p class="edit-object float-left"><a href="" class="btn btn-primary disabled">Edit</a></p>
+  {% endif %}
+  <div class="delete-object float-right">
+    {% if perms.communityroles.delete_communityrole %}
+      <form action="{% url 'communityrole_delete' role.pk %}?next={{ role.person.get_absolute_url }}" onsubmit='return confirm("Are you sure you wish to remove role \"{{ role.config }}\" from user \"{{ role.person }}\"?")' method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </form>
+    {% else %}
+    <button class="btn btn-danger disabled">Delete</button>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock content %}

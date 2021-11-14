@@ -44,7 +44,7 @@ class FormInvalidMessageMixin:
 
 
 class AMYDetailView(DetailView):
-    pass
+    object: Model
 
 
 class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
