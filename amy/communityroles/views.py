@@ -34,7 +34,7 @@ class CommunityRoleCreate(
     model = CommunityRole
     form_class = CommunityRoleForm
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "communityrole"})
         return kwargs
@@ -47,4 +47,10 @@ class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdate
 
 
 class CommunityRoleDelete(OnlyForAdminsMixin, AMYDeleteView):
+    permission_required = "communityroles.delete_communityrole"
     model = CommunityRole
+
+    def get_success_url(self) -> str:
+        # Currently can only be called via redirect.
+        # There is no direct view for all Community Roles.
+        return self.request.GET.get("next", "")
