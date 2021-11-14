@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('link_to_membership', models.BooleanField(verbose_name='Should link to a Membership?')),
                 ('additional_url', models.BooleanField(verbose_name='Should allow for additional URL?')),
                 ('generic_relation_multiple_items', models.BooleanField(verbose_name='Should generic relation point to more than 1 items?')),
-                ('award_role_limit', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='workshops.Role')),
+                ('award_badge_limit', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='workshops.Badge')),
                 ('generic_relation_content_type', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
             ],
             options={

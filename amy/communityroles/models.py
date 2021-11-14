@@ -5,15 +5,15 @@ from django.urls import reverse
 
 from fiscal.models import Membership
 from workshops.mixins import CreatedUpdatedMixin
-from workshops.models import Award, Person, Role
+from workshops.models import Award, Badge, Person
 
 
 class CommunityRoleConfig(CreatedUpdatedMixin, models.Model):
     name = models.CharField(max_length=150)
     display_name = models.CharField(max_length=150)
     link_to_award = models.BooleanField("Should link to an Award?")
-    award_role_limit = models.ForeignKey(
-        Role,
+    award_badge_limit = models.ForeignKey(
+        Badge,
         on_delete=models.PROTECT,
         null=True,
         blank=True,

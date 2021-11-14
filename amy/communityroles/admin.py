@@ -8,7 +8,7 @@ class CommunityRoleConfigAdmin(admin.ModelAdmin):
         "display_name",
         "name",
         "link_to_award",
-        "award_role_limit",
+        "award_badge_limit",
         "link_to_membership",
         "additional_url",
         "generic_relation_content_type",
