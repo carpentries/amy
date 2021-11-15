@@ -2,13 +2,10 @@ from fiscal.models import Membership
 from workshops.models import Award, Person
 from workshops.tests.base import TestBase
 
-from ..forms import CommunityRoleForm
-from ..models import CommunityRoleConfig
+from communityroles.forms import CommunityRoleForm
+from communityroles.models import CommunityRoleConfig
 
 
-# TODO: figure out why tests fail with:
-#  RuntimeError: Model class amy.communityroles.models.CommunityRoleConfig
-#  doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS.
 class TestCommunityRoleForm(TestBase):
     def test_clean_success(self):
         # Arrange

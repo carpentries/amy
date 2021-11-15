@@ -1,9 +1,8 @@
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
+from communityroles.templatetags.content_types import get_content_type_objects_by_ids
 from workshops.models import Role
-
-from ..templatetags.content_types import get_content_type_objects_by_ids
 
 
 class TestGetContentTypeObjectsByIds(TestCase):
