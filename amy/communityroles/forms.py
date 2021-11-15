@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Any
 
 from django import forms
@@ -47,47 +48,67 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
     def clean(self) -> dict[str, Any]:
         """Validate form according to rules set up in related Community Role
         configuration."""
-        config: CommunityRoleConfig = self.cleaned_data["config"]
+        cleaned_data = super().clean()
+        errors: defaultdict[str, list[ValidationError]] = defaultdict(list)
+        config: CommunityRoleConfig = cleaned_data["config"]
 
         # Award required?
-        if config.link_to_award and not self.cleaned_data["award"]:
-            raise ValidationError(f"Award is required with community role {config}")
+        if config.link_to_award and not cleaned_data["award"]:
+            errors["award"].append(
+                ValidationError(f"Award is required with community role {config}")
+            )
 
-        # Specific award role required?
-        if (badge := config.award_badge_limit) and (
-            award := self.cleaned_data["award"]
-        ):
+        # Specific award badge required?
+        if (badge := config.award_badge_limit) and (award := cleaned_data["award"]):
             if award.badge != badge:
-                raise ValidationError(
-                    f"Award badge must be {badge!r} for community role {config}"
+                errors["award"].append(
+                    ValidationError(
+                        f"Award badge must be {badge} for community role {config}"
+                    )
                 )
 
         # Membership required?
-        if config.link_to_membership and not self.cleaned_data["membership"]:
-            raise ValidationError(
-                f"Membership is required with community role {config}"
+        if config.link_to_membership and not cleaned_data["membership"]:
+            errors["membership"].append(
+                ValidationError(f"Membership is required with community role {config}")
             )
 
         # Additional URL supported?
-        if not config.additional_url and self.cleaned_data["url"]:
-            raise ValidationError(f"URL is not supported for community role {config}")
+        if not config.additional_url and cleaned_data["url"]:
+            errors["url"].append(
+                ValidationError(f"URL is not supported for community role {config}")
+            )
 
         # Multiple items supported for the generic relation?
-        generic_relation_ids = set(self.cleaned_data["generic_relation_m2m"])
+        generic_relation_ids = set(cleaned_data["generic_relation_m2m"])
         if not config.generic_relation_multiple_items and len(generic_relation_ids) > 1:
-            raise ValidationError(
-                "Multiple (>1) generic items are not supported for "
-                f"community role {config}"
+            errors["generic_relation_m2m"].append(
+                ValidationError(
+                    "Multiple (>1) generic items are not supported for "
+                    f"community role {config}"
+                )
             )
 
         # Generic relation objects don't exist?
-        model_class = config.generic_relation_content_type.model_class()
-        objects = model_class._base_manager.filter(id__in=generic_relation_ids)
-        object_ids = {object.id for object in set(objects)}
-        if missing_ids := object_ids - generic_relation_ids:
-            raise ValidationError(
-                f"Some generic relation objects of model {model_class!r} "
-                f"don't exist: {missing_ids}"
+        if config.generic_relation_content_type:
+            # limit provided IDs to not leak any database information
+            generic_relation_ids = (
+                set(cleaned_data["generic_relation_m2m"][0:1])
+                if not config.generic_relation_multiple_items
+                else set(cleaned_data["generic_relation_m2m"][:])
             )
+            model_class = config.generic_relation_content_type.model_class()
+            objects = model_class._base_manager.filter(id__in=generic_relation_ids)
+            object_ids = {object.id for object in set(objects)}
+            if missing_ids := generic_relation_ids - object_ids:
+                errors["generic_relation_m2m"].append(
+                    ValidationError(
+                        f"Some generic relation objects of model {model_class.__name__}"
+                        f" don't exist: {missing_ids}"
+                    )
+                )
 
-        return super().clean()
+        if errors:
+            raise ValidationError(errors)
+
+        return cleaned_data
