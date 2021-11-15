@@ -293,7 +293,7 @@ class AutoresponderMixin:
         return "email"
 
     def autoresponder_email_context(self, form):
-        """Context for """
+        """Context for"""
         # list of fields allowed to show to the user
         whitelist = []
         form_data = [v for k, v in form.cleaned_data.items() if k in whitelist]
