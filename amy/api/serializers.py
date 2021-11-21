@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from autoemails.models import EmailTemplate
+from communityroles.models import CommunityRoleConfig
 from consents.models import Consent, Term
 from workshops.models import (
     Airport,
@@ -509,4 +510,21 @@ class EmailTemplateSerializer(serializers.ModelSerializer):
             "bcc_header",
             "reply_to_header",
             "body_template",
+        ]
+
+
+class CommunityRoleConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommunityRoleConfig
+        fields = [
+            "id",
+            "created_at",
+            "last_updated_at",
+            "name",
+            "display_name",
+            "link_to_award",
+            "award_badge_limit",
+            "link_to_membership",
+            "additional_url",
+            "generic_relation_content_type",
         ]

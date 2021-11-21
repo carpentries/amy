@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from rest_framework import viewsets
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
@@ -19,6 +19,7 @@ from api.renderers import (
 from api.serializers import (
     AirportSerializer,
     AwardSerializer,
+    CommunityRoleConfigSerializer,
     ConsentSerializer,
     EmailTemplateSerializer,
     EventSerializer,
@@ -32,6 +33,7 @@ from api.serializers import (
     TrainingRequestWithPersonSerializer,
 )
 from autoemails.models import EmailTemplate
+from communityroles.models import CommunityRoleConfig
 from consents.models import Consent, Term
 from workshops.models import (
     Airport,
@@ -131,6 +133,14 @@ class ApiRoot(APIView):
                     (
                         "term-list",
                         reverse("api:term-list", request=request, format=format),
+                    ),
+                    (
+                        "communityroleconfig-list",
+                        reverse(
+                            "api:communityroleconfig-list",
+                            request=request,
+                            format=format,
+                        ),
                     ),
                 ]
             )
@@ -373,3 +383,18 @@ class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, pk=None, person_pk=None):
         self._person_pk = person_pk
         return super().retrieve(request, pk=pk)
+
+
+class CommunityRoleConfigViewSet(viewsets.ReadOnlyModelViewSet):
+    """List existing Community Role Configurations."""
+
+    permission_classes = (IsAuthenticated,)
+    serializer_class = CommunityRoleConfigSerializer
+
+    def get_queryset(self):
+        qs = CommunityRoleConfig.objects.all()
+
+        if term := self.request.GET.get("term"):
+            qs = qs.filter(Q(name__icontains=term) | Q(display_name__icontains=term))
+
+        return qs
