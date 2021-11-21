@@ -232,7 +232,10 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(form.errors.keys(), {"generic_relation_content_type"})
         self.assertEqual(
             form.errors["generic_relation_content_type"],
-            ["Invalid generic relation type None for community role Test"],
+            [
+                "Generic relation type should be lesson (not None) for "
+                "community role Test"
+            ],
         )
 
     def test_generic_relation_object_doesnt_exist(self):
@@ -268,5 +271,5 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(form.errors.keys(), {"generic_relation_pk"})
         self.assertEqual(
             form.errors["generic_relation_pk"],
-            ["Generic relation object of model Lesson doesn't exist."],
+            ["Generic relation object of model Lesson doesn't exist"],
         )

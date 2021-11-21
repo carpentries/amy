@@ -85,8 +85,9 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         if config.generic_relation_content_type != generic_relation_content_type:
             errors["generic_relation_content_type"].append(
                 ValidationError(
-                    "Invalid generic relation type "
-                    f"{generic_relation_content_type} for community "
+                    "Generic relation type should be "
+                    f"{config.generic_relation_content_type} "
+                    f"(not {generic_relation_content_type}) for community "
                     f"role {config}"
                 )
             )
@@ -100,7 +101,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 errors["generic_relation_pk"].append(
                     ValidationError(
                         f"Generic relation object of model {model_class.__name__} "
-                        "doesn't exist."
+                        "doesn't exist"
                     )
                 )
 
