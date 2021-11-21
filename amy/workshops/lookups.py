@@ -316,6 +316,9 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Award.objects.all()
 
+        if badge := self.request.GET.get("badge"):
+            results = results.filter(badge__pk=badge)
+
         if self.term:
             results = results.filter(slug__icontains=self.term)
 
