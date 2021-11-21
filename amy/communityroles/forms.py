@@ -4,7 +4,7 @@ from typing import Any
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
-from workshops.fields import ModelSelect2Widget
+from workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
 
 from .models import CommunityRole, CommunityRoleConfig
@@ -26,6 +26,9 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             "generic_relation_pk",
         )
         widgets = {
+            "config": HeavySelect2Widget(
+                data_view="api:communityroleconfig-list", attrs=SELECT2_SIDEBAR
+            ),
             "person": ModelSelect2Widget(
                 data_view="person-lookup", attrs=SELECT2_SIDEBAR
             ),
