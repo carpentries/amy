@@ -1,17 +1,24 @@
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
+import logging
 import operator
 import re
 
 from django.conf.urls import url
+from django.contrib.auth import get_permission_codename
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
+from django.db.models.query import EmptyQuerySet
 from django.http import JsonResponse
 from django_select2.views import AutoResponseView
 
 from fiscal.models import MembershipPersonRole
 from workshops import models
 from workshops.util import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
+
+logger = logging.getLogger("amy.server_logs")
 
 
 class ExtensibleAutoResponseView(AutoResponseView):
@@ -321,6 +328,48 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
         if self.term:
             results = results.filter(slug__icontains=self.term)
+
+        return results
+
+
+class GenericObjectLookupView(
+    OnlyForAdminsNoRedirectMixin, UserPassesTestMixin, AutoResponseView
+):
+    def get_test_func(self):
+        content_type = self.request.GET.get("content_type", "")
+        return partial(self.test_func, content_type=content_type)
+
+    def test_func(self, content_type: int):
+        # Get the ContentType.
+        try:
+            self.content_type = ContentType.objects.get(pk=content_type)
+        except ContentType.DoesNotExist:
+            logger.error(
+                "GenericObjectLookup tried to look up non-existing ContentType "
+                f"pk={content_type}"
+            )
+            return False
+
+        # Find "view" permission name for model of type ContentType.
+        codename = get_permission_codename(
+            "view", self.content_type.model_class()._meta
+        )
+
+        # Build permission name. The same way is used in for example ModelAdmin.
+        permission_name = f"{self.content_type.app_label}.{codename}"
+
+        # Check is user has view permissions for that ContentType.
+        return self.request.user.has_perm(permission_name)
+
+    def get_queryset(self):
+        results = EmptyQuerySet()
+
+        if content_type := self.request.GET.get("content_type"):
+            results = (
+                ContentType.objects.get(pk=content_type)
+                .model_class()
+                ._default_manager.all()
+            )
 
         return results
 
