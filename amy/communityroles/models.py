@@ -1,5 +1,5 @@
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.urls import reverse
 
@@ -25,9 +25,6 @@ class CommunityRoleConfig(CreatedUpdatedMixin, models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-    )
-    generic_relation_multiple_items = models.BooleanField(
-        "Should generic relation point to more than 1 items?",
     )
 
     def __str__(self) -> str:
@@ -55,12 +52,16 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
     )
     url = models.URLField("URL", blank=True, default="")
 
-    # Django doesn't support Generic Relation M2M, so to circumvent this issue
-    # there's a generic relation Content Type field
-    # `CommunityRoleConfig.generic_relation_content_type` and here in the array field
-    # are kept indices for related objects in this content type model.
-    generic_relation_m2m = ArrayField(
-        models.PositiveIntegerField(), default=list, blank=True
+    # value should be copied from related `CommunityRoleConfig`
+    generic_relation_content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    generic_relation_pk = models.PositiveIntegerField(null=True, blank=True)
+    generic_relation = GenericForeignKey(
+        "generic_relation_content_type", "generic_relation_pk"
     )
 
     def __str__(self) -> str:

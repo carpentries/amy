@@ -12,7 +12,6 @@ class CommunityRoleConfigAdmin(admin.ModelAdmin):
         "link_to_membership",
         "additional_url",
         "generic_relation_content_type",
-        "generic_relation_multiple_items",
         "created_at",
         "last_updated_at",
     )

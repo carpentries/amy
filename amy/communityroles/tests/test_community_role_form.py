@@ -28,6 +28,7 @@ class TestCommunityRoleForm(TestBase):
 
     def test_clean_success(self):
         # Arrange
+        ct = ContentType.objects.get_for_model(Lesson)
         test_config = CommunityRoleConfig.objects.create(
             name="test",
             display_name="Test",
@@ -35,8 +36,7 @@ class TestCommunityRoleForm(TestBase):
             award_badge_limit=None,
             link_to_membership=True,
             additional_url=True,
-            generic_relation_content_type=ContentType.objects.get_for_model(Lesson),
-            generic_relation_multiple_items=True,
+            generic_relation_content_type=ct,
         )
         data = {
             "config": test_config.pk,
@@ -47,7 +47,8 @@ class TestCommunityRoleForm(TestBase):
             "inactivation": None,
             "membership": self.membership.pk,
             "url": "https://example.org",
-            "generic_relation_m2m": [1, 2, 3],
+            "generic_relation_content_type": ct.pk,
+            "generic_relation_pk": self.git.pk,  # Lesson instance
         }
 
         # Act
@@ -67,7 +68,6 @@ class TestCommunityRoleForm(TestBase):
             link_to_membership=True,
             additional_url=True,
             generic_relation_content_type=None,
-            generic_relation_multiple_items=False,
         )
         data = {
             "config": test_config.pk,
@@ -78,7 +78,8 @@ class TestCommunityRoleForm(TestBase):
             "inactivation": None,
             "membership": self.membership.pk,
             "url": "https://example.org",
-            "generic_relation_m2m": [],
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
         }
 
         # Act
@@ -101,7 +102,6 @@ class TestCommunityRoleForm(TestBase):
             link_to_membership=True,
             additional_url=True,
             generic_relation_content_type=None,
-            generic_relation_multiple_items=False,
         )
         data = {
             "config": test_config.pk,
@@ -112,7 +112,8 @@ class TestCommunityRoleForm(TestBase):
             "inactivation": None,
             "membership": self.membership.pk,
             "url": "https://example.org",
-            "generic_relation_m2m": [],
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
         }
 
         # Act
@@ -139,7 +140,6 @@ class TestCommunityRoleForm(TestBase):
             link_to_membership=True,
             additional_url=True,
             generic_relation_content_type=None,
-            generic_relation_multiple_items=False,
         )
         data = {
             "config": test_config.pk,
@@ -150,7 +150,8 @@ class TestCommunityRoleForm(TestBase):
             "inactivation": None,
             "membership": None,  # should have a value
             "url": "https://example.org",
-            "generic_relation_m2m": [],
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
         }
 
         # Act
@@ -174,7 +175,6 @@ class TestCommunityRoleForm(TestBase):
             link_to_membership=True,
             additional_url=False,
             generic_relation_content_type=None,
-            generic_relation_multiple_items=False,
         )
         data = {
             "config": test_config.pk,
@@ -185,7 +185,8 @@ class TestCommunityRoleForm(TestBase):
             "inactivation": None,
             "membership": self.membership.pk,
             "url": "https://example.org",  # should be empty
-            "generic_relation_m2m": [],
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
         }
 
         # Act
@@ -199,7 +200,7 @@ class TestCommunityRoleForm(TestBase):
             ["URL is not supported for community role Test"],
         )
 
-    def test_multiple_items_for_generic_relation_supported(self):
+    def test_generic_relation_the_same_as_in_config(self):
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -209,7 +210,6 @@ class TestCommunityRoleForm(TestBase):
             link_to_membership=True,
             additional_url=True,
             generic_relation_content_type=ContentType.objects.get_for_model(Lesson),
-            generic_relation_multiple_items=False,
         )
         data = {
             "config": test_config.pk,
@@ -220,7 +220,8 @@ class TestCommunityRoleForm(TestBase):
             "inactivation": None,
             "membership": self.membership.pk,
             "url": "https://example.org",  # should be empty
-            "generic_relation_m2m": [1, 2, 3],
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
         }
 
         # Act
@@ -228,14 +229,15 @@ class TestCommunityRoleForm(TestBase):
 
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"generic_relation_m2m"})
+        self.assertEqual(form.errors.keys(), {"generic_relation_content_type"})
         self.assertEqual(
-            form.errors["generic_relation_m2m"],
-            ["Multiple (>1) generic items are not supported for community role Test"],
+            form.errors["generic_relation_content_type"],
+            ["Invalid generic relation type None for community role Test"],
         )
 
-    def test_items_for_generic_relation_dont_exist(self):
+    def test_generic_relation_object_doesnt_exist(self):
         # Arrange
+        ct = ContentType.objects.get_for_model(Lesson)
         test_config = CommunityRoleConfig.objects.create(
             name="test",
             display_name="Test",
@@ -243,8 +245,7 @@ class TestCommunityRoleForm(TestBase):
             award_badge_limit=None,
             link_to_membership=True,
             additional_url=True,
-            generic_relation_content_type=ContentType.objects.get_for_model(Lesson),
-            generic_relation_multiple_items=True,
+            generic_relation_content_type=ct,
         )
         data = {
             "config": test_config.pk,
@@ -255,7 +256,8 @@ class TestCommunityRoleForm(TestBase):
             "inactivation": None,
             "membership": self.membership.pk,
             "url": "https://example.org",  # should be empty
-            "generic_relation_m2m": [1234, 2222],
+            "generic_relation_content_type": ct.pk,
+            "generic_relation_pk": None,
         }
 
         # Act
@@ -263,8 +265,8 @@ class TestCommunityRoleForm(TestBase):
 
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"generic_relation_m2m"})
+        self.assertEqual(form.errors.keys(), {"generic_relation_pk"})
         self.assertEqual(
-            form.errors["generic_relation_m2m"],
-            ["Some generic relation objects of model Lesson don't exist: {1234, 2222}"],
+            form.errors["generic_relation_pk"],
+            ["Generic relation object of model Lesson doesn't exist."],
         )

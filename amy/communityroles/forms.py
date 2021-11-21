@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import Any
 
 from django import forms
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from workshops.fields import ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
@@ -22,7 +22,8 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             "inactivation",
             "membership",
             "url",
-            "generic_relation_m2m",
+            "generic_relation_content_type",
+            "generic_relation_pk",
         )
         widgets = {
             "person": ModelSelect2Widget(
@@ -79,32 +80,27 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 ValidationError(f"URL is not supported for community role {config}")
             )
 
-        # Multiple items supported for the generic relation?
-        generic_relation_ids = set(cleaned_data["generic_relation_m2m"])
-        if not config.generic_relation_multiple_items and len(generic_relation_ids) > 1:
-            errors["generic_relation_m2m"].append(
+        # Generic relation must be the same as in configuration
+        generic_relation_content_type = cleaned_data["generic_relation_content_type"]
+        if config.generic_relation_content_type != generic_relation_content_type:
+            errors["generic_relation_content_type"].append(
                 ValidationError(
-                    "Multiple (>1) generic items are not supported for "
-                    f"community role {config}"
+                    "Invalid generic relation type "
+                    f"{generic_relation_content_type} for community "
+                    f"role {config}"
                 )
             )
 
-        # Generic relation objects don't exist?
-        if config.generic_relation_content_type:
-            # limit provided IDs to not leak any database information
-            generic_relation_ids = (
-                set(cleaned_data["generic_relation_m2m"][0:1])
-                if not config.generic_relation_multiple_items
-                else set(cleaned_data["generic_relation_m2m"][:])
-            )
-            model_class = config.generic_relation_content_type.model_class()
-            objects = model_class._base_manager.filter(id__in=generic_relation_ids)
-            object_ids = {object.id for object in set(objects)}
-            if missing_ids := generic_relation_ids - object_ids:
-                errors["generic_relation_m2m"].append(
+        # Generic relation object must exist
+        if config.generic_relation_content_type and generic_relation_content_type:
+            model_class = generic_relation_content_type.model_class()
+            try:
+                model_class._base_manager.get(pk=cleaned_data["generic_relation_pk"])
+            except ObjectDoesNotExist:
+                errors["generic_relation_pk"].append(
                     ValidationError(
-                        f"Some generic relation objects of model {model_class.__name__}"
-                        f" don't exist: {missing_ids}"
+                        f"Generic relation object of model {model_class.__name__} "
+                        "doesn't exist."
                     )
                 )
 
