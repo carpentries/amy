@@ -38,6 +38,9 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             "membership": ModelSelect2Widget(
                 data_view="membership-lookup", attrs=SELECT2_SIDEBAR
             ),
+            "generic_relation_pk": HeavySelect2Widget(
+                data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR
+            ),
         }
 
     def __init__(self, *args, **kwargs):

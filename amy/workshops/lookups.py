@@ -5,13 +5,13 @@ import operator
 import re
 
 from django.conf.urls import url
-from django.contrib.auth import get_permission_codename
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
-from django.db.models.query import EmptyQuerySet
+from django.db.models.query import QuerySet
 from django.http import JsonResponse
+from django.http.response import Http404
 from django_select2.views import AutoResponseView
 
 from fiscal.models import MembershipPersonRole
@@ -339,11 +339,12 @@ class GenericObjectLookupView(
         content_type = self.request.GET.get("content_type", "")
         return partial(self.test_func, content_type=content_type)
 
-    def test_func(self, content_type: int):
+    def test_func(self, content_type: str):
         # Get the ContentType.
         try:
-            self.content_type = ContentType.objects.get(pk=content_type)
-        except ContentType.DoesNotExist:
+            self.content_type = ContentType.objects.get(pk=int(content_type))
+        except (ContentType.DoesNotExist, ValueError):
+            self.content_type = None
             logger.error(
                 "GenericObjectLookup tried to look up non-existing ContentType "
                 f"pk={content_type}"
@@ -351,10 +352,8 @@ class GenericObjectLookupView(
             return False
 
         # Find "view" permission name for model of type ContentType.
-        codename = get_permission_codename(
-            "view", self.content_type.model_class()._meta
-        )
-
+        action = "view"
+        codename = f"{action}_{self.content_type.model}"
         # Build permission name. The same way is used in for example ModelAdmin.
         permission_name = f"{self.content_type.app_label}.{codename}"
 
@@ -362,16 +361,34 @@ class GenericObjectLookupView(
         return self.request.user.has_perm(permission_name)
 
     def get_queryset(self):
-        results = EmptyQuerySet()
+        results = QuerySet()
 
-        if content_type := self.request.GET.get("content_type"):
-            results = (
-                ContentType.objects.get(pk=content_type)
-                .model_class()
-                ._default_manager.all()
-            )
+        if self.content_type:
+            try:
+                results = self.content_type.model_class()._default_manager.all()
+            except AttributeError as e:
+                logger.error(
+                    f"ContentType {self.content_type} may be stale "
+                    f"(model class doesn't exist). Error: {e}"
+                )
+                raise Http404("ContentType not found.")
 
         return results
+
+    def get(self, request, *args, **kwargs):
+        self.term = kwargs.get("term", request.GET.get("term", ""))
+        self.object_list = self.get_queryset()
+        return JsonResponse(
+            {
+                "results": [
+                    {
+                        "text": str(obj),
+                        "id": obj.pk,
+                    }
+                    for obj in self.object_list
+                ],
+            }
+        )
 
 
 urlpatterns = [
@@ -412,4 +429,5 @@ urlpatterns = [
         name="trainingrequest-lookup",
     ),
     url(r"^awards/$", AwardLookupView.as_view(), name="award-lookup"),
+    url(r"^generic/$", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
 ]

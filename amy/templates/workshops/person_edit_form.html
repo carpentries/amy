@@ -214,6 +214,7 @@
     $('#tabs').stickyTabs();
 
     let award_badge; // hold badge filter for award selection
+    let content_type;
     $("#id_communityrole-config").select2({
       ajax: {
         processResults: (data) => {
@@ -240,6 +241,19 @@
         }
       }
     });
+    $("#id_communityrole-generic_relation_pk").select2({
+      ajax: {
+        data: (params) => {
+          const query = {
+            content_type,
+            // `field_id` is required on backend by django-select2 views
+            field_id: $("#id_communityrole-generic_relation_pk").data('field_id'),
+            ...params,
+          };
+          return query;
+        }
+      }
+    });
     $('#id_communityrole-config').on('select2:select', (e) => {
       const data = e.params.data;
       $("#id_communityrole-award").prop("required", data.link_to_award);
@@ -249,6 +263,9 @@
       if (!data.additional_url) {
         $("#id_communityrole-url").val("");
       }
+      $("#id_communityrole-generic_relation_content_type").val(data.generic_relation_content_type);
+      content_type = data.generic_relation_content_type;
+      // TODO: block some user interactions based around content types and generic relations
     });
   });
 </script>
