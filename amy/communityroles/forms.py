@@ -38,6 +38,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             "membership": ModelSelect2Widget(
                 data_view="membership-lookup", attrs=SELECT2_SIDEBAR
             ),
+            "generic_relation_content_type": forms.Select(attrs={"disabled": ""}),
             "generic_relation_pk": HeavySelect2Widget(
                 data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR
             ),
@@ -93,17 +94,10 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 ValidationError(f"URL is not supported for community role {config}")
             )
 
-        # Generic relation must be the same as in configuration
-        generic_relation_content_type = cleaned_data["generic_relation_content_type"]
-        if config.generic_relation_content_type != generic_relation_content_type:
-            errors["generic_relation_content_type"].append(
-                ValidationError(
-                    "Generic relation type should be "
-                    f"{config.generic_relation_content_type} "
-                    f"(not {generic_relation_content_type}) for community "
-                    f"role {config}"
-                )
-            )
+        # Widget for `generic_relation_content_type` is disabled in HTML, which
+        # makes browsers not send it. The code below sets the default value to
+        # the same value as in related config.
+        generic_relation_content_type = config.generic_relation_content_type
 
         # Generic relation object must exist
         if config.generic_relation_content_type and generic_relation_content_type:

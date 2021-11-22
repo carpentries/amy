@@ -200,44 +200,6 @@ class TestCommunityRoleForm(TestBase):
             ["URL is not supported for community role Test"],
         )
 
-    def test_generic_relation_the_same_as_in_config(self):
-        # Arrange
-        test_config = CommunityRoleConfig.objects.create(
-            name="test",
-            display_name="Test",
-            link_to_award=True,
-            award_badge_limit=None,
-            link_to_membership=True,
-            additional_url=True,
-            generic_relation_content_type=ContentType.objects.get_for_model(Lesson),
-        )
-        data = {
-            "config": test_config.pk,
-            "person": self.hermione.pk,
-            "award": self.award.pk,
-            "start": "2021-11-14",
-            "end": "2022-11-14",
-            "inactivation": None,
-            "membership": self.membership.pk,
-            "url": "https://example.org",  # should be empty
-            "generic_relation_content_type": None,
-            "generic_relation_pk": None,
-        }
-
-        # Act
-        form = CommunityRoleForm(data)
-
-        # Assert
-        self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"generic_relation_content_type"})
-        self.assertEqual(
-            form.errors["generic_relation_content_type"],
-            [
-                "Generic relation type should be lesson (not None) for "
-                "community role Test"
-            ],
-        )
-
     def test_generic_relation_object_doesnt_exist(self):
         # Arrange
         ct = ContentType.objects.get_for_model(Lesson)
