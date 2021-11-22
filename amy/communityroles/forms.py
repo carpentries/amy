@@ -42,6 +42,13 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR
             ),
         }
+        labels = {
+            "generic_relation_content_type": "Generic relation object type",
+            "generic_relation_pk": "Generic relation object",
+        }
+
+    class Media:
+        js = ("communityrole_form.js",)
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
