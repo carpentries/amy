@@ -38,7 +38,11 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             "membership": ModelSelect2Widget(
                 data_view="membership-lookup", attrs=SELECT2_SIDEBAR
             ),
-            "generic_relation_content_type": forms.Select(attrs={"disabled": ""}),
+            "generic_relation_content_type": forms.Select(
+                # "disabled" means the browsers will not send the field during POST.
+                # See how it's handled in `clean()` method below.
+                attrs={"disabled": ""},
+            ),
             "generic_relation_pk": HeavySelect2Widget(
                 data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR
             ),

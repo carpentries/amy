@@ -45,6 +45,11 @@ class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdate
     model = CommunityRole
     form_class = CommunityRoleForm
 
+    def get_form_kwargs(self) -> dict:
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"prefix": "communityrole"})
+        return kwargs
+
 
 class CommunityRoleDelete(OnlyForAdminsMixin, AMYDeleteView):
     permission_required = "communityroles.delete_communityrole"

@@ -215,7 +215,7 @@
           <th>Inactive?</th>
           <th>Membership</th>
           <th>URL</th>
-          <th>Related objects</th>
+          <th>Related object</th>
         </tr>
         {% for role in community_roles %}
         <tr>
@@ -244,14 +244,8 @@
           </td>
           <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
           <td>
-            {% if role.config.generic_relation_content_type and role.generic_relation_m2m %}
-            {{ role.config.generic_relation_content_type|title }}:
-            {% get_content_type_objects_by_ids role.config.generic_relation_content_type role.generic_relation_m2m as objects %}
-            <ul>
-            {% for obj in objects %}
-              <li>{{ obj }}</li>
-            {% endfor %}
-            </ul>
+            {% if role.config.generic_relation_content_type and role.generic_relation %}
+            {{ role.generic_relation|title }}
             {% else %}
             &mdash;
             {% endif %}
