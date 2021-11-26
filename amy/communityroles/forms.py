@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any
+from typing import Any, Optional
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -69,16 +69,21 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         configuration."""
         cleaned_data = super().clean()
         errors: defaultdict[str, list[ValidationError]] = defaultdict(list)
-        config: CommunityRoleConfig = cleaned_data["config"]
+        config: Optional[CommunityRoleConfig] = cleaned_data.get("config")
+
+        # Config is required, but field validation for 'config' should raise
+        # validation error first.
+        if not config:
+            return cleaned_data
 
         # Award required?
-        if config.link_to_award and not cleaned_data["award"]:
+        if config.link_to_award and not cleaned_data.get("award"):
             errors["award"].append(
                 ValidationError(f"Award is required with community role {config}")
             )
 
         # Specific award badge required?
-        if (badge := config.award_badge_limit) and (award := cleaned_data["award"]):
+        if (badge := config.award_badge_limit) and (award := cleaned_data.get("award")):
             if award.badge != badge:
                 errors["award"].append(
                     ValidationError(
@@ -87,13 +92,13 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 )
 
         # Membership required?
-        if config.link_to_membership and not cleaned_data["membership"]:
+        if config.link_to_membership and not cleaned_data.get("membership"):
             errors["membership"].append(
                 ValidationError(f"Membership is required with community role {config}")
             )
 
         # Additional URL supported?
-        if not config.additional_url and cleaned_data["url"]:
+        if not config.additional_url and cleaned_data.get("url"):
             errors["url"].append(
                 ValidationError(f"URL is not supported for community role {config}")
             )
@@ -107,7 +112,9 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         if config.generic_relation_content_type and generic_relation_content_type:
             model_class = generic_relation_content_type.model_class()
             try:
-                model_class._base_manager.get(pk=cleaned_data["generic_relation_pk"])
+                model_class._base_manager.get(
+                    pk=cleaned_data.get("generic_relation_pk")
+                )
             except ObjectDoesNotExist:
                 errors["generic_relation_pk"].append(
                     ValidationError(
