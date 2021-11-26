@@ -58,6 +58,18 @@ class TestCommunityRoleForm(TestBase):
         self.assertTrue(form.is_valid())
         self.assertEqual(form.errors, {})
 
+    def test_empty_payload(self):
+        data = {}
+
+        # Act
+        form = CommunityRoleForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())  # errors expected
+        self.assertEqual(form.errors.keys(), {"config", "person"})
+        self.assertEqual(form.errors["config"], ["This field is required."])
+        self.assertEqual(form.errors["person"], ["This field is required."])
+
     def test_award_required(self):
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
