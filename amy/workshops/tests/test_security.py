@@ -266,7 +266,7 @@ class TestViews(TestBase):
         - In the case of function based views, test if the view is decorated
           with an access control decorator like @login_not_required.
 
-        - In the case of class based views, test if the view have access control
+        - In the case of class based views, test if the view has access control
           mixin like LoginNotRequiredMixin.
 
         Ignores:

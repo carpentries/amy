@@ -5,7 +5,7 @@ import operator
 import re
 
 from django.conf.urls import url
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
@@ -338,7 +338,9 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class GenericObjectLookupView(UserPassesTestMixin, AutoResponseView):
+class GenericObjectLookupView(
+    LoginRequiredMixin, UserPassesTestMixin, AutoResponseView
+):
     raise_exception = True  # prevent redirect to login page on unauthenticated user
 
     def get_test_func(self):

@@ -8,8 +8,12 @@ from django.test import RequestFactory
 from django.urls import reverse
 
 from workshops.lookups import AwardLookupView, GenericObjectLookupView, urlpatterns
-from workshops.models import Award, Badge, Lesson
-from workshops.tests.base import TestBase
+from workshops.models import Award, Badge, Lesson, Person
+from workshops.tests.base import (
+    TestBase,
+    TestViewPermissionsMixin,
+    consent_to_all_required_consents,
+)
 
 
 class TestLookups(TestBase):
@@ -183,3 +187,28 @@ class TestGenericObjectLookupView(TestBase):
         result = view.test_func(content_type)
         # Assert
         self.assertFalse(result)
+
+
+class TestGenericObjectLookupViewUserPermissions(TestViewPermissionsMixin, TestBase):
+    """Integration tests for user passing test on specific Model instances.
+
+    If user has "view_model" permissions, they should be let in."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = Person.objects.create_user(
+            "testuser",
+            "Personal",
+            "Family",
+            "personal.family@example.org",
+            "secretpassword",
+        )
+        self.model = Badge
+        self.permissions = ["view_badge"]
+        self.methods = ["GET"]
+        self.content_type = ContentType.objects.get_for_model(self.model)
+        self.view_url = (
+            reverse("generic-object-lookup") + f"?content_type={self.content_type.pk}"
+        )
+        # prevent redirect to accept terms from middleware
+        consent_to_all_required_consents(self.user)
