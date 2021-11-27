@@ -43,13 +43,13 @@ def consent_to_all_required_consents(person: Person) -> None:
 class SuperuserMixin:
     def _setUpSuperuser(self):
         """Set up admin account that can log into the website."""
-        password = "admin"
+        self.admin_password = "admin"
         self.admin = Person.objects.create_superuser(
             username="admin",
             personal="Super",
             family="User",
             email="sudo@example.org",
-            password=password,
+            password=self.admin_password,
         )
         self._superUserConsent()
         self.admin.save()
@@ -60,8 +60,7 @@ class SuperuserMixin:
 
     def _logSuperuserIn(self):
         """Log in superuser (administrator) account."""
-        password = "admin"
-        self.client.login(username=self.admin.username, password=password)
+        self.client.login(username=self.admin.username, password=self.admin_password)
 
 
 class TestBase(

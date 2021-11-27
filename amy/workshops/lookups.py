@@ -327,14 +327,20 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
             results = results.filter(badge__pk=badge)
 
         if self.term:
-            results = results.filter(slug__icontains=self.term)
+            results = results.filter(
+                Q(person__personal__icontains=self.term)
+                | Q(person__middle__icontains=self.term)
+                | Q(person__family__icontains=self.term)
+                | Q(person__email__icontains=self.term)
+                | Q(badge__name__icontains=self.term)
+            )
 
         return results
 
 
-class GenericObjectLookupView(
-    OnlyForAdminsNoRedirectMixin, UserPassesTestMixin, AutoResponseView
-):
+class GenericObjectLookupView(UserPassesTestMixin, AutoResponseView):
+    raise_exception = True  # prevent redirect to login page on unauthenticated user
+
     def get_test_func(self):
         content_type = self.request.GET.get("content_type", "")
         return partial(self.test_func, content_type=content_type)
@@ -361,22 +367,19 @@ class GenericObjectLookupView(
         return self.request.user.has_perm(permission_name)
 
     def get_queryset(self):
-        results = QuerySet()
+        if not self.content_type:
+            return QuerySet()
 
-        if self.content_type:
-            try:
-                results = self.content_type.model_class()._default_manager.all()
-            except AttributeError as e:
-                logger.error(
-                    f"ContentType {self.content_type} may be stale "
-                    f"(model class doesn't exist). Error: {e}"
-                )
-                raise Http404("ContentType not found.")
-
-        return results
+        try:
+            return self.content_type.model_class()._default_manager.all()
+        except AttributeError as e:
+            logger.error(
+                f"ContentType {self.content_type} may be stale "
+                f"(model class doesn't exist). Error: {e}"
+            )
+            raise Http404("ContentType not found.")
 
     def get(self, request, *args, **kwargs):
-        self.term = kwargs.get("term", request.GET.get("term", ""))
         self.object_list = self.get_queryset()
         return JsonResponse(
             {
