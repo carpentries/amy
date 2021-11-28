@@ -408,3 +408,8 @@ $(document).ready(function() {
     });
   }
 });
+
+// move focus to "search" field within select2 dropdown once it opens
+$(document).on('select2:open', () => {
+  document.querySelector('.select2-container--open .select2-search__field').focus();
+});
