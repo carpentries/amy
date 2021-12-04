@@ -28,7 +28,9 @@ dev_database :
 	${MANAGE} reset_db
 	${MANAGE} migrate
 	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
+	${MANAGE} loaddata amy/communityroles/fixtures/inactivations.json
 	${MANAGE} fake_database
+	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
 	${MANAGE} createinitialrevisions
 	${MANAGE} create_superuser
 

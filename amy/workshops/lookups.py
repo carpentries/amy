@@ -1,17 +1,24 @@
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
+import logging
 import operator
 import re
 
 from django.conf.urls import url
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
+from django.db.models.query import QuerySet
 from django.http import JsonResponse
+from django.http.response import Http404
 from django_select2.views import AutoResponseView
 
 from fiscal.models import MembershipPersonRole
 from workshops import models
 from workshops.util import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
+
+logger = logging.getLogger("amy.server_logs")
 
 
 class ExtensibleAutoResponseView(AutoResponseView):
@@ -312,6 +319,83 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        results = models.Award.objects.all()
+
+        if badge := self.request.GET.get("badge"):
+            results = results.filter(badge__pk=badge)
+
+        if self.term:
+            results = results.filter(
+                Q(person__personal__icontains=self.term)
+                | Q(person__middle__icontains=self.term)
+                | Q(person__family__icontains=self.term)
+                | Q(person__email__icontains=self.term)
+                | Q(badge__name__icontains=self.term)
+            )
+
+        return results
+
+
+class GenericObjectLookupView(
+    LoginRequiredMixin, UserPassesTestMixin, AutoResponseView
+):
+    raise_exception = True  # prevent redirect to login page on unauthenticated user
+
+    def get_test_func(self):
+        content_type = self.request.GET.get("content_type", "")
+        return partial(self.test_func, content_type=content_type)
+
+    def test_func(self, content_type: str):
+        # Get the ContentType.
+        try:
+            self.content_type = ContentType.objects.get(pk=int(content_type))
+        except (ContentType.DoesNotExist, ValueError):
+            self.content_type = None
+            logger.error(
+                "GenericObjectLookup tried to look up non-existing ContentType "
+                f"pk={content_type}"
+            )
+            return False
+
+        # Find "view" permission name for model of type ContentType.
+        action = "view"
+        codename = f"{action}_{self.content_type.model}"
+        # Build permission name. The same way is used in for example ModelAdmin.
+        permission_name = f"{self.content_type.app_label}.{codename}"
+
+        # Check is user has view permissions for that ContentType.
+        return self.request.user.has_perm(permission_name)
+
+    def get_queryset(self):
+        if not self.content_type:
+            return QuerySet()
+
+        try:
+            return self.content_type.model_class()._default_manager.all()
+        except AttributeError as e:
+            logger.error(
+                f"ContentType {self.content_type} may be stale "
+                f"(model class doesn't exist). Error: {e}"
+            )
+            raise Http404("ContentType not found.")
+
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return JsonResponse(
+            {
+                "results": [
+                    {
+                        "text": str(obj),
+                        "id": obj.pk,
+                    }
+                    for obj in self.object_list
+                ],
+            }
+        )
+
+
 urlpatterns = [
     url(r"^tags/$", TagLookupView.as_view(), name="tag-lookup"),
     url(r"^badges/$", BadgeLookupView.as_view(), name="badge-lookup"),
@@ -349,4 +433,6 @@ urlpatterns = [
         TrainingRequestLookupView.as_view(),
         name="trainingrequest-lookup",
     ),
+    url(r"^awards/$", AwardLookupView.as_view(), name="award-lookup"),
+    url(r"^generic/$", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
 ]

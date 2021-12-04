@@ -51,6 +51,7 @@ from autoemails.actions import (
 )
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
+from communityroles.forms import CommunityRoleForm
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent
 from dashboard.forms import AssignmentForm
@@ -657,6 +658,14 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                     form_tag=False,
                     prefix="task",
                     failed_trainings=failed_trainings,
+                    **kwargs,
+                ),
+                "community_roles": self.object.communityrole_set.select_related(
+                    "config", "award", "inactivation", "membership"
+                ),
+                "communityrole_form": CommunityRoleForm(
+                    form_tag=False,
+                    prefix="communityrole",
                     **kwargs,
                 ),
             }

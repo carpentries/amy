@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load links %}
+{% load dates %}
 
 {% block content %}
 <nav class="col-12">
@@ -10,6 +11,7 @@
     <li role="presentation" class="nav-item"><a class="nav-link" href="#awards" role="tab" data-toggle="tab" aria-controls="awards">Awards</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks">Tasks</a></li>
     <li role="presentation" class="nav-item"><a class="nav-link" href="#consents" role="tab" data-toggle="tab" aria-controls="consents">Consents</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#communityroles" role="tab" data-toggle="tab" aria-controls="communityroles">Community Roles</a></li>
   </ul>
 </nav>
 
@@ -92,7 +94,7 @@
         <td>
           <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
           &nbsp;
-          {% if perms.workshops.edit_task %}
+          {% if perms.workshops.change_task %}
           <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
           {% endif %}
           <form class="amy-form-inline" action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t }}\" from {{ t.event.slug }}?")' method="POST">
@@ -115,7 +117,79 @@
     {% else %}
       <p>No Terms.</p>
     {% endif %}
-    
+
+  </div>
+  <div class="tab-pane" role="tabpanel" aria-labelledby="communityroles-tab" id="communityroles">
+    {% if perms.communityroles.add_communityroles %}
+    <form class="form-horizontal" role="form" method="POST" action="{% url 'communityrole_add' %}?next={{ request.get_full_path|urlencode }}#communityroles">
+      {% crispy communityrole_form %}
+    </form>
+    {% endif %}
+
+    {% if community_roles %}
+    <table class="table table-striped">
+      <tr>
+        <th>Role</th>
+        <th>Dates</th>
+        <th>Award</th>
+        <th>Inactive?</th>
+        <th>Membership</th>
+        <th>URL</th>
+        <th>Related object</th>
+        <th class="additional-links-wider"></th>
+      </tr>
+      {% for role in community_roles.all %}
+      <tr>
+        <td>{{ role.config }}</td>
+        <td>
+          {% if role.start or role.end %}
+          {% human_daterange role.start role.end %}
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>
+          {% if role.award %}
+          <a href="{{ role.award.get_absolute_url }}">{{ role.award }}</a>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>{{ role.inactivation|default_if_none:"&mdash;" }}</td>
+        <td>
+          {% if role.membership %}
+          <a href="{{ role.membership.get_absolute_url }}">{{ role.membership }}</a>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
+        <td>
+          {% if role.config.generic_relation_content_type and role.generic_relation %}
+          {{ role.generic_relation|title }}
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'communityrole_details' role.pk %}" title="View {{ role }}"><i class="fas fa-info-circle"></i></a>
+          &nbsp;
+          {% if perms.communityroles.change_communityrole %}
+          <a href="{% url 'communityrole_edit' role.pk %}" title="Edit {{ role }}"><i class="fas fa-edit"></i></a>
+          {% endif %}
+          {% if perms.communityroles.delete_communityrole %}
+          <form class="amy-form-inline" action="{% url 'communityrole_delete' role.pk %}?next={{ request.get_full_path|urlencode }}#communityroles" onsubmit='return confirm("Are you sure you wish to remove role \"{{ role.config }}\" from user \"{{ role.person }}\"?")' method="POST">
+            {% csrf_token %}
+            <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>No community roles.</p>
+    {% endif %}
   </div>
 </div>
 

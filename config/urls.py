@@ -41,6 +41,7 @@ urlpatterns = [
     path('workshops/', include('workshops.urls')),
     path('select_lookups/', include('workshops.lookups')),  # autocomplete lookups
     path('terms/', include('consents.urls')),
+    path('communityroles/', include('communityroles.urls')),
 
     # for webhooks from Mailgun
     # path('mail_hooks/', include('anymail.urls')),

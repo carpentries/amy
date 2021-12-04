@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 from django_select2.forms import (
     ModelSelect2MultipleWidget as DS2_ModelSelect2MultipleWidget,
 )
+from django_select2.forms import HeavySelect2Widget as DS2_HeavySelect2Widget
 from django_select2.forms import ModelSelect2Widget as DS2_ModelSelect2Widget
 from django_select2.forms import Select2MultipleWidget as DS2_Select2MultipleWidget
 from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
@@ -204,3 +205,9 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
             self.create_option(name, v, v, selected, i) for i, v in enumerate(values)
         ]
         return [(None, subgroup, 0)]
+
+
+class HeavySelect2Widget(
+    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget
+):
+    pass

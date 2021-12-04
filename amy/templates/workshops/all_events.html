@@ -52,7 +52,7 @@
         <td>
           <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><i class="fas fa-info-circle"></i></a>
           &nbsp;
-          {% if perms.workshops.edit_event %}
+          {% if perms.workshops.change_event %}
           <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><i class="fas fa-edit"></i></a>
           {% endif %}
         </td>

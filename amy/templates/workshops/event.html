@@ -139,7 +139,7 @@
     <td>
       <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
       &nbsp;
-      {% if perms.workshops.edit_task %}
+      {% if perms.workshops.change_task %}
       <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
       {% endif %}
     </td>
