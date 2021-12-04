@@ -600,6 +600,7 @@ RQ_SHOW_ADMIN_LINK = False
 
 RQ = {
     "JOB_CLASS": "autoemails.job.Job",
+    "DEFAULT_RESULT_TTL": 31536000,  # 1 year in seconds for keeping job results
 }
 
 
