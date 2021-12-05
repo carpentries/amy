@@ -134,6 +134,7 @@ LOCAL_APPS = [
     "amy.autoemails.apps.AutoemailsConfig",
     "amy.consents.apps.ConsentsConfig",
     "amy.communityroles.apps.CommunityRolesConfig",
+    "amy.recruitment.apps.RecruitmentConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -625,4 +626,11 @@ if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
 REPORTS_LINK = env.str(
     "AMY_REPORTS_LINK",
     default="https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
+)
+
+# Instructor Recruitment Process
+# -----------------------------------------------------------------------------
+# Settings for Instructor Recruitment project
+INSTRUCTOR_RECRUITMENT_ENABLED = env.bool(
+    "AMY_INSTRUCTOR_RECRUITMENT_ENABLED", default=False
 )
