@@ -1307,7 +1307,6 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     to remind them when they should log in and update their profile.
     """
 
-    launch_at = timedelta(hours=1)
     LAST_LOGGED_IN_DELTA = timedelta(days=365)
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
 
