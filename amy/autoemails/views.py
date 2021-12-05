@@ -13,7 +13,7 @@ from workshops.util import admin_required
 from .actions import GenericAction
 from .forms import GenericEmailScheduleForm
 from .models import EmailTemplate, Trigger
-from .utils import check_status, scheduled_execution_time
+from .utils import check_status, safe_next_or_default_url, scheduled_execution_time
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -102,9 +102,9 @@ def generic_schedule_email(request, pk):
             fail_silently=True,
         )
 
-        return redirect(
-            request.POST.get("next", "") or workshop_request.get_absolute_url()
-        )
+        default_url = workshop_request.get_absolute_url()
+        next_url = request.POST.get("next", None)
+        return redirect(safe_next_or_default_url(next_url, default_url))
 
     else:
         messages.error(
@@ -113,6 +113,6 @@ def generic_schedule_email(request, pk):
             fail_silently=True,
         )
 
-        return redirect(
-            request.POST.get("next", "") or workshop_request.get_absolute_url()
-        )
+        default_url = workshop_request.get_absolute_url()
+        next_url = request.POST.get("next", None)
+        return redirect(safe_next_or_default_url(next_url, default_url))
