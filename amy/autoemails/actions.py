@@ -1288,6 +1288,7 @@ class BaseRepeatedAction:
     EMAIL_ACTION_CLASS: BaseAction
     INTERVAL: int = DAY_IN_SECONDS  # time between repeats
     REPEAT: Optional[int] = None  # number of times the job is repeated
+    # If repeat is None means repeat forever
 
     def __init__(self, trigger: Trigger):
         super().__init__()
