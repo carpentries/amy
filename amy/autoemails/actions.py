@@ -1285,7 +1285,6 @@ class BaseRepeatedAction:
     """
 
     trigger: Trigger
-    launch_at: Optional[timedelta] = None
     EMAIL_ACTION_CLASS: BaseAction
     INTERVAL: int = DAY_IN_SECONDS  # time between repeats
     REPEAT: Optional[int] = None  # number of times the job is repeated
@@ -1296,9 +1295,6 @@ class BaseRepeatedAction:
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
-
-    def get_launch_at(self, *args, **kwargs) -> Optional[timedelta]:
-        return self.launch_at
 
     @property
     def template(self):

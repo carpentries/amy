@@ -28,18 +28,15 @@ def clear_scheduled_jobs():
 def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler=None):
     action_name = action_class.__name__
     action = action_class(trigger=trigger)
-    launch_at = action.get_launch_at()
     meta = dict(
         action=action,
         template=trigger.template,
-        launch_at=launch_at,
         email=None,
         context=None,
         email_action_class=action_class.EMAIL_ACTION_CLASS,
     )
     job = _scheduler.schedule(
-        scheduled_time=datetime.utcnow()
-        + launch_at,  # Time for first execution, in UTC timezone
+        scheduled_time=datetime.utcnow(),  # Time for first execution, in UTC timezone
         func=action,  # Function to be queued
         interval=action.INTERVAL,  # Time before the function is called again
         repeat=action.REPEAT,  # Repeat this number of times (None means repeat forever)
