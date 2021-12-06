@@ -1285,7 +1285,7 @@ class BaseRepeatedAction:
     """
 
     trigger: Trigger
-    EMAIL_ACTION_CLASS: BaseAction
+    EMAIL_ACTION_CLASS: Type[BaseAction]
     INTERVAL: int = DAY_IN_SECONDS  # time between repeats
     REPEAT: Optional[int] = None  # number of times the job is repeated
     # If repeat is None means repeat forever
@@ -1308,7 +1308,6 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     to remind them when they should log in and update their profile.
     """
 
-    LAST_LOGGED_IN_DELTA = timedelta(days=365)
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
 
     def __call__(self, *args, **kwargs):
