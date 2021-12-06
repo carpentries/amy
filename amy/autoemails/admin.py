@@ -13,6 +13,7 @@ import django_rq
 from markdownx.widgets import AdminMarkdownxWidget
 from rq.exceptions import NoSuchJobError
 
+from autoemails.actions import BaseRepeatedAction
 from autoemails.forms import RescheduleForm, TemplateForm
 from autoemails.job import Job
 from autoemails.models import EmailTemplate, RQJob, Trigger
@@ -172,11 +173,14 @@ class RQJobAdmin(admin.ModelAdmin):
             try:
                 trigger = instance.trigger
                 template = instance.template
-                email = instance._email()
-                adn_context = instance.context
             except AttributeError:
                 trigger = None
                 template = None
+            # repeated jobs do not contain email or context
+            try:
+                email = instance._email()
+                adn_context = instance.context
+            except AttributeError:
                 email = None
                 adn_context = None
 
@@ -204,6 +208,7 @@ class RQJobAdmin(admin.ModelAdmin):
             rqjob=rqjob,
             job=job,
             job_scheduled=job_scheduled,
+            is_repeated_job=isinstance(instance, BaseRepeatedAction),
             instance=instance,
             status=status,
             trigger=trigger,
