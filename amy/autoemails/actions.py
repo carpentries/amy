@@ -1316,7 +1316,6 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
             active=True,
             action="profile-update",
         )
-        logger.debug("TRIGGER %s", triggers)
         for person in people:
             ActionManageMixin.add(
                 action_class=self.EMAIL_ACTION_CLASS,
@@ -1325,6 +1324,7 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
                 triggers=triggers,
                 context_objects={
                     "person_email": person.email,
+                    "person_full_name": person.full_name,
                 },
                 object_=person,
             )
