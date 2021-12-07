@@ -223,6 +223,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
             body=body.text,
         )
         msg.attach_alternative(body.html, "text/html")
+
         # https://anymail.readthedocs.io/en/stable/sending/templates/#batch-sending-with-merge-data
         # https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data
         # When set the recipients in the "to" field each get an individual message
@@ -299,6 +300,10 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         (
             "consent-required",
             "There is a new or updated term added that the users should consent to",
+        ),
+        (
+            "profile-update",
+            "Reminder to for the user to update the information in their profile.",
         ),
     )
     action = models.CharField(
@@ -385,6 +390,24 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         null=False,
         default="",
         verbose_name="Mail recipients",
+    )
+    interval = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Interval in seconds",
+    )
+    result_ttl = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Result TTL",
+    )
+    action_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=False,
+        default="",
+        verbose_name="Action Class",
+        help_text="Action class that will be executed.",
     )
 
     def __str__(self):

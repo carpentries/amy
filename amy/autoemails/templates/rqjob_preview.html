@@ -42,6 +42,10 @@
         </td>
     </tr>
     <tr>
+        <th>Action Class:</th>
+        <td>{{ rqjob.action_name }}</td>
+    </tr>
+    <tr>
         <th rowspan="2">Job:</th>
         <td>{{ job|default:"Job was removed from Redis" }}</td>
     </tr>
@@ -99,6 +103,20 @@
             {% endif %}
         </td>
     </tr>
+    <tr>
+        <th>Repeated Job:</th>
+        <td>{{ is_repeated_job }}</td>
+    </tr>
+    <tr>
+        <th>Interval:</th>
+        <td>{{ rqjob.interval }}</td>
+    </tr>
+    <tr>
+        <th>Result_TTL:</th>
+        <td>{{ rqjob.result_ttl }}</td>
+    </tr>
+
+    {% if not is_repeated_job %}
     <tr>
         <th colspan="2"><u>Email</u></th>
     </tr>
@@ -215,6 +233,7 @@
             {% endif %}
         </td>
     </tr>
+    {% endif %}
 </table>
 
 {% if previous or next %}

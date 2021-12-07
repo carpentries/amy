@@ -13,6 +13,7 @@ import django_rq
 from markdownx.widgets import AdminMarkdownxWidget
 from rq.exceptions import NoSuchJobError
 
+from autoemails.actions import BaseRepeatedAction
 from autoemails.forms import RescheduleForm, TemplateForm
 from autoemails.job import Job
 from autoemails.models import EmailTemplate, RQJob, Trigger
@@ -60,6 +61,7 @@ class TriggerAdmin(admin.ModelAdmin):
 class RQJobAdmin(admin.ModelAdmin):
     list_display = [
         "job_id",
+        "action_name",
         "manage_links",
         "created_at",
         "scheduled_execution",
@@ -68,14 +70,19 @@ class RQJobAdmin(admin.ModelAdmin):
         "mail_status",
         "event_slug",
         "recipients",
+        "interval",
+        "result_ttl",
     ]
     date_hierarchy = "created_at"
     readonly_fields = [
         "scheduled_execution",
+        "action_name",
         "status",
         "mail_status",
         "event_slug",
         "recipients",
+        "interval",
+        "result_ttl",
     ]
     actions = [
         "action_refresh_state",
@@ -166,11 +173,14 @@ class RQJobAdmin(admin.ModelAdmin):
             try:
                 trigger = instance.trigger
                 template = instance.template
-                email = instance._email()
-                adn_context = instance.context
             except AttributeError:
                 trigger = None
                 template = None
+            # repeated jobs do not contain email or context
+            try:
+                email = instance._email()
+                adn_context = instance.context
+            except AttributeError:
                 email = None
                 adn_context = None
 
@@ -198,6 +208,7 @@ class RQJobAdmin(admin.ModelAdmin):
             rqjob=rqjob,
             job=job,
             job_scheduled=job_scheduled,
+            is_repeated_job=isinstance(instance, BaseRepeatedAction),
             instance=instance,
             status=status,
             trigger=trigger,
