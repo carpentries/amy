@@ -63,7 +63,7 @@
           {% endif %}
         </td></tr>
     <tr><th>Country:</th>
-        <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
+        <td>{% include "includes/country_flag.html" with country=object.country %}</td></tr>
     <tr><th>Workshop language:</th>
         <td>{{ object.language }}</td></tr>
     <tr><th>Would you like to have this workshop listed on our websites?</th>

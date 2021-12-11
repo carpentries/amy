@@ -16,7 +16,7 @@
 <table class="table table-striped">
   <tr><th>Full name:</th><td>{{ organization.fullname }}</td></tr>
   <tr><th>Domain:</th><td><a href="//{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td></tr>
-  <tr><th>Country:</th><td>{{ organization.country.name|default:"&mdash;" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
+  <tr><th>Country:</th><td>{% include "includes/country_flag.html" with country=organization.country %}</td></tr>
   <tr>
     <th>Latitude / longitude:</th>
     <td>
