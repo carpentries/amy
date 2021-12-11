@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from reversion import revisions as reversion
 
 from workshops.mixins import CreatedUpdatedMixin, StateMixin
@@ -20,6 +21,9 @@ class InstructorRecruitment(CreatedUpdatedMixin, models.Model):
     event = models.OneToOneField(
         Event, on_delete=models.PROTECT, null=False, blank=False
     )
+
+    def get_absolute_url(self):
+        return reverse("instructorrecruitment_details", kwargs={"pk": self.pk})
 
 
 @reversion.register
