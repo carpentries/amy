@@ -1,5 +1,7 @@
-from typing import Union
+from typing import Optional, Union
 
+from django.conf import settings
+from django.utils.http import is_safe_url
 import django_rq
 import pytz
 from rq.exceptions import NoSuchJobError
@@ -66,3 +68,9 @@ def check_status(job: Union[str, Job], scheduler=None):
         return job.get_status() or "scheduled"
     else:
         return job.get_status() or "cancelled"
+
+
+def safe_next_or_default_url(next_url: Optional[str], default: str) -> str:
+    if next_url is not None and is_safe_url(next_url, settings.ALLOWED_HOSTS):
+        return next_url
+    return default
