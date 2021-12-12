@@ -250,10 +250,12 @@ class WorkshopInquiryRequest(
         UNSURE_CHOICE,
         (
             "nonprofit",
-            "I am with a government site, university, or other "
-            "nonprofit. I understand the workshop fee of US$2500, "
-            "and agree to follow through on The Carpentries "
-            "invoicing process.",
+            "I am with a government site, university, or other nonprofit. "
+            "I understand the workshop fee as listed on "
+            "<a href='{}' rel='noreferrer nofollow'>The Carpentries website</a> "
+            "and agree to follow through on The Carpentries invoicing process.".format(
+                ""  # TODO
+            ),
         ),
         (
             "forprofit",
