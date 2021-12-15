@@ -2979,11 +2979,8 @@ class WorkshopRequest(
         (
             "nonprofit",
             "I am with a government site, university, or other nonprofit. "
-            "I understand the workshop fee as listed on "
-            "<a href='{}' rel='noreferrer nofollow'>The Carpentries website</a> "
-            "and agree to follow through on The Carpentries invoicing process.".format(
-                ""  # TODO
-            ),
+            "I understand the workshop fee as listed on The Carpentries website "
+            "and agree to follow through on The Carpentries invoicing process.",
         ),
         (
             "forprofit",
@@ -3011,6 +3008,10 @@ class WorkshopRequest(
         default=None,
         verbose_name="Which of the following applies to your payment for the "
         "administrative fee?",
+        help_text=(
+            "<a href='{}' target='_blank' rel='noreferrer nofollow'>"
+            "The Carpentries website workshop fee listing.</a>".format("")
+        ),
     )
     scholarship_circumstances = models.TextField(
         blank=True,
