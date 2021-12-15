@@ -396,15 +396,15 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Instructors for {{ workshop_main_type }} workshop organized by {{ workshop_host.fullname }} {% if dates %} on {{ dates }}{% endif %}  
-**Date sent:** one hour from when conditions are met.  
-*Conditions:*  Start date more than seven days in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least two instructors and at least one host. Has at least one supporting instructor if online.  Centrally organized only.  
+**Date sent:** One hour from when conditions are met.  
+**Conditions:**  Start date more than seven days in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least two instructors and at least one host. Has at least one supporting instructor if online.  Centrally organized only.  
 **Content:** [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/5/change/) (authorized users only)    
 
 **Email description:** Recruit Helpers.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L973)  
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:** Regional coordinator email (admin-xx@carpentries.org)  
 **Subject:** Time to Recruit Helpers for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}  
-**Date sent:** 21 days before first day of workshop  
+**Date sent:** 21 days before start date.  
 **Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least one instructor or at least one host.  Has no helpers.  Centrally organized only.  
 **Content:** [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/7/change/) (authorized users only)    
 
@@ -422,7 +422,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Sent to:**  Single new supporting instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}  
-**Date sent:**  one hour after conditions are met  
+**Date sent:**  One hour after conditions are met.  
 **Conditions:**  New role of supporting instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Online workshop. Centrally organized only.  
 **Content:** [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/4/change/) (authorized users only)     
 
@@ -431,7 +431,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Sent to:**  Single new instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as an instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %} ({{ dates }}){% endif %}  
-**Date sent:** One hour after conditions are met  
+**Date sent:** One hour after conditions are met.  
 **Conditions:** New role of instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Centrally organized only.  
 **Content:**  [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/1/change/) (authorized users only)   
 
@@ -440,7 +440,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Sent to:**  Form submitter and additional contacts  
 **Sent from:**  Regional coordinator email  
 **Subject:**  {{ workshop.host.fullname }} ({{ workshop.slug }}) Workshop  
-**Date sent:** One hour after conditions are met  
+**Date sent:** One hour after conditions are met.  
 **Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive.  Event created from SO form.  Self organized only.  
 **Content:** [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/3/change/) (authorized users only)    
 
@@ -449,7 +449,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Completed {% if workshop_main_type %}{{ workshop_main_type }}{% else %}Carpentries{% endif %} workshop at {{ workshop.venue }} on {{ dates }} ({{ workshop.slug }})  
-**Date sent:** 7 days after end date  
+**Date sent:** 7 days after end date.  
 **Conditions:** End date in past.  Tag is not stalled, canceled, or unresponsive. Tag is one of ["LC", "DC", "SWC", "Circuits"].  Centrally organized or Self organized.  
 **Content:**  [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/2/change/) (authorized users only)  
 
