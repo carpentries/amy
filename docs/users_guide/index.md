@@ -392,7 +392,7 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 AMY sends automated emails for workshop administration.  The following seven email automations are currently enabled.
 
-**Email description:** Introduction of instructors and host. See Code  
+**Email description:** Introduction of instructors and host. See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L703)  
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Instructors for {{ workshop_main_type }} workshop organized by {{ workshop_host.fullname }} {% if dates %} on {{ dates }}{% endif %}  
@@ -400,7 +400,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 *Conditions:*  Start date more than seven days in future. Not canceled/stalled/unresponsive.  Has administrator.  Has at least two instructors and at least one host. Has at least one supporting instructor if online.  CO only.  
 **Content:**  https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/5/change/   
 
-**Email description:** Recruit Helpers.  See Code  
+**Email description:** Recruit Helpers.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L973)  
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:** Regional coordinator email (admin-xx@carpentries.org)  
 **Subject:** Time to Recruit Helpers for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}  
@@ -409,7 +409,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Content:** https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/7/change/   
 
 
-**Email description:** Website URL is missing.  See Code  
+**Email description:** Website URL is missing.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L839)  
 **Sent to:**  All Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Workshop Website needed for  {DC, SWC, LC} workshop at {site} on {dates}  
@@ -419,7 +419,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 
 
 ** Soon to be deprecated:**  
-**Email description:**  Supporting Instructor is added to the workshop.  See Code  
+**Email description:**  Supporting Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L348)  
 **Sent to:**  Single new supporting instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}
@@ -428,7 +428,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Content:** https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/4/change/  
 
 
-**Email description:** Instructor is added to the workshop.  See Code	
+**Email description:** Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L256)	
 **Sent to:**  Single new instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as an instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %} ({{ dates }}){% endif %}  
@@ -437,7 +437,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Content:** https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/1/change/  
 
 
-**Email description:** A new event is created from Self-Organised Request Form.  See Code	
+**Email description:** A new event is created from Self-Organised Request Form.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L594)	
 **Sent to:**  Form submitter and additional contacts  
 **Sent from:**  Regional coordinator email  
 **Subject:**  {{ workshop.host.fullname }} ({{ workshop.slug }}) Workshop  
@@ -446,7 +446,7 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Content:** https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/3/change/  
 
 
-**Email description:** 7 days past the end date of an active workshop.  See Code  	
+**Email description:** 7 days past the end date of an active workshop.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L430)  	
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Completed {% if workshop_main_type %}{{ workshop_main_type }}{% else %}Carpentries{% endif %} workshop at {{ workshop.venue }} on {{ dates }} ({{ workshop.slug }})  
