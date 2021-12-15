@@ -387,6 +387,19 @@ Admin users will have rights to view and edit many other parts of the AMY databa
 
 An admin user can view their profile as if they were an ordinary user on [this dashboard page](https://amy.carpentries.org/dashboard/trainee/).
 
+
+### Automated emails
+
+AMY sends automated emails for workshop administration.  The following seven email automations are currently enabled.
+
+
+
+
+
+
+
+
+
 ### Other Tasks
 
 #### Merging Duplicate Persons, Training Requests, or Events
