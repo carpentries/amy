@@ -417,12 +417,11 @@ AMY sends automated emails for workshop administration.  The following seven ema
 **Conditions:** Start date in future. Not canceled/stalled/unresponsive.  Has administrator.  No workshop URL. At least one instructor.  CO and SO.  
 **Content:** [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/6/change/) (authorized users only)    
 
-
-** Soon to be deprecated:**  
+ 
 **Email description:**  Supporting Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/e950612ede01af06e0ca1d27293d67634036cc3c/amy/autoemails/actions.py#L348)  
 **Sent to:**  Single new supporting instructor  
 **Sent from:**  Regional coordinator email  
-**Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}
+**Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}  
 **Date sent:**  one hour after conditions are met  
 **Conditions:**  New role of supporting instructor added. Start date in future. Not canceled/stalled/unresponsive.  Has administrator.  Online workshop. CO only.  
 **Content:** [View in the Django admin panel](https://amy.carpentries.org/yikoouxjewu5mri5wmqkufrq6ztk8i5y/autoemails/emailtemplate/4/change/) (authorized users only)     
