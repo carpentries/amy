@@ -4,12 +4,12 @@ from . import views
 
 urlpatterns = [
     path(
-        "roles/add/<int:event_id>/",
+        "process/add/<int:event_id>/",
         views.InstructorRecruitmentCreate.as_view(),
         name="instructorrecruitment_add",
     ),
     path(
-        "role/<int:pk>/",
+        "process/<int:pk>/",
         include(
             [
                 path(
