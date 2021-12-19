@@ -25,6 +25,12 @@ class InstructorRecruitment(CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self):
         return reverse("instructorrecruitment_details", kwargs={"pk": self.pk})
 
+    def __str__(self):
+        return (
+            f"Instructor Recruitment Process ({self.get_status_display()}) for "
+            f"event {self.event.slug}"
+        )
+
 
 @reversion.register
 class InstructorRecruitmentSignup(CreatedUpdatedMixin, StateMixin, models.Model):
