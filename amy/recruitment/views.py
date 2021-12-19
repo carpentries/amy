@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
 
 from recruitment.forms import InstructorRecruitmentCreateForm
 from workshops.base_views import (
@@ -11,7 +12,7 @@ from workshops.base_views import (
 from workshops.models import Event
 from workshops.util import OnlyForAdminsMixin, human_daterange
 
-from .models import InstructorRecruitment
+from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
 # ------------------------------------------------------------
 # InstructorRecruitment related views
@@ -88,9 +89,40 @@ class InstructorRecruitmentCreate(
 class InstructorRecruitmentDetails(
     OnlyForAdminsMixin, ConditionallyEnabledMixin, AMYDetailView
 ):
-    queryset = InstructorRecruitment.objects.all()
+    queryset = InstructorRecruitment.objects.prefetch_related(
+        Prefetch(
+            "instructorrecruitmentsignup_set",
+            queryset=(
+                InstructorRecruitmentSignup.objects.select_related(
+                    "recruitment", "person"
+                ).annotate(
+                    num_instructor=Count(
+                        Case(
+                            When(person__task__role__name="instructor", then=Value(1)),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    num_supporting=Count(
+                        Case(
+                            When(
+                                person__task__role__name="supporting-instructor",
+                                then=Value(1),
+                            ),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    num_helper=Count(
+                        Case(
+                            When(person__task__role__name="helper", then=Value(1)),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                )
+            ),
+        )
+    )
     context_object_name = "role"
-    template_name = "recruitment/instructor_recruitment.html"
+    template_name = "recruitment/instructorrecruitment_details.html"
 
     def get_view_enabled(self) -> bool:
         return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
