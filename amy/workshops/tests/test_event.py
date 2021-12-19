@@ -16,6 +16,7 @@ from autoemails.actions import (
 )
 from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.forms import EventCreateForm, EventForm, EventsMergeForm
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -790,6 +791,60 @@ class TestEventViews(TestBase):
         data["tags"].append(Tag.objects.get(name="Circuits").pk)
         form = EventForm(data)
         self.assertNotIn("curricula", form.errors)
+
+    def test_event_recruitment_statistics(self):
+        # Arrange
+        host = Organization.objects.get(fullname="Test Organization")
+        admin = Organization.objects.administrators().first()
+        event = Event.objects.create(
+            slug="2021-12-19-event-recruitment",
+            host=host,
+            sponsor=host,
+            administrator=admin,
+        )
+        recruitment = InstructorRecruitment.objects.create(event=event)
+        InstructorRecruitmentSignup.objects.bulk_create(
+            [
+                InstructorRecruitmentSignup(
+                    recruitment=recruitment,
+                    person=self.spiderman,
+                    interest="part",
+                    state="a",
+                ),
+                InstructorRecruitmentSignup(
+                    recruitment=recruitment,
+                    person=self.spiderman,
+                    interest="session",
+                    state="p",
+                ),
+                InstructorRecruitmentSignup(
+                    recruitment=recruitment,
+                    person=self.ironman,
+                    interest="session",
+                    state="a",
+                ),
+                InstructorRecruitmentSignup(
+                    recruitment=recruitment,
+                    person=self.blackwidow,
+                    interest="session",
+                    state="d",
+                ),
+            ]
+        )
+        # Act
+        response = self.client.get(event.get_absolute_url())
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("recruitment_stats", response.context)
+        self.assertEqual(
+            response.context["recruitment_stats"],
+            {
+                "all_signups": 4,
+                "pending_signups": 1,
+                "discarded_signups": 1,
+                "accepted_signups": 2,
+            },
+        )
 
 
 class TestEventMerging(TestBase):
