@@ -987,12 +987,30 @@ def event_details(request, slug):
                 "administrator",
                 "sponsor",
                 "membership",
+                "instructorrecruitment",
             )
             .get(slug=slug)
         )
         member_sites = Membership.objects.filter(task__event=event).distinct()
     except Event.DoesNotExist:
         raise Http404("Event matching query does not exist.")
+
+    try:
+        recruitment_stats = (
+            event.instructorrecruitment.instructorrecruitmentsignup_set.aggregate(
+                all_signups=Count("person"),
+                pending_signups=Count("person", filter=Q(state="p")),
+                discarded_signups=Count("person", filter=Q(state="d")),
+                accepted_signups=Count("person", filter=Q(state="a")),
+            )
+        )
+    except Event.instructorrecruitment.RelatedObjectDoesNotExist:
+        recruitment_stats = dict(
+            all_signups=None,
+            pending_signups=None,
+            discarded_signups=None,
+            accepted_signups=None,
+        )
 
     person_important_badges = Prefetch(
         "person__badges",
@@ -1031,6 +1049,7 @@ def event_details(request, slug):
             "latitude": event.latitude,
             "longitude": event.longitude,
         },
+        "recruitment_stats": recruitment_stats,
     }
     return render(request, "workshops/event.html", context)
 

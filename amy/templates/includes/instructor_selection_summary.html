@@ -16,14 +16,18 @@
   </tr>
   <tr>
     <th>Applicants total:</th>
-    <td>42</td>
+    <td>{{ stats.all_signups|default:"&mdash;" }}</td>
   </tr>
   <tr>
-    <th>Instructors:</th>
-    <td>&mdash;</td>
+    <th>Pending:</th>
+    <td>{{ stats.pending_signups|default:"&mdash;" }}</td>
   </tr>
   <tr>
-    <th>Helpers:</th>
-    <td>&mdash;</td>
+    <th>Accepted:</th>
+    <td>{{ stats.accepted_signups|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Declined:</th>
+    <td>{{ stats.discarded_signups|default:"&mdash;" }}</td>
   </tr>
 </table>
