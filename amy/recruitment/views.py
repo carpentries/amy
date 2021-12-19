@@ -67,15 +67,16 @@ class InstructorRecruitmentCreate(
         return context
 
     def get_initial(self) -> dict:
-        workshop_request = self.event.workshoprequest
-        if workshop_request:
+        try:
+            workshop_request = self.event.workshoprequest
             return {
                 "notes": (
                     f"{workshop_request.audience_description}\n\n"
                     f"{workshop_request.user_notes}"
                 )
             }
-        return {}
+        except Event.workshoprequest.RelatedObjectDoesNotExist:
+            return {}
 
     def form_valid(self, form):
         self.object: InstructorRecruitment = form.save(commit=False)
