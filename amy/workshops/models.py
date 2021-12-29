@@ -2984,20 +2984,19 @@ class WorkshopRequest(
         ),
         (
             "forprofit",
-            "I am with a corporate or for-profit site. I understand "
-            "The Carpentries staff will contact me about workshop "
-            "fees. I will follow through on The Carpentries "
-            "invoicing process for the agreed upon fee.",
+            "I am with a corporate or for-profit site. I understand the costs for "
+            "for-profit organisations are four times the price for not-for-profit "
+            "organisations.",
         ),
         (
             "member",
-            "I am with a Member Organisation so the workshop fee does "
-            "not apply (Instructor travel costs will still apply).",
+            "I am with a Member organisation so the workshop fee does not apply "
+            "(instructor travel costs will still apply for in-person workshops).",
         ),
         (
             "waiver",
-            "I am requesting a scholarship for the workshop fee "
-            "(Instructor travel costs will still apply).",
+            "I am requesting financial support for the workshop fee (instructor "
+            "travel costs will still apply for in-person workshops)",
         ),
     )
     administrative_fee = models.CharField(
