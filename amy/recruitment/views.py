@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
@@ -32,7 +34,7 @@ class InstructorRecruitmentCreate(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.event = None
+        self.event: Optional[Event] = None
 
     def get_other_object(self) -> Event:
         event_id = self.kwargs.get("event_id")
@@ -89,6 +91,7 @@ class InstructorRecruitmentCreate(
 class InstructorRecruitmentDetails(
     OnlyForAdminsMixin, ConditionallyEnabledMixin, AMYDetailView
 ):
+    permission_required = "recruitment.view_instructorrecruitment"
     queryset = InstructorRecruitment.objects.prefetch_related(
         Prefetch(
             "instructorrecruitmentsignup_set",
@@ -121,7 +124,6 @@ class InstructorRecruitmentDetails(
             ),
         )
     )
-    context_object_name = "role"
     template_name = "recruitment/instructorrecruitment_details.html"
 
     def get_view_enabled(self) -> bool:
