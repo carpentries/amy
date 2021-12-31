@@ -33,6 +33,7 @@ from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
 from workshops import github_auth
+from workshops.consts import FEE_DETAILS_URL
 from workshops.fields import NullableGithubUsernameField
 from workshops.mixins import (
     ActiveMixin,
@@ -3009,7 +3010,7 @@ class WorkshopRequest(
         "administrative fee?",
         help_text=(
             "<a href='{}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a>".format("")
+            "The Carpentries website workshop fee listing.</a>".format(FEE_DETAILS_URL)
         ),
     )
     scholarship_circumstances = models.TextField(

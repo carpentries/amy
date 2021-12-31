@@ -4,6 +4,7 @@ from django.db import models, transaction
 from django.urls import reverse
 from django_countries.fields import CountryField
 
+from workshops.consts import FEE_DETAILS_URL
 from workshops.mixins import (
     AssignmentMixin,
     COCAgreementMixin,
@@ -280,7 +281,7 @@ class WorkshopInquiryRequest(
         "administrative fee?",
         help_text=(
             "<a href='{}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a>".format("")
+            "The Carpentries website workshop fee listing.</a>".format(FEE_DETAILS_URL)
         ),
     )
     TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
