@@ -331,5 +331,61 @@
             "reply_to_header": "",
             "body_template": "Dear {{ person_full_name }},\r\n\r\nOnce a year, we ask you to check that the information we store about you and your activities with The Carpentries are up-to-date. It is important that we have current information so we can inform you of new teaching or volunteering opportunities.\r\n\r\nPlease go to <https://amy.carpentries.org> to log in to your AMY account. Check that your email address and affiliation are current, that your knowledge domain and the lessons you can teach are current, and that all the workshops you have taught are reflected on your profile. If you need help updating your profile, do not hesitate to contact us at [team@carpentries.org](mailto:team@carpentries.org).\r\n\r\nThank you for everything you do with The Carpentries!\r\n\r\nSincerely,\r\nThe Carpentries\r\n\r\n\r\n\r\nYou are receiving this message because your email address was provided for this AMY account. Please note that this email is a legal notice, and you cannot unsubscribe. If you believe you received this message in error, do not hesitate to contact [team@carpentries.org](mailto:team@carpentries.org)."
         }
+    },
+    {
+        "model": "autoemails.emailtemplate",
+        "pk": 13,
+        "fields": {
+            "active": true,
+            "created_at": "2020-09-14T20:35:29.650Z",
+            "last_updated_at": "2020-09-14T20:35:29.650Z",
+            "slug": "profile-archival-warning-inactivity",
+            "subject": "Profile Archival Warning",
+            "to_header": "{{ request.email }}",
+            "from_header": "amy-no-reply@carpentries.org",
+            "cc_header": "",
+            "bcc_header": "",
+            "reply_to_header": "",
+            "body_template": "Please [sign in](https://carpentries.org/) and update your profile information; if you do not your profile may be archived."
+        }
+    },
+    {
+        "model": "autoemails.trigger",
+        "pk": 14,
+        "fields": {
+            "active": true,
+            "created_at": "2020-08-15T14:30:16.081Z",
+            "last_updated_at": "2020-08-15T14:30:16.081Z",
+            "action": "profile-archival-warning-inactivity",
+            "template": 13
+        }
+    },
+    {
+        "model": "autoemails.emailtemplate",
+        "pk": 15,
+        "fields": {
+            "active": true,
+            "created_at": "2020-09-14T20:35:29.650Z",
+            "last_updated_at": "2020-09-14T20:35:29.650Z",
+            "slug": "profile-archival-warning-consents",
+            "subject": "Profile Archival Warning",
+            "to_header": "{{ request.email }}",
+            "from_header": "amy-no-reply@carpentries.org",
+            "cc_header": "",
+            "bcc_header": "",
+            "reply_to_header": "",
+            "body_template": "Please [sign in](https://carpentries.org/) and update your profile information; if you do not your profile may be archived. There are new terms and conditions."
+        }
+    },
+    {
+        "model": "autoemails.trigger",
+        "pk": 16,
+        "fields": {
+            "active": true,
+            "created_at": "2020-08-15T14:30:16.081Z",
+            "last_updated_at": "2020-08-15T14:30:16.081Z",
+            "action": "profile-archival-warning-consents",
+            "template": 13
+        }
     }
 ]

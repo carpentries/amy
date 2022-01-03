@@ -4,14 +4,21 @@ import logging
 from django.core.management.base import BaseCommand
 import django_rq
 
-from autoemails.actions import BaseRepeatedAction, UpdateProfileReminderRepeatedAction
+from autoemails.actions import (
+    BaseRepeatedAction,
+    ProfileArchivalWarningConsentsRepeatedAction,
+    ProfileArchivalWarningInactivityRepeatedAction,
+    UpdateProfileReminderRepeatedAction,
+)
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 
 scheduler = django_rq.get_scheduler()
 logger = logging.getLogger("amy.signals")
 REPEATED_JOBS_BY_TRIGGER = {
-    "profile-update": UpdateProfileReminderRepeatedAction,
+    UpdateProfileReminderRepeatedAction.ACTION_NAME: UpdateProfileReminderRepeatedAction,  # noqa: line too long
+    ProfileArchivalWarningInactivityRepeatedAction.ACTION_NAME: ProfileArchivalWarningInactivityRepeatedAction,  # noqa: line too long
+    ProfileArchivalWarningConsentsRepeatedAction.ACTION_NAME: ProfileArchivalWarningConsentsRepeatedAction,  # noqa: line too long
 }
 DAY_IN_SECONDS = 86400
 

@@ -10,12 +10,13 @@ from django.core.mail import EmailMultiAlternatives
 from django.db.models.query import QuerySet
 from django.http.request import HttpRequest
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
+from django.utils import timezone
 import django_rq
 
 from autoemails.base_views import ActionManageMixin
-from autoemails.models import EmailTemplate, Trigger
+from autoemails.models import EmailReminder, EmailTemplate, Trigger
 from autoemails.utils import compare_emails
-from consents.models import Term
+from consents.models import Consent, Term
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Person, Task
 
@@ -1286,6 +1287,7 @@ class BaseRepeatedAction:
 
     trigger: Trigger
     EMAIL_ACTION_CLASS: Type[BaseAction]
+    ACTION_NAME: str
     INTERVAL: int = DAY_IN_SECONDS  # time between repeats
     REPEAT: Optional[int] = None  # number of times the job is repeated
     # If repeat is None means repeat forever
@@ -1309,12 +1311,13 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     """
 
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
+    ACTION_NAME = "profile-update"
 
     def __call__(self, *args, **kwargs):
         people = self.get_people_with_anniversary()
         triggers = Trigger.objects.filter(
             active=True,
-            action="profile-update",
+            action=self.ACTION_NAME,
         )
         for person in people:
             ActionManageMixin.add(
@@ -1341,3 +1344,245 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
             created_at__day=today.day,
         )
         return people
+
+
+class ProfileArchivalWarningInactivityAction(BaseAction):
+    """
+    Action for asking users to login or their profile will be archived.
+    This email should be sent if the user is active and has not logged in
+    in the last 3 years.
+    This action is added during the RQ scheduler startup.
+    See amy.autoemails.management.commands.repeated_jobs
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def recipients(self) -> Optional[Tuple[str]]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            person_email = self.context_objects["person_email"]
+            return (person_email,)
+        except (KeyError, AttributeError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        recipients = self.recipients()
+        if recipients is not None:
+            return ", ".join(recipients)
+        return ""
+
+    def reply_to(self) -> Optional[Tuple[str]]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
+
+
+class ProfileArchivalWarningConsentsAction(BaseAction):
+    """
+    Action for asking users to login and consent to required consents or
+    their profile will be archived.
+
+    This action is added during the RQ scheduler startup.
+    See amy.autoemails.management.commands.repeated_jobs
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def recipients(self) -> Optional[Tuple[str]]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            person_email = self.context_objects["person_email"]
+            return (person_email,)
+        except (KeyError, AttributeError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        recipients = self.recipients()
+        if recipients is not None:
+            return ", ".join(recipients)
+        return ""
+
+    def reply_to(self) -> Optional[Tuple[str]]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
+
+
+class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
+    """
+    Base class for emails related to profile archival.
+    """
+
+    REMINDER_LIMIT: int = 3
+
+    def __call__(self, *args, **kwargs):
+        people = self.get_people()
+        triggers = self.get_triggers()
+        self.thirty_days_from_now = timezone.now() + timedelta(days=30)
+        email_reminders = self.get_email_reminders()
+        self.handle_existing_email_reminders(triggers, email_reminders, people)
+        self.create_new_email_reminders(triggers, email_reminders, people)
+
+    def get_people(self) -> Iterable[Person]:
+        """
+        Retrieves the affected users from the database.
+        """
+        return []
+
+    def get_triggers(self) -> Iterable[Trigger]:
+        """
+        Retrieves the related triggers from the database.
+        """
+        return [
+            Trigger.objects.filter(
+                active=True,
+                action=self.ACTION_NAME,
+            )[0]
+        ]
+
+    def get_email_reminders(self) -> Iterable[Trigger]:
+        """
+        Retrieves the related email reminders from the database.
+        """
+        return EmailReminder.objects.filter(
+            archived_at=None,
+            trigger__action=self.ACTION_NAME,
+        ).select_related("person")
+
+    def handle_existing_email_reminders(
+        self,
+        triggers: Iterable[Trigger],
+        email_reminders: Iterable[EmailReminder],
+        people: Iterable[Person],
+    ) -> None:
+        """
+        Update existing email reminders doing the following:
+        - Archive the email reminder where the users have logged in.
+        - Send another reminder if the user has not yet hit the REMINDER_LIMIT
+        - If the user hasn't logged in and they have hit the REMINDER_LIMIT,
+          archive the user and the email reminder.
+        """
+        people_ids = set([person.id for person in people])
+        reminders_to_archive = []
+        for reminder in email_reminders:
+            if reminder.person_id not in people_ids:
+                # if there is an email reminder that is not in people above
+                # archive the email reminder they have logged in
+                reminders_to_archive.append(reminder)
+            elif reminder.number_times_sent == self.REMINDER_LIMIT:
+                # Hit the reminder limit
+                # Archive the person and archive the reminder
+                reminder.person.archive()
+                reminders_to_archive.append(reminder)
+            else:
+                # send email
+                self._update_email_reminder(reminder)
+                self.schedule_rqjob(reminder, triggers)
+                reminder.save()
+        EmailReminder.objects.filter(
+            id__in=[r.id for r in reminders_to_archive]
+        ).update(archived_at=timezone.now())
+
+    def create_new_email_reminders(
+        self,
+        triggers: Iterable[Trigger],
+        email_reminders: Iterable[EmailReminder],
+        people: Iterable[Person],
+    ) -> None:
+        """
+        Creates an email reminder and sends an email
+        for users who have not received a reminder previously.
+        """
+        people_already_sent_emails = set([er.person for er in email_reminders])
+        people_new_email_reminders = set(people) - people_already_sent_emails
+        email_reminders = []
+        for person in people_new_email_reminders:
+            email_reminder = EmailReminder(
+                remind_again_date=self.thirty_days_from_now,
+                person=person,
+                trigger=triggers[0],
+            )
+            self._update_email_reminder(email_reminder)
+            self.schedule_rqjob(email_reminder, triggers)
+            email_reminders.append(email_reminder)
+        EmailReminder.objects.bulk_create(email_reminders)
+
+    def schedule_rqjob(
+        self, reminder: EmailReminder, triggers: Iterable[Trigger]
+    ) -> None:
+        ActionManageMixin.add(
+            action_class=self.EMAIL_ACTION_CLASS,
+            logger=logger,
+            scheduler=scheduler,
+            triggers=triggers,
+            context_objects={
+                "person_email": reminder.person.email,
+                "email_reminder": reminder,
+            },
+            object_=reminder.person,
+        )
+
+    def _update_email_reminder(self, reminder: EmailReminder) -> None:
+        """
+        Updates the date and number of times sent for the email reminder.
+        """
+        # TODO this might have to happen only if the email is successfully sent
+        reminder.remind_again_date = self.thirty_days_from_now
+        reminder.number_times_sent += 1
+
+
+class ProfileArchivalWarningInactivityRepeatedAction(
+    BaseProfileArchivalWarningRepeatedAction
+):
+    """
+    Emails a warning up to three times over a 90 day period
+    to remind the active user to login otherwise they will be archived.
+    """
+
+    EMAIL_ACTION_CLASS = ProfileArchivalWarningInactivityAction
+    ACTION_NAME = "profile-archival-warning-inactivity"
+
+    def get_people(self) -> Iterable[Person]:
+        """
+        Retrieves people who last logged in 3 years ago or more.
+        """
+        three_years_ago = timezone.now() - timedelta(days=365 * 3)
+        people = Person.objects.filter(
+            is_active=True, last_login__lte=three_years_ago, archived_at__isnull=True
+        )
+        return people
+
+
+class ProfileArchivalWarningConsentsRepeatedAction(
+    BaseProfileArchivalWarningRepeatedAction
+):
+    """
+    Emails a warning up to three times over a 90 day period
+    to remind the user to consent otherwise they will be archived.
+    """
+
+    EMAIL_ACTION_CLASS = ProfileArchivalWarningConsentsAction
+    ACTION_NAME = "profile-archival-warning-consents"
+
+    def get_people(self) -> Iterable[Person]:
+        """
+        Retrieves people who are missing required consents.
+        """
+        required_term_ids = (
+            Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
+            .active()
+            .values_list("id")
+        )
+        people_missing_required_terms = (
+            Consent.objects.filter(
+                term__in=required_term_ids,
+                term_option__isnull=True,
+                person__archived_at__isnull=True,
+                person__is_active=True,
+            )
+            .active()
+            .values_list("person")
+        )
+        return people_missing_required_terms

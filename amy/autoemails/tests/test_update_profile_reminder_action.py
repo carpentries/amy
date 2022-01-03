@@ -15,7 +15,8 @@ class TestUpdateProfileRepeatedAction(TestCase):
     def setUp(self) -> None:
         super().setUp()
         trigger = Trigger.objects.create(
-            action="profile-update", template=EmailTemplate.objects.create()
+            action=UpdateProfileReminderRepeatedAction.ACTION_NAME,
+            template=EmailTemplate.objects.create(),
         )
         self.action = UpdateProfileReminderRepeatedAction(trigger=trigger)
 
