@@ -1419,11 +1419,11 @@ class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
 
     def __call__(self, *args, **kwargs):
         people = self.get_people()
-        triggers = self.get_triggers()
+        trigger = self.get_trigger()
         self.thirty_days_from_now = timezone.now() + timedelta(days=30)
         email_reminders = self.get_email_reminders()
-        self.handle_existing_email_reminders(triggers, email_reminders, people)
-        self.create_new_email_reminders(triggers, email_reminders, people)
+        self.handle_existing_email_reminders(trigger, email_reminders, people)
+        self.create_new_email_reminders(trigger, email_reminders, people)
 
     def get_people(self) -> Iterable[Person]:
         """
@@ -1431,16 +1431,14 @@ class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
         """
         return []
 
-    def get_triggers(self) -> Iterable[Trigger]:
+    def get_trigger(self) -> Trigger:
         """
-        Retrieves the related triggers from the database.
+        Retrieves the related trigger from the database.
         """
-        return [
-            Trigger.objects.filter(
-                active=True,
-                action=self.ACTION_NAME,
-            )[0]
-        ]
+        return Trigger.objects.filter(
+            active=True,
+            action=self.ACTION_NAME,
+        )[0]
 
     def get_email_reminders(self) -> Iterable[Trigger]:
         """
@@ -1453,7 +1451,7 @@ class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
 
     def handle_existing_email_reminders(
         self,
-        triggers: Iterable[Trigger],
+        trigger: Trigger,
         email_reminders: Iterable[EmailReminder],
         people: Iterable[Person],
     ) -> None:
@@ -1464,30 +1462,35 @@ class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
         - If the user hasn't logged in and they have hit the REMINDER_LIMIT,
           archive the user and the email reminder.
         """
-        people_ids = set([person.id for person in people])
-        reminders_to_archive = []
-        for reminder in email_reminders:
-            if reminder.person_id not in people_ids:
-                # if there is an email reminder that is not in people above
-                # archive the email reminder they have logged in
-                reminders_to_archive.append(reminder)
-            elif reminder.number_times_sent == self.REMINDER_LIMIT:
-                # Hit the reminder limit
-                # Archive the person and archive the reminder
-                reminder.person.archive()
-                reminders_to_archive.append(reminder)
-            else:
-                # send email
-                self._update_email_reminder(reminder)
-                self.schedule_rqjob(reminder, triggers)
-                reminder.save()
-        EmailReminder.objects.filter(
-            id__in=[r.id for r in reminders_to_archive]
-        ).update(archived_at=timezone.now())
+        people_ids = set(person.id for person in people)
+        reminders_over_limit = set(
+            reminder
+            for reminder in email_reminders
+            if reminder.number_times_sent >= self.REMINDER_LIMIT
+        )
+
+        # Email reminders are archived if they have hit the reminder limit
+        # or the person has logged in and a reminder is not needed.
+        reminders_to_archive = (
+            set(
+                reminder
+                for reminder in email_reminders
+                if reminder.person_id not in people_ids
+            )
+            + reminders_over_limit
+        )
+        self._archive_email_reminders(reminders_to_archive)
+
+        # For reminders that have hit the reminder limit archive the people attached
+        self._archive_people(reminder.person_id for reminder in reminders_over_limit)
+
+        # Any reminders we are not archiving need to be resent
+        reminders_to_send = set(email_reminders) - reminders_to_archive
+        self._send_email_reminders(reminders_to_send, trigger)
 
     def create_new_email_reminders(
         self,
-        triggers: Iterable[Trigger],
+        trigger: Trigger,
         email_reminders: Iterable[EmailReminder],
         people: Iterable[Person],
     ) -> None:
@@ -1502,10 +1505,10 @@ class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
             email_reminder = EmailReminder(
                 remind_again_date=self.thirty_days_from_now,
                 person=person,
-                trigger=triggers[0],
+                trigger=trigger,
+                number_times_sent=1,
             )
-            self._update_email_reminder(email_reminder)
-            self.schedule_rqjob(email_reminder, triggers)
+            self.schedule_rqjob(email_reminder, [trigger])
             email_reminders.append(email_reminder)
         EmailReminder.objects.bulk_create(email_reminders)
 
@@ -1523,6 +1526,23 @@ class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
             },
             object_=reminder.person,
         )
+
+    def _archive_people(self, people: Iterable[Person]) -> None:
+        for person in people:
+            person.archive()
+
+    def _archive_email_reminders(self, reminders: EmailReminder) -> None:
+        EmailReminder.objects.filter(id__in=[r.id for r in reminders]).update(
+            archived_at=timezone.now()
+        )
+
+    def _send_email_reminders(
+        self, reminders: Iterable[EmailReminder], trigger: Trigger
+    ) -> None:
+        for reminder in reminders:
+            self._update_email_reminder(reminder)
+            self.schedule_rqjob(reminder, [trigger])
+            reminder.save()
 
     def _update_email_reminder(self, reminder: EmailReminder) -> None:
         """

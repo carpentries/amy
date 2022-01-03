@@ -4,8 +4,9 @@ from django.test import TestCase
 from django.utils import timezone
 
 from autoemails.actions import (
-    InactiveProfileArchivalWarningAction,
+    ProfileArchivalWarningConsentsAction,
     ProfileArchivalWarningConsentsRepeatedAction,
+    ProfileArchivalWarningInactivityAction,
     ProfileArchivalWarningInactivityRepeatedAction,
 )
 from autoemails.models import EmailReminder, EmailTemplate, RQJob, Trigger
@@ -97,7 +98,7 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
         self.assertCountEqual([job.recipients for job in rq_jobs], [p1.email])
         for job in rq_jobs:
             self.assertEqual(
-                job.action_name, InactiveProfileArchivalWarningAction.__name__
+                job.action_name, ProfileArchivalWarningInactivityAction.__name__
             )
             self.assertIsNone(job.interval)
             self.assertIsNone(job.result_ttl)
@@ -271,7 +272,7 @@ class TestProfileArchivalWarningConsentsRepeatedAction(TestCase):
         self.assertCountEqual([job.recipients for job in rq_jobs], [p1.email])
         for job in rq_jobs:
             self.assertEqual(
-                job.action_name, InactiveProfileArchivalWarningAction.__name__
+                job.action_name, ProfileArchivalWarningConsentsAction.__name__
             )
             self.assertIsNone(job.interval)
             self.assertIsNone(job.result_ttl)
