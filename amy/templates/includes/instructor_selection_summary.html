@@ -1,0 +1,33 @@
+<table class="table table-striped">
+  <tr>
+    <th width="50%">Instructor Selection status:</th>
+    <td>
+      {% if event.instructorrecruitment.status == "o" %}
+        <span class="text-warning">in progress</span> <br>
+        <a href="{{ event.instructorrecruitment.get_absolute_url }}">See details</a>
+      {% elif event.instructorrecruitment.status == "c" %}
+        <span class="text-success">closed</span> <br>
+        <a href="">See details or reopen</a>
+      {% else %}
+        <span class="text-danger">inactive</span> <br>
+        <a href="{% url 'instructorrecruitment_add' event.pk %}">Begin Instructor Selection process</a>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Applicants total:</th>
+    <td>{{ stats.all_signups|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Pending:</th>
+    <td>{{ stats.pending_signups|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Accepted:</th>
+    <td>{{ stats.accepted_signups|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Declined:</th>
+    <td>{{ stats.discarded_signups|default:"&mdash;" }}</td>
+  </tr>
+</table>

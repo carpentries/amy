@@ -1039,6 +1039,9 @@ class TagQuerySet(models.query.QuerySet):
     def carpentries(self):
         return self.filter(name__in=["SWC", "DC", "LC"])
 
+    def strings(self):
+        return self.values_list("name", flat=True)
+
 
 class Tag(models.Model):
     """Label for grouping events."""

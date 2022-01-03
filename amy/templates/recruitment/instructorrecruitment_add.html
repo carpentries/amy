@@ -1,0 +1,38 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+<div class="col-lg-8 offset-lg-2">
+  {{ block.super }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="col-lg-8 offset-lg-2">
+  <p class="lead">
+    Verify the details for this workshop.
+    <a href="{{ event.get_absolute_url }}">Return to event page</a> to edit other event details.
+  </p>
+
+  <ul>
+    <li>{% if event.administrator %}{{ event.administrator.fullname }}{% else %}(unknown administrator){% endif %} workshop at {{ event.venue }}</li>
+    <li>Date/Time: {{ event_dates }}</li>
+    <li>
+      Location:
+      {% if event.country == 'W3' %}
+        Online
+      {% else %}
+        {{ event.venue }}, {% include "includes/country_flag.html" with country=event.country %}, {{ event.address }}
+      {% endif %}
+    </li>
+    <li>
+      Curriculum:
+      {% for curriculum in event.curricula.all %}
+        {{ curriculum }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    </li>
+  </ul>
+  {% crispy form %}
+</div>
+{% endblock %}

@@ -4,6 +4,33 @@
 {% load links %}
 {% load revisions %}
 {% load tags %}
+{% load dates %}
+
+{% block title %}
+<div class="jumbotron container-fluid">
+  {% if event.completed %}
+  <div class="alert alert-success" role="alert">
+    <strong>Well done!</strong> This event is completed, you don't have to work on it.
+  </div>
+  {% endif %}
+  <div class="row">
+    <div class="col-lg-6">
+      <h1 class="d-inline-block">Event <span class="badge badge-light">{{ event.slug }}</span></h1>
+      <p class="lead"><i class="far fa-calendar"></i> {% human_daterange event.start event.end %} </p>
+      <p class="lead">
+        {% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}
+        {% if event.administrator.domain == "self-organized" %}self-organised{% endif %}
+      </p>
+    </div>
+    <div class="col-lg-6">
+      {% comment %} Only show Instructor Selection summary in centrally-organised events. Exclude TTT events, too. {% endcomment %}
+      {% if "TTT" not in event.tags.strings and event.administrator.domain != "self-organized" %}
+        {% include "includes/instructor_selection_summary.html" with event=event stats=recruitment_stats %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock title %}
 
 {% block content %}
 
@@ -14,12 +41,6 @@
   <p>This event's repository was updated by the repository owner. Changes detected:</p>
   <p>{{ event.metadata_all_changes |linebreaksbr }}</p>
   <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.slug %}">Review changes</a></p>
-</div>
-{% endif %}
-
-{% if event.completed %}
-<div class="alert alert-success" role="alert">
-  <strong>Well done!</strong> This event is completed, you don't have to work on it.
 </div>
 {% endif %}
 

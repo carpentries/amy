@@ -32,7 +32,7 @@
     <tr><th>Workshop location:</th>
         <td>{{ object.location }}</td></tr>
     <tr><th>Country:</th>
-        <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
+        <td>{% include "includes/country_flag.html" with country=object.country %}</td></tr>
     <tr><th>Online or Inperson:</th>
       <td>{{ object.online_inperson }}</td></tr>
 

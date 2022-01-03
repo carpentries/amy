@@ -49,7 +49,7 @@
     <th class="{% if not event.country %}table-danger{% endif %}">Country:</th>
     <td class="{% if not event.country %}table-danger{% endif %}">
     {% if event.country %}
-      {{ event.country.name }} <img src="{{ event.country.flag }}" alt="{{ event.country }}" class="country-flag" />
+      {% include "includes/country_flag.html" with country=event.country %}
     {% else %}
       &mdash;
     {% endif %}

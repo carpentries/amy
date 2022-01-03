@@ -8,7 +8,7 @@
 <table class="table table-striped">
   <tr><th>Full name:</th><td>{{ airport.fullname }}</td></tr>
   <tr><th>IATA:</th><td>{{ airport.iata }}</td></tr>
-  <tr><th>Country:</th><td>{{ airport.country.name }} <img src="{{ airport.country.flag }}" alt="{{ airport.country }}" class="country-flag" /></td></tr>
+  <tr><th>Country:</th><td>{% include "includes/country_flag.html" with country=airport.country %}</td></tr>
   <tr><th>Latitude:</th><td>{{ airport.latitude }}</td></tr>
   <tr><th>Longitude:</th><td>{{ airport.longitude }}</td></tr>
 </table>
