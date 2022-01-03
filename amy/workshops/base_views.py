@@ -1,4 +1,5 @@
 from smtplib import SMTPException
+from typing import Optional
 
 from django.conf import settings
 from django.contrib import messages
@@ -44,7 +45,7 @@ class FormInvalidMessageMixin:
 
 
 class AMYDetailView(DetailView):
-    pass
+    object: Model
 
 
 class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
@@ -293,7 +294,7 @@ class AutoresponderMixin:
         return "email"
 
     def autoresponder_email_context(self, form):
-        """Context for """
+        """Context for"""
         # list of fields allowed to show to the user
         whitelist = []
         form_data = [v for k, v in form.cleaned_data.items() if k in whitelist]
@@ -430,3 +431,18 @@ class AssignView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
         requested_person_id = self.kwargs.get(self.person_url_kwarg)
         assign(request, self.object, requested_person_id)
         return super().get(request, *args, **kwargs)
+
+
+class ConditionallyEnabledMixin:
+    """Mixin for enabling views based on feature flag."""
+
+    view_enabled: Optional[bool] = None
+
+    def get_view_enabled(self) -> bool:
+        return self.view_enabled is True
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.get_view_enabled() is not True:
+            raise Http404("Page not found")
+
+        return super().dispatch(request, *args, **kwargs)

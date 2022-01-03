@@ -133,6 +133,8 @@ LOCAL_APPS = [
     "amy.extcomments.apps.ExtcommentsConfig",
     "amy.autoemails.apps.AutoemailsConfig",
     "amy.consents.apps.ConsentsConfig",
+    "amy.communityroles.apps.CommunityRolesConfig",
+    "amy.recruitment.apps.RecruitmentConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -599,6 +601,7 @@ RQ_SHOW_ADMIN_LINK = False
 
 RQ = {
     "JOB_CLASS": "autoemails.job.Job",
+    "DEFAULT_RESULT_TTL": 31536000,  # 1 year in seconds for keeping job results
 }
 
 
@@ -624,4 +627,11 @@ if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
 REPORTS_LINK = env.str(
     "AMY_REPORTS_LINK",
     default="https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
+)
+
+# Instructor Recruitment Process
+# -----------------------------------------------------------------------------
+# Settings for Instructor Recruitment project
+INSTRUCTOR_RECRUITMENT_ENABLED = env.bool(
+    "AMY_INSTRUCTOR_RECRUITMENT_ENABLED", default=False
 )

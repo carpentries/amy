@@ -7,7 +7,7 @@ from typing import List
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django_countries import countries as Countries
 from faker import Faker
@@ -230,21 +230,33 @@ class Command(BaseCommand):
     def fake_instructors(self, count=30):
         self.stdout.write("Generating {} fake instructors...".format(count))
         for _ in range(count):
-            self.fake_person(is_instructor=True)
+            try:
+                with transaction.atomic():
+                    self.fake_person(is_instructor=True)
+            except IntegrityError as e:
+                print(f"Error generating fake person: {e}")
 
     def fake_trainers(self, count=10):
         self.stdout.write("Generating {} fake trainers...".format(count))
         for _ in range(count):
-            self.fake_person(is_instructor=True, is_trainer=True)
+            try:
+                with transaction.atomic():
+                    self.fake_person(is_instructor=True, is_trainer=True)
+            except IntegrityError as e:
+                print(f"Error generating fake person: {e}")
 
     def fake_admins(self, count=10):
         self.stdout.write("Generating {} fake admins...".format(count))
         for _ in range(count):
-            person = self.fake_person(is_instructor=randbool(0.5))
-            person.groups.add(choice(Group.objects.all()))
-            person.is_active = True
-            person.set_password(person.username)
-            person.save()
+            try:
+                with transaction.atomic():
+                    person = self.fake_person(is_instructor=randbool(0.5))
+                    person.groups.add(choice(Group.objects.all()))
+                    person.is_active = True
+                    person.set_password(person.username)
+                    person.save()
+            except IntegrityError as e:
+                print(f"Error generating fake person: {e}")
 
     def fake_trainees(self, count=30):
         self.stdout.write(
@@ -252,14 +264,18 @@ class Command(BaseCommand):
             "progresses and training requests)...".format(count)
         )
         for _ in range(count):
-            p = self.fake_person(is_instructor=randbool(0.1))
-            training = choice(Event.objects.ttt())
-            Task.objects.create(
-                person=p, event=training, role=Role.objects.get(name="learner")
-            )
+            try:
+                with transaction.atomic():
+                    p = self.fake_person(is_instructor=randbool(0.1))
+                    training = choice(Event.objects.ttt())
+                    Task.objects.create(
+                        person=p, event=training, role=Role.objects.get(name="learner")
+                    )
 
-            self.fake_training_request(p)
-            self.fake_training_progresses(p, training)
+                    self.fake_training_request(p)
+                    self.fake_training_progresses(p, training)
+            except IntegrityError as e:
+                print(f"Error generating fake trainees: {e}")
 
     def fake_training_progresses(self, p, training):
         trainers = Person.objects.filter(award__badge__name="trainer")
@@ -294,7 +310,12 @@ class Command(BaseCommand):
     def fake_training_request(self, person_or_None):
         if person_or_None is None:
             state = "p" if randbool(0.5) else "d"
-            person = self.fake_person(is_instructor=False)
+            try:
+                with transaction.atomic():
+                    person = self.fake_person(is_instructor=False)
+            except IntegrityError as e:
+                print(f"Error generating fake training request: {e}")
+                return
         else:
             state = "a"
             person = person_or_None

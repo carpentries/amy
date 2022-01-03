@@ -4,6 +4,7 @@ from django.db import models, transaction
 from django.urls import reverse
 from django_countries.fields import CountryField
 
+from workshops.consts import FEE_DETAILS_URL
 from workshops.mixins import (
     AssignmentMixin,
     COCAgreementMixin,
@@ -185,7 +186,7 @@ class WorkshopInquiryRequest(
         + DC_LESSONS_LINK
         + ", or the "
         + LC_LESSONS_LINK
-        + " for more information about any of our lessons. If you’re "
+        + " for more information about any of our lessons. If you're "
         "not sure and would like to discuss with us, please select "
         'the "Don\'t know yet" option below.<br class="mb-1">'
         "Check all that apply.",
@@ -247,40 +248,41 @@ class WorkshopInquiryRequest(
         "comments section below. ",
     )
     FEE_CHOICES = (
-        UNSURE_CHOICE,
         (
             "nonprofit",
-            "I am with a government site, university, or other "
-            "nonprofit. I understand the workshop fee of US$2500, "
-            "and agree to follow through on The Carpentries "
-            "invoicing process.",
+            "I am with a government site, university, or other nonprofit. "
+            "I understand the workshop fee as listed on The Carpentries website "
+            "and agree to follow through on The Carpentries invoicing process.",
         ),
         (
             "forprofit",
-            "I am with a corporate or for-profit site. I understand "
-            "The Carpentries staff will contact me about workshop "
-            "fees. I will follow through on The Carpentries "
-            "invoicing process for the agreed upon fee.",
+            "I am with a corporate or for-profit site. I understand the costs for "
+            "for-profit organisations are four times the price for not-for-profit "
+            "organisations.",
         ),
         (
             "member",
-            "I am with a Member Organisation so the workshop fee does "
-            "not apply (Instructor travel costs will still apply).",
+            "I am with a Member organisation so the workshop fee does not apply "
+            "(instructor travel costs will still apply for in-person workshops).",
         ),
         (
             "waiver",
-            "I am requesting a scholarship for the workshop fee "
-            "(Instructor travel costs will still apply).",
+            "I am requesting financial support for the workshop fee (instructor "
+            "travel costs will still apply for in-person workshops)",
         ),
     )
     administrative_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
-        blank=True,
-        null=True,
+        blank=False,
+        null=False,
         default=None,
         verbose_name="Which of the following applies to your payment for the "
         "administrative fee?",
+        help_text=(
+            "<a href='{}' target='_blank' rel='noreferrer nofollow'>"
+            "The Carpentries website workshop fee listing.</a>".format(FEE_DETAILS_URL)
+        ),
     )
     TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
         UNSURE_CHOICE,

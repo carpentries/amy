@@ -43,13 +43,13 @@ def consent_to_all_required_consents(person: Person) -> None:
 class SuperuserMixin:
     def _setUpSuperuser(self):
         """Set up admin account that can log into the website."""
-        password = "admin"
+        self.admin_password = "admin"
         self.admin = Person.objects.create_superuser(
             username="admin",
             personal="Super",
             family="User",
             email="sudo@example.org",
-            password=password,
+            password=self.admin_password,
         )
         self._superUserConsent()
         self.admin.save()
@@ -60,8 +60,7 @@ class SuperuserMixin:
 
     def _logSuperuserIn(self):
         """Log in superuser (administrator) account."""
-        password = "admin"
-        self.client.login(username=self.admin.username, password=password)
+        self.client.login(username=self.admin.username, password=self.admin_password)
 
 
 class TestBase(
@@ -592,3 +591,66 @@ class FormTestHelper:
         form = Form(data)
         self.assertIn(first_name, form.errors)
         self.assertNotIn(other_name, form.errors)
+
+
+class TestViewPermissionsMixin:
+    """
+    Simple mixin for testing a single view URL for specific permissions, admin/no-admin
+    access. Multiple HTTP methods supported.
+    """
+
+    view_url: str
+    permissions: list[str]
+    methods: list[str]
+    user: Person
+
+    def test_view_admin_accessible(self):
+        # Arrange
+        super()._setUpSuperuser()
+        super()._logSuperuserIn()
+
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Act
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 200)
+
+    def test_view_unauthenticated_user_inaccessible(self):
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Act
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 403)
+
+    def test_view_required_permissions_accessible(self):
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Arrange
+                self.user.user_permissions.clear()
+                self.user.user_permissions.add(
+                    *[
+                        Permission.objects.get(codename=permission)
+                        for permission in self.permissions
+                    ]
+                )
+                # Act
+                self.client.force_login(self.user)
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 200)
+
+    def test_view_other_permissions_inaccessible(self):
+        for method in self.methods:
+            with self.subTest(method=method):
+                # Arrange
+                self.user.user_permissions.clear()
+                self.user.user_permissions.set(
+                    Permission.objects.exclude(codename__in=self.permissions)
+                )
+                # Act
+                self.client.force_login(self.user)
+                result = self.client.generic(method.upper(), self.view_url)
+                # Assert
+                self.assertEqual(result.status_code, 403)

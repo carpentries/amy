@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import logging
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Type
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -21,6 +21,7 @@ from workshops.models import Event, Person, Task
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
+DAY_IN_SECONDS = 86400
 
 
 def send_bulk_email(
@@ -198,6 +199,7 @@ class BaseAction:
 
         # build email
         self.logger.debug("Building email with provided context...")
+
         email = self.template.build_email(
             subject=self.subject(),
             sender=self.sender(),
@@ -242,6 +244,13 @@ class BaseAction:
         ) as e:
             self.logger.debug("Error occurred: {}", str(e))
             return False
+
+    def repeated_job_emails(self) -> Optional[List[str]]:
+        """
+        For repeated jobs, do a query for
+        the emails needed to send at this time.
+        """
+        return None
 
 
 class NewInstructorAction(BaseAction):
@@ -1235,3 +1244,100 @@ class NewConsentRequiredAction(BaseAction):
     def reply_to(self) -> Optional[Tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
         return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
+
+
+class ProfileUpdateReminderAction(BaseAction):
+    """
+    Action for asking users to login and update their profile information.
+    This email should be sent on the anniversary of the date the user's
+    profile was created.
+
+    This action is added during the RQ scheduler startup.
+    See amy.autoemails.management.commands.repeated_jobs
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def recipients(self) -> Optional[Tuple[str]]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            person_email = self.context_objects["person_email"]
+            return (person_email,)
+        except (KeyError, AttributeError):
+            return None
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        recipients = self.recipients()
+        if recipients is not None:
+            return ", ".join(recipients)
+        return ""
+
+    def reply_to(self) -> Optional[Tuple[str]]:
+        """Overwrite in order to set own reply-to from descending Action."""
+        return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
+
+
+class BaseRepeatedAction:
+    """
+    Base class for repeated jobs in the Redis.
+    """
+
+    trigger: Trigger
+    EMAIL_ACTION_CLASS: Type[BaseAction]
+    INTERVAL: int = DAY_IN_SECONDS  # time between repeats
+    REPEAT: Optional[int] = None  # number of times the job is repeated
+    # If repeat is None means repeat forever
+
+    def __init__(self, trigger: Trigger):
+        super().__init__()
+        self.trigger = trigger
+
+    def __call__(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @property
+    def template(self):
+        return self.trigger.template
+
+
+class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
+    """
+    Daily job that runs determining what emails to send out to people
+    to remind them when they should log in and update their profile.
+    """
+
+    EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
+
+    def __call__(self, *args, **kwargs):
+        people = self.get_people_with_anniversary()
+        triggers = Trigger.objects.filter(
+            active=True,
+            action="profile-update",
+        )
+        for person in people:
+            ActionManageMixin.add(
+                action_class=self.EMAIL_ACTION_CLASS,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects={
+                    "person_email": person.email,
+                    "person_full_name": person.full_name,
+                },
+                object_=person,
+            )
+
+    @staticmethod
+    def get_people_with_anniversary() -> Iterable[Person]:
+        """
+        Pull all people whose created_at anniversary is today
+        """
+        today = datetime.today()
+        people = Person.objects.filter(
+            is_active=True,
+            created_at__month=today.month,
+            created_at__day=today.day,
+        )
+        return people

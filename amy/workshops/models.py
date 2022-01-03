@@ -33,6 +33,7 @@ from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
 from workshops import github_auth
+from workshops.consts import FEE_DETAILS_URL
 from workshops.fields import NullableGithubUsernameField
 from workshops.mixins import (
     ActiveMixin,
@@ -661,6 +662,7 @@ class Person(
     DataPrivacyAgreementMixin,
     CreatedUpdatedArchivedMixin,
     GenderMixin,
+    RQJobsMixin,
     SecondaryEmailMixin,
 ):
     """Represent a single person."""
@@ -1037,6 +1039,9 @@ class TagQuerySet(models.query.QuerySet):
 
     def carpentries(self):
         return self.filter(name__in=["SWC", "DC", "LC"])
+
+    def strings(self):
+        return self.values_list("name", flat=True)
 
 
 class Tag(models.Model):
@@ -2974,27 +2979,25 @@ class WorkshopRequest(
     FEE_CHOICES = (
         (
             "nonprofit",
-            "I am with a government site, university, or other "
-            "nonprofit. I understand the workshop fee of US$2500, "
-            "and agree to follow through on The Carpentries "
-            "invoicing process.",
+            "I am with a government site, university, or other nonprofit. "
+            "I understand the workshop fee as listed on The Carpentries website "
+            "and agree to follow through on The Carpentries invoicing process.",
         ),
         (
             "forprofit",
-            "I am with a corporate or for-profit site. I understand "
-            "The Carpentries staff will contact me about workshop "
-            "fees. I will follow through on The Carpentries "
-            "invoicing process for the agreed upon fee.",
+            "I am with a corporate or for-profit site. I understand the costs for "
+            "for-profit organisations are four times the price for not-for-profit "
+            "organisations.",
         ),
         (
             "member",
-            "I am with a Member Organisation so the workshop fee does "
-            "not apply (Instructor travel costs will still apply).",
+            "I am with a Member organisation so the workshop fee does not apply "
+            "(instructor travel costs will still apply for in-person workshops).",
         ),
         (
             "waiver",
-            "I am requesting a scholarship for the workshop fee "
-            "(Instructor travel costs will still apply).",
+            "I am requesting financial support for the workshop fee (instructor "
+            "travel costs will still apply for in-person workshops)",
         ),
     )
     administrative_fee = models.CharField(
@@ -3005,6 +3008,10 @@ class WorkshopRequest(
         default=None,
         verbose_name="Which of the following applies to your payment for the "
         "administrative fee?",
+        help_text=(
+            "<a href='{}' target='_blank' rel='noreferrer nofollow'>"
+            "The Carpentries website workshop fee listing.</a>".format(FEE_DETAILS_URL)
+        ),
     )
     scholarship_circumstances = models.TextField(
         blank=True,

@@ -1,15 +1,31 @@
 site_name: AMY documentation
 repo_url: https://github.com/carpentries/amy/
+edit_uri: 'edit/develop/docs/'
+
 theme: readthedocs
 nav:
     - 'Home': 'index.md'
-    - 'User Guide': 'user_guide.md'
-    - 'Procedures': 'procedures.md'
-    - 'Database Structure': 'amy_database_structure.md'
-    - 'Sending Mails': 'sending_mails.md'
-    - 'Design':
+    - 'For AMY Administrators':
+        - 'Users Guide': 'users_guide/index.md'
+        - 'Database Structure': 'amy_database_structure.md'
+    - 'For AMY Developers':
         - 'Design': 'design/index.md'
         - 'Database Models': 'design/database_models.md'
         - 'Template Hierarchy': 'design/template_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
-    - 'Releases': 'releases'
+        - 'Procedures': 'procedures.md'
+        - 'Sending Mails': 'sending_mails.md'
+        - 'Releases': 'releases'
+    - 'About The Carpentries':
+        - 'The Carpentries': 'https://carpentries.org'
+        - 'Data Carpentry': 'https://datacarpentry.org/'
+        - 'Library Carpentry': 'https://librarycarpentry.org/'
+        - 'Software Carpentry': 'https://software-carpentry.org/'
+        - 'AMY': 'https://amy.carpentries.org'
+
+
+markdown_extensions:
+    - toc:
+        permalink: 
+
+extra_css: [extra.css]

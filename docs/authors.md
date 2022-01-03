@@ -1,28 +1,29 @@
 # Authors
 
-*Updated on 2021-01-31.*
+*Updated on 2021-10-28.*
 
 These people contributed to AMY:
 
 * [pbanaszkiewicz](https://github.com/pbanaszkiewicz)
 * [gvwilson](https://github.com/gvwilson)
 * [chrismedrela](https://github.com/chrismedrela)
+* [lauryndbrown](https://github.com/lauryndbrown)
 * [aditnryn](https://github.com/aditnryn)
-* [wking](https://github.com/wking)
-* maneesha sane
-* [rbeagrie](https://github.com/rbeagrie)
-* [fmichonneau](https://github.com/fmichonneau)
+* Greg Wilson
 * [maneesha](https://github.com/maneesha)
+* [wking](https://github.com/wking)
+* [dependabot[bot]](https://github.com/apps/dependabot)
+* [fmichonneau](https://github.com/fmichonneau)
+* [rbeagrie](https://github.com/rbeagrie)
 * [sburns](https://github.com/sburns)
 * [neon-ninja](https://github.com/neon-ninja)
 * [staeff](https://github.com/staeff)
-* [drio](https://github.com/drio)
 * [marwahaha](https://github.com/marwahaha)
-* [dependabot[bot]](https://github.com/apps/dependabot)
+* [drio](https://github.com/drio)
 * [shapiromatron](https://github.com/shapiromatron)
 * [shubhsingh594](https://github.com/shubhsingh594)
 * Raniere Silva
-* Erin Becker
+* [ErinBecker](https://github.com/ErinBecker)
 * [carlosp420](https://github.com/carlosp420)
 * [jduckles](https://github.com/jduckles)
 * [cudevmaxwell](https://github.com/cudevmaxwell)
@@ -33,7 +34,7 @@ These people contributed to AMY:
 * Christopher Medrela
 * Jonah Duckles
 * [timtomch](https://github.com/timtomch)
-* [tracykteal](https://github.com/tracykteal)
+
 
 The list was generated using this Python script:
 

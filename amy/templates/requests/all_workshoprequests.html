@@ -40,7 +40,7 @@
           <a href="{% url 'organization_add' %}?domain={{ req.institution_other_URL|urlencode }}&fullname={{ req.institution_other_name|urlencode }}&comment={{ req.institution_department|urlencode }}"><i class="fas fa-plus"></i></a>
         {% endif %}
       </td>
-      <td>{{ req.country.name }} <img src="{{ req.country.flag }}" alt="{{ req.country }}" class="country-flag" /></td>
+      <td>{% include "includes/country_flag.html" with country=req.country %}</td>
       <td>{{ req.dates }}</td>
       <td>
         {% for type in req.requested_workshop_types.all %}

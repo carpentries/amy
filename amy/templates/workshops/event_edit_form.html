@@ -48,7 +48,7 @@
       <td>
         <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
         &nbsp;
-        {% if perms.workshops.edit_task %}
+        {% if perms.workshops.change_task %}
         <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
         {% endif %}
         <form class="amy-form-inline" action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.full_name }}\" from {{ object.slug }}?")' method="POST">
@@ -78,7 +78,7 @@
   $('select[name="task-person"]').on('change', function() {
     var person_id = $(this).val();
     var url = `/api/v1/persons/${person_id}/trainingprogress`;
-    $.get(url, function (training_progresses) {   
+    $.get(url, function (training_progresses) {
       for (training of training_progresses){
         if (training.state === "Failed"){
           alert("Warning: Trainee failed previous training(s). Are you sure you want to continue?");

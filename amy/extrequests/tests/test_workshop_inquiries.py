@@ -36,6 +36,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         "travel_expences_agreement": True,
         "location": "London",
         "country": "GB",
+        "administrative_fee": "nonprofit",
         "data_privacy_agreement": True,
         "code_of_conduct_agreement": True,
         "host_responsibilities": True,

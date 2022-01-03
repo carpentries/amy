@@ -93,8 +93,8 @@
   </tr>
   <tr>
     <th scope="row">Country</th>
-    <td>{% if obj_a.country %}{{ obj_a.country.name }} <img src="{{ obj_a.country.flag }}" alt="{{ obj_a.country }}" class="country-flag" />{% else %}—{% endif %}</td>
-    <td>{% if obj_b.country %}{{ obj_b.country.name }} <img src="{{ obj_b.country.flag }}" alt="{{ obj_b.country }}" class="country-flag" />{% else %}—{% endif %}</td>
+    <td>{% if obj_a.country %}{% include "includes/country_flag.html" with country=obj_a.country %}{% else %}—{% endif %}</td>
+    <td>{% if obj_b.country %}{% include "includes/country_flag.html" with country=obj_b.country %}{% else %}—{% endif %}</td>
     <th>{% include "includes/merge_radio.html" with field=form.country %}</th>
   </tr>
   <tr>
