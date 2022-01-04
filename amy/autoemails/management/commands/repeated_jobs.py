@@ -3,6 +3,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 import django_rq
+from django_rq.queues import DjangoScheduler
 
 from autoemails.actions import (
     BaseRepeatedAction,
@@ -13,7 +14,6 @@ from autoemails.actions import (
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 
-scheduler = django_rq.get_scheduler()
 logger = logging.getLogger("amy.signals")
 REPEATED_JOBS_BY_TRIGGER = {
     UpdateProfileReminderRepeatedAction.ACTION_NAME: UpdateProfileReminderRepeatedAction,  # noqa: line too long
@@ -23,7 +23,7 @@ REPEATED_JOBS_BY_TRIGGER = {
 DAY_IN_SECONDS = 86400
 
 
-def clear_scheduled_jobs():
+def clear_scheduled_jobs(scheduler: DjangoScheduler):
     # Delete any existing repeated jobs in the scheduler
     for job in scheduler.get_jobs():
         if issubclass(job.meta["action"].__class__, BaseRepeatedAction):
@@ -32,7 +32,9 @@ def clear_scheduled_jobs():
             RQJob.objects.filter(job_id=job.get_id()).delete()
 
 
-def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler=None):
+def schedule_repeating_job(
+    trigger, action_class: BaseRepeatedAction, scheduler: DjangoScheduler
+) -> RQJob:
     action_name = action_class.__name__
     action = action_class(trigger=trigger)
     meta = dict(
@@ -42,7 +44,7 @@ def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler
         context=None,
         email_action_class=action_class.EMAIL_ACTION_CLASS,
     )
-    job = _scheduler.schedule(
+    job = scheduler.schedule(
         scheduled_time=datetime.utcnow(),  # Time for first execution, in UTC timezone
         func=action,  # Function to be queued
         interval=action.INTERVAL,  # Time before the function is called again
@@ -73,7 +75,7 @@ def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler
     return rqj
 
 
-def register_scheduled_jobs():
+def register_scheduled_jobs(scheduler: DjangoScheduler):
     triggers = Trigger.objects.filter(
         active=True, action__in=REPEATED_JOBS_BY_TRIGGER.keys()
     )
@@ -89,5 +91,6 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **kwargs):
-        clear_scheduled_jobs()  # This is necessary to prevent dupes
-        register_scheduled_jobs()
+        scheduler = django_rq.get_scheduler()
+        clear_scheduled_jobs(scheduler)  # This is necessary to prevent dupes
+        register_scheduled_jobs(scheduler)

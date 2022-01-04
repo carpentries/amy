@@ -246,13 +246,6 @@ class BaseAction:
             self.logger.debug("Error occurred: {}", str(e))
             return False
 
-    def repeated_job_emails(self) -> Optional[List[str]]:
-        """
-        For repeated jobs, do a query for
-        the emails needed to send at this time.
-        """
-        return None
-
 
 class NewInstructorAction(BaseAction):
     """
@@ -1477,12 +1470,12 @@ class BaseProfileArchivalWarningRepeatedAction(BaseRepeatedAction):
                 for reminder in email_reminders
                 if reminder.person_id not in people_ids
             )
-            + reminders_over_limit
+            | reminders_over_limit
         )
         self._archive_email_reminders(reminders_to_archive)
 
         # For reminders that have hit the reminder limit archive the people attached
-        self._archive_people(reminder.person_id for reminder in reminders_over_limit)
+        self._archive_people(reminder.person for reminder in reminders_over_limit)
 
         # Any reminders we are not archiving need to be resent
         reminders_to_send = set(email_reminders) - reminders_to_archive
@@ -1595,8 +1588,8 @@ class ProfileArchivalWarningConsentsRepeatedAction(
             .active()
             .values_list("id")
         )
-        people_missing_required_terms = (
-            Consent.objects.filter(
+        people_missing_required_terms = Person.objects.filter(
+            id__in=Consent.objects.filter(
                 term__in=required_term_ids,
                 term_option__isnull=True,
                 person__archived_at__isnull=True,

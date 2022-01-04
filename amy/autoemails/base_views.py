@@ -47,7 +47,7 @@ class ActionManageMixin:
         logger.debug("%s: adding jobs...", action_name)
 
         # fetch all related triggers
-        logger.debug("%s: found %d triggers", action_name, triggers.count())
+        logger.debug("%s: found %d triggers", action_name, len(triggers))
 
         created_jobs = []
         created_rqjobs = []

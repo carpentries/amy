@@ -1,9 +1,11 @@
 from datetime import timedelta
+from typing import Type
 
 from django.test import TestCase
 from django.utils import timezone
 
 from autoemails.actions import (
+    BaseRepeatedAction,
     ProfileArchivalWarningConsentsAction,
     ProfileArchivalWarningConsentsRepeatedAction,
     ProfileArchivalWarningInactivityAction,
@@ -13,7 +15,7 @@ from autoemails.models import EmailReminder, EmailTemplate, RQJob, Trigger
 from workshops.models import Person
 
 
-class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
+class BaseProfileArchivalWarningRepeatedActionTest(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.trigger = Trigger.objects.create(
@@ -25,6 +27,10 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
         )
         self.today = timezone.now()
         self.thirty_days_from_now = self.today + timedelta(days=30)
+        self.four_years_ago = self.today - timedelta(days=365 * 4)
+
+    def get_repeated_action(self) -> Type[BaseRepeatedAction]:
+        raise NotImplementedError
 
     def assert_reminder(
         self,
@@ -60,6 +66,13 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
         self.assertIsNotNone(person.archived_at)
         self.assertFalse(person.is_active)
 
+
+class TestProfileArchivalWarningInactivityRepeatedAction(
+    BaseProfileArchivalWarningRepeatedActionTest
+):
+    def get_repeated_action(self) -> Type[BaseRepeatedAction]:
+        return ProfileArchivalWarningInactivityRepeatedAction
+
     def test_send_emails_to_users(self) -> None:
         """
         Tests that the emails that should be sent out are given the users.
@@ -71,7 +84,7 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
         p1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk", is_active=True
         )
-        p1.last_login = self.today - timedelta(days=365 * 4)
+        p1.last_login = self.four_years_ago
         p1.save()
         # person with old profile who is inactive
         p2 = Person.objects.create(
@@ -81,7 +94,7 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
             email="hg@magic.uk",
             is_active=False,
         )
-        p2.last_login = self.today - timedelta(days=365 * 4)
+        p2.last_login = self.four_years_ago
         p2.save()
         # person with current profile
         Person.objects.create(
@@ -118,7 +131,7 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
         p1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk", is_active=True
         )
-        p1.last_login = self.today - timedelta(days=365 * 4)
+        p1.last_login = self.four_years_ago
         p1.save()
         self.action()
         reminders = EmailReminder.objects.filter(person=p1, trigger=self.trigger)
@@ -148,7 +161,7 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
         p1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk", is_active=True
         )
-        p1.last_login = self.today - timedelta(days=365 * 4)
+        p1.last_login = self.four_years_ago
         p1.save()
         EmailReminder.objects.create(
             remind_again_date=self.thirty_days_from_now,
@@ -192,64 +205,24 @@ class TestProfileArchivalWarningInactivityRepeatedAction(TestCase):
         self.assert_person_not_archived(p1)
 
 
-class TestProfileArchivalWarningConsentsRepeatedAction(TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.trigger = Trigger.objects.create(
-            action=ProfileArchivalWarningConsentsRepeatedAction.ACTION_NAME,
-            template=EmailTemplate.objects.create(),
-        )
-        self.action = ProfileArchivalWarningConsentsRepeatedAction(trigger=self.trigger)
-        self.today = timezone.now()
-        self.thirty_days_from_now = self.today + timedelta(days=30)
-
-    def assert_reminder(
-        self,
-        reminder: EmailReminder,
-        expected_person: Person,
-        number_of_times_sent: int = 1,
-        is_archived: bool = False,
-    ) -> None:
-        """
-        Asserts that the reminder's remind again date
-        has been updated to 30 days from today
-        """
-        self.assertEqual(
-            reminder.remind_again_date.year, self.thirty_days_from_now.year
-        )
-        self.assertEqual(
-            reminder.remind_again_date.month, self.thirty_days_from_now.month
-        )
-        self.assertEqual(reminder.remind_again_date.day, self.thirty_days_from_now.day)
-        if is_archived:
-            self.assertIsNotNone(reminder.archived_at)
-        else:
-            self.assertIsNone(reminder.archived_at)
-        self.assertEqual(reminder.number_times_sent, number_of_times_sent)
-        self.assertEqual(reminder.person, expected_person)
-        self.assertEqual(reminder.trigger, self.trigger)
-
-    def assert_person_not_archived(self, person: Person) -> None:
-        self.assertTrue(person.is_active)
-        self.assertIsNone(person.archived_at)
-
-    def assert_person_archived(self, person: Person) -> None:
-        self.assertIsNotNone(person.archived_at)
-        self.assertFalse(person.is_active)
+class TestProfileArchivalWarningConsentsRepeatedAction(
+    BaseProfileArchivalWarningRepeatedActionTest
+):
+    def get_repeated_action(self) -> Type[BaseRepeatedAction]:
+        return ProfileArchivalWarningConsentsRepeatedAction
 
     def test_send_emails_to_users(self) -> None:
         """
-        Tests that the emails that should be sent out are given the users.
+        Tests that the emails are sent to the correct users.
         An email is sent if:
-        - Person has not logged in a long time
-        - Person is active
+        - Person is active, is not archived, and has missing consents.
         """
         # Person with missing consents that is still active
         p1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk", is_active=True
         )
 
-        # person with missing consents who is inactive
+        # person with missing consents who is archived
         Person.objects.create(
             personal="Hermione",
             family="Granger",
@@ -292,7 +265,7 @@ class TestProfileArchivalWarningConsentsRepeatedAction(TestCase):
         p1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk", is_active=True
         )
-        p1.last_login = self.today - timedelta(days=365 * 4)
+        p1.last_login = self.four_years_ago
         p1.save()
         self.action()
         reminders = EmailReminder.objects.filter(person=p1, trigger=self.trigger)
@@ -322,7 +295,7 @@ class TestProfileArchivalWarningConsentsRepeatedAction(TestCase):
         p1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk", is_active=True
         )
-        p1.last_login = self.today - timedelta(days=365 * 4)
+        p1.last_login = self.four_years_ago
         p1.save()
         EmailReminder.objects.create(
             remind_again_date=self.thirty_days_from_now,
