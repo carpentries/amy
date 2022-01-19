@@ -160,6 +160,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_form_valid(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
+        request.user = mock.MagicMock()
         mock_form = mock.MagicMock()
         organization = Organization.objects.first()
         event = Event.objects.create(

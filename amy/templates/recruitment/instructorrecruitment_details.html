@@ -1,5 +1,6 @@
 {% extends "base_nav.html" %}
 
+{% load dates %}
 {% load crispy_forms_tags %}
 
 {% block content %}
@@ -9,6 +10,14 @@
       {{ object.get_status_display }}
     </span>
   </h3>
+  <p class="lead">
+    <i class="far fa-calendar"></i> {% human_daterange object.event.start object.event.end %}<br>
+    {% if "online" in object.event.tags.strings %}
+      <i class="fa fa-globe"></i> online
+    {% else %}
+      <i class="fa fa-users"></i> in-person
+    {% endif %}
+  </p>
   <div class="lead">{{ object.notes|linebreaks }}</div>
   {% include "includes/instructorrecruitment.html" with object=object %}
 {% endblock %}
