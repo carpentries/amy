@@ -1,0 +1,44 @@
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>Instructor Name</th>
+      <th>Count workshops taught</th>
+      <th>Country</th>
+      <th>Interested in?</th>
+      <th>Notes from Instructor</th>
+      <th>Notes from RC</th>
+      <th>Date conflicts</th>
+      <th>State</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for signup in object.instructorrecruitmentsignup_set.all %}
+    <tr>
+      <td><a href="{{ signup.person.get_absolute_url }}">{{ signup.person }}</a></td>
+      <td>
+        <span title="Helper: {{ signup.num_helper }}; Supporting Instructor: {{ signup.num_supporting }}; Instructor: {{ signup.num_instructor }}">
+          {{ signup.num_helper }} H;
+          {{ signup.num_supporting }} SI;
+          {{ signup.num_instructor }} I
+        </span>
+      </td>
+      <td>{% include "includes/country_flag.html" with country=signup.person.country %}</td>
+      <td>{{ signup.get_interest_display }}</td>
+      <td>{{ signup.user_notes }}</td>
+      <td>{{ signup.notes }}</td>
+      <td>TODO</td>
+      <td>{{ signup.get_state_display }}</td>
+      <td>
+        TODO
+        <a href="" class="btn btn-sm btn-success">Confirm</a>
+        <a href="" class="btn btn-sm btn-danger">Decline</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan=9><em>No applications yet.</em></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
