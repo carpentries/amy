@@ -4,10 +4,12 @@ from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
 
+from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import InstructorRecruitmentCreateForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDetailView,
+    AMYListView,
     ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
@@ -23,6 +25,48 @@ from .models import InstructorRecruitment, InstructorRecruitmentSignup
 class RecruitmentEnabledMixin:
     def get_view_enabled(self) -> bool:
         return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
+
+
+class InstructorRecruitmentList(
+    OnlyForAdminsMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+):
+    permission_required = "recruitment.view_instructorrecruitment"
+    title = "Recruitment processes"
+    filter_class = InstructorRecruitmentFilter
+
+    queryset = InstructorRecruitment.objects.prefetch_related(
+        Prefetch(
+            "instructorrecruitmentsignup_set",
+            queryset=(
+                InstructorRecruitmentSignup.objects.select_related(
+                    "recruitment", "person"
+                ).annotate(
+                    num_instructor=Count(
+                        Case(
+                            When(person__task__role__name="instructor", then=Value(1)),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    num_supporting=Count(
+                        Case(
+                            When(
+                                person__task__role__name="supporting-instructor",
+                                then=Value(1),
+                            ),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    num_helper=Count(
+                        Case(
+                            When(person__task__role__name="helper", then=Value(1)),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                )
+            ),
+        )
+    ).order_by("-created_at")
+    template_name = "recruitment/instructorrecruitment_list.html"
 
 
 class InstructorRecruitmentCreate(
