@@ -5,6 +5,7 @@
 {% load revisions %}
 {% load tags %}
 {% load dates %}
+{% load instructorrecruitment %}
 
 {% block title %}
 <div class="jumbotron container-fluid">
@@ -24,8 +25,11 @@
     </div>
     <div class="col-lg-6">
       {% comment %} Only show Instructor Selection summary in centrally-organised events. Exclude TTT events, too. {% endcomment %}
-      {% if "TTT" not in event.tags.strings and event.administrator.domain != "self-organized" %}
-        {% include "includes/instructor_selection_summary.html" with event=event stats=recruitment_stats %}
+      {% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
+      {% if INSTRUCTOR_RECRUITMENT_ENABLED %}
+        {% if "TTT" not in event.tags.strings and event.administrator.domain != "self-organized" %}
+          {% include "includes/instructor_selection_summary.html" with event=event stats=recruitment_stats %}
+        {% endif %}
       {% endif %}
     </div>
   </div>
