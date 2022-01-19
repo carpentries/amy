@@ -20,10 +20,16 @@ from .models import InstructorRecruitment, InstructorRecruitmentSignup
 # InstructorRecruitment related views
 
 
+class RecruitmentEnabledMixin:
+    def get_view_enabled(self) -> bool:
+        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
+
+
 class InstructorRecruitmentCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
+    RecruitmentEnabledMixin,
     ConditionallyEnabledMixin,
     AMYCreateView,
 ):
@@ -51,9 +57,6 @@ class InstructorRecruitmentCreate(
         self.request = request
         self.event = self.get_other_object()
         return super().post(request, *args, **kwargs)
-
-    def get_view_enabled(self) -> bool:
-        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
 
     def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
@@ -90,7 +93,10 @@ class InstructorRecruitmentCreate(
 
 
 class InstructorRecruitmentDetails(
-    OnlyForAdminsMixin, ConditionallyEnabledMixin, AMYDetailView
+    OnlyForAdminsMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    AMYDetailView,
 ):
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = InstructorRecruitment.objects.prefetch_related(
@@ -126,9 +132,6 @@ class InstructorRecruitmentDetails(
         )
     )
     template_name = "recruitment/instructorrecruitment_details.html"
-
-    def get_view_enabled(self) -> bool:
-        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
