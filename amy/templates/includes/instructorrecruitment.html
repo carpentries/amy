@@ -27,7 +27,23 @@
       <td>{{ signup.get_interest_display }}</td>
       <td>{{ signup.user_notes }}</td>
       <td>{{ signup.notes }}</td>
-      <td>TODO</td>
+      <td>
+        {% comment %}
+        Find person, their tasks, and figure out if task's event dates conflict with
+        signup event dates.
+        {% endcomment %}
+        {% for person in personal_conflicts %}
+          {% if person == signup.person %}
+            {% for task in person.task_set.all %}
+              {% if task.event != signup.recruitment.event %}{# don't consider the same event #}
+                {% if task.event.start <= signup.recruitment.event.end and task.event.end >= signup.recruitment.event.start %}
+                  <a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      </td>
       <td>{{ signup.get_state_display }}</td>
       <td>
         TODO

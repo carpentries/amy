@@ -20,7 +20,7 @@
     {% endif %}
   </p>
   <div>{{ object.notes|linebreaks }}</div>
-  {% include "includes/instructorrecruitment.html" with object=object %}
+  {% include "includes/instructorrecruitment.html" with object=object personal_conflicts=personal_conflicts %}
   {% endfor %}
   {% pagination object_list %}
 {% endblock %}

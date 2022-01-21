@@ -13,7 +13,7 @@ from workshops.base_views import (
     ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
-from workshops.models import Event
+from workshops.models import Event, Person, Task
 from workshops.util import OnlyForAdminsMixin, human_daterange
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
@@ -34,38 +34,44 @@ class InstructorRecruitmentList(
     title = "Recruitment processes"
     filter_class = InstructorRecruitmentFilter
 
-    queryset = InstructorRecruitment.objects.prefetch_related(
-        Prefetch(
-            "instructorrecruitmentsignup_set",
-            queryset=(
-                InstructorRecruitmentSignup.objects.select_related(
-                    "recruitment", "person"
-                ).annotate(
-                    num_instructor=Count(
-                        Case(
-                            When(person__task__role__name="instructor", then=Value(1)),
-                            output_field=IntegerField(),
-                        )
-                    ),
-                    num_supporting=Count(
-                        Case(
-                            When(
-                                person__task__role__name="supporting-instructor",
-                                then=Value(1),
-                            ),
-                            output_field=IntegerField(),
-                        )
-                    ),
-                    num_helper=Count(
-                        Case(
-                            When(person__task__role__name="helper", then=Value(1)),
-                            output_field=IntegerField(),
-                        )
-                    ),
-                )
-            ),
+    queryset = (
+        InstructorRecruitment.objects.select_related("event")
+        .prefetch_related(
+            Prefetch(
+                "instructorrecruitmentsignup_set",
+                queryset=(
+                    InstructorRecruitmentSignup.objects.select_related(
+                        "recruitment", "person"
+                    ).annotate(
+                        num_instructor=Count(
+                            Case(
+                                When(
+                                    person__task__role__name="instructor", then=Value(1)
+                                ),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                        num_supporting=Count(
+                            Case(
+                                When(
+                                    person__task__role__name="supporting-instructor",
+                                    then=Value(1),
+                                ),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                        num_helper=Count(
+                            Case(
+                                When(person__task__role__name="helper", then=Value(1)),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                    )
+                ),
+            )
         )
-    ).order_by("-created_at")
+        .order_by("-created_at")
+    )
     template_name = "recruitment/instructorrecruitment_list.html"
 
     def get_filter_data(self):
@@ -77,6 +83,24 @@ class InstructorRecruitmentList(
         data = super().get_filter_data().copy()
         data.setdefault("assigned_to", self.request.user.pk)
         return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["personal_conflicts"] = (
+            Person.objects.filter(
+                instructorrecruitmentsignup__recruitment__in=self.get_queryset()
+            )
+            .distinct()
+            .prefetch_related(
+                Prefetch(
+                    "task_set",
+                    Task.objects.select_related("event", "role").filter(
+                        role__name="instructor"
+                    ),
+                )
+            )
+        )
+        return context
 
 
 class InstructorRecruitmentCreate(
