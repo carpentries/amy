@@ -68,6 +68,16 @@ class InstructorRecruitmentList(
     ).order_by("-created_at")
     template_name = "recruitment/instructorrecruitment_list.html"
 
+    def get_filter_data(self):
+        """If no filter value present for `assigned_to`, set default to current user.
+
+        This means that by default the filter will be set to currently logged-in user;
+        it's still possible to clear that filter value, in which case the query param
+        will become `?assigned_to=` (empty)."""
+        data = super().get_filter_data().copy()
+        data.setdefault("assigned_to", self.request.user.pk)
+        return data
+
 
 class InstructorRecruitmentCreate(
     OnlyForAdminsMixin,
