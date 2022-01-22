@@ -37,6 +37,11 @@ router.register(
     views.CommunityRoleConfigViewSet,
     basename="communityroleconfig",
 )
+router.register(
+    "instructorrecruitment",
+    views.InstructorRecruitmentViewSet,
+    basename="instructorrecruitment",
+)
 
 urlpatterns = [
     path("", views.ApiRoot.as_view(), name="root"),
