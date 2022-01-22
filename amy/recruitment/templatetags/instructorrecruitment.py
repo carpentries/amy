@@ -5,7 +5,7 @@ register = template.Library()
 
 
 @register.simple_tag
-def is_instructor_recruitment_enabled():
+def is_instructor_recruitment_enabled() -> bool:
     try:
         return bool(settings.INSTRUCTOR_RECRUITMENT_ENABLED)
     except AttributeError:
