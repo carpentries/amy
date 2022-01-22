@@ -19,7 +19,28 @@
       <i class="fa fa-users"></i> in-person
     {% endif %}
   </p>
-  <div>{{ object.notes|linebreaks }}</div>
+  <div class="card recruitment-notes">
+    <div class="card-body">
+      {% if object.notes %}
+      <div class="notes">
+        {{ object.notes|linebreaks }}
+        <button type="button" class="btn btn-outline-primary btn-sm edit-notes">Edit notes</button>
+      </div>
+      <div class="notes-editing">
+        <textarea class="form-control" rows=5>{{ object.notes }}</textarea>
+        <button type="button" class="btn btn-primary btn-sm save-notes">Save</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm cancel-notes">Cancel</button>
+      </div>
+      {% else %}
+      <button type="button" class="btn btn-outline-primary btn-sm add-notes">Add notes</button>
+      <div class="notes-editing">
+        <textarea class="form-control" rows=5></textarea>
+        <button type="button" class="btn btn-primary btn-sm save-notes">Save</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm cancel-notes">Cancel</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
   {% include "includes/instructorrecruitment.html" with object=object personal_conflicts=personal_conflicts %}
   {% endfor %}
   {% pagination object_list %}
