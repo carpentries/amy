@@ -18,9 +18,15 @@
       <td><a href="{{ signup.person.get_absolute_url }}">{{ signup.person }}</a></td>
       <td>
         <span title="Helper: {{ signup.num_helper }}; Supporting Instructor: {{ signup.num_supporting }}; Instructor: {{ signup.num_instructor }}">
-          {{ signup.num_helper }} H;
-          {{ signup.num_supporting }} SI;
-          {{ signup.num_instructor }} I
+          <span title="{{ signup.num_helper }} Helper Roles">
+            {{ signup.num_helper }} H;
+          </span>
+          <span title="{{ signup.num_supporting }} Supporting Instructor Roles">
+            {{ signup.num_supporting }} SI;
+          </span>
+          <span title="{{ signup.num_instructor }} Instructor Roles">
+            {{ signup.num_instructor }} I
+          </span>
         </span>
       </td>
       <td>{% include "includes/country_flag.html" with country=signup.person.country %}</td>
