@@ -4,14 +4,16 @@ from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
 
+from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import InstructorRecruitmentCreateForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDetailView,
+    AMYListView,
     ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
-from workshops.models import Event
+from workshops.models import Event, Person, Task
 from workshops.util import OnlyForAdminsMixin, human_daterange
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
@@ -20,10 +22,92 @@ from .models import InstructorRecruitment, InstructorRecruitmentSignup
 # InstructorRecruitment related views
 
 
+class RecruitmentEnabledMixin:
+    def get_view_enabled(self) -> bool:
+        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
+
+
+class InstructorRecruitmentList(
+    OnlyForAdminsMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+):
+    permission_required = "recruitment.view_instructorrecruitment"
+    title = "Recruitment processes"
+    filter_class = InstructorRecruitmentFilter
+
+    queryset = (
+        InstructorRecruitment.objects.select_related("event")
+        .prefetch_related(
+            Prefetch(
+                "instructorrecruitmentsignup_set",
+                queryset=(
+                    InstructorRecruitmentSignup.objects.select_related(
+                        "recruitment", "person"
+                    ).annotate(
+                        num_instructor=Count(
+                            Case(
+                                When(
+                                    person__task__role__name="instructor", then=Value(1)
+                                ),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                        num_supporting=Count(
+                            Case(
+                                When(
+                                    person__task__role__name="supporting-instructor",
+                                    then=Value(1),
+                                ),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                        num_helper=Count(
+                            Case(
+                                When(person__task__role__name="helper", then=Value(1)),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                    )
+                ),
+            )
+        )
+        .order_by("-created_at")
+    )
+    template_name = "recruitment/instructorrecruitment_list.html"
+
+    def get_filter_data(self):
+        """If no filter value present for `assigned_to`, set default to current user.
+
+        This means that by default the filter will be set to currently logged-in user;
+        it's still possible to clear that filter value, in which case the query param
+        will become `?assigned_to=` (empty)."""
+        data = super().get_filter_data().copy()
+        data.setdefault("assigned_to", self.request.user.pk)
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["personal_conflicts"] = (
+            Person.objects.filter(
+                instructorrecruitmentsignup__recruitment__in=self.get_queryset()
+            )
+            .distinct()
+            .prefetch_related(
+                Prefetch(
+                    "task_set",
+                    Task.objects.select_related("event", "role").filter(
+                        role__name="instructor"
+                    ),
+                )
+            )
+        )
+        return context
+
+
 class InstructorRecruitmentCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
+    RecruitmentEnabledMixin,
     ConditionallyEnabledMixin,
     AMYCreateView,
 ):
@@ -51,9 +135,6 @@ class InstructorRecruitmentCreate(
         self.request = request
         self.event = self.get_other_object()
         return super().post(request, *args, **kwargs)
-
-    def get_view_enabled(self) -> bool:
-        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
 
     def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
@@ -83,13 +164,17 @@ class InstructorRecruitmentCreate(
 
     def form_valid(self, form):
         self.object: InstructorRecruitment = form.save(commit=False)
+        self.object.assigned_to = self.request.user
         self.object.event = self.event
         self.object.save()
         return super().form_valid(form)
 
 
 class InstructorRecruitmentDetails(
-    OnlyForAdminsMixin, ConditionallyEnabledMixin, AMYDetailView
+    OnlyForAdminsMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    AMYDetailView,
 ):
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = InstructorRecruitment.objects.prefetch_related(
@@ -125,9 +210,6 @@ class InstructorRecruitmentDetails(
         )
     )
     template_name = "recruitment/instructorrecruitment_details.html"
-
-    def get_view_enabled(self) -> bool:
-        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)

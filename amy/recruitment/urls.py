@@ -4,6 +4,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "processes/",
+        views.InstructorRecruitmentList.as_view(),
+        name="all_instructorrecruitment",
+    ),
+    path(
         "process/add/<int:event_id>/",
         views.InstructorRecruitmentCreate.as_view(),
         name="instructorrecruitment_add",

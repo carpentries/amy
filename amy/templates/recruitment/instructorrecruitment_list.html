@@ -1,15 +1,16 @@
-{% extends "base_nav.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load dates %}
-{% load crispy_forms_tags %}
+{% load pagination %}
 
 {% block content %}
-  <h3>
+  {% for object in object_list %}
+  <h4 class="mt-4">
     <a href="{{ object.event.get_absolute_url }}">{{ object.event.slug }}</a>
     <span class="badge {% if object.status == "o" %}badge-warning{% elif object.status == "c" %}badge-success{% else %}badge-dark{% endif %}">
       {{ object.get_status_display }}
     </span>
-  </h3>
+  </h4>
   <p class="lead">
     <i class="far fa-calendar"></i> {% human_daterange object.event.start object.event.end %}<br>
     {% if "online" in object.event.tags.strings %}
@@ -18,6 +19,8 @@
       <i class="fa fa-users"></i> in-person
     {% endif %}
   </p>
-  <div class="lead">{{ object.notes|linebreaks }}</div>
-  {% include "includes/instructorrecruitment.html" with object=object %}
+  <div>{{ object.notes|linebreaks }}</div>
+  {% include "includes/instructorrecruitment.html" with object=object personal_conflicts=personal_conflicts %}
+  {% endfor %}
+  {% pagination object_list %}
 {% endblock %}

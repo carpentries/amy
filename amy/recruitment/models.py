@@ -2,12 +2,12 @@ from django.db import models
 from django.urls import reverse
 from reversion import revisions as reversion
 
-from workshops.mixins import CreatedUpdatedMixin, StateMixin
+from workshops.mixins import AssignmentMixin, CreatedUpdatedMixin, StateMixin
 from workshops.models import Event, Person
 
 
 @reversion.register
-class InstructorRecruitment(CreatedUpdatedMixin, models.Model):
+class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
     """Instructor recruitment process for a given event."""
 
     STATUS_CHOICES = (

@@ -5,11 +5,106 @@ from django.test import override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 
+from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import InstructorRecruitmentCreateForm
-from recruitment.models import InstructorRecruitment
-from recruitment.views import InstructorRecruitmentCreate, InstructorRecruitmentDetails
-from workshops.models import Event, Language, Organization, WorkshopRequest
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from recruitment.views import (
+    InstructorRecruitmentCreate,
+    InstructorRecruitmentDetails,
+    InstructorRecruitmentList,
+)
+from workshops.models import Event, Language, Organization, Person, WorkshopRequest
 from workshops.tests.base import TestBase
+
+
+class TestInstructorRecruitmentListView(TestBase):
+    def test_class_fields(self) -> None:
+        # Arrange
+        view = InstructorRecruitmentList()
+        # Assert
+        self.assertEqual(
+            view.permission_required, "recruitment.view_instructorrecruitment"
+        )
+        self.assertEqual(view.title, "Recruitment processes")
+        self.assertEqual(view.filter_class, InstructorRecruitmentFilter)
+        self.assertEqual(
+            view.template_name, "recruitment/instructorrecruitment_list.html"
+        )
+        self.assertNotEqual(view.queryset, None)  # it's a complicated query
+
+    def test_get_filter_data(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        request.user = mock.MagicMock()
+        view = InstructorRecruitmentList(request=request)
+        # Act
+        data = view.get_filter_data()
+        # Assert
+        self.assertIn("assigned_to", data.keys())
+        self.assertEqual(data["assigned_to"], request.user.pk)
+
+    def test_get_context_data_empty(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        request.user = mock.MagicMock()
+        view = InstructorRecruitmentList(request=request, object_list=[], filter=None)
+        # Act
+        context = view.get_context_data()
+        # Assert
+        self.assertIn("personal_conflicts", context.keys())
+        self.assertEqual(
+            list(context["personal_conflicts"]), list(Person.objects.none())
+        )
+
+    def test_get_context_data(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        request.user = mock.MagicMock()
+        view = InstructorRecruitmentList(request=request, object_list=[], filter=None)
+        host = Organization.objects.first()
+        event = Event.objects.create(slug="test-event", host=host)
+        recruitment = InstructorRecruitment.objects.create(event=event)
+        person = Person.objects.create(username="test_user")
+        InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person, interest="session"
+        )
+        # Act
+        context = view.get_context_data()
+        # Assert
+        self.assertEqual(list(context["personal_conflicts"]), [person])
+
+    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    def test_integration(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=date(2022, 1, 22),
+        )
+        recruitment = InstructorRecruitment.objects.create(
+            event=event,
+            notes="Test notes",
+        )
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person, interest="session"
+        )
+        # Act
+        response = self.client.get(reverse("all_instructorrecruitment"))
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["object_list"]), [recruitment])
+        self.assertEqual(
+            list(
+                response.context["object_list"][0].instructorrecruitmentsignup_set.all()
+            ),
+            [signup],
+        )
 
 
 class TestInstructorRecruitmentCreateView(TestBase):
@@ -160,6 +255,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_form_valid(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
+        request.user = mock.MagicMock()
         mock_form = mock.MagicMock()
         organization = Organization.objects.first()
         event = Event.objects.create(
