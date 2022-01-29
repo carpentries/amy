@@ -2,6 +2,7 @@
 
 {% load dates %}
 {% load pagination %}
+{% load static %}
 
 {% block content %}
   {% for object in object_list %}
@@ -21,27 +22,27 @@
   </p>
   <div class="card recruitment-notes">
     <div class="card-body">
-      {% if object.notes %}
       <div class="notes">
-        {{ object.notes|linebreaks }}
-        <button type="button" class="btn btn-outline-primary btn-sm edit-notes">Edit notes</button>
+        <div class="notes-content">{{ object.notes }}</div>
+        {% if object.notes %}
+        <button type="button" class="btn btn-outline-primary btn-sm edit-notes" onclick="editInstructorRecruitmentNotes(this)">Edit notes</button>
+        {% else %}
+        <button type="button" class="btn btn-outline-primary btn-sm add-notes" onclick="editInstructorRecruitmentNotes(this)">Add notes</button>
+        {% endif %}
       </div>
-      <div class="notes-editing">
-        <textarea class="form-control" rows=5>{{ object.notes }}</textarea>
-        <button type="button" class="btn btn-primary btn-sm save-notes">Save</button>
-        <button type="button" class="btn btn-outline-secondary btn-sm cancel-notes">Cancel</button>
+      <div class="notes-editing d-none">
+        <textarea class="form-control notes-content-editable" rows=5>{{ object.notes }}</textarea>
+        <div class="invalid-feedback d-none">Error when saving notes. Please try again later.</div>
+        <button type="button" class="btn btn-primary btn-sm save-notes" onclick="saveInstructorRecruitmentNotes(this, {{ object.id }})">Save</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm cancel-notes" onclick="cancelSavingInstructorRecruitmentNotes(this)">Cancel</button>
       </div>
-      {% else %}
-      <button type="button" class="btn btn-outline-primary btn-sm add-notes">Add notes</button>
-      <div class="notes-editing">
-        <textarea class="form-control" rows=5></textarea>
-        <button type="button" class="btn btn-primary btn-sm save-notes">Save</button>
-        <button type="button" class="btn btn-outline-secondary btn-sm cancel-notes">Cancel</button>
-      </div>
-      {% endif %}
     </div>
   </div>
   {% include "includes/instructorrecruitment.html" with object=object personal_conflicts=personal_conflicts %}
   {% endfor %}
   {% pagination object_list %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{% static 'instructor_recruitment.js' %}"></script>
 {% endblock %}

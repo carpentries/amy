@@ -190,16 +190,14 @@ select[readonly].select2-hidden-accessible + .select2-container
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
-.recruitment-notes .card-body p,
-.recruitment-notes .card-body p + p {
-    margin-bottom: 0;
-}
-.recruitment-notes .card-body p + p {
-    margin-top: 1rem;
-}
-.recruitment-notes .edit-notes {
-    margin-top: 1rem;
-}
 .recruitment-notes .save-notes, .recruitment-notes .cancel-notes {
     margin-top: 0.5rem;
+}
+.recruitment-notes .add-notes {
+    margin-top: -1.5rem;
+}
+.notes-content {
+    white-space: pre-line;
+    margin-top: 0;
+    margin-bottom: 1rem;
 }
