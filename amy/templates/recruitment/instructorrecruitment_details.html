@@ -18,6 +18,6 @@
       <i class="fa fa-users"></i> in-person
     {% endif %}
   </p>
-  <div class="lead">{{ object.notes|linebreaks }}</div>
+  <div class="lead notes-content">{{ object.notes }}</div>
   {% include "includes/instructorrecruitment.html" with object=object %}
 {% endblock %}

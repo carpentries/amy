@@ -12,6 +12,7 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from api.filters import EventFilter, PersonFilter, TaskFilter, TrainingRequestFilterIDs
+from api.permissions import DjangoModelPermissionsWithView
 from api.renderers import (
     TrainingRequestCSVRenderer,
     TrainingRequestManualScoreCSVRenderer,
@@ -23,6 +24,7 @@ from api.serializers import (
     ConsentSerializer,
     EmailTemplateSerializer,
     EventSerializer,
+    InstructorRecruitmentSerializer,
     OrganizationSerializer,
     PersonSerializer,
     PersonSerializerAllData,
@@ -35,6 +37,7 @@ from api.serializers import (
 from autoemails.models import EmailTemplate
 from communityroles.models import CommunityRoleConfig
 from consents.models import Consent, Term
+from recruitment.models import InstructorRecruitment
 from workshops.models import (
     Airport,
     Award,
@@ -138,6 +141,14 @@ class ApiRoot(APIView):
                         "communityroleconfig-list",
                         reverse(
                             "api:communityroleconfig-list",
+                            request=request,
+                            format=format,
+                        ),
+                    ),
+                    (
+                        "instructorrecruitment-list",
+                        reverse(
+                            "api:instructorrecruitment-list",
                             request=request,
                             format=format,
                         ),
@@ -398,3 +409,11 @@ class CommunityRoleConfigViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(Q(name__icontains=term) | Q(display_name__icontains=term))
 
         return qs
+
+
+class InstructorRecruitmentViewSet(viewsets.ModelViewSet):
+    """List/add/edit/delete Instructor Recruitments."""
+
+    permission_classes = (DjangoModelPermissionsWithView,)
+    serializer_class = InstructorRecruitmentSerializer
+    queryset = InstructorRecruitment.objects.all()
