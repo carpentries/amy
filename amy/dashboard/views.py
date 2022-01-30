@@ -34,18 +34,18 @@ from workshops.models import (
 )
 from workshops.util import admin_required, login_required
 
-# Terms shown on the trainee dashboard and can be updated by the user.
+# Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = ["may-contact", "public-profile", "may-publish-name"]
 
 
 @login_required
 def dispatch(request):
     """If user is admin, then show them admin dashboard; otherwise redirect
-    them to trainee dashboard."""
+    them to instructor dashboard."""
     if request.user.is_admin:
         return redirect(reverse("admin-dashboard"))
     else:
-        return redirect(reverse("trainee-dashboard"))
+        return redirect(reverse("instructor-dashboard"))
 
 
 @admin_required
@@ -99,11 +99,11 @@ def admin_dashboard(request):
 
 
 # ------------------------------------------------------------
-# Views for trainees
+# Views for instructors and trainees
 
 
 @login_required
-def trainee_dashboard(request):
+def instructor_dashboard(request):
     qs = Person.objects.select_related("airport").prefetch_related(
         "badges",
         "lessons",
@@ -134,7 +134,7 @@ def trainee_dashboard(request):
         consent_by_term_slug_label[label] = consent.term_option
 
     context = {"title": "Your profile", "user": user, **consent_by_term_slug_label}
-    return render(request, "dashboard/trainee_dashboard.html", context)
+    return render(request, "dashboard/instructor_dashboard.html", context)
 
 
 @login_required
@@ -173,7 +173,7 @@ def autoupdate_profile(request):
 
             messages.success(request, "Your profile was updated.")
 
-            return redirect(reverse("trainee-dashboard"))
+            return redirect(reverse("instructor-dashboard"))
         else:
             messages.error(request, "Fix errors below.")
 
