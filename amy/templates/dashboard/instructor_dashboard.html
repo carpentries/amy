@@ -5,8 +5,15 @@
 
 {% load crispy_forms_tags %}
 {% load dates %}
+{% load instructorrecruitment %}
 
 {% block content %}
+
+{% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
+{% if INSTRUCTOR_RECRUITMENT_ENABLED %}
+TODO: check active instructor role <br>
+<a href="{% url 'upcoming-teaching-opportunities' %}" class="btn btn-primary btn-lg my-3">View upcoming teaching opportunities with The Carpentries</a>
+{% endif %}
 
 <div>
 

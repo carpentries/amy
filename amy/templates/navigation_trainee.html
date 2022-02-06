@@ -1,4 +1,5 @@
 {% load navigation %}
+{% load instructorrecruitment %}
 {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand" href="{% url 'admin-dashboard' %}">AMY</a>
@@ -14,6 +15,11 @@
           {% navbar_element "Your profile" "instructor-dashboard" %}
           {% navbar_element "Update data" "autoupdate_profile" %}
           {% navbar_element "Training progress" "training-progress" %}
+
+          {% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
+          {% if INSTRUCTOR_RECRUITMENT_ENABLED %}
+            {% navbar_element "Upcoming Teaching Opportunities" "upcoming-teaching-opportunities" %}
+          {% endif %}
         </ul>
 
         <ul class="navbar-nav ml-auto">

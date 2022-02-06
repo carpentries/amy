@@ -1,0 +1,45 @@
+{% extends "base_nav_sidebar.html" %}
+
+{% load pagination %}
+
+{% block navbar %}
+  {% include 'navigation_trainee.html' %}
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Profile snapshot</h5>
+      <ul>
+        <li><strong>Name:</strong> {{ person }}</li>
+        <li><strong>Email:</strong> {{ person.email|default:"&mdash;" }}</li>
+        <li><strong>Country:</strong> {{ person.country|default:"&mdash;" }}</li>
+        <li><strong>Teaching experience:</strong>
+          <ul>
+            <li><strong>Helper:</strong> {{ person.num_helper }} times</li>
+            <li><strong>Supporting Instructor:</strong> {{ person.num_supporting }} times</li>
+            <li><strong>Instructor:</strong> {{ person.num_taught }} times</li>
+          </ul>
+        </li>
+      </ul>
+      <p class="card-text">
+        If any of this information is incorrect, please edit your information on your
+        <a href="{% url 'autoupdate_profile' %}">profile page in AMY</a>.
+      </p>
+    </div>
+  </div>
+
+  <p class="lead mt-3">
+    Please check any of the upcoming workshops that you are interested in teaching.
+    This only expresses your interest and does not confirm you to teach in that workshop.
+    A member of the Carpentries Workshop Admin team will follow up with you to confirm.
+    Contact <a href="mailto:workshops@carpentries.org">workshops@carpentries.org</a> with any questions.
+  </p>
+
+  {% for object in object_list %}
+    {% include "includes/teaching_opportunity.html" with object=object %}
+    {% if not forloop.last %}<hr>{% endif %}
+  {% endfor %}
+  {% pagination object_list %}
+
+{% endblock content %}

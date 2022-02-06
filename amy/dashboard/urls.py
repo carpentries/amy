@@ -31,6 +31,11 @@ urlpatterns = [
                     views.autoupdate_profile,
                     name="autoupdate_profile",
                 ),
+                path(
+                    "teaching_opportunities/",
+                    views.UpcomingTeachingOpportunitiesList.as_view(),
+                    name="upcoming-teaching-opportunities",
+                ),
             ]
         ),
     ),

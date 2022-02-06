@@ -12,6 +12,7 @@ from django_comments.models import Comment
 
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
+from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
@@ -19,6 +20,9 @@ from dashboard.forms import (
     SendHomeworkForm,
 )
 from fiscal.models import MembershipTask
+from recruitment.models import InstructorRecruitment
+from recruitment.views import RecruitmentEnabledMixin
+from workshops.base_views import AMYListView, ConditionallyEnabledMixin
 from workshops.models import (
     Airport,
     Badge,
@@ -255,6 +259,52 @@ def training_progress(request):
         "homework_form": homework_form,
     }
     return render(request, "dashboard/training_progress.html", context)
+
+
+# ------------------------------------------------------------
+# Views for instructors - upcoming teaching opportunities
+
+
+class UpcomingTeachingOpportunitiesList(
+    RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+):
+    permission_required = "recruitment.view_instructorrecruitment"
+    title = "Upcoming Teaching Opportunities"
+    queryset = InstructorRecruitment.objects.select_related("event").prefetch_related(
+        "event__curricula"
+    )
+    template_name = "dashboard/upcoming_teaching_opportunities.html"
+    filter_class = UpcomingTeachingOpportunitiesFilter
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # person details with tasks counted
+        context["person"] = (
+            Person.objects.annotate(
+                num_taught=Count(
+                    Case(
+                        When(task__role__name="instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_supporting=Count(
+                    Case(
+                        When(task__role__name="supporting-instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_helper=Count(
+                    Case(
+                        When(task__role__name="helper", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
+            .select_related("airport")
+            .get(pk=self.request.user.pk)
+        )
+        return context
 
 
 # ------------------------------------------------------------
