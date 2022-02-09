@@ -1,55 +1,30 @@
-from django.db.models import F
+from django.db.models import F, QuerySet
 import django_filters as filters
 
 from recruitment.models import InstructorRecruitment
 from workshops.filters import AMYFilterSet
 
 
-class ProximityOrderingFilter(filters.OrderingFilter):
-    def __init__(self, *args, **kwargs):
-        self.latitude: float = kwargs.pop("lat", 0.0)
-        self.longitude: float = kwargs.pop("lng", 0.0)
-        super().__init__(*args, **kwargs)
-
-        self.extra["choices"] += [
-            ("proximity", "Closer to my airport"),
-            ("-proximity", "Further away from my airport"),
-        ]
-
-    def filter(self, qs, value: list):
-        ordering = super().filter(qs, value)
-        distance = (F("airport__latitude") - self.latitude) ** 2 + (
-            F("airport__longitude") - self.longitude
-        ) ** 2
-
-        if not value:
-            return ordering
-
-        # `value` is a list
-        if any(v in ["proximity"] for v in value):
-            return ordering.annotate(distance=distance).order_by("distance")
-        elif any(v in ["-proximity"] for v in value):
-            return ordering.annotate(distance=distance).order_by("-distance")
-
-        return ordering
-
-
 class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
     status = filters.ChoiceFilter(
         choices=(
-            ("any", "Any"),
             ("online", "Online only"),
             ("inperson", "Inperson only"),
         ),
+        empty_label="Any",
+        label="Online/inperson",
         method="filter_status",
     )
 
-    # TODO: pass user's lat/lng
-    order_by = ProximityOrderingFilter(
-        fields=(
-            "event__start",
-            "proximity",
-        )
+    order_by = filters.OrderingFilter(
+        fields=("event__start",),
+        choices=(
+            ("event__start", "Event start"),
+            ("-event__start", "Event start (descending)"),
+            ("proximity", "Closer to my airport"),
+            ("-proximity", "Further away from my airport"),
+        ),
+        method="filter_order_by",
     )
 
     class Meta:
@@ -58,11 +33,36 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
             "status",
         ]
 
-    def filter_status(self, queryset, name, value):
+    def filter_status(self, queryset: QuerySet, name: str, value: str) -> QuerySet:
         """Filter recruitments based on the event (online/inperson) status."""
-        if value == "any":
-            return queryset
-        elif value == "online":
+        if value == "online":
             return queryset.filter(event__tags__name="online")
         elif value == "inperson":
             return queryset.exclude(event__tags__name="online")
+        else:
+            return queryset
+
+    def filter_order_by(self, queryset: QuerySet, name: str, values: list) -> QuerySet:
+        """Order entries by proximity to user's airport."""
+        try:
+            latitude: float = self.request.user.airport.latitude
+        except AttributeError:
+            latitude = 0.0
+
+        try:
+            longitude: float = self.request.user.airport.longitude
+        except AttributeError:
+            longitude = 0.0
+
+        # `0.0` is neutral element for this equation, so even if user doesn't have the
+        # airport specified, the sorting should still work
+        distance = (F("event__latitude") - latitude) ** 2 + (
+            F("event__longitude") - longitude
+        ) ** 2
+
+        if values == ["proximity"]:
+            return queryset.annotate(distance=distance).order_by("distance")
+        elif values == ["-proximity"]:
+            return queryset.annotate(distance=distance).order_by("-distance")
+        else:
+            return queryset.order_by(*values)

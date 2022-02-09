@@ -13,7 +13,8 @@
       <ul>
         <li><strong>Name:</strong> {{ person }}</li>
         <li><strong>Email:</strong> {{ person.email|default:"&mdash;" }}</li>
-        <li><strong>Country:</strong> {{ person.country|default:"&mdash;" }}</li>
+        <li><strong>Country:</strong> {% include "includes/country_flag.html" with country=person.country %}</li>
+        <li><strong>Airport:</strong> {{ person.airport|default:"&mdash;" }}</li>
         <li><strong>Teaching experience:</strong>
           <ul>
             <li><strong>Helper:</strong> {{ person.num_helper }} times</li>
