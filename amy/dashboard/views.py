@@ -2,6 +2,7 @@ import re
 from typing import Dict, Optional
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
@@ -266,7 +267,7 @@ def training_progress(request):
 
 
 class UpcomingTeachingOpportunitiesList(
-    RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+    LoginRequiredMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
 ):
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
