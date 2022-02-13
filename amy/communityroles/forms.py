@@ -129,7 +129,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         return cleaned_data
 
     def clean_end(self):
-        '''Validate that end >= start'''
+        """Validate that end >= start"""
         start = self.cleaned_data.get("start")
         end = self.cleaned_data.get("end")
         if start and end and end < start:
