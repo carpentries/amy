@@ -176,31 +176,13 @@ class TestCommunityRoleForm(TestBase):
             form.errors["membership"],
             ["Membership is required with community role Test"],
         )
- 
 
-    def test_start_date_gte_end_date(self):
-        '''Tests error raised if end < start'''
+    def test_start_date_gt_end_date_is_invalid(self):
+        """Tests error raised if end < start"""
         # Arrange
-        test_config = CommunityRoleConfig.objects.create(
-            name="test",
-            display_name="Test",
-            link_to_award=True,
-            award_badge_limit=None,
-            link_to_membership=True,
-            additional_url=True,
-            generic_relation_content_type=None,
-        )
         data = {
-            "config": test_config.pk,
-            "person": self.hermione.pk,
-            "award": self.award.pk,
-            "start": "2021-11-14",
-            "end": "2021-11-13", # lt start
-            "inactivation": None,
-            "membership": self.membership.pk,
-            "url": "https://example.org",
-            "generic_relation_content_type": None,
-            "generic_relation_pk": None,
+            "start": date(2021, 11, 14),
+            "end": date(2021, 11, 13),  # lt start
         }
 
         # Act
@@ -208,11 +190,34 @@ class TestCommunityRoleForm(TestBase):
 
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"end"})
+        self.assertIn("end", form.errors.keys())
         self.assertEqual(
             form.errors["end"],
             ["Must not be earlier than start date."],
         )
+
+    def test_start_end_dates_valid(self):
+        """Tests valid start date <= end date"""
+        # Arrange
+        params = [
+            (date(2021, 11, 14), date(2021, 11, 14)),
+            (date(2021, 11, 14), date(2021, 11, 15)),
+        ]
+
+        for p1, p2 in params:
+            data = {
+                "start": p1,
+                "end": p2,
+            }
+
+            # Act
+            form = CommunityRoleForm(data)
+            form.is_valid()
+
+            # Assert
+            with self.subTest():
+                self.assertEqual(form.cleaned_data.get("end"), p2)
+                self.assertNotIn("end", form.errors.keys())
 
     def test_additional_url_supported(self):
         # Arrange
