@@ -20,8 +20,10 @@ includes CSS styles and JS code, displays messages, footer, etc.
 The `base_nav.html` is nothing more but `base.html` extended with a navigation.
 Navigation changes depending on user - one navigation bar
 (`navigation.html`) exists for admin users, a different one
-(`navigation_trainee.html`) exists for trainees. A correct navigation bar is
-being included in `base_nav.html`.
+(`navigation_instructor_dashboard.html`) exists for instructors/trainees.
+A correct navigation bar is being included in `base_nav.html` and every
+instructor-enabled template (e.g. Auto Update Profile form, Upcoming Teaching
+Opportunities page, etc.).
 
 ## Blocks available in base template
 
