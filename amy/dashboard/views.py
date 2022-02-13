@@ -11,6 +11,7 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
 from dashboard.filters import UpcomingTeachingOpportunitiesFilter
@@ -276,6 +277,15 @@ class UpcomingTeachingOpportunitiesList(
     )
     template_name = "dashboard/upcoming_teaching_opportunities.html"
     filter_class = UpcomingTeachingOpportunitiesFilter
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
