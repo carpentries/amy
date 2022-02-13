@@ -3,6 +3,7 @@
   {% include 'navigation_trainee.html' %}
 {% endblock %}
 
+{% load communityroles %}
 {% load crispy_forms_tags %}
 {% load dates %}
 {% load instructorrecruitment %}
@@ -10,8 +11,8 @@
 {% block content %}
 
 {% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
-{% if INSTRUCTOR_RECRUITMENT_ENABLED %}
-TODO: check active instructor role <br>
+{% get_community_role user role_name="instructor" as INSTRUCTOR_COMMUNITY_ROLE %}
+{% if INSTRUCTOR_RECRUITMENT_ENABLED and INSTRUCTOR_COMMUNITY_ROLE.is_active %}
 <a href="{% url 'upcoming-teaching-opportunities' %}" class="btn btn-primary btn-lg my-3">View upcoming teaching opportunities with The Carpentries</a>
 {% endif %}
 
