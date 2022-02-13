@@ -133,5 +133,5 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         start = self.cleaned_data.get("start")
         end = self.cleaned_data.get("end")
         if start and end and end < start:
-            raise ValidationError(f"Must not be earlier than start date.")
+            raise ValidationError("Must not be earlier than start date.")
         return end
