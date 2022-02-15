@@ -295,7 +295,7 @@ class TestTrainingRequestsListView(TestBase):
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
-        self.assertTrue(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
         msg = "Successfully discarded selected requests."
         self.assertContains(rv, msg)
@@ -313,7 +313,7 @@ class TestTrainingRequestsListView(TestBase):
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
-        self.assertTrue(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
         msg = "Successfully accepted selected requests."
         self.assertContains(rv, msg)
@@ -1090,7 +1090,7 @@ class TestTrainingRequestMerging(TestBase):
 
     def test_merging(self):
         rv = self.client.post(self.url_1, self.strategy_1, follow=True)
-        self.assertTrue(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 200)
         # after successful merge, we should end up redirected to the details
         # page of the base object
         self.assertEqual(rv.resolver_match.view_name, "trainingrequest_details")
@@ -1103,7 +1103,7 @@ class TestTrainingRequestMerging(TestBase):
 
         # try second strategy
         rv = self.client.post(self.url_2, self.strategy_2, follow=True)
-        self.assertTrue(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "trainingrequest_details")
 
         # check if objects merged
