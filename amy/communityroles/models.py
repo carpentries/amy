@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -69,3 +71,23 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
 
     def get_absolute_url(self):
         return reverse("communityrole_details", kwargs={"pk": self.pk})
+
+    def is_active(self) -> bool:
+        """Determine if a community role is considered active.
+
+        Rules for INACTIVE:
+        1. `inactivation` is provided, or...
+        2. End is provided and it's <= today, or...
+        3. Start is provided and it's > today, or...
+        4. Both start and end are provided, and today is NOT between them.
+
+        Otherwise by default it's ACTIVE."""
+        today = date.today()
+        if (
+            self.inactivation is not None
+            or (self.end and self.end <= today)
+            or (self.start and self.start > today)
+            or (self.start and self.end and not (self.start <= today < self.end))
+        ):
+            return False
+        return True

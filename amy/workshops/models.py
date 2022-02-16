@@ -701,7 +701,7 @@ class Person(
         null=True,
         blank=True,
         verbose_name="Email address",
-        help_text="Primary email address, used for communication and " "as a login.",
+        help_text="Primary email address, used for communication and as a login.",
     )
     may_contact = models.BooleanField(
         default=True,

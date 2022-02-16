@@ -104,7 +104,7 @@ urlpatterns = [
 redirect_urlpatterns = [
     path('workshops/', RedirectView.as_view(pattern_name='dispatch')),
     path('workshops/admin-dashboard/', RedirectView.as_view(pattern_name='admin-dashboard')),
-    path('workshops/trainee-dashboard/', RedirectView.as_view(pattern_name='trainee-dashboard')),
+    path('workshops/trainee-dashboard/', RedirectView.as_view(pattern_name='instructor-dashboard')),
     path('workshops/trainee-dashboard/training_progress/', RedirectView.as_view(pattern_name='training-progress')),
     path('workshops/autoupdate_profile/', RedirectView.as_view(pattern_name='autoupdate_profile')),
 

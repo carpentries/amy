@@ -1,3 +1,6 @@
+from datetime import date, timedelta
+from typing import Optional
+
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from django.urls.base import reverse
@@ -77,3 +80,62 @@ class TestCommunityRoleModel(TestCase):
         self.assertEqual(
             url, reverse("communityrole_details", args=[self.community_role.pk])
         )
+
+    def test_is_active(self):
+        # Arrange
+        person = Person(personal="Test", family="User", email="test@user.com")
+        config = CommunityRoleConfig(
+            name="test_config",
+            display_name="Test Config",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        inactivation = CommunityRoleInactivation(name="test inactivation")
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        tomorrow = today + timedelta(days=1)
+        data: list[
+            tuple[
+                Optional[CommunityRoleInactivation],  # role.inactivation
+                Optional[date],  # role.start
+                Optional[date],  # role.end
+                bool,  # expected result
+            ]
+        ] = [
+            # cases when we have inactivation set: always False
+            (inactivation, None, None, False),
+            (inactivation, yesterday, tomorrow, False),
+            (inactivation, yesterday, None, False),
+            (inactivation, None, tomorrow, False),
+            # cases when no start/no end
+            (None, None, None, True),
+            # cases when both start and end are available
+            (None, yesterday, tomorrow, True),
+            (None, tomorrow, yesterday, False),
+            (None, today, tomorrow, True),
+            (None, yesterday, today, False),
+            # cases when only start is provided
+            (None, tomorrow, None, False),
+            (None, today, None, True),
+            (None, yesterday, None, True),
+            # cases when only end is provided
+            (None, None, tomorrow, True),
+            (None, None, today, False),
+            (None, None, yesterday, False),
+        ]
+        for inactivation, start, end, expected in data:
+            with self.subTest(inactivation=inactivation, start=start, end=end):
+                community_role = CommunityRole(
+                    config=config,
+                    person=person,
+                    inactivation=inactivation,
+                    start=start,
+                    end=end,
+                )
+
+                # Act
+                result = community_role.is_active()
+
+                # Assert
+                self.assertEqual(result, expected)

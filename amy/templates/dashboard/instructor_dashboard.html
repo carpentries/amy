@@ -1,12 +1,20 @@
 {% extends "base.html" %}
 {% block navbar %}
-  {% include 'navigation_trainee.html' %}
+  {% include 'navigation_instructor_dashboard.html' %}
 {% endblock %}
 
+{% load communityroles %}
 {% load crispy_forms_tags %}
 {% load dates %}
+{% load instructorrecruitment %}
 
 {% block content %}
+
+{% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
+{% get_community_role user role_name="instructor" as INSTRUCTOR_COMMUNITY_ROLE %}
+{% if INSTRUCTOR_RECRUITMENT_ENABLED and INSTRUCTOR_COMMUNITY_ROLE.is_active %}
+<a href="{% url 'upcoming-teaching-opportunities' %}" class="btn btn-primary btn-lg my-3">View upcoming teaching opportunities with The Carpentries</a>
+{% endif %}
 
 <div>
 

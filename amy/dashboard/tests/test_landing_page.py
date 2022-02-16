@@ -170,7 +170,7 @@ class TestAdminDashboard(TestBase):
 
 
 class TestDispatch(TestBase):
-    """Test that the right dashboard (trainee or admin dashboard) is displayed
+    """Test that the right dashboard (instructor or admin dashboard) is displayed
     after logging in."""
 
     def test_superuser_logs_in(self):
@@ -239,4 +239,4 @@ class TestDispatch(TestBase):
             reverse("login"), {"username": "trainee", "password": "pass"}, follow=True
         )
 
-        self.assertEqual(rv.resolver_match.view_name, "trainee-dashboard")
+        self.assertEqual(rv.resolver_match.view_name, "instructor-dashboard")

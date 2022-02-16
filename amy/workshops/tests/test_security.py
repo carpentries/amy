@@ -160,7 +160,7 @@ class TestViews(TestBase):
         Test that a view decorated with @login_required is accessible
         only for Admins and Trainees.
         """
-        view_name = "trainee-dashboard"
+        view_name = "instructor-dashboard"
         view = get_view_by_name(view_name)
         assert view._access_control_list == [login_required]
         url = reverse(view_name)

@@ -132,7 +132,7 @@ class TestTermsMiddleware(ConsentTestBase):
         the required terms is redirected to the form."""
         urls = [
             reverse("admin-dashboard"),
-            reverse("trainee-dashboard"),
+            reverse("instructor-dashboard"),
         ]
 
         # ensure we're logged in
@@ -150,7 +150,7 @@ class TestTermsMiddleware(ConsentTestBase):
     def test_no_more_redirects_after_agreement(self):
         """Ensure user is no longer forcefully redirected to accept the
         required terms."""
-        url = reverse("trainee-dashboard")
+        url = reverse("instructor-dashboard")
 
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -215,7 +215,7 @@ class TestTermsMiddleware(ConsentTestBase):
         """
         urls = [
             reverse("admin-dashboard"),
-            reverse("trainee-dashboard"),
+            reverse("instructor-dashboard"),
         ]
         harry = Person.objects.create(
             personal="Harry",

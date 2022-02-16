@@ -2,6 +2,7 @@ import re
 from typing import Dict, Optional
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
@@ -10,8 +11,10 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
+from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
@@ -19,6 +22,9 @@ from dashboard.forms import (
     SendHomeworkForm,
 )
 from fiscal.models import MembershipTask
+from recruitment.models import InstructorRecruitment
+from recruitment.views import RecruitmentEnabledMixin
+from workshops.base_views import AMYListView, ConditionallyEnabledMixin
 from workshops.models import (
     Airport,
     Badge,
@@ -34,18 +40,18 @@ from workshops.models import (
 )
 from workshops.util import admin_required, login_required
 
-# Terms shown on the trainee dashboard and can be updated by the user.
+# Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = ["may-contact", "public-profile", "may-publish-name"]
 
 
 @login_required
 def dispatch(request):
     """If user is admin, then show them admin dashboard; otherwise redirect
-    them to trainee dashboard."""
+    them to instructor dashboard."""
     if request.user.is_admin:
         return redirect(reverse("admin-dashboard"))
     else:
-        return redirect(reverse("trainee-dashboard"))
+        return redirect(reverse("instructor-dashboard"))
 
 
 @admin_required
@@ -99,11 +105,11 @@ def admin_dashboard(request):
 
 
 # ------------------------------------------------------------
-# Views for trainees
+# Views for instructors and trainees
 
 
 @login_required
-def trainee_dashboard(request):
+def instructor_dashboard(request):
     qs = Person.objects.select_related("airport").prefetch_related(
         "badges",
         "lessons",
@@ -134,7 +140,7 @@ def trainee_dashboard(request):
         consent_by_term_slug_label[label] = consent.term_option
 
     context = {"title": "Your profile", "user": user, **consent_by_term_slug_label}
-    return render(request, "dashboard/trainee_dashboard.html", context)
+    return render(request, "dashboard/instructor_dashboard.html", context)
 
 
 @login_required
@@ -173,7 +179,7 @@ def autoupdate_profile(request):
 
             messages.success(request, "Your profile was updated.")
 
-            return redirect(reverse("trainee-dashboard"))
+            return redirect(reverse("instructor-dashboard"))
         else:
             messages.error(request, "Fix errors below.")
 
@@ -255,6 +261,61 @@ def training_progress(request):
         "homework_form": homework_form,
     }
     return render(request, "dashboard/training_progress.html", context)
+
+
+# ------------------------------------------------------------
+# Views for instructors - upcoming teaching opportunities
+
+
+class UpcomingTeachingOpportunitiesList(
+    LoginRequiredMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+):
+    permission_required = "recruitment.view_instructorrecruitment"
+    title = "Upcoming Teaching Opportunities"
+    queryset = InstructorRecruitment.objects.select_related("event").prefetch_related(
+        "event__curricula"
+    )
+    template_name = "dashboard/upcoming_teaching_opportunities.html"
+    filter_class = UpcomingTeachingOpportunitiesFilter
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # person details with tasks counted
+        context["person"] = (
+            Person.objects.annotate(
+                num_taught=Count(
+                    Case(
+                        When(task__role__name="instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_supporting=Count(
+                    Case(
+                        When(task__role__name="supporting-instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_helper=Count(
+                    Case(
+                        When(task__role__name="helper", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
+            .select_related("airport")
+            .get(pk=self.request.user.pk)
+        )
+        return context
 
 
 # ------------------------------------------------------------

@@ -1,0 +1,29 @@
+{% load dates %}
+
+{% with event=object.event %}
+<h3>{{ event }} at {{ event.venue }}</h3>
+<ul>
+  <li>
+    <strong>Date/Time:</strong>
+    {% human_daterange event.start event.end %}
+  </li>
+  <li>
+    <strong>Location:</strong>
+    {% if "online" in event.tags.strings %}
+      Online
+    {% else %}
+      {{ event.venue }}, {% include "includes/country_flag.html" with country=event.country %}
+    {% endif %}
+  </li>
+  <li>
+    <strong>Curriculum:</strong>
+    {% for curriculum in event.curricula.all %}
+      {{ curriculum }}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+  </li>
+  <li>
+    <strong>Notes:</strong>
+    <p class="notes-content ml-3 text-muted">{{ object.notes }}</p>
+  </li>
+</ul>
+{% endwith %}

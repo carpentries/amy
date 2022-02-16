@@ -189,7 +189,7 @@ class AMYListView(ListView):
             self.qs = super().get_queryset()
         else:
             self.filter = self.filter_class(
-                self.get_filter_data(), super().get_queryset()
+                self.get_filter_data(), super().get_queryset(), request=self.request
             )
             self.qs = self.filter.qs
         paginated = get_pagination_items(self.request, self.qs)
