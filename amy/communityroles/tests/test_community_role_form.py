@@ -177,6 +177,48 @@ class TestCommunityRoleForm(TestBase):
             ["Membership is required with community role Test"],
         )
 
+    def test_start_date_gt_end_date_is_invalid(self):
+        """Tests error raised if end < start"""
+        # Arrange
+        data = {
+            "start": date(2021, 11, 14),
+            "end": date(2021, 11, 13),  # lt start
+        }
+
+        # Act
+        form = CommunityRoleForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())  # errors expected
+        self.assertIn("end", form.errors.keys())
+        self.assertEqual(
+            form.errors["end"],
+            ["Must not be earlier than start date."],
+        )
+
+    def test_start_end_dates_valid(self):
+        """Tests valid start date <= end date"""
+        # Arrange
+        params = [
+            (date(2021, 11, 14), date(2021, 11, 14)),
+            (date(2021, 11, 14), date(2021, 11, 15)),
+        ]
+
+        for p1, p2 in params:
+            data = {
+                "start": p1,
+                "end": p2,
+            }
+
+            # Act
+            form = CommunityRoleForm(data)
+            form.is_valid()
+
+            # Assert
+            with self.subTest():
+                self.assertEqual(form.cleaned_data.get("end"), p2)
+                self.assertNotIn("end", form.errors.keys())
+
     def test_additional_url_supported(self):
         # Arrange
         test_config = CommunityRoleConfig.objects.create(

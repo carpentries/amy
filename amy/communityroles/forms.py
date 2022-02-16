@@ -127,3 +127,11 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             raise ValidationError(errors)
 
         return cleaned_data
+
+    def clean_end(self):
+        """Validate that end >= start"""
+        start = self.cleaned_data.get("start")
+        end = self.cleaned_data.get("end")
+        if start and end and end < start:
+            raise ValidationError("Must not be earlier than start date.")
+        return end
