@@ -397,7 +397,13 @@ If duplicate Person, Training Request, or Event records exist, they can be merge
 
 ![AMY merge duplicates menu](images/merge_menu.png)
 
-Instructions coming here.
+Once you select "Merge Persons" or "Merge Events" you will be taken to a screen to select the two Persons or Events you would like to merge. Start typing in the Person's name or the Event's slug, and AMY will autocomplete with possible options.
+
+![AMY select Persons to merge](images/select_merge_persons.png)
+
+This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values).  Click "Submit" on the bottom of this screen to complete the merge process.
+
+![AMY merge Persons](images/merge_persons.png)
 
 ##### Searching for possible duplicate Person or Training Request records
 
