@@ -407,13 +407,18 @@ This will take you to a screen listing all the information in that Person's reco
 
 ##### Searching for possible duplicate Person or Training Request records
 
-Instructions coming here.  
-
-Select the appropriate option from the "Reports" menu.
+If you want to check for duplicate Person or Training Requests in general, you can review a list of possible duplicate records. Select the appropriate option from the "Reports" menu.
 
 ![AMY find duplicates menu](images/find_duplicate_menu.png)
 
-Choose the two records to be merged, and click "Submit" to see merge options. Here you can choose to keep the value from Record A, from Record B, or to combine the values.  By default, keeping the value in Record A is checked.
+Here, you will see two lists:
+
+* **Possible duplicate persons**. This will include records where another record exists with the personal and family names switched, or a single person with the same personal and family name.  
+* **Persons with the same names**.  This compares people with the same personal and family names.  
+
+In either case, if these records should be merged, select records A and B.  This will take you to the Merge Persons screen (see above).  If these individuals are not the same person, select "Mark as Reviewed" and they will not show up in the list of possible duplicates again.
+
+![AMY search duplicates](images/search_duplicates.png)
 
 ### Searching
 
