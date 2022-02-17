@@ -391,7 +391,21 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 #### Merging Duplicate Persons, Training Requests, or Events
 
-If duplicate Person, Training Request, or Event records exist, they can be merged.  Select the appropriate option from the "More" menu.
+If duplicate Person, Training Request, or Event records exist, they can be merged.  If you know which two records should be merged, you can select them directly.  You can also search for possible duplicate records.
+
+##### Merging two known duplicate records.
+
+![AMY merge duplicates menu](images/merge_menu.png)
+
+Instructions coming here.
+
+##### Searching for possible duplicate Person or Training Request records
+
+Instructions coming here.  
+
+Select the appropriate option from the "Reports" menu.
+
+![AMY find duplicates menu](images/find_duplicate_menu.png)
 
 Choose the two records to be merged, and click "Submit" to see merge options. Here you can choose to keep the value from Record A, from Record B, or to combine the values.  By default, keeping the value in Record A is checked.
 
