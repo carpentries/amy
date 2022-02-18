@@ -1888,7 +1888,7 @@ class TestEventUpdateInstructorsHostIntroduction(
 
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
 
@@ -1952,7 +1952,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         )
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
         # with open('test.html', 'w', encoding='utf-8') as f:
@@ -2115,7 +2115,7 @@ class TestEventDeleteInstructorsHostIntroduction(
 
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
         # with open('test.html', 'w', encoding='utf-8') as f:
