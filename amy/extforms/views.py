@@ -25,12 +25,18 @@ class TrainingRequestCreate(
 ):
     model = TrainingRequest
     form_class = TrainingRequestForm
+    page_title = "Instructor Training Form"
     template_name = "forms/trainingrequest.html"
     success_url = reverse_lazy("training_request_confirm")
     autoresponder_subject = "Thank you for your application"
     autoresponder_body_template_txt = "mailing/training_request.txt"
     autoresponder_body_template_html = "mailing/training_request.html"
     autoresponder_form_field = "email"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = self.page_title
+        return context
 
     def autoresponder_email_context(self, form):
         return dict(object=self.object)
