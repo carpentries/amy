@@ -39,7 +39,7 @@
 
   {% for object in object_list %}
     {% include "includes/teaching_opportunity.html" with object=object %}
-    {% if not forloop.last %}<hr>{% endif %}
+    <hr>
   {% endfor %}
   {% pagination object_list %}
 

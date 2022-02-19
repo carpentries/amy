@@ -22,7 +22,7 @@ from dashboard.forms import (
     SendHomeworkForm,
 )
 from fiscal.models import MembershipTask
-from recruitment.models import InstructorRecruitment
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from recruitment.views import RecruitmentEnabledMixin
 from workshops.base_views import AMYListView, ConditionallyEnabledMixin
 from workshops.models import (
@@ -272,11 +272,23 @@ class UpcomingTeachingOpportunitiesList(
 ):
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
-    queryset = InstructorRecruitment.objects.select_related("event").prefetch_related(
-        "event__curricula"
-    )
     template_name = "dashboard/upcoming_teaching_opportunities.html"
     filter_class = UpcomingTeachingOpportunitiesFilter
+
+    def get_queryset(self):
+        self.queryset = InstructorRecruitment.objects.select_related(
+            "event"
+        ).prefetch_related(
+            "event__curricula",
+            Prefetch(
+                "instructorrecruitmentsignup_set",
+                queryset=InstructorRecruitmentSignup.objects.filter(
+                    person=self.request.user,
+                ),
+                to_attr="person_signup",
+            ),
+        )
+        return super().get_queryset()
 
     def get_view_enabled(self) -> bool:
         try:
