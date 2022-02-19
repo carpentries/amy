@@ -1,3 +1,4 @@
+from datetime import timedelta
 import re
 from typing import Dict, Optional
 
@@ -6,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
@@ -351,8 +352,6 @@ class SignupForRecruitment(
     form_class = SignupForRecruitmentForm
     template_name = "dashboard/signup_for_recruitment.html"
 
-    success_url = reverse_lazy("upcoming-teaching-opportunities")
-
     def get_context_data(self, **kwargs):
         self.other_object: InstructorRecruitment
         event = self.other_object.event
@@ -396,6 +395,11 @@ class SignupForRecruitment(
             "pending."
         )
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"person": self.request.user, "recruitment": self.other_object})
+        return kwargs
+
     def form_valid(self, form):
         obj = form.save(commit=False)
 
@@ -405,6 +409,39 @@ class SignupForRecruitment(
         obj.recruitment = self.other_object
         obj.person = self.request.user
         obj.save()
+
+        # Check and display warnings
+        recruitment: InstructorRecruitment = self.other_object
+        event: Event = recruitment.event
+
+        # existing events within +-14days of this event
+        if tasks_nearby := Task.objects.exclude(event=event).filter(
+            person=self.request.user,
+            role__name="instructor",
+            event__start__lte=event.end + timedelta(days=14),
+            event__end__gte=event.start - timedelta(days=14),
+        ):
+            messages.warning(
+                self.request,
+                "Selected event dates fall within 14 days of your other workshops: "
+                f"{', '.join(task.event.slug for task in tasks_nearby)}",
+            )
+
+        # instructor has applied for opportunities in the same dates
+        if conflicting_signups := InstructorRecruitmentSignup.objects.exclude(
+            recruitment=recruitment
+        ).filter(
+            person=self.request.user,
+            recruitment__event__start__lte=event.end,
+            recruitment__event__end__gte=event.start,
+        ):
+            gen = (signup.recruitment.event.slug for signup in conflicting_signups)
+            messages.warning(
+                self.request,
+                "You have applied to other workshops on the same dates: "
+                f"{', '.join(gen)}",
+            )
+
         return super().form_valid(form)
 
 

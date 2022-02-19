@@ -3,10 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django_countries.fields import CountryField
 
-from recruitment.models import InstructorRecruitmentSignup
-
-# this is used instead of Django Autocomplete Light widgets
-# see issue #1330: https://github.com/swcarpentry/amy/issues/1330
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.fields import (
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
@@ -14,9 +11,11 @@ from workshops.fields import (
 )
 from workshops.forms import BootstrapHelper
 from workshops.models import (
+    Event,
     GenderMixin,
     Language,
     Person,
+    Task,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -184,12 +183,25 @@ class SignupForRecruitmentForm(forms.ModelForm):
             "user_notes",
         ]
 
+    def __init__(self, *args, **kwargs):
+        self.person: Person = kwargs.pop("person")
+        self.recruitment: InstructorRecruitment = kwargs.pop("recruitment")
+        super().__init__(*args, **kwargs)
+
     def clean(self):
         super().clean()
-        errors = dict()
 
-        # TODO: custom validation is required, see #2068
-
-        # raise errors if any present
-        if errors:
-            raise ValidationError(errors)
+        # Check if user has any instructor roles for events taking place at the same
+        # time of this event.
+        event: Event = self.recruitment.event
+        if conflicting_tasks := Task.objects.filter(
+            person=self.person,
+            role__name="instructor",
+            event__start__lte=event.end,
+            event__end__gte=event.start,
+        ):
+            # error not bound to any particular field
+            raise ValidationError(
+                "Selected event dates conflict with events: "
+                f"{', '.join(task.event.slug for task in conflicting_tasks)}"
+            )
