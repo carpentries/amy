@@ -1,6 +1,6 @@
 {% load dates %}
 
-{% with event=object.event signup=object.person_signup.0 %}
+{% with event=object.event %}
 <h3>{{ event }} at {{ event.venue }}</h3>
 <ul>
   <li>
@@ -25,29 +25,6 @@
     <strong>Notes:</strong>
     <p class="notes-content ml-3 text-muted">{{ object.notes|default:"&mdash;" }}</p>
   </li>
-  {% if signup and object.person_signup %}
-  <li>
-    <strong>Your Signup Notes:</strong>
-    <p class="notes-content ml-3 text-muted">{{ signup.user_notes|default:"&mdash;" }}</p>
-  </li>
-  {% endif %}
 </ul>
-
-  {% if not signup or not object.person_signup %}
-    TODO
-    <a href="#" class="btn btn-primary">I am interested in teaching this workshop.</a>
-  {% else %}
-    {% if signup.state == "p" %}
-      TODO
-      <button class="btn btn-outline-primary btn-disabled" disabled>Interest expressed, confirmation pending...</button>
-      <a href="#" class="btn btn-danger">Cancel teaching request.</a>
-    {% elif signup.state == "a" %}
-      TODO
-      <button class="btn btn-outline-success btn-disabled" disabled>Teaching confirmed.</button>
-    {% elif signup.state == "d" %}
-      TODO
-      <button class="btn btn-outline-warning btn-disabled" disabled>Teaching discarded.</button>
-    {% endif %}
-  {% endif %}
 
 {% endwith %}
