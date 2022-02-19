@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django_countries.fields import CountryField
 
+from recruitment.models import InstructorRecruitmentSignup
+
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
@@ -165,3 +167,29 @@ class SearchForm(forms.Form):
     term = forms.CharField(label="Term", max_length=100)
     no_redirect = forms.BooleanField(required=False, initial=False)
     helper = BootstrapHelper(add_cancel_button=False, use_get_method=True)
+
+
+class SignupForRecruitmentForm(forms.ModelForm):
+    user_notes = forms.CharField(
+        required=False, widget=forms.Textarea, label="Your notes"
+    )
+    helper = BootstrapHelper(
+        submit_label="Submit my interest in teaching this workshop",
+        add_cancel_button=False,
+    )
+
+    class Meta:
+        model = InstructorRecruitmentSignup
+        fields = [
+            "user_notes",
+        ]
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # TODO: custom validation is required, see #2068
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)

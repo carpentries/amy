@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
@@ -20,7 +20,9 @@ from dashboard.forms import (
     AutoUpdateProfileForm,
     SearchForm,
     SendHomeworkForm,
+    SignupForRecruitmentForm,
 )
+from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from recruitment.views import RecruitmentEnabledMixin
@@ -328,6 +330,82 @@ class UpcomingTeachingOpportunitiesList(
             .get(pk=self.request.user.pk)
         )
         return context
+
+
+class SignupForRecruitment(
+    LoginRequiredMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    AMYCreateAndFetchObjectView,
+):
+    permission_required = [
+        "recruitment.view_instructorrecruitment",
+        "recruitment.add_instructorrecruitmentsignup",
+    ]
+    title = "Signup for workshop"
+    model = InstructorRecruitmentSignup
+    queryset_other = InstructorRecruitment.objects.filter(status="o")
+    context_other_object_name = "recruitment"
+    pk_url_kwarg = "recruitment_pk"
+
+    form_class = SignupForRecruitmentForm
+    template_name = "dashboard/signup_for_recruitment.html"
+
+    success_url = reverse_lazy("upcoming-teaching-opportunities")
+
+    def get_context_data(self, **kwargs):
+        self.other_object: InstructorRecruitment
+        event = self.other_object.event
+
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Signup for workshop {event}"
+
+        # person details with tasks counted
+        context["person"] = (
+            Person.objects.annotate(
+                num_taught=Count(
+                    Case(
+                        When(task__role__name="instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_supporting=Count(
+                    Case(
+                        When(task__role__name="supporting-instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_helper=Count(
+                    Case(
+                        When(task__role__name="helper", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
+            .select_related("airport")
+            .get(pk=self.request.user.pk)
+        )
+
+        return context
+
+    def get_success_message(self, cleaned_data):
+        self.other_object: InstructorRecruitment
+        event = self.other_object.event
+        return (
+            f"Your interest in teaching at {event} has been recorded and is now "
+            "pending."
+        )
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+
+        # This is the only available selection for the user, see #2068.
+        obj.interest = "session"
+
+        obj.recruitment = self.other_object
+        obj.person = self.request.user
+        obj.save()
+        return super().form_valid(form)
 
 
 # ------------------------------------------------------------

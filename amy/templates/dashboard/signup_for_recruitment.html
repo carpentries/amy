@@ -1,0 +1,16 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block navbar %}
+  {% include 'navigation_instructor_dashboard.html' %}
+{% endblock %}
+
+{% comment %} narrower and centered {% endcomment %}
+{% block maincolumn %}col-md-8 offset-md-2{% endblock maincolumn %}
+
+{% block content %}
+  {% include "includes/instructor_profile_snapshot.html" with person=person %}
+  {% include "includes/teaching_opportunity.html" with object=recruitment %}
+  {% crispy form %}
+{% endblock %}
