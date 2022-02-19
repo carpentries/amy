@@ -7,11 +7,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
@@ -394,6 +395,11 @@ class SignupForRecruitment(
             f"Your interest in teaching at {event} has been recorded and is now "
             "pending."
         )
+
+    def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next", None)
+        success_url = reverse_lazy("upcoming-teaching-opportunities")
+        return safe_next_or_default_url(next_url, success_url)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

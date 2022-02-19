@@ -28,7 +28,7 @@
       {% endif %}
 
       {% if not signup or not object.person_signup %}
-        <a href="{% url 'signup-for-recruitment' object.pk %}" class="btn btn-primary">I am interested in teaching this workshop.</a>
+        <a href="{% url 'signup-for-recruitment' object.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-primary">I am interested in teaching this workshop.</a>
       {% else %}
         {% if signup.state == "p" %}
           TODO
