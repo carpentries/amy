@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
@@ -346,12 +346,23 @@ class SignupForRecruitment(
     ]
     title = "Signup for workshop"
     model = InstructorRecruitmentSignup
-    queryset_other = InstructorRecruitment.objects.filter(status="o")
+    queryset_other = InstructorRecruitment.objects.filter(status="o").select_related(
+        "event"
+    )
     context_other_object_name = "recruitment"
     pk_url_kwarg = "recruitment_pk"
 
     form_class = SignupForRecruitmentForm
     template_name = "dashboard/signup_for_recruitment.html"
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
 
     def get_context_data(self, **kwargs):
         self.other_object: InstructorRecruitment
@@ -398,7 +409,7 @@ class SignupForRecruitment(
 
     def get_success_url(self) -> str:
         next_url = self.request.GET.get("next", None)
-        success_url = reverse_lazy("upcoming-teaching-opportunities")
+        success_url = reverse("upcoming-teaching-opportunities")
         return safe_next_or_default_url(next_url, success_url)
 
     def get_form_kwargs(self):
