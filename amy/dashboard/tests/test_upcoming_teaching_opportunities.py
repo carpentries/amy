@@ -7,10 +7,11 @@ from communityroles.models import (
     CommunityRoleInactivation,
 )
 from dashboard.views import UpcomingTeachingOpportunitiesList
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.models import Event, Organization, Person, Role, Task
 
 
-class TestUpcomingTeachingOpportunityView(TestCase):
+class TestUpcomingTeachingOpportunitiesList(TestCase):
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
     def test_view_enabled__no_community_role(self):
         # Arrange
@@ -72,6 +73,27 @@ class TestUpcomingTeachingOpportunityView(TestCase):
         # Assert
         self.assertEqual(role.is_active(), True)
         self.assertEqual(view.get_view_enabled(), True)
+
+    def test_get_queryset(self):
+        # Arrange
+        host = Organization.objects.create(domain="test.com", fullname="Test")
+        person = Person.objects.create(
+            personal="Test", family="User", email="test@user.com"
+        )
+        event = Event.objects.create(slug="test-event", host=host)
+        recruitment = InstructorRecruitment.objects.create(status="o", event=event)
+        signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person, interest="session"
+        )
+        request = RequestFactory().get("/")
+        request.user = person
+        # Act
+        view = UpcomingTeachingOpportunitiesList(request=request)
+        qs = view.get_queryset()
+        # Assert
+        self.assertEqual(list(qs), [recruitment])
+        # `person_signup` is an additional attribute created using `Prefetch()`
+        self.assertEqual(list(qs[0].person_signup), [signup])
 
     def test_get_context_data(self):
         """Context data is extended only with person object, but it includes pre-counted
