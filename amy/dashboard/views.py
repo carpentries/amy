@@ -408,10 +408,6 @@ class SignupForRecruitment(
 
     def form_valid(self, form):
         obj = form.save(commit=False)
-
-        # This is the only available selection for the user, see #2068.
-        obj.interest = "session"
-
         obj.recruitment = self.other_object
         obj.person = self.request.user
         obj.save()

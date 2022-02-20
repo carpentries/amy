@@ -49,7 +49,11 @@ class InstructorRecruitmentSignup(CreatedUpdatedMixin, StateMixin, models.Model)
         ("support", "Supporting instructor"),  # choice disabled, see #2068
     )
     interest = models.CharField(
-        max_length=10, choices=INTEREST_CHOICES, null=False, blank=False
+        max_length=10,
+        choices=INTEREST_CHOICES,
+        null=False,
+        blank=False,
+        default="session",
     )
     user_notes = models.TextField(default="", null=False, blank=True)
     notes = models.TextField(default="", null=False, blank=True)  # admin notes
