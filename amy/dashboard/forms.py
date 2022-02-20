@@ -194,11 +194,17 @@ class SignupForRecruitmentForm(forms.ModelForm):
         # Check if user has any instructor roles for events taking place at the same
         # time of this event.
         event: Event = self.recruitment.event
-        if conflicting_tasks := Task.objects.filter(
-            person=self.person,
-            role__name="instructor",
-            event__start__lte=event.end,
-            event__end__gte=event.start,
+        if (
+            event.start
+            and event.end
+            and (
+                conflicting_tasks := Task.objects.filter(
+                    person=self.person,
+                    role__name="instructor",
+                    event__start__lte=event.end,
+                    event__end__gte=event.start,
+                )
+            )
         ):
             # error not bound to any particular field
             raise ValidationError(
