@@ -391,9 +391,34 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 #### Merging Duplicate Persons, Training Requests, or Events
 
-If duplicate Person, Training Request, or Event records exist, they can be merged.  Select the appropriate option from the "More" menu.
+If duplicate Person, Training Request, or Event records exist, they can be merged.  If you know which two records should be merged, you can select them directly.  You can also search for possible duplicate records.
 
-Choose the two records to be merged, and click "Submit" to see merge options. Here you can choose to keep the value from Record A, from Record B, or to combine the values.  By default, keeping the value in Record A is checked.
+##### Merging two known duplicate records.
+
+![AMY merge duplicates menu](images/merge_menu.png)
+
+Once you select "Merge Persons" or "Merge Events" you will be taken to a screen to select the two Persons or Events you would like to merge. Start typing in the Person's name or the Event's slug, and AMY will autocomplete with possible options.
+
+![AMY select Persons to merge](images/select_merge_persons.png)
+
+This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values).  Click "Submit" on the bottom of this screen to complete the merge process.
+
+![AMY merge Persons](images/merge_persons.png)
+
+##### Searching for possible duplicate Person or Training Request records
+
+If you want to check for duplicate Person or Training Requests in general, you can review a list of possible duplicate records. Select the appropriate option from the "Reports" menu.
+
+![AMY find duplicates menu](images/find_duplicate_menu.png)
+
+Here, you will see two lists:
+
+* **Possible duplicate persons**. This will include records where another record exists with the personal and family names switched, or a single person with the same personal and family name.  
+* **Persons with the same names**.  This compares people with the same personal and family names.  
+
+In either case, if these records should be merged, select records A and B.  This will take you to the Merge Persons screen (see above).  If these individuals are not the same person, select "Mark as Reviewed" and they will not show up in the list of possible duplicates again.
+
+![AMY search duplicates](images/search_duplicates.png)
 
 ### Searching
 
