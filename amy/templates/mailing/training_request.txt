@@ -16,7 +16,7 @@ Learn about our community at: https://carpentries.org/community/
 Read our blog: https://carpentries.org/blog/
 Sign-up for our newsletter: https://carpentries.org/newsletter/
 
-If you have questions about your application, please contact checkout@carpentries.org. Thanks again for applying!
+If you have questions about your application, please contact instructor.training@carpentries.org. Thanks again for applying!
 
 Best,
 
