@@ -290,7 +290,7 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ),
         (
             "instructors-host-introduction",
-            "Introduction of instrutors and host (centr. org. workshop)",
+            "Introduction of instructors and host (centr. org. workshop)",
         ),
         ("ask-for-website", "Website URL is missing"),
         ("recruit-helpers", "Recruit helpers"),

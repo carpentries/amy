@@ -1584,7 +1584,7 @@ class TestTaskCreateInstructorsHostIntroduction(
 
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
 
@@ -1726,7 +1726,7 @@ class TestTaskUpdateInstructorsHostIntroduction(
 
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
 
