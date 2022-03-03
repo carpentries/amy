@@ -2715,6 +2715,7 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
     ONLINE_INPERSON_CHOICES = (
         ("online", "Online"),
         ("inperson", "In-person"),
+        ("hybrid", "Hybrid"),
         ("unsure", "Not sure"),
     )
     online_inperson = models.CharField(
