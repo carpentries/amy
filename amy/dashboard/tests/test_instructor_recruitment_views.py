@@ -124,16 +124,23 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         Task.objects.create(role=helper, person=person, event=event1)
         Task.objects.create(role=helper, person=person, event=event2)
         Task.objects.create(role=helper, person=person, event=event3)
+        signup1 = InstructorRecruitmentSignup.objects.create(
+            person=person,
+            recruitment=InstructorRecruitment.objects.create(event=event3),
+        )
         request.user = person
         view = UpcomingTeachingOpportunitiesList(request=request)
         view.get_queryset()
         # Act & Assert
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(2):
             data = view.get_context_data(object_list=[])
         # Assert
         self.assertEqual(data["person"].num_taught, 1)
         self.assertEqual(data["person"].num_supporting, 2)
         self.assertEqual(data["person"].num_helper, 3)
+        self.assertEqual(list(data["person_instructor_tasks_slugs"]), [event1.slug])
+        self.assertEqual(data["person_instructor_task_events"], {event1})
+        self.assertEqual(list(data["person_signups"]), [signup1])
 
 
 class TestSignupForRecruitment(TestCase):

@@ -280,17 +280,19 @@ class UpcomingTeachingOpportunitiesList(
     filter_class = UpcomingTeachingOpportunitiesFilter
 
     def get_queryset(self):
-        self.queryset = InstructorRecruitment.objects.select_related(
-            "event"
-        ).prefetch_related(
-            "event__curricula",
-            Prefetch(
-                "instructorrecruitmentsignup_set",
-                queryset=InstructorRecruitmentSignup.objects.filter(
-                    person=self.request.user,
+        self.queryset = (
+            InstructorRecruitment.objects.select_related("event")
+            .prefetch_related(
+                "event__curricula",
+                Prefetch(
+                    "instructorrecruitmentsignup_set",
+                    queryset=InstructorRecruitmentSignup.objects.filter(
+                        person=self.request.user,
+                    ),
+                    to_attr="person_signup",
                 ),
-                to_attr="person_signup",
-            ),
+            )
+            .order_by("event__start")
         )
         return super().get_queryset()
 
@@ -331,6 +333,21 @@ class UpcomingTeachingOpportunitiesList(
             .select_related("airport")
             .get(pk=self.request.user.pk)
         )
+        context["person_instructor_tasks_slugs"] = Task.objects.filter(
+            role__name="instructor", person__pk=self.request.user.pk
+        ).values_list("event__slug", flat=True)
+
+        context["person_instructor_task_events"] = {
+            task.event
+            for task in Task.objects.filter(
+                role__name="instructor", person__pk=self.request.user.pk
+            ).select_related("event")
+        }
+
+        context["person_signups"] = InstructorRecruitmentSignup.objects.filter(
+            person=self.request.user
+        ).select_related("recruitment", "recruitment__event")
+
         return context
 
 
@@ -427,7 +444,7 @@ class SignupForRecruitment(
         recruitment: InstructorRecruitment = self.other_object
         event: Event = recruitment.event
 
-        # existing events within +-14days of this event
+        # existing instructor tasks within +-14days of this event
         if tasks_nearby := Task.objects.exclude(event=event).filter(
             person=self.request.user,
             role__name="instructor",
