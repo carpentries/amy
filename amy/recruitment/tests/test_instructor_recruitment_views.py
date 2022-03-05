@@ -85,6 +85,7 @@ class TestInstructorRecruitmentListView(TestBase):
             start=date(2022, 1, 22),
         )
         recruitment = InstructorRecruitment.objects.create(
+            assigned_to=self.admin,
             event=event,
             notes="Test notes",
         )

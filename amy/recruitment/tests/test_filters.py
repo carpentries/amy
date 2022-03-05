@@ -29,10 +29,10 @@ class TestInstructorRecruitmentFilter(TestCase):
         filter_set = InstructorRecruitmentFilter()
 
         # Act
-        choices = filter_set.filters["assigned_to"].extra["choices"]
+        choices = filter_set.filters["assigned_to"].extra["queryset"]
 
         # Assert
-        self.assertEqual(choices, [])
+        self.assertEqual(list(choices), [])
 
     def test_assigned_to_filter_choices(self) -> None:
         # Arrange
@@ -45,7 +45,7 @@ class TestInstructorRecruitmentFilter(TestCase):
         filter_set = InstructorRecruitmentFilter()
 
         # Act
-        choices = filter_set.filters["assigned_to"].extra["choices"]
+        choices = filter_set.filters["assigned_to"].extra["queryset"]
 
         # Assert
-        self.assertEqual(choices, [(person.pk, str(person))])
+        self.assertEqual(list(choices), [person])
