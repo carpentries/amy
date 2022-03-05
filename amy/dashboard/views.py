@@ -1,3 +1,4 @@
+from datetime import timedelta
 import re
 from typing import Dict, Optional
 
@@ -11,6 +12,7 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_GET
 from django_comments.models import Comment
 
+from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
@@ -20,9 +22,11 @@ from dashboard.forms import (
     AutoUpdateProfileForm,
     SearchForm,
     SendHomeworkForm,
+    SignupForRecruitmentForm,
 )
+from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
-from recruitment.models import InstructorRecruitment
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from recruitment.views import RecruitmentEnabledMixin
 from workshops.base_views import AMYListView, ConditionallyEnabledMixin
 from workshops.models import (
@@ -272,11 +276,25 @@ class UpcomingTeachingOpportunitiesList(
 ):
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
-    queryset = InstructorRecruitment.objects.select_related("event").prefetch_related(
-        "event__curricula"
-    )
     template_name = "dashboard/upcoming_teaching_opportunities.html"
     filter_class = UpcomingTeachingOpportunitiesFilter
+
+    def get_queryset(self):
+        self.queryset = (
+            InstructorRecruitment.objects.select_related("event")
+            .prefetch_related(
+                "event__curricula",
+                Prefetch(
+                    "instructorrecruitmentsignup_set",
+                    queryset=InstructorRecruitmentSignup.objects.filter(
+                        person=self.request.user,
+                    ),
+                    to_attr="person_signup",
+                ),
+            )
+            .order_by("event__start")
+        )
+        return super().get_queryset()
 
     def get_view_enabled(self) -> bool:
         try:
@@ -315,7 +333,146 @@ class UpcomingTeachingOpportunitiesList(
             .select_related("airport")
             .get(pk=self.request.user.pk)
         )
+        context["person_instructor_tasks_slugs"] = Task.objects.filter(
+            role__name="instructor", person__pk=self.request.user.pk
+        ).values_list("event__slug", flat=True)
+
+        context["person_instructor_task_events"] = {
+            task.event
+            for task in Task.objects.filter(
+                role__name="instructor", person__pk=self.request.user.pk
+            ).select_related("event")
+        }
+
+        context["person_signups"] = InstructorRecruitmentSignup.objects.filter(
+            person=self.request.user
+        ).select_related("recruitment", "recruitment__event")
+
         return context
+
+
+class SignupForRecruitment(
+    LoginRequiredMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    AMYCreateAndFetchObjectView,
+):
+    permission_required = [
+        "recruitment.view_instructorrecruitment",
+        "recruitment.add_instructorrecruitmentsignup",
+    ]
+    title = "Signup for workshop"
+    model = InstructorRecruitmentSignup
+    queryset_other = InstructorRecruitment.objects.filter(status="o").select_related(
+        "event"
+    )
+    context_other_object_name = "recruitment"
+    pk_url_kwarg = "recruitment_pk"
+
+    form_class = SignupForRecruitmentForm
+    template_name = "dashboard/signup_for_recruitment.html"
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
+
+    def get_context_data(self, **kwargs):
+        self.other_object: InstructorRecruitment
+        event = self.other_object.event
+
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Signup for workshop {event}"
+
+        # person details with tasks counted
+        context["person"] = (
+            Person.objects.annotate(
+                num_taught=Count(
+                    Case(
+                        When(task__role__name="instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_supporting=Count(
+                    Case(
+                        When(task__role__name="supporting-instructor", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+                num_helper=Count(
+                    Case(
+                        When(task__role__name="helper", then=Value(1)),
+                        output_field=IntegerField(),
+                    )
+                ),
+            )
+            .select_related("airport")
+            .get(pk=self.request.user.pk)
+        )
+
+        return context
+
+    def get_success_message(self, cleaned_data):
+        self.other_object: InstructorRecruitment
+        event = self.other_object.event
+        return (
+            f"Your interest in teaching at {event} has been recorded and is now "
+            "pending."
+        )
+
+    def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next", None)
+        success_url = reverse("upcoming-teaching-opportunities")
+        return safe_next_or_default_url(next_url, success_url)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"person": self.request.user, "recruitment": self.other_object})
+        return kwargs
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.recruitment = self.other_object
+        obj.person = self.request.user
+        obj.save()
+
+        # Check and display warnings
+        recruitment: InstructorRecruitment = self.other_object
+        event: Event = recruitment.event
+
+        # existing instructor tasks within +-14days of this event
+        if tasks_nearby := Task.objects.exclude(event=event).filter(
+            person=self.request.user,
+            role__name="instructor",
+            event__start__lte=event.end + timedelta(days=14),
+            event__end__gte=event.start - timedelta(days=14),
+        ):
+            messages.warning(
+                self.request,
+                "Selected event dates fall within 14 days of your other workshops: "
+                f"{', '.join(task.event.slug for task in tasks_nearby)}",
+            )
+
+        # instructor has applied for opportunities in the same dates
+        if conflicting_signups := InstructorRecruitmentSignup.objects.exclude(
+            recruitment=recruitment
+        ).filter(
+            person=self.request.user,
+            recruitment__event__start__lte=event.end,
+            recruitment__event__end__gte=event.start,
+        ):
+            gen = (signup.recruitment.event.slug for signup in conflicting_signups)
+            messages.warning(
+                self.request,
+                "You have applied to other workshops on the same dates: "
+                f"{', '.join(gen)}",
+            )
+
+        return super().form_valid(form)
 
 
 # ------------------------------------------------------------

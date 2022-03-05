@@ -1,34 +1,14 @@
 {% extends "base_nav_sidebar.html" %}
 
 {% load pagination %}
+{% load instructorrecruitment %}
 
 {% block navbar %}
   {% include 'navigation_instructor_dashboard.html' %}
 {% endblock %}
 
 {% block content %}
-  <div class="card">
-    <div class="card-body">
-      <h5 class="card-title">Profile snapshot</h5>
-      <ul>
-        <li><strong>Name:</strong> {{ person }}</li>
-        <li><strong>Email:</strong> {{ person.email|default:"&mdash;" }}</li>
-        <li><strong>Country:</strong> {% include "includes/country_flag.html" with country=person.country %}</li>
-        <li><strong>Airport:</strong> {{ person.airport|default:"&mdash;" }}</li>
-        <li><strong>Teaching experience:</strong>
-          <ul>
-            <li><strong>Helper:</strong> {{ person.num_helper }} times</li>
-            <li><strong>Supporting Instructor:</strong> {{ person.num_supporting }} times</li>
-            <li><strong>Instructor:</strong> {{ person.num_taught }} times</li>
-          </ul>
-        </li>
-      </ul>
-      <p class="card-text">
-        If any of this information is incorrect, please edit your information on your
-        <a href="{% url 'autoupdate_profile' %}">profile page in AMY</a>.
-      </p>
-    </div>
-  </div>
+  {% include "includes/instructor_profile_snapshot.html" with person=person %}
 
   <p class="lead mt-3">
     Please check any of the upcoming workshops that you are interested in teaching.
@@ -38,8 +18,61 @@
   </p>
 
   {% for object in object_list %}
+    <section>
     {% include "includes/teaching_opportunity.html" with object=object %}
-    {% if not forloop.last %}<hr>{% endif %}
+
+    {% with signup=object.person_signup.0 %}
+      {% if signup and object.person_signup %}
+      <div>
+        <strong>Your Signup Notes:</strong>
+        <p class="notes-content ml-3 text-muted">{{ signup.user_notes|default:"&mdash;" }}</p>
+      </div>
+      {% endif %}
+
+      {% get_event_conflicts events=person_instructor_task_events event=object.event as event_conflicts %}
+
+      {% if event_conflicts %}
+      <div class="alert alert-danger" role="alert">
+        <p>You cannot apply for this workshop. You are teaching at a conflicting workshop: <span class="badge badge-danger">{{ event_conflicts.0.slug }}</span>.</p>
+      </div>
+
+      {% elif object.event.slug in person_instructor_tasks_slugs %}
+      <div class="alert alert-success " role="alert">
+        <p>You are teaching at this workshop.</p>
+      </div>
+
+      {% elif not signup or not object.person_signup %}
+        {% get_events_nearby events=person_instructor_task_events event=object.event as events_nearby %}
+        {% if events_nearby %}
+        <div class="alert alert-warning" role="alert">
+          <p>You are teaching workshops within 14 days: {% for event in events_nearby %}<span class="badge badge-warning">{{ event }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+        </div>
+        {% endif %}
+
+        {% get_signup_conflicts signups=person_signups recruitment=object as signup_conflicts %}
+        {% if signup_conflicts %}
+        <div class="alert alert-warning" role="alert">
+          <p>You have workshop applications on the same dates: {% for signup in signup_conflicts %}<span class="badge badge-warning">{{ signup.recruitment.event }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+        </div>
+        {% endif %}
+        <a href="{% url 'signup-for-recruitment' object.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-primary">I am interested in teaching this workshop.</a>
+
+      {% else %}
+        {% if signup.state == "p" %}
+          TODO
+          <button class="btn btn-outline-primary btn-disabled" disabled>Interest expressed, confirmation pending...</button>
+          <a href="#" class="btn btn-danger">Cancel teaching request.</a>
+        {% elif signup.state == "a" %}
+          TODO
+          <button class="btn btn-outline-success btn-disabled" disabled>Teaching confirmed.</button>
+        {% elif signup.state == "d" %}
+          TODO
+          <button class="btn btn-outline-warning btn-disabled" disabled>Teaching discarded.</button>
+        {% endif %}
+      {% endif %}
+    {% endwith %}
+    <hr>
+    </section>
   {% endfor %}
   {% pagination object_list %}
 

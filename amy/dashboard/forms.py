@@ -3,8 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django_countries.fields import CountryField
 
-# this is used instead of Django Autocomplete Light widgets
-# see issue #1330: https://github.com/swcarpentry/amy/issues/1330
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.fields import (
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
@@ -12,9 +11,11 @@ from workshops.fields import (
 )
 from workshops.forms import BootstrapHelper
 from workshops.models import (
+    Event,
     GenderMixin,
     Language,
     Person,
+    Task,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -165,3 +166,48 @@ class SearchForm(forms.Form):
     term = forms.CharField(label="Term", max_length=100)
     no_redirect = forms.BooleanField(required=False, initial=False)
     helper = BootstrapHelper(add_cancel_button=False, use_get_method=True)
+
+
+class SignupForRecruitmentForm(forms.ModelForm):
+    user_notes = forms.CharField(
+        required=False, widget=forms.Textarea, label="Your notes"
+    )
+    helper = BootstrapHelper(
+        submit_label="Submit my interest in teaching this workshop",
+        add_cancel_button=False,
+    )
+
+    class Meta:
+        model = InstructorRecruitmentSignup
+        fields = [
+            "user_notes",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        self.person: Person = kwargs.pop("person")
+        self.recruitment: InstructorRecruitment = kwargs.pop("recruitment")
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        # Check if user has any instructor roles for events taking place at the same
+        # time of this event.
+        event: Event = self.recruitment.event
+        if (
+            event.start
+            and event.end
+            and (
+                conflicting_tasks := Task.objects.filter(
+                    person=self.person,
+                    role__name="instructor",
+                    event__start__lte=event.end,
+                    event__end__gte=event.start,
+                )
+            )
+        ):
+            # error not bound to any particular field
+            raise ValidationError(
+                "Selected event dates conflict with events: "
+                f"{', '.join(task.event.slug for task in conflicting_tasks)}"
+            )
