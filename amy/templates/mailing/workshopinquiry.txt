@@ -9,7 +9,7 @@ a workshop will not be scheduled until it has been confirmed by the host and
 The Carpentries Workshop Administrator. Our workshops are organised based on
 the order the Workshop Request Form is received and finalized.
 
-If you are interested in learning more about how we teach workshops online in, you can read about it in our handbook
+If you are interested in learning more about how we teach workshops online, you can read about it in our handbook
 (https://docs.carpentries.org/topic_folders/hosts_instructors/resources_for_online_workshops.html).
 
 A member from our team will be following up with you. We look forward to
