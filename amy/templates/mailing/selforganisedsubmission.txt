@@ -1,6 +1,6 @@
 
 
-Thank you for informing us of your self-organised workshop! The workshop administrative team or your regional coordinator will follow-up within a week.
+Thank you for informing us of your self-organised workshop! The workshop administrative team will follow-up within a week.
 
 Approximately 2 weeks prior to the workshop, please send a reminder to your learners to complete the pre-survey and install the necessary software prior to the workshop. Feel free to utilize the email template "Email Learners before Workshop", found in The Carpentries Handbook (https://docs.carpentries.org/topic_folders/hosts_instructors/hosts_instructors_checklist.html#email-templates). The survey links for learners are automatically generated on the workshop's GitHub page, and typically located above and within the schedule.
 
