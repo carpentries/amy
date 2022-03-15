@@ -912,7 +912,7 @@ class Command(BaseCommand):
         closed."""
         self.stdout.write("Generating 2 fake instructor recruitments...")
 
-        assignee = Person.objects.first()
+        assignee = Person.objects.get(username="admin")
         event1 = self.fake_event()
         recruitment1 = InstructorRecruitment.objects.create(
             assigned_to=assignee,

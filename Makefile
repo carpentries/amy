@@ -29,10 +29,10 @@ dev_database :
 	${MANAGE} migrate
 	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
 	${MANAGE} loaddata amy/communityroles/fixtures/inactivations.json
+	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
 	${MANAGE} createinitialrevisions
-	${MANAGE} create_superuser
 
 ## node_modules : install front-end dependencies using Yarn
 node_modules : package.json
