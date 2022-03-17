@@ -11,3 +11,11 @@ class InstructorRecruitmentCreateForm(forms.ModelForm):
     class Meta:
         model = InstructorRecruitment
         fields = ("notes",)
+
+
+class InstructorRecruitmentSignupChangeStateForm(forms.Form):
+    ALLOWED_ACTIONS = (
+        ("confirm", "Confirm"),
+        ("decline", "Decline"),
+    )
+    action = forms.ChoiceField(choices=ALLOWED_ACTIONS)

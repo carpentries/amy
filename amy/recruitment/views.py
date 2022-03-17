@@ -3,9 +3,16 @@ from typing import Optional
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.generic import View
+from django.views.generic.edit import FormMixin
 
 from recruitment.filters import InstructorRecruitmentFilter
-from recruitment.forms import InstructorRecruitmentCreateForm
+from recruitment.forms import (
+    InstructorRecruitmentCreateForm,
+    InstructorRecruitmentSignupChangeStateForm,
+)
 from workshops.base_views import (
     AMYCreateView,
     AMYDetailView,
@@ -215,3 +222,33 @@ class InstructorRecruitmentDetails(
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         return context
+
+
+class InstructorRecruitmentSignupChangeState(FormMixin, View):
+    """POST requests for editing (confirming or deleting) the instructor signup."""
+
+    form_class = InstructorRecruitmentSignupChangeStateForm
+
+    def get_object(self) -> InstructorRecruitmentSignup:
+        return InstructorRecruitmentSignup.objects.get(pk=self.kwargs["pk"])
+
+    def get_success_url(self) -> str:
+        return reverse("all_instructorrecruitment")
+
+    def form_invalid(self, form):
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_valid(self, form):
+        # edit object
+        self.object.state = "a" if form.cleaned_data["action"] == "confirm" else "d"
+        self.object.save()
+        return super().form_valid(form)
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)

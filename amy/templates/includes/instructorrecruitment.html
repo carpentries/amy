@@ -52,9 +52,16 @@
       </td>
       <td>{{ signup.get_state_display }}</td>
       <td>
-        TODO
-        <a href="" class="btn btn-sm btn-success">Confirm</a>
-        <a href="" class="btn btn-sm btn-danger">Decline</a>
+        <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to CONFIRM this application?")' method="POST" class="d-inline-block my-1 mr-1">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <button type="submit" class="btn btn-sm btn-success">Confirm</button>
+        </form>
+        <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to DECLINE this application?")' method="POST" class="d-inline-block my-1 mr-1">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="decline">
+          <button type="submit" class="btn btn-sm btn-danger">Decline</button>
+        </form>
       </td>
     </tr>
     {% empty %}
