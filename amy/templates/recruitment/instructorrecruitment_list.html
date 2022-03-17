@@ -13,13 +13,25 @@
     </span>
   </h4>
   <p class="lead">
-    <i class="far fa-calendar"></i> {% human_daterange object.event.start object.event.end %}<br>
-    {% if "online" in object.event.tags.strings %}
-      <i class="fa fa-globe"></i> online <br>
-    {% else %}
-      <i class="fa fa-users"></i> in-person <br>
-    {% endif %}
-    <i class="fas fa-user-cog"></i> {% if object.assigned_to %}Assigned to: <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a>{% else %}Unassigned{% endif %}
+    <table>
+      <tr>
+        <td width="25px"><i class="far fa-calendar"></i></td>
+        <td>{% human_daterange object.event.start object.event.end %}</td>
+      </tr>
+      <tr>
+        {% if "online" in object.event.tags.strings %}
+        <td><i class="fa fa-globe"></i></td>
+        <td>online</td>
+        {% else %}
+        <td><i class="fa fa-users"></td>
+        <td>in-person</td>
+        {% endif %}
+      </tr>
+      <tr>
+        <td><i class="fas fa-user-cog"></i></td>
+        <td>{% if object.assigned_to %}Assigned to: <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a>{% else %}Unassigned{% endif %}</td>
+      </tr>
+    </table>
   </p>
   <div class="card recruitment-notes">
     <div class="card-body">
