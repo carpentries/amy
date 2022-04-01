@@ -558,17 +558,33 @@ def search(request):
             )
             results_combined += airports
 
-            training_requests = list(
-                TrainingRequest.objects.filter(
+            if len(tokens) == 2:
+                name1, name2 = tokens
+                complex_q = (
                     Q(group_name__icontains=term)
-                    | Q(family__icontains=term)
+                    | (Q(personal__icontains=name1) & Q(family__icontains=name2))
+                    | (Q(personal__icontains=name2) & Q(family__icontains=name1))
                     | Q(email__icontains=term)
+                    | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
                     | Q(affiliation__icontains=term)
                     | Q(location__icontains=term)
                     | Q(user_notes__icontains=term)
                 )
-            )
+                training_requests = list(TrainingRequest.objects.filter(complex_q))
+
+            else:
+                training_requests = list(
+                    TrainingRequest.objects.filter(
+                        Q(group_name__icontains=term)
+                        | Q(family__icontains=term)
+                        | Q(email__icontains=term)
+                        | Q(github__icontains=term)
+                        | Q(affiliation__icontains=term)
+                        | Q(location__icontains=term)
+                        | Q(user_notes__icontains=term)
+                    )
+                )
             results_combined += training_requests
 
             comments = list(
