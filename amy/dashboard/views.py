@@ -537,7 +537,7 @@ def search(request):
                     | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
                 )
-                persons = list(Person.objects.filter(complex_q))
+                persons = list(Person.objects.filter(complex_q).order_by("family"))
             else:
                 persons = list(
                     Person.objects.filter(
@@ -571,7 +571,7 @@ def search(request):
                     | Q(location__icontains=term)
                     | Q(user_notes__icontains=term)
                 )
-                training_requests = list(TrainingRequest.objects.filter(complex_q))
+                training_requests = list(TrainingRequest.objects.filter(complex_q).order_by("family"))
 
             else:
                 training_requests = list(
@@ -583,8 +583,9 @@ def search(request):
                         | Q(affiliation__icontains=term)
                         | Q(location__icontains=term)
                         | Q(user_notes__icontains=term)
-                    )
+                    ).order_by("family")
                 )
+
             results_combined += training_requests
 
             comments = list(
