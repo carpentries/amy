@@ -169,7 +169,7 @@ class InstructorRecruitmentCreate(
         except Event.workshoprequest.RelatedObjectDoesNotExist:
             return {}
 
-    def form_valid(self, form):
+    def form_valid(self, form: InstructorRecruitmentCreateForm):
         self.object: InstructorRecruitment = form.save(commit=False)
         self.object.assigned_to = self.request.user
         self.object.event = self.event
@@ -225,7 +225,7 @@ class InstructorRecruitmentDetails(
 
 
 class InstructorRecruitmentSignupChangeState(FormMixin, View):
-    """POST requests for editing (confirming or deleting) the instructor signup."""
+    """POST requests for editing (confirming or declining) the instructor signup."""
 
     form_class = InstructorRecruitmentSignupChangeStateForm
 
@@ -239,9 +239,13 @@ class InstructorRecruitmentSignupChangeState(FormMixin, View):
         return HttpResponseRedirect(self.get_success_url())
 
     def form_valid(self, form):
-        # edit object
-        self.object.state = "a" if form.cleaned_data["action"] == "confirm" else "d"
+        action_to_state_mapping = {
+            "confirm": "a",
+            "decline": "d",
+        }
+        self.object.state = action_to_state_mapping[form.cleaned_data["action"]]
         self.object.save()
+
         return super().form_valid(form)
 
     def post(self, request, *args, **kwargs):
