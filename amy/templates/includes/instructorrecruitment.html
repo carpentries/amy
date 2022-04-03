@@ -1,3 +1,4 @@
+{% load state %}
 <table class="table table-bordered table-striped">
   <thead>
     <tr>
@@ -8,7 +9,16 @@
       <th>Notes from Instructor</th>
       <th>Notes from RC</th>
       <th>Date conflicts</th>
-      <th>State</th>
+      <th>
+        State
+        <i
+          class="fas fa-question-circle"
+          data-toggle="popover" data-html="true" data-trigger="hover"
+          data-content="<span class='badge badge-warning'>Pending</span>
+                        <span class='badge badge-success'>Accepted</span>
+                        <span class='badge badge-danger'>Discarded</span>"
+        ></i>
+      </th>
       <th>Action</th>
     </tr>
   </thead>
@@ -50,17 +60,29 @@
           {% endif %}
         {% endfor %}
       </td>
-      <td>{{ signup.get_state_display }}</td>
+      <td>
+        <span class="{% state_label signup %}">
+          {{ signup.get_state_display }}
+        </span>
+      </td>
       <td>
         <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to CONFIRM this application?")' method="POST" class="d-inline-block my-1 mr-1">
           {% csrf_token %}
           <input type="hidden" name="action" value="confirm">
+          {% if signup.state == "p" %}
           <button type="submit" class="btn btn-sm btn-success">Confirm</button>
+          {% else %}
+          <button type="submit" class="btn btn-sm btn-secondary">Confirm</button>
+          {% endif %}
         </form>
         <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to DECLINE this application?")' method="POST" class="d-inline-block my-1 mr-1">
           {% csrf_token %}
           <input type="hidden" name="action" value="decline">
+          {% if signup.state == "p" %}
           <button type="submit" class="btn btn-sm btn-danger">Decline</button>
+          {% else %}
+          <button type="submit" class="btn btn-sm btn-secondary">Decline</button>
+          {% endif %}
         </form>
       </td>
     </tr>
