@@ -5,12 +5,16 @@ from django.test import override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 
+from autoemails.actions import NewInstructorAction
+from autoemails.models import EmailTemplate, RQJob, Trigger
+from autoemails.tests.base import FakeRedisTestCaseMixin
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
 )
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+import recruitment.views
 from recruitment.views import (
     InstructorRecruitmentCreate,
     InstructorRecruitmentDetails,
@@ -23,6 +27,7 @@ from workshops.models import (
     Organization,
     Person,
     Role,
+    Tag,
     Task,
     WorkshopRequest,
 )
@@ -387,7 +392,38 @@ class TestInstructorRecruitmentDetailsView(TestBase):
         self.assertEqual(response.context["object"], recruitment)
 
 
-class TestInstructorRecruitmentSignupChangeState(TestBase):
+class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = recruitment.views.scheduler
+        self._saved_redis_connection = recruitment.views.redis_connection
+        # overwrite them
+        recruitment.views.scheduler = self.scheduler
+        recruitment.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        recruitment.views.scheduler = self._saved_scheduler
+        recruitment.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_email_automation_data(self) -> None:
+        self.automated_email_tag = Tag.objects.create(
+            name="automated-email", priority=0
+        )
+        template = EmailTemplate.objects.create(
+            slug="sample-template",
+            subject="Welcome!",
+            to_header="",
+            from_header="test@address.com",
+            cc_header="copy@example.org",
+            bcc_header="bcc@example.org",
+            reply_to_header="",
+            body_template="# Welcome",
+        )
+        Trigger.objects.create(action="new-instructor", template=template)
+
     def test_class_fields(self) -> None:
         # Arrange
         view = InstructorRecruitmentSignupChangeState()
@@ -486,25 +522,41 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
     def test_add_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
-        view = InstructorRecruitmentSignupChangeState()
+        self._prepare_email_automation_data()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
         )
-        organization = Organization.objects.first()
+        organization = self.org_alpha
         event = Event.objects.create(
             slug="test-event",
             host=organization,
             administrator=organization,
         )
+        event.tags.add(self.automated_email_tag)
         # Act
-        result = view.add_instructor_task(person, event)
+        task = view.add_instructor_task(person, event)
         # Assert
-        self.assertTrue(result.pk)
+        self.assertTrue(task.pk)
+        self.assertTrue(NewInstructorAction.check(task))
+        self.assertTrue(task.rq_jobs.all())
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
 
     def test_remove_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
-        view = InstructorRecruitmentSignupChangeState()
+        self._prepare_email_automation_data()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
         )

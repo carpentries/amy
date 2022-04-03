@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 from django.conf import settings
@@ -9,7 +10,12 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import View
 from django.views.generic.edit import FormMixin
+import django_rq
 
+from autoemails.actions import NewInstructorAction
+from autoemails.base_views import ActionManageMixin
+from autoemails.job import Job
+from autoemails.models import RQJob, Trigger
 from autoemails.utils import safe_next_or_default_url
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
@@ -27,6 +33,11 @@ from workshops.models import Event, Person, Role, Task
 from workshops.util import OnlyForAdminsMixin, human_daterange
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
+
+logger = logging.getLogger("amy.signals")
+scheduler = django_rq.get_scheduler("default")
+redis_connection = django_rq.get_connection("default")
+
 
 # ------------------------------------------------------------
 # InstructorRecruitment related views
@@ -274,16 +285,46 @@ class InstructorRecruitmentSignupChangeState(
 
     def add_instructor_task(self, person: Person, event: Event) -> Task:
         role = Role.objects.get(name="instructor")
-        return Task.objects.create(
+        task = Task.objects.create(
             event=event,
             person=person,
             role=role,
         )
+        self.add_automated_email(task)
+        return task
 
     def remove_instructor_task(self, person: Person, event: Event) -> None:
-        Task.objects.filter(
-            role__name="instructor", person=person, event=event
-        ).delete()
+        task = Task.objects.get(role__name="instructor", person=person, event=event)
+        self.remove_automated_email(task)
+        task.delete()
+
+    def add_automated_email(self, task: Task) -> tuple[list[Job], list[RQJob]]:
+        trigger_name = "new-instructor"
+        triggers = Trigger.objects.filter(active=True, action=trigger_name)
+        return ActionManageMixin.add(
+            action_class=NewInstructorAction,
+            logger=logger,
+            scheduler=scheduler,
+            triggers=triggers,
+            context_objects=dict(task=task, event=task.event),
+            object_=task,
+            request=self.request,
+        )
+
+    def remove_automated_email(self, task: Task) -> None:
+        trigger_name = "new-instructor"
+        jobs = task.rq_jobs.filter(trigger__action=trigger_name).values_list(
+            "job_id", flat=True
+        )
+        return ActionManageMixin.remove(
+            action_class=NewInstructorAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs,
+            object_=task,
+            request=self.request,
+        )
 
     def post(self, request, *args, **kwargs):
         self.request = request
