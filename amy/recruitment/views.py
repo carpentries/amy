@@ -225,7 +225,13 @@ class InstructorRecruitmentDetails(
         return context
 
 
-class InstructorRecruitmentSignupChangeState(FormMixin, View):
+class InstructorRecruitmentSignupChangeState(
+    OnlyForAdminsMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    FormMixin,
+    View,
+):
     """POST requests for editing (confirming or declining) the instructor signup."""
 
     form_class = InstructorRecruitmentSignupChangeStateForm
