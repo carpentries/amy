@@ -7,12 +7,9 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
-from django.db.models.query import QuerySet
-from django.http.request import HttpRequest
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 import django_rq
 
-from autoemails.base_views import ActionManageMixin
 from autoemails.models import EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
@@ -22,40 +19,6 @@ from workshops.models import Event, Person, Task
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
 DAY_IN_SECONDS = 86400
-
-
-def send_bulk_email(
-    request: HttpRequest,
-    action_class: Type[BaseAction],
-    triggers: QuerySet[Trigger],
-    emails: List[str],
-    additional_context_objects: Mapping[Any, Any],
-    object_: Any,
-):
-    emails_to_send = [
-        emails[i : i + settings.BULK_EMAIL_LIMIT]  # noqa
-        for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)
-    ]
-    for emails in emails_to_send:
-        jobs, rqjobs = ActionManageMixin.add(
-            action_class=action_class,
-            logger=logger,
-            scheduler=scheduler,
-            triggers=triggers,
-            context_objects=dict(
-                person_emails=emails,
-                **additional_context_objects,
-            ),
-            object_=object_,
-        )
-        if triggers and jobs:
-            ActionManageMixin.bulk_schedule_message(
-                request=request,
-                num_emails=len(emails),
-                trigger=triggers[0],
-                job=jobs[0],
-                scheduler=scheduler,
-            )
 
 
 class BaseAction:
@@ -1311,6 +1274,8 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
 
     def __call__(self, *args, **kwargs):
+        from autoemails.base_views import ActionManageMixin
+
         people = self.get_people_with_anniversary()
         triggers = Trigger.objects.filter(
             active=True,
