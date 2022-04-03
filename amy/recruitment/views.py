@@ -1,9 +1,11 @@
 from typing import Optional
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import IntegrityError
 from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import View
 from django.views.generic.edit import FormMixin
@@ -21,7 +23,7 @@ from workshops.base_views import (
     ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
-from workshops.models import Event, Person, Task
+from workshops.models import Event, Person, Role, Task
 from workshops.util import OnlyForAdminsMixin, human_daterange
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
@@ -244,10 +246,10 @@ class InstructorRecruitmentSignupChangeState(
         default_url = reverse("all_instructorrecruitment")
         return safe_next_or_default_url(next_url, default_url)
 
-    def form_invalid(self, form):
+    def form_invalid(self, form) -> HttpResponse:
         return HttpResponseRedirect(self.get_success_url())
 
-    def form_valid(self, form):
+    def form_valid(self, form) -> HttpResponse:
         action_to_state_mapping = {
             "confirm": "a",
             "decline": "d",
@@ -255,7 +257,33 @@ class InstructorRecruitmentSignupChangeState(
         self.object.state = action_to_state_mapping[form.cleaned_data["action"]]
         self.object.save()
 
-        return super().form_valid(form)
+        state_to_method_action_mapping = {
+            "a": self.add_instructor_task,
+            "d": self.remove_instructor_task,
+        }
+        handler = state_to_method_action_mapping[self.object.state]
+        try:
+            handler(self.object.person, self.object.recruitment.event)
+            return super().form_valid(form)
+        except IntegrityError:
+            messages.error(
+                self.request,
+                "Unable to create or remove instructor task due to database error.",
+            )
+            return HttpResponseRedirect(self.get_success_url())
+
+    def add_instructor_task(self, person: Person, event: Event) -> Task:
+        role = Role.objects.get(name="instructor")
+        return Task.objects.create(
+            event=event,
+            person=person,
+            role=role,
+        )
+
+    def remove_instructor_task(self, person: Person, event: Event) -> None:
+        Task.objects.filter(
+            role__name="instructor", person=person, event=event
+        ).delete()
 
     def post(self, request, *args, **kwargs):
         self.request = request

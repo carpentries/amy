@@ -17,7 +17,15 @@ from recruitment.views import (
     InstructorRecruitmentList,
     InstructorRecruitmentSignupChangeState,
 )
-from workshops.models import Event, Language, Organization, Person, WorkshopRequest
+from workshops.models import (
+    Event,
+    Language,
+    Organization,
+    Person,
+    Role,
+    Task,
+    WorkshopRequest,
+)
 from workshops.tests.base import TestBase
 
 
@@ -436,7 +444,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Assert
         self.assertEqual(result, default_success_url)
 
-    def test_form_invalid_redirects_to_success_url(self) -> None:
+    def test_form_invalid__redirects_to_success_url(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
         pk = 120000
@@ -452,6 +460,67 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Assert
         mock_get_success_url.assert_called_once()
         self.assertEqual(result.status_code, 302)
+
+    def test_form_valid(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        mock_object = mock.MagicMock()
+        view = InstructorRecruitmentSignupChangeState(
+            object=mock_object, request=request
+        )
+        view.add_instructor_task = mock.MagicMock()
+        view.remove_instructor_task = mock.MagicMock()
+        data = {"action": "confirm"}
+        form = InstructorRecruitmentSignupChangeStateForm(data)
+        form.is_valid()
+        # Act
+        view.form_valid(form)
+        # Assert
+        self.assertEqual(mock_object.state, "a")
+        mock_object.save.assert_called_once()
+        view.add_instructor_task.assert_called_once_with(
+            mock_object.person, mock_object.recruitment.event
+        )
+        view.remove_instructor_task.assert_not_called()
+
+    def test_add_instructor_task(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        view = InstructorRecruitmentSignupChangeState()
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        # Act
+        result = view.add_instructor_task(person, event)
+        # Assert
+        self.assertTrue(result.pk)
+
+    def test_remove_instructor_task(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        view = InstructorRecruitmentSignupChangeState()
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        role = Role.objects.get(name="instructor")
+        task = Task.objects.create(person=person, event=event, role=role)
+        # Act
+        view.remove_instructor_task(person, event)
+        # Assert
+        with self.assertRaises(Task.DoesNotExist):
+            task.refresh_from_db()
 
     def test_post__form_valid(self) -> None:
         # Arrange
@@ -522,7 +591,8 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
-        data = {"action": "decline"}
+        role = Role.objects.create(name="instructor")
+        data = {"action": "confirm"}
         url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
         success_url = reverse("all_instructorrecruitment")
         # Act
@@ -531,4 +601,5 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Assert
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
-        self.assertEqual(signup.state, "d")
+        self.assertEqual(signup.state, "a")
+        self.assertTrue(Task.objects.get(event=event, person=person, role=role))
