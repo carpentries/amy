@@ -201,3 +201,8 @@ select[readonly].select2-hidden-accessible + .select2-container
     margin-top: 0;
     margin-bottom: 1rem;
 }
+
+/* RELATIVE TIME */
+relative-time {
+    text-decoration: dotted underline 10%;
+}

@@ -120,11 +120,10 @@ class ActionManageMixin:
                     request,
                     format_html(
                         "New email ({}) was scheduled to run "
-                        '<relative-time datetime="{}">{}</relative-time>: '
-                        '<a href="{}">{}</a>.',
+                        '<relative-time datetime="{}"></relative-time>: '
+                        '<a href="{}"><code>{}</code></a>.',
                         trigger.get_action_display(),
                         scheduled_at.isoformat(),
-                        "{:%Y-%m-%d %H:%M}".format(scheduled_at),
                         reverse("admin:autoemails_rqjob_preview", args=[rqj.pk]),
                         job.id,
                     ),
@@ -205,8 +204,8 @@ class ActionManageMixin:
                     messages.info(
                         request,
                         format_html(
-                            "Scheduled email {} was removed because action "
-                            "conditions have changed. "
+                            "Scheduled email <code>{}</code> was removed because "
+                            "action conditions have changed. "
                             '<a href="{}">See other scheduled jobs</a>.',
                             job,
                             reverse("admin:autoemails_rqjob_changelist"),

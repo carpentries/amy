@@ -1635,7 +1635,9 @@ class TestEventUpdatePostWorkshopAction(
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1748,7 +1750,9 @@ class TestEventDeletePostWorkshopAction(
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1988,7 +1992,9 @@ class TestEventUpdateInstructorsHostIntroduction(
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2143,7 +2149,9 @@ class TestEventDeleteInstructorsHostIntroduction(
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2350,7 +2358,9 @@ class TestEventUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2478,7 +2488,9 @@ class TestEventDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2691,7 +2703,9 @@ class TestEventUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, Test
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2823,7 +2837,9 @@ class TestEventDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, Test
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
