@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.views.generic import View
 from django.views.generic.edit import FormMixin
 
+from autoemails.utils import safe_next_or_default_url
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
     InstructorRecruitmentCreateForm,
@@ -233,7 +234,9 @@ class InstructorRecruitmentSignupChangeState(FormMixin, View):
         return InstructorRecruitmentSignup.objects.get(pk=self.kwargs["pk"])
 
     def get_success_url(self) -> str:
-        return reverse("all_instructorrecruitment")
+        next_url = self.request.POST.get("next", None)
+        default_url = reverse("all_instructorrecruitment")
+        return safe_next_or_default_url(next_url, default_url)
 
     def form_invalid(self, form):
         return HttpResponseRedirect(self.get_success_url())

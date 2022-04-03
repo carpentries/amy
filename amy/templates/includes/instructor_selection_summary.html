@@ -7,7 +7,7 @@
         <a href="{{ event.instructorrecruitment.get_absolute_url }}">See details</a>
       {% elif event.instructorrecruitment.status == "c" %}
         <span class="text-success">closed</span> <br>
-        <a href="">See details or reopen</a>
+        <a href="{{ event.instructorrecruitment.get_absolute_url }}">See details or reopen</a>
       {% else %}
         <span class="text-danger">inactive</span> <br>
         <a href="{% url 'instructorrecruitment_add' event.pk %}">Begin Instructor Selection process</a>

@@ -69,6 +69,7 @@
         <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to CONFIRM this application?")' method="POST" class="d-inline-block my-1 mr-1">
           {% csrf_token %}
           <input type="hidden" name="action" value="confirm">
+          <input type="hidden" name="next" value="{{ request.get_full_path|urlencode }}">
           {% if signup.state == "p" %}
           <button type="submit" class="btn btn-sm btn-success">Confirm</button>
           {% else %}
@@ -78,6 +79,7 @@
         <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to DECLINE this application?")' method="POST" class="d-inline-block my-1 mr-1">
           {% csrf_token %}
           <input type="hidden" name="action" value="decline">
+          <input type="hidden" name="next" value="{{ request.get_full_path|urlencode }}">
           {% if signup.state == "p" %}
           <button type="submit" class="btn btn-sm btn-danger">Decline</button>
           {% else %}
