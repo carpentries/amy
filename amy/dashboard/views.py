@@ -571,7 +571,9 @@ def search(request):
                     | Q(location__icontains=term)
                     | Q(user_notes__icontains=term)
                 )
-                training_requests = list(TrainingRequest.objects.filter(complex_q).order_by("family"))
+                training_requests = list(
+                    TrainingRequest.objects.filter(complex_q).order_by("family")
+                )
 
             else:
                 training_requests = list(
