@@ -5,7 +5,6 @@
       <th>Instructor Name</th>
       <th>Count workshops taught</th>
       <th>Country</th>
-      <th>Interested in?</th>
       <th>Notes from Instructor</th>
       <th>Notes from RC</th>
       <th>Date conflicts</th>
@@ -40,7 +39,6 @@
         </span>
       </td>
       <td>{% include "includes/country_flag.html" with country=signup.person.country %}</td>
-      <td>{{ signup.get_interest_display }}</td>
       <td>{{ signup.user_notes }}</td>
       <td>{{ signup.notes }}</td>
       <td>
