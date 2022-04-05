@@ -25,4 +25,16 @@ urlpatterns = [
             ]
         ),
     ),
+    path(
+        "signup/<int:pk>/",
+        include(
+            [
+                path(
+                    "change-state",
+                    views.InstructorRecruitmentSignupChangeState.as_view(),
+                    name="instructorrecruitmentsignup_changestate",
+                ),
+            ]
+        ),
+    ),
 ]

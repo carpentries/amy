@@ -872,7 +872,9 @@ class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         response = self.client.post(
             reverse("task_edit", args=[task.pk]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1006,7 +1008,9 @@ class TestTaskDeleteNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
 
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
 
         # task is gone
         with self.assertRaises(Task.DoesNotExist):
@@ -1322,7 +1326,9 @@ class TestTaskUpdateNewSupportingInstructor(
         response = self.client.post(
             reverse("task_edit", args=[task.pk]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1458,7 +1464,9 @@ class TestTaskDeleteNewSupportingInstructor(
 
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
 
         # task is gone
         with self.assertRaises(Task.DoesNotExist):
@@ -1785,7 +1793,9 @@ class TestTaskUpdateInstructorsHostIntroduction(
         response = self.client.post(
             reverse("task_edit", args=[self.host1_task.pk]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1928,7 +1938,9 @@ class TestTaskDeleteInstructorsHostIntroduction(
         response = self.client.post(
             reverse("task_delete", args=[self.host1_task.pk]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2183,7 +2195,9 @@ class TestTaskUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         response = self.client.post(
             reverse("task_edit", args=[self.instructor_task.pk]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2291,7 +2305,9 @@ class TestTaskDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         response = self.client.post(
             reverse("task_delete", args=[self.instructor_task.pk]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2476,7 +2492,9 @@ class TestTaskCreateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         response = self.client.post(reverse("task_add"), data, follow=True)
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
 
         # ensure the event doesn't pass checks anymore
         self.test_event.refresh_from_db()
@@ -2654,7 +2672,9 @@ class TestTaskUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         response = self.client.post(
             reverse("task_edit", args=[self.instructor_task.pk]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2844,7 +2864,9 @@ class TestTaskDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
 
         # ensure the event doesn't pass checks anymore
         self.test_event.refresh_from_db()

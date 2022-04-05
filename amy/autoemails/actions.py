@@ -2,17 +2,14 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 import logging
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple, Type
+from typing import Iterable, Optional, Type
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
-from django.db.models.query import QuerySet
-from django.http.request import HttpRequest
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
 import django_rq
 
-from autoemails.base_views import ActionManageMixin
 from autoemails.models import EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
@@ -22,40 +19,6 @@ from workshops.models import Event, Person, Task
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
 DAY_IN_SECONDS = 86400
-
-
-def send_bulk_email(
-    request: HttpRequest,
-    action_class: Type[BaseAction],
-    triggers: QuerySet[Trigger],
-    emails: List[str],
-    additional_context_objects: Mapping[Any, Any],
-    object_: Any,
-):
-    emails_to_send = [
-        emails[i : i + settings.BULK_EMAIL_LIMIT]  # noqa
-        for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)
-    ]
-    for emails in emails_to_send:
-        jobs, rqjobs = ActionManageMixin.add(
-            action_class=action_class,
-            logger=logger,
-            scheduler=scheduler,
-            triggers=triggers,
-            context_objects=dict(
-                person_emails=emails,
-                **additional_context_objects,
-            ),
-            object_=object_,
-        )
-        if triggers and jobs:
-            ActionManageMixin.bulk_schedule_message(
-                request=request,
-                num_emails=len(emails),
-                trigger=triggers[0],
-                job=jobs[0],
-                scheduler=scheduler,
-            )
 
 
 class BaseAction:
@@ -70,9 +33,9 @@ class BaseAction:
     # Keeps the default timestamp for the job to run
     launch_at: Optional[timedelta] = None
     # Stores additional contextual data for the trigger/template
-    additional_context: Optional[Dict] = None
+    additional_context: Optional[dict] = None
 
-    def __init__(self, trigger: Trigger, objects: Optional[Dict] = None):
+    def __init__(self, trigger: Trigger, objects: Optional[dict] = None):
         # save parameters just in case
         self.trigger = trigger
         # TODO: perhaps save in dict?
@@ -145,7 +108,7 @@ class BaseAction:
         Action."""
         return None
 
-    def reply_to(self) -> Optional[Tuple[str]]:
+    def reply_to(self) -> Optional[tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
         return None
 
@@ -167,7 +130,7 @@ class BaseAction:
         """If available, return string of all recipients."""
         return ""
 
-    def get_merge_data(self) -> Optional[Dict]:
+    def get_merge_data(self) -> Optional[dict]:
         """If available return a dict containing per user customizations
         See https://anymail.readthedocs.io/en/stable/sending/templates/#anymail.message.AnymailMessage.merge_data # noqa
 
@@ -177,7 +140,7 @@ class BaseAction:
         """
         return None
 
-    def _context(self, additional_context: Optional[Dict] = None) -> Dict:
+    def _context(self, additional_context: Optional[dict] = None) -> dict:
         """Prepare general context for lazy-evaluated email message used later
         on."""
         context = dict(site=Site.objects.get_current())
@@ -245,7 +208,7 @@ class BaseAction:
             self.logger.debug("Error occurred: {}", str(e))
             return False
 
-    def repeated_job_emails(self) -> Optional[List[str]]:
+    def repeated_job_emails(self) -> Optional[list[str]]:
         """
         For repeated jobs, do a query for
         the emails needed to send at this time.
@@ -1235,13 +1198,13 @@ class NewConsentRequiredAction(BaseAction):
     def get_additional_context(self, objects, *args, **kwargs):
         return dict()
 
-    def get_merge_data(self) -> Optional[Dict]:
+    def get_merge_data(self) -> Optional[dict]:
         # Returning an empty dictionary is necessary
         # if you want to send an individual email to each recipient
         # but have no per-user configuration
         return {}
 
-    def reply_to(self) -> Optional[Tuple[str]]:
+    def reply_to(self) -> Optional[tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
         return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
 
@@ -1258,7 +1221,7 @@ class ProfileUpdateReminderAction(BaseAction):
 
     launch_at = timedelta(hours=1)
 
-    def recipients(self) -> Optional[Tuple[str]]:
+    def recipients(self) -> Optional[tuple[str]]:
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
@@ -1274,7 +1237,7 @@ class ProfileUpdateReminderAction(BaseAction):
             return ", ".join(recipients)
         return ""
 
-    def reply_to(self) -> Optional[Tuple[str]]:
+    def reply_to(self) -> Optional[tuple[str]]:
         """Overwrite in order to set own reply-to from descending Action."""
         return (settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT,)
 
@@ -1311,6 +1274,8 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
     EMAIL_ACTION_CLASS = ProfileUpdateReminderAction
 
     def __call__(self, *args, **kwargs):
+        from autoemails.base_views import ActionManageMixin
+
         people = self.get_people_with_anniversary()
         triggers = Trigger.objects.filter(
             active=True,

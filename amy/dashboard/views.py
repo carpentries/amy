@@ -282,6 +282,7 @@ class UpcomingTeachingOpportunitiesList(
     def get_queryset(self):
         self.queryset = (
             InstructorRecruitment.objects.select_related("event")
+            .filter(status="o")
             .prefetch_related(
                 "event__curricula",
                 Prefetch(

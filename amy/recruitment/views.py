@@ -1,11 +1,27 @@
+import logging
 from typing import Optional
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import IntegrityError
 from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+from django.views.generic import View
+from django.views.generic.edit import FormMixin
+import django_rq
 
+from autoemails.actions import NewInstructorAction
+from autoemails.base_views import ActionManageMixin
+from autoemails.job import Job
+from autoemails.models import RQJob, Trigger
+from autoemails.utils import safe_next_or_default_url
 from recruitment.filters import InstructorRecruitmentFilter
-from recruitment.forms import InstructorRecruitmentCreateForm
+from recruitment.forms import (
+    InstructorRecruitmentCreateForm,
+    InstructorRecruitmentSignupChangeStateForm,
+)
 from workshops.base_views import (
     AMYCreateView,
     AMYDetailView,
@@ -13,10 +29,15 @@ from workshops.base_views import (
     ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
-from workshops.models import Event, Person, Task
+from workshops.models import Event, Person, Role, Task
 from workshops.util import OnlyForAdminsMixin, human_daterange
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
+
+logger = logging.getLogger("amy.signals")
+scheduler = django_rq.get_scheduler("default")
+redis_connection = django_rq.get_connection("default")
+
 
 # ------------------------------------------------------------
 # InstructorRecruitment related views
@@ -162,7 +183,7 @@ class InstructorRecruitmentCreate(
         except Event.workshoprequest.RelatedObjectDoesNotExist:
             return {}
 
-    def form_valid(self, form):
+    def form_valid(self, form: InstructorRecruitmentCreateForm):
         self.object: InstructorRecruitment = form.save(commit=False)
         self.object.assigned_to = self.request.user
         self.object.event = self.event
@@ -215,3 +236,101 @@ class InstructorRecruitmentDetails(
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         return context
+
+
+class InstructorRecruitmentSignupChangeState(
+    OnlyForAdminsMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    FormMixin,
+    View,
+):
+    """POST requests for editing (confirming or declining) the instructor signup."""
+
+    form_class = InstructorRecruitmentSignupChangeStateForm
+
+    def get_object(self) -> InstructorRecruitmentSignup:
+        return InstructorRecruitmentSignup.objects.get(pk=self.kwargs["pk"])
+
+    def get_success_url(self) -> str:
+        next_url = self.request.POST.get("next", None)
+        default_url = reverse("all_instructorrecruitment")
+        return safe_next_or_default_url(next_url, default_url)
+
+    def form_invalid(self, form) -> HttpResponse:
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_valid(self, form) -> HttpResponse:
+        action_to_state_mapping = {
+            "confirm": "a",
+            "decline": "d",
+        }
+        self.object.state = action_to_state_mapping[form.cleaned_data["action"]]
+        self.object.save()
+
+        state_to_method_action_mapping = {
+            "a": self.add_instructor_task,
+            "d": self.remove_instructor_task,
+        }
+        handler = state_to_method_action_mapping[self.object.state]
+        try:
+            handler(self.object.person, self.object.recruitment.event)
+            return super().form_valid(form)
+        except IntegrityError:
+            messages.error(
+                self.request,
+                "Unable to create or remove instructor task due to database error.",
+            )
+            return HttpResponseRedirect(self.get_success_url())
+
+    def add_instructor_task(self, person: Person, event: Event) -> Task:
+        role = Role.objects.get(name="instructor")
+        task = Task.objects.create(
+            event=event,
+            person=person,
+            role=role,
+        )
+        self.add_automated_email(task)
+        return task
+
+    def remove_instructor_task(self, person: Person, event: Event) -> None:
+        task = Task.objects.get(role__name="instructor", person=person, event=event)
+        self.remove_automated_email(task)
+        task.delete()
+
+    def add_automated_email(self, task: Task) -> tuple[list[Job], list[RQJob]]:
+        trigger_name = "new-instructor"
+        triggers = Trigger.objects.filter(active=True, action=trigger_name)
+        return ActionManageMixin.add(
+            action_class=NewInstructorAction,
+            logger=logger,
+            scheduler=scheduler,
+            triggers=triggers,
+            context_objects=dict(task=task, event=task.event),
+            object_=task,
+            request=self.request,
+        )
+
+    def remove_automated_email(self, task: Task) -> None:
+        trigger_name = "new-instructor"
+        jobs = task.rq_jobs.filter(trigger__action=trigger_name).values_list(
+            "job_id", flat=True
+        )
+        return ActionManageMixin.remove(
+            action_class=NewInstructorAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs,
+            object_=task,
+            request=self.request,
+        )
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)

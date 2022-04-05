@@ -5,15 +5,32 @@ from django.test import override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 
+from autoemails.actions import NewInstructorAction
+from autoemails.models import EmailTemplate, RQJob, Trigger
+from autoemails.tests.base import FakeRedisTestCaseMixin
 from recruitment.filters import InstructorRecruitmentFilter
-from recruitment.forms import InstructorRecruitmentCreateForm
+from recruitment.forms import (
+    InstructorRecruitmentCreateForm,
+    InstructorRecruitmentSignupChangeStateForm,
+)
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+import recruitment.views
 from recruitment.views import (
     InstructorRecruitmentCreate,
     InstructorRecruitmentDetails,
     InstructorRecruitmentList,
+    InstructorRecruitmentSignupChangeState,
 )
-from workshops.models import Event, Language, Organization, Person, WorkshopRequest
+from workshops.models import (
+    Event,
+    Language,
+    Organization,
+    Person,
+    Role,
+    Tag,
+    Task,
+    WorkshopRequest,
+)
 from workshops.tests.base import TestBase
 
 
@@ -373,3 +390,268 @@ class TestInstructorRecruitmentDetailsView(TestBase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["object"], recruitment)
+
+
+class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = recruitment.views.scheduler
+        self._saved_redis_connection = recruitment.views.redis_connection
+        # overwrite them
+        recruitment.views.scheduler = self.scheduler
+        recruitment.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        recruitment.views.scheduler = self._saved_scheduler
+        recruitment.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_email_automation_data(self) -> None:
+        self.automated_email_tag = Tag.objects.create(
+            name="automated-email", priority=0
+        )
+        template = EmailTemplate.objects.create(
+            slug="sample-template",
+            subject="Welcome!",
+            to_header="",
+            from_header="test@address.com",
+            cc_header="copy@example.org",
+            bcc_header="bcc@example.org",
+            reply_to_header="",
+            body_template="# Welcome",
+        )
+        Trigger.objects.create(action="new-instructor", template=template)
+
+    def test_class_fields(self) -> None:
+        # Arrange
+        view = InstructorRecruitmentSignupChangeState()
+        # Assert
+        self.assertEqual(view.form_class, InstructorRecruitmentSignupChangeStateForm)
+
+    def test_get_object(self) -> None:
+        # Arrange
+        pk = 120000
+        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
+        # Act
+        with mock.patch("recruitment.views.InstructorRecruitmentSignup") as mock_signup:
+            view.get_object()
+        # Assert
+        mock_signup.objects.get.assert_called_once_with(pk=pk)
+
+    def test_get_success_url__safe_next_provided(self) -> None:
+        # Arrange
+        safe_next = "/asdasd"
+        request = RequestFactory().post("/", {"next": safe_next})
+        pk = 120000
+        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
+        with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
+            view.post(request)
+        # Act
+        result = view.get_success_url()
+        # Assert
+        self.assertEqual(result, safe_next)
+
+    def test_get_success_url__unsafe_next_provided(self) -> None:
+        # Arrange
+        unsafe_next = "https://google.com/"
+        default_success_url = reverse("all_instructorrecruitment")
+        request = RequestFactory().post("/", {"next": unsafe_next})
+        pk = 120000
+        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
+        with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
+            view.post(request)
+        # Act
+        result = view.get_success_url()
+        # Assert
+        self.assertEqual(result, default_success_url)
+
+    def test_get_success_url__next_not_provided(self) -> None:
+        # Arrange
+        default_success_url = reverse("all_instructorrecruitment")
+        request = RequestFactory().post("/")
+        pk = 120000
+        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
+        with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
+            view.post(request)
+        # Act
+        result = view.get_success_url()
+        # Assert
+        self.assertEqual(result, default_success_url)
+
+    def test_form_invalid__redirects_to_success_url(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        pk = 120000
+        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
+        with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
+            view.post(request)
+        # Act
+        with mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "get_success_url"
+        ) as mock_get_success_url:
+            mock_get_success_url.return_value = "/"
+            result = view.form_invalid(mock.MagicMock())
+        # Assert
+        mock_get_success_url.assert_called_once()
+        self.assertEqual(result.status_code, 302)
+
+    def test_form_valid(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        mock_object = mock.MagicMock()
+        view = InstructorRecruitmentSignupChangeState(
+            object=mock_object, request=request
+        )
+        view.add_instructor_task = mock.MagicMock()
+        view.remove_instructor_task = mock.MagicMock()
+        data = {"action": "confirm"}
+        form = InstructorRecruitmentSignupChangeStateForm(data)
+        form.is_valid()
+        # Act
+        view.form_valid(form)
+        # Assert
+        self.assertEqual(mock_object.state, "a")
+        mock_object.save.assert_called_once()
+        view.add_instructor_task.assert_called_once_with(
+            mock_object.person, mock_object.recruitment.event
+        )
+        view.remove_instructor_task.assert_not_called()
+
+    def test_add_instructor_task(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        self._prepare_email_automation_data()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = self.org_alpha
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        event.tags.add(self.automated_email_tag)
+        # Act
+        task = view.add_instructor_task(person, event)
+        # Assert
+        self.assertTrue(task.pk)
+        self.assertTrue(NewInstructorAction.check(task))
+        self.assertTrue(task.rq_jobs.all())
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+    def test_remove_instructor_task(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        self._prepare_email_automation_data()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        role = Role.objects.get(name="instructor")
+        task = Task.objects.create(person=person, event=event, role=role)
+        # Act
+        view.remove_instructor_task(person, event)
+        # Assert
+        with self.assertRaises(Task.DoesNotExist):
+            task.refresh_from_db()
+
+    def test_post__form_valid(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState()
+        # Act
+        # TODO: switch syntax for multiple context managers in Python 3.10+
+        # https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
+        with mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "get_object"
+        ) as mock_get_object, mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "get_form"
+        ) as mock_get_form, mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "form_valid"
+        ) as mock_form_valid, mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "form_invalid"
+        ) as mock_form_invalid:
+            mock_get_form.return_value.is_valid.return_value = True
+            view.post(request)
+        # Assert
+        mock_get_object.assert_called_once()
+        mock_get_form.assert_called_once()
+        mock_get_form.return_value.is_valid.assert_called_once()
+        mock_form_valid.assert_called_once_with(mock_get_form.return_value)
+        mock_form_invalid.assert_not_called()
+
+    def test_post__form_invalid(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState()
+        # Act
+        # TODO: switch syntax for multiple context managers in Python 3.10+
+        # https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
+        with mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "get_object"
+        ) as mock_get_object, mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "get_form"
+        ) as mock_get_form, mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "form_valid"
+        ) as mock_form_valid, mock.patch.object(
+            InstructorRecruitmentSignupChangeState, "form_invalid"
+        ) as mock_form_invalid:
+            mock_get_form.return_value.is_valid.return_value = False
+            view.post(request)
+        # Assert
+        mock_get_object.assert_called_once()
+        mock_get_form.assert_called_once()
+        mock_get_form.return_value.is_valid.assert_called_once()
+        mock_form_valid.assert_not_called()
+        mock_form_invalid.assert_called_once_with(mock_get_form.return_value)
+
+    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    def test_integration(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        recruitment = InstructorRecruitment.objects.create(
+            event=event, notes="Test notes"
+        )
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person
+        )
+        role = Role.objects.create(name="instructor")
+        data = {"action": "confirm"}
+        url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
+        success_url = reverse("all_instructorrecruitment")
+        # Act
+        response = self.client.post(url, data, follow=False)
+        signup.refresh_from_db()
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, success_url)
+        self.assertEqual(signup.state, "a")
+        self.assertTrue(Task.objects.get(event=event, person=person, role=role))

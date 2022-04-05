@@ -19,6 +19,7 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.models import (
     AcademicLevel,
     Airport,
@@ -552,7 +553,7 @@ class Command(BaseCommand):
         self_organized=False,
         add_tags=True,
         future_date=False,
-    ):
+    ) -> Event:
         if future_date:
             start = self.faker.date_time_between(
                 start_date="now", end_date="+120d"
@@ -904,6 +905,67 @@ class Command(BaseCommand):
         ).active().update(archived_at=timezone.now())
         Consent.objects.bulk_create(consents)
 
+    def fake_instructor_recruitments(self) -> list[InstructorRecruitment]:
+        """Create recruitments for new fake events.
+
+        Two new recruitments will be created, one should be open, the other should be
+        closed."""
+        self.stdout.write("Generating 2 fake instructor recruitments...")
+
+        assignee = Person.objects.get(username="admin")
+        event1 = self.fake_event()
+        recruitment1 = InstructorRecruitment.objects.create(
+            assigned_to=assignee,
+            status="o",
+            notes=self.faker.paragraph(nb_sentences=1),
+            event=event1,
+        )
+        event2 = self.fake_event()
+        recruitment2 = InstructorRecruitment.objects.create(
+            assigned_to=assignee,
+            status="c",
+            notes=self.faker.paragraph(nb_sentences=1),
+            event=event2,
+        )
+        return [recruitment1, recruitment2]
+
+    def fake_instructor_recruitment_signups(
+        self, recruitments: list[InstructorRecruitment]
+    ) -> None:
+        self.stdout.write(
+            f"Generating {3 * len(recruitments)} fake instructor recruitment signups..."
+        )
+
+        person1 = self.fake_person(is_instructor=True)
+        person2 = self.fake_person(is_instructor=True)
+        person3 = self.fake_person(is_instructor=True)
+
+        for recruitment in recruitments:
+            InstructorRecruitmentSignup.objects.create(
+                state="p",
+                recruitment=recruitment,
+                person=person1,
+                interest="session",
+                user_notes=self.faker.paragraph(nb_sentences=2),
+                notes=self.faker.paragraph(nb_sentences=1),
+            )
+            InstructorRecruitmentSignup.objects.create(
+                state="d",
+                recruitment=recruitment,
+                person=person2,
+                interest="session",
+                user_notes=self.faker.paragraph(nb_sentences=2),
+                notes=self.faker.paragraph(nb_sentences=1),
+            )
+            InstructorRecruitmentSignup.objects.create(
+                state="a",
+                recruitment=recruitment,
+                person=person3,
+                interest="session",
+                user_notes=self.faker.paragraph(nb_sentences=2),
+                notes=self.faker.paragraph(nb_sentences=1),
+            )
+
     def handle(self, *args, **options):
         seed = options["seed"]
         if seed is not None:
@@ -933,6 +995,8 @@ class Command(BaseCommand):
             self.fake_workshop_inquiries()
             self.fake_selforganised_submissions()
             self.fake_consents()
+            recruitments = self.fake_instructor_recruitments()
+            self.fake_instructor_recruitment_signups(recruitments)
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")
