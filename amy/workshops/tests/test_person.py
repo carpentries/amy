@@ -355,9 +355,9 @@ class TestPerson(TestBase):
         data = {
             "username": "curie_marie",
             "personal": "Marie",
-            "family": "Curie",
+            "family": "Skłodowska-Curie",
             "gender": "F",
-            "email": "M.CURIE@sorbonne.fr",
+            "email": "M.SKLODOWSKA-CURIE@sorbonne.fr",
         }
         url = reverse("person_add")
         self.client.post(url, data)
