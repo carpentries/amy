@@ -353,7 +353,6 @@ class TestPerson(TestBase):
     def test_person_email_auto_lowercase(self):
         """Make sure PersonForm/PersonCreateForm lowercases user's email."""
         data = {
-            "username": "curie_marie",
             "personal": "Marie",
             "family": "Skłodowska-Curie",
             "gender": "F",
@@ -361,7 +360,7 @@ class TestPerson(TestBase):
         }
         url = reverse("person_add")
         self.client.post(url, data)
-        person = Person.objects.get(username="curie_marie")
+        person = Person.objects.get(username="skodowska-curie_marie")
         self.assertEqual(person.email, "m.sklodowska-curie@sorbonne.fr")
 
         url = reverse("person_edit", args=[person.pk])
