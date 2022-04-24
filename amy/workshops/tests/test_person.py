@@ -355,19 +355,19 @@ class TestPerson(TestBase):
         data = {
             "username": "curie_marie",
             "personal": "Marie",
-            "family": "Curie",
+            "family": "Skłodowska-Curie",
             "gender": "F",
-            "email": "M.CURIE@sorbonne.fr",
+            "email": "M.SKLODOWSKA-CURIE@sorbonne.fr",
         }
         url = reverse("person_add")
         self.client.post(url, data)
         person = Person.objects.get(username="curie_marie")
-        self.assertEqual(person.email, "m.curie@sorbonne.fr")
+        self.assertEqual(person.email, "m.sklodowska-curie@sorbonne.fr")
 
         url = reverse("person_edit", args=[person.pk])
         self.client.post(url, data)
         person.refresh_from_db()
-        self.assertEqual(person.email, "m.curie@sorbonne.fr")
+        self.assertEqual(person.email, "m.sklodowska-curie@sorbonne.fr")
 
     def test_edit_permission_of_person_without_email(self):
         """
