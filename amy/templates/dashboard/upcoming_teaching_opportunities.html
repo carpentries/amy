@@ -59,15 +59,21 @@
 
       {% else %}
         {% if signup.state == "p" %}
-          TODO
-          <button class="btn btn-outline-primary btn-disabled" disabled>Interest expressed, confirmation pending...</button>
-          <a href="#" class="btn btn-danger">Cancel teaching request.</a>
+          <div class="alert alert-info" role="alert">
+            <p>You expressed interest in this workshop, the confirmation is pending...</p>
+            <form action="{% url 'resign-from-recruitment' signup.pk %}" onsubmit='return confirm("Do you want to cancel your teaching request?")' method="POST">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Cancel teaching request</button>
+            </form>
+          </div>
         {% elif signup.state == "a" %}
-          TODO
-          <button class="btn btn-outline-success btn-disabled" disabled>Teaching confirmed.</button>
+          <div class="alert alert-success" role="alert">
+           <p>Your teaching request has been confirmed.</p>
+          </div>
         {% elif signup.state == "d" %}
-          TODO
-          <button class="btn btn-outline-warning btn-disabled" disabled>Teaching discarded.</button>
+          <div class="alert alert-warning" role="alert">
+           <p>Your teaching request has been declined.</p>
+          </div>
         {% endif %}
       {% endif %}
     {% endwith %}
