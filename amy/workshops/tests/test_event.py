@@ -275,6 +275,20 @@ class TestEvent(TestBase):
         host_label = event._meta.get_field('host').verbose_name
         self.assertEqual(host_label, 'Host Site')
 
+class TestEventForm(TestBase):
+    def test_sponsor_field_is_required(self):
+        form = EventForm()
+        self.assertTrue(form.fields['sponsor'].required)
+
+    def test_host_field_is_required(self):
+        form = EventForm()
+        self.assertTrue(form.fields['host'].required)
+
+    def test_membership_field_is_optional(self):
+        form = EventForm()
+        self.assertFalse(form.fields['membership'].required)
+
+
 class TestEventFormComments(TestBase):
     form = EventForm
 
