@@ -255,6 +255,25 @@ class TestEvent(TestBase):
         event.tags.set([self.TTT_tag])
         event.full_clean()
 
+    def test_sponsor_label(self):
+        event = Event.objects.create(
+            slug="test-event",
+            host=self.org_alpha,
+            sponsor=self.org_alpha,
+            administrator=self.org_alpha,
+        )
+        sponsor_label = event._meta.get_field('sponsor').verbose_name
+        self.assertEqual(sponsor_label, 'Organiser')
+
+    def test_host_label(self):
+        event = Event.objects.create(
+            slug="test-event",
+            host=self.org_alpha,
+            sponsor=self.org_alpha,
+            administrator=self.org_alpha,
+        )
+        host_label = event._meta.get_field('host').verbose_name
+        self.assertEqual(host_label, 'Host Site')
 
 class TestEventFormComments(TestBase):
     form = EventForm
