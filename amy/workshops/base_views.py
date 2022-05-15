@@ -10,7 +10,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import get_template
-from django.utils.http import is_safe_url
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -249,7 +249,7 @@ class RedirectSupportMixin:
     def get_success_url(self):
         default_url = super().get_success_url()
         next_url = self.request.GET.get("next", None)
-        if next_url is not None and is_safe_url(
+        if next_url is not None and url_has_allowed_host_and_scheme(
             next_url, allowed_hosts=settings.ALLOWED_HOSTS
         ):
             return next_url

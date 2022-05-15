@@ -3,7 +3,7 @@ Django settings for AMY project.
 """
 
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 import environ
 
 ROOT_DIR = environ.Path(__file__) - 2  # (amy/config/settings.py - 2 = amy/)
@@ -62,6 +62,9 @@ DATABASES = {
     ),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
+# Default primary key field type
+# https://docs.djangoproject.com/en/dev/ref/settings/#default-auto-field
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # URLS
 # -----------------------------------------------------------------------------
