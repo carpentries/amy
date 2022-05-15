@@ -41,6 +41,11 @@ urlpatterns = [
                     views.SignupForRecruitment.as_view(),
                     name="signup-for-recruitment",
                 ),
+                path(
+                    "teaching_opportunities/signups/<int:signup_pk>/resign",
+                    views.ResignFromRecruitment.as_view(),
+                    name="resign-from-recruitment",
+                ),
             ]
         ),
     ),

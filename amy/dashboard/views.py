@@ -7,9 +7,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
+from django.views.generic import View
+from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 
 from autoemails.utils import safe_next_or_default_url
@@ -474,6 +476,54 @@ class SignupForRecruitment(
             )
 
         return super().form_valid(form)
+
+
+class ResignFromRecruitment(
+    LoginRequiredMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    SingleObjectMixin,
+    View,
+):
+    permission_required = [
+        "recruitment.view_instructorrecruitmentsignup",
+        "recruitment.delete_instructorrecruitmentsignup",
+    ]
+    default_redirect_url = reverse_lazy("upcoming-teaching-opportunities")
+    pk_url_kwarg = "signup_pk"
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+
+        signup = self.get_object()
+        recruitment = signup.recruitment
+        signup.delete()
+
+        messages.success(
+            self.request,
+            f"Your teaching request was removed from recruitment {recruitment.event}",
+        )
+
+        redirect_url = self.get_redirect_url()
+        return redirect(redirect_url)
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
+
+    def get_queryset(self):
+        return InstructorRecruitmentSignup.objects.filter(
+            person=self.request.user, recruitment__status="o"
+        )
+
+    def get_redirect_url(self) -> str:
+        next_url = self.request.POST.get("next", None)
+        return safe_next_or_default_url(next_url, self.default_redirect_url)
 
 
 # ------------------------------------------------------------
