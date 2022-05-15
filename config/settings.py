@@ -30,8 +30,6 @@ DEBUG = env.bool("AMY_DEBUG", True)
 TIME_ZONE = "UTC"
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = "en-us"
-# https://docs.djangoproject.com/en/dev/ref/settings/#site-id
-SITE_ID = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
 USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-l10n
@@ -47,6 +45,7 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
         "SECRET_KEY when running with Debug=FALSE."
     )
 
+# https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = env.int("AMY_SITE_ID", default=2)
 ALLOWED_HOSTS = env.list("AMY_ALLOWED_HOSTS", default=["amy.carpentries.org"])
 if DEBUG:
@@ -91,6 +90,7 @@ if DEBUG:
 # APPS
 # -----------------------------------------------------------------------------
 DJANGO_APPS = [
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -107,7 +107,6 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "crispy_forms",
     "django_select2",
-    "django.contrib.admin",
     "django_countries",
     "django_filters",
     "reversion",
@@ -141,13 +140,6 @@ LOCAL_APPS = [
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
-
-# MIGRATIONS
-# -----------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#migration-modules
-MIGRATION_MODULES = {
-    # 'sites': 'amy.contrib.sites.migrations'
-}
 
 # AUTHENTICATION
 # -----------------------------------------------------------------------------
@@ -201,25 +193,25 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.BCryptPasswordHasher",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
-VALIDATION = "django.contrib.auth.password_validation."
+VALIDATION = "django.contrib.auth.password_validation"
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": VALIDATION + "UserAttributeSimilarityValidator",
+        "NAME": f"{VALIDATION}.UserAttributeSimilarityValidator",
         "OPTIONS": {
             "user_attributes": ("username", "personal", "middle", "family", "email")
         },
     },
     {
-        "NAME": VALIDATION + "MinimumLengthValidator",
+        "NAME": f"{VALIDATION}.MinimumLengthValidator",
         "OPTIONS": {
             "min_length": 10,
         },
     },
     {
-        "NAME": VALIDATION + "CommonPasswordValidator",
+        "NAME": f"{VALIDATION}.CommonPasswordValidator",
     },
     {
-        "NAME": VALIDATION + "NumericPasswordValidator",
+        "NAME": f"{VALIDATION}.NumericPasswordValidator",
     },
 ]
 
