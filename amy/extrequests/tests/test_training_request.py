@@ -523,7 +523,7 @@ class TestTrainingRequestsListView(TestBase):
         }
         msg1 = (
             f"Membership &quot;{membership1}&quot; is using more training seats "
-            "than it&#39;s been allowed."
+            "than it&#x27;s been allowed."
         )
         self.second_req.person = self.blackwidow
         self.second_req.save()
@@ -536,7 +536,7 @@ class TestTrainingRequestsListView(TestBase):
         }
         msg2 = (
             f"Membership &quot;{membership2}&quot; is using more training seats "
-            "than it&#39;s been allowed."
+            "than it&#x27;s been allowed."
         )
 
         # Act

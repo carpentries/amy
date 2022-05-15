@@ -618,7 +618,7 @@ def get_pagination_items(request, all_objects):
         items = all_objects.count()
 
     # Figure out where we are.
-    page = request.GET.get("page")
+    page = request.GET.get("page", 1)
 
     # Show selected items.
     paginator = Paginator(all_objects, items)

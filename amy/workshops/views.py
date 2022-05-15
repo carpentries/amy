@@ -22,7 +22,9 @@ from django.db import IntegrityError
 from django.db.models import (
     Case,
     Count,
+    ExpressionWrapper,
     F,
+    FloatField,
     IntegerField,
     Prefetch,
     ProtectedError,
@@ -2299,7 +2301,9 @@ def _workshop_staff_query(lat=None, lng=None):
         complex_F = (F("airport__latitude") - lat) ** 2 + (
             F("airport__longitude") - lng
         ) ** 2
-        people = people.annotate(distance=complex_F).order_by("distance", "family")
+        people = people.annotate(
+            distance=ExpressionWrapper(complex_F, output_field=FloatField())
+        ).order_by("distance", "family")
 
     return people
 

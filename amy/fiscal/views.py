@@ -73,11 +73,11 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
         related = ["host", "sponsor", "membership"]
         context["all_events"] = (
             self.object.hosted_events.select_related(*related)
+            .prefetch_related("tags")
             .union(
                 self.object.sponsored_events.select_related(*related),
                 self.object.administered_events.select_related(*related),
             )
-            .prefetch_related("tags")
         )
         context["main_organisation_memberships"] = Membership.objects.filter(
             member__role__name="main", member__organization=self.object
