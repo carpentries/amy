@@ -15,16 +15,15 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.paginator import Paginator as DjangoPaginator
-from django.core.validators import ValidationError
 from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.utils.http import is_safe_url
+from django.utils.http import url_has_allowed_host_and_scheme
 from django_comments.models import Comment
 import django_rq
 import requests
@@ -619,7 +618,7 @@ def get_pagination_items(request, all_objects):
         items = all_objects.count()
 
     # Figure out where we are.
-    page = request.GET.get("page")
+    page = request.GET.get("page", 1)
 
     # Show selected items.
     paginator = Paginator(all_objects, items)
@@ -1264,7 +1263,7 @@ def redirect_with_next_support(request, *args, **kwargs):
     does the same."""
 
     next_url = request.GET.get("next", None)
-    if next_url is not None and is_safe_url(
+    if next_url is not None and url_has_allowed_host_and_scheme(
         next_url, allowed_hosts=settings.ALLOWED_HOSTS
     ):
         return redirect(next_url)

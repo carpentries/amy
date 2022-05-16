@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from django.conf import settings
-from django.utils.http import is_safe_url
+from django.utils.http import url_has_allowed_host_and_scheme
 import django_rq
 import pytz
 from rq.exceptions import NoSuchJobError
@@ -71,6 +71,8 @@ def check_status(job: Union[str, Job], scheduler=None):
 
 
 def safe_next_or_default_url(next_url: Optional[str], default: str) -> str:
-    if next_url is not None and is_safe_url(next_url, settings.ALLOWED_HOSTS):
+    if next_url is not None and url_has_allowed_host_and_scheme(
+        next_url, settings.ALLOWED_HOSTS
+    ):
         return next_url
     return default

@@ -81,7 +81,7 @@ class ConsentsUpdateTest(ConsentTestBase):
             data[f"consents-{consent.term.slug}"] = consent.term_option.pk
         consents_path = reverse("consents_add", kwargs={"person_id": self.person.pk})
         result = self.client.post(f"{consents_path}?next={person_edit_view}", data)
-        self.assertEquals(result.status_code, status.HTTP_302_FOUND)
+        self.assertEqual(result.status_code, status.HTTP_302_FOUND)
 
         consents = Consent.objects.filter(
             person=self.person, term__in=[term1, term2, term3]

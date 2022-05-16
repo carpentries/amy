@@ -349,12 +349,12 @@ class TestTask(TestBase):
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; is using more public "
-            "training seats than it&#39;s been allowed.",
+            "training seats than it&#x27;s been allowed.",
         )
         self.assertContains(
             response2,
             f"Membership &quot;{self.membership}&quot; is using more in-house "
-            "training seats than it&#39;s been allowed.",
+            "training seats than it&#x27;s been allowed.",
         )
 
     def test_no_remaining_seats_warnings_when_updating(self):
@@ -468,12 +468,12 @@ class TestTask(TestBase):
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; is using more public "
-            "training seats than it&#39;s been allowed.",
+            "training seats than it&#x27;s been allowed.",
         )
         self.assertContains(
             response2,
             f"Membership &quot;{self.membership}&quot; is using more in-house "
-            "training seats than it&#39;s been allowed.",
+            "training seats than it&#x27;s been allowed.",
         )
 
     def test_open_applications_TTT(self):

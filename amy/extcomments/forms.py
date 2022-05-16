@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_comments.forms import COMMENT_MAX_LENGTH
 from django_comments.forms import CommentForm as DjCF
 from markdownx.fields import MarkdownxFormField
