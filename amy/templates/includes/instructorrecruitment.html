@@ -93,3 +93,4 @@
     {% endfor %}
   </tbody>
 </table>
+<p><a href="{% url 'instructorrecruitment_add_signup' object.pk %}?next={{ request.get_full_path|urlize }}" class="btn btn-success">New instructor application</a></p>

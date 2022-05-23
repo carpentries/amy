@@ -22,6 +22,11 @@ urlpatterns = [
                     views.InstructorRecruitmentDetails.as_view(),
                     name="instructorrecruitment_details",
                 ),
+                path(
+                    "add-signup",
+                    views.InstructorRecruitmentAddSignup.as_view(),
+                    name="instructorrecruitment_add_signup",
+                ),
             ]
         ),
     ),
