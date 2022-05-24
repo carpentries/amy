@@ -4,12 +4,13 @@ from typing import Optional
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db import IntegrityError
 from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import View
-from django.views.generic.edit import FormMixin
+from django.views.generic.edit import FormMixin, FormView
 import django_rq
 
 from autoemails.actions import NewInstructorAction
@@ -19,6 +20,7 @@ from autoemails.models import RQJob, Trigger
 from autoemails.utils import safe_next_or_default_url
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
+    InstructorRecruitmentAddSignupForm,
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
 )
@@ -236,6 +238,55 @@ class InstructorRecruitmentDetails(
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         return context
+
+
+class InstructorRecruitmentAddSignup(
+    OnlyForAdminsMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    """POST requests for adding new signup for an existing recruitment."""
+
+    permission_required = [
+        "recruitment.change_instructorrecruitment",
+        "recruitment.view_instructorrecruitmentsignup",
+    ]
+    form_class = InstructorRecruitmentAddSignupForm
+    template_name = "recruitment/instructorrecruitment_add_signup.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Add instructor application to {self.object}"
+        return context
+
+    def get_object(self) -> InstructorRecruitment:
+        return InstructorRecruitment.objects.get(pk=self.kwargs["pk"])
+
+    def get_success_url(self) -> str:
+        next_url = self.request.POST.get("next", None)
+        default_url = reverse("all_instructorrecruitment")
+        return safe_next_or_default_url(next_url, default_url)
+
+    def get_success_message(self, cleaned_data: dict[str, str]) -> str:
+        return f"Added {cleaned_data['person']} to {self.object}"
+
+    def form_valid(self, form: InstructorRecruitmentAddSignupForm) -> HttpResponse:
+        signup: InstructorRecruitmentSignup = form.save(commit=False)
+        signup.recruitment = self.object
+        signup.save()
+        return super().form_valid(form)
+
+    def get(self, request, *args, **kwargs):
+        self.request = request
+        self.object = self.get_object()
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
 
 
 class InstructorRecruitmentSignupChangeState(

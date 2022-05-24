@@ -206,6 +206,37 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class InstructorLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    """Lookup view for instructors using Community Roles approach (Instructor Role)."""
+
+    def get_queryset(self):
+        results = models.Person.objects.filter(
+            communityrole__config__name="instructor"
+        ).distinct()
+
+        if self.term:
+            filters = [
+                Q(personal__icontains=self.term),
+                Q(family__icontains=self.term),
+                Q(email__icontains=self.term),
+                Q(secondary_email__icontains=self.term),
+                Q(username__icontains=self.term),
+            ]
+
+            # split query into first and last names
+            tokens = re.split(r"\s+", self.term)
+            if len(tokens) == 2:
+                name1, name2 = tokens
+                complex_q = (
+                    Q(personal__icontains=name1) & Q(family__icontains=name2)
+                ) | (Q(personal__icontains=name2) & Q(family__icontains=name1))
+                filters.append(complex_q)
+
+            results = results.filter(reduce(operator.or_, filters))
+
+        return results
+
+
 class AdminLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     """The same as PersonLookup, but allows only to select administrators.
 
@@ -419,6 +450,8 @@ urlpatterns = [
     ),
     path("persons/", PersonLookupView.as_view(), name="person-lookup"),
     path("admins/", AdminLookupView.as_view(), name="admin-lookup"),
+    # uses community role
+    path("instructors/", InstructorLookupView.as_view(), name="instructor-lookup"),
     path("airports/", AirportLookupView.as_view(), name="airport-lookup"),
     path("languages/", LanguageLookupView.as_view(), name="language-lookup"),
     path(
