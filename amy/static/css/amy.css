@@ -206,3 +206,8 @@ select[readonly].select2-hidden-accessible + .select2-container
 relative-time {
     text-decoration: dotted underline 10%;
 }
+
+/* FORM inside btn-group  */
+.btn-group > form.btn-group:not(:first-child) {
+    margin-left: 0px;
+}

@@ -58,7 +58,7 @@ class InstructorRecruitmentList(
     filter_class = InstructorRecruitmentFilter
 
     queryset = (
-        InstructorRecruitment.objects.select_related("event")
+        InstructorRecruitment.objects.select_related("event", "assigned_to")
         .prefetch_related(
             Prefetch(
                 "instructorrecruitmentsignup_set",
@@ -69,7 +69,8 @@ class InstructorRecruitmentList(
                         num_instructor=Count(
                             Case(
                                 When(
-                                    person__task__role__name="instructor", then=Value(1)
+                                    person__task__role__name="instructor",
+                                    then=Value(1),
                                 ),
                                 output_field=IntegerField(),
                             )
@@ -85,12 +86,26 @@ class InstructorRecruitmentList(
                         ),
                         num_helper=Count(
                             Case(
-                                When(person__task__role__name="helper", then=Value(1)),
+                                When(
+                                    person__task__role__name="helper",
+                                    then=Value(1),
+                                ),
                                 output_field=IntegerField(),
                             )
                         ),
                     )
                 ),
+            )
+        )
+        .annotate(
+            num_pending=Count(
+                Case(
+                    When(
+                        instructorrecruitmentsignup__state="p",
+                        then=Value(1),
+                    ),
+                    output_field=IntegerField(),
+                )
             )
         )
         .order_by("-created_at")
@@ -231,6 +246,16 @@ class InstructorRecruitmentDetails(
                 )
             ),
         )
+    ).annotate(
+        num_pending=Count(
+            Case(
+                When(
+                    instructorrecruitmentsignup__state="p",
+                    then=Value(1),
+                ),
+                output_field=IntegerField(),
+            )
+        )
     )
     template_name = "recruitment/instructorrecruitment_details.html"
 
@@ -245,6 +270,7 @@ class InstructorRecruitmentAddSignup(
     RecruitmentEnabledMixin,
     ConditionallyEnabledMixin,
     SuccessMessageMixin,
+    PermissionRequiredMixin,
     FormView,
 ):
     """POST requests for adding new signup for an existing recruitment."""
@@ -294,10 +320,12 @@ class InstructorRecruitmentSignupChangeState(
     RecruitmentEnabledMixin,
     ConditionallyEnabledMixin,
     FormMixin,
+    PermissionRequiredMixin,
     View,
 ):
     """POST requests for editing (confirming or declining) the instructor signup."""
 
+    permission_required = "recruitment.change_instructorrecruitmentsignup"
     form_class = InstructorRecruitmentSignupChangeStateForm
 
     def get_object(self) -> InstructorRecruitmentSignup:
