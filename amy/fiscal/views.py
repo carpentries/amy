@@ -509,7 +509,7 @@ class MembershipCreateRollOver(
             "consortium": self.membership.consortium,
             "public_status": self.membership.public_status,
             "variant": self.membership.variant,
-            "agreement_start": self.membership.agreement_end,
+            "agreement_start": self.membership.agreement_end + timedelta(days=1),
             "agreement_end": date(
                 self.membership.agreement_end.year + 1,
                 self.membership.agreement_end.month,

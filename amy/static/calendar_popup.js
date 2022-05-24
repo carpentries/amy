@@ -39,6 +39,7 @@ $(document).ready(function() {
         if (e.date && !$('#id_agreement_end').val()) {
             d = e.date;
             d.setFullYear(d.getFullYear() + 1);
+            d.setDate(d.getDate() - 1);
             $('#id_agreement_end').datepicker('update', d);
         }
     });

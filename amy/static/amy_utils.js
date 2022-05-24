@@ -315,10 +315,16 @@ $(document).ready(function() {
   const duration_warning = function(start_element, end_element, warning_element) {
     const next_year = start_element.datepicker("getDate");
     const end_date = end_element.datepicker("getDate");
-    next_year.setFullYear(next_year.getFullYear() + 1);
 
-    if (next_year.getTime() != end_date.getTime()) {
-      warning_element.removeClass("d-none");
+    if (next_year && end_date) {
+      next_year.setFullYear(next_year.getFullYear() + 1);
+      next_year.setDate(next_year.getDate() - 1);
+
+      if (next_year.getTime() != end_date.getTime()) {
+        warning_element.removeClass("d-none");
+      } else {
+        warning_element.addClass("d-none");
+      }
     } else {
       warning_element.addClass("d-none");
     }
