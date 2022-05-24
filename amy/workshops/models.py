@@ -1263,6 +1263,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         blank=False,
         related_name="hosted_events",
         help_text="Organisation hosting the event.",
+        verbose_name="Host Site",
     )
     sponsor = models.ForeignKey(
         Organization,
@@ -1271,6 +1272,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         blank=False,
         related_name="sponsored_events",
         help_text="Institution that is funding or organising the workshop.",
+        verbose_name="Organiser",
     )
     membership = models.ForeignKey(
         Membership,

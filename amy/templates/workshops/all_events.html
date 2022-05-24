@@ -3,6 +3,7 @@
 {% load links %}
 {% load pagination %}
 {% load tags %}
+{% load verbose_names %}
 
 {% block content %}
   {% if perms.workshops.add_event %}
@@ -18,7 +19,7 @@
         <th>Tags</th>
         <th>URL</th>
         <th>Instructors</th>
-        <th>Host</th>
+        <th>{% get_verbose_field_name_by_model_name 'Event' 'host' %}</th>
         <th>Dates</th>
         <th>Completed</th>
         <th class="additional-links"></th>
