@@ -249,6 +249,10 @@ class InstructorRecruitmentAddSignup(
 ):
     """POST requests for adding new signup for an existing recruitment."""
 
+    permission_required = [
+        "recruitment.change_instructorrecruitment",
+        "recruitment.view_instructorrecruitmentsignup",
+    ]
     form_class = InstructorRecruitmentAddSignupForm
     template_name = "recruitment/instructorrecruitment_add_signup.html"
 

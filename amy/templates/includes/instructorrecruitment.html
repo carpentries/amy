@@ -93,4 +93,8 @@
     {% endfor %}
   </tbody>
 </table>
+{% if perms.recruitment.change_instructorrecruitment and perms.recruitment.view_instructorrecruitmentsignup %}
 <p><a href="{% url 'instructorrecruitment_add_signup' object.pk %}?next={{ request.get_full_path|urlize }}" class="btn btn-success">New instructor application</a></p>
+{% else %}
+<p><a href="#" class="btn btn-success disabled" role="button" aria-disabled="true">New instructor application</a></p>
+{% endif %}
