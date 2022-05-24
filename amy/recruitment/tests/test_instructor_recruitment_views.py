@@ -8,14 +8,21 @@ from django.urls import reverse
 from autoemails.actions import NewInstructorAction
 from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
+from communityroles.models import (
+    CommunityRole,
+    CommunityRoleConfig,
+    CommunityRoleInactivation,
+)
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
+    InstructorRecruitmentAddSignupForm,
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
 )
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 import recruitment.views
 from recruitment.views import (
+    InstructorRecruitmentAddSignup,
     InstructorRecruitmentCreate,
     InstructorRecruitmentDetails,
     InstructorRecruitmentList,
@@ -390,6 +397,190 @@ class TestInstructorRecruitmentDetailsView(TestBase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["object"], recruitment)
+
+
+class TestInstructorRecruitmentAddSignup(TestBase):
+    def test_class_fields(self) -> None:
+        # Arrange
+        view = InstructorRecruitmentAddSignup()
+        # Assert
+        self.assertEqual(
+            view.permission_required,
+            [
+                "recruitment.change_instructorrecruitment",
+                "recruitment.view_instructorrecruitmentsignup",
+            ],
+        )
+        self.assertEqual(view.form_class, InstructorRecruitmentAddSignupForm)
+        self.assertEqual(
+            view.template_name, "recruitment/instructorrecruitment_add_signup.html"
+        )
+
+    def test_context_data(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=date(2021, 12, 29),
+        )
+        recruitment = InstructorRecruitment.objects.create(
+            event=event,
+            notes="Test notes",
+        )
+        view = InstructorRecruitmentAddSignup(
+            kwargs={"pk": recruitment.pk},
+            object=recruitment,
+            request=request,
+        )
+        # Act
+        context = view.get_context_data(form=None)
+        # Assert
+        self.assertEqual(
+            context,
+            {
+                "form": None,
+                "title": f"Add instructor application to {recruitment}",
+                "view": view,
+            },
+        )
+
+    def test_get_object(self) -> None:
+        # Arrange
+        pk = 120000
+        view = InstructorRecruitmentAddSignup(kwargs={"pk": pk})
+        # Act
+        with mock.patch("recruitment.views.InstructorRecruitment") as mock_recruitment:
+            view.get_object()
+        # Assert
+        mock_recruitment.objects.get.assert_called_once_with(pk=pk)
+
+    def test_get_success_url(self) -> None:
+        # Arrange
+        url_redirect = {
+            "/asdasd": "/asdasd",
+            "https://google.com/": reverse("all_instructorrecruitment"),
+            None: reverse("all_instructorrecruitment"),
+        }
+        for url, redirect in url_redirect.items():
+            request = RequestFactory().post("/", {"next": url} if url else {})
+            pk = 120000
+            view = InstructorRecruitmentAddSignup(kwargs={"pk": pk})
+            with mock.patch("recruitment.views.InstructorRecruitment"):
+                view.post(request)
+            # Act
+            result = view.get_success_url()
+            # Assert
+            self.assertEqual(result, redirect)
+
+    def test_get_success_message(self) -> None:
+        # Arrange
+        view = InstructorRecruitmentAddSignup(object="Test")
+        data = {
+            "person": "Harry Potter",
+            "other_data": "James Bond",
+        }
+        # Act
+        success_message = view.get_success_message(data)
+        # Assert
+        self.assertEqual(success_message, "Added Harry Potter to Test")
+
+    def test_form_valid(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        mock_object = mock.MagicMock()
+        view = InstructorRecruitmentAddSignup(object=mock_object, request=request)
+        form = mock.MagicMock()
+        mock_signup = mock.MagicMock()
+        form.save.return_value = mock_signup
+
+        # Act
+        with mock.patch("recruitment.views.super") as mock_super:
+            view.form_valid(form)
+
+            # Assert
+            form.save.assert_called_once_with(commit=False)
+            self.assertEqual(mock_signup.recruitment, mock_object)
+            mock_signup.save.assert_called_once()
+            mock_super().form_valid.assert_called_once_with(form)
+
+    def test_get(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        mock_object = mock.MagicMock()
+        view = InstructorRecruitmentAddSignup(request=request, kwargs={"pk": 11200})
+        view.get_object = mock.MagicMock(return_value=mock_object)
+
+        # Act
+        with mock.patch("recruitment.views.super") as mock_super:
+            view.get(request)
+
+            # Assert
+            self.assertEqual(view.request, request)
+            self.assertEqual(view.object, mock_object)
+            mock_super().get.assert_called_once_with(request)
+
+    def test_post(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        mock_object = mock.MagicMock()
+        view = InstructorRecruitmentAddSignup(request=request, kwargs={"pk": 11200})
+        view.get_object = mock.MagicMock(return_value=mock_object)
+
+        # Act
+        with mock.patch("recruitment.views.super") as mock_super:
+            view.post(request)
+
+            # Assert
+            self.assertEqual(view.request, request)
+            self.assertEqual(view.object, mock_object)
+            mock_super().post.assert_called_once_with(request)
+
+    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    def test_integration(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        recruitment = InstructorRecruitment.objects.create(
+            event=event, notes="Test notes"
+        )
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            display_name="Instructor",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        inactivation = CommunityRoleInactivation.objects.create(name="inactivation")
+        CommunityRole.objects.create(
+            config=config,
+            person=person,
+            inactivation=inactivation,
+        )
+        notes = "Lorem ipsum"
+        data = {"person": person.pk, "notes": notes}
+        url = reverse("instructorrecruitment_add_signup", args=[recruitment.pk])
+        success_url = reverse("all_instructorrecruitment")
+        # Act
+        response = self.client.post(url, data, follow=False)
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, success_url)
+        self.assertEqual(recruitment.instructorrecruitmentsignup_set.count(), 1)
+        signup = recruitment.instructorrecruitmentsignup_set.last()
+        self.assertEqual(signup.person, person)
+        self.assertEqual(signup.user_notes, "")
+        self.assertEqual(signup.notes, notes)
 
 
 class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBase):

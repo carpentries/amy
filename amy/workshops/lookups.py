@@ -210,7 +210,9 @@ class InstructorLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     """Lookup view for instructors using Community Roles approach (Instructor Role)."""
 
     def get_queryset(self):
-        results = models.Person.objects.filter(communityrole__config__name="instructor")
+        results = models.Person.objects.filter(
+            communityrole__config__name="instructor"
+        ).distinct()
 
         if self.term:
             filters = [
