@@ -101,14 +101,15 @@
     <a href="#" class="btn btn-success disabled" role="button" aria-disabled="true">New instructor application</a>
     {% endif %}
 
-    {% if perms.recruitment.change_instructorrecruitment and object.num_pending == 0 %}
+    {% if perms.recruitment.change_instructorrecruitment and object.num_pending == 0 and object.status == "o" %}
     <form
-      action="#?next={{ request.get_full_path|urlize }}"
+      action="{% url 'instructorrecruitment_changestate' object.pk %}"
       method="POST"
       class="btn-group"
       onsubmit='return confirm("Are you sure you want to close this recruitment?");'
     >
       {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path|urlize }}">
       <button type="submit" class="btn btn-warning">Close signups</button>
     </form>
     {% else %}

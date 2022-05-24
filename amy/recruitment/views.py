@@ -413,3 +413,70 @@ class InstructorRecruitmentSignupChangeState(
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
+
+
+class InstructorRecruitmentChangeState(
+    OnlyForAdminsMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    FormMixin,
+    PermissionRequiredMixin,
+    View,
+):
+    """POST requests for editing (e.g. closing) the instructor recruitment."""
+
+    permission_required = "recruitment.change_instructorrecruitment"
+
+    def get_object(self) -> InstructorRecruitment:
+        return InstructorRecruitment.objects.annotate(
+            num_pending=Count(
+                Case(
+                    When(
+                        instructorrecruitmentsignup__state="p",
+                        then=Value(1),
+                    ),
+                    output_field=IntegerField(),
+                )
+            )
+        ).get(pk=self.kwargs["pk"])
+
+    def get_success_url(self) -> str:
+        next_url = self.request.POST.get("next", None)
+        default_url = reverse("all_instructorrecruitment")
+        return safe_next_or_default_url(next_url, default_url)
+
+    def _validate_for_closing(self, recruitment: InstructorRecruitment) -> bool:
+        if getattr(recruitment, "num_pending", 1) != 0:
+            return False
+        if recruitment.status != "o":
+            return False
+        return True
+
+    def close_recruitment(self) -> HttpResponse:
+        if not self._validate_for_closing(self.object):
+            messages.error(
+                self.request,
+                "Unable to close recruitment.",
+            )
+
+        else:
+            self.object.status = "c"
+            self.object.save()
+            messages.success(
+                self.request,
+                f"Successfully closed recruitment {self.object}.",
+            )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        self.request = request
+        self.object = self.get_object()
+
+        action = "close"
+        # For future if we need to handle other actions
+        action_handler_mapping = {
+            "close": self.close_recruitment,
+        }
+
+        return action_handler_mapping[action]()
