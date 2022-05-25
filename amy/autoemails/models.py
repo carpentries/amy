@@ -305,6 +305,11 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "profile-update",
             "Reminder to for the user to update the information in their profile.",
         ),
+        (
+            "declined-instructors",
+            "Thank-you email to Instructors who were not selected to teach in "
+            "a workshop.",
+        ),
     )
     action = models.CharField(
         max_length=50,
