@@ -1323,11 +1323,11 @@ class DeclinedInstructorsAction(BaseAction):
 
     launch_at = timedelta(hours=1)
 
-    def recipients(self) -> Optional[str]:
+    def recipients(self) -> Optional[list[str]]:
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
-            return self.context["email"]
+            return [self.context["email"]]
         except (AttributeError, KeyError):
             return None
 
@@ -1341,8 +1341,7 @@ class DeclinedInstructorsAction(BaseAction):
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
         try:
-            emails = self.context_objects["email"]
-            return ", ".join(emails)
+            return self.context_objects["person"].email
         except KeyError:
             return ""
 
