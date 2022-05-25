@@ -601,7 +601,7 @@ class SelfOrganisedRequestAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):  # type: ignore
+    def check(event: Event) -> bool:
         """Conditions for creating a SelfOrganisedRequestAction."""
         try:
             return bool(
@@ -725,6 +725,11 @@ class InstructorsHostIntroductionAction(BaseAction):
         except (Task.DoesNotExist, ValueError):
             return False
 
+        try:
+            open_instructor_recruitment = event.instructorrecruitment
+        except Event.instructorrecruitment.RelatedObjectDoesNotExist:
+            open_instructor_recruitment = False
+
         online = event.tags.filter(name="online")
 
         return bool(
@@ -742,6 +747,7 @@ class InstructorsHostIntroductionAction(BaseAction):
             and host
             and len(instructors) >= 2
             and (online and len(supporting_instructors) >= 1 or not online)
+            and not open_instructor_recruitment
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
