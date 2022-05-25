@@ -716,15 +716,13 @@ class InstructorsHostIntroductionAction(BaseAction):
     @staticmethod
     def check(event: Event):  # type: ignore
         """Conditions for creating a SelfOrganisedRequestAction."""
+
         # there is 1 host task and 2 instructor tasks
-        try:
-            host = event.task_set.filter(role__name="host").first()
-            instructors = event.task_set.filter(role__name="instructor")
-            supporting_instructors = event.task_set.filter(
-                role__name="supporting-instructor"
-            )
-        except (Task.DoesNotExist, ValueError):
-            return False
+        host = event.task_set.filter(role__name="host").first()
+        instructors = event.task_set.filter(role__name="instructor")
+        supporting_instructors = event.task_set.filter(
+            role__name="supporting-instructor"
+        )
 
         try:
             open_instructor_recruitment = event.instructorrecruitment
