@@ -725,7 +725,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         )
 
         try:
-            open_instructor_recruitment = event.instructorrecruitment
+            open_instructor_recruitment = event.instructorrecruitment.status == "o"
         except Event.instructorrecruitment.RelatedObjectDoesNotExist:
             open_instructor_recruitment = False
 

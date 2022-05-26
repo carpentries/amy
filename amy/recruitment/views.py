@@ -449,7 +449,8 @@ class InstructorRecruitmentChangeState(
         default_url = reverse("all_instructorrecruitment")
         return safe_next_or_default_url(next_url, default_url)
 
-    def _validate_for_closing(self, recruitment: InstructorRecruitment) -> bool:
+    @staticmethod
+    def _validate_for_closing(recruitment: InstructorRecruitment) -> bool:
         if getattr(recruitment, "num_pending", 1) != 0:
             return False
         if recruitment.status != "o":
