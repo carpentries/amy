@@ -35,6 +35,7 @@ social-auth-core = "~=4.1.0"
 social-auth-app-django = "~=5.0.0"
 gunicorn = "~=20.1.0"
 whitenoise = "~=6.1"
+django-better-admin-arrayfield = "==1.4.2"
 
 [dev-packages]
 django-webtest = "~=1.9.8"

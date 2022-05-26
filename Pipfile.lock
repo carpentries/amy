@@ -230,6 +230,14 @@
             "markers": "python_version >= '3.6'",
             "version": "==1.0.5"
         },
+        "django-better-admin-arrayfield": {
+            "hashes": [
+                "sha256:b45423e51bbc0aa31ef658248c058ca8b533a541be4dee9fb8bcd059f8a10a58",
+                "sha256:bfeaa0fa8210a7ea95ee996a6caaa59ecd0c923269f573e6d8319c28dcac5c88"
+            ],
+            "index": "pypi",
+            "version": "==1.4.2"
+        },
         "django-contrib-comments": {
             "hashes": [
                 "sha256:d82f1d04690550df026553053903deec0c52dc54212e1b79241b08f0355cff2c",

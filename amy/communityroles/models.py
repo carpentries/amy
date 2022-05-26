@@ -4,6 +4,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
+from django_better_admin_arrayfield.models.fields import ArrayField
 
 from fiscal.models import Membership
 from workshops.mixins import CreatedUpdatedMixin
@@ -26,6 +27,12 @@ class CommunityRoleConfig(CreatedUpdatedMixin, models.Model):
         ContentType,
         on_delete=models.CASCADE,
         null=True,
+        blank=True,
+    )
+    custom_key_labels = ArrayField(
+        models.CharField(max_length=150),
+        help_text="Labels to be used for custom text fields in community roles.",
+        default=list,
         blank=True,
     )
 
@@ -65,6 +72,14 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
     generic_relation = GenericForeignKey(
         "generic_relation_content_type", "generic_relation_pk"
     )
+
+    # Store custom keys (as defined by CommunityRoleConfig.custom_key_labels) in a list
+    # of pairs like so:
+    # [
+    #   ("This is a label for a key", "This is a value."),
+    #   ("Website", "https://carpentries.org/"),
+    # ]
+    custom_keys = models.JSONField(default=str, blank=True, null=True)
 
     def __str__(self) -> str:
         return f'Community Role "{self.config}" for {self.person}'
