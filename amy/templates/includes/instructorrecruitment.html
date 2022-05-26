@@ -22,7 +22,7 @@
     </tr>
   </thead>
   <tbody>
-    {% for signup in object.instructorrecruitmentsignup_set.all %}
+    {% for signup in object.signups.all %}
     <tr>
       <td><a href="{{ signup.person.get_absolute_url }}">{{ signup.person }}</a></td>
       <td>

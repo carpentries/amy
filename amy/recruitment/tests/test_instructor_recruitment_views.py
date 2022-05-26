@@ -125,9 +125,7 @@ class TestInstructorRecruitmentListView(TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["object_list"]), [recruitment])
         self.assertEqual(
-            list(
-                response.context["object_list"][0].instructorrecruitmentsignup_set.all()
-            ),
+            list(response.context["object_list"][0].signups.all()),
             [signup],
         )
 
@@ -576,8 +574,8 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         # Assert
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
-        self.assertEqual(recruitment.instructorrecruitmentsignup_set.count(), 1)
-        signup = recruitment.instructorrecruitmentsignup_set.last()
+        self.assertEqual(recruitment.signups.count(), 1)
+        signup = recruitment.signups.last()
         self.assertEqual(signup.person, person)
         self.assertEqual(signup.user_notes, "")
         self.assertEqual(signup.notes, notes)

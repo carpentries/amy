@@ -65,7 +65,7 @@ class InstructorRecruitmentList(
         InstructorRecruitment.objects.select_related("event", "assigned_to")
         .prefetch_related(
             Prefetch(
-                "instructorrecruitmentsignup_set",
+                "signups",
                 queryset=(
                     InstructorRecruitmentSignup.objects.select_related(
                         "recruitment", "person"
@@ -105,7 +105,7 @@ class InstructorRecruitmentList(
             num_pending=Count(
                 Case(
                     When(
-                        instructorrecruitmentsignup__state="p",
+                        signups__state="p",
                         then=Value(1),
                     ),
                     output_field=IntegerField(),
@@ -221,7 +221,7 @@ class InstructorRecruitmentDetails(
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = InstructorRecruitment.objects.prefetch_related(
         Prefetch(
-            "instructorrecruitmentsignup_set",
+            "signups",
             queryset=(
                 InstructorRecruitmentSignup.objects.select_related(
                     "recruitment", "person"
@@ -254,7 +254,7 @@ class InstructorRecruitmentDetails(
         num_pending=Count(
             Case(
                 When(
-                    instructorrecruitmentsignup__state="p",
+                    signups__state="p",
                     then=Value(1),
                 ),
                 output_field=IntegerField(),
@@ -436,7 +436,7 @@ class InstructorRecruitmentChangeState(
             num_pending=Count(
                 Case(
                     When(
-                        instructorrecruitmentsignup__state="p",
+                        signups__state="p",
                         then=Value(1),
                     ),
                     output_field=IntegerField(),
@@ -499,9 +499,7 @@ class InstructorRecruitmentChangeState(
             )
 
     def send_thank_you_to_declined(self, recruitment: InstructorRecruitment) -> None:
-        declined_instructor_signups = (
-            recruitment.instructorrecruitmentsignup_set.filter(state="d")
-        )
+        declined_instructor_signups = recruitment.signups.filter(state="d")
         triggers = Trigger.objects.filter(
             active=True, action=DeclinedInstructorsAction.trigger_name
         )

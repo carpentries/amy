@@ -288,7 +288,7 @@ class UpcomingTeachingOpportunitiesList(
             .prefetch_related(
                 "event__curricula",
                 Prefetch(
-                    "instructorrecruitmentsignup_set",
+                    "signups",
                     queryset=InstructorRecruitmentSignup.objects.filter(
                         person=self.request.user,
                     ),
