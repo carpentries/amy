@@ -222,6 +222,7 @@ class InstructorRecruitmentCreate(
         self.object: InstructorRecruitment = form.save(commit=False)
         self.object.assigned_to = self.request.user
         self.object.event = self.event
+        self.object.priority = self.object.calculate_priority()
         self.object.save()
         return super().form_valid(form)
 

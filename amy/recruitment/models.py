@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from django.db import models
 from django.urls import reverse
 from reversion import revisions as reversion
@@ -23,6 +25,16 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
         Event, on_delete=models.PROTECT, null=False, blank=False
     )
 
+    class Priority(models.IntegerChoices):
+        LOW = 1
+        MEDIUM = 2
+        HIGH = 3
+
+    priority = models.IntegerField(
+        choices=Priority.choices,
+        default=Priority.LOW,
+    )
+
     def get_absolute_url(self):
         return reverse("instructorrecruitment_details", kwargs={"pk": self.pk})
 
@@ -31,6 +43,18 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
             f"Instructor Recruitment Process ({self.get_status_display()}) for "
             f"event {self.event.slug}"
         )
+
+    def calculate_priority(self) -> Priority:
+        online = self.event.tags.filter(name="online")
+        time_to_start = self.event.start - date.today()
+        offset = 0 if online else 30
+
+        if time_to_start >= timedelta(days=60 + offset):
+            return self.Priority.LOW
+        elif time_to_start > timedelta(days=30 + offset):
+            return self.Priority.MEDIUM
+        else:
+            return self.Priority.HIGH
 
 
 @reversion.register
