@@ -22,7 +22,7 @@
     </tr>
   </thead>
   <tbody>
-    {% for signup in object.instructorrecruitmentsignup_set.all %}
+    {% for signup in object.signups.all %}
     <tr>
       <td><a href="{{ signup.person.get_absolute_url }}">{{ signup.person }}</a></td>
       <td>
@@ -93,8 +93,27 @@
     {% endfor %}
   </tbody>
 </table>
-{% if perms.recruitment.change_instructorrecruitment and perms.recruitment.view_instructorrecruitmentsignup %}
-<p><a href="{% url 'instructorrecruitment_add_signup' object.pk %}?next={{ request.get_full_path|urlize }}" class="btn btn-success">New instructor application</a></p>
-{% else %}
-<p><a href="#" class="btn btn-success disabled" role="button" aria-disabled="true">New instructor application</a></p>
-{% endif %}
+<p>
+  <div class="btn-group" role="group" aria-label="Actions for instructor recruitment">
+    {% if perms.recruitment.change_instructorrecruitment and perms.recruitment.view_instructorrecruitmentsignup %}
+    <a href="{% url 'instructorrecruitment_add_signup' object.pk %}?next={{ request.get_full_path|urlize }}" class="btn btn-success">New instructor application</a>
+    {% else %}
+    <a href="#" class="btn btn-success disabled" role="button" aria-disabled="true">New instructor application</a>
+    {% endif %}
+
+    {% if perms.recruitment.change_instructorrecruitment and object.num_pending == 0 and object.status == "o" %}
+    <form
+      action="{% url 'instructorrecruitment_changestate' object.pk %}"
+      method="POST"
+      class="btn-group"
+      onsubmit='return confirm("Are you sure you want to close this recruitment?");'
+    >
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path|urlize }}">
+      <button type="submit" class="btn btn-warning">Close signups</button>
+    </form>
+    {% else %}
+    <a href="#" class="btn btn-warning disabled" role="button" aria-disabled="true">Close signups</a>
+    {% endif %}
+  </div>
+</p>

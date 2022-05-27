@@ -13,6 +13,7 @@ import django_rq
 from autoemails.models import EmailTemplate, Trigger
 from autoemails.utils import compare_emails
 from consents.models import Term
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Person, Task
 
@@ -601,7 +602,7 @@ class SelfOrganisedRequestAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):  # type: ignore
+    def check(event: Event) -> bool:
         """Conditions for creating a SelfOrganisedRequestAction."""
         try:
             return bool(
@@ -715,15 +716,18 @@ class InstructorsHostIntroductionAction(BaseAction):
     @staticmethod
     def check(event: Event):  # type: ignore
         """Conditions for creating a SelfOrganisedRequestAction."""
+
         # there is 1 host task and 2 instructor tasks
+        host = event.task_set.filter(role__name="host").first()
+        instructors = event.task_set.filter(role__name="instructor")
+        supporting_instructors = event.task_set.filter(
+            role__name="supporting-instructor"
+        )
+
         try:
-            host = event.task_set.filter(role__name="host").first()
-            instructors = event.task_set.filter(role__name="instructor")
-            supporting_instructors = event.task_set.filter(
-                role__name="supporting-instructor"
-            )
-        except (Task.DoesNotExist, ValueError):
-            return False
+            open_instructor_recruitment = event.instructorrecruitment.status == "o"
+        except Event.instructorrecruitment.RelatedObjectDoesNotExist:
+            open_instructor_recruitment = False
 
         online = event.tags.filter(name="online")
 
@@ -742,6 +746,7 @@ class InstructorsHostIntroductionAction(BaseAction):
             and host
             and len(instructors) >= 2
             and (online and len(supporting_instructors) >= 1 or not online)
+            and not open_instructor_recruitment
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -1306,3 +1311,74 @@ class UpdateProfileReminderRepeatedAction(BaseRepeatedAction):
             created_at__day=today.day,
         )
         return people
+
+
+class DeclinedInstructorsAction(BaseAction):
+    """
+    Action for thanking the instructors for their signup for a workshop. This email
+    should be sent after the instructor selection is closed for a given workshop.
+    """
+
+    trigger_name = "declined-instructors"
+
+    launch_at = timedelta(hours=1)
+
+    def recipients(self) -> Optional[list[str]]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return [self.context["email"]]
+        except (AttributeError, KeyError):
+            return None
+
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            return self.context_objects["person"].email
+        except KeyError:
+            return ""
+
+    @staticmethod
+    def check(signup: InstructorRecruitmentSignup) -> bool:
+        """Conditions for creating a DeclinedInstructorsAction."""
+        return signup.state == "d" and signup.recruitment.status == "c"
+
+    def get_additional_context(self, objects, *args, **kwargs) -> dict:
+        from workshops.util import human_daterange, match_notification_email
+
+        # refresh related recruitment, event and person
+        recruitment: InstructorRecruitment = objects["recruitment"]
+        recruitment.refresh_from_db()
+        event: Event = objects["event"]
+        event.refresh_from_db()
+        person: Person = objects["person"]
+        person.refresh_from_db()
+
+        # prepare context
+        context = dict()
+        context["workshop"] = event
+        context["recruitment"] = recruitment
+        context["email"] = person.email
+        context["person"] = person
+        context["workshop_main_type"] = None
+        tmp = event.tags.carpentries().first()
+        if tmp:
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = None
+        if event.end:
+            context["dates"] = human_daterange(event.start, event.end)
+        context["host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
+        )
+        context["tags"] = list(event.tags.values_list("name", flat=True))
+
+        return context

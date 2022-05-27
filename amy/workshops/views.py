@@ -998,13 +998,11 @@ def event_details(request, slug):
         raise Http404("Event matching query does not exist.")
 
     try:
-        recruitment_stats = (
-            event.instructorrecruitment.instructorrecruitmentsignup_set.aggregate(
-                all_signups=Count("person"),
-                pending_signups=Count("person", filter=Q(state="p")),
-                discarded_signups=Count("person", filter=Q(state="d")),
-                accepted_signups=Count("person", filter=Q(state="a")),
-            )
+        recruitment_stats = event.instructorrecruitment.signups.aggregate(
+            all_signups=Count("person"),
+            pending_signups=Count("person", filter=Q(state="p")),
+            discarded_signups=Count("person", filter=Q(state="d")),
+            accepted_signups=Count("person", filter=Q(state="a")),
         )
     except Event.instructorrecruitment.RelatedObjectDoesNotExist:
         recruitment_stats = dict(

@@ -13,7 +13,11 @@ from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
 import django_rq
 
-from autoemails.actions import NewInstructorAction
+from autoemails.actions import (
+    DeclinedInstructorsAction,
+    InstructorsHostIntroductionAction,
+    NewInstructorAction,
+)
 from autoemails.base_views import ActionManageMixin
 from autoemails.job import Job
 from autoemails.models import RQJob, Trigger
@@ -58,10 +62,10 @@ class InstructorRecruitmentList(
     filter_class = InstructorRecruitmentFilter
 
     queryset = (
-        InstructorRecruitment.objects.select_related("event")
+        InstructorRecruitment.objects.select_related("event", "assigned_to")
         .prefetch_related(
             Prefetch(
-                "instructorrecruitmentsignup_set",
+                "signups",
                 queryset=(
                     InstructorRecruitmentSignup.objects.select_related(
                         "recruitment", "person"
@@ -69,7 +73,8 @@ class InstructorRecruitmentList(
                         num_instructor=Count(
                             Case(
                                 When(
-                                    person__task__role__name="instructor", then=Value(1)
+                                    person__task__role__name="instructor",
+                                    then=Value(1),
                                 ),
                                 output_field=IntegerField(),
                             )
@@ -85,12 +90,26 @@ class InstructorRecruitmentList(
                         ),
                         num_helper=Count(
                             Case(
-                                When(person__task__role__name="helper", then=Value(1)),
+                                When(
+                                    person__task__role__name="helper",
+                                    then=Value(1),
+                                ),
                                 output_field=IntegerField(),
                             )
                         ),
                     )
                 ),
+            )
+        )
+        .annotate(
+            num_pending=Count(
+                Case(
+                    When(
+                        signups__state="p",
+                        then=Value(1),
+                    ),
+                    output_field=IntegerField(),
+                )
             )
         )
         .order_by("-created_at")
@@ -202,7 +221,7 @@ class InstructorRecruitmentDetails(
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = InstructorRecruitment.objects.prefetch_related(
         Prefetch(
-            "instructorrecruitmentsignup_set",
+            "signups",
             queryset=(
                 InstructorRecruitmentSignup.objects.select_related(
                     "recruitment", "person"
@@ -231,6 +250,16 @@ class InstructorRecruitmentDetails(
                 )
             ),
         )
+    ).annotate(
+        num_pending=Count(
+            Case(
+                When(
+                    signups__state="p",
+                    then=Value(1),
+                ),
+                output_field=IntegerField(),
+            )
+        )
     )
     template_name = "recruitment/instructorrecruitment_details.html"
 
@@ -245,6 +274,7 @@ class InstructorRecruitmentAddSignup(
     RecruitmentEnabledMixin,
     ConditionallyEnabledMixin,
     SuccessMessageMixin,
+    PermissionRequiredMixin,
     FormView,
 ):
     """POST requests for adding new signup for an existing recruitment."""
@@ -294,10 +324,12 @@ class InstructorRecruitmentSignupChangeState(
     RecruitmentEnabledMixin,
     ConditionallyEnabledMixin,
     FormMixin,
+    PermissionRequiredMixin,
     View,
 ):
     """POST requests for editing (confirming or declining) the instructor signup."""
 
+    permission_required = "recruitment.change_instructorrecruitmentsignup"
     form_class = InstructorRecruitmentSignupChangeStateForm
 
     def get_object(self) -> InstructorRecruitmentSignup:
@@ -385,3 +417,118 @@ class InstructorRecruitmentSignupChangeState(
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
+
+
+class InstructorRecruitmentChangeState(
+    OnlyForAdminsMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    FormMixin,
+    PermissionRequiredMixin,
+    View,
+):
+    """POST requests for editing (e.g. closing) the instructor recruitment."""
+
+    permission_required = "recruitment.change_instructorrecruitment"
+
+    def get_object(self) -> InstructorRecruitment:
+        return InstructorRecruitment.objects.annotate(
+            num_pending=Count(
+                Case(
+                    When(
+                        signups__state="p",
+                        then=Value(1),
+                    ),
+                    output_field=IntegerField(),
+                )
+            )
+        ).get(pk=self.kwargs["pk"])
+
+    def get_success_url(self) -> str:
+        next_url = self.request.POST.get("next", None)
+        default_url = reverse("all_instructorrecruitment")
+        return safe_next_or_default_url(next_url, default_url)
+
+    @staticmethod
+    def _validate_for_closing(recruitment: InstructorRecruitment) -> bool:
+        if getattr(recruitment, "num_pending", 1) != 0:
+            return False
+        if recruitment.status != "o":
+            return False
+        return True
+
+    def close_recruitment(self) -> HttpResponse:
+        if not self._validate_for_closing(self.object):
+            messages.error(
+                self.request,
+                "Unable to close recruitment.",
+            )
+
+        else:
+            self.object.status = "c"
+            self.object.save()
+            messages.success(
+                self.request,
+                f"Successfully closed recruitment {self.object}.",
+            )
+            self.send_introduction_email(self.object.event, self.object)
+            self.send_thank_you_to_declined(self.object)
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def send_introduction_email(
+        self, event: Event, recruitment: InstructorRecruitment
+    ) -> None:
+        if InstructorsHostIntroductionAction.check(event):
+            triggers = Trigger.objects.filter(
+                active=True, action="instructors-host-introduction"
+            )
+            ActionManageMixin.add(
+                action_class=InstructorsHostIntroductionAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=event, recruitment=recruitment),
+                object_=event,
+                request=self.request,
+            )
+        else:
+            messages.warning(
+                self.request,
+                "Instructors-Host introduction email was not sent due to "
+                "unmet conditions.",
+            )
+
+    def send_thank_you_to_declined(self, recruitment: InstructorRecruitment) -> None:
+        declined_instructor_signups = recruitment.signups.filter(state="d")
+        triggers = Trigger.objects.filter(
+            active=True, action=DeclinedInstructorsAction.trigger_name
+        )
+
+        for signup in declined_instructor_signups:
+            if DeclinedInstructorsAction.check(signup):
+                ActionManageMixin.add(
+                    action_class=DeclinedInstructorsAction,
+                    logger=logger,
+                    scheduler=scheduler,
+                    triggers=triggers,
+                    context_objects=dict(
+                        recruitment=recruitment,
+                        event=recruitment.event,
+                        person=signup.person,
+                    ),
+                    object_=signup,
+                    request=self.request,
+                )
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        self.request = request
+        self.object = self.get_object()
+
+        action = "close"
+        # For future if we need to handle other actions
+        action_handler_mapping = {
+            "close": self.close_recruitment,
+        }
+
+        return action_handler_mapping[action]()

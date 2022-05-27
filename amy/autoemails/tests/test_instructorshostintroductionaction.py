@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from autoemails.actions import InstructorsHostIntroductionAction
 from autoemails.models import EmailTemplate, Trigger
+from recruitment.models import InstructorRecruitment
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
@@ -176,6 +177,10 @@ class TestInstructorsHostIntroductionAction(TestCase):
             event=e,
         )
         self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
+
+        # 10th case: instructor recruitment is open - check should fail
+        InstructorRecruitment.objects.create(event=e, status="o")
+        self.assertEqual(InstructorsHostIntroductionAction.check(e), False)
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
