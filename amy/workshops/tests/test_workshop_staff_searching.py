@@ -446,7 +446,7 @@ class TestWorkshopStaffCSV(TestBase):
             self.assertEqual(
                 row["Has Trainer badge"], "yes" if expected.is_trainer else "no"
             )
-            self.assertEqual(row["Taught times"], str(expected.num_taught))
+            self.assertEqual(row["Taught times"], str(expected.num_instructor))
             self.assertEqual(row["Is trainee"], "yes" if expected.is_trainee else "no")
             self.assertEqual(row["Airport"], str(expected.airport))
             self.assertEqual(row["Country"], expected.country.name)

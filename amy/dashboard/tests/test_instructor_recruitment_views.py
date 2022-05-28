@@ -187,7 +187,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         with self.assertNumQueries(2):
             data = view.get_context_data(object_list=[])
         # Assert
-        self.assertEqual(data["person"].num_taught, 1)
+        self.assertEqual(data["person"].num_instructor, 1)
         self.assertEqual(data["person"].num_supporting, 2)
         self.assertEqual(data["person"].num_helper, 3)
         self.assertEqual(list(data["person_instructor_tasks_slugs"]), [event1.slug])
@@ -282,7 +282,7 @@ class TestSignupForRecruitment(TestCase):
         # Assert
         self.assertEqual(data["title"], f"Signup for workshop {event}")
         # `num_*` are special fields added through `QuerySet.annotate`
-        self.assertEqual(data["person"].num_taught, 1)
+        self.assertEqual(data["person"].num_instructor, 1)
         self.assertEqual(data["person"].num_supporting, 0)
         self.assertEqual(data["person"].num_helper, 0)
 
