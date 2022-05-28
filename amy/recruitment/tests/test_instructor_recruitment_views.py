@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from unittest import mock
 
+from django.http import Http404
 from django.test import override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
@@ -163,12 +164,58 @@ class TestInstructorRecruitmentCreateView(TestBase):
 
     def test_get_other_object(self) -> None:
         # Arrange
-        event = self.prepare_event()
-        view = InstructorRecruitmentCreate(kwargs={"event_id": event.pk})
-        # Act
-        object = view.get_other_object()
-        # Assert
-        self.assertEqual(event, object)
+        host = Organization.objects.first()
+        online_tag = Tag.objects.get(name="online")
+        data = [
+            (Event(slug="test1", host=host, start=date(2000, 1, 1)), False),
+            (Event.objects.create(slug="test2", host=host, start=date.today()), False),
+            (Event.objects.create(slug="test3", host=host, start=date.today()), True),
+            (
+                Event.objects.create(
+                    slug="test4", host=host, start=date.today(), venue="University"
+                ),
+                False,
+            ),
+            (
+                Event.objects.create(
+                    slug="test5",
+                    host=host,
+                    start=date.today(),
+                    venue="University",
+                    latitude=1,
+                ),
+                False,
+            ),
+            (
+                Event.objects.create(
+                    slug="test6",
+                    host=host,
+                    start=date.today(),
+                    venue="University",
+                    latitude=1,
+                    longitude=-1,
+                ),
+                True,
+            ),
+            (
+                Event.objects.create(slug="test1", host=host, start=date(2000, 1, 1)),
+                False,
+            ),
+        ]
+        data[2][0].tags.add(online_tag)
+        data[6][0].tags.add(online_tag)
+
+        for event, expected in data:
+            # Act
+            view = InstructorRecruitmentCreate(kwargs={"event_id": event.pk})
+
+            # Assert
+            if expected:
+                object = view.get_other_object()
+                self.assertEqual(event.pk, object.pk)
+            else:
+                with self.assertRaises(Http404):
+                    view.get_other_object()
 
     def test_get(self) -> None:
         # Arrange

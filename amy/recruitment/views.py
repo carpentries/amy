@@ -169,8 +169,8 @@ class InstructorRecruitmentCreate(
 
         # this condition means: either venue, latitude and longitude are provided, or
         # the event has "online" tag
-        location = ~Q(venue="") & Q(latitude__isnull=False) & Q(
-            longitude__isnull=False
+        location = (
+            ~Q(venue="") & Q(latitude__isnull=False) & Q(longitude__isnull=False)
         ) | Q(tags__name="online")
         qs = (
             Event.objects.filter(start__gte=today)

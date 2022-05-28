@@ -17,7 +17,7 @@ from dashboard.views import (
     UpcomingTeachingOpportunitiesList,
 )
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from workshops.models import Event, Organization, Person, Role, Task
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestUpcomingTeachingOpportunitiesList(TestCase):
@@ -89,10 +89,58 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         person = Person.objects.create(
             personal="Test", family="User", email="test@user.com"
         )
-        event = Event.objects.create(slug="test-event", host=host)
-        recruitment = InstructorRecruitment.objects.create(status="o", event=event)
+        online_tag = Tag.objects.get(name="online")
+        event_ineligible1 = Event.objects.create(
+            slug="test-event1",
+            host=host,
+            start=date(2000, 1, 1),
+            venue="University",
+            latitude=1,
+            longitude=-40,
+        )
+        event_ineligible2 = Event.objects.create(
+            slug="test-event2",
+            host=host,
+            start=date.today(),
+            # venue="University",
+            # latitude=1,
+            # longitude=None,
+        )
+        event_ineligible3 = Event.objects.create(
+            slug="test-event3",
+            host=host,
+            start=date(2000, 1, 1),
+        )
+        event_ineligible3.tags.add(online_tag)
+        event_eligible1 = Event.objects.create(
+            slug="test-event4",
+            host=host,
+            start=date.today(),
+            venue="University",
+            latitude=1,
+            longitude=-40,
+        )
+        event_eligible2 = Event.objects.create(
+            slug="test-event5",
+            host=host,
+            start=date.today(),
+        )
+        event_eligible2.tags.add(online_tag)
+        InstructorRecruitment.objects.bulk_create(
+            [
+                InstructorRecruitment(status="o", event=event_ineligible1),
+                InstructorRecruitment(status="o", event=event_ineligible2),
+                InstructorRecruitment(status="o", event=event_ineligible3),
+            ]
+        )
+        recruitment1 = InstructorRecruitment.objects.create(
+            status="o", event=event_eligible1
+        )
+        recruitment2 = InstructorRecruitment.objects.create(
+            status="o", event=event_eligible2
+        )
         signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person, interest="session"
+            recruitment=recruitment1, person=person, interest="session"
         )
         request = RequestFactory().get("/")
         request.user = person
@@ -100,7 +148,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         view = UpcomingTeachingOpportunitiesList(request=request)
         qs = view.get_queryset()
         # Assert
-        self.assertEqual(list(qs), [recruitment])
+        self.assertEqual(list(qs), [recruitment1, recruitment2])
         # `person_signup` is an additional attribute created using `Prefetch()`
         self.assertEqual(list(qs[0].person_signup), [signup])
 

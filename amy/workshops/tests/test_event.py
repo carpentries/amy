@@ -255,6 +255,56 @@ class TestEvent(TestBase):
         event.tags.set([self.TTT_tag])
         event.full_clean()
 
+    def test_eligible_for_instructor_recruitment(self) -> None:
+        # Arrange
+        host = Organization.objects.first()
+        online_tag = Tag.objects.get(name="online")
+        data = [
+            (Event(slug="test1", host=host, start=date(2000, 1, 1)), False),
+            (Event.objects.create(slug="test2", host=host, start=date.today()), False),
+            (Event.objects.create(slug="test3", host=host, start=date.today()), True),
+            (
+                Event.objects.create(
+                    slug="test4", host=host, start=date.today(), venue="University"
+                ),
+                False,
+            ),
+            (
+                Event.objects.create(
+                    slug="test5",
+                    host=host,
+                    start=date.today(),
+                    venue="University",
+                    latitude=1,
+                ),
+                False,
+            ),
+            (
+                Event.objects.create(
+                    slug="test6",
+                    host=host,
+                    start=date.today(),
+                    venue="University",
+                    latitude=1,
+                    longitude=-1,
+                ),
+                True,
+            ),
+            (
+                Event.objects.create(slug="test1", host=host, start=date(2000, 1, 1)),
+                False,
+            ),
+        ]
+        data[2][0].tags.add(online_tag)
+        data[6][0].tags.add(online_tag)
+
+        for event, expected in data:
+            # Act
+            result = event.eligible_for_instructor_recruitment()
+
+            # Assert
+            self.assertEqual(result, expected, event)
+
 
 class TestEventFormComments(TestBase):
     form = EventForm

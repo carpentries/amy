@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 import re
 from typing import Dict, Optional
 
@@ -282,9 +282,20 @@ class UpcomingTeachingOpportunitiesList(
     filter_class = UpcomingTeachingOpportunitiesFilter
 
     def get_queryset(self):
+        today = date.today()
+
+        # this condition means: either venue, latitude and longitude are provided, or
+        # the event has "online" tag
+        location = (
+            ~Q(event__venue="")
+            & Q(event__latitude__isnull=False)
+            & Q(event__longitude__isnull=False)
+        ) | Q(event__tags__name="online")
+
         self.queryset = (
             InstructorRecruitment.objects.select_related("event")
-            .filter(status="o")
+            .filter(status="o", event__start__gte=today)
+            .filter(location)
             .prefetch_related(
                 "event__curricula",
                 Prefetch(
