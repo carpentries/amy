@@ -37,7 +37,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
 )
 from workshops.models import Event, Person, Role, Task
-from workshops.util import OnlyForAdminsMixin, human_daterange
+from workshops.util import OnlyForAdminsMixin
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
@@ -200,8 +200,8 @@ class InstructorRecruitmentCreate(
         context = super().get_context_data(**kwargs)
         context["title"] = f"Begin Instructor Selection Process for {self.event}"
         context["event"] = self.event
-        context["event_dates"] = human_daterange(
-            self.event.start, self.event.end, common_month_left=r"%B %d", range_char="-"
+        context["event_dates"] = self.event.human_readable_date(
+            common_month_left=r"%B %d", range_char="-"
         )
         return context
 

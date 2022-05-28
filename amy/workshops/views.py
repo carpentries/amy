@@ -1045,7 +1045,7 @@ def event_details(request, slug):
         "admin_lookup_form": admin_lookup_form,
         "event_location": {
             "venue": event.venue,
-            "humandate": event.human_readable_date,
+            "humandate": event.human_readable_date(),
             "latitude": event.latitude,
             "longitude": event.longitude,
         },

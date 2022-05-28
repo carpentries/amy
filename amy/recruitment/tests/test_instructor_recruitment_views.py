@@ -136,6 +136,18 @@ class TestInstructorRecruitmentListView(TestBase):
 
 
 class TestInstructorRecruitmentCreateView(TestBase):
+    def prepare_event(self) -> Event:
+        organization = Organization.objects.first()
+        return Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=date.today(),
+            venue="Hogwarts",
+            latitude=90.0,
+            longitude=90.0,
+        )
+
     def test_class_fields(self) -> None:
         # Arrange
         view = InstructorRecruitmentCreate()
@@ -148,16 +160,10 @@ class TestInstructorRecruitmentCreateView(TestBase):
             view.template_name, "recruitment/instructorrecruitment_add.html"
         )
         self.assertEqual(view.form_class, InstructorRecruitmentCreateForm)
-        self.assertEqual(view.event, None)
 
     def test_get_other_object(self) -> None:
         # Arrange
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        event = self.prepare_event()
         view = InstructorRecruitmentCreate(kwargs={"event_id": event.pk})
         # Act
         object = view.get_other_object()
@@ -167,12 +173,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_get(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        event = self.prepare_event()
         view = InstructorRecruitmentCreate(kwargs={"event_id": event.pk})
         # Act
         with mock.patch("recruitment.views.super") as mock_super:
@@ -185,12 +186,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_post(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        event = self.prepare_event()
         view = InstructorRecruitmentCreate(kwargs={"event_id": event.pk})
         # Act
         with mock.patch("recruitment.views.super") as mock_super:
@@ -203,12 +199,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_get_form_kwargs(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        event = self.prepare_event()
         view = InstructorRecruitmentCreate(request=request)
         view.event = event
         # Act
@@ -219,13 +210,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_context_data(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-            start=date(2021, 12, 29),
-        )
+        event = self.prepare_event()
         view = InstructorRecruitmentCreate(request=request, object=None)
         view.event = event
         # Act
@@ -236,7 +221,9 @@ class TestInstructorRecruitmentCreateView(TestBase):
             {
                 "title": "Begin Instructor Selection Process for test-event",
                 "event": event,
-                "event_dates": "Dec 29, 2021-???",
+                "event_dates": event.human_readable_date(
+                    common_month_left=r"%B %d", range_char="-"
+                ),
                 "view": view,
                 "model": InstructorRecruitment,
                 # it needs to be the same instance, otherwise the test fails
@@ -247,12 +234,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_get_initial(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        event = self.prepare_event()
         workshop_request = WorkshopRequest.objects.create(
             event=event,
             personal="Harry",
@@ -285,12 +267,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
         request = RequestFactory().get("/")
         request.user = mock.MagicMock()
         mock_form = mock.MagicMock()
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        event = self.prepare_event()
         view = InstructorRecruitmentCreate(request=request)
         view.event = event
         # Act
@@ -305,12 +282,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
     def test_integration(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        event = self.prepare_event()
         data = {"instructorrecruitment-notes": "Test notes"}
         # Act
         response = self.client.post(
