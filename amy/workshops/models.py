@@ -1559,6 +1559,14 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             [self.manual_attendance, self.task_set.filter(role__name="learner").count()]
         )
 
+    def eligible_for_instructor_recruitment(self) -> bool:
+        return self.start >= datetime.date.today() and (
+            self.venue
+            and self.latitude is not None
+            and self.longitude is not None
+            or "online" in self.tags.strings()
+        )
+
     def clean(self):
         """Additional model validation."""
 
