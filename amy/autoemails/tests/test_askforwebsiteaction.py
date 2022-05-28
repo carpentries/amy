@@ -222,7 +222,7 @@ class TestAskForWebsiteAction(TestCase):
             dict(
                 workshop=e,
                 workshop_main_type="SWC",
-                dates=e.human_readable_date,
+                dates=e.human_readable_date(),
                 workshop_host=Organization.objects.first(),
                 regional_coordinator_email=["admin-uk@carpentries.org"],
                 instructors=[p1, p2],

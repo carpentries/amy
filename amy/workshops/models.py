@@ -1540,14 +1540,13 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         emails = find_emails(self.contact)
         return emails
 
-    @property
-    def human_readable_date(self):
+    def human_readable_date(self, **kwargs):
         """Render start and end dates as human-readable short date."""
         from workshops.util import human_daterange
 
         date1 = self.start
         date2 = self.end
-        return human_daterange(date1, date2)
+        return human_daterange(date1, date2, **kwargs)
 
     @cached_property
     def attendance(self):
@@ -1557,6 +1556,18 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         annotated this way before."""
         return max(
             [self.manual_attendance, self.task_set.filter(role__name="learner").count()]
+        )
+
+    def eligible_for_instructor_recruitment(self) -> bool:
+        return (
+            self.start
+            and self.start >= datetime.date.today()
+            and (
+                self.venue
+                and self.latitude is not None
+                and self.longitude is not None
+                or "online" in self.tags.strings()
+            )
         )
 
     def clean(self):

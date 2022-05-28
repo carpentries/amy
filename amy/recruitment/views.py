@@ -1,13 +1,14 @@
+from datetime import date
 import logging
-from typing import Optional
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import IntegrityError
-from django.db.models import Case, Count, IntegerField, Prefetch, Value, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
@@ -36,7 +37,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
 )
 from workshops.models import Event, Person, Role, Task
-from workshops.util import OnlyForAdminsMixin, human_daterange
+from workshops.util import OnlyForAdminsMixin
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
@@ -160,11 +161,23 @@ class InstructorRecruitmentCreate(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.event: Optional[Event] = None
+        self.event: Event
 
     def get_other_object(self) -> Event:
         event_id = self.kwargs.get("event_id")
-        return Event.objects.select_related("administrator").get(pk=event_id)
+        today = date.today()
+
+        # this condition means: either venue, latitude and longitude are provided, or
+        # the event has "online" tag
+        location = (
+            ~Q(venue="") & Q(latitude__isnull=False) & Q(longitude__isnull=False)
+        ) | Q(tags__name="online")
+        qs = (
+            Event.objects.filter(start__gte=today)
+            .filter(location)
+            .select_related("administrator")
+        )
+        return get_object_or_404(qs, pk=event_id)
 
     def get(self, request, *args, **kwargs):
         """Load other object upon GET request. Save the request."""
@@ -187,8 +200,8 @@ class InstructorRecruitmentCreate(
         context = super().get_context_data(**kwargs)
         context["title"] = f"Begin Instructor Selection Process for {self.event}"
         context["event"] = self.event
-        context["event_dates"] = human_daterange(
-            self.event.start, self.event.end, common_month_left=r"%B %d", range_char="-"
+        context["event_dates"] = self.event.human_readable_date(
+            common_month_left=r"%B %d", range_char="-"
         )
         return context
 

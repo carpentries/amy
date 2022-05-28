@@ -20,7 +20,7 @@
     <li>Date/Time: {{ event_dates }}</li>
     <li>
       Location:
-      {% if event.country == 'W3' %}
+      {% if event.country == 'W3' or "online" in event.tags.strings %}
         Online
       {% else %}
         {{ event.venue }}, {% include "includes/country_flag.html" with country=event.country %}, {{ event.address }}
