@@ -44,17 +44,21 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
             f"event {self.event.slug}"
         )
 
-    def calculate_priority(self) -> Priority:
-        online = self.event.tags.filter(name="online")
-        time_to_start = self.event.start - date.today()
-        offset = 0 if online else 30
+    @staticmethod
+    def calculate_priority(event: Event) -> Priority:
+        online = event.tags.filter(name="online")
+        if not event.start:
+            return InstructorRecruitment.Priority.LOW
 
-        if time_to_start >= timedelta(days=60 + offset):
-            return self.Priority.LOW
-        elif time_to_start > timedelta(days=30 + offset):
-            return self.Priority.MEDIUM
+        time_to_start = event.start - date.today()
+        inperson_offset = 30 if not online else 0
+
+        if time_to_start >= timedelta(days=60 + inperson_offset):
+            return InstructorRecruitment.Priority.LOW
+        elif time_to_start > timedelta(days=30 + inperson_offset):
+            return InstructorRecruitment.Priority.MEDIUM
         else:
-            return self.Priority.HIGH
+            return InstructorRecruitment.Priority.HIGH
 
 
 @reversion.register

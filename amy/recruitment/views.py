@@ -204,6 +204,7 @@ class InstructorRecruitmentCreate(
         context["event_dates"] = self.event.human_readable_date(
             common_month_left=r"%B %d", range_char="-"
         )
+        context["priority"] = InstructorRecruitment.calculate_priority(self.event)
         return context
 
     def get_initial(self) -> dict:
@@ -222,7 +223,7 @@ class InstructorRecruitmentCreate(
         self.object: InstructorRecruitment = form.save(commit=False)
         self.object.assigned_to = self.request.user
         self.object.event = self.event
-        self.object.priority = self.object.calculate_priority()
+        self.object.priority = InstructorRecruitment.calculate_priority(self.event)
         self.object.save()
         return super().form_valid(form)
 

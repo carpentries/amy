@@ -32,6 +32,9 @@
         {{ curriculum }}{% if not forloop.last %}, {% endif %}
       {% endfor %}
     </li>
+    <li>
+      Priority: {{ priority.label }}
+    </li>
   </ul>
   {% crispy form %}
 </div>

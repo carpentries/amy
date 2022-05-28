@@ -275,6 +275,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
                 "model": InstructorRecruitment,
                 # it needs to be the same instance, otherwise the test fails
                 "form": context["form"],
+                "priority": InstructorRecruitment.Priority.HIGH,
             },
         )
 
