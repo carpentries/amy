@@ -262,7 +262,7 @@ STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
 STATICFILES_DIRS = [
     str(APPS_DIR.path("static")),
-    str(ROOT_DIR.path("node_modules/@fortawesome/fontawesome-free/css")),
+    str(ROOT_DIR.path("node_modules/@fortawesome/fontawesome-free/")),
     str(ROOT_DIR.path("node_modules/@github/time-elements/dist")),
     str(ROOT_DIR.path("node_modules/bootstrap/dist/css")),
     str(ROOT_DIR.path("node_modules/bootstrap/dist/js")),
