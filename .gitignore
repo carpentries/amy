@@ -47,3 +47,6 @@ docker/redis/*
 
 # mkdocs output folder
 site/
+
+# environment variables
+.env

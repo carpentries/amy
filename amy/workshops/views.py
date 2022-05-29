@@ -29,6 +29,7 @@ from django.db.models import (
     Prefetch,
     ProtectedError,
     Q,
+    QuerySet,
     Sum,
     Value,
     When,
@@ -223,32 +224,7 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
     template_name = "workshops/person.html"
     pk_url_kwarg = "person_id"
     queryset = (
-        Person.objects.annotate(
-            num_taught=Count(
-                Case(
-                    When(task__role__name="instructor", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_helper=Count(
-                Case(
-                    When(task__role__name="helper", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_learner=Count(
-                Case(
-                    When(task__role__name="learner", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_supporting=Count(
-                Case(
-                    When(task__role__name="supporting-instructor", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-        )
+        Person.objects.annotate_with_role_count()
         .prefetch_related(
             "badges",
             "lessons",
@@ -2241,7 +2217,7 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
 # ------------------------------------------------------------
 
 
-def _workshop_staff_query(lat=None, lng=None):
+def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
     """This query is used in two views: workshop staff searching and its CSV
     results. Thanks to factoring-out this function, we're now quite certain
     that the results in both of the views are the same."""
@@ -2259,30 +2235,13 @@ def _workshop_staff_query(lat=None, lng=None):
     # we need to count number of specific roles users had
     # and if they are SWC/DC/LC instructors
     people = (
-        Person.objects.filter(airport__isnull=False)
-        .select_related("airport")
+        Person.objects.annotate_with_role_count()
         .annotate(
-            num_taught=Count(
-                Case(
-                    When(task__role__name="instructor", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_helper=Count(
-                Case(
-                    When(task__role__name="helper", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_organizer=Count(
-                Case(
-                    When(task__role__name="organizer", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
             is_trainee=Count("task", filter=(Q(task__in=trainee_tasks))),
             is_trainer=Count("badges", filter=(Q(badges__name="trainer"))),
         )
+        .filter(airport__isnull=False)
+        .select_related("airport")
         .prefetch_related(
             "lessons",
             Prefetch(
@@ -2392,7 +2351,7 @@ def workshop_staff_csv(request):
                 person.email,
                 " ".join([badge.name for badge in person.important_badges]),
                 "yes" if person.is_trainer else "no",
-                person.num_taught,
+                person.num_instructor,
                 "yes" if person.is_trainee else "no",
                 str(person.airport) if person.airport else "",
                 person.country.name if person.country else "",

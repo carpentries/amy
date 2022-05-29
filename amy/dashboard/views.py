@@ -324,26 +324,7 @@ class UpcomingTeachingOpportunitiesList(
 
         # person details with tasks counted
         context["person"] = (
-            Person.objects.annotate(
-                num_taught=Count(
-                    Case(
-                        When(task__role__name="instructor", then=Value(1)),
-                        output_field=IntegerField(),
-                    )
-                ),
-                num_supporting=Count(
-                    Case(
-                        When(task__role__name="supporting-instructor", then=Value(1)),
-                        output_field=IntegerField(),
-                    )
-                ),
-                num_helper=Count(
-                    Case(
-                        When(task__role__name="helper", then=Value(1)),
-                        output_field=IntegerField(),
-                    )
-                ),
-            )
+            Person.objects.annotate_with_role_count()
             .select_related("airport")
             .get(pk=self.request.user.pk)
         )
@@ -404,26 +385,7 @@ class SignupForRecruitment(
 
         # person details with tasks counted
         context["person"] = (
-            Person.objects.annotate(
-                num_taught=Count(
-                    Case(
-                        When(task__role__name="instructor", then=Value(1)),
-                        output_field=IntegerField(),
-                    )
-                ),
-                num_supporting=Count(
-                    Case(
-                        When(task__role__name="supporting-instructor", then=Value(1)),
-                        output_field=IntegerField(),
-                    )
-                ),
-                num_helper=Count(
-                    Case(
-                        When(task__role__name="helper", then=Value(1)),
-                        output_field=IntegerField(),
-                    )
-                ),
-            )
+            Person.objects.annotate_with_role_count()
             .select_related("airport")
             .get(pk=self.request.user.pk)
         )

@@ -18,6 +18,7 @@ from django.db.models import (
     IntegerField,
     PositiveIntegerField,
     Q,
+    QuerySet,
     Sum,
     When,
 )
@@ -643,6 +644,40 @@ class PersonManager(BaseUserManager):
                 * F("passed_homework")
                 * F("passed_demo")
             )
+        )
+
+    def annotate_with_role_count(self) -> QuerySet["Person"]:
+        return self.annotate(
+            num_instructor=Count(
+                "task",
+                filter=(
+                    Q(task__role__name="instructor")
+                    & ~Q(task__event__administrator__domain="carpentries.org")
+                ),
+                distinct=True,
+            ),
+            num_trainer=Count(
+                "task",
+                filter=(
+                    Q(task__role__name="instructor")
+                    & Q(task__event__administrator__domain="carpentries.org")
+                ),
+                distinct=True,
+            ),
+            num_helper=Count(
+                "task", filter=Q(task__role__name="helper"), distinct=True
+            ),
+            num_learner=Count(
+                "task", filter=Q(task__role__name="learner"), distinct=True
+            ),
+            num_supporting=Count(
+                "task",
+                filter=Q(task__role__name="supporting-instructor"),
+                distinct=True,
+            ),
+            num_organizer=Count(
+                "task", filter=Q(task__role__name="organizer"), distinct=True
+            ),
         )
 
     def duplication_review_expired(self):
