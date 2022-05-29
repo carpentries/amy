@@ -649,7 +649,20 @@ class PersonManager(BaseUserManager):
     def annotate_with_role_count(self) -> QuerySet["Person"]:
         return self.annotate(
             num_instructor=Count(
-                "task", filter=Q(task__role__name="instructor"), distinct=True
+                "task",
+                filter=(
+                    Q(task__role__name="instructor")
+                    & ~Q(task__event__administrator__domain="carpentries.org")
+                ),
+                distinct=True,
+            ),
+            num_trainer=Count(
+                "task",
+                filter=(
+                    Q(task__role__name="instructor")
+                    & Q(task__event__administrator__domain="carpentries.org")
+                ),
+                distinct=True,
             ),
             num_helper=Count(
                 "task", filter=Q(task__role__name="helper"), distinct=True
