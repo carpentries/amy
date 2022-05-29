@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
-from django.core.validators import ValidationError
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django_comments.models import Comment
 from reversion.models import Version
@@ -539,6 +539,73 @@ class TestPerson(TestBase):
         comment = Comment.objects.first()
         self.assertEqual(comment.comment, "This is a test comment.")
         self.assertIn(comment, Comment.objects.for_model(obj))
+
+    def test_annotate_with_role_count(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        person = Person.objects.create(personal="Test", family="Person")
+
+        instructor = Role.objects.get(name="instructor")
+        helper = Role.objects.get(name="helper")
+        learner = Role.objects.get(name="learner")
+        supporting_instructor = Role.objects.get(name="supporting-instructor")
+        organizer = Role.objects.get(name="organizer")
+
+        Organization.objects.create(
+            domain="carpentries.org", fullname="Instructor Training"
+        )
+
+        workshop = Event.objects.create(
+            slug="workshop-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="self-organized"),
+        )
+        training = Event.objects.create(
+            slug="training-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="carpentries.org"),
+        )
+
+        Task.objects.bulk_create(
+            [
+                Task(person=person, event=workshop, role=instructor),
+                Task(person=person, event=training, role=instructor),
+                Task(person=person, event=workshop, role=helper),
+                Task(person=person, event=training, role=helper),
+                Task(person=person, event=training, role=learner),
+                Task(person=person, event=workshop, role=supporting_instructor),
+                Task(person=person, event=training, role=supporting_instructor),
+                Task(person=person, event=training, role=organizer),
+            ]
+        )
+
+        # When badges were used in filter, they were duplicating counting results:
+        # https://github.com/carpentries/amy/issues/2138
+        # Solution was to use COUNT(DISTINCT), and here we are regression-testing
+        # this bugfix.
+        Award.objects.bulk_create(
+            [
+                Award(person=person, badge=self.swc_instructor, event=workshop),
+                Award(person=person, badge=self.dc_instructor),
+                Award(person=person, badge=self.lc_instructor, event=training),
+            ]
+        )
+
+        # Act
+        result = (
+            Person.objects.annotate_with_role_count()
+            .filter(
+                badges__in=[self.swc_instructor, self.dc_instructor, self.lc_instructor]
+            )
+            .get(pk=person.pk)
+        )
+        # Assert
+        self.assertEqual(result.num_instructor, 1)
+        self.assertEqual(result.num_trainer, 1)
+        self.assertEqual(result.num_helper, 2)
+        self.assertEqual(result.num_learner, 1)
+        self.assertEqual(result.num_supporting, 2)
+        self.assertEqual(result.num_organizer, 1)
 
 
 class TestPersonPassword(TestBase):

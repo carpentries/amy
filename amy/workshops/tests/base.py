@@ -476,6 +476,9 @@ class TestBase(
                 Role(name="learner", verbose_name="Learner"),
                 Role(name="organizer", verbose_name="Organizer"),
                 Role(name="tutor", verbose_name="Tutor"),
+                Role(
+                    name="supporting-instructor", verbose_name="Supporting Instructor"
+                ),
             ]
         )
 
