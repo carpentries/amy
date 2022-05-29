@@ -148,9 +148,11 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         view = UpcomingTeachingOpportunitiesList(request=request)
         qs = view.get_queryset()
         # Assert
-        self.assertEqual(list(qs), [recruitment1, recruitment2])
+        self.assertEqual(set(qs), {recruitment1, recruitment2})
         # `person_signup` is an additional attribute created using `Prefetch()`
-        self.assertEqual(list(qs[0].person_signup), [signup])
+        self.assertTrue(
+            any(recruitment.person_signup == [signup] for recruitment in qs)
+        )
 
     def test_get_context_data(self):
         """Context data is extended only with person object, but it includes pre-counted
