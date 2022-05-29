@@ -190,44 +190,6 @@ class Command(BaseCommand):
                 name=tag, defaults=dict(priority=priority, details=details)
             )
 
-    def fake_badges(self):
-        """Provide fixed badges."""
-        badges = [
-            ("creator", "Creator", "Creating learning materials and other " "content"),
-            (
-                "swc-instructor",
-                "Software Carpentry Instructor",
-                "Teaching at Software Carpentry workshops or online",
-            ),
-            ("member", "Member", "Software Carpentry Foundation member"),
-            ("organizer", "Organizer", "Organizing workshops and learning " "groups"),
-            (
-                "dc-instructor",
-                "Data Carpentry Instructor",
-                "Teaching at Data Carpentry workshops or online",
-            ),
-            (
-                "maintainer",
-                "Maintainer",
-                "Maintainer of Software or Data " "Carpentry lesson",
-            ),
-            ("trainer", "Trainer", "Teaching instructor training workshops"),
-            ("mentor", "Mentor", "Mentor of Carpentry Instructors"),
-            ("mentee", "Mentee", "Mentee in Carpentry Mentorship Program"),
-            (
-                "lc-instructor",
-                "Library Carpentry Instructor",
-                "Teaching at Library Carpentry workshops or online",
-            ),
-        ]
-
-        self.stdout.write("Generating {} fake badges...".format(len(badges)))
-
-        for name, title, criteria in badges:
-            Badge.objects.get_or_create(
-                name=name, defaults=dict(title=title, criteria=criteria)
-            )
-
     def fake_instructors(self, count=30):
         self.stdout.write("Generating {} fake instructors...".format(count))
         for _ in range(count):
@@ -539,11 +501,13 @@ class Command(BaseCommand):
         self.stdout.write(
             "Generating {} fake train-the-trainer events...".format(count)
         )
-
+        ttt_tag = Tag.objects.get(name="TTT")
+        carpentries_org = Organization.objects.get(domain="carpentries.org")
         for _ in range(count):
             e = self.fake_event()
             e.slug += "-ttt"
-            e.tags.set([Tag.objects.get(name="TTT")])
+            e.administrator = carpentries_org
+            e.tags.set([ttt_tag])
             e.save()
 
     def fake_event(
@@ -563,8 +527,10 @@ class Command(BaseCommand):
         city = self.faker.city().replace(" ", "-").lower()
         if self_organized:
             org = Organization.objects.get(domain="self-organized")
+            administrator = org
         else:
             org = choice(Organization.objects.exclude(domain="self-organized"))
+            administrator = None
 
         # The following line may result in IntegrityError from time to time,
         # because we don't guarantee that the url is unique. In that case,
@@ -577,6 +543,7 @@ class Command(BaseCommand):
             end=start + timedelta(days=2),
             url=self.faker.unique_url(),
             host=org,
+            administrator=administrator,
             # needed in order for event to be published
             country=choice(Countries)[0] if location_data else None,
             venue=self.faker.word().title() if location_data else "",
@@ -976,7 +943,6 @@ class Command(BaseCommand):
             self.fake_airports()
             self.fake_roles()
             self.fake_tags()
-            self.fake_badges()
             self.fake_instructors()
             self.fake_trainers()
             self.fake_admins()

@@ -27,11 +27,12 @@ fast_test_fail:
 dev_database :
 	${MANAGE} reset_db
 	${MANAGE} migrate
+	${MANAGE} loaddata amy/workshops/fixtures/badges.json
 	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
 	${MANAGE} loaddata amy/communityroles/fixtures/inactivations.json
+	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
-	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
 	${MANAGE} createinitialrevisions
 
 ## node_modules : install front-end dependencies using Yarn
