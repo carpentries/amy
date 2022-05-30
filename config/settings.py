@@ -287,6 +287,7 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_AUTOREFRESH = DEBUG or CONTINUOUS_INTEGRATION  # faster tests
 
 # MEDIA
 # -----------------------------------------------------------------------------
