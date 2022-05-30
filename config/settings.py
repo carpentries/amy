@@ -96,6 +96,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
+    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     # Handy template tags
     "django.contrib.humanize",
@@ -113,7 +114,6 @@ THIRD_PARTY_APPS = [
     "reversion_compare",
     "rest_framework",
     "captcha",
-    "compressor",
     "social_django",
     "debug_toolbar",
     "django_extensions",
@@ -233,12 +233,6 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     },
-    "compressor": {
-        # TODO: in future, either switch to offline compression or
-        #       install Memcached
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        # 'LOCATION': 'templates-media',  # required if >1 LocMemCache used
-    },
 }
 
 # MIDDLEWARE
@@ -248,6 +242,7 @@ MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -267,37 +262,32 @@ STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
 STATICFILES_DIRS = [
     str(APPS_DIR.path("static")),
-    str(ROOT_DIR.path("node_modules")),
+    str(ROOT_DIR.path("node_modules/@fortawesome/fontawesome-free/")),
+    str(ROOT_DIR.path("node_modules/@github/time-elements/dist")),
+    str(ROOT_DIR.path("node_modules/bootstrap/dist/css")),
+    str(ROOT_DIR.path("node_modules/bootstrap/dist/js")),
+    str(ROOT_DIR.path("node_modules/bootstrap-datepicker/dist/css")),
+    str(ROOT_DIR.path("node_modules/bootstrap-datepicker/dist/js")),
+    str(ROOT_DIR.path("node_modules/bootstrap-datepicker/dist/locales")),
+    str(ROOT_DIR.path("node_modules/popper.js/dist/umd")),
+    str(ROOT_DIR.path("node_modules/datatables.net/js")),
+    str(ROOT_DIR.path("node_modules/datatables.net-bs4/css")),
+    str(ROOT_DIR.path("node_modules/datatables.net-bs4/js")),
+    str(ROOT_DIR.path("node_modules/select2/dist/css")),
+    str(ROOT_DIR.path("node_modules/select2/dist/js")),
+    str(ROOT_DIR.path("node_modules/@ttskch/select2-bootstrap4-theme/dist")),
+    str(ROOT_DIR.path("node_modules/jquery/dist")),
+    str(ROOT_DIR.path("node_modules/jquery-stickytabs")),
+    str(ROOT_DIR.path("node_modules/js-cookie/dist")),
+    str(ROOT_DIR.path("node_modules/urijs/src")),
 ]
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "compressor.finders.CompressorFinder",
 ]
-
-# DJANGO-COMPRESSOR
-# -----------------------------------------------------------------------------
-# https://django-compressor.readthedocs.io/en/stable/settings/
-COMPRESS_ENABLED = not CONTINUOUS_INTEGRATION
-
-COMPRESS_FILTERS = {
-    "css": [
-        "compressor.filters.css_default.CssAbsoluteFilter",
-        "compressor.filters.cssmin.rCSSMinFilter",
-    ],
-    "js": [
-        "compressor.filters.jsmin.JSMinFilter",
-    ],
-}
-
-# DB-backend cache is very slow when we're using SQLite. Therefore it is
-# advised to use a different cache, like MemCached. By default, AMY sets
-# LocMemCache for Django-Compressor. It has some drawbacks, biggest one
-# this cache being available only for one process. Therefore, for more
-# processes Django-Compressor will start regenerating the cache.
-# TODO: switch to Redis / Memcached once they're in place.
-COMPRESS_CACHE_BACKEND = "compressor"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_AUTOREFRESH = DEBUG or CONTINUOUS_INTEGRATION  # faster tests
 
 # MEDIA
 # -----------------------------------------------------------------------------

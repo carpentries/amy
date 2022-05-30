@@ -55,6 +55,12 @@ jobs:
         python -m pip install pipenv
         pipenv sync --dev
 
+    - name: Install Yarn
+      run: npm install -g yarn
+
+    - name: Install NodeJS dependencies
+      run: yarn install
+
     - name: Check migrations
       run: |
         pipenv run python manage.py makemigrations --dry-run --check;
@@ -63,6 +69,13 @@ jobs:
         fi;
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_amy
+
+    - name: Collect static files
+      run: |
+        pipenv run python manage.py collectstatic --no-input;
+        if [[ $? != "0" ]]; then
+          exit 1;
+        fi;
 
     - name: Test
       run: pipenv run python manage.py test
