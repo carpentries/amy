@@ -176,6 +176,7 @@ class InstructorRecruitmentCreate(
             Event.objects.filter(start__gte=today)
             .filter(location)
             .select_related("administrator")
+            .distinct()
         )
         return get_object_or_404(qs, pk=event_id)
 

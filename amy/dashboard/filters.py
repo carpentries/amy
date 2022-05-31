@@ -1,4 +1,5 @@
 from django.db.models import F, QuerySet
+from django.forms import widgets
 import django_filters as filters
 
 from recruitment.models import InstructorRecruitment
@@ -14,6 +15,12 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
         empty_label="Any",
         label="Online/inperson",
         method="filter_status",
+    )
+
+    only_applied_to = filters.BooleanFilter(
+        label="Show only workshops I have applied to",
+        method="filter_application_only",
+        widget=widgets.CheckboxInput,
     )
 
     order_by = filters.OrderingFilter(
@@ -66,3 +73,11 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
             return queryset.annotate(distance=distance).order_by("-distance")
         else:
             return queryset.order_by(*values)
+
+    def filter_application_only(
+        self, queryset: QuerySet, name: str, value: bool
+    ) -> QuerySet:
+        if value:
+            return queryset.filter(signups__person=self.request.user)
+
+        return queryset

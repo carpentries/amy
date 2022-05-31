@@ -14,7 +14,9 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
         # Act
         filterset = UpcomingTeachingOpportunitiesFilter(data)
         # Assert
-        self.assertEqual(filterset.filters.keys(), {"status", "order_by"})
+        self.assertEqual(
+            filterset.filters.keys(), {"status", "order_by", "only_applied_to"}
+        )
 
     def test_invalid_values_for_status(self):
         # Arrange
@@ -167,3 +169,24 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
         self.assertEqual(
             qs_mock.annotate.call_args_list[0], call(distance=distance_expression)
         )
+
+    def test_filter_application_only__not_applied(self) -> None:
+        # Arrange
+        qs_mock = MagicMock()
+        filterset = UpcomingTeachingOpportunitiesFilter({})
+        name = "only_applied_to"
+        # Act
+        filterset.filter_application_only(qs_mock, name, False)
+        # Assert
+        qs_mock.filter.assert_not_called()
+
+    def test_filter_application_only__applied(self) -> None:
+        # Arrange
+        qs_mock = MagicMock()
+        filterset = UpcomingTeachingOpportunitiesFilter({})
+        filterset.request = MagicMock()
+        name = "only_applied_to"
+        # Act
+        filterset.filter_application_only(qs_mock, name, True)
+        # Assert
+        qs_mock.filter.assert_called_once_with(signups__person=filterset.request.user)
