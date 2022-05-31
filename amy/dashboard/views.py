@@ -307,6 +307,7 @@ class UpcomingTeachingOpportunitiesList(
                 ),
             )
             .order_by("event__start")
+            .distinct()
         )
         return super().get_queryset()
 
