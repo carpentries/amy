@@ -76,7 +76,7 @@
         <dl>
         {% for label, value in role.custom_keys %}
           <dt>{{ label }}:</dt>
-          <dd>{{ value }}</dd>
+          <dd>{{ value|default:"&mdash;" }}</dd>
         {% endfor %}
         </dl>
       {% else %}

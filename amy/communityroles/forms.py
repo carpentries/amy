@@ -65,16 +65,12 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         }
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 
-    def clean(
-        self, community_role_config: Optional[CommunityRoleConfig] = None
-    ) -> dict[str, Any]:
+    def clean(self) -> dict[str, Any]:
         """Validate form according to rules set up in related Community Role
         configuration."""
         cleaned_data = super().clean()
         errors: defaultdict[str, list[ValidationError]] = defaultdict(list)
-        config: Optional[CommunityRoleConfig] = cleaned_data.get(
-            "config", community_role_config
-        )
+        config: Optional[CommunityRoleConfig] = cleaned_data.get("config")
 
         # Config is required, but field validation for 'config' should raise
         # validation error first.
@@ -148,7 +144,7 @@ class CommunityRoleUpdateForm(CommunityRoleForm):
         disabled=True,
     )
 
-    custom_keys = CustomKeysJSONField()
+    custom_keys = CustomKeysJSONField(required=False)
 
     class Meta(CommunityRoleForm.Meta):
         fields = CommunityRoleForm.Meta.fields + ("custom_keys",)

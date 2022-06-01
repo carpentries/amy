@@ -17,15 +17,16 @@ class CustomKeysWidget(forms.TextInput):
 
     def get_context(self, name: str, value: str, attrs: dict):
         value_deserialized = json.loads(value)
-        default_values = [(label, "") for label in self.labels]
-        context_value = value_deserialized or default_values
+        value_deserialized_dict = dict(value_deserialized)
+        default_values = dict([(label, "") for label in self.labels])
+        context_value = default_values | value_deserialized_dict
 
         context = super().get_context(name, context_value, attrs)
         final_attrs = context["widget"]["attrs"]
         id_ = context["widget"]["attrs"].get("id")
 
         subwidgets = []
-        for index, (label, value) in enumerate(context_value):
+        for index, (label, value) in enumerate(context_value.items()):
             widget_attrs = final_attrs.copy()
             if id_:
                 widget_attrs["id"] = "{id_}_{index}".format(id_=id_, index=index)
@@ -48,7 +49,10 @@ class CustomKeysWidget(forms.TextInput):
                 ...
             ]
         """
-        values = [value for value in data.getlist(name) if value]
+        try:
+            values = data.getlist(name)
+        except AttributeError:
+            values = data.get(name, [])
         return list(zip(self.labels, values))
 
     def value_omitted_from_data(
