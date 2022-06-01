@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
 
+from .fields import CustomKeysJSONField
 from .models import CommunityRole, CommunityRoleConfig
 
 
@@ -64,12 +65,16 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         }
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 
-    def clean(self) -> dict[str, Any]:
+    def clean(
+        self, community_role_config: Optional[CommunityRoleConfig] = None
+    ) -> dict[str, Any]:
         """Validate form according to rules set up in related Community Role
         configuration."""
         cleaned_data = super().clean()
         errors: defaultdict[str, list[ValidationError]] = defaultdict(list)
-        config: Optional[CommunityRoleConfig] = cleaned_data.get("config")
+        config: Optional[CommunityRoleConfig] = cleaned_data.get(
+            "config", community_role_config
+        )
 
         # Config is required, but field validation for 'config' should raise
         # validation error first.
@@ -135,3 +140,20 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         if start and end and end < start:
             raise ValidationError("Must not be earlier than start date.")
         return end
+
+
+class CommunityRoleUpdateForm(CommunityRoleForm):
+    config = forms.ModelChoiceField(
+        queryset=CommunityRoleConfig.objects.all(),
+        disabled=True,
+    )
+
+    custom_keys = CustomKeysJSONField()
+
+    class Meta(CommunityRoleForm.Meta):
+        fields = CommunityRoleForm.Meta.fields + ("custom_keys",)
+
+    def __init__(self, *args, community_role_config: CommunityRoleConfig, **kwargs):
+        self.config = community_role_config
+        super().__init__(*args, **kwargs)
+        self.fields["custom_keys"].apply_labels(self.config.custom_key_labels)
