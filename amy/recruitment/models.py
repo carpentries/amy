@@ -75,8 +75,10 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
 
     priority = models.IntegerField(
         choices=RecruitmentPriority.choices,
-        default=RecruitmentPriority.LOW,
+        help_text="If no priority is selected, automated priority will be calculated "
+        "based on the days to start of the event.",
         null=True,
+        blank=True,
     )
 
     def get_absolute_url(self):

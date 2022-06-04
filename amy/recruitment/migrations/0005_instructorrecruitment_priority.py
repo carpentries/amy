@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instructorrecruitment',
             name='priority',
-            field=models.IntegerField(choices=[(1, 'Low'), (2, 'Medium'), (3, 'High')], default=1, null=True),
+            field=models.IntegerField(blank=True, choices=[(1, 'Low'), (2, 'Medium'), (3, 'High')], help_text='If no priority is selected, automated priority will be calculated based on the days to start of the event.', null=True),
         ),
     ]

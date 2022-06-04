@@ -14,7 +14,7 @@ class InstructorRecruitmentCreateForm(forms.ModelForm):
 
     class Meta:
         model = InstructorRecruitment
-        fields = ("notes",)
+        fields = ("priority", "notes")
 
 
 class InstructorRecruitmentAddSignupForm(forms.ModelForm):
