@@ -1,6 +1,7 @@
 {% extends "base_nav_sidebar.html" %}
 
 {% load dates %}
+{% load instructorrecruitment %}
 {% load pagination %}
 {% load static %}
 
@@ -27,6 +28,12 @@
         <td><i class="fa fa-users"></td>
         <td>in-person</td>
         {% endif %}
+      </tr>
+      <tr>
+        <td><i class="fa fa-exclamation"></i></td>
+        <td>
+          {% if object.priority is not None %}manual priority: {{ object.priority|priority_value_label }}{% else %}automatic priority: {{ object.automatic_priority|priority_value_label }}{% endif %}
+        </td>
       </tr>
       <tr>
         <td><i class="fas fa-user-cog"></i></td>

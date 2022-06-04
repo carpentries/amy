@@ -63,7 +63,8 @@ class InstructorRecruitmentList(
     filter_class = InstructorRecruitmentFilter
 
     queryset = (
-        InstructorRecruitment.objects.select_related("event", "assigned_to")
+        InstructorRecruitment.objects.annotate_with_priority()
+        .select_related("event", "assigned_to")
         .prefetch_related(
             Prefetch(
                 "signups",
@@ -234,45 +235,51 @@ class InstructorRecruitmentDetails(
     AMYDetailView,
 ):
     permission_required = "recruitment.view_instructorrecruitment"
-    queryset = InstructorRecruitment.objects.prefetch_related(
-        Prefetch(
-            "signups",
-            queryset=(
-                InstructorRecruitmentSignup.objects.select_related(
-                    "recruitment", "person"
-                ).annotate(
-                    num_instructor=Count(
-                        Case(
-                            When(person__task__role__name="instructor", then=Value(1)),
-                            output_field=IntegerField(),
-                        )
-                    ),
-                    num_supporting=Count(
-                        Case(
-                            When(
-                                person__task__role__name="supporting-instructor",
-                                then=Value(1),
-                            ),
-                            output_field=IntegerField(),
-                        )
-                    ),
-                    num_helper=Count(
-                        Case(
-                            When(person__task__role__name="helper", then=Value(1)),
-                            output_field=IntegerField(),
-                        )
-                    ),
-                )
-            ),
-        )
-    ).annotate(
-        num_pending=Count(
-            Case(
-                When(
-                    signups__state="p",
-                    then=Value(1),
+    queryset = (
+        InstructorRecruitment.objects.annotate_with_priority()
+        .prefetch_related(
+            Prefetch(
+                "signups",
+                queryset=(
+                    InstructorRecruitmentSignup.objects.select_related(
+                        "recruitment", "person"
+                    ).annotate(
+                        num_instructor=Count(
+                            Case(
+                                When(
+                                    person__task__role__name="instructor", then=Value(1)
+                                ),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                        num_supporting=Count(
+                            Case(
+                                When(
+                                    person__task__role__name="supporting-instructor",
+                                    then=Value(1),
+                                ),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                        num_helper=Count(
+                            Case(
+                                When(person__task__role__name="helper", then=Value(1)),
+                                output_field=IntegerField(),
+                            )
+                        ),
+                    )
                 ),
-                output_field=IntegerField(),
+            )
+        )
+        .annotate(
+            num_pending=Count(
+                Case(
+                    When(
+                        signups__state="p",
+                        then=Value(1),
+                    ),
+                    output_field=IntegerField(),
+                )
             )
         )
     )

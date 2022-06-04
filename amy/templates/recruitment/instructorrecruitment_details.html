@@ -2,6 +2,7 @@
 
 {% load dates %}
 {% load crispy_forms_tags %}
+{% load instructorrecruitment %}
 
 {% block content %}
   <h3>
@@ -16,7 +17,8 @@
       <i class="fa fa-globe"></i> online
     {% else %}
       <i class="fa fa-users"></i> in-person
-    {% endif %}
+    {% endif %}<br>
+    <i class="fa fa-exclamation"></i> {% if object.priority is not None %}manual priority: {{ object.priority|priority_value_label }}{% else %}automatic priority: {{ object.automatic_priority|priority_value_label }}{% endif %}
   </p>
   <div class="lead notes-content">{{ object.notes }}</div>
   {% include "includes/instructorrecruitment.html" with object=object %}
