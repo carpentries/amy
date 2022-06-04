@@ -219,7 +219,7 @@
         </tr>
         {% for role in community_roles %}
         <tr>
-          <td>{{ role.config }}</td>
+          <td><a href="{{ role.get_absolute_url }}">{{ role.config }}</a></td>
           <td>
             {% if role.start or role.end %}
             {% human_daterange role.start role.end %}

@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
 
+from .fields import CustomKeysJSONField
 from .models import CommunityRole, CommunityRoleConfig
 
 
@@ -135,3 +136,20 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         if start and end and end < start:
             raise ValidationError("Must not be earlier than start date.")
         return end
+
+
+class CommunityRoleUpdateForm(CommunityRoleForm):
+    config = forms.ModelChoiceField(
+        queryset=CommunityRoleConfig.objects.all(),
+        disabled=True,
+    )
+
+    custom_keys = CustomKeysJSONField(required=False)
+
+    class Meta(CommunityRoleForm.Meta):
+        fields = CommunityRoleForm.Meta.fields + ("custom_keys",)
+
+    def __init__(self, *args, community_role_config: CommunityRoleConfig, **kwargs):
+        self.config = community_role_config
+        super().__init__(*args, **kwargs)
+        self.fields["custom_keys"].apply_labels(self.config.custom_key_labels)

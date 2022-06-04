@@ -69,6 +69,21 @@
       {% endif %}
     </td>
   </tr>
+  <tr>
+    <th>Custom keys</th>
+    <td>
+      {% if role.custom_keys %}
+        <dl>
+        {% for label, value in role.custom_keys %}
+          <dt>{{ label }}:</dt>
+          <dd>{{ value|default:"&mdash;" }}</dd>
+        {% endfor %}
+        </dl>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
 </table>
 
 <div class="clearfix">
