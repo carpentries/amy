@@ -34,6 +34,7 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
     priority = models.IntegerField(
         choices=RecruitmentPriority.choices,
         default=RecruitmentPriority.LOW,
+        null=True,
     )
 
     def get_absolute_url(self):
