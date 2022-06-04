@@ -9,6 +9,12 @@ from workshops.mixins import AssignmentMixin, CreatedUpdatedMixin, StateMixin
 from workshops.models import Event, Person
 
 
+class RecruitmentPriority(models.IntegerChoices):
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+
+
 @reversion.register
 class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
     """Instructor recruitment process for a given event."""
@@ -25,14 +31,9 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
         Event, on_delete=models.PROTECT, null=False, blank=False
     )
 
-    class Priority(models.IntegerChoices):
-        LOW = 1
-        MEDIUM = 2
-        HIGH = 3
-
     priority = models.IntegerField(
-        choices=Priority.choices,
-        default=Priority.LOW,
+        choices=RecruitmentPriority.choices,
+        default=RecruitmentPriority.LOW,
     )
 
     def get_absolute_url(self):
@@ -45,20 +46,20 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
         )
 
     @staticmethod
-    def calculate_priority(event: Event) -> Priority:
+    def calculate_priority(event: Event) -> RecruitmentPriority:
         online = event.tags.filter(name="online")
         if not event.start:
-            return InstructorRecruitment.Priority.LOW
+            return RecruitmentPriority.LOW
 
         time_to_start = event.start - date.today()
         inperson_offset = 30 if not online else 0
 
         if time_to_start >= timedelta(days=60 + inperson_offset):
-            return InstructorRecruitment.Priority.LOW
+            return RecruitmentPriority.LOW
         elif time_to_start > timedelta(days=30 + inperson_offset):
-            return InstructorRecruitment.Priority.MEDIUM
+            return RecruitmentPriority.MEDIUM
         else:
-            return InstructorRecruitment.Priority.HIGH
+            return RecruitmentPriority.HIGH
 
 
 @reversion.register
