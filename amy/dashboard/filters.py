@@ -26,7 +26,7 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
     order_by = filters.OrderingFilter(
         fields=("event__start",),
         choices=(
-            ("-priority", "Priority"),
+            ("-calculated_priority", "Priority"),
             ("event__start", "Event start"),
             ("-event__start", "Event start (descending)"),
             ("proximity", "Closer to my airport"),
