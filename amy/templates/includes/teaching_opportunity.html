@@ -3,9 +3,9 @@
 {% with event=object.event %}
 <h3>
   {{ event }} at {{ event.venue }}
-  {% if object.priority == 3 %}
+  {% if object.calculated_priority == 3 %}
   <span class="badge badge-danger">High priority</span>
-  {% elif object.priority == 2 %}
+  {% elif object.calculated_priority == 2 %}
   <span class="badge badge-warning">Medium priority</span>
   {% endif %}
 </h3>

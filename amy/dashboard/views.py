@@ -293,7 +293,8 @@ class UpcomingTeachingOpportunitiesList(
         ) | Q(event__tags__name="online")
 
         self.queryset = (
-            InstructorRecruitment.objects.select_related("event")
+            InstructorRecruitment.objects.annotate_with_priority()
+            .select_related("event")
             .filter(status="o", event__start__gte=today)
             .filter(location)
             .prefetch_related(
