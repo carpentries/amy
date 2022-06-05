@@ -1,13 +1,23 @@
 from datetime import date, timedelta
 
 from django.db import models
-from django.db.models import Case, F, IntegerField, Q, QuerySet, Value, When
+from django.db.models import (
+    Case,
+    Exists,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
 from django.urls import reverse
 from reversion import revisions as reversion
 
 from autoemails.mixins import RQJobsMixin
 from workshops.mixins import AssignmentMixin, CreatedUpdatedMixin, StateMixin
-from workshops.models import Event, Person
+from workshops.models import Event, Person, Tag
 
 
 class RecruitmentPriority(models.IntegerChoices):
@@ -24,6 +34,12 @@ class InstructorRecruitmentManager(models.Manager):
         cutoff_low_inperson = today + timedelta(days=90)
         cutoff_medium_inperson = today + timedelta(days=60)
 
+        # Online tag existence is checked with a subquery + Exists() to solve issue
+        # with event without any tags (wrong results with:
+        #   `.annotate(event__tag__name="online")`
+        # ).
+        online_tag_exists = Tag.objects.filter(event=OuterRef("event"), name="online")
+
         # If event is online, then it has the following priority:
         # 1) LOW if start >= 60 days
         # 2) MEDIUM if start > 30 days
@@ -32,7 +48,7 @@ class InstructorRecruitmentManager(models.Manager):
         # 1) LOW if start >= 90 days
         # 2) MEDIUM if start > 60 days
         # 3) HIGH otherwise.
-        q_online = Q(event__tags__name="online")
+        q_online = Q(online_tag_exists=True)
         q_low_online = Q(event__start__gte=cutoff_low_online)
         q_medium_online = Q(event__start__gt=cutoff_medium_online)
         q_low_inperson = Q(event__start__gte=cutoff_low_inperson)
@@ -41,6 +57,7 @@ class InstructorRecruitmentManager(models.Manager):
         q_medium = (q_online & q_medium_online) | (~q_online & q_medium_inperson)
 
         return self.annotate(
+            online_tag_exists=Exists(online_tag_exists),
             automatic_priority=Case(
                 When(q_low, then=Value(RecruitmentPriority.LOW.value)),
                 When(q_medium, then=Value(RecruitmentPriority.MEDIUM.value)),
@@ -49,7 +66,7 @@ class InstructorRecruitmentManager(models.Manager):
             ),
             calculated_priority=Case(
                 When(priority__isnull=False, then=F("priority")),
-                When(priority__isnull=True, then=F("automatic_priority")),
+                default=F("automatic_priority"),
                 output_field=IntegerField(),
             ),
         )
