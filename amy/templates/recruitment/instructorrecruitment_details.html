@@ -29,9 +29,9 @@
       <td><i class="fa fa-exclamation"></i></td>
       <td>
         {% if object.priority is not None %}
-        manual priority: {{ object.priority|priority_value_label }}
+        manual priority: {{ object.priority|priority_label }}
         {% else %}
-        automatic priority: {{ object.automatic_priority|priority_value_label }}
+        automatic priority: {{ object.automatic_priority|priority_label }}
         {% endif %}
       </td>
     </tr>

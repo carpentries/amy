@@ -75,5 +75,5 @@ def get_signup_conflicts(
 
 
 @register.filter
-def priority_value_label(value: Union[int, RecruitmentPriority]) -> str:
+def priority_label(value: Union[int, RecruitmentPriority]) -> str:
     return RecruitmentPriority(value).label
