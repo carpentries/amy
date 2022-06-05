@@ -24,7 +24,11 @@ from recruitment.forms import (
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
 )
-from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from recruitment.models import (
+    InstructorRecruitment,
+    InstructorRecruitmentSignup,
+    RecruitmentPriority,
+)
 import recruitment.views
 from recruitment.views import (
     InstructorRecruitmentAddSignup,
@@ -275,6 +279,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
                 "model": InstructorRecruitment,
                 # it needs to be the same instance, otherwise the test fails
                 "form": context["form"],
+                "priority": RecruitmentPriority.HIGH,
             },
         )
 

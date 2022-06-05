@@ -1,10 +1,14 @@
 from datetime import timedelta
-from typing import Sequence
+from typing import Sequence, Union
 
 from django import template
 from django.conf import settings
 
-from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from recruitment.models import (
+    InstructorRecruitment,
+    InstructorRecruitmentSignup,
+    RecruitmentPriority,
+)
 from workshops.models import Event
 
 register = template.Library()
@@ -68,3 +72,8 @@ def get_signup_conflicts(
             conflicts.append(signup_to_check)
 
     return conflicts
+
+
+@register.filter
+def priority_label(value: Union[int, RecruitmentPriority]) -> str:
+    return RecruitmentPriority(value).label

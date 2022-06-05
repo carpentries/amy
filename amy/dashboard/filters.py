@@ -26,6 +26,7 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
     order_by = filters.OrderingFilter(
         fields=("event__start",),
         choices=(
+            ("-calculated_priority", "Priority"),
             ("event__start", "Event start"),
             ("-event__start", "Event start (descending)"),
             ("proximity", "Closer to my airport"),
@@ -63,9 +64,9 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
 
         # `0.0` is neutral element for this equation, so even if user doesn't have the
         # airport specified, the sorting should still work
-        distance = (F("event__latitude") - latitude) ** 2 + (
+        distance = (F("event__latitude") - latitude) ** 2.0 + (
             F("event__longitude") - longitude
-        ) ** 2
+        ) ** 2.0
 
         if values == ["proximity"]:
             return queryset.annotate(distance=distance).order_by("distance")

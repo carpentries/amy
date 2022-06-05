@@ -2,6 +2,7 @@
 
 {% load dates %}
 {% load crispy_forms_tags %}
+{% load instructorrecruitment %}
 
 {% block content %}
   <h3>
@@ -10,14 +11,31 @@
       {{ object.get_status_display }}
     </span>
   </h3>
-  <p class="lead">
-    <i class="far fa-calendar"></i> {% human_daterange object.event.start object.event.end %}<br>
-    {% if "online" in object.event.tags.strings %}
-      <i class="fa fa-globe"></i> online
-    {% else %}
-      <i class="fa fa-users"></i> in-person
-    {% endif %}
-  </p>
+  <table class="lead">
+    <tr>
+      <td width="30px"><i class="far fa-calendar"></i></td>
+      <td>{% human_daterange object.event.start object.event.end %}</td>
+    </tr>
+    <tr>
+      {% if "online" in object.event.tags.strings %}
+      <td><i class="fa fa-globe"></i></td>
+      <td>online</td>
+      {% else %}
+      <td><i class="fa fa-users"></i></td>
+      <td>in-person</td>
+      {% endif %}
+    </tr>
+    <tr>
+      <td><i class="fa fa-exclamation"></i></td>
+      <td>
+        {% if object.priority is not None %}
+        manual priority: {{ object.priority|priority_label }}
+        {% else %}
+        automatic priority: {{ object.automatic_priority|priority_label }}
+        {% endif %}
+      </td>
+    </tr>
+  </table>
   <div class="lead notes-content">{{ object.notes }}</div>
   {% include "includes/instructorrecruitment.html" with object=object %}
 {% endblock %}

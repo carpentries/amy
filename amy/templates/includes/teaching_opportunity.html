@@ -1,7 +1,14 @@
 {% load dates %}
 
 {% with event=object.event %}
-<h3>{{ event }} at {{ event.venue }}</h3>
+<h3>
+  {{ event }} at {{ event.venue }}
+  {% if object.calculated_priority == 3 %}
+  <span class="badge badge-danger">High priority</span>
+  {% elif object.calculated_priority == 2 %}
+  <span class="badge badge-warning">Medium priority</span>
+  {% endif %}
+</h3>
 <ul>
   <li>
     <strong>Date/Time:</strong>

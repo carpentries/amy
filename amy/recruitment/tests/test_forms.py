@@ -26,7 +26,7 @@ class TestInstructorRecruitmentCreateForm(TestCase):
 
     def test_clean_success(self) -> None:
         # Arrange
-        data = {"notes": "Lorem ipsum"}
+        data = {"notes": "Lorem ipsum", "priority": 2}
         # Act
         form = InstructorRecruitmentCreateForm(data)
         # Assert

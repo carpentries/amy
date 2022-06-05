@@ -3,12 +3,17 @@ from datetime import date
 from django.conf import settings
 from django.test import TestCase, override_settings
 
-from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from recruitment.models import (
+    InstructorRecruitment,
+    InstructorRecruitmentSignup,
+    RecruitmentPriority,
+)
 from recruitment.templatetags.instructorrecruitment import (
     get_event_conflicts,
     get_events_nearby,
     get_signup_conflicts,
     is_instructor_recruitment_enabled,
+    priority_label,
 )
 from workshops.models import Event
 
@@ -99,3 +104,21 @@ class TestInstructorRecruitmentTemplateTags(TestCase):
         results = get_signup_conflicts(signups, recruitment)
         # Assert
         self.assertEqual(results, [signup2])
+
+    def test_priority_label__success(self) -> None:
+        # Arrange
+        values = [1, RecruitmentPriority.MEDIUM]
+        expected = ["Low", "Medium"]
+        # Act
+        for value, expected in zip(values, expected):
+            # Assert
+            self.assertEqual(priority_label(value), expected)
+
+    def test_priority_label__failure(self) -> None:
+        # Arrange
+        values = [10, "HIGH", "High", "text", None, "3"]
+        # Act
+        for value in values:
+            # Assert
+            with self.assertRaises(ValueError):
+                priority_label(value)

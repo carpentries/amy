@@ -41,12 +41,8 @@ node_modules : package.json
 	touch node_modules
 
 ## serve        : run a server
-serve : node_modules
-	${MANAGE} runserver
-
-## serve_now    : run a server now
-serve_now :
-	${MANAGE} runserver
+serve :
+	gunicorn --workers=4 --bind=127.0.0.1:8000 --reload --env DJANGO_SETTINGS_MODULE=config.settings config.wsgi
 
 ## outdated     : show outdated dependencies
 outdated :
