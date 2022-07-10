@@ -357,6 +357,9 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         if badge := self.request.GET.get("badge"):
             results = results.filter(badge__pk=badge)
 
+        if person := self.request.GET.get("person"):
+            results = results.filter(person__pk=person)
+
         if self.term:
             results = results.filter(
                 Q(person__personal__icontains=self.term)
