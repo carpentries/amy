@@ -1,11 +1,12 @@
 from collections import defaultdict
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
+from workshops.models import Award, Person
 
 from .fields import CustomKeysJSONField
 from .models import CommunityRole, CommunityRoleConfig
@@ -65,12 +66,17 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         }
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 
-    def clean(self) -> dict[str, Any]:
+    def clean(self) -> Union[dict[str, Any], None]:
         """Validate form according to rules set up in related Community Role
         configuration."""
         cleaned_data = super().clean()
+        if not cleaned_data:
+            return cleaned_data
+
         errors: defaultdict[str, list[ValidationError]] = defaultdict(list)
         config: Optional[CommunityRoleConfig] = cleaned_data.get("config")
+        award: Optional[Award] = cleaned_data.get("award")
+        person: Optional[Person] = cleaned_data.get("person")
 
         # Config is required, but field validation for 'config' should raise
         # validation error first.
@@ -78,13 +84,17 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             return cleaned_data
 
         # Award required?
-        if config.link_to_award and not cleaned_data.get("award"):
+        if config.link_to_award and not award:
             errors["award"].append(
                 ValidationError(f"Award is required with community role {config}")
             )
 
+        # Award should point at the same person the community role links to
+        if award and award.person != person:
+            errors["award"].append(ValidationError(f"Award should belong to {person}"))
+
         # Specific award badge required?
-        if (badge := config.award_badge_limit) and (award := cleaned_data.get("award")):
+        if (badge := config.award_badge_limit) and award:
             if award.badge != badge:
                 errors["award"].append(
                     ValidationError(

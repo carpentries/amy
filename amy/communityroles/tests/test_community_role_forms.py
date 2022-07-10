@@ -13,8 +13,8 @@ class TestCommunityRoleForm(TestBase):
     def setUp(self):
         super().setUp()
 
-        test_badge = Badge.objects.create(name="test badge")
-        self.award = Award.objects.create(person=self.hermione, badge=test_badge)
+        self.test_badge = Badge.objects.create(name="test badge")
+        self.award = Award.objects.create(person=self.hermione, badge=self.test_badge)
         self.membership = Membership.objects.create(
             variant="partner",
             registration_code="test-beta-code-test",
@@ -102,6 +102,41 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(form.errors.keys(), {"award"})
         self.assertEqual(
             form.errors["award"], ["Award is required with community role Test"]
+        )
+
+    def test_award_same_person_required(self):
+        # Arrange
+        test_config = CommunityRoleConfig.objects.create(
+            name="test",
+            display_name="Test",
+            link_to_award=True,
+            award_badge_limit=None,
+            link_to_membership=True,
+            additional_url=True,
+            generic_relation_content_type=None,
+        )
+        award = Award.objects.create(person=self.harry, badge=self.test_badge)
+        data = {
+            "config": test_config.pk,
+            "person": self.hermione.pk,
+            "award": award.pk,
+            "start": "2021-11-14",
+            "end": "2022-11-14",
+            "inactivation": None,
+            "membership": self.membership.pk,
+            "url": "https://example.org",
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
+        }
+
+        # Act
+        form = CommunityRoleForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())  # errors expected
+        self.assertEqual(form.errors.keys(), {"award"})
+        self.assertEqual(
+            form.errors["award"], [f"Award should belong to {self.hermione}"]
         )
 
     def test_specific_award_badge_required(self):

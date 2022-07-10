@@ -7,7 +7,7 @@ from communityroles.models import (
     CommunityRoleConfig,
     CommunityRoleInactivation,
 )
-from workshops.models import Award, Person
+from workshops.models import Award, Badge, Person
 from workshops.tests.base import TestBase
 
 
@@ -58,10 +58,14 @@ class TestCommunityRoleCreateView(TestCommunityRoleMixin, TestBase):
         super()._setUpBadges()
         super()._setUpInstructors()
         super()._setUpUsersAndLogin()
+        award = Award.objects.create(
+            badge=Badge.objects.first(),
+            person=self.person,
+        )
         self.data = {
             "communityrole-config": self.config.pk,
             "communityrole-person": self.person.pk,
-            "communityrole-award": Award.objects.first().pk,
+            "communityrole-award": award.pk,
             "communityrole-start": date(2021, 11, 26),
             "communityrole-end": date(2022, 11, 26),
             "communityrole-inactivation": self.inactivation.pk,
@@ -88,10 +92,14 @@ class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):
         super()._setUpBadges()
         super()._setUpInstructors()
         super()._setUpUsersAndLogin()
+        award = Award.objects.create(
+            badge=Badge.objects.first(),
+            person=self.person,
+        )
         self.data = {
             "communityrole-config": self.config.pk,
             "communityrole-person": self.person.pk,
-            "communityrole-award": Award.objects.first().pk,
+            "communityrole-award": award.pk,
             "communityrole-start": date(2021, 11, 26),
             "communityrole-end": date(2022, 11, 26),
             "communityrole-inactivation": self.inactivation.pk,
