@@ -88,5 +88,14 @@
     "title": "Organizer",
     "criteria": "Organizing workshops and learning groups"
   }
+},
+{
+  "model": "workshops.badge",
+  "pk": 11,
+  "fields": {
+    "name": "instructor",
+    "title": "Instructor",
+    "criteria": "Teaching at The Carpentries workshops or online"
+  }
 }
 ]
