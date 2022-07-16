@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from django.core.management import call_command
+from django.test import TestCase
 from faker import Faker
 import requests_mock
 
@@ -23,7 +24,10 @@ from workshops.management.commands.fake_database import Command as FakeDatabaseC
 from workshops.management.commands.instructors_activity import (
     Command as InstructorsActivityCommand,
 )
-from workshops.models import Badge, Event, Organization, Role, Task
+from workshops.management.commands.migrate_to_single_instructor_badge import (
+    Command as MigrateToSingleInstructorBadge,
+)
+from workshops.models import Award, Badge, Event, Organization, Person, Role, Task
 from workshops.tests.base import TestBase
 
 
@@ -405,3 +409,161 @@ class TestWebsiteUpdatesCommand(TestBase):
     def test_running(self):
         """Test running whole command."""
         call_command("check_for_workshop_websites_updates")
+
+
+class TestMigrateToSingleInstructorBadge(TestCase):
+    def setUp(self) -> None:
+        self.swc_instructor = Badge.objects.get(name="swc-instructor")
+        self.dc_instructor = Badge.objects.get(name="dc-instructor")
+        self.lc_instructor = Badge.objects.get(name="lc-instructor")
+        self.instructor_badge = Badge.objects.create(
+            name="instructor", title="Instructor"
+        )
+        self.command = MigrateToSingleInstructorBadge()
+
+    def test___init__(self) -> None:
+        # Act
+        # Assert
+        self.assertEqual(
+            self.command.instructor_badge, Badge.objects.get(name="instructor")
+        )
+
+    def test_find_instructors(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        Award.objects.create(person=person1, badge=self.swc_instructor)
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        Award.objects.create(person=person2, badge=self.swc_instructor)
+        Award.objects.create(person=person2, badge=self.dc_instructor)
+        person3 = Person.objects.create(
+            username="test3", personal="Test3", family="User", email="test3@example.org"
+        )
+        Award.objects.create(person=person3, badge=self.swc_instructor)
+        Award.objects.create(person=person3, badge=self.dc_instructor)
+        Award.objects.create(person=person3, badge=self.lc_instructor)
+        Award.objects.create(person=person3, badge=self.instructor_badge)
+
+        # Act
+        instructors = self.command.find_instructors()
+
+        # Assert
+        self.assertEqual([person1, person2], list(instructors))
+
+    def test_earliest_award(self) -> None:
+        # Arrange
+        person = Person.objects.create(
+            username="test", personal="Test", family="User", email="test@example.org"
+        )
+        Award.objects.create(
+            person=person, badge=self.swc_instructor, awarded=date(2022, 1, 1)
+        )
+        Award.objects.create(
+            person=person, badge=self.dc_instructor, awarded=date(2021, 1, 1)
+        )
+        Award.objects.create(
+            person=person, badge=self.lc_instructor, awarded=date(2020, 1, 1)
+        )
+        award = Award.objects.create(
+            person=person, badge=self.instructor_badge, awarded=date(1999, 1, 1)
+        )
+
+        # Act
+        earliest_award = self.command.earliest_award(person)
+
+        # Assert
+        self.assertEqual(earliest_award, award)
+
+    def test_create_instructor_award(self) -> None:
+        # Arrange
+        person = Person.objects.create(
+            username="test", personal="Test", family="User", email="test@example.org"
+        )
+        Award.objects.create(
+            person=person, badge=self.swc_instructor, awarded=date(2022, 1, 1)
+        )
+        Award.objects.create(
+            person=person, badge=self.dc_instructor, awarded=date(2021, 1, 1)
+        )
+        Award.objects.create(
+            person=person, badge=self.lc_instructor, awarded=date(2020, 1, 1)
+        )
+
+        # Act
+        instructor_award = self.command.create_instructor_award(person)
+
+        # Assert
+        self.assertEqual(instructor_award.person, person)
+        self.assertEqual(instructor_award.badge, self.instructor_badge)
+        self.assertEqual(instructor_award.awarded, date(2020, 1, 1))
+        self.assertEqual(instructor_award.event, None)
+        self.assertEqual(instructor_award.awarded_by, None)
+
+    def test_handle(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        Award.objects.create(
+            person=person1, badge=self.swc_instructor, awarded=date(2022, 1, 1)
+        )
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        Award.objects.create(
+            person=person2, badge=self.swc_instructor, awarded=date(2021, 1, 1)
+        )
+        Award.objects.create(
+            person=person2, badge=self.dc_instructor, awarded=date(2022, 1, 1)
+        )
+        person3 = Person.objects.create(
+            username="test3", personal="Test3", family="User", email="test3@example.org"
+        )
+        Award.objects.create(
+            person=person3, badge=self.swc_instructor, awarded=date(2020, 1, 1)
+        )
+        Award.objects.create(
+            person=person3, badge=self.dc_instructor, awarded=date(2021, 1, 1)
+        )
+        Award.objects.create(
+            person=person3, badge=self.lc_instructor, awarded=date(2022, 1, 1)
+        )
+        expected = [
+            Award(
+                person=person3,
+                badge=self.instructor_badge,
+                awarded=date(2020, 1, 1),
+                event=None,
+                awarded_by=None,
+            ),
+            Award(
+                person=person2,
+                badge=self.instructor_badge,
+                awarded=date(2021, 1, 1),
+                event=None,
+                awarded_by=None,
+            ),
+            Award(
+                person=person1,
+                badge=self.instructor_badge,
+                awarded=date(2022, 1, 1),
+                event=None,
+                awarded_by=None,
+            ),
+        ]
+
+        # Act
+        self.command.handle(no_output=True)
+
+        # Assert
+        for db, exp in zip(list(Award.objects.order_by("-pk")[:3]), expected):
+            # Can't compare db == exp, since exp isn't from database and
+            # doesn't contain a PK.
+            self.assertEqual(db.person, exp.person)
+            self.assertEqual(db.badge, exp.badge)
+            self.assertEqual(db.awarded, exp.awarded)
+            self.assertEqual(db.event, exp.event)
+            self.assertEqual(db.awarded_by, exp.awarded_by)
