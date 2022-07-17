@@ -167,7 +167,8 @@ class TestGenericObjectLookupView(TestBase):
             '{"text": "Trainer", "id": 4}, '
             '{"text": "Mentor", "id": 5}, '
             '{"text": "Mentee", "id": 6}, '
-            '{"text": "Library Carpentry Instructor", "id": 7}]}',
+            '{"text": "Library Carpentry Instructor", "id": 7}, '
+            '{"text": "Single Instructor Badge", "id": 60}]}',
         )
 
     def test_permissions_no_content_type(self):
