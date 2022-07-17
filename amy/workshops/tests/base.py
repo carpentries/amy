@@ -6,6 +6,7 @@ from django.contrib.sites.models import Site
 from django_webtest import WebTest
 import webtest.forms
 
+from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.models import Consent, Term, TermOption
 from workshops.models import (
     Airport,
@@ -195,6 +196,11 @@ class TestBase(
         )
         # lc-instructor is provided via a migration
         self.lc_instructor = Badge.objects.get(name="lc-instructor")
+
+        self.instructor_badge, _ = Badge.objects.get_or_create(
+            name="instructor",
+            defaults=dict(title="Single Instructor Badge"),
+        )
 
     def _setUpInstructors(self):
         """Set up person objects representing instructors."""
@@ -480,6 +486,51 @@ class TestBase(
                     name="supporting-instructor", verbose_name="Supporting Instructor"
                 ),
             ]
+        )
+
+    def _setUpSingleInstructorBadges(self) -> None:
+        """Add single Instructor Badges for Hermione, Harry and Ron."""
+        Award.objects.create(
+            person=self.hermione,
+            badge=self.instructor_badge,
+            awarded=datetime.date(2022, 7, 17),
+        )
+        Award.objects.create(
+            person=self.harry,
+            badge=self.instructor_badge,
+            awarded=datetime.date(2022, 7, 17),
+        )
+        Award.objects.create(
+            person=self.ron,
+            badge=self.instructor_badge,
+            awarded=datetime.date(2022, 7, 17),
+        )
+
+    def _setUpCommunityRoles(self) -> None:
+        """Add Instructor Community Roles to Hermione, Harry and Ron."""
+        instructor_config, _ = CommunityRoleConfig.objects.get_or_create(
+            name="instructor",
+            defaults=dict(
+                link_to_award=True,
+                award_badge_limit=self.instructor_badge,
+                link_to_membership=False,
+                additional_url=False,
+            ),
+        )
+        CommunityRole.objects.create(
+            config=instructor_config,
+            person=self.hermione,
+            award=Award.objects.get(person=self.hermione, badge=self.instructor_badge),
+        )
+        CommunityRole.objects.create(
+            config=instructor_config,
+            person=self.harry,
+            award=Award.objects.get(person=self.harry, badge=self.instructor_badge),
+        )
+        CommunityRole.objects.create(
+            config=instructor_config,
+            person=self.ron,
+            award=Award.objects.get(person=self.ron, badge=self.instructor_badge),
         )
 
     @staticmethod
