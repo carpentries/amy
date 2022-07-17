@@ -55,6 +55,7 @@ from autoemails.actions import (
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from communityroles.forms import CommunityRoleForm
+from communityroles.models import CommunityRole
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent
 from dashboard.forms import AssignmentForm
@@ -2232,24 +2233,25 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
         .exclude(person__badges__in=important_badges)
     )
 
+    active_instructor_community_roles = CommunityRole.objects.active().filter(
+        config__name="instructor"
+    )
+
     # we need to count number of specific roles users had
     # and if they are SWC/DC/LC instructors
     people = (
         Person.objects.annotate_with_role_count()
         .annotate(
-            is_trainee=Count("task", filter=(Q(task__in=trainee_tasks))),
-            is_trainer=Count("badges", filter=(Q(badges__name="trainer"))),
+            is_trainee=Count("task", filter=Q(task__in=trainee_tasks)),
+            is_trainer=Count("badges", filter=Q(badges__name="trainer")),
+            is_instructor=Count(
+                "communityrole",
+                filter=Q(communityrole__in=active_instructor_community_roles),
+            ),
         )
         .filter(airport__isnull=False)
         .select_related("airport")
-        .prefetch_related(
-            "lessons",
-            Prefetch(
-                "badges",
-                to_attr="important_badges",
-                queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
-            ),
-        )
+        .prefetch_related("lessons")
         .order_by("family", "personal")
     )
 
@@ -2328,8 +2330,8 @@ def workshop_staff_csv(request):
     header_row = (
         "Name",
         "Email",
-        "Some badges",
-        "Has Trainer badge",
+        "Is instructor",
+        "Is trainer",
         "Taught times",
         "Is trainee",
         "Airport",
@@ -2349,7 +2351,7 @@ def workshop_staff_csv(request):
             [
                 person.full_name,
                 person.email,
-                " ".join([badge.name for badge in person.important_badges]),
+                "yes" if person.is_instructor else "no",
                 "yes" if person.is_trainer else "no",
                 person.num_instructor,
                 "yes" if person.is_trainee else "no",

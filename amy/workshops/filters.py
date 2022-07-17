@@ -400,10 +400,9 @@ class WorkshopStaffFilter(AMYFilterSet):
         queryset=Lesson.objects.all(),
         conjoined=True,  # `AND`
     )
-    badges = django_filters.ModelMultipleChoiceFilter(
-        label="Badges",
-        queryset=Badge.objects.instructor_badges(),
-        conjoined=False,  # `OR`
+    is_instructor = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
+        method="filter_instructor",
     )
     is_trainer = django_filters.BooleanFilter(
         widget=widgets.CheckboxInput,
@@ -439,6 +438,11 @@ class WorkshopStaffFilter(AMYFilterSet):
     def filter_country(self, qs, n, v):
         if v:
             return qs.filter(Q(airport__country__in=v) | Q(country__in=v))
+        return qs
+
+    def filter_instructor(self, qs, n, v):
+        if v:
+            return qs.filter(is_instructor__gte=1)
         return qs
 
     def filter_trainer(self, qs, n, v):
