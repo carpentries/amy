@@ -12,6 +12,10 @@ from django.test import TestCase
 from faker import Faker
 import requests_mock
 
+from communityroles.models import CommunityRole, CommunityRoleConfig
+from workshops.management.commands.assign_instructor_community_role import (
+    Command as AssignInstructorCommunityRole,
+)
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
@@ -567,3 +571,164 @@ class TestMigrateToSingleInstructorBadge(TestCase):
             self.assertEqual(db.awarded, exp.awarded)
             self.assertEqual(db.event, exp.event)
             self.assertEqual(db.awarded_by, exp.awarded_by)
+
+
+class TestAssignInstructorCommunityRole(TestCase):
+    def setUp(self) -> None:
+        self.swc_instructor = Badge.objects.get(name="swc-instructor")
+        self.dc_instructor = Badge.objects.get(name="dc-instructor")
+        self.lc_instructor = Badge.objects.get(name="lc-instructor")
+        self.instructor_badge = Badge.objects.create(
+            name="instructor", title="Instructor"
+        )
+        self.instructor_community_role_config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            link_to_award=True,
+            award_badge_limit=self.instructor_badge,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        self.command = AssignInstructorCommunityRole()
+
+    def test___init__(self) -> None:
+        # Act
+        # Assert
+        self.assertEqual(
+            self.command.instructor_badge, Badge.objects.get(name="instructor")
+        )
+        self.assertEqual(
+            self.command.community_role_config,
+            self.instructor_community_role_config,
+        )
+
+    def test_find_instructor_awards(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        Award.objects.create(person=person1, badge=self.swc_instructor)
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        Award.objects.create(person=person2, badge=self.instructor_badge)
+        person3 = Person.objects.create(
+            username="test3", personal="Test3", family="User", email="test3@example.org"
+        )
+        Award.objects.create(person=person3, badge=self.dc_instructor)
+        Award.objects.create(person=person3, badge=self.instructor_badge)
+
+        # Act
+        instructor_awards = self.command.find_instructor_awards()
+
+        # Assert
+        self.assertEqual(len(instructor_awards), 2)
+        self.assertEqual(instructor_awards[0].person, person2)
+        self.assertEqual(instructor_awards[1].person, person3)
+
+    def test_exclude_instructor_community_roles(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        award1 = Award.objects.create(person=person1, badge=self.instructor_badge)
+        CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person1,
+            award=award1,
+            start=date.today(),
+            end=None,
+        )
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        Award.objects.create(person=person2, badge=self.instructor_badge)
+
+        # Act
+        instructor_awards = self.command.exclude_instructor_community_roles(
+            self.command.find_instructor_awards()
+        )
+
+        # Assert
+        self.assertEqual(len(instructor_awards), 1)
+        self.assertEqual(instructor_awards[0].person, person2)
+
+    def test_create_instructor_community_role(self) -> None:
+        # Arrange
+        person = Person.objects.create(
+            username="test", personal="Test", family="User", email="test@example.org"
+        )
+        award = Award.objects.create(
+            person=person, badge=self.instructor_badge, awarded=date(2022, 1, 1)
+        )
+
+        # Act
+        instructor_community_role = self.command.create_instructor_community_role(award)
+
+        # Assert
+        self.assertEqual(
+            instructor_community_role.config, self.instructor_community_role_config
+        )
+        self.assertEqual(instructor_community_role.person, person)
+        self.assertEqual(instructor_community_role.award, award)
+        self.assertEqual(instructor_community_role.start, award.awarded)
+        self.assertEqual(instructor_community_role.end, None)
+
+    def test_handle(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        award1 = Award.objects.create(
+            person=person1, badge=self.instructor_badge, awarded=date(2022, 1, 1)
+        )
+        CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person1,
+            award=award1,
+            start=date.today(),
+            end=None,
+        )
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        award2 = Award.objects.create(
+            person=person2, badge=self.instructor_badge, awarded=date(2021, 1, 1)
+        )
+        Award.objects.create(
+            person=person2, badge=self.dc_instructor, awarded=date(2022, 1, 1)
+        )
+        person3 = Person.objects.create(
+            username="test3", personal="Test3", family="User", email="test3@example.org"
+        )
+        award3 = Award.objects.create(
+            person=person3, badge=self.instructor_badge, awarded=date(2020, 1, 1)
+        )
+        expected = [
+            CommunityRole(
+                config=self.instructor_community_role_config,
+                person=person2,
+                award=award2,
+                start=date(2021, 1, 1),
+                end=None,
+            ),
+            CommunityRole(
+                config=self.instructor_community_role_config,
+                person=person3,
+                award=award3,
+                start=date(2020, 1, 1),
+                end=None,
+            ),
+        ]
+
+        # Act
+        self.command.handle(no_output=True)
+
+        # Assert
+        for db, exp in zip(list(CommunityRole.objects.order_by("-pk")[:2]), expected):
+            # Can't compare db == exp, since exp isn't from database and
+            # doesn't contain a PK.
+            self.assertEqual(db.config, exp.config)
+            self.assertEqual(db.person, exp.person)
+            self.assertEqual(db.award, exp.award)
+            self.assertEqual(db.start, exp.award.awarded)
+            self.assertEqual(db.end, None)
