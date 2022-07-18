@@ -29,7 +29,6 @@ from workshops.fields import (
 from workshops.models import (
     Airport,
     Award,
-    Badge,
     Event,
     GenderMixin,
     KnowledgeDomain,
@@ -281,12 +280,9 @@ class WorkshopStaffForm(forms.Form):
         required=False,
     )
 
-    badges = forms.ModelMultipleChoiceField(
-        queryset=Badge.objects.instructor_badges(),
-        widget=CheckboxSelectMultiple(),
-        required=False,
+    is_instructor = forms.BooleanField(
+        required=False, label="Has active Instructor Community Role"
     )
-
     is_trainer = forms.BooleanField(required=False, label="Has Trainer badge")
 
     GENDER_CHOICES = ((None, "---------"),) + Person.GENDER_CHOICES
@@ -324,7 +320,7 @@ class WorkshopStaffForm(forms.Form):
                 ),
                 css_class="card",
             ),
-            "badges",
+            "is_instructor",
             "is_trainer",
             HTML("<hr>"),
             "was_helper",

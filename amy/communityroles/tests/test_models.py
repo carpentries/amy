@@ -10,7 +10,7 @@ from communityroles.models import (
     CommunityRoleConfig,
     CommunityRoleInactivation,
 )
-from workshops.models import Badge, Person
+from workshops.models import Award, Badge, Person
 
 
 class TestCommunityRoleConfigModel(TestCase):
@@ -41,6 +41,97 @@ class TestCommunityRoleInactivationModel(TestCase):
         representation = str(instance)
         # Assert
         self.assertEqual(representation, "test inactivation")
+
+
+class TestCommunityRoleQuery(TestCase):
+    def test_active(self) -> None:
+        # Arrange
+        today = date.today()
+        self.instructor_badge = Badge.objects.create(
+            name="instructor", title="Instructor"
+        )
+        self.instructor_community_role_config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            link_to_award=True,
+            award_badge_limit=self.instructor_badge,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        award1 = Award.objects.create(
+            person=person1, badge=self.instructor_badge, awarded=date(2022, 1, 1)
+        )
+        CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person1,
+            award=award1,
+            start=today + timedelta(days=30),
+            end=None,
+        )
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        award2 = Award.objects.create(person=person2, badge=self.instructor_badge)
+        crole2 = CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person2,
+            award=award2,
+            start=today - timedelta(days=7),
+            end=today + timedelta(days=7),
+        )
+        person3 = Person.objects.create(
+            username="test3", personal="Test3", family="User", email="test3@example.org"
+        )
+        award3 = Award.objects.create(person=person3, badge=self.instructor_badge)
+        crole3 = CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person3,
+            award=award3,
+            start=None,
+            end=today + timedelta(days=30),
+        )
+        person4 = Person.objects.create(
+            username="test4", personal="Test4", family="User", email="test4@example.org"
+        )
+        award4 = Award.objects.create(person=person4, badge=self.instructor_badge)
+        CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person4,
+            award=award4,
+            start=None,
+            end=today - timedelta(days=30),
+        )
+        person5 = Person.objects.create(
+            username="test5", personal="Test5", family="User", email="test5@example.org"
+        )
+        award5 = Award.objects.create(person=person5, badge=self.instructor_badge)
+        crole5 = CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person5,
+            award=award5,
+            start=None,
+            end=None,
+        )
+        person6 = Person.objects.create(
+            username="test6", personal="Test6", family="User", email="test6@example.org"
+        )
+        award6 = Award.objects.create(person=person6, badge=self.instructor_badge)
+        CommunityRole.objects.create(
+            config=self.instructor_community_role_config,
+            person=person6,
+            award=award6,
+            start=None,
+            end=None,
+            inactivation=CommunityRoleInactivation.objects.create(name="Inactive"),
+        )
+
+        # Act
+        active_roles = CommunityRole.objects.active()
+
+        # Assert
+        self.assertEqual(set(active_roles), {crole2, crole3, crole5})
 
 
 class TestCommunityRoleModel(TestCase):

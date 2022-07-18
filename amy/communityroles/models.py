@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 from django_better_admin_arrayfield.models.fields import ArrayField
 
@@ -47,6 +48,16 @@ class CommunityRoleInactivation(CreatedUpdatedMixin, models.Model):
         return self.name
 
 
+class CommunityRoleQuery(models.query.QuerySet):
+    def active(self):
+        today = date.today()
+        return self.filter(
+            Q(inactivation__isnull=True)
+            & (Q(start__isnull=False) & Q(start__lt=today) | Q(start__isnull=True))
+            & (Q(end__isnull=False) & Q(end__gte=today) | Q(end__isnull=True))
+        )
+
+
 class CommunityRole(CreatedUpdatedMixin, models.Model):
     config = models.ForeignKey(CommunityRoleConfig, on_delete=models.PROTECT)
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
@@ -80,6 +91,8 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
     #   ("Website", "https://carpentries.org/"),
     # ]
     custom_keys = models.JSONField(default=str, blank=True, null=True)
+
+    objects = CommunityRoleQuery.as_manager()
 
     def __str__(self) -> str:
         return f'Community Role "{self.config}" for {self.person}'
