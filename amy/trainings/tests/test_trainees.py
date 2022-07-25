@@ -136,7 +136,9 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             username="instructor1_instructor1",
         )
         Award.objects.create(
-            person=self.instructor1, badge=self.swc_instructor, awarded=date(2014, 1, 1)
+            person=self.instructor1,
+            badge=self.instructor_badge,
+            awarded=date(2014, 1, 1),
         )
         self.instructor2 = Person.objects.create(
             personal="Instructor2",
@@ -145,7 +147,9 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             username="instructor2_instructor2",
         )
         Award.objects.create(
-            person=self.instructor2, badge=self.dc_instructor, awarded=date(2014, 1, 1)
+            person=self.instructor2,
+            badge=self.instructor_badge,
+            awarded=date(2014, 1, 1),
         )
         self.instructor3 = Person.objects.create(
             personal="Instructor3",
@@ -154,24 +158,9 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             username="instructor3_instructor3",
         )
         Award.objects.create(
-            person=self.instructor3, badge=self.lc_instructor, awarded=date(2014, 1, 1)
-        )
-
-        # 1 combined instructor (SWC-DC-LC)
-        self.instructor4 = Person.objects.create(
-            personal="Instructor4",
-            family="Instructor4",
-            email="instructor4@example.org",
-            username="instructor4_instructor4",
-        )
-        Award.objects.create(
-            person=self.instructor4, badge=self.swc_instructor, awarded=date(2014, 1, 1)
-        )
-        Award.objects.create(
-            person=self.instructor4, badge=self.dc_instructor, awarded=date(2014, 1, 1)
-        )
-        Award.objects.create(
-            person=self.instructor4, badge=self.lc_instructor, awarded=date(2014, 1, 1)
+            person=self.instructor3,
+            badge=self.instructor_badge,
+            awarded=date(2014, 1, 1),
         )
 
         # 1 eligible trainee with no instructor badges
@@ -257,7 +246,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             ]
         )
         Award.objects.create(
-            person=self.trainee2, badge=self.lc_instructor, awarded=date(2014, 1, 1)
+            person=self.trainee2, badge=self.instructor_badge, awarded=date(2014, 1, 1)
         )
         # 1 non-eligible trainee
         self.trainee3 = Person.objects.create(
@@ -313,39 +302,10 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         self.assertEqual(rv, self.queryset)
         self.assertQuerysetEqual(rv, list(self.queryset), transform=lambda x: x)
 
-    def test_all_instructors(self):
+    def test_instructors(self):
         # only instructors who have all 3 badges should be returned
-        rv = self.filter(choice="all")
-        values = [self.instructor4]
-        self.assertQuerysetEqual(rv, values, transform=lambda x: x)
-
-    def test_any_instructors(self):
-        # any instructor should be returned
-        rv = self.filter(choice="any")
-        values = [
-            self.instructor1,
-            self.instructor2,
-            self.instructor3,
-            self.instructor4,
-        ]
-        self.assertQuerysetEqual(rv, values, transform=lambda x: x)
-
-    def test_swc_instructors(self):
-        # only SWC instructors should be returned
-        rv = self.filter(choice="swc")
-        values = [self.instructor1, self.instructor4]
-        self.assertQuerysetEqual(rv, values, transform=lambda x: x)
-
-    def test_dc_instructors(self):
-        # only DC instructors should be returned
-        rv = self.filter(choice="dc")
-        values = [self.instructor2, self.instructor4]
-        self.assertQuerysetEqual(rv, values, transform=lambda x: x)
-
-    def test_lc_instructors(self):
-        # only LC instructors should be returned
-        rv = self.filter(choice="lc")
-        values = [self.instructor3, self.instructor4]
+        rv = self.filter(choice="yes")
+        values = [self.instructor1, self.instructor2, self.instructor3]
         self.assertQuerysetEqual(rv, values, transform=lambda x: x)
 
     def test_eligible_trainees(self):
@@ -356,51 +316,30 @@ class TestFilterTraineesByInstructorStatus(TestBase):
 
     def test_eligibility_query(self):
         # check if eligibility query works correctly
-        self.assertEqual(Person.objects.all().count(), 7)
+        self.assertEqual(Person.objects.all().count(), 6)
         rv = all_trainees_queryset().order_by("pk")
         conditions_per_person = [
             # self.instructor1
             dict(
                 username="instructor1_instructor1",
-                is_swc_instructor=1,
-                is_dc_instructor=0,
-                is_lc_instructor=0,
                 is_instructor=1,
                 instructor_eligible=0,
             ),
             # self.instructor2
             dict(
                 username="instructor2_instructor2",
-                is_swc_instructor=0,
-                is_dc_instructor=1,
-                is_lc_instructor=0,
                 is_instructor=1,
                 instructor_eligible=0,
             ),
             # self.instructor3
             dict(
                 username="instructor3_instructor3",
-                is_swc_instructor=0,
-                is_dc_instructor=0,
-                is_lc_instructor=1,
                 is_instructor=1,
-                instructor_eligible=0,
-            ),
-            # self.instructor4
-            dict(
-                username="instructor4_instructor4",
-                is_swc_instructor=1,
-                is_dc_instructor=1,
-                is_lc_instructor=1,
-                is_instructor=3,
                 instructor_eligible=0,
             ),
             # self.trainee1
             dict(
                 username="trainee1_trainee1",
-                is_swc_instructor=0,
-                is_dc_instructor=0,
-                is_lc_instructor=0,
                 is_instructor=0,
                 passed_training=1,
                 passed_discussion=1,
@@ -417,11 +356,6 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             # self.trainee2
             dict(
                 username="trainee2_trainee2",
-                is_swc_instructor=0,
-                is_dc_instructor=0,
-                # no idea why this is counting this way, but
-                # bool(5) == True so we're cool?
-                is_lc_instructor=5,
                 is_instructor=5,
                 passed_training=1,
                 passed_discussion=1,
@@ -438,9 +372,6 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             # self.trainee3
             dict(
                 username="trainee3_trainee3",
-                is_swc_instructor=0,
-                is_dc_instructor=0,
-                is_lc_instructor=0,
                 is_instructor=0,
                 passed_training=1,
                 passed_discussion=0,
