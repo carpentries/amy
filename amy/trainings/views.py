@@ -93,13 +93,6 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin, AMYDelete
 
 
 def all_trainees_queryset():
-    def has_badge(badge):
-        return Sum(
-            Case(
-                When(badges__name=badge, then=1), default=0, output_field=IntegerField()
-            )
-        )
-
     return (
         Person.objects.annotate_with_instructor_eligibility()
         .prefetch_related(
@@ -117,12 +110,9 @@ def all_trainees_queryset():
             "trainingprogress_set__evaluated_by",
         )
         .annotate(
-            is_swc_instructor=has_badge("swc-instructor"),
-            is_dc_instructor=has_badge("dc-instructor"),
-            is_lc_instructor=has_badge("lc-instructor"),
             is_instructor=Sum(
                 Case(
-                    When(badges__name__in=Badge.INSTRUCTOR_BADGES, then=1),
+                    When(badges__name=Badge.SINGLE_INSTRUCTOR_BADGE, then=1),
                     default=0,
                     output_field=IntegerField(),
                 )
@@ -148,7 +138,7 @@ def all_trainees(request):
             for trainee in discard_form.cleaned_data["trainees"]:
                 TrainingProgress.objects.filter(trainee=trainee).update(discarded=True)
             messages.success(
-                request, "Successfully discarded progress of " "all selected trainees."
+                request, "Successfully discarded progress of all selected trainees."
             )
 
             # Raw uri contains GET parameters from django filters. We use it
@@ -173,7 +163,7 @@ def all_trainees(request):
                     notes=form.cleaned_data["notes"],
                 )
             messages.success(
-                request, "Successfully changed progress of " "all selected trainees."
+                request, "Successfully changed progress of all selected trainees."
             )
 
             return redirect(request.get_raw_uri())
@@ -196,9 +186,6 @@ def all_trainees(request):
     context = {
         "title": "Trainees",
         "all_trainees": trainees,
-        "swc": Badge.objects.get(name="swc-instructor"),
-        "dc": Badge.objects.get(name="dc-instructor"),
-        "lc": Badge.objects.get(name="lc-instructor"),
         "filter": filter,
         "form": form,
         "discard_form": discard_form,

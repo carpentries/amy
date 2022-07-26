@@ -1812,11 +1812,13 @@ class BadgeQuerySet(models.query.QuerySet):
     """Custom QuerySet that provides easy way to get instructor badges
     (we use that a lot)."""
 
+    SINGLE_INSTRUCTOR_BADGE = "instructor"
+
     INSTRUCTOR_BADGES = (
         "dc-instructor",
         "swc-instructor",
         "lc-instructor",
-        "instructor",
+        SINGLE_INSTRUCTOR_BADGE,
     )
 
     def instructor_badges(self):
@@ -1829,6 +1831,7 @@ class Badge(models.Model):
     """Represent a badge we award."""
 
     # just for easier access outside `models.py`
+    SINGLE_INSTRUCTOR_BADGE = BadgeQuerySet.SINGLE_INSTRUCTOR_BADGE
     INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
     IMPORTANT_BADGES = INSTRUCTOR_BADGES + ("trainer",)
 

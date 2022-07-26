@@ -81,17 +81,9 @@
           {% endfor %}
         </td>
         <td>
-          {% if trainee.is_swc_instructor %}
+          {% if trainee.is_instructor %}
             <span class="badge badge-secondary" data-toggle="popover" data-trigger="hover"
-                  data-content="This person is SWC instructor">SWC</span>
-          {% endif %}
-          {% if trainee.is_dc_instructor %}
-              <span class="badge badge-secondary" data-toggle="popover" data-trigger="hover"
-                    data-content="This person is DC Instructor.">DC</span>
-          {% endif %}
-          {% if trainee.is_lc_instructor %}
-              <span class="badge badge-secondary" data-toggle="popover" data-trigger="hover"
-                    data-content="This person is LC Instructor.">LC</span>
+                  data-content="This person is an instructor">Instructor</span>
           {% endif %}
           {% if trainee.get_missing_instructor_requirements %}
             <a class="badge badge-dark" data-toggle="popover" data-html="true" data-trigger="hover"
