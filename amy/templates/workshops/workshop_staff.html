@@ -15,8 +15,7 @@
     <table class="table table-striped">
       <tr>
         <th><input type="checkbox" value="Select all" select-all-checkbox /></th>
-        <th class="badges-column">Instructor <i class="fas fa-question-circle" data-toggle="tooltip"
-            title="Has an active Instructor Community Role."></i></th>
+        <th class="badges-column">Instructor Community Role</th>
         <th>Trainer</th>
         <th>Person</th>
         <th>Taught (inc. TTT)</th>
@@ -29,7 +28,7 @@
       {% for p in persons %}
       <tr>
         <td><input type="checkbox" email="{{ p.email }}" respond-to-select-all-checkbox /></td>
-        <td>{% if p.is_instructor %}{% bootstrap_tag 'INSTRUCTOR' %}{% else %}&mdash;{% endif %}</td>
+        <td>{% for role in p.instructor_community_roles %}{% include "includes/instructor_role_badge.html" with role=role %}{% empty %}&mdash;{% endfor %}</td>
         <td>{% if p.is_trainer %}{% bootstrap_tag 'TRAINER' %}{% else %}&mdash;{% endif %}</td>
         <td><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_instructor|add:p.num_trainer }}</td>
