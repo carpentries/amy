@@ -10,21 +10,28 @@ register = template.Library()
 def bootstrap_tag_class(name):
     name_low = name.lower()
 
-    class_ = "badge-secondary"
-    if name_low.startswith("swc"):
-        class_ = "badge-primary"
-    elif name_low.startswith("dc"):
-        class_ = "badge-success"
-    elif name_low.startswith("online"):
-        class_ = "badge-info"
-    elif name_low.startswith("lc"):
-        class_ = "badge-warning"
-    elif name_low.startswith("ttt"):
-        class_ = "badge-danger"
-    elif name_low.startswith("itt"):
-        class_ = "badge-danger"
+    mapping = {
+        "swc": "badge-primary",
+        "dc": "badge-success",
+        "online": "badge-info",
+        "lc": "badge-warning",
+        "ttt": "badge-danger",
+        "itt": "badge-danger",
+        "instructor": "badge-primary",
+        "trainer": "badge-dark",
+    }
+    default = "badge-secondary"
 
-    return mark_safe(class_)
+    return mark_safe(
+        next(
+            (
+                css_class
+                for prefix, css_class in mapping.items()
+                if name_low.startswith(prefix)
+            ),
+            default,
+        )
+    )
 
 
 @register.simple_tag
