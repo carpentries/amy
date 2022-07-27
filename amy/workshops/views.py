@@ -216,6 +216,11 @@ class AllPersons(OnlyForAdminsMixin, AMYListView):
             to_attr="important_badges",
             queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
         ),
+        Prefetch(
+            "communityrole_set",
+            to_attr="instructor_community_roles",
+            queryset=CommunityRole.objects.filter(config__name="instructor"),
+        ),
     )
     title = "All Persons"
 
@@ -995,10 +1000,16 @@ def event_details(request, slug):
         queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
     )
 
+    person_instructor_community_roles = Prefetch(
+        "person__communityrole_set",
+        to_attr="instructor_community_roles",
+        queryset=CommunityRole.objects.filter(config__name="instructor"),
+    )
+
     tasks = (
         Task.objects.filter(event__id=event.id)
         .select_related("event", "person", "role")
-        .prefetch_related(person_important_badges)
+        .prefetch_related(person_important_badges, person_instructor_community_roles)
         .order_by("role__name")
     )
 
@@ -2225,12 +2236,12 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
     TTT = Tag.objects.get(name="TTT")
     stalled = Tag.objects.get(name="stalled")
     learner = Role.objects.get(name="learner")
-    important_badges = Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES)
+    instructor_badges = Badge.objects.filter(name__in=Badge.INSTRUCTOR_BADGES)
 
     trainee_tasks = (
         Task.objects.filter(event__tags=TTT, role=learner)
         .exclude(event__tags=stalled)
-        .exclude(person__badges__in=important_badges)
+        .exclude(person__badges__in=instructor_badges)
     )
 
     active_instructor_community_roles = CommunityRole.objects.active().filter(
@@ -2238,7 +2249,7 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
     )
 
     # we need to count number of specific roles users had
-    # and if they are SWC/DC/LC instructors
+    # and if they are instructors
     people = (
         Person.objects.annotate_with_role_count()
         .annotate(
@@ -2251,7 +2262,14 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
         )
         .filter(airport__isnull=False)
         .select_related("airport")
-        .prefetch_related("lessons")
+        .prefetch_related(
+            "lessons",
+            Prefetch(
+                "communityrole_set",
+                to_attr="instructor_community_roles",
+                queryset=CommunityRole.objects.filter(config__name="instructor"),
+            ),
+        )
         .order_by("family", "personal")
     )
 
