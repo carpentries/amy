@@ -1821,6 +1821,8 @@ class BadgeQuerySet(models.query.QuerySet):
         SINGLE_INSTRUCTOR_BADGE,
     )
 
+    TRAINER_BADGE = "trainer"
+
     def instructor_badges(self):
         """Filter for instructor badges only."""
 
@@ -1833,7 +1835,8 @@ class Badge(models.Model):
     # just for easier access outside `models.py`
     SINGLE_INSTRUCTOR_BADGE = BadgeQuerySet.SINGLE_INSTRUCTOR_BADGE
     INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
-    IMPORTANT_BADGES = INSTRUCTOR_BADGES + ("trainer",)
+    TRAINER_BADGE = BadgeQuerySet.TRAINER_BADGE
+    IMPORTANT_BADGES = (SINGLE_INSTRUCTOR_BADGE, TRAINER_BADGE)
 
     name = models.CharField(max_length=STR_MED, unique=True)
     title = models.CharField(max_length=STR_MED)
