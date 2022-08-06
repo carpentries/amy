@@ -795,6 +795,24 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         with self.assertRaises(Task.DoesNotExist):
             task.refresh_from_db()
 
+    def test_remove_instructor_task__no_task(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        self._prepare_email_automation_data()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        # Act & Assert - no error
+        view.remove_instructor_task(person, event)
+
     def test_post__form_valid(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
