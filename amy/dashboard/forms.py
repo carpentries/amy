@@ -10,15 +10,7 @@ from workshops.fields import (
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
-from workshops.models import (
-    Event,
-    GenderMixin,
-    Language,
-    Person,
-    Task,
-    TrainingProgress,
-    TrainingRequirement,
-)
+from workshops.models import Event, GenderMixin, Language, Person, Task
 
 
 class AssignmentForm(forms.Form):
@@ -142,22 +134,9 @@ class AutoUpdateProfileForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class SendHomeworkForm(forms.ModelForm):
+class SendHomeworkForm(forms.Form):
     url = forms.URLField(label="URL")
-    requirement = forms.ModelChoiceField(
-        queryset=TrainingRequirement.objects.filter(name__endswith="Homework"),
-        label="Type",
-        required=True,
-    )
-
     helper = BootstrapHelper(add_cancel_button=False)
-
-    class Meta:
-        model = TrainingProgress
-        fields = [
-            "requirement",
-            "url",
-        ]
 
 
 class SearchForm(forms.Form):

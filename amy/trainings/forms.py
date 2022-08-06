@@ -1,13 +1,14 @@
 from crispy_forms.layout import Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.forms import RadioSelect, TextInput
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper
-from workshops.models import Event, Person, TrainingProgress
+from workshops.models import Event, Person, TrainingProgress, TrainingRequirement
 
 
 class TrainingProgressForm(forms.ModelForm):
@@ -88,6 +89,16 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
 
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
 
+    requirement = forms.ModelChoiceField(
+        queryset=TrainingRequirement.objects.exclude(
+            Q(name__startswith="SWC")
+            | Q(name__startswith="DC")
+            | Q(name__startswith="LC")
+        ),
+        label="Type",
+        required=True,
+    )
+
     helper = BootstrapHelper(
         additional_form_class="training-progress",
         submit_label="Add",
@@ -122,7 +133,7 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        trainees = cleaned_data.get("trainees")
+        trainees = cleaned_data.get("trainees", [])
 
         # check if all trainees have at least one training task
         for trainee in trainees:
