@@ -399,9 +399,15 @@ class InstructorRecruitmentSignupChangeState(
         return task
 
     def remove_instructor_task(self, person: Person, event: Event) -> None:
-        task = Task.objects.get(role__name="instructor", person=person, event=event)
-        self.remove_automated_email(task)
-        task.delete()
+        """Remove instructor task from a Person only if the task exists. If it doesn't,
+        don't throw errors."""
+        try:
+            task = Task.objects.get(role__name="instructor", person=person, event=event)
+        except Task.DoesNotExist:
+            pass
+        else:
+            self.remove_automated_email(task)
+            task.delete()
 
     def add_automated_email(self, task: Task) -> tuple[list[Job], list[RQJob]]:
         trigger_name = "new-instructor"
