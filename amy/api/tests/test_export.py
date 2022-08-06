@@ -187,9 +187,12 @@ class TestExportingPersonData(BaseExportingTest):
             discarded=False,
             url=None,
         )
+        homework, _ = TrainingRequirement.objects.get_or_create(
+            name="Homework", defaults={"url_required": True}
+        )
         TrainingProgress.objects.create(
             trainee=self.user,
-            requirement=TrainingRequirement.objects.get(name="DC Homework"),
+            requirement=homework,
             state="a",  # asked to repeat
             event=None,
             evaluated_by=self.admin,
@@ -532,7 +535,7 @@ class TestExportingPersonData(BaseExportingTest):
                 "created_at": data["training_progresses"][1]["created_at"],
                 "last_updated_at": data["training_progresses"][1]["last_updated_at"],
                 "requirement": {
-                    "name": "DC Homework",
+                    "name": "Homework",
                     "url_required": True,
                     "event_required": False,
                 },

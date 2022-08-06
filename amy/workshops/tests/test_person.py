@@ -1264,28 +1264,30 @@ class TestPersonAndUserSocialAuth(TestBase):
                 self.client.get(reverse("sync_usersocialauth", args=(self.admin.pk,)))
 
 
-class TestGetMissingSWCInstructorRequirements(TestBase):
+class TestGetMissingInstructorRequirements(TestBase):
     def setUp(self):
         self.person = Person.objects.create(username="person")
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.swc_homework = TrainingRequirement.objects.get(name="SWC Homework")
-        self.dc_homework = TrainingRequirement.objects.get(name="DC Homework")
+        self.homework, _ = TrainingRequirement.objects.get_or_create(
+            name="Homework", defaults={"url_required": True}
+        )
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
-        self.swc_demo = TrainingRequirement.objects.get(name="SWC Demo")
-        self.dc_demo = TrainingRequirement.objects.get(name="DC Demo")
+        self.demo, _ = TrainingRequirement.objects.get_or_create(
+            name="Demo", defaults={}
+        )
 
     def test_all_requirements_satisfied(self):
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.training
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_homework
+            trainee=self.person, state="p", requirement=self.homework
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.discussion
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_demo
+            trainee=self.person, state="p", requirement=self.demo
         )
 
         person = Person.objects.annotate_with_instructor_eligibility().get(
@@ -1296,18 +1298,14 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
     def test_some_requirements_are_fulfilled(self):
         # Homework was accepted, the second time.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.swc_homework
+            trainee=self.person, state="f", requirement=self.homework
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_homework
-        )
-        # Dc-demo records should be ignored
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_demo
+            trainee=self.person, state="p", requirement=self.homework
         )
         # Not passed progress should be ignored.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.swc_demo
+            trainee=self.person, state="f", requirement=self.demo
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="n", requirement=self.discussion
@@ -1321,7 +1319,8 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
             username="person"
         )
         self.assertEqual(
-            person.get_missing_instructor_requirements(), ["Training", "Discussion"]
+            person.get_missing_instructor_requirements(),
+            ["Training", "Discussion", "Demo"],
         )
 
     def test_none_requirement_is_fulfilled(self):
@@ -1330,78 +1329,7 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Homework (SWC/DC/LC)", "Discussion", "Demo (SWC/DC/LC)"],
-        )
-
-
-class TestGetMissingDCInstructorRequirements(TestBase):
-    def setUp(self):
-        self.person = Person.objects.create(username="person")
-        self.training = TrainingRequirement.objects.get(name="Training")
-        self.swc_homework = TrainingRequirement.objects.get(name="SWC Homework")
-        self.dc_homework = TrainingRequirement.objects.get(name="DC Homework")
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
-        self.swc_demo = TrainingRequirement.objects.get(name="SWC Demo")
-        self.dc_demo = TrainingRequirement.objects.get(name="DC Demo")
-
-    def test_all_requirements_satisfied(self):
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training
-        )
-
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_homework
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.discussion
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_demo
-        )
-
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
-        self.assertEqual(person.get_missing_instructor_requirements(), [])
-
-    def test_some_requirements_are_fulfilled(self):
-        # Homework was accepted, the second time.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.dc_homework
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_homework
-        )
-        # Swc-demo should be ignored
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_demo
-        )
-        # Not passed progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.dc_demo
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="n", requirement=self.discussion
-        )
-        # Passed discarded progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training, discarded=True
-        )
-
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
-        self.assertEqual(
-            person.get_missing_instructor_requirements(), ["Training", "Discussion"]
-        )
-
-    def test_none_requirement_is_fulfilled(self):
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
-        self.assertEqual(
-            person.get_missing_instructor_requirements(),
-            ["Training", "Homework (SWC/DC/LC)", "Discussion", "Demo (SWC/DC/LC)"],
+            ["Training", "Homework", "Discussion", "Demo"],
         )
 
 

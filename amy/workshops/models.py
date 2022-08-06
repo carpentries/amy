@@ -596,43 +596,36 @@ class PersonManager(BaseUserManager):
                 )
             )
 
-        def passed_either(req_a, req_b, req_c):
+        def passed_either(*reqs):
             return Sum(
                 Case(
-                    When(
-                        trainingprogress__requirement__name=req_a,
-                        trainingprogress__state="p",
-                        trainingprogress__discarded=False,
-                        then=1,
-                    ),
-                    When(
-                        trainingprogress__requirement__name=req_b,
-                        trainingprogress__state="p",
-                        trainingprogress__discarded=False,
-                        then=1,
-                    ),
-                    When(
-                        trainingprogress__requirement__name=req_c,
-                        trainingprogress__state="p",
-                        trainingprogress__discarded=False,
-                        then=1,
-                    ),
+                    *[
+                        When(
+                            trainingprogress__requirement__name=req,
+                            trainingprogress__state="p",
+                            trainingprogress__discarded=False,
+                            then=1,
+                        )
+                        for req in reqs
+                    ],
                     default=0,
                     output_field=IntegerField(),
                 )
             )
 
+        HOMEWORK_TRAININGPROGRESS_NAMES = [
+            "Homework",
+            "SWC Homework",
+            "DC Homework",
+            "LC Homework",
+        ]
+        DEMO_TRAININGPROGRESS_NAMES = ["Demo", "SWC Demo", "DC Demo", "LC Demo"]
+
         return self.annotate(
             passed_training=passed("Training"),
-            passed_swc_homework=passed("SWC Homework"),
-            passed_dc_homework=passed("DC Homework"),
-            passed_lc_homework=passed("LC Homework"),
+            passed_homework=passed_either(*HOMEWORK_TRAININGPROGRESS_NAMES),
             passed_discussion=passed("Discussion"),
-            passed_swc_demo=passed("SWC Demo"),
-            passed_dc_demo=passed("DC Demo"),
-            passed_lc_demo=passed("LC Demo"),
-            passed_homework=passed_either("SWC Homework", "DC Homework", "LC Homework"),
-            passed_demo=passed_either("SWC Demo", "DC Demo", "LC Demo"),
+            passed_demo=passed_either(*DEMO_TRAININGPROGRESS_NAMES),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
             # be instructor badge eligible. Legend:
@@ -973,15 +966,15 @@ class Person(
         """
         fields = [
             ("passed_training", "Training"),
-            ("passed_homework", "Homework (SWC/DC/LC)"),
+            ("passed_homework", "Homework"),
             ("passed_discussion", "Discussion"),
-            ("passed_demo", "Demo (SWC/DC/LC)"),
+            ("passed_demo", "Demo"),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
         except AttributeError as e:
             raise Exception(
-                "Did you forget to call " "annotate_with_instructor_eligibility()?"
+                "Did you forget to call annotate_with_instructor_eligibility()?"
             ) from e
 
     def get_training_tasks(self):

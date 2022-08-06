@@ -27,7 +27,9 @@ class TestTraineesView(TestBase):
         self._setUpRoles()
 
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.homework = TrainingRequirement.objects.get(name="SWC Homework")
+        self.homework, _ = TrainingRequirement.objects.get_or_create(
+            name="Homework", defaults={"url_required": True}
+        )
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
 
         self.ttt_event = Event.objects.create(
@@ -116,12 +118,15 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         pass
 
     def _setUpTrainingRequirements(self):
-        self.swc_demo = TrainingRequirement.objects.get(name="SWC Demo")
-        self.swc_homework = TrainingRequirement.objects.get(name="SWC Homework")
-        self.dc_demo = TrainingRequirement.objects.get(name="DC Demo")
-        self.dc_homework = TrainingRequirement.objects.get(name="DC Homework")
-        self.lc_demo = TrainingRequirement.objects.get(name="LC Demo")
-        self.lc_homework = TrainingRequirement.objects.get(name="LC Homework")
+        """Add some Training Requirements created through fixture
+        (amy/trainings/fixtures/training_requirements.json)"""
+        self.demo, _ = TrainingRequirement.objects.get_or_create(
+            name="Demo", defaults={"url_required": True}
+        )
+        self.homework, _ = TrainingRequirement.objects.get_or_create(
+            name="Homework", defaults={}
+        )
+
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
         self.training = TrainingRequirement.objects.get(name="Training")
 
@@ -187,19 +192,13 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 TrainingProgress(
                     trainee=self.trainee1,
                     evaluated_by=None,
-                    requirement=self.swc_homework,
+                    requirement=self.homework,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
                     evaluated_by=None,
-                    requirement=self.dc_homework,
-                    state="p",
-                ),
-                TrainingProgress(
-                    trainee=self.trainee1,
-                    evaluated_by=None,
-                    requirement=self.lc_demo,
+                    requirement=self.demo,
                     state="p",
                 ),
             ]
@@ -228,19 +227,13 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 TrainingProgress(
                     trainee=self.trainee2,
                     evaluated_by=None,
-                    requirement=self.dc_homework,
+                    requirement=self.homework,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
                     evaluated_by=None,
-                    requirement=self.swc_demo,
-                    state="p",
-                ),
-                TrainingProgress(
-                    trainee=self.trainee2,
-                    evaluated_by=None,
-                    requirement=self.lc_demo,
+                    requirement=self.demo,
                     state="p",
                 ),
             ]
@@ -273,13 +266,13 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 TrainingProgress(
                     trainee=self.trainee3,
                     evaluated_by=None,
-                    requirement=self.lc_homework,
+                    requirement=self.homework,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
                     evaluated_by=None,
-                    requirement=self.lc_demo,
+                    requirement=self.demo,
                     state="p",
                 ),
             ]
@@ -343,31 +336,19 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=0,
                 passed_training=1,
                 passed_discussion=1,
-                passed_swc_homework=1,
-                passed_dc_homework=1,
-                passed_lc_homework=0,
-                passed_homework=2,
-                passed_swc_demo=0,
-                passed_dc_demo=0,
-                passed_lc_demo=1,
+                passed_homework=1,
                 passed_demo=1,
-                instructor_eligible=2,
+                instructor_eligible=1,
             ),
             # self.trainee2
             dict(
                 username="trainee2_trainee2",
-                is_instructor=5,
+                is_instructor=4,
                 passed_training=1,
                 passed_discussion=1,
-                passed_swc_homework=0,
-                passed_dc_homework=1,
-                passed_lc_homework=0,
                 passed_homework=1,
-                passed_swc_demo=1,
-                passed_dc_demo=0,
-                passed_lc_demo=1,
-                passed_demo=2,
-                instructor_eligible=2,
+                passed_demo=1,
+                instructor_eligible=1,
             ),
             # self.trainee3
             dict(
@@ -375,13 +356,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=0,
                 passed_training=1,
                 passed_discussion=0,
-                passed_swc_homework=0,
-                passed_dc_homework=0,
-                passed_lc_homework=1,
                 passed_homework=1,
-                passed_swc_demo=0,
-                passed_dc_demo=0,
-                passed_lc_demo=1,
                 passed_demo=1,
                 instructor_eligible=0,
             ),

@@ -31,6 +31,7 @@ dev_database :
 	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
 	${MANAGE} loaddata amy/communityroles/fixtures/inactivations.json
 	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
+	${MANAGE} loaddata amy/trainings/fixtures/training_requirements.json
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
