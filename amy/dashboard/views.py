@@ -43,6 +43,7 @@ from workshops.models import (
     Task,
     TrainingProgress,
     TrainingRequest,
+    TrainingRequirement,
 )
 from workshops.util import admin_required, login_required
 
@@ -215,56 +216,30 @@ def training_progress(request):
     )
 
     progresses = request.user.trainingprogress_set.filter(discarded=False)
-    last_swc_homework = (
-        progresses.filter(requirement__name="SWC Homework")
-        .order_by("-created_at")
-        .first()
-    )
-    request.user.swc_homework_in_evaluation = (
-        last_swc_homework is not None and last_swc_homework.state == "n"
-    )
-    last_dc_homework = (
-        progresses.filter(requirement__name="DC Homework")
-        .order_by("-created_at")
-        .first()
-    )
-    request.user.dc_homework_in_evaluation = (
-        last_dc_homework is not None and last_dc_homework.state == "n"
-    )
-    last_lc_homework = (
-        progresses.filter(requirement__name="LC Homework")
-        .order_by("-created_at")
-        .first()
-    )
-    request.user.lc_homework_in_evaluation = (
-        last_lc_homework is not None and last_lc_homework.state == "n"
+    last_homework = (
+        progresses.filter(requirement__name="Homework").order_by("-created_at").first()
     )
 
     if request.method == "POST":
         homework_form = SendHomeworkForm(data=request.POST)
         if homework_form.is_valid():
-            # read homework type from POST
-            hw_type = homework_form.cleaned_data["requirement"]
-
-            # create "empty" progress object and fill out
-            progress = TrainingProgress(
+            TrainingProgress.objects.create(
                 trainee=request.user,
                 state="n",  # not evaluated yet
-                requirement=hw_type,
+                requirement=TrainingRequirement.objects.get(name="Homework"),
+                url=homework_form.cleaned_data["url"],
             )
-
-            # create virtual form to validate and save
-            form = SendHomeworkForm(data=request.POST, instance=progress)
-            if form.is_valid():
-                form.save()
-                messages.success(
-                    request, "Your homework submission will be " "evaluated soon."
-                )
-                return redirect(reverse("training-progress"))
+            messages.success(
+                request, "Your homework submission will be evaluated soon."
+            )
+            return redirect(reverse("training-progress"))
 
     context = {
         "title": "Your training progress",
         "homework_form": homework_form,
+        "homework_in_evaluation": (
+            last_homework is not None and last_homework.state == "n"
+        ),
     }
     return render(request, "dashboard/training_progress.html", context)
 

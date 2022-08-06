@@ -36,80 +36,27 @@ class TestInstructorStatus(TestBase):
         self._setUpUsersAndLogin()
         self._setUpBadges()
         self.progress_url = reverse("training-progress")
+        TrainingRequirement.objects.create(name="Homework", url_required=True)
+        TrainingRequirement.objects.create(name="Demo")
 
-    def test_swc_dc_lc_instructor_badges(self):
+    def test_instructor_badge(self):
         """When the trainee is awarded both Carpentry Instructor badge,
         we want to display that info in the dashboard."""
 
         Award.objects.create(
             person=self.admin,
-            badge=self.swc_instructor,
-            awarded=datetime(2016, 6, 1, 15, 0),
-        )
-        Award.objects.create(
-            person=self.admin,
-            badge=self.dc_instructor,
-            awarded=datetime(2016, 6, 1, 15, 0),
-        )
-        Award.objects.create(
-            person=self.admin,
-            badge=self.lc_instructor,
-            awarded=datetime(2018, 12, 25, 20, 16),
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Software Carpentry Instructor")
-        self.assertContains(rv, "Data Carpentry Instructor")
-        self.assertContains(rv, "Library Carpentry Instructor")
-        self.assertIn(self.swc_instructor, rv.context["user"].instructor_badges)
-        self.assertIn(self.dc_instructor, rv.context["user"].instructor_badges)
-        self.assertIn(self.lc_instructor, rv.context["user"].instructor_badges)
-
-    def test_swc_instructor(self):
-        Award.objects.create(
-            person=self.admin,
-            badge=self.swc_instructor,
+            badge=self.instructor_badge,
             awarded=datetime(2016, 6, 1, 15, 0),
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Software Carpentry Instructor")
-        self.assertIn(self.swc_instructor, rv.context["user"].instructor_badges)
-
-    def test_dc_instructor(self):
-        Award.objects.create(
-            person=self.admin,
-            badge=self.dc_instructor,
-            awarded=datetime(2016, 6, 1, 15, 0),
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Data Carpentry Instructor")
-        self.assertIn(self.dc_instructor, rv.context["user"].instructor_badges)
-
-    def test_lc_instructor(self):
-        Award.objects.create(
-            person=self.admin,
-            badge=self.lc_instructor,
-            awarded=datetime(2018, 12, 25, 20, 16),
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Library Carpentry Instructor")
-        self.assertIn(self.lc_instructor, rv.context["user"].instructor_badges)
+        self.assertContains(rv, "Congratulations, you're a certified")
+        self.assertIn(self.instructor_badge, rv.context["user"].instructor_badges)
 
     def test_neither_swc_nor_dc_instructor(self):
         """Check that we don't display that the trainee is an instructor if
         they don't have appropriate badge."""
         rv = self.client.get(self.progress_url)
-        self.assertNotContains(
-            rv,
-            "Congratulations, you're certified both "
-            "Software Carpentry and Data Carpentry "
-            "Instructor!",
-        )
-        self.assertNotContains(
-            rv, "Congratulations, you're certified " "Software Carpentry Instructor!"
-        )
-        self.assertNotContains(
-            rv, "Congratulations, you're certified " "Data Carpentry Instructor!"
-        )
+        self.assertNotContains(rv, "Congratulations, you're certified")
 
     def test_eligible_but_not_awarded(self):
         """Test what is dispslayed when a trainee is eligible to be certified
@@ -117,11 +64,9 @@ class TestInstructorStatus(TestBase):
         yet."""
         requirements = [
             "Training",
-            "SWC Homework",
-            "DC Homework",
+            "Homework",
             "Discussion",
-            "SWC Demo",
-            "DC Demo",
+            "Demo",
         ]
         for requirement in requirements:
             TrainingProgress.objects.create(
@@ -136,18 +81,7 @@ class TestInstructorStatus(TestBase):
 
         rv = self.client.get(self.progress_url)
 
-        self.assertNotContains(
-            rv,
-            "Congratulations, you're certified both "
-            "Software Carpentry and Data Carpentry "
-            "Instructor!",
-        )
-        self.assertNotContains(
-            rv, "Congratulations, you're certified " "Software Carpentry Instructor!"
-        )
-        self.assertNotContains(
-            rv, "Congratulations, you're certified " "Data Carpentry Instructor!"
-        )
+        self.assertNotContains(rv, "Congratulations, you're certified")
 
 
 class TestInstructorTrainingStatus(TestBase):
@@ -198,37 +132,39 @@ class TestInstructorTrainingStatus(TestBase):
         self.assertContains(rv, "Training not passed yet")
 
 
-class TestSWCHomeworkStatus(TestBase):
-    """Test that trainee dashboard displays status of passing SWC Homework.
-    Test that SWC homework submission form works."""
+class TestHomeworkStatus(TestBase):
+    """Test that trainee dashboard displays status of passing Homework.
+    Test that homework submission form works."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.homework = TrainingRequirement.objects.get(name="SWC Homework")
+        self.homework, _ = TrainingRequirement.objects.get_or_create(
+            name="Homework", defaults={"url_required": True}
+        )
         self.progress_url = reverse("training-progress")
 
     def test_homework_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Homework not submitted")
+        self.assertContains(rv, "Homework not submitted")
 
     def test_homework_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.homework, state="n"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Homework evaluation pending")
+        self.assertContains(rv, "Homework evaluation pending")
 
     def test_homework_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Homework accepted")
+        self.assertContains(rv, "Homework accepted")
 
     def test_homework_not_accepted_when_homework_passed_but_discarded(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.homework, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Homework not submitted")
+        self.assertContains(rv, "Homework not submitted")
 
     def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
         self,
@@ -238,7 +174,7 @@ class TestSWCHomeworkStatus(TestBase):
             trainee=self.admin, requirement=self.homework, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Homework accepted")
+        self.assertContains(rv, "Homework accepted")
 
     def test_submission_form(self):
         data = {
@@ -259,141 +195,7 @@ class TestSWCHomeworkStatus(TestBase):
                 "n",
                 self.admin.pk,
                 "http://example.com",
-                TrainingRequirement.objects.get(name="SWC Homework").pk,
-            )
-        ]
-        self.assertEqual(got, expected)
-
-
-class TestDCHomeworkStatus(TestBase):
-    """Test that trainee dashboard displays status of passing DC Homework.
-    Test that DC homework submission form works."""
-
-    def setUp(self):
-        self._setUpUsersAndLogin()
-        self.homework = TrainingRequirement.objects.get(name="DC Homework")
-        self.progress_url = reverse("training-progress")
-
-    def test_homework_not_submitted(self):
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Homework not submitted")
-
-    def test_homework_waiting_to_be_evaluated(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, state="n"
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Homework evaluation pending")
-
-    def test_homework_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Homework accepted")
-
-    def test_homework_not_accepted_when_homework_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Homework not submitted")
-
-    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
-        self,
-    ):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Homework accepted")
-
-    def test_submission_form(self):
-        data = {
-            "url": "http://example.com",
-            "requirement": self.homework.pk,
-        }
-        rv = self.client.post(self.progress_url, data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(rv, "Your homework submission will be evaluated " "soon.")
-        got = list(
-            TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement"
-            )
-        )
-        expected = [
-            (
-                "n",
-                self.admin.pk,
-                "http://example.com",
-                TrainingRequirement.objects.get(name="DC Homework").pk,
-            )
-        ]
-        self.assertEqual(got, expected)
-
-
-class TestLCHomeworkStatus(TestBase):
-    """Test that trainee dashboard displays status of passing LC Homework.
-    Test that LC homework submission form works."""
-
-    def setUp(self):
-        self._setUpUsersAndLogin()
-        self.homework = TrainingRequirement.objects.get(name="LC Homework")
-        self.progress_url = reverse("training-progress")
-
-    def test_homework_not_submitted(self):
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Homework not submitted")
-
-    def test_homework_waiting_to_be_evaluated(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, state="n"
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Homework evaluation pending")
-
-    def test_homework_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Homework accepted")
-
-    def test_homework_not_accepted_when_homework_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Homework not submitted")
-
-    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
-        self,
-    ):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Homework accepted")
-
-    def test_submission_form(self):
-        data = {
-            "url": "http://example.com",
-            "requirement": self.homework.pk,
-        }
-        rv = self.client.post(self.progress_url, data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(rv, "Your homework submission will be evaluated " "soon.")
-        got = list(
-            TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement"
-            )
-        )
-        expected = [
-            (
-                "n",
-                self.admin.pk,
-                "http://example.com",
-                TrainingRequirement.objects.get(name="LC Homework").pk,
+                self.homework.pk,
             )
         ]
         self.assertEqual(got, expected)
@@ -442,131 +244,46 @@ class TestDiscussionSessionStatus(TestBase):
 
 
 class TestDemoSessionStatus(TestBase):
-    """Test that trainee dashboard displays status of passing SWC/DC Demo
-    Session. Test whether we display instructions for registering for a
-    session."""
+    """Test that trainee dashboard displays status of passing a Demo Session. Test
+    whether we display instructions for registering for a session."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.swc_demo = TrainingRequirement.objects.get(name="SWC Demo")
-        self.dc_demo = TrainingRequirement.objects.get(name="DC Demo")
-        self.lc_demo = TrainingRequirement.objects.get(name="LC Demo")
+        self.demo, _ = TrainingRequirement.objects.get_or_create(
+            name="Demo", defaults={}
+        )
         self.progress_url = reverse("training-progress")
+        self.SESSION_LINK_TEXT = "You can register for a Demo Session on"
 
-    def test_swc_session_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.swc_demo)
+    def test_session_passed(self):
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session passed")
-        self.assertContains(rv, "You can register for a Demo Session on")
+        self.assertContains(rv, "Demo Session passed")
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_swc_session_passed_but_discarded(self):
+    def test_session_passed_but_discarded(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.swc_demo, discarded=True
+            trainee=self.admin, requirement=self.demo, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
+        self.assertContains(rv, "Demo Session not completed")
+        self.assertContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_swc_last_session_discarded_but_another_is_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.swc_demo)
+    def test_session_failed(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.swc_demo, discarded=True
+            trainee=self.admin, requirement=self.demo, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session passed")
-        self.assertContains(rv, "You can register for a Demo Session on")
+        self.assertContains(rv, "Demo Session not completed")
+        self.assertContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_swc_session_failed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.swc_demo, state="f"
-        )
+    def test_no_participation_in_a_session_yet(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
+        self.assertContains(rv, "Demo Session not completed")
+        self.assertContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_no_participation_in_a_swc_session_yet(self):
+    def test_no_registration_instruction_when_trainee_passed_session(self):
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_dc_session_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.dc_demo)
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session passed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_dc_session_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.dc_demo, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_dc_last_session_discarded_but_another_is_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.dc_demo)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.dc_demo, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session passed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_dc_session_failed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.dc_demo, state="f"
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_no_participation_in_a_dc_session_yet(self):
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "DC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_lc_session_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.lc_demo)
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session passed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_lc_session_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lc_demo, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_lc_last_session_discarded_but_another_is_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.lc_demo)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lc_demo, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session passed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_lc_session_failed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lc_demo, state="f"
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_no_participation_in_a_lc_session_yet(self):
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "LC Demo Session not completed")
-        self.assertContains(rv, "You can register for a Demo Session on")
-
-    def test_no_registration_instruction_when_trainee_passed_both_all_sessions(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.swc_demo)
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.dc_demo)
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.lc_demo)
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "SWC Demo Session passed")
-        self.assertContains(rv, "DC Demo Session passed")
-        self.assertContains(rv, "LC Demo Session passed")
-        self.assertNotContains(rv, "You can register for a Demo Session on")
+        self.assertContains(rv, "Demo Session passed")
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT)
