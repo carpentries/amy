@@ -25,7 +25,11 @@
       {% if signup and object.person_signup %}
       <div>
         <strong>Your Signup Notes:</strong>
-        <p class="notes-content ml-3 text-muted">{{ signup.user_notes|default:"&mdash;" }}</p>
+        {% if signup.user_notes %}
+        <p class="notes-content pl-2 border-left">{{ signup.user_notes }}</p>
+        {% else %}
+        &mdash;
+        {% endif %}
       </div>
       {% endif %}
 
