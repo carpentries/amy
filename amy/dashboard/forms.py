@@ -149,7 +149,10 @@ class SearchForm(forms.Form):
 
 class SignupForRecruitmentForm(forms.ModelForm):
     user_notes = forms.CharField(
-        required=False, widget=forms.Textarea, label="Your notes"
+        required=False,
+        widget=forms.Textarea,
+        label="Your notes",
+        help_text="Is there anything else you would like to share with us?",
     )
     helper = BootstrapHelper(
         submit_label="Submit my interest in teaching this workshop",
