@@ -15,7 +15,8 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
         filterset = UpcomingTeachingOpportunitiesFilter(data)
         # Assert
         self.assertEqual(
-            filterset.filters.keys(), {"status", "order_by", "only_applied_to"}
+            filterset.filters.keys(),
+            {"status", "order_by", "only_applied_to", "country", "curricula"},
         )
 
     def test_invalid_values_for_status(self):

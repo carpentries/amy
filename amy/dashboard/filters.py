@@ -3,7 +3,9 @@ from django.forms import widgets
 import django_filters as filters
 
 from recruitment.models import InstructorRecruitment
-from workshops.filters import AMYFilterSet
+from workshops.fields import Select2MultipleWidget
+from workshops.filters import AllCountriesMultipleFilter, AMYFilterSet
+from workshops.models import Curriculum
 
 
 class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
@@ -21,6 +23,17 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
         label="Show only workshops I have applied to",
         method="filter_application_only",
         widget=widgets.CheckboxInput,
+    )
+
+    country = AllCountriesMultipleFilter(
+        field_name="event__country", widget=Select2MultipleWidget
+    )
+
+    curricula = filters.ModelMultipleChoiceFilter(
+        field_name="event__curricula",
+        queryset=Curriculum.objects.all(),
+        label="Curriculum",
+        widget=Select2MultipleWidget(),
     )
 
     order_by = filters.OrderingFilter(
