@@ -269,7 +269,7 @@ class UpcomingTeachingOpportunitiesList(
 
         self.queryset = (
             InstructorRecruitment.objects.annotate_with_priority()
-            .select_related("event")
+            .select_related("event", "event__host")
             .filter(status="o", event__start__gte=today)
             .filter(location)
             .prefetch_related(
