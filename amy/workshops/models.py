@@ -2620,6 +2620,11 @@ class Curriculum(ActiveMixin, models.Model):
         help_text="Mark this curriculum record as 'Mix & Match'."
         "There can be only one such record in the database.",
     )
+    website = models.URLField(
+        blank=True,
+        default="",
+        verbose_name="Curriculum page",
+    )
 
     objects = CurriculumManager()
 

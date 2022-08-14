@@ -31,9 +31,11 @@ class CurriculumAdmin(admin.ModelAdmin):
         "slug",
         "name",
         "description",
+        "website",
         "active",
         "other",
         "unknown",
+        "mix_match",
     )
 
 
