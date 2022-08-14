@@ -25,7 +25,10 @@
   <li>
     <strong>Curriculum:</strong>
     {% for curriculum in event.curricula.all %}
-      {{ curriculum }}{% if not forloop.last %}, {% endif %}
+      {% if curriculum.website %}
+      <a href="{{ curriculum.website }}" target="_blank" rel="noreferrer nofollow">{{ curriculum }}</a>
+      {% else %}{{ curriculum }}{% endif %}
+      {% if not forloop.last %}, {% endif %}
     {% endfor %}
   </li>
   <li>
