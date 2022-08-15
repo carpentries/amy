@@ -8,7 +8,7 @@ import workshops.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workshops', '0252_auto_20211231_1108'),
+        ('workshops', '0253_curriculum_website'),
     ]
 
     operations = [
