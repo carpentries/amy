@@ -110,10 +110,27 @@
     >
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.get_full_path|urlize }}">
+      <input type="hidden" name="action" value="close">
       <button type="submit" class="btn btn-warning">Close signups</button>
     </form>
     {% else %}
     <a href="#" class="btn btn-warning disabled" role="button" aria-disabled="true">Close signups</a>
+    {% endif %}
+
+    {% if perms.recruitment.change_instructorrecruitment and object.status == "c" %}
+    <form
+      action="{% url 'instructorrecruitment_changestate' object.pk %}"
+      method="POST"
+      class="btn-group"
+      onsubmit='return confirm("Are you sure you want to re-open this recruitment?");'
+    >
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path|urlize }}">
+      <input type="hidden" name="action" value="reopen">
+      <button type="submit" class="btn btn-info">Re-open signups</button>
+    </form>
+    {% else %}
+    <a href="#" class="btn btn-info disabled" role="button" aria-disabled="true">Re-open signups</a>
     {% endif %}
   </div>
 </p>

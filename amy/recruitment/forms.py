@@ -48,3 +48,11 @@ class InstructorRecruitmentSignupChangeStateForm(forms.Form):
         ("decline", "Decline"),
     )
     action = forms.ChoiceField(choices=ALLOWED_ACTIONS)
+
+
+class InstructorRecruitmentChangeStateForm(forms.Form):
+    ALLOWED_ACTIONS = (
+        ("close", "Close"),
+        ("reopen", "Reopen"),
+    )
+    action = forms.ChoiceField(choices=ALLOWED_ACTIONS)

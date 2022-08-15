@@ -7,6 +7,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import IntegrityError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
+from django.forms import BaseForm
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -26,6 +27,7 @@ from autoemails.utils import safe_next_or_default_url
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
     InstructorRecruitmentAddSignupForm,
+    InstructorRecruitmentChangeStateForm,
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
 )
@@ -457,6 +459,7 @@ class InstructorRecruitmentChangeState(
 ):
     """POST requests for editing (e.g. closing) the instructor recruitment."""
 
+    form_class = InstructorRecruitmentChangeStateForm
     permission_required = "recruitment.change_instructorrecruitment"
 
     def get_object(self) -> InstructorRecruitment:
@@ -549,14 +552,51 @@ class InstructorRecruitmentChangeState(
                     request=self.request,
                 )
 
-    def post(self, request, *args, **kwargs) -> HttpResponse:
-        self.request = request
-        self.object = self.get_object()
+    @staticmethod
+    def _validate_for_reopening(recruitment: InstructorRecruitment) -> bool:
+        if recruitment.status != "c":
+            return False
+        return True
 
-        action = "close"
-        # For future if we need to handle other actions
+    def reopen_recruitment(self) -> HttpResponse:
+        if not self._validate_for_reopening(self.object):
+            messages.error(
+                self.request,
+                "Unable to re-open recruitment.",
+            )
+
+        else:
+            self.object.status = "o"
+            self.object.save()
+            messages.success(
+                self.request, f"Successfully re-opened recruitment {self.object}."
+            )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_valid(self, form: BaseForm) -> HttpResponse:
+        action = form.cleaned_data["action"]
+
         action_handler_mapping = {
             "close": self.close_recruitment,
+            "reopen": self.reopen_recruitment,
         }
 
         return action_handler_mapping[action]()
+
+    def form_invalid(self, form: BaseForm) -> HttpResponse:
+        messages.error(self.request, "Please choose correct action.")
+        # Note: there's not really a place to redirect user to... So worst-case scenario
+        # they will be redirected to the success URL.
+        referrer = self.request.headers.get("Referer", self.get_success_url())
+        next_url = self.request.POST.get("next", None)
+        return HttpResponseRedirect(safe_next_or_default_url(next_url, referrer))
+
+    def post(self, request, *args, **kwargs) -> HttpResponse:
+        self.request = request
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)

@@ -8,6 +8,7 @@ from communityroles.models import (
 )
 from recruitment.forms import (
     InstructorRecruitmentAddSignupForm,
+    InstructorRecruitmentChangeStateForm,
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
 )
@@ -108,6 +109,26 @@ class TestInstructorRecruitmentSignupChangeStateForm(TestCase):
         data = {"action": "confirm"}
         # Act
         form = InstructorRecruitmentSignupChangeStateForm(data)
+        # Assert
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.errors.keys(), set())
+
+
+class TestInstructorRecruitmentChangeStateForm(TestCase):
+    def test_empty_payload(self) -> None:
+        # Arrange
+        data = {}
+        # Act
+        form = InstructorRecruitmentChangeStateForm(data)
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors.keys(), {"action"})
+
+    def test_clean_success(self) -> None:
+        # Arrange
+        data = {"action": "close"}
+        # Act
+        form = InstructorRecruitmentChangeStateForm(data)
         # Assert
         self.assertTrue(form.is_valid())
         self.assertEqual(form.errors.keys(), set())
