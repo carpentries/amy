@@ -912,7 +912,7 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         recruitment.views.scheduler = self._saved_scheduler
         recruitment.views.redis_connection = self._saved_redis_connection
 
-    def _prepare_email_automation_data(self) -> None:
+    def _prepare_event_and_recruitment(self) -> None:
         Tag.objects.bulk_create(
             [
                 Tag(name="automated-email", priority=0),
@@ -930,6 +930,12 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
             end=date.today() + timedelta(days=8),
         )
         self.event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
+        self.recruitment = InstructorRecruitment.objects.create(
+            event=self.event, status="c"
+        )
+
+    def _prepare_email_automation_data(self) -> None:
+        self._prepare_event_and_recruitment()
         instructor_role = Role.objects.create(name="instructor")
         host_role = Role.objects.create(name="host")
         person1 = Person.objects.create(
@@ -947,9 +953,6 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
                 Task(person=person2, role=instructor_role, event=self.event),
                 Task(person=person3, role=instructor_role, event=self.event),
             ]
-        )
-        self.recruitment = InstructorRecruitment.objects.create(
-            event=self.event, status="c"
         )
         InstructorRecruitmentSignup.objects.create(
             person=person2,
@@ -1023,13 +1026,14 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
             # Assert
             self.assertEqual(result, redirect)
 
-    def test_post(self) -> None:
+    def test_post__action_close(self) -> None:
         # Arrange
-        request = RequestFactory().post("/")
+        request = RequestFactory().post("/", data={"action": "close"})
         mock_object = mock.MagicMock()
         view = InstructorRecruitmentChangeState(request=request, kwargs={"pk": 11200})
         view.get_object = mock.MagicMock(return_value=mock_object)
         view.close_recruitment = mock.MagicMock()
+        view.reopen_recruitment = mock.MagicMock()
 
         # Act
         view.post(request)
@@ -1038,6 +1042,25 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         self.assertEqual(view.request, request)
         self.assertEqual(view.object, mock_object)
         view.close_recruitment.assert_called_once_with()
+        view.reopen_recruitment.assert_not_called()
+
+    def test_post__action_reopen(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/", data={"action": "reopen"})
+        mock_object = mock.MagicMock()
+        view = InstructorRecruitmentChangeState(request=request, kwargs={"pk": 11200})
+        view.get_object = mock.MagicMock(return_value=mock_object)
+        view.close_recruitment = mock.MagicMock()
+        view.reopen_recruitment = mock.MagicMock()
+
+        # Act
+        view.post(request)
+
+        # Assert
+        self.assertEqual(view.request, request)
+        self.assertEqual(view.object, mock_object)
+        view.close_recruitment.assert_not_called()
+        view.reopen_recruitment.assert_called_once_with()
 
     def test__validate_for_closing(self) -> None:
         # Arrange
@@ -1180,8 +1203,64 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
             request=view.request,
         )
 
+    def test__validate_for_reopening(self) -> None:
+        # Arrange
+        recruitment1 = InstructorRecruitment(event=None, status="o")
+        recruitment2 = InstructorRecruitment(event=None, status="c")
+        data = [
+            (recruitment1, False),
+            (recruitment2, True),
+            (InstructorRecruitment(event=None, status="o"), False),
+            (InstructorRecruitment(event=None, status="c"), True),
+        ]
+        for R, expected in data:
+            # Act
+            result = InstructorRecruitmentChangeState._validate_for_reopening(R)
+            # Assert
+            self.assertEqual(result, expected)
+
+    def test_reopen_recruitment__failure(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentChangeState(request=request)
+        view._validate_for_reopening = mock.MagicMock(return_value=False)
+        view.object = mock.MagicMock()
+        view.get_success_url = mock.MagicMock(return_value="")
+
+        # Act
+        with mock.patch("recruitment.views.messages") as mock_messages:
+            result = view.reopen_recruitment()
+
+        # Assert
+        mock_messages.success.assert_not_called()
+        mock_messages.error.assert_called_once_with(
+            request, "Unable to re-open recruitment."
+        )
+        self.assertEqual(result.status_code, 302)
+
+    def test_reopen_recruitment__success(self) -> None:
+        # Arrange
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentChangeState(request=request)
+        view._validate_for_reopening = mock.MagicMock(return_value=True)
+        view.object = mock.MagicMock()
+        view.get_success_url = mock.MagicMock(return_value="")
+
+        # Act
+        with mock.patch("recruitment.views.messages") as mock_messages:
+            result = view.reopen_recruitment()
+
+        # Assert
+        self.assertEqual(view.object.status, "o")
+        view.object.save.assert_called_once_with()
+        mock_messages.success.assert_called_once_with(
+            request, f"Successfully re-opened recruitment {view.object}."
+        )
+        view.get_success_url.assert_called_once_with()
+        self.assertEqual(result.status_code, 302)
+
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
-    def test_integration(self) -> None:
+    def test_integration__action_close(self) -> None:
         # Arrange
         self._prepare_email_automation_data()
         self.recruitment.status = "o"
@@ -1192,7 +1271,7 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         success_url = reverse("all_instructorrecruitment")
 
         # Act
-        response = self.client.post(url, {}, follow=False)
+        response = self.client.post(url, {"action": "close"}, follow=False)
         self.recruitment.refresh_from_db()
 
         # Assert
@@ -1205,3 +1284,23 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         self.assertTrue(
             RQJob.objects.get(trigger__action=DeclinedInstructorsAction.trigger_name)
         )
+
+    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    def test_integration__action_reopen(self) -> None:
+        # Arrange
+        self._prepare_event_and_recruitment()
+        self.recruitment.status = "c"
+        self.recruitment.save()
+
+        super()._setUpUsersAndLogin()
+        url = reverse("instructorrecruitment_changestate", args=[self.recruitment.pk])
+        success_url = reverse("all_instructorrecruitment")
+
+        # Act
+        response = self.client.post(url, {"action": "reopen"}, follow=False)
+        self.recruitment.refresh_from_db()
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, success_url)
+        self.assertEqual(self.recruitment.status, "o")

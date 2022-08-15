@@ -110,6 +110,7 @@
     >
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.get_full_path|urlize }}">
+      <input type="hidden" name="action" value="close">
       <button type="submit" class="btn btn-warning">Close signups</button>
     </form>
     {% else %}
