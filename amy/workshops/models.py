@@ -2003,7 +2003,9 @@ class TrainingRequest(
     )
     github = NullableGithubUsernameField(
         verbose_name="GitHub username",
-        help_text="Please put only a single username here.",
+        help_text="Please put only a single username here. After your application has "
+        "been accepted, you will be able to use your GitHub username to log in to our "
+        "database to view your profile.",
         null=True,
         blank=True,
     )

@@ -2,7 +2,7 @@
 
 {% with event=object.event %}
 <h3>
-  {{ event }} at {{ event.venue }}
+  {{ event.curricula.first }} at {{ event.host.fullname }} on {% human_daterange event.start event.end %}
   {% if object.calculated_priority == 3 %}
   <span class="badge badge-danger">High priority</span>
   {% elif object.calculated_priority == 2 %}
@@ -33,7 +33,11 @@
   </li>
   <li>
     <strong>Notes:</strong>
-    <p class="notes-content ml-3 text-muted">{{ object.notes|default:"&mdash;" }}</p>
+    {% if object.notes %}
+    <p class="notes-content pl-2 border-left">{{ object.notes }}</p>
+    {% else %}
+    &mdash;
+    {% endif %}
   </li>
 </ul>
 
