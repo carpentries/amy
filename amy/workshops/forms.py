@@ -14,6 +14,7 @@ from django_countries import Countries
 from django_countries.fields import CountryField
 from markdownx.fields import MarkdownxFormField
 
+from communityroles.models import CommunityRole
 from dashboard.models import Continent
 
 # this is used instead of Django Autocomplete Light widgets
@@ -37,6 +38,7 @@ from workshops.models import (
     Membership,
     Organization,
     Person,
+    Role,
     Tag,
     Task,
 )
@@ -663,6 +665,42 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
                 ' Are you sure you want to continue?");'
             )
         self.helper = BootstrapHelper(**bootstrap_kwargs)
+
+    def clean(self):
+        result = super().clean()
+        errors = dict()
+        person: Person = self.cleaned_data["person"]
+        role: Role = self.cleaned_data["role"]
+        event: Event = self.cleaned_data["event"]
+
+        # Check validity of person's community role
+        if role.name == "instructor":
+            # If event is TTT (Train The Trainers), then community role "trainer"
+            # corresponds to role "instructor"; otherwise it's "instructor" community
+            # role.
+            community_role_name = "instructor"
+            if event.administrator.domain == "carpentries.org":
+                community_role_name = "trainer"
+
+            person_community_roles = CommunityRole.objects.filter(
+                person=person, config__name__iexact=community_role_name
+            ).select_related("config")
+
+            no_active_role = not any(
+                role.is_active() for role in person_community_roles
+            )
+
+            if person_community_roles and no_active_role:
+                errors["role"] = ValidationError(
+                    f'{person} has inactive "{community_role_name}" community role(s) '
+                    'related to "{role.name}" task.'
+                )
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
+
+        return result
 
 
 class PersonForm(forms.ModelForm):
