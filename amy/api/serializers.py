@@ -525,6 +525,7 @@ class CommunityRoleConfigSerializer(serializers.ModelSerializer):
             "display_name",
             "link_to_award",
             "award_badge_limit",
+            "autoassign_when_award_created",
             "link_to_membership",
             "additional_url",
             "generic_relation_content_type",
