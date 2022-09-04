@@ -24,6 +24,16 @@ class TrainingProgressForm(forms.ModelForm):
         queryset=Person.objects.all(),
         widget=ModelSelect2Widget(data_view="admin-lookup"),
     )
+    requirement = forms.ModelChoiceField(
+        queryset=TrainingRequirement.objects.exclude(
+            Q(name__startswith="SWC")
+            | Q(name__startswith="DC")
+            | Q(name__startswith="LC")
+        ),
+        label="Type",
+        required=True,
+    )
+
     event = forms.ModelChoiceField(
         label="Event",
         required=False,
