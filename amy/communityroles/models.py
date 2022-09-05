@@ -22,6 +22,12 @@ class CommunityRoleConfig(CreatedUpdatedMixin, models.Model):
         null=True,
         blank=True,
     )
+    autoassign_when_award_created = models.BooleanField(
+        "Auto-assign when award is created",
+        default=False,
+        help_text="Should automatically assign a Community Role to a user, when "
+        "a selected badge is awarded to them.",
+    )
     link_to_membership = models.BooleanField("Should link to a Membership?")
     additional_url = models.BooleanField("Should allow for additional URL?")
     generic_relation_content_type = models.ForeignKey(
