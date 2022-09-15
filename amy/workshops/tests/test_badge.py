@@ -33,15 +33,15 @@ class TestBadge(TestBase):
     def test_badge_award(self):
         """Ensure we can add awards from badge_award page."""
         swc_badge = self.app.get(
-            reverse("badge_details", args=[self.swc_instructor.name]), user="admin"
+            reverse("badge_details", args=[self.instructor_badge.name]), user="admin"
         )
         award_add = swc_badge.click("Award new", index=0)
         form = award_add.forms[2]
-        self.assertSelected(form["award-badge"], "Software Carpentry Instructor")
+        self.assertSelected(form["award-badge"], "Instructor")
         form["award-person"].force_value(self.spiderman.id)
-        assert self.swc_instructor.award_set.count() == 3
+        assert self.instructor_badge.award_set.count() == 0
         form.submit()
-        assert self.swc_instructor.award_set.count() == 4
+        assert self.instructor_badge.award_set.count() == 1
 
     def test_remove_award(self):
         "Remove a badge from someone (ie. remove corresponding Award object)."

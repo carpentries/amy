@@ -169,7 +169,7 @@ class TestGenericObjectLookupView(TestBase):
             '{"text": "Mentor", "id": 5}, '
             '{"text": "Mentee", "id": 6}, '
             '{"text": "Library Carpentry Instructor", "id": 7}, '
-            '{"text": "Single Instructor Badge", "id": '
+            '{"text": "Instructor", "id": '
             f"{self.instructor_badge.pk}"
             "}]}",
         )

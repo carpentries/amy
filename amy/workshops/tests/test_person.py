@@ -131,12 +131,12 @@ class TestPerson(TestBase):
         url = reverse("person_edit", args=[self.spiderman.pk])
         person_edit = self.app.get(url, user="admin")
         award_form = person_edit.forms[2]
-        award_form["award-badge"] = self.swc_instructor.pk
+        award_form["award-badge"] = self.instructor_badge.pk
 
         self.assertEqual(self.spiderman.award_set.count(), 0)
         self.assertRedirects(award_form.submit(), url)
         self.assertEqual(self.spiderman.award_set.count(), 1)
-        self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
+        self.assertEqual(self.spiderman.award_set.first().badge, self.instructor_badge)
 
     def test_person_failed_training_warning(self):
         """
@@ -459,25 +459,10 @@ class TestPerson(TestBase):
         self.assertEqual(
             int(swc_res.forms["main-form"]["award-event"].value), training.pk
         )
-        swc_res.forms["main-form"]["award-badge"].select(self.swc_instructor.pk)
+        swc_res.forms["main-form"]["award-badge"].select(self.instructor_badge.pk)
         res = swc_res.forms["main-form"].submit()
         self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
-
-        # clear trainee awards so that .last() always returns the exact badge
-        # we want
-        trainee.award_set.all().delete()
-
-        # Test workflow starting from clicking at "instructor badge" label
-        dc_res = trainees.click("^<strike>instructor badge</strike>$")
-        self.assertSelected(dc_res.forms["main-form"]["award-badge"], "---------")
-        self.assertEqual(
-            int(dc_res.forms["main-form"]["award-event"].value), training.pk
-        )
-        dc_res.forms["main-form"]["award-badge"].select(self.dc_instructor.pk)
-        res = dc_res.forms["main-form"].submit()
-        self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
+        self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)
 
     def test_person_github_username_validation(self):
         """Ensure GitHub username doesn't allow for spaces or commas."""
