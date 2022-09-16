@@ -8,7 +8,7 @@
 {% block content %}
 
 {% if swc_form.errors or dc_form.errors %}
-  <div class="alert alert-danger" role="alert">Fix errors in your homework submission.</div>
+  <div class="alert alert-danger" role="alert">Fix errors in your Lesson Contribution submission.</div>
 {% endif %}
 
 <div>
@@ -39,14 +39,14 @@
       </td>
     </tr>
     <tr>
-      <th rowspan="2">2. Homework</th>
+      <th rowspan="2">2. Lesson Contribution</th>
       <td>
-        {% if user.passed_homework %}
-        <p class="text-success">Homework accepted.</p>
-        {% elif homework_in_evaluation %}
-        <p>Homework evaluation pending.<br>Please wait while we evaluate your homework.</p>
+        {% if user.passed_lesson_contribution %}
+        <p class="text-success">Lesson Contribution accepted.</p>
+        {% elif lesson_contribution_in_evaluation %}
+        <p>Lesson Contribution evaluation pending.<br>Please wait while we evaluate your contribution.</p>
         {% else %}
-        <p>Homework not submitted.</p>
+        <p>Lesson Contribution not submitted.</p>
         {% endif %}
       </td>
     </tr>
@@ -77,7 +77,7 @@
           <li><a href="https://github.com/carpentrieslab">The Carpentries Lab</a></li>
           <li><a href="https://github.com/carpentries-incubator">carpentries-incubator</a></li>
          </ul>
-        {% crispy homework_form %}
+        {% crispy lesson_contribution_form %}
       </td>
     </tr>
     <tr>

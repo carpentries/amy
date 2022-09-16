@@ -75,7 +75,7 @@
   "model": "workshops.trainingrequirement",
   "pk": 9,
   "fields": {
-    "name": "Homework",
+    "name": "Lesson Contribution",
     "url_required": true,
     "event_required": false
   }

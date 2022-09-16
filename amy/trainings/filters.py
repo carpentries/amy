@@ -37,8 +37,8 @@ def filter_trainees_by_trainee_name_or_email(queryset, name, value):
         return queryset
 
 
-def filter_trainees_by_unevaluated_homework_presence(queryset, name, flag):
-    if flag:  # return only trainees with an unevaluated homework
+def filter_trainees_by_unevaluated_lesson_contribution_presence(queryset, name, flag):
+    if flag:  # return only trainees with an unevaluated lesson contribution
         return queryset.filter(trainingprogress__state="n").distinct()
     else:
         return queryset
@@ -87,10 +87,10 @@ class TraineeFilter(AMYFilterSet):
         widget=widgets.CheckboxInput,
     )
 
-    homework = django_filters.BooleanFilter(
-        label="Only trainees with unevaluated homework",
+    lesson_contribution = django_filters.BooleanFilter(
+        label="Only trainees with unevaluated Lesson Contribution",
         widget=widgets.CheckboxInput,
-        method=filter_trainees_by_unevaluated_homework_presence,
+        method=filter_trainees_by_unevaluated_lesson_contribution_presence,
     )
 
     training_request = django_filters.BooleanFilter(
@@ -131,7 +131,7 @@ class TraineeFilter(AMYFilterSet):
         fields = [
             "search",
             "all_persons",
-            "homework",
+            "lesson_contribution",
             "is_instructor",
             "training",
         ]

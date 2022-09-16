@@ -134,7 +134,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class SendHomeworkForm(forms.Form):
+class LessonContributionForm(forms.Form):
     url = forms.URLField(label="URL")
     helper = BootstrapHelper(add_cancel_button=False)
 

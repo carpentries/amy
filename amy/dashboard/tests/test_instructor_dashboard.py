@@ -36,7 +36,9 @@ class TestInstructorStatus(TestBase):
         self._setUpUsersAndLogin()
         self._setUpBadges()
         self.progress_url = reverse("training-progress")
-        TrainingRequirement.objects.create(name="Homework", url_required=True)
+        TrainingRequirement.objects.create(
+            name="Lesson Contribution", url_required=True
+        )
         TrainingRequirement.objects.create(name="Demo")
 
     def test_instructor_badge(self):
@@ -64,7 +66,7 @@ class TestInstructorStatus(TestBase):
         yet."""
         requirements = [
             "Training",
-            "Homework",
+            "Lesson Contribution",
             "Discussion",
             "Demo",
         ]
@@ -132,59 +134,67 @@ class TestInstructorTrainingStatus(TestBase):
         self.assertContains(rv, "Training not passed yet")
 
 
-class TestHomeworkStatus(TestBase):
-    """Test that trainee dashboard displays status of passing Homework.
-    Test that homework submission form works."""
+class TestLessonContributionStatus(TestBase):
+    """Test that trainee dashboard displays status of passing Lesson Contribution.
+    Test that Lesson Contribution submission form works."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.homework, _ = TrainingRequirement.objects.get_or_create(
-            name="Homework", defaults={"url_required": True}
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
         )
         self.progress_url = reverse("training-progress")
 
-    def test_homework_not_submitted(self):
+    def test_lesson_contribution_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Homework not submitted")
+        self.assertContains(rv, "Lesson Contribution not submitted")
 
-    def test_homework_waiting_to_be_evaluated(self):
+    def test_lesson_contribution_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, state="n"
+            trainee=self.admin, requirement=self.lesson_contribution, state="n"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Homework evaluation pending")
+        self.assertContains(rv, "Lesson Contribution evaluation pending")
 
-    def test_homework_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Homework accepted")
-
-    def test_homework_not_accepted_when_homework_passed_but_discarded(self):
+    def test_lesson_contribution_passed(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, discarded=True
+            trainee=self.admin, requirement=self.lesson_contribution
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Homework not submitted")
+        self.assertContains(rv, "Lesson Contribution accepted")
 
-    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
+    def test_lesson_contribution_not_accepted_when_lesson_contribution_passed_but_discarded(  # noqa: line too long
         self,
     ):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.homework, discarded=True
+            trainee=self.admin, requirement=self.lesson_contribution, discarded=True
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Homework accepted")
+        self.assertContains(rv, "Lesson Contribution not submitted")
+
+    def test_lesson_contribution_is_accepted_when_last_lesson_contribution_is_discarded_but_other_one_is_passed(  # noqa: line too long
+        self,
+    ):
+        TrainingProgress.objects.create(
+            trainee=self.admin, requirement=self.lesson_contribution
+        )
+        TrainingProgress.objects.create(
+            trainee=self.admin, requirement=self.lesson_contribution, discarded=True
+        )
+        rv = self.client.get(self.progress_url)
+        self.assertContains(rv, "Lesson Contribution accepted")
 
     def test_submission_form(self):
         data = {
             "url": "http://example.com",
-            "requirement": self.homework.pk,
+            "requirement": self.lesson_contribution.pk,
         }
         rv = self.client.post(self.progress_url, data, follow=True)
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(rv, "Your homework submission will be evaluated " "soon.")
+        self.assertContains(
+            rv, "Your Lesson Contribution submission will be evaluated soon."
+        )
         got = list(
             TrainingProgress.objects.values_list(
                 "state", "trainee", "url", "requirement"
@@ -195,7 +205,7 @@ class TestHomeworkStatus(TestBase):
                 "n",
                 self.admin.pk,
                 "http://example.com",
-                self.homework.pk,
+                self.lesson_contribution.pk,
             )
         ]
         self.assertEqual(got, expected)

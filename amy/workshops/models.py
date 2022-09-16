@@ -613,8 +613,8 @@ class PersonManager(BaseUserManager):
                 )
             )
 
-        HOMEWORK_TRAININGPROGRESS_NAMES = [
-            "Homework",
+        LESSON_CONTRIBUTION_NAMES = [
+            "Lesson Contribution",
             "SWC Homework",
             "DC Homework",
             "LC Homework",
@@ -623,7 +623,7 @@ class PersonManager(BaseUserManager):
 
         return self.annotate(
             passed_training=passed("Training"),
-            passed_homework=passed_either(*HOMEWORK_TRAININGPROGRESS_NAMES),
+            passed_lesson_contribution=passed_either(*LESSON_CONTRIBUTION_NAMES),
             passed_discussion=passed("Discussion"),
             passed_demo=passed_either(*DEMO_TRAININGPROGRESS_NAMES),
         ).annotate(
@@ -634,7 +634,7 @@ class PersonManager(BaseUserManager):
             instructor_eligible=(
                 F("passed_training")
                 * F("passed_discussion")
-                * F("passed_homework")
+                * F("passed_lesson_contribution")
                 * F("passed_demo")
             )
         )
@@ -966,7 +966,7 @@ class Person(
         """
         fields = [
             ("passed_training", "Training"),
-            ("passed_homework", "Homework"),
+            ("passed_lesson_contribution", "Lesson Contribution"),
             ("passed_discussion", "Discussion"),
             ("passed_demo", "Demo"),
         ]
@@ -2432,8 +2432,8 @@ class TrainingRequirement(models.Model):
 class TrainingProgress(CreatedUpdatedMixin, models.Model):
     trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
 
-    # Mentor/examiner who evaluates homework / session. May be null when a
-    # trainee submits their homework.
+    # Mentor/examiner who evaluates lesson contribution / session. May be null when a
+    # trainee submits their lesson contribution.
     evaluated_by = models.ForeignKey(
         Person, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )

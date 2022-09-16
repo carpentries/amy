@@ -739,7 +739,9 @@ class TestPersonMerging(TestBase):
 
         # create training requirement
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.homework = TrainingRequirement.objects.get(name="SWC Homework")
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
+        )
 
         # create first person
         self.person_a = Person.objects.create(
@@ -836,7 +838,7 @@ class TestPersonMerging(TestBase):
         self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
         self.person_b.trainingprogress_set.create(requirement=self.training)
-        self.person_b.trainingprogress_set.create(requirement=self.homework)
+        self.person_b.trainingprogress_set.create(requirement=self.lesson_contribution)
 
         # comments made by this person
         self.cb_1 = Comment.objects.create(
@@ -1253,8 +1255,8 @@ class TestGetMissingInstructorRequirements(TestBase):
     def setUp(self):
         self.person = Person.objects.create(username="person")
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.homework, _ = TrainingRequirement.objects.get_or_create(
-            name="Homework", defaults={"url_required": True}
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
         )
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
         self.demo, _ = TrainingRequirement.objects.get_or_create(
@@ -1266,7 +1268,7 @@ class TestGetMissingInstructorRequirements(TestBase):
             trainee=self.person, state="p", requirement=self.training
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.homework
+            trainee=self.person, state="p", requirement=self.lesson_contribution
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.discussion
@@ -1281,12 +1283,12 @@ class TestGetMissingInstructorRequirements(TestBase):
         self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
-        # Homework was accepted, the second time.
+        # Lesson Contribution was accepted, the second time.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.homework
+            trainee=self.person, state="f", requirement=self.lesson_contribution
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.homework
+            trainee=self.person, state="p", requirement=self.lesson_contribution
         )
         # Not passed progress should be ignored.
         TrainingProgress.objects.create(
@@ -1314,7 +1316,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Homework", "Discussion", "Demo"],
+            ["Training", "Lesson Contribution", "Discussion", "Demo"],
         )
 
 
