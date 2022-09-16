@@ -22,8 +22,8 @@ from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
+    LessonContributionForm,
     SearchForm,
-    SendHomeworkForm,
     SignupForRecruitmentForm,
 )
 from extrequests.base_views import AMYCreateAndFetchObjectView
@@ -200,7 +200,7 @@ def autoupdate_profile(request):
 
 @login_required
 def training_progress(request):
-    homework_form = SendHomeworkForm()
+    lesson_contribution_form = LessonContributionForm()
 
     # Add information about instructor training progress to request.user.
     request.user = (
@@ -216,29 +216,32 @@ def training_progress(request):
     )
 
     progresses = request.user.trainingprogress_set.filter(discarded=False)
-    last_homework = (
-        progresses.filter(requirement__name="Homework").order_by("-created_at").first()
+    last_lesson_contribution = (
+        progresses.filter(requirement__name="Lesson Contribution")
+        .order_by("-created_at")
+        .first()
     )
 
     if request.method == "POST":
-        homework_form = SendHomeworkForm(data=request.POST)
-        if homework_form.is_valid():
+        lesson_contribution_form = LessonContributionForm(data=request.POST)
+        if lesson_contribution_form.is_valid():
             TrainingProgress.objects.create(
                 trainee=request.user,
                 state="n",  # not evaluated yet
-                requirement=TrainingRequirement.objects.get(name="Homework"),
-                url=homework_form.cleaned_data["url"],
+                requirement=TrainingRequirement.objects.get(name="Lesson Contribution"),
+                url=lesson_contribution_form.cleaned_data["url"],
             )
             messages.success(
-                request, "Your homework submission will be evaluated soon."
+                request, "Your Lesson Contribution submission will be evaluated soon."
             )
             return redirect(reverse("training-progress"))
 
     context = {
         "title": "Your training progress",
-        "homework_form": homework_form,
-        "homework_in_evaluation": (
-            last_homework is not None and last_homework.state == "n"
+        "lesson_contribution_form": lesson_contribution_form,
+        "lesson_contribution_in_evaluation": (
+            last_lesson_contribution is not None
+            and last_lesson_contribution.state == "n"
         ),
     }
     return render(request, "dashboard/training_progress.html", context)

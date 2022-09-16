@@ -199,7 +199,7 @@ class TestBase(
 
         self.instructor_badge, _ = Badge.objects.get_or_create(
             name="instructor",
-            defaults=dict(title="Single Instructor Badge"),
+            defaults=dict(title="Instructor"),
         )
 
     def _setUpInstructors(self):

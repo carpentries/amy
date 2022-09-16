@@ -131,12 +131,12 @@ class TestPerson(TestBase):
         url = reverse("person_edit", args=[self.spiderman.pk])
         person_edit = self.app.get(url, user="admin")
         award_form = person_edit.forms[2]
-        award_form["award-badge"] = self.swc_instructor.pk
+        award_form["award-badge"] = self.instructor_badge.pk
 
         self.assertEqual(self.spiderman.award_set.count(), 0)
         self.assertRedirects(award_form.submit(), url)
         self.assertEqual(self.spiderman.award_set.count(), 1)
-        self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
+        self.assertEqual(self.spiderman.award_set.first().badge, self.instructor_badge)
 
     def test_person_failed_training_warning(self):
         """
@@ -459,25 +459,10 @@ class TestPerson(TestBase):
         self.assertEqual(
             int(swc_res.forms["main-form"]["award-event"].value), training.pk
         )
-        swc_res.forms["main-form"]["award-badge"].select(self.swc_instructor.pk)
+        swc_res.forms["main-form"]["award-badge"].select(self.instructor_badge.pk)
         res = swc_res.forms["main-form"].submit()
         self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
-
-        # clear trainee awards so that .last() always returns the exact badge
-        # we want
-        trainee.award_set.all().delete()
-
-        # Test workflow starting from clicking at "instructor badge" label
-        dc_res = trainees.click("^<strike>instructor badge</strike>$")
-        self.assertSelected(dc_res.forms["main-form"]["award-badge"], "---------")
-        self.assertEqual(
-            int(dc_res.forms["main-form"]["award-event"].value), training.pk
-        )
-        dc_res.forms["main-form"]["award-badge"].select(self.dc_instructor.pk)
-        res = dc_res.forms["main-form"].submit()
-        self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
+        self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)
 
     def test_person_github_username_validation(self):
         """Ensure GitHub username doesn't allow for spaces or commas."""
@@ -754,7 +739,9 @@ class TestPersonMerging(TestBase):
 
         # create training requirement
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.homework = TrainingRequirement.objects.get(name="SWC Homework")
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
+        )
 
         # create first person
         self.person_a = Person.objects.create(
@@ -851,7 +838,7 @@ class TestPersonMerging(TestBase):
         self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
         self.person_b.trainingprogress_set.create(requirement=self.training)
-        self.person_b.trainingprogress_set.create(requirement=self.homework)
+        self.person_b.trainingprogress_set.create(requirement=self.lesson_contribution)
 
         # comments made by this person
         self.cb_1 = Comment.objects.create(
@@ -1268,8 +1255,8 @@ class TestGetMissingInstructorRequirements(TestBase):
     def setUp(self):
         self.person = Person.objects.create(username="person")
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.homework, _ = TrainingRequirement.objects.get_or_create(
-            name="Homework", defaults={"url_required": True}
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
         )
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
         self.demo, _ = TrainingRequirement.objects.get_or_create(
@@ -1281,7 +1268,7 @@ class TestGetMissingInstructorRequirements(TestBase):
             trainee=self.person, state="p", requirement=self.training
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.homework
+            trainee=self.person, state="p", requirement=self.lesson_contribution
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.discussion
@@ -1296,12 +1283,12 @@ class TestGetMissingInstructorRequirements(TestBase):
         self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
-        # Homework was accepted, the second time.
+        # Lesson Contribution was accepted, the second time.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.homework
+            trainee=self.person, state="f", requirement=self.lesson_contribution
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.homework
+            trainee=self.person, state="p", requirement=self.lesson_contribution
         )
         # Not passed progress should be ignored.
         TrainingProgress.objects.create(
@@ -1329,7 +1316,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Homework", "Discussion", "Demo"],
+            ["Training", "Lesson Contribution", "Discussion", "Demo"],
         )
 
 

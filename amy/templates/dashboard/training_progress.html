@@ -8,7 +8,7 @@
 {% block content %}
 
 {% if swc_form.errors or dc_form.errors %}
-  <div class="alert alert-danger" role="alert">Fix errors in your homework submission.</div>
+  <div class="alert alert-danger" role="alert">Fix errors in your Lesson Contribution submission.</div>
 {% endif %}
 
 <div>
@@ -39,20 +39,30 @@
       </td>
     </tr>
     <tr>
-      <th rowspan="2">2. Homework</th>
+      <th rowspan="2">2. Lesson Contribution</th>
       <td>
-        {% if user.passed_homework %}
-        <p class="text-success">Homework accepted.</p>
-        {% elif homework_in_evaluation %}
-        <p>Homework evaluation pending.<br>Please wait while we evaluate your homework.</p>
+        {% if user.passed_lesson_contribution %}
+        <p class="text-success">Lesson Contribution accepted.</p>
+        {% elif lesson_contribution_in_evaluation %}
+        <p>Lesson Contribution evaluation pending.<br>Please wait while we evaluate your contribution.</p>
         {% else %}
-        <p>Homework not submitted.</p>
+        <p>Lesson Contribution not submitted.</p>
         {% endif %}
       </td>
     </tr>
     <tr>
       <td>
-        <p>Submit link to your contribution. Your contribution will be reviewed within 7-10 days. Please be sure your contribution is to a repo in one of these organisations:</p>
+        <p>
+          Submit link to your contribution on Github. Your contribution will be reviewed within 7-10 days.<br>
+          If you do not use GitHub, you may submit your lesson contribution via
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSeMBOj5Rdh8Mgk0ebRbeRyHhGHKbItdft6avWuEzmeg8CgWbA/viewform">this form</a>.
+          A Carpentries Core Team member will create an issue based on the relevant repository, and will
+          send you a link so that you may view any responses. In either case, you can track your progress
+          by returning to this page.
+        </p>
+        <p>
+          Please be sure your contribution is to a repo in one of these organisations:
+        </p>
         <ul>
           <li><a href="https://github.com/carpentries">The Carpentries</a></li>
           <li><a href="https://github.com/datacarpentry">Data Carpentry</a></li>
@@ -67,7 +77,7 @@
           <li><a href="https://github.com/carpentrieslab">The Carpentries Lab</a></li>
           <li><a href="https://github.com/carpentries-incubator">carpentries-incubator</a></li>
          </ul>
-        {% crispy homework_form %}
+        {% crispy lesson_contribution_form %}
       </td>
     </tr>
     <tr>

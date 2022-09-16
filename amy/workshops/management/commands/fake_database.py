@@ -245,7 +245,9 @@ class Command(BaseCommand):
         for r in TrainingRequirement.objects.all():
             if randbool(0.4):
                 notes = ""
-                if "Homework" in r.name and randbool(0.5):
+                if (
+                    "Homework" in r.name or "Lesson Contribution" in r.name
+                ) and randbool(0.5):
                     state = "n"
                 else:
                     if randbool(0.90):
@@ -258,7 +260,11 @@ class Command(BaseCommand):
 
                 evaluated_by = None if state == "n" else choice(trainers)
                 event = training if r.name == "Training" else None
-                url = self.faker.url() if "Homework" in r.name else None
+                url = (
+                    self.faker.url()
+                    if ("Homework" in r.name or "Lesson Contribution" in r.name)
+                    else None
+                )
                 TrainingProgress.objects.create(
                     trainee=p,
                     requirement=r,

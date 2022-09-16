@@ -27,8 +27,8 @@ class TestTraineesView(TestBase):
         self._setUpRoles()
 
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.homework, _ = TrainingRequirement.objects.get_or_create(
-            name="Homework", defaults={"url_required": True}
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
         )
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
 
@@ -123,8 +123,8 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         self.demo, _ = TrainingRequirement.objects.get_or_create(
             name="Demo", defaults={"url_required": True}
         )
-        self.homework, _ = TrainingRequirement.objects.get_or_create(
-            name="Homework", defaults={}
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={}
         )
 
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
@@ -192,7 +192,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 TrainingProgress(
                     trainee=self.trainee1,
                     evaluated_by=None,
-                    requirement=self.homework,
+                    requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
@@ -227,7 +227,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 TrainingProgress(
                     trainee=self.trainee2,
                     evaluated_by=None,
-                    requirement=self.homework,
+                    requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
@@ -266,7 +266,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 TrainingProgress(
                     trainee=self.trainee3,
                     evaluated_by=None,
-                    requirement=self.homework,
+                    requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
@@ -336,7 +336,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=0,
                 passed_training=1,
                 passed_discussion=1,
-                passed_homework=1,
+                passed_lesson_contribution=1,
                 passed_demo=1,
                 instructor_eligible=1,
             ),
@@ -346,7 +346,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=4,
                 passed_training=1,
                 passed_discussion=1,
-                passed_homework=1,
+                passed_lesson_contribution=1,
                 passed_demo=1,
                 instructor_eligible=1,
             ),
@@ -356,7 +356,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=0,
                 passed_training=1,
                 passed_discussion=0,
-                passed_homework=1,
+                passed_lesson_contribution=1,
                 passed_demo=1,
                 instructor_eligible=0,
             ),

@@ -85,7 +85,7 @@ function updateTrainingProgressForm() {
     }
   }
 
-  if (type == 'Homework') {
+  if (type == 'Lesson Contribution') {
     url_div.show();
   } else {
     url_div.hide();

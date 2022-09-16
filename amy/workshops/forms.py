@@ -30,6 +30,7 @@ from workshops.fields import (
 from workshops.models import (
     Airport,
     Award,
+    Badge,
     Event,
     GenderMixin,
     KnowledgeDomain,
@@ -992,6 +993,14 @@ class PersonsMergeForm(forms.Form):
 
 
 class AwardForm(WidgetOverrideMixin, forms.ModelForm):
+    badge = forms.ModelChoiceField(
+        queryset=Badge.objects.exclude(
+            name__in=["lc-instructor", "dc-instructor", "swc-instructor"]
+        ).order_by("title", "name"),
+        label="Badge",
+        required=True,
+    )
+
     class Meta:
         model = Award
         fields = "__all__"

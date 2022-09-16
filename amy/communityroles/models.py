@@ -65,16 +65,32 @@ class CommunityRoleQuery(models.query.QuerySet):
 
 
 class CommunityRole(CreatedUpdatedMixin, models.Model):
-    config = models.ForeignKey(CommunityRoleConfig, on_delete=models.PROTECT)
+    config = models.ForeignKey(
+        CommunityRoleConfig, on_delete=models.PROTECT, verbose_name="Role Name"
+    )
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
-    award = models.ForeignKey(Award, on_delete=models.PROTECT, null=True, blank=True)
-    start = models.DateField(null=True, blank=True)
-    end = models.DateField(null=True, blank=True)
+    award = models.ForeignKey(
+        Award,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Associated Award",
+    )
+    start = models.DateField(null=True, blank=True, verbose_name="Role Start Date")
+    end = models.DateField(null=True, blank=True, verbose_name="Role End Date")
     inactivation = models.ForeignKey(
-        CommunityRoleInactivation, on_delete=models.PROTECT, null=True, blank=True
+        CommunityRoleInactivation,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Reason for inactivation",
     )
     membership = models.ForeignKey(
-        Membership, on_delete=models.PROTECT, null=True, blank=True
+        Membership,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Associated Membership",
     )
     url = models.URLField("URL", blank=True, default="")
 
