@@ -2,7 +2,6 @@
 import datetime
 from datetime import timedelta
 
-from django.http import Http404
 from django.test import RequestFactory
 from django.utils import timezone
 import requests.exceptions
@@ -14,10 +13,7 @@ from workshops.models import Event, Language, Organization, Person, WorkshopRequ
 from workshops.tests.base import TestBase
 from workshops.util import (
     archive_least_recent_active_consents,
-    assign,
     match_notification_email,
-    reports_link,
-    reports_link_hash,
     str2bool,
 )
 from workshops.utils.dates import human_daterange
@@ -30,7 +26,9 @@ from workshops.utils.metadata import (
     validate_workshop_metadata,
 )
 from workshops.utils.pagination import Paginator
+from workshops.utils.reports import reports_link, reports_link_hash
 from workshops.utils.usernames import create_username
+from workshops.utils.views import assign
 
 
 class TestHandlingEventMetadata(TestBase):
@@ -856,63 +854,34 @@ class TestPaginatorSections(TestBase):
 class TestAssignUtil(TestBase):
     def setUp(self):
         """Set up RequestFactory for making fast fake requests."""
-        Person.objects.create_user(
+        self.person = Person.objects.create_user(  # type: ignore
             username="test_user", email="user@test", personal="User", family="Test"
         )
         self.factory = RequestFactory()
         self.event = Event.objects.create(
-            slug="event-for-assignment", host=Organization.objects.first()
+            slug="event-for-assignment",
+            host=Organization.objects.first(),
+            assigned_to=None,
         )
-
-    def test_no_integer_pk(self):
-        """Ensure we fail with 404 when person PK is string, not integer."""
-        tests = [
-            (self.factory.get("/"), "alpha"),
-            (self.factory.post("/", {"person": "alpha"}), None),
-        ]
-        for request, person_id in tests:
-            with self.subTest(method=request.method):
-                with self.assertRaises(Http404):
-                    assign(request, self.event, person_id=person_id)
-
-                # just reset the link, for safety sake
-                self.event.assigned_to = None
-                self.event.save()
 
     def test_assigning(self):
         """Ensure that with assignment is set correctly."""
-        first_person = Person.objects.first()
-        tests = [
-            (self.factory.get("/"), first_person.pk),
-            (self.factory.post("/", {"person": first_person.pk}), None),
-        ]
-        for request, person_id in tests:
-            with self.subTest(method=request.method):
-                # just reset the link, for safety sake
-                self.event.assigned_to = None
-                self.event.save()
-
-                assign(request, self.event, person_id=person_id)
-                self.event.refresh_from_db()
-                self.assertEqual(self.event.assigned_to, first_person)
+        # Act
+        assign(self.event, person=self.person)
+        # Assert
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.assigned_to, self.person)
 
     def test_removing_assignment(self):
         """Ensure that with person_id=None, the assignment is removed."""
-        first_person = Person.objects.first()
-        tests = [
-            (self.factory.get("/"), None),
-            (self.factory.post("/"), None),
-        ]
-        for request, person_id in tests:
-            with self.subTest(method=request.method):
-                # just re-set the link to first person, for safety sake
-                self.event.assigned_to = first_person
-                self.event.save()
-
-                assign(request, self.event, person_id=person_id)
-
-                self.event.refresh_from_db()
-                self.assertEqual(self.event.assigned_to, None)
+        # Arrange
+        self.event.assigned_to = self.person
+        self.event.save()
+        # Act
+        assign(self.event, person=None)
+        # Assert
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.assigned_to, None)
 
 
 class TestStr2Bool(TestBase):

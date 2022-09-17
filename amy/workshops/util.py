@@ -1,21 +1,17 @@
 from collections import defaultdict
 import datetime
-from hashlib import sha1
 import re
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.db import IntegrityError, models, transaction
-from django.http import Http404
-from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
 from django_comments.models import Comment
 
 from consents.models import Consent
 from dashboard.models import Criterium
-from workshops.models import STR_LONG, STR_MED, Person
+from workshops.models import STR_LONG, STR_MED
 
 WORD_SPLIT = re.compile(r"""([\s<>"']+)""")
 SIMPLE_EMAIL = re.compile(r"^\S+@\S+\.\S+$")
@@ -38,51 +34,6 @@ def find_emails(text):
             emails.append("{}@{}".format(local, domain))
 
     return emails
-
-
-def failed_to_delete(request, object, protected_objects, back=None):
-    context = {
-        "title": "Failed to delete",
-        "back": back or object.get_absolute_url,
-        "object": object,
-        "refs": defaultdict(list),
-    }
-
-    for obj in protected_objects:
-        # e.g. for model Award its plural name is 'awards'
-        name = str(obj.__class__._meta.verbose_name_plural)
-        context["refs"][name].append(obj)
-
-    # this trick enables looping through defaultdict instance
-    context["refs"].default_factory = None
-
-    return render(request, "workshops/failed_to_delete.html", context)
-
-
-def assign(request, obj, person_id):
-    """Set obj.assigned_to. This view helper works with both POST and GET
-    requests:
-
-    * POST: read person ID from POST's `person`
-    * GET: read person_id from URL
-    * both: if person_id is None then make event.assigned_to empty
-    * otherwise assign matching person.
-
-    This is not a view, but it's used in some."""
-    try:
-        if request.method == "POST":
-            person_id = request.POST.get("person", None)
-
-        if person_id is None:
-            obj.assigned_to = None
-        else:
-            person = Person.objects.get(pk=person_id)
-            obj.assigned_to = person
-
-        obj.save()
-
-    except (Person.DoesNotExist, ValueError):
-        raise Http404("No person found matching the query.")
 
 
 def archive_least_recent_active_consents(object_a, object_b, base_obj):
@@ -301,21 +252,6 @@ def merge_objects(
         return base_obj.save(), integrity_errors
 
 
-def redirect_with_next_support(request, *args, **kwargs):
-    """Works in the same way as `redirect` except when there is GET parameter
-    named "next". In that case, user is redirected to the URL from that
-    parameter. If you have a class-based view, use RedirectSupportMixin that
-    does the same."""
-
-    next_url = request.GET.get("next", None)
-    if next_url is not None and url_has_allowed_host_and_scheme(
-        next_url, allowed_hosts=settings.ALLOWED_HOSTS
-    ):
-        return redirect(next_url)
-    else:
-        return redirect(*args, **kwargs)
-
-
 def dict_without_Nones(**keys):
     return {k: v for k, v in keys.items() if v is not None}
 
@@ -396,19 +332,3 @@ def add_comment(content_object, comment, **kwargs):
         submit_date=submit_date,
         site=site,
     )
-
-
-def reports_link_hash(slug: str) -> str:
-    """Generate hash for accessing workshop reports repository."""
-    lowered = slug.lower()
-    salt_front = settings.REPORTS_SALT_FRONT
-    salt_back = settings.REPORTS_SALT_BACK
-    hashed = sha1(f"{salt_front}{lowered}{salt_back}".encode("utf-8"))
-    return hashed.hexdigest()
-
-
-def reports_link(slug: str) -> str:
-    """Return link to workshop's reports with hash and slug filled in."""
-    hashed = reports_link_hash(slug)
-    link = settings.REPORTS_LINK
-    return link.format(hash=hashed, slug=slug)

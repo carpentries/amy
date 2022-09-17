@@ -21,10 +21,11 @@ from django.views.generic import (
     UpdateView,
 )
 from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.edit import FormMixin
 
-from workshops.forms import BootstrapHelper
-from workshops.util import assign, failed_to_delete
+from workshops.forms import AdminLookupForm, BootstrapHelper
 from workshops.utils.pagination import Paginator, get_pagination_items
+from workshops.utils.views import assign, failed_to_delete
 
 
 class FormInvalidMessageMixin:
@@ -419,19 +420,21 @@ class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, Redirec
         return super().get(request, *args, **kwargs)
 
 
-class AssignView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
+class AssignView(PermissionRequiredMixin, SingleObjectMixin, FormMixin, RedirectView):
     # URL keyword argument for requested person.
     permanent = False
     person_url_kwarg = "person_id"
+    form_class = AdminLookupForm
 
     def get_redirect_url(self, *args, **kwargs):
         return self.object.get_absolute_url()
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        requested_person_id = self.kwargs.get(self.person_url_kwarg)
-        assign(request, self.object, requested_person_id)
-        return super().get(request, *args, **kwargs)
+        form = self.get_form()
+        if form.is_valid():
+            assign(self.object, person=form.cleaned_data.get("person"))
+        return super().post(request, *args, **kwargs)
 
 
 class ConditionallyEnabledMixin:

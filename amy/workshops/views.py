@@ -113,7 +113,7 @@ from workshops.models import (
     TrainingProgress,
 )
 from workshops.signals import create_comment_signal
-from workshops.util import add_comment, failed_to_delete, merge_objects
+from workshops.util import add_comment, merge_objects
 from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
 from workshops.utils.metadata import (
     fetch_workshop_metadata,
@@ -127,6 +127,7 @@ from workshops.utils.person_upload import (
     verify_upload_person_task,
 )
 from workshops.utils.usernames import create_username
+from workshops.utils.views import failed_to_delete
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

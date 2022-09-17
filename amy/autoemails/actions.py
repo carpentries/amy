@@ -17,6 +17,7 @@ from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignu
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Person, Task
 from workshops.utils.dates import human_daterange
+from workshops.utils.reports import reports_link
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -493,7 +494,7 @@ class PostWorkshopAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, reports_link
+        from workshops.util import match_notification_email
 
         # refresh related event
         event = objects["event"]
