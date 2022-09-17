@@ -113,8 +113,9 @@ from workshops.models import (
     TrainingProgress,
 )
 from workshops.signals import create_comment_signal
-from workshops.util import add_comment, merge_objects
 from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from workshops.utils.comments import add_comment
+from workshops.utils.merge import merge_objects
 from workshops.utils.metadata import (
     fetch_workshop_metadata,
     parse_workshop_metadata,

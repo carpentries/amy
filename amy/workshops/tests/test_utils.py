@@ -11,12 +11,9 @@ from consents.models import Consent, Term
 from workshops.exceptions import InternalError
 from workshops.models import Event, Language, Organization, Person, WorkshopRequest
 from workshops.tests.base import TestBase
-from workshops.util import (
-    archive_least_recent_active_consents,
-    match_notification_email,
-    str2bool,
-)
+from workshops.utils.consents import archive_least_recent_active_consents
 from workshops.utils.dates import human_daterange
+from workshops.utils.emails import match_notification_email
 from workshops.utils.metadata import (
     fetch_workshop_metadata,
     find_workshop_HTML_metadata,
@@ -882,58 +879,6 @@ class TestAssignUtil(TestBase):
         # Assert
         self.event.refresh_from_db()
         self.assertEqual(self.event.assigned_to, None)
-
-
-class TestStr2Bool(TestBase):
-    """Tests for ensuring str2bool works as expected."""
-
-    def setUp(self):
-        self.expected_true = (
-            "True",
-            "TRUE",
-            "true",
-            "tRuE",
-            "1",
-            "t",
-            "T",
-            "yes",
-            "YES",
-            "yEs",
-        )
-        self.expected_false = (
-            "False",
-            "FALSE",
-            "false",
-            "fAlSe",
-            "0",
-            "f",
-            "F",
-            "no",
-            "NO",
-            "nO",
-        )
-        self.expected_none = (
-            "",
-            " ",
-            "dummy",
-            "None",
-            "asdgfh",
-        )
-
-    def test_true(self):
-        """Ensure `True` is returned for correct input data."""
-        for element in self.expected_true:
-            self.assertEqual(str2bool(element), True, element)
-
-    def test_false(self):
-        """Ensure `False` is returned for correct input data."""
-        for element in self.expected_false:
-            self.assertEqual(str2bool(element), False, element)
-
-    def test_none(self):
-        """Ensure `None` is returned for correct input data."""
-        for element in self.expected_none:
-            self.assertIsNone(str2bool(element), element)
 
 
 class TestHumanDaterange(TestBase):
