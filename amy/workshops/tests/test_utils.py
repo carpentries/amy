@@ -10,23 +10,11 @@ import requests_mock
 
 from consents.models import Consent, Term
 from workshops.exceptions import InternalError
-from workshops.models import (
-    Award,
-    Badge,
-    Event,
-    Language,
-    Organization,
-    Person,
-    Role,
-    Task,
-    WorkshopRequest,
-)
+from workshops.models import Event, Language, Organization, Person, WorkshopRequest
 from workshops.tests.base import TestBase
 from workshops.util import (
     archive_least_recent_active_consents,
     assign,
-    default_membership_cutoff,
-    get_members,
     match_notification_email,
     reports_link,
     reports_link_hash,
@@ -758,86 +746,6 @@ Other content.
         errors, warnings = validate_workshop_metadata(metadata)
         self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
-
-
-class TestMembership(TestBase):
-    """Tests for SCF membership."""
-
-    def setUp(self):
-        super().setUp()
-        self._setUpUsersAndLogin()
-
-        one_day = datetime.timedelta(days=1)
-        one_month = datetime.timedelta(days=30)
-        three_years = datetime.timedelta(days=3 * 365)
-
-        today = datetime.date.today()
-        yesterday = today - one_day
-        tomorrow = today + one_day
-
-        # Set up events in the past, at present, and in future.
-        past = Event.objects.create(
-            host=self.org_alpha,
-            slug="in-past",
-            start=today - three_years,
-            end=tomorrow - three_years,
-        )
-
-        present = Event.objects.create(
-            host=self.org_alpha, slug="at-present", start=today - one_month
-        )
-
-        future = Event.objects.create(
-            host=self.org_alpha,
-            slug="in-future",
-            start=today + one_month,
-            end=tomorrow + one_month,
-        )
-
-        # Roles and badges.
-        instructor_role = Role.objects.create(name="instructor")
-        member_badge = Badge.objects.create(name="member")
-
-        # Spiderman is an explicit member.
-        Award.objects.create(
-            person=self.spiderman, badge=member_badge, awarded=yesterday
-        )
-
-        # Hermione teaches in the past, now, and in future, so she's a member.
-        Task.objects.create(event=past, person=self.hermione, role=instructor_role)
-        Task.objects.create(event=present, person=self.hermione, role=instructor_role)
-        Task.objects.create(event=future, person=self.hermione, role=instructor_role)
-
-        # Ron only teaches in the distant past, so he's not a member.
-        Task.objects.create(event=past, person=self.ron, role=instructor_role)
-
-        # Harry only teaches in the future, so he's not a member.
-        Task.objects.create(event=future, person=self.harry, role=instructor_role)
-
-    def test_members_default_cutoffs(self):
-        """Make sure default membership rules are obeyed."""
-        earliest, latest = default_membership_cutoff()
-        members = get_members(earliest=earliest, latest=latest)
-
-        self.assertIn(self.hermione, members)  # taught recently
-        self.assertNotIn(self.ron, members)  # taught too long ago
-        self.assertNotIn(self.harry, members)  # only teaching in the future
-        self.assertIn(self.spiderman, members)  # explicit member
-        self.assertEqual(len(members), 2)
-
-    def test_members_explicit_earliest(self):
-        """Make sure membership rules are obeyed with explicit earliest
-        date."""
-        # Set start date to exclude Hermione.
-        earliest = datetime.date.today() - datetime.timedelta(days=1)
-        _, latest = default_membership_cutoff()
-        members = get_members(earliest=earliest, latest=latest)
-
-        self.assertNotIn(self.hermione, members)  # taught recently
-        self.assertNotIn(self.ron, members)  # taught too long ago
-        self.assertNotIn(self.harry, members)  # only teaching in the future
-        self.assertIn(self.spiderman, members)  # explicit member
-        self.assertEqual(len(members), 1)
 
 
 class TestUsernameGeneration(TestBase):

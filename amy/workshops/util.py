@@ -15,39 +15,10 @@ from django_comments.models import Comment
 
 from consents.models import Consent
 from dashboard.models import Criterium
-from workshops.models import STR_LONG, STR_MED, Badge, Person, Role
+from workshops.models import STR_LONG, STR_MED, Person
 
 WORD_SPLIT = re.compile(r"""([\s<>"']+)""")
 SIMPLE_EMAIL = re.compile(r"^\S+@\S+\.\S+$")
-
-
-def get_members(earliest, latest):
-    """Get everyone who is a member of the Software Carpentry Foundation."""
-
-    member_badge = Badge.objects.get(name="member")
-    instructor_badges = Badge.objects.instructor_badges()
-    instructor_role = Role.objects.get(name="instructor")
-
-    # Everyone who is an explicit member.
-    explicit = Person.objects.filter(badges__in=[member_badge]).distinct()
-
-    # Everyone who qualifies by having taught recently.
-    implicit = Person.objects.filter(
-        task__role=instructor_role,
-        badges__in=instructor_badges,
-        task__event__start__gte=earliest,
-        task__event__start__lte=latest,
-    ).distinct()
-
-    # Merge the two sets.
-    return explicit | implicit
-
-
-def default_membership_cutoff():
-    "Calculate a default cutoff dates for members finding with `get_members`."
-    earliest = datetime.date.today() - 2 * datetime.timedelta(days=365)
-    latest = datetime.date.today()
-    return earliest, latest
 
 
 def find_emails(text):
