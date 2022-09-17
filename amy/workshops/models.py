@@ -1568,7 +1568,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         emails = find_emails(self.contact)
         return emails
 
-    def human_readable_date(self, **kwargs):
+    def human_readable_date(self, **kwargs) -> str:
         """Render start and end dates as human-readable short date."""
         from workshops.util import human_daterange
 
@@ -1587,7 +1587,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         )
 
     def eligible_for_instructor_recruitment(self) -> bool:
-        return (
+        return bool(
             self.start
             and self.start >= datetime.date.today()
             and (

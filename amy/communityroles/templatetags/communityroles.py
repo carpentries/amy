@@ -4,6 +4,7 @@ from django import template
 
 from communityroles.models import CommunityRole
 from workshops.models import Person
+from workshops.util import human_daterange as human_daterange_util
 
 register = template.Library()
 
@@ -14,3 +15,11 @@ def get_community_role(person: Person, role_name: str) -> Optional[CommunityRole
         return CommunityRole.objects.get(person=person, config__name=role_name)
     except CommunityRole.DoesNotExist:
         return None
+
+
+@register.simple_tag
+def community_role_human_dates(community_role: CommunityRole) -> str:
+    result = human_daterange_util(
+        community_role.start, community_role.end, no_date_right="present"
+    )
+    return result

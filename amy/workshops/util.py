@@ -1318,49 +1318,49 @@ def choice_field_with_other(choices, default, verbose_name=None, help_text=None)
 def human_daterange(
     date_left: Optional[Union[datetime.date, datetime.datetime]],
     date_right: Optional[Union[datetime.date, datetime.datetime]],
-    no_date="???",
-    range_char=" - ",
-    common_month_left="%b %d",
-    common_month_right="%d, %Y",
-    common_year_left="%b %d",
-    common_year_right="%b %d, %Y",
-    nothing_common_left="%b %d, %Y",
-    nothing_common_right="%b %d, %Y",
-):
+    no_date_left: str = "???",
+    no_date_right: str = "???",
+    separator: str = " - ",
+    common_month_left: str = "%b %d",
+    common_month_right: str = "%d, %Y",
+    common_year_left: str = "%b %d",
+    common_year_right: str = "%b %d, %Y",
+    nothing_common_left: str = "%b %d, %Y",
+    nothing_common_right: str = "%b %d, %Y",
+) -> str:
 
-    left = ""
-    middle = "{sep}"
-    right = ""
+    if not date_left and not date_right:
+        return f"{no_date_left}{separator}{no_date_right}"
 
     if date_left and not date_right:
-        left = "{left:%s}" % nothing_common_left
-        right = "{none}"
+        return f"{date_left:{nothing_common_left}}{separator}{no_date_right}"
 
     elif date_right and not date_left:
-        left = "{none}"
-        right = "{right:%s}" % nothing_common_right
+        return f"{no_date_left}{separator}{date_right:{nothing_common_right}}"
 
-    elif not date_right and not date_left:
-        left = "{none}"
-        right = "{none}"
+    common_year = date_left.year == date_right.year  # type: ignore
+    common_month = date_left.month == date_right.month  # type: ignore
+
+    if common_year and common_month:
+        return (
+            f"{date_left:{common_month_left}}"
+            f"{separator}"
+            f"{date_right:{common_month_right}}"
+        )
+
+    elif common_year:
+        return (
+            f"{date_left:{common_year_left}}"
+            f"{separator}"
+            f"{date_right:{common_year_right}}"
+        )
 
     else:
-        common_year = date_left.year == date_right.year
-        common_month = date_left.month == date_right.month
-
-        if common_year and common_month:
-            left = "{left:%s}" % common_month_left
-            right = "{right:%s}" % common_month_right
-        elif common_year:
-            left = "{left:%s}" % common_year_left
-            right = "{right:%s}" % common_year_right
-        else:
-            left = "{left:%s}" % nothing_common_left
-            right = "{right:%s}" % nothing_common_right
-
-    return (left + middle + right).format(
-        **dict(left=date_left, sep=range_char, right=date_right, none=no_date)
-    )
+        return (
+            f"{date_left:{nothing_common_left}}"
+            f"{separator}"
+            f"{date_right:{nothing_common_right}}"
+        )
 
 
 def match_notification_email(obj):

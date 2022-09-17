@@ -1060,8 +1060,9 @@ class TestStr2Bool(TestBase):
 class TestHumanDaterange(TestBase):
     def setUp(self):
         self.formats = {
-            "no_date": "????",
-            "range_char": " - ",
+            "no_date_left": "????",
+            "no_date_right": "!!!!",
+            "separator": " - ",
         }
         self.inputs = (
             (datetime.datetime(2018, 9, 1), datetime.datetime(2018, 9, 30)),
@@ -1077,9 +1078,9 @@ class TestHumanDaterange(TestBase):
             "Sep 30 - 01, 2018",
             "Sep 01 - Dec 01, 2018",
             "Sep 01, 2018 - Dec 01, 2019",
-            "Sep 01, 2018 - ????",
+            "Sep 01, 2018 - !!!!",
             "???? - Sep 01, 2018",
-            "???? - ????",
+            "???? - !!!!",
         )
 
     def test_function(self):
