@@ -64,14 +64,9 @@ from workshops.models import (
     TrainingRequest,
     WorkshopRequest,
 )
-from workshops.util import (
-    failed_to_delete,
-    fetch_workshop_metadata,
-    merge_objects,
-    parse_workshop_metadata,
-    redirect_with_next_support,
-)
+from workshops.util import failed_to_delete, merge_objects, redirect_with_next_support
 from workshops.utils.access import OnlyForAdminsMixin, admin_required
+from workshops.utils.metadata import fetch_workshop_metadata, parse_workshop_metadata
 from workshops.utils.trainingrequest_upload import (
     clean_upload_trainingrequest_manual_score,
     update_manual_score,

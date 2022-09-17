@@ -113,15 +113,13 @@ from workshops.models import (
     TrainingProgress,
 )
 from workshops.signals import create_comment_signal
-from workshops.util import (
-    add_comment,
-    failed_to_delete,
+from workshops.util import add_comment, failed_to_delete, merge_objects
+from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from workshops.utils.metadata import (
     fetch_workshop_metadata,
-    merge_objects,
     parse_workshop_metadata,
     validate_workshop_metadata,
 )
-from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
 from workshops.utils.pagination import get_pagination_items
 from workshops.utils.person_upload import (
     create_uploaded_persons_tasks,

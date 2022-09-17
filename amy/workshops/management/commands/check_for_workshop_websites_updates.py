@@ -13,7 +13,7 @@ from rest_framework.utils.encoders import JSONEncoder
 
 from workshops.exceptions import WrongWorkshopURL
 from workshops.models import Event
-from workshops.util import fetch_workshop_metadata, parse_workshop_metadata
+from workshops.utils.metadata import fetch_workshop_metadata, parse_workshop_metadata
 
 
 def datetime_match(string):

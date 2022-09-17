@@ -26,19 +26,21 @@ from workshops.util import (
     archive_least_recent_active_consents,
     assign,
     default_membership_cutoff,
+    get_members,
+    match_notification_email,
+    reports_link,
+    reports_link_hash,
+    str2bool,
+)
+from workshops.utils.dates import human_daterange
+from workshops.utils.metadata import (
     fetch_workshop_metadata,
     find_workshop_HTML_metadata,
     find_workshop_YAML_metadata,
     generate_url_to_event_index,
-    get_members,
-    match_notification_email,
     parse_workshop_metadata,
-    reports_link,
-    reports_link_hash,
-    str2bool,
     validate_workshop_metadata,
 )
-from workshops.utils.dates import human_daterange
 from workshops.utils.pagination import Paginator
 from workshops.utils.usernames import create_username
 
