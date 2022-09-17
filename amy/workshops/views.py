@@ -115,18 +115,20 @@ from workshops.models import (
 from workshops.signals import create_comment_signal
 from workshops.util import (
     add_comment,
-    create_uploaded_persons_tasks,
-    create_username,
     failed_to_delete,
     fetch_workshop_metadata,
-    get_pagination_items,
     merge_objects,
     parse_workshop_metadata,
-    upload_person_task_csv,
     validate_workshop_metadata,
-    verify_upload_person_task,
 )
 from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from workshops.utils.pagination import get_pagination_items
+from workshops.utils.person_upload import (
+    create_uploaded_persons_tasks,
+    upload_person_task_csv,
+    verify_upload_person_task,
+)
+from workshops.utils.usernames import create_username
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

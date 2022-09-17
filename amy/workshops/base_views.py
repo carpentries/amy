@@ -23,7 +23,8 @@ from django.views.generic import (
 from django.views.generic.detail import SingleObjectMixin
 
 from workshops.forms import BootstrapHelper
-from workshops.util import Paginator, assign, failed_to_delete, get_pagination_items
+from workshops.util import assign, failed_to_delete
+from workshops.utils.pagination import Paginator, get_pagination_items
 
 
 class FormInvalidMessageMixin:

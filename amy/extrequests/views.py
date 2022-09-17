@@ -65,17 +65,19 @@ from workshops.models import (
     WorkshopRequest,
 )
 from workshops.util import (
-    clean_upload_trainingrequest_manual_score,
-    create_username,
     failed_to_delete,
     fetch_workshop_metadata,
     merge_objects,
     parse_workshop_metadata,
     redirect_with_next_support,
+)
+from workshops.utils.access import OnlyForAdminsMixin, admin_required
+from workshops.utils.trainingrequest_upload import (
+    clean_upload_trainingrequest_manual_score,
     update_manual_score,
     upload_trainingrequest_manual_score_csv,
 )
-from workshops.utils.access import OnlyForAdminsMixin, admin_required
+from workshops.utils.usernames import create_username
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

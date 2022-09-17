@@ -23,10 +23,8 @@ from workshops.models import (
 )
 from workshops.tests.base import TestBase
 from workshops.util import (
-    Paginator,
     archive_least_recent_active_consents,
     assign,
-    create_username,
     default_membership_cutoff,
     fetch_workshop_metadata,
     find_workshop_HTML_metadata,
@@ -41,6 +39,8 @@ from workshops.util import (
     validate_workshop_metadata,
 )
 from workshops.utils.dates import human_daterange
+from workshops.utils.pagination import Paginator
+from workshops.utils.usernames import create_username
 
 
 class TestHandlingEventMetadata(TestBase):
