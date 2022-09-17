@@ -47,6 +47,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
     StateFilterMixin,
 )
+from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
@@ -64,9 +65,7 @@ from workshops.models import (
     WorkshopRequest,
 )
 from workshops.util import (
-    InternalError,
     OnlyForAdminsMixin,
-    WrongWorkshopURL,
     admin_required,
     clean_upload_trainingrequest_manual_score,
     create_username,

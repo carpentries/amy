@@ -70,6 +70,7 @@ from workshops.base_views import (
     PrepopulationSupportMixin,
     RedirectSupportMixin,
 )
+from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.filters import (
     AirportFilter,
     BadgeAwardsFilter,
@@ -113,9 +114,7 @@ from workshops.models import (
 )
 from workshops.signals import create_comment_signal
 from workshops.util import (
-    InternalError,
     OnlyForAdminsMixin,
-    WrongWorkshopURL,
     add_comment,
     admin_required,
     create_uploaded_persons_tasks,

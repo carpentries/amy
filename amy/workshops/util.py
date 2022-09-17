@@ -1,4 +1,3 @@
-# coding: utf-8
 from collections import defaultdict, namedtuple
 import csv
 import datetime
@@ -34,6 +33,7 @@ from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from consents.models import Consent
 from dashboard.models import Criterium
+from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.models import STR_LONG, STR_MED, Badge, Event, Person, Role, Task
 
 logger = logging.getLogger("amy.signals")
@@ -62,10 +62,6 @@ ALLOWED_METADATA_NAMES = [
     "helper",
     "contact",
 ]
-
-
-class InternalError(Exception):
-    pass
 
 
 def upload_person_task_csv(stream):
@@ -667,20 +663,6 @@ def fetch_workshop_metadata(event_url, timeout=5):
 
     # leave normalization or validation to the caller function
     return metadata
-
-
-class WrongWorkshopURL(Exception):
-    """Raised when we fall back to reading metadata from event's YAML front
-    matter, which requires a link to GitHub raw hosted file, but we can't get
-    that link because provided URL doesn't match Event.WEBSITE_REGEX or Event.REPO_REGEX
-    (see `generate_url_to_event_index` below)."""
-
-    def __init__(self, msg: str):
-        # Store the error message in class field so that it can be retrieved later.
-        # This circumvents CodeQL error when the exception instance `e` was stringified
-        # `str(e)` - now the code addresses `e.msg` directly.
-        self.msg = msg
-        super().__init__()
 
 
 def generate_url_to_event_index(website_url):

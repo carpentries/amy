@@ -13,6 +13,7 @@ from faker import Faker
 import requests_mock
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
+from workshops.exceptions import WrongWorkshopURL
 from workshops.management.commands.assign_instructor_community_role import (
     Command as AssignInstructorCommunityRole,
 )
@@ -20,7 +21,6 @@ from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
-    WrongWorkshopURL,
     datetime_decode,
     datetime_match,
 )
