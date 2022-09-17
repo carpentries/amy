@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import date
 from typing import Any, Optional, Union
 
 from django import forms
@@ -9,7 +10,7 @@ from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixi
 from workshops.models import Award, Person
 
 from .fields import CustomKeysJSONField
-from .models import CommunityRole, CommunityRoleConfig
+from .models import CommunityRole, CommunityRoleConfig, CommunityRoleInactivation
 
 
 class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
@@ -77,6 +78,10 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         config: Optional[CommunityRoleConfig] = cleaned_data.get("config")
         award: Optional[Award] = cleaned_data.get("award")
         person: Optional[Person] = cleaned_data.get("person")
+        inactivation: Optional[CommunityRoleInactivation] = cleaned_data.get(
+            "inactivation"
+        )
+        end_date: Optional[date] = cleaned_data.get("end")
 
         # Config is required, but field validation for 'config' should raise
         # validation error first.
@@ -133,6 +138,12 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                         "doesn't exist"
                     )
                 )
+
+        # End date is required when any inactivation was selected.
+        if inactivation is not None and end_date is None:
+            errors["end"].append(
+                ValidationError("Required when Reason for inactivation selected.")
+            )
 
         if errors:
             raise ValidationError(errors)

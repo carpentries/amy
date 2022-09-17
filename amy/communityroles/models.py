@@ -76,7 +76,7 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
         blank=True,
         verbose_name="Associated Award",
     )
-    start = models.DateField(null=True, blank=True, verbose_name="Role Start Date")
+    start = models.DateField(null=True, blank=False, verbose_name="Role Start Date")
     end = models.DateField(null=True, blank=True, verbose_name="Role End Date")
     inactivation = models.ForeignKey(
         CommunityRoleInactivation,
