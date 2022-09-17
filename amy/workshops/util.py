@@ -6,7 +6,6 @@ from hashlib import sha1
 from itertools import chain
 import logging
 import re
-from typing import Optional, Union
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required as django_login_required
@@ -880,10 +879,6 @@ def validate_workshop_metadata(metadata):
     return errors, warnings
 
 
-def universal_date_format(date):
-    return "{:%Y-%m-%d}".format(date)
-
-
 def get_members(earliest, latest):
     """Get everyone who is a member of the Software Carpentry Foundation."""
 
@@ -1295,54 +1290,6 @@ def choice_field_with_other(choices, default, verbose_name=None, help_text=None)
         default="",
     )
     return field, other_field
-
-
-def human_daterange(
-    date_left: Optional[Union[datetime.date, datetime.datetime]],
-    date_right: Optional[Union[datetime.date, datetime.datetime]],
-    no_date_left: str = "???",
-    no_date_right: str = "???",
-    separator: str = " - ",
-    common_month_left: str = "%b %d",
-    common_month_right: str = "%d, %Y",
-    common_year_left: str = "%b %d",
-    common_year_right: str = "%b %d, %Y",
-    nothing_common_left: str = "%b %d, %Y",
-    nothing_common_right: str = "%b %d, %Y",
-) -> str:
-
-    if not date_left and not date_right:
-        return f"{no_date_left}{separator}{no_date_right}"
-
-    if date_left and not date_right:
-        return f"{date_left:{nothing_common_left}}{separator}{no_date_right}"
-
-    elif date_right and not date_left:
-        return f"{no_date_left}{separator}{date_right:{nothing_common_right}}"
-
-    common_year = date_left.year == date_right.year  # type: ignore
-    common_month = date_left.month == date_right.month  # type: ignore
-
-    if common_year and common_month:
-        return (
-            f"{date_left:{common_month_left}}"
-            f"{separator}"
-            f"{date_right:{common_month_right}}"
-        )
-
-    elif common_year:
-        return (
-            f"{date_left:{common_year_left}}"
-            f"{separator}"
-            f"{date_right:{common_year_right}}"
-        )
-
-    else:
-        return (
-            f"{date_left:{nothing_common_left}}"
-            f"{separator}"
-            f"{date_right:{nothing_common_right}}"
-        )
 
 
 def match_notification_email(obj):

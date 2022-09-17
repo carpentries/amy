@@ -52,6 +52,7 @@ from workshops.mixins import (
     StateMixin,
 )
 from workshops.signals import person_archived_signal
+from workshops.utils.dates import human_daterange
 
 STR_SHORT = 10  # length of short strings
 STR_MED = 40  # length of medium strings
@@ -300,8 +301,6 @@ class Membership(models.Model):
     )
 
     def __str__(self):
-        from workshops.util import human_daterange
-
         dates = human_daterange(self.agreement_start, self.agreement_end)
         variant = self.variant.title()
 
@@ -1570,8 +1569,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
 
     def human_readable_date(self, **kwargs) -> str:
         """Render start and end dates as human-readable short date."""
-        from workshops.util import human_daterange
-
         date1 = self.start
         date2 = self.end
         return human_daterange(date1, date2, **kwargs)

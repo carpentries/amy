@@ -1,7 +1,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 
-from workshops.util import human_daterange as human_daterange_util
+from workshops.utils.dates import human_daterange as human_daterange_util
 
 register = template.Library()
 

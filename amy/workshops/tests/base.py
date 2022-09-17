@@ -22,7 +22,7 @@ from workshops.models import (
     Role,
     Tag,
 )
-from workshops.util import universal_date_format
+from workshops.utils.dates import universal_date_format
 
 
 def consent_to_all_required_consents(person: Person) -> None:

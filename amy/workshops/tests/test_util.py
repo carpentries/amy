@@ -9,6 +9,7 @@ import requests.exceptions
 import requests_mock
 
 from consents.models import Consent, Term
+from workshops.exceptions import InternalError
 from workshops.models import (
     Award,
     Badge,
@@ -22,7 +23,6 @@ from workshops.models import (
 )
 from workshops.tests.base import TestBase
 from workshops.util import (
-    InternalError,
     Paginator,
     archive_least_recent_active_consents,
     assign,
@@ -33,7 +33,6 @@ from workshops.util import (
     find_workshop_YAML_metadata,
     generate_url_to_event_index,
     get_members,
-    human_daterange,
     match_notification_email,
     parse_workshop_metadata,
     reports_link,
@@ -41,6 +40,7 @@ from workshops.util import (
     str2bool,
     validate_workshop_metadata,
 )
+from workshops.utils.dates import human_daterange
 
 
 class TestHandlingEventMetadata(TestBase):
