@@ -3,7 +3,11 @@ from datetime import date, timedelta
 from django.contrib.contenttypes.models import ContentType
 
 from communityroles.forms import CommunityRoleForm, CommunityRoleUpdateForm
-from communityroles.models import CommunityRole, CommunityRoleConfig
+from communityroles.models import (
+    CommunityRole,
+    CommunityRoleConfig,
+    CommunityRoleInactivation,
+)
 from fiscal.models import Membership
 from workshops.models import Award, Badge, Lesson, Person
 from workshops.tests.base import TestBase
@@ -66,9 +70,10 @@ class TestCommunityRoleForm(TestBase):
 
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"config", "person"})
+        self.assertEqual(form.errors.keys(), {"config", "person", "start"})
         self.assertEqual(form.errors["config"], ["This field is required."])
         self.assertEqual(form.errors["person"], ["This field is required."])
+        self.assertEqual(form.errors["start"], ["This field is required."])
 
     def test_award_required(self):
         # Arrange
@@ -325,6 +330,44 @@ class TestCommunityRoleForm(TestBase):
             ["Generic relation object of model Lesson doesn't exist"],
         )
 
+    def test_end_date_required_when_inactivation_selected(self):
+        """Should not validate if the inactivation reason is provided and end date
+        is missing."""
+        # Arrange
+        ct = ContentType.objects.get_for_model(Lesson)
+        inactivation = CommunityRoleInactivation.objects.create(name="End of term")
+        test_config = CommunityRoleConfig.objects.create(
+            name="test",
+            display_name="Test",
+            link_to_award=True,
+            award_badge_limit=None,
+            link_to_membership=True,
+            additional_url=True,
+            generic_relation_content_type=ct,
+        )
+        data = {
+            "config": test_config.pk,
+            "person": self.hermione.pk,
+            "award": self.award.pk,
+            "start": "2021-11-14",
+            "end": None,
+            "inactivation": inactivation.pk,
+            "membership": self.membership.pk,
+            "url": "https://example.org",
+            "generic_relation_content_type": ct.pk,
+            "generic_relation_pk": self.git.pk,  # Lesson instance
+        }
+
+        # Act
+        form = CommunityRoleForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors.keys(), {"end"})
+        self.assertEqual(
+            form.errors["end"], ["Required when Reason for inactivation selected."]
+        )
+
 
 class TestCommunityRoleUpdateForm(TestBase):
     def test_fields(self) -> None:
@@ -411,8 +454,9 @@ class TestCommunityRoleUpdateForm(TestBase):
 
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"person"})
+        self.assertEqual(form.errors.keys(), {"person", "start"})
         self.assertEqual(form.errors["person"], ["This field is required."])
+        self.assertEqual(form.errors["start"], ["This field is required."])
 
     def test_clean_success(self) -> None:
         # Arrange
@@ -431,7 +475,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             "config": config.pk,
             "person": person.pk,
             "award": "",
-            "start": "",
+            "start": "2022-09-17",
             "end": "",
             "inactivation": None,
             "membership": "",
@@ -466,7 +510,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             "config": config.pk,
             "person": person.pk,
             "award": "",
-            "start": "",
+            "start": "2022-09-17",
             "end": "",
             "inactivation": None,
             "membership": "",
