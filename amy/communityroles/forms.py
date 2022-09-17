@@ -4,6 +4,7 @@ from typing import Any, Optional, Union
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Q
 
 from workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
@@ -81,11 +82,12 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         inactivation: Optional[CommunityRoleInactivation] = cleaned_data.get(
             "inactivation"
         )
+        start_date: Optional[date] = cleaned_data.get("start")
         end_date: Optional[date] = cleaned_data.get("end")
 
         # Config is required, but field validation for 'config' should raise
         # validation error first.
-        if not config:
+        if not config or not person:
             return cleaned_data
 
         # Award required?
@@ -145,8 +147,13 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 ValidationError("Required when Reason for inactivation selected.")
             )
 
+        try:
+            self.check_concurrent_role(config, person, start_date, end_date)
+        except ValidationError as exc:
+            errors["person"].append(exc)
+
         if errors:
-            raise ValidationError(errors)
+            raise ValidationError(errors)  # type: ignore
 
         return cleaned_data
 
@@ -157,6 +164,32 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         if start and end and end < start:
             raise ValidationError("Must not be earlier than start date.")
         return end
+
+    def check_concurrent_role(
+        self,
+        config: Optional[CommunityRoleConfig] = None,
+        person: Optional[Person] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> Optional[Person]:
+        """Person should not have any concurrent Community Roles of the same type in the
+        same time."""
+        # These are required fields in the form, so they should be present.
+        if config and person and start_date:
+            same_time = Q(end__gt=start_date) | Q(end__isnull=True)
+            if end_date:
+                # if `end_date` is present, introduce additional condition
+                same_time &= Q(start__lt=end_date) | Q(start__isnull=True)
+            if roles := CommunityRole.objects.filter(
+                person=person, config=config
+            ).filter(same_time):
+                raise (
+                    ValidationError(
+                        f"Person {person} has concurrent community roles: "
+                        f"{list(roles)}."
+                    )
+                )
+        return person
 
 
 class CommunityRoleUpdateForm(CommunityRoleForm):
@@ -173,4 +206,16 @@ class CommunityRoleUpdateForm(CommunityRoleForm):
     def __init__(self, *args, community_role_config: CommunityRoleConfig, **kwargs):
         self.config = community_role_config
         super().__init__(*args, **kwargs)
-        self.fields["custom_keys"].apply_labels(self.config.custom_key_labels)
+        self.fields["custom_keys"].apply_labels(  # type: ignore
+            self.config.custom_key_labels
+        )
+
+    def check_concurrent_role(
+        self,
+        config: Optional[CommunityRoleConfig] = None,
+        person: Optional[Person] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+    ) -> Optional[Person]:
+        """When updating a CommunityRole, we shouldn't check for concurrent roles."""
+        return person
