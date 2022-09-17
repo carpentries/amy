@@ -114,21 +114,19 @@ from workshops.models import (
 )
 from workshops.signals import create_comment_signal
 from workshops.util import (
-    OnlyForAdminsMixin,
     add_comment,
-    admin_required,
     create_uploaded_persons_tasks,
     create_username,
     failed_to_delete,
     fetch_workshop_metadata,
     get_pagination_items,
-    login_required,
     merge_objects,
     parse_workshop_metadata,
     upload_person_task_csv,
     validate_workshop_metadata,
     verify_upload_person_task,
 )
+from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

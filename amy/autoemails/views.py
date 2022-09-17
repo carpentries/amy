@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 import django_rq
 
 from workshops.models import WorkshopRequest
-from workshops.util import admin_required
+from workshops.utils.access import admin_required
 
 from .actions import GenericAction
 from .forms import GenericEmailScheduleForm

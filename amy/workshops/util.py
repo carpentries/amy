@@ -1,16 +1,12 @@
 from collections import defaultdict, namedtuple
 import csv
 import datetime
-from functools import wraps
 from hashlib import sha1
 from itertools import chain
 import logging
 import re
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required as django_login_required
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -1186,51 +1182,6 @@ def merge_objects(
         merging_obj.delete()
 
         return base_obj.save(), integrity_errors
-
-
-def access_control_decorator(decorator):
-    """Every function-based view should be decorated with one of access control
-    decorators, even if the view is accessible to everyone, including
-    unauthorized users (in that case, use @login_not_required)."""
-
-    @wraps(decorator)
-    def decorated_access_control_decorator(view):
-        acl = getattr(view, "_access_control_list", [])
-        view = decorator(view)
-        view._access_control_list = acl + [decorated_access_control_decorator]
-        return view
-
-    return decorated_access_control_decorator
-
-
-@access_control_decorator
-def admin_required(view):
-    return user_passes_test(lambda u: u.is_authenticated and u.is_admin)(view)
-
-
-@access_control_decorator
-def login_required(view):
-    return django_login_required(view)
-
-
-@access_control_decorator
-def login_not_required(view):
-    # @access_control_decorator adds _access_control_list to `view`,
-    # so @login_not_required is *not* no-op.
-    return view
-
-
-class OnlyForAdminsMixin(UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.is_admin
-
-
-class OnlyForAdminsNoRedirectMixin(OnlyForAdminsMixin):
-    raise_exception = True
-
-
-class LoginNotRequiredMixin(object):
-    pass
 
 
 def redirect_with_next_support(request, *args, **kwargs):

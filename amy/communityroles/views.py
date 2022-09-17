@@ -8,7 +8,7 @@ from workshops.base_views import (
     AMYUpdateView,
     RedirectSupportMixin,
 )
-from workshops.util import OnlyForAdminsMixin
+from workshops.utils.access import OnlyForAdminsMixin
 
 from .forms import CommunityRoleForm, CommunityRoleUpdateForm
 from .models import CommunityRole

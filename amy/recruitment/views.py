@@ -39,7 +39,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
 )
 from workshops.models import Event, Person, Role, Task
-from workshops.util import OnlyForAdminsMixin
+from workshops.utils.access import OnlyForAdminsMixin
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 

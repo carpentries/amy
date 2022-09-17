@@ -25,7 +25,8 @@ from workshops.models import (
     TrainingProgress,
     TrainingRequirement,
 )
-from workshops.util import OnlyForAdminsMixin, admin_required, get_pagination_items
+from workshops.util import get_pagination_items
+from workshops.utils.access import OnlyForAdminsMixin, admin_required
 
 
 class AllTrainings(OnlyForAdminsMixin, AMYListView):

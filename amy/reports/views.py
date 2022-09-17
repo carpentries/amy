@@ -19,7 +19,8 @@ from workshops.models import (
     Task,
     TrainingRequest,
 )
-from workshops.util import admin_required, get_pagination_items
+from workshops.util import get_pagination_items
+from workshops.utils.access import admin_required
 
 
 @admin_required
