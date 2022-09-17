@@ -368,6 +368,126 @@ class TestCommunityRoleForm(TestBase):
             form.errors["end"], ["Required when Reason for inactivation selected."]
         )
 
+    def test_concurrent_community_roles_disallowed__validation_errors(self) -> None:
+        """"""
+        # Arrange
+        config = CommunityRoleConfig.objects.create(
+            name="test",
+            display_name="Test",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        # When the validation failures should occur - failure feed data.
+        failure_data = [
+            # community role start, end, form start, form end
+            (date(2022, 9, 17), date(2023, 9, 16), "2022-10-01", "2022-10-31"),
+            (date(2022, 9, 17), date(2023, 9, 16), "2022-01-01", "2022-10-31"),
+            (date(2022, 9, 17), date(2023, 9, 16), "2023-01-01", "2023-10-31"),
+            (date(2022, 9, 17), None, "2022-10-01", "2022-10-31"),
+            (date(2022, 9, 17), None, "2022-01-01", "2022-10-31"),
+            (date(2022, 9, 17), None, "2022-10-01", None),
+            (date(2022, 9, 17), None, "2022-01-01", None),
+            (None, None, "2022-01-01", None),
+        ]
+        for role_start, role_end, form_start, form_end in failure_data:
+            with self.subTest(
+                role_start=role_start,
+                role_end=role_end,
+                form_start=form_start,
+                form_end=form_end,
+            ):
+                # clear community roles if the test suite doesn't
+                CommunityRole.objects.filter(
+                    config=config, person=self.hermione
+                ).delete()
+
+                community_role = CommunityRole.objects.create(
+                    config=config,
+                    person=self.hermione,
+                    start=role_start,
+                    end=role_end,
+                )
+                form_data = {
+                    "config": config.pk,
+                    "person": self.hermione.pk,
+                    "award": self.award.pk,
+                    "start": form_start,
+                    "end": form_end,
+                    "inactivation": None,
+                    "membership": None,
+                    "url": "",
+                    "generic_relation_content_type": None,
+                    "generic_relation_pk": None,
+                }
+
+                # Act
+                form = CommunityRoleForm(form_data)
+                # Assert
+                self.assertFalse(form.is_valid())
+                self.assertEqual(form.errors.keys(), {"person"})
+                self.assertEqual(
+                    form.errors["person"],
+                    [
+                        f"Person {self.hermione} has concurrent community roles: "
+                        f"{[community_role]}."
+                    ],
+                )
+
+    def test_concurrent_community_roles_disallowed__validation_succeeds(self) -> None:
+        """"""
+        # Arrange
+        config = CommunityRoleConfig.objects.create(
+            name="test",
+            display_name="Test",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        # When the validation failures should NOT occur - pass feed data.
+        pass_data = [
+            # community role start, end, form start, form end
+            (date(2022, 9, 17), date(2023, 9, 16), "2023-09-16", "2023-09-30"),
+            (date(2022, 9, 17), date(2023, 9, 16), "2022-01-01", "2022-09-17"),
+            (None, date(2022, 9, 17), "2022-09-17", None),
+        ]
+        for role_start, role_end, form_start, form_end in pass_data:
+            with self.subTest(
+                role_start=role_start,
+                role_end=role_end,
+                form_start=form_start,
+                form_end=form_end,
+            ):
+                # clear community roles if the test suite doesn't
+                CommunityRole.objects.filter(
+                    config=config, person=self.hermione
+                ).delete()
+
+                CommunityRole.objects.create(
+                    config=config,
+                    person=self.hermione,
+                    start=role_start,
+                    end=role_end,
+                )
+                form_data = {
+                    "config": config.pk,
+                    "person": self.hermione.pk,
+                    "award": self.award.pk,
+                    "start": form_start,
+                    "end": form_end,
+                    "inactivation": None,
+                    "membership": None,
+                    "url": "",
+                    "generic_relation_content_type": None,
+                    "generic_relation_pk": None,
+                }
+
+                # Act
+                form = CommunityRoleForm(form_data)
+                # Assert
+                self.assertTrue(form.is_valid())
+                self.assertEqual(form.errors.keys(), set())
+
 
 class TestCommunityRoleUpdateForm(TestBase):
     def test_fields(self) -> None:
@@ -430,7 +550,7 @@ class TestCommunityRoleUpdateForm(TestBase):
         # Act
         form = CommunityRoleUpdateForm(community_role_config=config)
         # Assert
-        self.assertEqual(form.fields["custom_keys"].labels, labels)
+        self.assertEqual(form.fields["custom_keys"].labels, labels)  # type: ignore
 
     def test_empty_payload(self) -> None:
         # Arrange

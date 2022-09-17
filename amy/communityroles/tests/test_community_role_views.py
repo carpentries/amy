@@ -31,6 +31,8 @@ class TestCommunityRoleMixin:
         self.community_role = CommunityRole.objects.create(
             config=self.config,
             person=self.person,
+            start=date(2022, 1, 1),
+            end=date(2022, 1, 31),
         )
 
 
@@ -66,8 +68,8 @@ class TestCommunityRoleCreateView(TestCommunityRoleMixin, TestBase):
             "communityrole-config": self.config.pk,
             "communityrole-person": self.person.pk,
             "communityrole-award": award.pk,
-            "communityrole-start": date(2021, 11, 26),
-            "communityrole-end": date(2022, 11, 26),
+            "communityrole-start": date(2022, 11, 26),
+            "communityrole-end": date(2023, 11, 26),
             "communityrole-inactivation": self.inactivation.pk,
             "communityrole-membership": "",
             "communityrole-url": "http://example.org",
