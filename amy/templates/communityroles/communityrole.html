@@ -1,5 +1,5 @@
 {% extends "base_nav.html" %}
-{% load links dates %}
+{% load links dates communityroles %}
 
 
 {% block content %}
@@ -24,8 +24,8 @@
   <tr>
     <th>Dates</th>
     <td>
-      {% if role.start or role.end %}
-      {% human_daterange role.start role.end %}
+      {% if role.start %}
+      {% community_role_human_dates role %}
       {% else %}
       &mdash;
       {% endif %}

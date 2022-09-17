@@ -36,7 +36,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
 )
 from workshops.models import Award, Member, MemberRole, Membership, Organization, Task
-from workshops.util import OnlyForAdminsMixin
+from workshops.utils.access import OnlyForAdminsMixin
 
 # ------------------------------------------------------------
 # Organization related views

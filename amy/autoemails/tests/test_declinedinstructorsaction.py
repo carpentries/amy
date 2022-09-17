@@ -6,7 +6,7 @@ from autoemails.actions import DeclinedInstructorsAction
 from autoemails.models import EmailTemplate, Trigger
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.models import Event, Organization, Person, Tag
-from workshops.util import human_daterange
+from workshops.utils.dates import human_daterange
 
 
 class TestDeclinedInstructorsAction(TestCase):

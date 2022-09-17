@@ -12,7 +12,8 @@ from extforms.forms import (
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from workshops.base_views import AMYCreateView, AutoresponderMixin, EmailSendMixin
 from workshops.models import TrainingRequest, WorkshopRequest
-from workshops.util import LoginNotRequiredMixin, match_notification_email
+from workshops.utils.access import LoginNotRequiredMixin
+from workshops.utils.emails import match_notification_email
 
 # ------------------------------------------------------------
 # TrainingRequest views

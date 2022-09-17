@@ -34,8 +34,15 @@ from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
 from workshops import github_auth
-from workshops.consts import FEE_DETAILS_URL
-from workshops.fields import NullableGithubUsernameField
+from workshops.consts import (
+    FEE_DETAILS_URL,
+    STR_LONG,
+    STR_LONGEST,
+    STR_MED,
+    STR_REG_KEY,
+    STR_SHORT,
+)
+from workshops.fields import NullableGithubUsernameField, choice_field_with_other
 from workshops.mixins import (
     ActiveMixin,
     AssignmentMixin,
@@ -52,12 +59,8 @@ from workshops.mixins import (
     StateMixin,
 )
 from workshops.signals import person_archived_signal
-
-STR_SHORT = 10  # length of short strings
-STR_MED = 40  # length of medium strings
-STR_LONG = 100  # length of long strings
-STR_LONGEST = 255  # length of the longest strings
-STR_REG_KEY = 20  # length of Eventbrite registration key
+from workshops.utils.dates import human_daterange
+from workshops.utils.emails import find_emails
 
 # ------------------------------------------------------------
 
@@ -300,8 +303,6 @@ class Membership(models.Model):
     )
 
     def __str__(self):
-        from workshops.util import human_daterange
-
         dates = human_daterange(self.agreement_start, self.agreement_end)
         variant = self.variant.title()
 
@@ -1563,15 +1564,11 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
-        from workshops.util import find_emails
-
         emails = find_emails(self.contact)
         return emails
 
-    def human_readable_date(self, **kwargs):
+    def human_readable_date(self, **kwargs) -> str:
         """Render start and end dates as human-readable short date."""
-        from workshops.util import human_daterange
-
         date1 = self.start
         date2 = self.end
         return human_daterange(date1, date2, **kwargs)
@@ -1587,7 +1584,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         )
 
     def eligible_for_instructor_recruitment(self) -> bool:
-        return (
+        return bool(
             self.start
             and self.start >= datetime.date.today()
             and (
@@ -1923,9 +1920,6 @@ class TrainingRequest(
     SecondaryEmailMixin,
     models.Model,
 ):
-
-    from workshops.util import choice_field_with_other
-
     MANUAL_SCORE_UPLOAD_FIELDS = (
         "request_id",
         "score_manual",

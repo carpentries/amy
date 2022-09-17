@@ -23,7 +23,7 @@ from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
 
-from workshops.util import login_required
+from workshops.utils.access import login_required
 from workshops.views import logout_then_login_with_msg
 
 urlpatterns = [

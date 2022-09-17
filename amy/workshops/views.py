@@ -70,6 +70,7 @@ from workshops.base_views import (
     PrepopulationSupportMixin,
     RedirectSupportMixin,
 )
+from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.filters import (
     AirportFilter,
     BadgeAwardsFilter,
@@ -112,24 +113,22 @@ from workshops.models import (
     TrainingProgress,
 )
 from workshops.signals import create_comment_signal
-from workshops.util import (
-    InternalError,
-    OnlyForAdminsMixin,
-    WrongWorkshopURL,
-    add_comment,
-    admin_required,
-    create_uploaded_persons_tasks,
-    create_username,
-    failed_to_delete,
+from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from workshops.utils.comments import add_comment
+from workshops.utils.merge import merge_objects
+from workshops.utils.metadata import (
     fetch_workshop_metadata,
-    get_pagination_items,
-    login_required,
-    merge_objects,
     parse_workshop_metadata,
-    upload_person_task_csv,
     validate_workshop_metadata,
+)
+from workshops.utils.pagination import get_pagination_items
+from workshops.utils.person_upload import (
+    create_uploaded_persons_tasks,
+    upload_person_task_csv,
     verify_upload_person_task,
 )
+from workshops.utils.usernames import create_username
+from workshops.utils.views import failed_to_delete
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

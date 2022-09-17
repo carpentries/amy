@@ -6,7 +6,7 @@ from django.contrib.sessions.serializers import JSONSerializer
 from extrequests.tests.test_training_request import create_training_request
 from workshops.models import TrainingRequest
 from workshops.tests.base import TestBase
-from workshops.util import (
+from workshops.utils.trainingrequest_upload import (
     clean_upload_trainingrequest_manual_score,
     update_manual_score,
     upload_trainingrequest_manual_score_csv,

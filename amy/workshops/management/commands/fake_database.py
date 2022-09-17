@@ -46,7 +46,7 @@ from workshops.models import (
     TrainingRequirement,
     WorkshopRequest,
 )
-from workshops.util import create_username
+from workshops.utils.usernames import create_username
 
 
 def randbool(chances_of_true):

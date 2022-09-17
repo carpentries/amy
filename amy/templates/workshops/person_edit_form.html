@@ -3,6 +3,7 @@
 {% load crispy_forms_tags %}
 {% load links %}
 {% load dates %}
+{% load communityroles %}
 
 {% block content %}
 <nav class="col-12">
@@ -142,8 +143,8 @@
       <tr>
         <td>{{ role.config }}</td>
         <td>
-          {% if role.start or role.end %}
-          {% human_daterange role.start role.end %}
+          {% if role.start %}
+          {% community_role_human_dates role %}
           {% else %}
           &mdash;
           {% endif %}

@@ -16,6 +16,9 @@ from consents.models import Term
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Person, Task
+from workshops.utils.dates import human_daterange
+from workshops.utils.emails import match_notification_email
+from workshops.utils.reports import reports_link
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
@@ -277,8 +280,6 @@ class NewInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import human_daterange, match_notification_email
-
         # refresh related event
         event = objects["event"]
         task = objects["task"]
@@ -359,8 +360,6 @@ class NewSupportingInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import human_daterange, match_notification_email
-
         # refresh related event
         event = objects["event"]
         task = objects["task"]
@@ -492,12 +491,6 @@ class PostWorkshopAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import (
-            human_daterange,
-            match_notification_email,
-            reports_link,
-        )
-
         # refresh related event
         event = objects["event"]
         event.refresh_from_db()
@@ -627,8 +620,6 @@ class SelfOrganisedRequestAction(BaseAction):
             return False
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import human_daterange, match_notification_email
-
         # refresh related event and request
         event = objects["event"]
         event.refresh_from_db()
@@ -750,8 +741,6 @@ class InstructorsHostIntroductionAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import human_daterange, match_notification_email
-
         # refresh related event
         event = objects["event"]
         event.refresh_from_db()
@@ -904,8 +893,6 @@ class AskForWebsiteAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import human_daterange, match_notification_email
-
         # refresh related event
         event = objects["event"]
         event.refresh_from_db()
@@ -1038,8 +1025,6 @@ class RecruitHelpersAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import human_daterange, match_notification_email
-
         # refresh related event
         event = objects["event"]
         event.refresh_from_db()
@@ -1102,8 +1087,6 @@ class GenericAction(BaseAction):
             return ""
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import human_daterange, match_notification_email
-
         # prepare context
         context = dict()
 
@@ -1351,8 +1334,6 @@ class DeclinedInstructorsAction(BaseAction):
         return signup.state == "d" and signup.recruitment.status == "c"
 
     def get_additional_context(self, objects, *args, **kwargs) -> dict:
-        from workshops.util import human_daterange, match_notification_email
-
         # refresh related recruitment, event and person
         recruitment: InstructorRecruitment = objects["recruitment"]
         recruitment.refresh_from_db()

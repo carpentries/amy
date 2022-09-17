@@ -45,7 +45,7 @@ from workshops.models import (
     TrainingRequest,
     TrainingRequirement,
 )
-from workshops.util import admin_required, login_required
+from workshops.utils.access import admin_required, login_required
 
 # Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = ["may-contact", "public-profile", "may-publish-name"]

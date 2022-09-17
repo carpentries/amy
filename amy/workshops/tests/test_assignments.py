@@ -1,52 +1,43 @@
 from django.urls import reverse
 
-from workshops.models import Event, Person
+from workshops.models import Event, Organization, Person
 from workshops.tests.base import TestBase
 
 
 class TestAssignments(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
-        self._setUpEvents()
+        self.person = Person.objects.create_user(  # type: ignore
+            username="test_user", email="user@test", personal="User", family="Test"
+        )
+        self.event = Event.objects.create(
+            slug="event-for-assignment",
+            host=Organization.objects.first(),
+            assigned_to=None,
+        )
 
     def test_assign_user_to_event(self):
         """Check if `event_assign` correctly assigns selected user
-        to the event."""
-        event = Event.objects.first()
-        user = Person.objects.first()
-
-        assert event.assigned_to is None
-
-        self.client.get(reverse("event_assign", args=[event.slug, user.pk]))
-        event.refresh_from_db()
-        assert event.assigned_to == user
-
-    def test_assign_user_to_event_POST(self):
-        """Check if `event_assign` correctly assigns selected user
         to the event (use POST)."""
-        event = Event.objects.first()
-        user = Person.objects.first()
-
-        assert event.assigned_to is None
-
-        fake_user_pk = 0
+        assert self.event.assigned_to is None
 
         self.client.post(
-            reverse("event_assign", args=[event.slug, fake_user_pk]),
-            {"person": user.pk},
+            reverse("event_assign", args=[self.event.slug]),
+            {"person": self.person.pk},
         )
-        event.refresh_from_db()
-        assert event.assigned_to == user
+        self.event.refresh_from_db()
+        assert self.event.assigned_to == self.person
 
     def test_clear_assignment_from_event(self):
         """Check if `event_assign` correctly clears the assignment on selected
         event."""
-        event = Event.objects.first()
-        user = Person.objects.first()
-        event.assigned_to = user
-        event.save()
+        self.event.assigned_to = self.person
+        self.event.save()
 
-        assert event.assigned_to == user
-        self.client.get(reverse("event_assign", args=[event.slug]))
-        event.refresh_from_db()
-        assert event.assigned_to is None
+        assert self.event.assigned_to == self.person
+        self.client.post(
+            reverse("event_assign", args=[self.event.slug]),
+            {"person": ""},
+        )
+        self.event.refresh_from_db()
+        assert self.event.assigned_to is None

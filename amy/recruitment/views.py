@@ -39,7 +39,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
 )
 from workshops.models import Event, Person, Role, Task
-from workshops.util import OnlyForAdminsMixin
+from workshops.utils.access import OnlyForAdminsMixin
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
@@ -205,7 +205,7 @@ class InstructorRecruitmentCreate(
         context["title"] = f"Begin Instructor Selection Process for {self.event}"
         context["event"] = self.event
         context["event_dates"] = self.event.human_readable_date(
-            common_month_left=r"%B %d", range_char="-"
+            common_month_left=r"%B %d", separator="-"
         )
         context["priority"] = InstructorRecruitment.calculate_priority(self.event)
         return context

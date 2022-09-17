@@ -11,6 +11,8 @@ from django_select2.forms import Select2MultipleWidget as DS2_Select2MultipleWid
 from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
 from django_select2.forms import Select2Widget as DS2_Select2Widget
 
+from workshops.consts import STR_LONG, STR_MED
+
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(
     39,
     message="Maximum allowed username length is 39 characters.",
@@ -211,3 +213,26 @@ class HeavySelect2Widget(
     Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget
 ):
     pass
+
+
+def choice_field_with_other(choices, default, verbose_name=None, help_text=None):
+    assert default in [c[0] for c in choices]
+    assert all(c[0] != "" for c in choices)
+
+    field = models.CharField(
+        max_length=STR_MED,
+        choices=choices,
+        verbose_name=verbose_name,
+        help_text=help_text,
+        null=False,
+        blank=False,
+        default=default,
+    )
+    other_field = models.CharField(
+        max_length=STR_LONG,
+        verbose_name=" ",
+        null=False,
+        blank=True,
+        default="",
+    )
+    return field, other_field

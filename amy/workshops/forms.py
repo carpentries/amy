@@ -1057,7 +1057,7 @@ class PersonLookupForm(forms.Form):
 class AdminLookupForm(forms.Form):
     person = forms.ModelChoiceField(
         label="Administrator",
-        required=True,
+        required=False,
         queryset=Person.objects.all(),
         widget=ModelSelect2Widget(
             data_view="admin-lookup",

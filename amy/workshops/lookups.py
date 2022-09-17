@@ -16,7 +16,7 @@ from django_select2.views import AutoResponseView
 
 from fiscal.models import MembershipPersonRole
 from workshops import models
-from workshops.util import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
+from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 logger = logging.getLogger("amy.server_logs")
 

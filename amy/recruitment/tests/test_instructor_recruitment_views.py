@@ -273,7 +273,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
                 "title": "Begin Instructor Selection Process for test-event",
                 "event": event,
                 "event_dates": event.human_readable_date(
-                    common_month_left=r"%B %d", range_char="-"
+                    common_month_left=r"%B %d", separator="-"
                 ),
                 "view": view,
                 "model": InstructorRecruitment,

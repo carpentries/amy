@@ -21,7 +21,6 @@ urlpatterns = [
         path('accept_event/', views.WorkshopRequestAcceptEvent.as_view(), name='workshoprequest_accept_event'),
         path('edit/', views.WorkshopRequestChange.as_view(), name='workshoprequest_edit'),
         path('assign/', views.WorkshopRequestAssign.as_view(), name='workshoprequest_assign'),
-        path('assign/<int:person_id>/', views.WorkshopRequestAssign.as_view(), name='workshoprequest_assign'),
     ])),
 
     # workshop inquiries
@@ -32,7 +31,6 @@ urlpatterns = [
         path('accept_event/', views.WorkshopInquiryAcceptEvent.as_view(), name='workshopinquiry_accept_event'),
         path('edit/', views.WorkshopInquiryChange.as_view(), name='workshopinquiry_edit'),
         path('assign/', views.WorkshopInquiryAssign.as_view(), name='workshopinquiry_assign'),
-        path('assign/<int:person_id>/', views.WorkshopInquiryAssign.as_view(), name='workshopinquiry_assign'),
     ])),
 
     # self-organized submissions
@@ -43,6 +41,5 @@ urlpatterns = [
         path('accept_event/', views.SelfOrganisedSubmissionAcceptEvent.as_view(), name='selforganisedsubmission_accept_event'),
         path('edit/', views.SelfOrganisedSubmissionChange.as_view(), name='selforganisedsubmission_edit'),
         path('assign/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
-        path('assign/<int:person_id>/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
     ])),
 ]
