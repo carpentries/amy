@@ -4,7 +4,7 @@ from typing import Any, Optional, Union
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 
 from workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
@@ -147,10 +147,17 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 ValidationError("Required when Reason for inactivation selected.")
             )
 
-        try:
-            self.check_concurrent_role(config, person, start_date, end_date)
-        except ValidationError as exc:
-            errors["person"].append(exc)
+        # Person should not have any concurrent Community Roles of the same type in the
+        # same time.
+        if concurrent_roles := self.find_concurrent_roles(
+            config, person, start_date, end_date
+        ):
+            errors["person"].append(
+                ValidationError(
+                    f"Person {person} has concurrent community roles: "
+                    f"{list(concurrent_roles)}."
+                )
+            )
 
         if errors:
             raise ValidationError(errors)  # type: ignore
@@ -165,31 +172,25 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             raise ValidationError("Must not be earlier than start date.")
         return end
 
-    def check_concurrent_role(
-        self,
+    @staticmethod
+    def find_concurrent_roles(
         config: Optional[CommunityRoleConfig] = None,
         person: Optional[Person] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-    ) -> Optional[Person]:
-        """Person should not have any concurrent Community Roles of the same type in the
-        same time."""
+    ) -> Optional[QuerySet[CommunityRole]]:
+        """Lookup concurrent Community Roles."""
         # These are required fields in the form, so they should be present.
         if config and person and start_date:
             same_time = Q(end__gt=start_date) | Q(end__isnull=True)
             if end_date:
                 # if `end_date` is present, introduce additional condition
                 same_time &= Q(start__lt=end_date) | Q(start__isnull=True)
-            if roles := CommunityRole.objects.filter(
-                person=person, config=config
-            ).filter(same_time):
-                raise (
-                    ValidationError(
-                        f"Person {person} has concurrent community roles: "
-                        f"{list(roles)}."
-                    )
-                )
-        return person
+            roles = CommunityRole.objects.filter(person=person, config=config).filter(
+                same_time
+            )
+            return roles
+        return None
 
 
 class CommunityRoleUpdateForm(CommunityRoleForm):
@@ -210,12 +211,12 @@ class CommunityRoleUpdateForm(CommunityRoleForm):
             self.config.custom_key_labels
         )
 
-    def check_concurrent_role(
-        self,
+    @staticmethod
+    def find_concurrent_roles(
         config: Optional[CommunityRoleConfig] = None,
         person: Optional[Person] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-    ) -> Optional[Person]:
+    ) -> Optional[QuerySet[CommunityRole]]:
         """When updating a CommunityRole, we shouldn't check for concurrent roles."""
-        return person
+        return None
