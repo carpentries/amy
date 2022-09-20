@@ -3,6 +3,7 @@ from datetime import date
 from typing import Any, Optional, Union
 
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q, QuerySet
 
@@ -121,14 +122,11 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 ValidationError(f"URL is not supported for community role {config}")
             )
 
-        # Widget for `generic_relation_content_type` is disabled in HTML, which
-        # makes browsers not send it. The code below sets the default value to
-        # the same value as in related config.
-        generic_relation_content_type = config.generic_relation_content_type
-
         # Generic relation object must exist
-        if config.generic_relation_content_type and generic_relation_content_type:
-            model_class = generic_relation_content_type.model_class()
+        if config.generic_relation_content_type and cleaned_data.get(
+            "generic_relation_pk"
+        ):
+            model_class = config.generic_relation_content_type.model_class()
             try:
                 model_class._base_manager.get(
                     pk=cleaned_data.get("generic_relation_pk")
@@ -171,6 +169,17 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         if start and end and end < start:
             raise ValidationError("Must not be earlier than start date.")
         return end
+
+    def clean_generic_relation_content_type(self) -> Optional[ContentType]:
+        """Copy content type from the Community Role Configuration."""
+
+        # Widget for `generic_relation_content_type` is disabled in HTML, which
+        # makes browsers not send it. The code below sets the default value to
+        # the same value as in related config.
+        config: Optional[CommunityRoleConfig] = self.cleaned_data.get("config")
+        if config:
+            return config.generic_relation_content_type
+        return None
 
     @staticmethod
     def find_concurrent_roles(
