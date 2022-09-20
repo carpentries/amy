@@ -316,7 +316,7 @@ class TestCommunityRoleForm(TestBase):
             "membership": self.membership.pk,
             "url": "https://example.org",  # should be empty
             "generic_relation_content_type": ct.pk,
-            "generic_relation_pk": None,
+            "generic_relation_pk": 102390128371902,
         }
 
         # Act
