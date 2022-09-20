@@ -130,7 +130,8 @@ from workshops.utils.person_upload import (
 from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy.server_logs")
+logger_signals = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 
@@ -1106,7 +1107,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
             )
             ActionManageMixin.add(
                 action_class=PostWorkshopAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1121,7 +1122,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1190,7 +1191,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.add(
                 action_class=PostWorkshopAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1205,7 +1206,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.remove(
                 action_class=PostWorkshopAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1220,7 +1221,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1235,7 +1236,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.remove(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1248,7 +1249,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1261,7 +1262,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             jobs = self.object.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1274,7 +1275,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1287,7 +1288,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1309,7 +1310,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         )
         ActionManageMixin.remove(
             action_class=PostWorkshopAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1322,7 +1323,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         )
         ActionManageMixin.remove(
             action_class=InstructorsHostIntroductionAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1335,7 +1336,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         jobs = self.object.rq_jobs.filter(trigger__action="ask-for-website")
         ActionManageMixin.remove(
             action_class=AskForWebsiteAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1346,7 +1347,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
         ActionManageMixin.remove(
             action_class=RecruitHelpersAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1750,12 +1751,13 @@ class TaskCreate(
 
         # save the object
         res = super().form_valid(form)
+        self.object: Task  # created and saved to DB by super().form_valid()
 
         # check conditions for running a NewInstructorAction
         if NewInstructorAction.check(self.object):
             ActionManageMixin.add(
                 action_class=NewInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(active=True, action="new-instructor"),
                 context_objects=dict(task=self.object, event=self.object.event),
@@ -1767,7 +1769,7 @@ class TaskCreate(
         if NewSupportingInstructorAction.check(self.object):
             ActionManageMixin.add(
                 action_class=NewSupportingInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
                     active=True, action="new-supporting-instructor"
@@ -1786,7 +1788,7 @@ class TaskCreate(
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1799,7 +1801,7 @@ class TaskCreate(
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1812,7 +1814,7 @@ class TaskCreate(
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1826,7 +1828,7 @@ class TaskCreate(
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1897,7 +1899,7 @@ class TaskUpdate(
             triggers = Trigger.objects.filter(active=True, action="new-instructor")
             ActionManageMixin.add(
                 action_class=NewInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(task=self.object, event=self.object.event),
@@ -1910,7 +1912,7 @@ class TaskUpdate(
             jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
             ActionManageMixin.remove(
                 action_class=NewInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1925,7 +1927,7 @@ class TaskUpdate(
             )
             ActionManageMixin.add(
                 action_class=NewSupportingInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(task=self.object, event=self.object.event),
@@ -1940,7 +1942,7 @@ class TaskUpdate(
             )
             ActionManageMixin.remove(
                 action_class=NewSupportingInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1955,7 +1957,7 @@ class TaskUpdate(
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1970,7 +1972,7 @@ class TaskUpdate(
             )
             ActionManageMixin.remove(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1983,7 +1985,7 @@ class TaskUpdate(
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1996,7 +1998,7 @@ class TaskUpdate(
             jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2009,7 +2011,7 @@ class TaskUpdate(
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -2022,7 +2024,7 @@ class TaskUpdate(
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2048,7 +2050,7 @@ class TaskDelete(
         jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
         ActionManageMixin.remove(
             action_class=NewInstructorAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -2059,7 +2061,7 @@ class TaskDelete(
         jobs = self.object.rq_jobs.filter(trigger__action="new-supporting-instructor")
         ActionManageMixin.remove(
             action_class=NewSupportingInstructorAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -2087,7 +2089,7 @@ class TaskDelete(
             )
             ActionManageMixin.remove(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2100,7 +2102,7 @@ class TaskDelete(
             jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2113,7 +2115,7 @@ class TaskDelete(
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.event),
@@ -2126,7 +2128,7 @@ class TaskDelete(
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
