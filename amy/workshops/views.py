@@ -34,7 +34,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.forms import HiddenInput
+from django.forms import BaseForm, HiddenInput
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -55,7 +55,7 @@ from autoemails.actions import (
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from communityroles.forms import CommunityRoleForm
-from communityroles.models import CommunityRole
+from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent
 from dashboard.forms import AssignmentForm
@@ -2171,6 +2171,46 @@ class MockAwardCreate(
 
     def get_success_url(self):
         return reverse("badge_details", args=[self.object.badge.name])
+
+    def form_valid(self, form: BaseForm) -> HttpResponse:
+        result = super().form_valid(form)
+        self.object: Award  # created and saved to DB by super().form_valid()
+
+        # Check for CommunityRoles that should automatically be created.
+        badge = self.object.badge
+        person = self.object.person
+        community_role_configs = CommunityRoleConfig.objects.filter(
+            award_badge_limit=badge,
+            autoassign_when_award_created=True,
+        )
+        if community_role_configs:
+            start_date = datetime.date.today()
+            roles = [
+                CommunityRole(
+                    config=config,
+                    person=person,
+                    award=self.object,
+                    start=start_date,
+                    end=None,
+                    inactivation=None,
+                    membership=None,
+                    url="",
+                )
+                for config in community_role_configs
+                if not CommunityRoleForm.find_concurrent_roles(
+                    config, person, start_date
+                )
+            ]
+            logger.debug(
+                f"Automatically creating community roles set up for badge {badge}"
+            )
+            roles_result = CommunityRole.objects.bulk_create(roles)
+            logger.debug(
+                f"Created {len(roles_result)} Community Roles for badge {badge} and "
+                f"person {person}"
+            )
+
+        return result
 
 
 class AwardCreate(RedirectSupportMixin, MockAwardCreate):
