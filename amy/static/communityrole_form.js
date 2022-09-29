@@ -58,6 +58,7 @@ jQuery(function () {
     award_badge = data.award_badge_limit;
     $("#id_communityrole-membership").prop("required", data.link_to_membership);
     $("#id_communityrole-url").prop("disabled", !data.additional_url);
+    $("#id_communityrole-url").prop("required", data.additional_url);
     if (!data.additional_url) {
       $("#id_communityrole-url").val("");
     }

@@ -85,6 +85,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         )
         start_date: Optional[date] = cleaned_data.get("start")
         end_date: Optional[date] = cleaned_data.get("end")
+        url: Optional[str] = cleaned_data.get("url")
 
         # Config is required, but field validation for 'config' should raise
         # validation error first.
@@ -116,10 +117,10 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 ValidationError(f"Membership is required with community role {config}")
             )
 
-        # Additional URL supported?
-        if not config.additional_url and cleaned_data.get("url"):
+        # Additional URL supported and required?
+        if config.additional_url and not url:
             errors["url"].append(
-                ValidationError(f"URL is not supported for community role {config}")
+                ValidationError(f"URL is required for community role {config}")
             )
 
         # Generic relation object must exist
@@ -148,7 +149,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         # Person should not have any concurrent Community Roles of the same type in the
         # same time.
         if concurrent_roles := self.find_concurrent_roles(
-            config, person, start_date, end_date
+            config, person, start_date, end_date, url
         ):
             errors["person"].append(
                 ValidationError(
@@ -187,16 +188,23 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         person: Optional[Person] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        url: Optional[str] = None,
     ) -> Optional[QuerySet[CommunityRole]]:
         """Lookup concurrent Community Roles."""
         # These are required fields in the form, so they should be present.
         if config and person and start_date:
-            same_time = Q(end__gt=start_date) | Q(end__isnull=True)
+            initial_conditions = Q(end__gt=start_date) | Q(end__isnull=True)
+
+            # if `end_date` is present, introduce additional condition
             if end_date:
-                # if `end_date` is present, introduce additional condition
-                same_time &= Q(start__lt=end_date) | Q(start__isnull=True)
-            roles = CommunityRole.objects.filter(person=person, config=config).filter(
-                same_time
+                initial_conditions &= Q(start__lt=end_date) | Q(start__isnull=True)
+
+            # if configuration requires URL, add URL to conditions
+            if config.additional_url:
+                initial_conditions &= Q(url=url)
+
+            roles = CommunityRole.objects.filter(
+                initial_conditions, person=person, config=config
             )
             return roles
         return None
@@ -226,6 +234,7 @@ class CommunityRoleUpdateForm(CommunityRoleForm):
         person: Optional[Person] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        url: Optional[str] = None,
     ) -> Optional[QuerySet[CommunityRole]]:
         """When updating a CommunityRole, we shouldn't check for concurrent roles."""
         return None
