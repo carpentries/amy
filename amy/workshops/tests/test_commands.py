@@ -98,7 +98,7 @@ class TestInstructorsActivityCommand(TestBase):
         # include people who don't want to be contacted (other option is tested
         # in `self.test_fetching_activity_may_contact_only`)
         results = self.cmd.fetch_activity(may_contact_only=False)
-        instructor_badges = Badge.objects.instructor_badges()
+        instructor_badges = Badge.objects.instructor_badges()  # type: ignore
 
         persons = [d["person"] for d in results]
         lessons = [list(d["lessons"]) for d in results]
@@ -155,7 +155,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.fake_cmd = FakeDatabaseCommand()
         self.seed = 12345
         Faker.seed(self.seed)
-        self.fake_cmd.stdout = StringIO()
+        self.fake_cmd.stdout = StringIO()  # type: ignore
 
         self.fake_cmd.fake_organizations()
 
@@ -481,6 +481,35 @@ class TestMigrateToSingleInstructorBadge(TestCase):
         # Assert
         self.assertEqual(earliest_award, award)
 
+    def test_remove_awards_for_old_instructor_badges(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        Award.objects.create(person=person1, badge=self.swc_instructor)
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        Award.objects.create(person=person2, badge=self.swc_instructor)
+        Award.objects.create(person=person2, badge=self.dc_instructor)
+        person3 = Person.objects.create(
+            username="test3", personal="Test3", family="User", email="test3@example.org"
+        )
+        Award.objects.create(person=person3, badge=self.swc_instructor)
+        Award.objects.create(person=person3, badge=self.dc_instructor)
+        Award.objects.create(person=person3, badge=self.lc_instructor)
+        instructor_award = Award.objects.create(
+            person=person3, badge=self.instructor_badge
+        )
+
+        # Act
+        self.command.remove_awards_for_old_instructor_badges()
+
+        # Assert
+        self.assertEqual(list(Award.objects.filter(person=person1)), [])
+        self.assertEqual(list(Award.objects.filter(person=person2)), [])
+        self.assertEqual(list(Award.objects.filter(person=person3)), [instructor_award])
+
     def test_create_instructor_award(self) -> None:
         # Arrange
         person = Person.objects.create(
@@ -563,7 +592,7 @@ class TestMigrateToSingleInstructorBadge(TestCase):
         self.command.handle(no_output=True)
 
         # Assert
-        for db, exp in zip(list(Award.objects.order_by("-pk")[:3]), expected):
+        for db, exp in zip(list(Award.objects.order_by("-pk")), expected):
             # Can't compare db == exp, since exp isn't from database and
             # doesn't contain a PK.
             self.assertEqual(db.person, exp.person)

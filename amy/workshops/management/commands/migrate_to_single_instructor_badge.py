@@ -5,25 +5,33 @@ from workshops.models import Award, Badge, Person
 
 
 class Command(BaseCommand):
+    OLD_INSTRUCTOR_BADGE_NAMES = (
+        "swc-instructor",
+        "dc-instructor",
+        "lc-instructor",
+    )
+    NEW_INSTRUCTOR_BADGE_NAME = "instructor"
+
     def __init__(self) -> None:
         super().__init__()
-        self.instructor_badge = Badge.objects.get(name="instructor")
+        self.instructor_badge = Badge.objects.get(name=self.NEW_INSTRUCTOR_BADGE_NAME)
 
     def find_instructors(self) -> QuerySet[Person]:
         return (
             Person.objects.filter(
-                award__badge__name__in=[
-                    "swc-instructor",
-                    "dc-instructor",
-                    "lc-instructor",
-                ]
+                award__badge__name__in=self.OLD_INSTRUCTOR_BADGE_NAMES,
             )
-            .exclude(award__badge__name="instructor")
+            .exclude(award__badge__name=self.NEW_INSTRUCTOR_BADGE_NAME)
             .distinct()
         )
 
     def earliest_award(self, person: Person) -> Award:
-        return person.award_set.order_by("awarded").first()
+        return person.award_set.order_by("awarded").first()  # type: ignore
+
+    def remove_awards_for_old_instructor_badges(self) -> None:
+        Award.objects.filter(
+            badge__name__in=self.OLD_INSTRUCTOR_BADGE_NAMES,
+        ).exclude(badge__name=self.NEW_INSTRUCTOR_BADGE_NAME).delete()
 
     def create_instructor_award(self, person: Person) -> Award:
         earliest_award = self.earliest_award(person)
@@ -57,4 +65,8 @@ class Command(BaseCommand):
         self.log(no_output, f"Bulk-creating {len(new_awards)} new Instructor awards...")
 
         Award.objects.bulk_create(new_awards)
+        self.log(no_output, "Done.")
+
+        self.log(no_output, "Removing old instructor awards...")
+        self.remove_awards_for_old_instructor_badges()
         self.log(no_output, "Done.")
