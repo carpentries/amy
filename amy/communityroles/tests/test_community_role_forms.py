@@ -399,6 +399,62 @@ class TestCommunityRoleForm(TestBase):
             form.errors["end"], ["Required when Reason for inactivation selected."]
         )
 
+    def test_find_concurrent_roles(self) -> None:
+        # Arrange
+        config1 = CommunityRoleConfig.objects.create(
+            name="test1",
+            display_name="Test1",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        config2 = CommunityRoleConfig.objects.create(
+            name="test2",
+            display_name="Test2",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=True,
+        )
+        role1 = CommunityRole.objects.create(
+            person=self.hermione,
+            config=config1,
+            start=date(2022, 9, 29),
+            end=date(2023, 9, 29),
+        )
+        role2 = CommunityRole.objects.create(
+            person=self.hermione,
+            config=config2,
+            start=date(2022, 9, 29),
+            end=date(2023, 9, 29),
+            url="https://example.org/",
+        )
+        # Act
+        roles1 = CommunityRoleForm.find_concurrent_roles(
+            config1, self.hermione, date(2022, 1, 1), date(2022, 1, 31)
+        )
+        roles2 = CommunityRoleForm.find_concurrent_roles(
+            config1, self.hermione, date(2022, 10, 1), date(2022, 10, 31)
+        )
+        roles3 = CommunityRoleForm.find_concurrent_roles(
+            config2, self.hermione, date(2022, 10, 1), date(2022, 10, 31), url=None
+        )
+        roles4 = CommunityRoleForm.find_concurrent_roles(
+            config2, self.hermione, date(2022, 10, 1), date(2022, 10, 31), url=""
+        )
+        roles5 = CommunityRoleForm.find_concurrent_roles(
+            config2,
+            self.hermione,
+            date(2022, 10, 1),
+            date(2022, 10, 31),
+            url="https://example.org/",
+        )
+        # Assert
+        self.assertEqual(list(roles1), [])  # type: ignore
+        self.assertEqual(list(roles2), [role1])  # type: ignore
+        self.assertEqual(list(roles3), [])  # type: ignore
+        self.assertEqual(list(roles4), [])  # type: ignore
+        self.assertEqual(list(roles5), [role2])  # type: ignore
+
     def test_concurrent_community_roles_disallowed__validation_errors(self) -> None:
         """"""
         # Arrange
@@ -630,7 +686,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             "end": "",
             "inactivation": None,
             "membership": "",
-            "url": "",
+            "url": "https://example.org/",
             "generic_relation_content_type": "",
             "generic_relation_pk": "",
         }
@@ -665,7 +721,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             "end": "",
             "inactivation": None,
             "membership": "",
-            "url": "",
+            "url": "https://example.org/",
             "generic_relation_content_type": "",
             "generic_relation_pk": "",
             "custom_keys": ["", "another value"],
