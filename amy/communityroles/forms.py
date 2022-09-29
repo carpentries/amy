@@ -116,10 +116,10 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
                 ValidationError(f"Membership is required with community role {config}")
             )
 
-        # Additional URL supported?
-        if not config.additional_url and cleaned_data.get("url"):
+        # Additional URL supported and required?
+        if config.additional_url and not cleaned_data.get("url"):
             errors["url"].append(
-                ValidationError(f"URL is not supported for community role {config}")
+                ValidationError(f"URL is required for community role {config}")
             )
 
         # Generic relation object must exist

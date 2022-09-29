@@ -259,7 +259,42 @@ class TestCommunityRoleForm(TestBase):
                 self.assertEqual(form.cleaned_data.get("end"), p2)
                 self.assertNotIn("end", form.errors.keys())
 
-    def test_additional_url_supported(self):
+    def test_additional_url_required(self):
+        # Arrange
+        test_config = CommunityRoleConfig.objects.create(
+            name="test",
+            display_name="Test",
+            link_to_award=True,
+            award_badge_limit=None,
+            link_to_membership=True,
+            additional_url=True,
+            generic_relation_content_type=None,
+        )
+        data = {
+            "config": test_config.pk,
+            "person": self.hermione.pk,
+            "award": self.award.pk,
+            "start": "2021-11-14",
+            "end": "2022-11-14",
+            "inactivation": None,
+            "membership": self.membership.pk,
+            "url": "",  # shouldn't be empty
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
+        }
+
+        # Act
+        form = CommunityRoleForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())  # errors expected
+        self.assertEqual(form.errors.keys(), {"url"})
+        self.assertEqual(
+            form.errors["url"],
+            ["URL is required for community role Test"],
+        )
+
+    def test_additional_url_not_required(self):
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -278,7 +313,7 @@ class TestCommunityRoleForm(TestBase):
             "end": "2022-11-14",
             "inactivation": None,
             "membership": self.membership.pk,
-            "url": "https://example.org",  # should be empty
+            "url": "",  # it's okay
             "generic_relation_content_type": None,
             "generic_relation_pk": None,
         }
@@ -287,12 +322,8 @@ class TestCommunityRoleForm(TestBase):
         form = CommunityRoleForm(data)
 
         # Assert
-        self.assertFalse(form.is_valid())  # errors expected
-        self.assertEqual(form.errors.keys(), {"url"})
-        self.assertEqual(
-            form.errors["url"],
-            ["URL is not supported for community role Test"],
-        )
+        self.assertTrue(form.is_valid())  # errors not expected
+        self.assertEqual(form.errors.keys(), set())
 
     def test_generic_relation_object_doesnt_exist(self):
         # Arrange
