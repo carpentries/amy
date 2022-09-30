@@ -26,7 +26,13 @@ class Command(BaseCommand):
         )
 
     def earliest_award(self, person: Person) -> Award:
-        return person.award_set.order_by("awarded").first()  # type: ignore
+        return (
+            person.award_set.filter(  # type: ignore
+                badge__name__in=self.OLD_INSTRUCTOR_BADGE_NAMES,
+            )
+            .order_by("awarded")
+            .first()
+        )
 
     def remove_awards_for_old_instructor_badges(self) -> None:
         Award.objects.filter(
