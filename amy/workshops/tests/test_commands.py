@@ -17,6 +17,9 @@ from workshops.exceptions import WrongWorkshopURL
 from workshops.management.commands.assign_instructor_community_role import (
     Command as AssignInstructorCommunityRole,
 )
+from workshops.management.commands.assign_trainer_community_role import (
+    Command as AssignTrainerCommunityRole,
+)
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
@@ -27,6 +30,9 @@ from workshops.management.commands.check_for_workshop_websites_updates import (
 from workshops.management.commands.fake_database import Command as FakeDatabaseCommand
 from workshops.management.commands.instructors_activity import (
     Command as InstructorsActivityCommand,
+)
+from workshops.management.commands.migrate_inactive_trainers_to_trainer_badges import (
+    Command as MigrateInactiveTrainersToTrainerBadges,
 )
 from workshops.management.commands.migrate_to_single_instructor_badge import (
     Command as MigrateToSingleInstructorBadge,
@@ -468,10 +474,10 @@ class TestMigrateToSingleInstructorBadge(TestCase):
         Award.objects.create(
             person=person, badge=self.dc_instructor, awarded=date(2021, 1, 1)
         )
-        Award.objects.create(
+        award = Award.objects.create(
             person=person, badge=self.lc_instructor, awarded=date(2020, 1, 1)
         )
-        award = Award.objects.create(
+        Award.objects.create(
             person=person, badge=self.instructor_badge, awarded=date(1999, 1, 1)
         )
 
@@ -759,5 +765,233 @@ class TestAssignInstructorCommunityRole(TestCase):
             self.assertEqual(db.config, exp.config)
             self.assertEqual(db.person, exp.person)
             self.assertEqual(db.award, exp.award)
-            self.assertEqual(db.start, exp.award.awarded)
+            self.assertEqual(db.start, exp.award.awarded)  # type: ignore
             self.assertEqual(db.end, None)
+
+
+class TestAssignTrainerCommunityRole(TestCase):
+    def setUp(self) -> None:
+        self.trainer_badge = Badge.objects.get(name="trainer")
+        self.trainer_community_role_config = CommunityRoleConfig.objects.create(
+            name="trainer",
+            link_to_award=True,
+            award_badge_limit=self.trainer_badge,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        self.command = AssignTrainerCommunityRole()
+
+    def test___init__(self) -> None:
+        # Assert
+        self.assertEqual(self.command.trainer_badge, self.trainer_badge)
+        self.assertEqual(
+            self.command.community_role_config,
+            self.trainer_community_role_config,
+        )
+
+    def test_find_trainer_awards(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        Award.objects.create(person=person1, badge=self.trainer_badge)
+        Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+
+        # Act
+        trainer_awards = self.command.find_trainer_awards()
+
+        # Assert
+        self.assertEqual(len(trainer_awards), 1)
+        self.assertEqual(trainer_awards[0].person, person1)
+
+    def test_exclude_trainer_community_roles(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        award1 = Award.objects.create(person=person1, badge=self.trainer_badge)
+        CommunityRole.objects.create(
+            config=self.trainer_community_role_config,
+            person=person1,
+            award=award1,
+            start=date.today(),
+            end=None,
+        )
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        Award.objects.create(person=person2, badge=self.trainer_badge)
+
+        # Act
+        trainer_awards = self.command.exclude_trainer_community_roles(
+            self.command.find_trainer_awards()
+        )
+
+        # Assert
+        self.assertEqual(len(trainer_awards), 1)
+        self.assertEqual(trainer_awards[0].person, person2)
+
+    def test_create_trainer_community_role(self) -> None:
+        # Arrange
+        person = Person.objects.create(
+            username="test", personal="Test", family="User", email="test@example.org"
+        )
+        award = Award.objects.create(
+            person=person, badge=self.trainer_badge, awarded=date(2022, 1, 1)
+        )
+
+        # Act
+        trainer_community_role = self.command.create_trainer_community_role(award)
+
+        # Assert
+        self.assertEqual(
+            trainer_community_role.config, self.trainer_community_role_config
+        )
+        self.assertEqual(trainer_community_role.person, person)
+        self.assertEqual(trainer_community_role.award, award)
+        self.assertEqual(trainer_community_role.start, award.awarded)
+        self.assertEqual(trainer_community_role.end, None)
+
+    def test_handle(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        award1 = Award.objects.create(
+            person=person1, badge=self.trainer_badge, awarded=date(2022, 1, 1)
+        )
+        CommunityRole.objects.create(
+            config=self.trainer_community_role_config,
+            person=person1,
+            award=award1,
+            start=date.today(),
+            end=None,
+        )
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        award2 = Award.objects.create(
+            person=person2, badge=self.trainer_badge, awarded=date(2021, 1, 1)
+        )
+        expected = CommunityRole(
+            config=self.trainer_community_role_config,
+            person=person2,
+            award=award2,
+            start=date(2021, 1, 1),
+            end=None,
+        )
+
+        # Act
+        self.command.handle(no_output=True)
+
+        # Assert
+        self.assertEqual(CommunityRole.objects.count(), 2)  # only 1 created
+        records = list(CommunityRole.objects.all())
+        self.assertEqual(records[-1].config, expected.config)
+        self.assertEqual(records[-1].person, expected.person)
+        self.assertEqual(records[-1].award, expected.award)
+        self.assertEqual(records[-1].start, expected.start)
+        self.assertEqual(records[-1].end, None)
+
+
+class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
+    def setUp(self) -> None:
+        self.trainer_badge = Badge.objects.get(name="trainer")
+        self.trainer_inactive_badge, _ = Badge.objects.get_or_create(
+            name="trainer-inactive"
+        )
+        self.trainer_community_role_config = CommunityRoleConfig.objects.create(
+            name="trainer",
+            link_to_award=True,
+            award_badge_limit=self.trainer_badge,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        self.command = MigrateInactiveTrainersToTrainerBadges()
+
+    def test__init__(self) -> None:
+        # Assert
+        self.assertEqual(self.command.trainer_badge, self.trainer_badge)
+        self.assertEqual(
+            self.command.trainer_inactive_badge, self.trainer_inactive_badge
+        )
+        self.assertEqual(
+            self.command.community_role_config,
+            self.trainer_community_role_config,
+        )
+
+    def test_find_people_with_trainer_community_role(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        award1 = Award.objects.create(person=person1, badge=self.trainer_badge)
+        CommunityRole.objects.create(
+            config=self.trainer_community_role_config,
+            person=person1,
+            award=award1,
+            start=date.today(),
+            end=None,
+        )
+        Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+
+        # Act
+        people_with_trainer_community_roles = (
+            self.command.find_people_with_trainer_community_role()
+        )
+
+        # Assert
+        self.assertEqual(list(people_with_trainer_community_roles), [person1])
+
+    def test_find_trainer_inactive_awards(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        Award.objects.create(person=person1, badge=self.trainer_badge)
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        award2 = Award.objects.create(person=person2, badge=self.trainer_inactive_badge)
+
+        # Act
+        trainer_inactive_awards = self.command.find_trainer_inactive_awards()
+
+        # Assert
+        self.assertEqual(list(trainer_inactive_awards), [award2])
+
+    def test_handle(self) -> None:
+        # Arrange
+        person1 = Person.objects.create(
+            username="test1", personal="Test1", family="User", email="test1@example.org"
+        )
+        award1 = Award.objects.create(
+            person=person1, badge=self.trainer_badge, awarded=date(2022, 1, 1)
+        )
+        CommunityRole.objects.create(
+            config=self.trainer_community_role_config,
+            person=person1,
+            award=award1,
+            start=date.today(),
+            end=None,
+        )
+        person2 = Person.objects.create(
+            username="test2", personal="Test2", family="User", email="test2@example.org"
+        )
+        award2 = Award.objects.create(
+            person=person2, badge=self.trainer_inactive_badge, awarded=date(2021, 1, 1)
+        )
+
+        # Act
+        self.command.handle(no_output=True)
+
+        # Assert
+        award1.refresh_from_db()
+        award2.refresh_from_db()
+        self.assertEqual(award2.badge, self.trainer_badge)  # Changed
+        self.assertEqual(award2.awarded, date(2021, 1, 1))
+        self.assertEqual(award1.badge, self.trainer_badge)  # Not changed
