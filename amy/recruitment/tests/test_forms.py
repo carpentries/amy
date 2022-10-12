@@ -11,6 +11,7 @@ from recruitment.forms import (
     InstructorRecruitmentChangeStateForm,
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
+    InstructorRecruitmentSignupUpdateForm,
 )
 from workshops.models import Person
 
@@ -129,6 +130,25 @@ class TestInstructorRecruitmentChangeStateForm(TestCase):
         data = {"action": "close"}
         # Act
         form = InstructorRecruitmentChangeStateForm(data)
+        # Assert
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.errors.keys(), set())
+
+
+class TestInstructorRecruitmentSignupUpdateForm(TestCase):
+    def test_empty_payload(self) -> None:
+        # Arrange
+        data = {}
+        # Act
+        form = InstructorRecruitmentSignupUpdateForm(data)
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean_success(self) -> None:
+        # Arrange
+        data = {"notes": "test"}
+        # Act
+        form = InstructorRecruitmentSignupUpdateForm(data)
         # Assert
         self.assertTrue(form.is_valid())
         self.assertEqual(form.errors.keys(), set())

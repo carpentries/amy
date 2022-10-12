@@ -1304,3 +1304,35 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
         self.assertEqual(self.recruitment.status, "o")
+
+
+class TestInstructorRecruitmentSignupUpdateView(TestBase):
+    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    def test_integration(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+        )
+        recruitment = InstructorRecruitment.objects.create(
+            event=event, notes="Test notes"
+        )
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person, notes="Admin notes to be changed"
+        )
+        data = {"notes": "New admin notes"}
+        url = reverse("instructorrecruitmentsignup_edit", args=[signup.pk])
+        success_url = reverse("all_instructorrecruitment")
+        # Act
+        response = self.client.post(url, data, follow=False)
+        signup.refresh_from_db()
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, success_url)
+        self.assertEqual(signup.notes, "New admin notes")

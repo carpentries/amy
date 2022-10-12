@@ -44,6 +44,11 @@ urlpatterns = [
                     views.InstructorRecruitmentSignupChangeState.as_view(),
                     name="instructorrecruitmentsignup_changestate",
                 ),
+                path(
+                    "edit",
+                    views.InstructorRecruitmentSignupUpdate.as_view(),
+                    name="instructorrecruitmentsignup_edit",
+                ),
             ]
         ),
     ),

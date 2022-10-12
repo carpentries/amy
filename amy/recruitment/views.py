@@ -30,11 +30,13 @@ from recruitment.forms import (
     InstructorRecruitmentChangeStateForm,
     InstructorRecruitmentCreateForm,
     InstructorRecruitmentSignupChangeStateForm,
+    InstructorRecruitmentSignupUpdateForm,
 )
 from workshops.base_views import (
     AMYCreateView,
     AMYDetailView,
     AMYListView,
+    AMYUpdateView,
     ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
@@ -600,3 +602,19 @@ class InstructorRecruitmentChangeState(
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
+
+
+class InstructorRecruitmentSignupUpdate(
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    RedirectSupportMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    AMYUpdateView,
+):
+    permission_required = "recruitment.change_instructorrecruitmentsignup"
+    form_class = InstructorRecruitmentSignupUpdateForm
+    model = InstructorRecruitmentSignup
+
+    def get_success_url(self):
+        return reverse("all_instructorrecruitment")

@@ -39,8 +39,8 @@
         </span>
       </td>
       <td>{% include "includes/country_flag.html" with country=signup.person.country %}</td>
-      <td class="notes-content">{{ signup.user_notes }}</td>
-      <td>{{ signup.notes }}</td>
+      <td class="display-white-space">{{ signup.user_notes }}</td>
+      <td class="display-white-space">{{ signup.notes }}</td>
       <td>
         {% comment %}
         Find person, their tasks, and figure out if task's event dates conflict with
@@ -84,6 +84,7 @@
           <button type="submit" class="btn btn-sm btn-secondary">Decline</button>
           {% endif %}
         </form>
+        <a href="{% url 'instructorrecruitmentsignup_edit' signup.pk %}" class="btn btn-sm btn-primary">Edit</a>
       </td>
     </tr>
     {% empty %}

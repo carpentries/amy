@@ -202,6 +202,9 @@ select[readonly].select2-hidden-accessible + .select2-container
     margin-bottom: 1rem;
     border-width: 2px !important;
 }
+.display-white-space {
+    white-space: pre-line;
+}
 
 /* RELATIVE TIME */
 relative-time {
