@@ -155,3 +155,9 @@ class InstructorRecruitmentSignup(
     )
     user_notes = models.TextField(default="", null=False, blank=True)
     notes = models.TextField(default="", null=False, blank=True)  # admin notes
+
+    def __str__(self) -> str:
+        return (
+            f"Instructor Signup applicant {self.person.full_name} "
+            f"for {self.recruitment.event}"
+        )

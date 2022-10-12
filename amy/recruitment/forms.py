@@ -42,6 +42,14 @@ class InstructorRecruitmentAddSignupForm(forms.ModelForm):
             )
 
 
+class InstructorRecruitmentSignupUpdateForm(forms.ModelForm):
+    helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = InstructorRecruitmentSignup
+        fields = ("notes",)
+
+
 class InstructorRecruitmentSignupChangeStateForm(forms.Form):
     ALLOWED_ACTIONS = (
         ("confirm", "Confirm"),
