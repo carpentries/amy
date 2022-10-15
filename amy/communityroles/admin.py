@@ -1,14 +1,16 @@
 from django.contrib import admin
+from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 
 from .models import CommunityRoleConfig, CommunityRoleInactivation
 
 
-class CommunityRoleConfigAdmin(admin.ModelAdmin):
+class CommunityRoleConfigAdmin(DynamicArrayMixin, admin.ModelAdmin):
     list_display = (
         "display_name",
         "name",
         "link_to_award",
         "award_badge_limit",
+        "autoassign_when_award_created",
         "link_to_membership",
         "additional_url",
         "generic_relation_content_type",

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block navbar %}
-  {% include 'navigation_trainee.html' %}
+  {% include 'navigation_instructor_dashboard.html' %}
 {% endblock %}
 
 {% load crispy_forms_tags %}
@@ -8,7 +8,7 @@
 {% block content %}
 
 {% if swc_form.errors or dc_form.errors %}
-  <div class="alert alert-danger" role="alert">Fix errors in your homework submission.</div>
+  <div class="alert alert-danger" role="alert">Fix errors in your Lesson Contribution submission.</div>
 {% endif %}
 
 <div>
@@ -25,137 +25,88 @@
   </div>
   {% endif %}
 
-  <div class="alert alert-warning" role="alert">Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge (DC, LC, and/or SWC) is correctly displayed, you are in good standing.</div>
+  <div class="alert alert-warning" role="alert">Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge is correctly displayed, you are in good standing.</div>
 
   <table class="table table-striped">
     <tr>
       <th>1. Training</th>
-      <td colspan="2">
+      <td>
         {% if user.passed_training %}
-          <p><span class="label label-success">Training passed.</span></p>
+          <p class="text-success">Training passed.</p>
         {% else %}
-          <p><span class="label label-default">Training not passed yet.</span></p>
+          <p>Training not passed yet.</p>
         {% endif %}
       </td>
     </tr>
     <tr>
-      <th rowspan="5">2. Homework</th>
-      <th>Carpentry lesson program</th>
-      <th>Status</th>
+      <th rowspan="2">2. Lesson Contribution</th>
+      <td>
+        {% if user.passed_lesson_contribution %}
+        <p class="text-success">Lesson Contribution accepted.</p>
+        {% elif lesson_contribution_in_evaluation %}
+        <p>Lesson Contribution evaluation pending.<br>Please wait while we evaluate your contribution.</p>
+        {% else %}
+        <p>Lesson Contribution not submitted.</p>
+        {% endif %}
+      </td>
     </tr>
-    {% if user.passed_swc_homework %}
-    <tr class="table-success">
-      <td><b>SWC</b></td>
-      <td>SWC Homework accepted.</td>
-    </tr>
-    {% elif user.swc_homework_in_evaluation %}
-    <tr class="table-warning">
-      <td><b>SWC</b></td>
-      <td>SWC Homework evaluation pending.<br>Please wait while we evaluate your homework.</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td><b>SWC</b></td>
-      <td>SWC Homework not submitted.<br>Only one homework is necessary to become a certified Carpentries Instructor.</td>
-    </tr>
-    {% endif %}
-    {% if user.passed_dc_homework %}
-    <tr class="table-success">
-      <td><b>DC</b></td>
-      <td>DC Homework accepted.</td>
-    </tr>
-    {% elif user.dc_homework_in_evaluation %}
-    <tr class="table-warning">
-      <td><b>DC</b></td>
-      <td>DC Homework evaluation pending.<br>Please wait while we evaluate your homework.</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td><b>DC</b></td>
-      <td>DC Homework not submitted.<br>Only one homework is necessary to become a certified Carpentries Instructor.</td>
-    </tr>
-    {% endif %}
-    {% if user.passed_lc_homework %}
-    <tr class="table-success">
-      <td><b>LC</b></td>
-      <td>LC Homework accepted.</td>
-    </tr>
-    {% elif user.lc_homework_in_evaluation %}
-    <tr class="table-warning">
-      <td><b>LC</b></td>
-      <td>LC Homework evaluation pending.<br>Please wait while we evaluate your homework.</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td><b>LC</b></td>
-      <td>LC Homework not submitted.<br>Only one homework is necessary to become a certified Carpentries Instructor.</td>
-    </tr>
-    {% endif %}
     <tr>
       <td>
-        <p>Submit link to your Homework or Pull Request:</p>
-        {% crispy homework_form %}
+        <p>
+          Submit link to your contribution on Github. Your contribution will be reviewed within 7-10 days.<br>
+          If you do not use GitHub, you may submit your lesson contribution via
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSeMBOj5Rdh8Mgk0ebRbeRyHhGHKbItdft6avWuEzmeg8CgWbA/viewform">this form</a>.
+          A Carpentries Core Team member will create an issue based on the relevant repository, and will
+          send you a link so that you may view any responses. In either case, you can track your progress
+          by returning to this page.
+        </p>
+        <p>
+          Please be sure your contribution is to a repo in one of these organisations:
+        </p>
+        <ul>
+          <li><a href="https://github.com/carpentries">The Carpentries</a></li>
+          <li><a href="https://github.com/datacarpentry">Data Carpentry</a></li>
+          <li><a href="https://github.com/librarycarpentry">Library Carpentry</a></li>
+          <li><a href="https://github.com/swcarpentry">Software Carpentry</a></li>
+          <li><a href="https://github.com/carpentries-es">The Carpentries - Spanish Translations</a></li>
+          <li><a href="https://github.com/Reproducible-Science-Curriculum">Reproducible Science Curriculum</a></li>
+          <li><a href="https://github.com/carpentrycon">CarpentryCon</a></li>
+          <li><a href="https://github.com/carpentryconnect">CarpentryConnect</a></li>
+          <li><a href="https://github.com/carpentries-workshops">carpentries-workshops</a></li>
+          <li><a href="https://github.com/data-lessons">data-lessons</a></li>
+          <li><a href="https://github.com/carpentrieslab">The Carpentries Lab</a></li>
+          <li><a href="https://github.com/carpentries-incubator">carpentries-incubator</a></li>
+         </ul>
+        {% crispy lesson_contribution_form %}
       </td>
     </tr>
     <tr>
       <th>3. Discussion Session</th>
-      <td colspan="2">
+      <td>
         {% if user.passed_discussion %}
-          <p><span class="label label-success">Discussion Session passed.</span></p>
+          <p class="text-success">Discussion Session passed.</p>
         {% else %}
-          <p><span class="label label-default">Discussion Session not passed yet.</span></p>
+          <p>Discussion Session not passed yet.</p>
           <p>Register for a Discussion Session on <a href="https://pad.carpentries.org/community-discussions">this Etherpad</a>. Register for only one session even if you want to become an Instructor for more than one Carpentry lesson program.</p>
         {% endif %}
       </td>
     </tr>
     <tr>
-      <th rowspan="5">4. Demo Session</th>
-      <th>Carpentry lesson program</th>
-      <th>Status</th>
-    </tr>
-    {% if user.passed_swc_demo %}
-    <tr class="table-success">
-      <td><b>SWC</b></td>
-      <td>SWC Demo Session passed.</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td><b>SWC</b></td>
-      <td>SWC Demo Session not completed.</td>
-    </tr>
-    {% endif %}
-    {% if user.passed_dc_demo %}
-    <tr class="table-success">
-      <td><b>DC</b></td>
-      <td>DC Demo Session passed.</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td><b>DC</b></td>
-      <td>DC Demo Session not completed.</td>
-    </tr>
-    {% endif %}
-    {% if user.passed_lc_demo %}
-    <tr class="table-success">
-      <td><b>LC</b></td>
-      <td>LC Demo Session passed.</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td><b>LC</b></td>
-      <td>LC Demo Session not completed.</td>
-    </tr>
-    {% endif %}
-    <tr>
-      <td colspan="2">{% if not user.passed_swc_demo or not user.passed_dc_demo or not user.passed_lc_demo %}
-          <p>You can register for a Demo Session on <a href="https://pad.carpentries.org/teaching-demos">this Etherpad</a>.</p>
-        {% endif %}</td>
+      <th>4. Demo Session</th>
+      <td>
+        {% if user.passed_demo %}
+        <p class="text-success">Demo Session passed.</p>
+        {% else %}
+        <p>Demo Session not completed.</p>
+        <p>You can register for a Demo Session on <a href="https://pad.carpentries.org/teaching-demos">this Etherpad</a>.</p>
+        {% endif %}
+      </td>
     </tr>
 
   </table>
 
 
-  <p>In the case of any questions, please send us email at <a href="mailto:checkout@carpentries.org">checkout@carpentries.org</a></p>
+  <p>In the case of any questions, please send us email at <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a></p>
 </div>
 
 {% endblock %}

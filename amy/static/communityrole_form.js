@@ -7,6 +7,7 @@ jQuery(function () {
 
   let award_badge; // hold badge filter for award selection
   let content_type;
+  let person = $("#id_communityrole-person").val();
   $("#id_communityrole-config").select2({
     ajax: {
       processResults: (data) => {
@@ -25,6 +26,7 @@ jQuery(function () {
       data: (params) => {
         const query = {
           badge: award_badge,
+          person,
           // `field_id` is required on backend by django-select2 views
           field_id: $("#id_communityrole-award").data("field_id"),
           ...params,
@@ -46,12 +48,17 @@ jQuery(function () {
       },
     },
   });
+  $("#id_communityrole-person").on("select2:select", (e) => {
+    const data = e.params.data;
+    person = data.id;
+  });
   $("#id_communityrole-config").on("select2:select", (e) => {
     const data = e.params.data;
     $("#id_communityrole-award").prop("required", data.link_to_award);
     award_badge = data.award_badge_limit;
     $("#id_communityrole-membership").prop("required", data.link_to_membership);
     $("#id_communityrole-url").prop("disabled", !data.additional_url);
+    $("#id_communityrole-url").prop("required", data.additional_url);
     if (!data.additional_url) {
       $("#id_communityrole-url").val("");
     }

@@ -22,16 +22,19 @@ from django.db import IntegrityError
 from django.db.models import (
     Case,
     Count,
+    ExpressionWrapper,
     F,
+    FloatField,
     IntegerField,
     Prefetch,
     ProtectedError,
     Q,
+    QuerySet,
     Sum,
     Value,
     When,
 )
-from django.forms import HiddenInput
+from django.forms import BaseForm, HiddenInput
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -52,6 +55,7 @@ from autoemails.actions import (
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from communityroles.forms import CommunityRoleForm
+from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent
 from dashboard.forms import AssignmentForm
@@ -66,6 +70,7 @@ from workshops.base_views import (
     PrepopulationSupportMixin,
     RedirectSupportMixin,
 )
+from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.filters import (
     AirportFilter,
     BadgeAwardsFilter,
@@ -108,26 +113,25 @@ from workshops.models import (
     TrainingProgress,
 )
 from workshops.signals import create_comment_signal
-from workshops.util import (
-    InternalError,
-    OnlyForAdminsMixin,
-    WrongWorkshopURL,
-    add_comment,
-    admin_required,
-    create_uploaded_persons_tasks,
-    create_username,
-    failed_to_delete,
+from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from workshops.utils.comments import add_comment
+from workshops.utils.merge import merge_objects
+from workshops.utils.metadata import (
     fetch_workshop_metadata,
-    get_pagination_items,
-    login_required,
-    merge_objects,
     parse_workshop_metadata,
-    upload_person_task_csv,
     validate_workshop_metadata,
+)
+from workshops.utils.pagination import get_pagination_items
+from workshops.utils.person_upload import (
+    create_uploaded_persons_tasks,
+    upload_person_task_csv,
     verify_upload_person_task,
 )
+from workshops.utils.usernames import create_username
+from workshops.utils.views import failed_to_delete
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy.server_logs")
+logger_signals = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 
@@ -212,6 +216,11 @@ class AllPersons(OnlyForAdminsMixin, AMYListView):
             to_attr="important_badges",
             queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
         ),
+        Prefetch(
+            "communityrole_set",
+            to_attr="instructor_community_roles",
+            queryset=CommunityRole.objects.filter(config__name="instructor"),
+        ),
     )
     title = "All Persons"
 
@@ -221,32 +230,7 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
     template_name = "workshops/person.html"
     pk_url_kwarg = "person_id"
     queryset = (
-        Person.objects.annotate(
-            num_taught=Count(
-                Case(
-                    When(task__role__name="instructor", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_helper=Count(
-                Case(
-                    When(task__role__name="helper", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_learner=Count(
-                Case(
-                    When(task__role__name="learner", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_supporting=Count(
-                Case(
-                    When(task__role__name="supporting-instructor", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-        )
+        Person.objects.annotate_with_role_count()
         .prefetch_related(
             "badges",
             "lessons",
@@ -996,13 +980,11 @@ def event_details(request, slug):
         raise Http404("Event matching query does not exist.")
 
     try:
-        recruitment_stats = (
-            event.instructorrecruitment.instructorrecruitmentsignup_set.aggregate(
-                all_signups=Count("person"),
-                pending_signups=Count("person", filter=Q(state="p")),
-                discarded_signups=Count("person", filter=Q(state="d")),
-                accepted_signups=Count("person", filter=Q(state="a")),
-            )
+        recruitment_stats = event.instructorrecruitment.signups.aggregate(
+            all_signups=Count("person"),
+            pending_signups=Count("person", filter=Q(state="p")),
+            discarded_signups=Count("person", filter=Q(state="d")),
+            accepted_signups=Count("person", filter=Q(state="a")),
         )
     except Event.instructorrecruitment.RelatedObjectDoesNotExist:
         recruitment_stats = dict(
@@ -1018,10 +1000,16 @@ def event_details(request, slug):
         queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
     )
 
+    person_instructor_community_roles = Prefetch(
+        "person__communityrole_set",
+        to_attr="instructor_community_roles",
+        queryset=CommunityRole.objects.filter(config__name="instructor"),
+    )
+
     tasks = (
         Task.objects.filter(event__id=event.id)
         .select_related("event", "person", "role")
-        .prefetch_related(person_important_badges)
+        .prefetch_related(person_important_badges, person_instructor_community_roles)
         .order_by("role__name")
     )
 
@@ -1045,7 +1033,7 @@ def event_details(request, slug):
         "admin_lookup_form": admin_lookup_form,
         "event_location": {
             "venue": event.venue,
-            "humandate": event.human_readable_date,
+            "humandate": event.human_readable_date(),
             "latitude": event.latitude,
             "longitude": event.longitude,
         },
@@ -1119,7 +1107,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
             )
             ActionManageMixin.add(
                 action_class=PostWorkshopAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1134,7 +1122,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1203,7 +1191,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.add(
                 action_class=PostWorkshopAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1218,7 +1206,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.remove(
                 action_class=PostWorkshopAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1233,7 +1221,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1248,7 +1236,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             )
             ActionManageMixin.remove(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1261,7 +1249,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1274,7 +1262,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             jobs = self.object.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1287,7 +1275,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object),
@@ -1300,7 +1288,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1322,7 +1310,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         )
         ActionManageMixin.remove(
             action_class=PostWorkshopAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1335,7 +1323,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         )
         ActionManageMixin.remove(
             action_class=InstructorsHostIntroductionAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1348,7 +1336,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         jobs = self.object.rq_jobs.filter(trigger__action="ask-for-website")
         ActionManageMixin.remove(
             action_class=AskForWebsiteAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1359,7 +1347,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
         ActionManageMixin.remove(
             action_class=RecruitHelpersAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -1763,12 +1751,13 @@ class TaskCreate(
 
         # save the object
         res = super().form_valid(form)
+        self.object: Task  # created and saved to DB by super().form_valid()
 
         # check conditions for running a NewInstructorAction
         if NewInstructorAction.check(self.object):
             ActionManageMixin.add(
                 action_class=NewInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(active=True, action="new-instructor"),
                 context_objects=dict(task=self.object, event=self.object.event),
@@ -1780,7 +1769,7 @@ class TaskCreate(
         if NewSupportingInstructorAction.check(self.object):
             ActionManageMixin.add(
                 action_class=NewSupportingInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
                     active=True, action="new-supporting-instructor"
@@ -1799,7 +1788,7 @@ class TaskCreate(
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1812,7 +1801,7 @@ class TaskCreate(
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1825,7 +1814,7 @@ class TaskCreate(
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1839,7 +1828,7 @@ class TaskCreate(
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1910,7 +1899,7 @@ class TaskUpdate(
             triggers = Trigger.objects.filter(active=True, action="new-instructor")
             ActionManageMixin.add(
                 action_class=NewInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(task=self.object, event=self.object.event),
@@ -1923,7 +1912,7 @@ class TaskUpdate(
             jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
             ActionManageMixin.remove(
                 action_class=NewInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1938,7 +1927,7 @@ class TaskUpdate(
             )
             ActionManageMixin.add(
                 action_class=NewSupportingInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(task=self.object, event=self.object.event),
@@ -1953,7 +1942,7 @@ class TaskUpdate(
             )
             ActionManageMixin.remove(
                 action_class=NewSupportingInstructorAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1968,7 +1957,7 @@ class TaskUpdate(
             )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -1983,7 +1972,7 @@ class TaskUpdate(
             )
             ActionManageMixin.remove(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -1996,7 +1985,7 @@ class TaskUpdate(
             triggers = Trigger.objects.filter(active=True, action="ask-for-website")
             ActionManageMixin.add(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -2009,7 +1998,7 @@ class TaskUpdate(
             jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2022,7 +2011,7 @@ class TaskUpdate(
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
@@ -2035,7 +2024,7 @@ class TaskUpdate(
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2061,7 +2050,7 @@ class TaskDelete(
         jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
         ActionManageMixin.remove(
             action_class=NewInstructorAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -2072,7 +2061,7 @@ class TaskDelete(
         jobs = self.object.rq_jobs.filter(trigger__action="new-supporting-instructor")
         ActionManageMixin.remove(
             action_class=NewSupportingInstructorAction,
-            logger=logger,
+            logger=logger_signals,
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
@@ -2100,7 +2089,7 @@ class TaskDelete(
             )
             ActionManageMixin.remove(
                 action_class=InstructorsHostIntroductionAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2113,7 +2102,7 @@ class TaskDelete(
             jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
             ActionManageMixin.remove(
                 action_class=AskForWebsiteAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2126,7 +2115,7 @@ class TaskDelete(
             triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
             ActionManageMixin.add(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.event),
@@ -2139,7 +2128,7 @@ class TaskDelete(
             jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
             ActionManageMixin.remove(
                 action_class=RecruitHelpersAction,
-                logger=logger,
+                logger=logger_signals,
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
@@ -2182,6 +2171,46 @@ class MockAwardCreate(
 
     def get_success_url(self):
         return reverse("badge_details", args=[self.object.badge.name])
+
+    def form_valid(self, form: BaseForm) -> HttpResponse:
+        result = super().form_valid(form)
+        self.object: Award  # created and saved to DB by super().form_valid()
+
+        # Check for CommunityRoles that should automatically be created.
+        badge = self.object.badge
+        person = self.object.person
+        community_role_configs = CommunityRoleConfig.objects.filter(
+            award_badge_limit=badge,
+            autoassign_when_award_created=True,
+        )
+        if community_role_configs:
+            start_date = datetime.date.today()
+            roles = [
+                CommunityRole(
+                    config=config,
+                    person=person,
+                    award=self.object,
+                    start=start_date,
+                    end=None,
+                    inactivation=None,
+                    membership=None,
+                    url="",
+                )
+                for config in community_role_configs
+                if not CommunityRoleForm.find_concurrent_roles(
+                    config, person, start_date
+                )
+            ]
+            logger.debug(
+                f"Automatically creating community roles set up for badge {badge}"
+            )
+            roles_result = CommunityRole.objects.bulk_create(roles)
+            logger.debug(
+                f"Created {len(roles_result)} Community Roles for badge {badge} and "
+                f"person {person}"
+            )
+
+        return result
 
 
 class AwardCreate(RedirectSupportMixin, MockAwardCreate):
@@ -2241,54 +2270,45 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
 # ------------------------------------------------------------
 
 
-def _workshop_staff_query(lat=None, lng=None):
+def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
     """This query is used in two views: workshop staff searching and its CSV
     results. Thanks to factoring-out this function, we're now quite certain
     that the results in both of the views are the same."""
     TTT = Tag.objects.get(name="TTT")
     stalled = Tag.objects.get(name="stalled")
     learner = Role.objects.get(name="learner")
-    important_badges = Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES)
+    instructor_badges = Badge.objects.filter(name__in=Badge.INSTRUCTOR_BADGES)
 
     trainee_tasks = (
         Task.objects.filter(event__tags=TTT, role=learner)
         .exclude(event__tags=stalled)
-        .exclude(person__badges__in=important_badges)
+        .exclude(person__badges__in=instructor_badges)
+    )
+
+    active_instructor_community_roles = CommunityRole.objects.active().filter(
+        config__name="instructor"
     )
 
     # we need to count number of specific roles users had
-    # and if they are SWC/DC/LC instructors
+    # and if they are instructors
     people = (
-        Person.objects.filter(airport__isnull=False)
-        .select_related("airport")
+        Person.objects.annotate_with_role_count()
         .annotate(
-            num_taught=Count(
-                Case(
-                    When(task__role__name="instructor", then=Value(1)),
-                    output_field=IntegerField(),
-                )
+            is_trainee=Count("task", filter=Q(task__in=trainee_tasks)),
+            is_trainer=Count("badges", filter=Q(badges__name="trainer")),
+            is_instructor=Count(
+                "communityrole",
+                filter=Q(communityrole__in=active_instructor_community_roles),
             ),
-            num_helper=Count(
-                Case(
-                    When(task__role__name="helper", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            num_organizer=Count(
-                Case(
-                    When(task__role__name="organizer", then=Value(1)),
-                    output_field=IntegerField(),
-                )
-            ),
-            is_trainee=Count("task", filter=(Q(task__in=trainee_tasks))),
-            is_trainer=Count("badges", filter=(Q(badges__name="trainer"))),
         )
+        .filter(airport__isnull=False)
+        .select_related("airport")
         .prefetch_related(
             "lessons",
             Prefetch(
-                "badges",
-                to_attr="important_badges",
-                queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
+                "communityrole_set",
+                to_attr="instructor_community_roles",
+                queryset=CommunityRole.objects.filter(config__name="instructor"),
             ),
         )
         .order_by("family", "personal")
@@ -2299,7 +2319,9 @@ def _workshop_staff_query(lat=None, lng=None):
         complex_F = (F("airport__latitude") - lat) ** 2 + (
             F("airport__longitude") - lng
         ) ** 2
-        people = people.annotate(distance=complex_F).order_by("distance", "family")
+        people = people.annotate(
+            distance=ExpressionWrapper(complex_F, output_field=FloatField())
+        ).order_by("distance", "family")
 
     return people
 
@@ -2367,8 +2389,8 @@ def workshop_staff_csv(request):
     header_row = (
         "Name",
         "Email",
-        "Some badges",
-        "Has Trainer badge",
+        "Is instructor",
+        "Is trainer",
         "Taught times",
         "Is trainee",
         "Airport",
@@ -2388,9 +2410,9 @@ def workshop_staff_csv(request):
             [
                 person.full_name,
                 person.email,
-                " ".join([badge.name for badge in person.important_badges]),
+                "yes" if person.is_instructor else "no",
                 "yes" if person.is_trainer else "no",
-                person.num_taught,
+                person.num_instructor,
                 "yes" if person.is_trainee else "no",
                 str(person.airport) if person.airport else "",
                 person.country.name if person.country else "",

@@ -9,7 +9,8 @@ from django.template.exceptions import TemplateSyntaxError
 from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 
-from autoemails.actions import BaseAction, send_bulk_email
+from autoemails.actions import BaseAction
+from autoemails.bulk_email import send_bulk_email
 from autoemails.models import EmailTemplate, RQJob, Trigger
 from consents.models import Term
 

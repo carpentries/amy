@@ -14,10 +14,8 @@ FROM base AS compilation
 
 # some dependencies require compilation
 # TODO: remove compilation dependencies:
-#       * django-compressor requires rcssmin, which requires python3-dev (and gcc?)
-#       * python3-dev installs python3.7 (no dev pkg for 3.9)
 #       * use psycopg2-binary instead of psycopg2 (gcc+libpq-dev required)
-RUN apt-get install -y --no-install-recommends gcc libpq-dev python3-dev \
+RUN apt-get install -y --no-install-recommends gcc libpq-dev \
     && python3 -m pip install pipenv \
     && mkdir /app
 

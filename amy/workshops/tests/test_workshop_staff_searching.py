@@ -16,6 +16,8 @@ class TestLocateWorkshopStaff(TestBase):
         self._setUpTags()
         self._setUpRoles()
         self._setUpUsersAndLogin()
+        self._setUpSingleInstructorBadges()
+        self._setUpCommunityRoles()
         self.url = reverse("workshop_staff")
 
     def test_non_instructors_and_instructors_returned_by_search(self):
@@ -140,18 +142,13 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.ironman, response.context["persons"])
         self.assertIn(self.blackwidow, response.context["persons"])
 
-    def test_instructor_badges(self):
+    def test_is_instructor(self):
         """Ensure people with instructor badges are returned by search. The
         search is OR'ed, so should return people with any of the selected
         badges."""
         response = self.client.get(
             self.url,
-            {
-                "airport": self.airport_0_0.pk,
-                "badges": Badge.objects.filter(
-                    name__in=["swc-instructor", "dc-instructor"]
-                ).values_list("pk", flat=True),
-            },
+            {"airport": self.airport_0_0.pk, "is_instructor": True},
         )
         self.assertEqual(response.status_code, 200)
 
@@ -164,25 +161,17 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.ironman, response.context["persons"])
         self.assertNotIn(self.blackwidow, response.context["persons"])
 
-        response = self.client.get(
-            self.url,
-            {
-                "airport": self.airport_0_0.pk,
-                "badges": Badge.objects.filter(
-                    name__in=["dc-instructor", "lc-instructor"]
-                ).values_list("pk", flat=True),
-            },
-        )
+        response = self.client.get(self.url, {"airport": self.airport_0_0.pk})
         self.assertEqual(response.status_code, 200)
 
         # instructors
         self.assertIn(self.hermione, response.context["persons"])  # SWC, DC,LC
         self.assertIn(self.harry, response.context["persons"])  # SWC, DC
-        self.assertNotIn(self.ron, response.context["persons"])  # SWC only
+        self.assertIn(self.ron, response.context["persons"])  # SWC only
         # non-instructors
-        self.assertNotIn(self.spiderman, response.context["persons"])
-        self.assertNotIn(self.ironman, response.context["persons"])
-        self.assertNotIn(self.blackwidow, response.context["persons"])
+        self.assertIn(self.spiderman, response.context["persons"])
+        self.assertIn(self.ironman, response.context["persons"])
+        self.assertIn(self.blackwidow, response.context["persons"])
 
     def test_match_on_one_language(self):
         """Ensure people with one particular language preference
@@ -425,7 +414,7 @@ class TestWorkshopStaffCSV(TestBase):
         rv = self.client.get(self.url)
         first_row = rv.content.decode("utf-8").splitlines()[0]
         first_row_expected = (
-            "Name,Email,Some badges,Has Trainer badge,Taught times,"
+            "Name,Email,Is instructor,Is trainer,Taught times,"
             "Is trainee,Airport,Country,Lessons,Affiliation"
         )
 
@@ -440,13 +429,11 @@ class TestWorkshopStaffCSV(TestBase):
             self.assertEqual(row["Name"], expected.full_name)
             self.assertEqual(row["Email"] or None, expected.email)
             self.assertEqual(
-                row["Some badges"],
-                " ".join(map(lambda x: x.name, expected.important_badges)),
+                row["Is instructor"],
+                "yes" if expected.is_instructor else "no",
             )
-            self.assertEqual(
-                row["Has Trainer badge"], "yes" if expected.is_trainer else "no"
-            )
-            self.assertEqual(row["Taught times"], str(expected.num_taught))
+            self.assertEqual(row["Is trainer"], "yes" if expected.is_trainer else "no")
+            self.assertEqual(row["Taught times"], str(expected.num_instructor))
             self.assertEqual(row["Is trainee"], "yes" if expected.is_trainee else "no")
             self.assertEqual(row["Airport"], str(expected.airport))
             self.assertEqual(row["Country"], expected.country.name)

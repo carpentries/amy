@@ -1,0 +1,44 @@
+{% load dates %}
+
+{% with event=object.event %}
+<h3>
+  {{ event.curricula.first }} at {{ event.host.fullname }} on {% human_daterange event.start event.end %}
+  {% if object.calculated_priority == 3 %}
+  <span class="badge badge-danger">High priority</span>
+  {% elif object.calculated_priority == 2 %}
+  <span class="badge badge-warning">Medium priority</span>
+  {% endif %}
+</h3>
+<ul>
+  <li>
+    <strong>Date/Time:</strong>
+    {% human_daterange event.start event.end %}
+  </li>
+  <li>
+    <strong>Location:</strong>
+    {% if "online" in event.tags.strings %}
+      Online
+    {% else %}
+      {{ event.venue }}, {% include "includes/country_flag.html" with country=event.country %}
+    {% endif %}
+  </li>
+  <li>
+    <strong>Curriculum:</strong>
+    {% for curriculum in event.curricula.all %}
+      {% if curriculum.website %}
+      <a href="{{ curriculum.website }}" target="_blank" rel="noreferrer nofollow">{{ curriculum }}</a>
+      {% else %}{{ curriculum }}{% endif %}
+      {% if not forloop.last %}, {% endif %}
+    {% endfor %}
+  </li>
+  <li>
+    <strong>Notes:</strong>
+    {% if object.notes %}
+    <p class="notes-content pl-2 border-left">{{ object.notes }}</p>
+    {% else %}
+    &mdash;
+    {% endif %}
+  </li>
+</ul>
+
+{% endwith %}

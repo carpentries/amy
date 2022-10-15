@@ -18,6 +18,7 @@ from django.db.models import (
     IntegerField,
     PositiveIntegerField,
     Q,
+    QuerySet,
     Sum,
     When,
 )
@@ -33,8 +34,15 @@ from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
 from workshops import github_auth
-from workshops.consts import FEE_DETAILS_URL
-from workshops.fields import NullableGithubUsernameField
+from workshops.consts import (
+    FEE_DETAILS_URL,
+    STR_LONG,
+    STR_LONGEST,
+    STR_MED,
+    STR_REG_KEY,
+    STR_SHORT,
+)
+from workshops.fields import NullableGithubUsernameField, choice_field_with_other
 from workshops.mixins import (
     ActiveMixin,
     AssignmentMixin,
@@ -51,12 +59,8 @@ from workshops.mixins import (
     StateMixin,
 )
 from workshops.signals import person_archived_signal
-
-STR_SHORT = 10  # length of short strings
-STR_MED = 40  # length of medium strings
-STR_LONG = 100  # length of long strings
-STR_LONGEST = 255  # length of the longest strings
-STR_REG_KEY = 20  # length of Eventbrite registration key
+from workshops.utils.dates import human_daterange
+from workshops.utils.emails import find_emails
 
 # ------------------------------------------------------------
 
@@ -299,8 +303,6 @@ class Membership(models.Model):
     )
 
     def __str__(self):
-        from workshops.util import human_daterange
-
         dates = human_daterange(self.agreement_start, self.agreement_end)
         variant = self.variant.title()
 
@@ -595,43 +597,36 @@ class PersonManager(BaseUserManager):
                 )
             )
 
-        def passed_either(req_a, req_b, req_c):
+        def passed_either(*reqs):
             return Sum(
                 Case(
-                    When(
-                        trainingprogress__requirement__name=req_a,
-                        trainingprogress__state="p",
-                        trainingprogress__discarded=False,
-                        then=1,
-                    ),
-                    When(
-                        trainingprogress__requirement__name=req_b,
-                        trainingprogress__state="p",
-                        trainingprogress__discarded=False,
-                        then=1,
-                    ),
-                    When(
-                        trainingprogress__requirement__name=req_c,
-                        trainingprogress__state="p",
-                        trainingprogress__discarded=False,
-                        then=1,
-                    ),
+                    *[
+                        When(
+                            trainingprogress__requirement__name=req,
+                            trainingprogress__state="p",
+                            trainingprogress__discarded=False,
+                            then=1,
+                        )
+                        for req in reqs
+                    ],
                     default=0,
                     output_field=IntegerField(),
                 )
             )
 
+        LESSON_CONTRIBUTION_NAMES = [
+            "Lesson Contribution",
+            "SWC Homework",
+            "DC Homework",
+            "LC Homework",
+        ]
+        DEMO_TRAININGPROGRESS_NAMES = ["Demo", "SWC Demo", "DC Demo", "LC Demo"]
+
         return self.annotate(
             passed_training=passed("Training"),
-            passed_swc_homework=passed("SWC Homework"),
-            passed_dc_homework=passed("DC Homework"),
-            passed_lc_homework=passed("LC Homework"),
+            passed_lesson_contribution=passed_either(*LESSON_CONTRIBUTION_NAMES),
             passed_discussion=passed("Discussion"),
-            passed_swc_demo=passed("SWC Demo"),
-            passed_dc_demo=passed("DC Demo"),
-            passed_lc_demo=passed("LC Demo"),
-            passed_homework=passed_either("SWC Homework", "DC Homework", "LC Homework"),
-            passed_demo=passed_either("SWC Demo", "DC Demo", "LC Demo"),
+            passed_demo=passed_either(*DEMO_TRAININGPROGRESS_NAMES),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
             # be instructor badge eligible. Legend:
@@ -640,9 +635,43 @@ class PersonManager(BaseUserManager):
             instructor_eligible=(
                 F("passed_training")
                 * F("passed_discussion")
-                * F("passed_homework")
+                * F("passed_lesson_contribution")
                 * F("passed_demo")
             )
+        )
+
+    def annotate_with_role_count(self) -> QuerySet["Person"]:
+        return self.annotate(
+            num_instructor=Count(
+                "task",
+                filter=(
+                    Q(task__role__name="instructor")
+                    & ~Q(task__event__administrator__domain="carpentries.org")
+                ),
+                distinct=True,
+            ),
+            num_trainer=Count(
+                "task",
+                filter=(
+                    Q(task__role__name="instructor")
+                    & Q(task__event__administrator__domain="carpentries.org")
+                ),
+                distinct=True,
+            ),
+            num_helper=Count(
+                "task", filter=Q(task__role__name="helper"), distinct=True
+            ),
+            num_learner=Count(
+                "task", filter=Q(task__role__name="learner"), distinct=True
+            ),
+            num_supporting=Count(
+                "task",
+                filter=Q(task__role__name="supporting-instructor"),
+                distinct=True,
+            ),
+            num_organizer=Count(
+                "task", filter=Q(task__role__name="organizer"), distinct=True
+            ),
         )
 
     def duplication_review_expired(self):
@@ -701,7 +730,7 @@ class Person(
         null=True,
         blank=True,
         verbose_name="Email address",
-        help_text="Primary email address, used for communication and " "as a login.",
+        help_text="Primary email address, used for communication and as a login.",
     )
     may_contact = models.BooleanField(
         default=True,
@@ -938,15 +967,15 @@ class Person(
         """
         fields = [
             ("passed_training", "Training"),
-            ("passed_homework", "Homework (SWC/DC/LC)"),
+            ("passed_lesson_contribution", "Lesson Contribution"),
             ("passed_discussion", "Discussion"),
-            ("passed_demo", "Demo (SWC/DC/LC)"),
+            ("passed_demo", "Demo"),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
         except AttributeError as e:
             raise Exception(
-                "Did you forget to call " "annotate_with_instructor_eligibility()?"
+                "Did you forget to call annotate_with_instructor_eligibility()?"
             ) from e
 
     def get_training_tasks(self):
@@ -1535,19 +1564,14 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
-        from workshops.util import find_emails
-
         emails = find_emails(self.contact)
         return emails
 
-    @property
-    def human_readable_date(self):
+    def human_readable_date(self, **kwargs) -> str:
         """Render start and end dates as human-readable short date."""
-        from workshops.util import human_daterange
-
         date1 = self.start
         date2 = self.end
-        return human_daterange(date1, date2)
+        return human_daterange(date1, date2, **kwargs)
 
     @cached_property
     def attendance(self):
@@ -1557,6 +1581,18 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         annotated this way before."""
         return max(
             [self.manual_attendance, self.task_set.filter(role__name="learner").count()]
+        )
+
+    def eligible_for_instructor_recruitment(self) -> bool:
+        return bool(
+            self.start
+            and self.start >= datetime.date.today()
+            and (
+                self.venue
+                and self.latitude is not None
+                and self.longitude is not None
+                or "online" in self.tags.strings()
+            )
         )
 
     def clean(self):
@@ -1766,7 +1802,16 @@ class BadgeQuerySet(models.query.QuerySet):
     """Custom QuerySet that provides easy way to get instructor badges
     (we use that a lot)."""
 
-    INSTRUCTOR_BADGES = ("dc-instructor", "swc-instructor", "lc-instructor")
+    SINGLE_INSTRUCTOR_BADGE = "instructor"
+
+    INSTRUCTOR_BADGES = (
+        "dc-instructor",
+        "swc-instructor",
+        "lc-instructor",
+        SINGLE_INSTRUCTOR_BADGE,
+    )
+
+    TRAINER_BADGE = "trainer"
 
     def instructor_badges(self):
         """Filter for instructor badges only."""
@@ -1778,8 +1823,10 @@ class Badge(models.Model):
     """Represent a badge we award."""
 
     # just for easier access outside `models.py`
+    SINGLE_INSTRUCTOR_BADGE = BadgeQuerySet.SINGLE_INSTRUCTOR_BADGE
     INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
-    IMPORTANT_BADGES = INSTRUCTOR_BADGES + ("trainer",)
+    TRAINER_BADGE = BadgeQuerySet.TRAINER_BADGE
+    IMPORTANT_BADGES = (SINGLE_INSTRUCTOR_BADGE, TRAINER_BADGE)
 
     name = models.CharField(max_length=STR_MED, unique=True)
     title = models.CharField(max_length=STR_MED)
@@ -1873,9 +1920,6 @@ class TrainingRequest(
     SecondaryEmailMixin,
     models.Model,
 ):
-
-    from workshops.util import choice_field_with_other
-
     MANUAL_SCORE_UPLOAD_FIELDS = (
         "request_id",
         "score_manual",
@@ -1953,7 +1997,9 @@ class TrainingRequest(
     )
     github = NullableGithubUsernameField(
         verbose_name="GitHub username",
-        help_text="Please put only a single username here.",
+        help_text="Please put only a single username here. After your application has "
+        "been accepted, you will be able to use your GitHub username to log in to our "
+        "database to view your profile.",
         null=True,
         blank=True,
     )
@@ -2380,8 +2426,8 @@ class TrainingRequirement(models.Model):
 class TrainingProgress(CreatedUpdatedMixin, models.Model):
     trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
 
-    # Mentor/examiner who evaluates homework / session. May be null when a
-    # trainee submits their homework.
+    # Mentor/examiner who evaluates lesson contribution / session. May be null when a
+    # trainee submits their lesson contribution.
     evaluated_by = models.ForeignKey(
         Person, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
@@ -2569,6 +2615,11 @@ class Curriculum(ActiveMixin, models.Model):
         verbose_name="Mix & Match",
         help_text="Mark this curriculum record as 'Mix & Match'."
         "There can be only one such record in the database.",
+    )
+    website = models.URLField(
+        blank=True,
+        default="",
+        verbose_name="Curriculum page",
     )
 
     objects = CurriculumManager()

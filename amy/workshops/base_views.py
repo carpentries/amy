@@ -10,7 +10,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import get_template
-from django.utils.http import is_safe_url
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -21,9 +21,11 @@ from django.views.generic import (
     UpdateView,
 )
 from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.edit import FormMixin
 
-from workshops.forms import BootstrapHelper
-from workshops.util import Paginator, assign, failed_to_delete, get_pagination_items
+from workshops.forms import AdminLookupForm, BootstrapHelper
+from workshops.utils.pagination import Paginator, get_pagination_items
+from workshops.utils.views import assign, failed_to_delete
 
 
 class FormInvalidMessageMixin:
@@ -189,7 +191,7 @@ class AMYListView(ListView):
             self.qs = super().get_queryset()
         else:
             self.filter = self.filter_class(
-                self.get_filter_data(), super().get_queryset()
+                self.get_filter_data(), super().get_queryset(), request=self.request
             )
             self.qs = self.filter.qs
         paginated = get_pagination_items(self.request, self.qs)
@@ -249,7 +251,7 @@ class RedirectSupportMixin:
     def get_success_url(self):
         default_url = super().get_success_url()
         next_url = self.request.GET.get("next", None)
-        if next_url is not None and is_safe_url(
+        if next_url is not None and url_has_allowed_host_and_scheme(
             next_url, allowed_hosts=settings.ALLOWED_HOSTS
         ):
             return next_url
@@ -418,19 +420,21 @@ class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, Redirec
         return super().get(request, *args, **kwargs)
 
 
-class AssignView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
+class AssignView(PermissionRequiredMixin, SingleObjectMixin, FormMixin, RedirectView):
     # URL keyword argument for requested person.
     permanent = False
     person_url_kwarg = "person_id"
+    form_class = AdminLookupForm
 
     def get_redirect_url(self, *args, **kwargs):
         return self.object.get_absolute_url()
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        requested_person_id = self.kwargs.get(self.person_url_kwarg)
-        assign(request, self.object, requested_person_id)
-        return super().get(request, *args, **kwargs)
+        form = self.get_form()
+        if form.is_valid():
+            assign(self.object, person=form.cleaned_data.get("person"))
+        return super().post(request, *args, **kwargs)
 
 
 class ConditionallyEnabledMixin:

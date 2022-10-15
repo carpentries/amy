@@ -27,12 +27,14 @@ fast_test_fail:
 dev_database :
 	${MANAGE} reset_db
 	${MANAGE} migrate
+	${MANAGE} loaddata amy/workshops/fixtures/badges.json
 	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
 	${MANAGE} loaddata amy/communityroles/fixtures/inactivations.json
-	${MANAGE} fake_database
 	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
-	${MANAGE} createinitialrevisions
+	${MANAGE} loaddata amy/trainings/fixtures/training_requirements.json
 	${MANAGE} create_superuser
+	${MANAGE} fake_database
+	${MANAGE} createinitialrevisions
 
 ## node_modules : install front-end dependencies using Yarn
 node_modules : package.json
@@ -40,12 +42,8 @@ node_modules : package.json
 	touch node_modules
 
 ## serve        : run a server
-serve : node_modules
-	${MANAGE} runserver
-
-## serve_now    : run a server now
-serve_now :
-	${MANAGE} runserver
+serve :
+	gunicorn --workers=4 --bind=127.0.0.1:8000 --reload --env DJANGO_SETTINGS_MODULE=config.settings config.wsgi
 
 ## outdated     : show outdated dependencies
 outdated :

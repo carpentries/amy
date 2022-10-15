@@ -255,6 +255,56 @@ class TestEvent(TestBase):
         event.tags.set([self.TTT_tag])
         event.full_clean()
 
+    def test_eligible_for_instructor_recruitment(self) -> None:
+        # Arrange
+        host = Organization.objects.first()
+        online_tag = Tag.objects.get(name="online")
+        data = [
+            (Event(slug="test1", host=host, start=date(2000, 1, 1)), False),
+            (Event.objects.create(slug="test2", host=host, start=date.today()), False),
+            (Event.objects.create(slug="test3", host=host, start=date.today()), True),
+            (
+                Event.objects.create(
+                    slug="test4", host=host, start=date.today(), venue="University"
+                ),
+                False,
+            ),
+            (
+                Event.objects.create(
+                    slug="test5",
+                    host=host,
+                    start=date.today(),
+                    venue="University",
+                    latitude=1,
+                ),
+                False,
+            ),
+            (
+                Event.objects.create(
+                    slug="test6",
+                    host=host,
+                    start=date.today(),
+                    venue="University",
+                    latitude=1,
+                    longitude=-1,
+                ),
+                True,
+            ),
+            (
+                Event.objects.create(slug="test1", host=host, start=date(2000, 1, 1)),
+                False,
+            ),
+        ]
+        data[2][0].tags.add(online_tag)
+        data[6][0].tags.add(online_tag)
+
+        for event, expected in data:
+            # Act
+            result = event.eligible_for_instructor_recruitment()
+
+            # Assert
+            self.assertEqual(result, expected, event)
+
 
 class TestEventFormComments(TestBase):
     form = EventForm
@@ -1635,7 +1685,9 @@ class TestEventUpdatePostWorkshopAction(
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1748,7 +1800,9 @@ class TestEventDeletePostWorkshopAction(
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1888,7 +1942,7 @@ class TestEventUpdateInstructorsHostIntroduction(
 
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
 
@@ -1952,7 +2006,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         )
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
         # with open('test.html', 'w', encoding='utf-8') as f:
@@ -1988,7 +2042,9 @@ class TestEventUpdateInstructorsHostIntroduction(
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2115,7 +2171,7 @@ class TestEventDeleteInstructorsHostIntroduction(
 
         self.assertContains(
             response,
-            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            "New email (Introduction of instructors and host (centr. org. workshop))"
             " was scheduled",
         )
         # with open('test.html', 'w', encoding='utf-8') as f:
@@ -2143,7 +2199,9 @@ class TestEventDeleteInstructorsHostIntroduction(
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2350,7 +2408,9 @@ class TestEventUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2478,7 +2538,9 @@ class TestEventDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2691,7 +2753,9 @@ class TestEventUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, Test
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2823,7 +2887,9 @@ class TestEventDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, Test
         response = self.client.post(
             reverse("event_delete", args=[event.slug]), follow=True
         )
-        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        self.assertContains(
+            response, f"Scheduled email <code>{rqjob.job_id}</code> was removed"
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 

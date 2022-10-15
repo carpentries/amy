@@ -1,5 +1,5 @@
 {% extends "base_nav.html" %}
-{% load links dates %}
+{% load links dates communityroles %}
 
 
 {% block content %}
@@ -24,8 +24,8 @@
   <tr>
     <th>Dates</th>
     <td>
-      {% if role.start or role.end %}
-      {% human_daterange role.start role.end %}
+      {% if role.start %}
+      {% community_role_human_dates role %}
       {% else %}
       &mdash;
       {% endif %}
@@ -64,6 +64,21 @@
     <td>
       {% if role.config.generic_relation_content_type and role.generic_relation %}
       {{ role.generic_relation|title }}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Custom keys</th>
+    <td>
+      {% if role.custom_keys %}
+        <dl>
+        {% for label, value in role.custom_keys %}
+          <dt>{{ label }}:</dt>
+          <dd>{{ value|default:"&mdash;" }}</dd>
+        {% endfor %}
+        </dl>
       {% else %}
       &mdash;
       {% endif %}

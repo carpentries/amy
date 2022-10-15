@@ -187,14 +187,17 @@ class TestExportingPersonData(BaseExportingTest):
             discarded=False,
             url=None,
         )
+        lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
+        )
         TrainingProgress.objects.create(
             trainee=self.user,
-            requirement=TrainingRequirement.objects.get(name="DC Homework"),
+            requirement=lesson_contribution,
             state="a",  # asked to repeat
             event=None,
             evaluated_by=self.admin,
             discarded=False,
-            url="http://example.org/homework",
+            url="http://example.org/lesson",
         )
         terms = (
             Term.objects.active()
@@ -532,7 +535,7 @@ class TestExportingPersonData(BaseExportingTest):
                 "created_at": data["training_progresses"][1]["created_at"],
                 "last_updated_at": data["training_progresses"][1]["last_updated_at"],
                 "requirement": {
-                    "name": "DC Homework",
+                    "name": "Lesson Contribution",
                     "url_required": True,
                     "event_required": False,
                 },
@@ -542,7 +545,7 @@ class TestExportingPersonData(BaseExportingTest):
                     "name": "Super User",
                 },
                 "event": None,
-                "url": "http://example.org/homework",
+                "url": "http://example.org/lesson",
             },
         ]
         self.assertEqual(len(data["training_progresses"]), 2)

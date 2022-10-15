@@ -5,6 +5,7 @@
 {% load revisions %}
 {% load tags %}
 {% load dates %}
+{% load instructorrecruitment %}
 
 {% block title %}
 <div class="jumbotron container-fluid">
@@ -24,8 +25,11 @@
     </div>
     <div class="col-lg-6">
       {% comment %} Only show Instructor Selection summary in centrally-organised events. Exclude TTT events, too. {% endcomment %}
-      {% if "TTT" not in event.tags.strings and event.administrator.domain != "self-organized" %}
-        {% include "includes/instructor_selection_summary.html" with event=event stats=recruitment_stats %}
+      {% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
+      {% if INSTRUCTOR_RECRUITMENT_ENABLED %}
+        {% if "TTT" not in event.tags.strings and event.administrator.domain != "self-organized" %}
+          {% include "includes/instructor_selection_summary.html" with event=event stats=recruitment_stats %}
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -144,9 +148,11 @@
   <tbody>
   {% for t in tasks %}
   <tr>
-    <td>{% for badge in t.person.important_badges %}
-      {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
-    {% empty %}&mdash;{% endfor %}</td>
+    <td>
+      {% for badge in t.person.important_badges %}{% bootstrap_tag badge.name|upper %}{% endfor %}
+      {% for role in t.person.instructor_community_roles %}{% include "includes/instructor_role_badge.html" with role=role %}{% endfor %}
+      {% if not t.person.important_badges and not person.instructor_community_roles %}&mdash;{% endif %}
+    </td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.url|default:"&mdash;"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>

@@ -290,7 +290,7 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ),
         (
             "instructors-host-introduction",
-            "Introduction of instrutors and host (centr. org. workshop)",
+            "Introduction of instructors and host (centr. org. workshop)",
         ),
         ("ask-for-website", "Website URL is missing"),
         ("recruit-helpers", "Recruit helpers"),
@@ -304,6 +304,11 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         (
             "profile-update",
             "Reminder to for the user to update the information in their profile.",
+        ),
+        (
+            "declined-instructors",
+            "Thank-you email to Instructors who were not selected to teach in "
+            "a workshop.",
         ),
     )
     action = models.CharField(

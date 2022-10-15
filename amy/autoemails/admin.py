@@ -18,7 +18,7 @@ from autoemails.forms import RescheduleForm, TemplateForm
 from autoemails.job import Job
 from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
-from workshops.util import admin_required
+from workshops.utils.access import admin_required
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

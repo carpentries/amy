@@ -1,0 +1,101 @@
+[
+{
+  "model": "workshops.badge",
+  "pk": 1,
+  "fields": {
+    "name": "swc-instructor",
+    "title": "Software Carpentry Instructor",
+    "criteria": "Teaching at Software Carpentry workshops or online"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 2,
+  "fields": {
+    "name": "dc-instructor",
+    "title": "Data Carpentry Instructor",
+    "criteria": "Teaching at Data Carpentry workshops or online"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 3,
+  "fields": {
+    "name": "maintainer",
+    "title": "Maintainer",
+    "criteria": "Maintainer of Software or Data Carpentry lesson"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 4,
+  "fields": {
+    "name": "trainer",
+    "title": "Trainer",
+    "criteria": "Teaching instructor training workshops"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 5,
+  "fields": {
+    "name": "mentor",
+    "title": "Mentor",
+    "criteria": "Mentor of Carpentry Instructors"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 6,
+  "fields": {
+    "name": "mentee",
+    "title": "Mentee",
+    "criteria": "Mentee in Carpentry Mentorship Program"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 7,
+  "fields": {
+    "name": "lc-instructor",
+    "title": "Library Carpentry Instructor",
+    "criteria": "Teaching at Library Carpentry workshops or online"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 8,
+  "fields": {
+    "name": "creator",
+    "title": "Creator",
+    "criteria": "Creating learning materials and other content"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 9,
+  "fields": {
+    "name": "member",
+    "title": "Member",
+    "criteria": "Software Carpentry Foundation member"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 10,
+  "fields": {
+    "name": "organizer",
+    "title": "Organizer",
+    "criteria": "Organizing workshops and learning groups"
+  }
+},
+{
+  "model": "workshops.badge",
+  "pk": 11,
+  "fields": {
+    "name": "instructor",
+    "title": "Instructor",
+    "criteria": "Teaching at The Carpentries workshops or online"
+  }
+}
+]

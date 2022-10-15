@@ -3,6 +3,7 @@
 {% load links %}
 {% load revisions %}
 {% load dates %}
+{% load communityroles %}
 
 {% block content %}
 {% last_modified person %}
@@ -152,7 +153,8 @@
       {% endwith %}
       <p>Summary:</p>
       <ul>
-        <li>Instructor: {{ person.num_taught }} times</li>
+        <li>Instructor: {{ person.num_instructor }} times</li>
+        <li>Trainer: {{ person.num_trainer }} times</li>
         <li>Supporting Instructor: {{ person.num_supporting }} times</li>
         <li>Helper: {{ person.num_helper }} times</li>
         <li>Learner: {{ person.num_learner }} times</li>
@@ -218,10 +220,10 @@
         </tr>
         {% for role in community_roles %}
         <tr>
-          <td>{{ role.config }}</td>
+          <td><a href="{{ role.get_absolute_url }}">{{ role.config }}</a></td>
           <td>
-            {% if role.start or role.end %}
-            {% human_daterange role.start role.end %}
+            {% if role.start %}
+            {% community_role_human_dates role %}
             {% else %}
             &mdash;
             {% endif %}

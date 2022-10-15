@@ -1,13 +1,22 @@
+from __future__ import annotations
+
+from logging import Logger
+from typing import Optional, Sequence, Type, Union
+
 from django.contrib import messages
+from django.db.models.query import QuerySet
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from django_rq.queues import DjangoScheduler
+from redis import Redis, StrictRedis
 from rq.exceptions import NoSuchJobError
 
+from autoemails.actions import BaseAction
+from autoemails.job import Job
+from autoemails.mixins import RQJobsMixin
 from autoemails.models import RQJob, Trigger
-
-from .job import Job
-from .utils import check_status, scheduled_execution_time
+from autoemails.utils import check_status, scheduled_execution_time
 
 
 class ActionManageMixin:
@@ -33,14 +42,14 @@ class ActionManageMixin:
 
     @staticmethod
     def add(
-        action_class,
-        logger,
-        scheduler,
-        triggers,
-        context_objects,
-        object_=None,
-        request=None,
-    ):
+        action_class: Type[BaseAction],
+        logger: Logger,
+        scheduler: DjangoScheduler,
+        triggers: QuerySet[Trigger],
+        context_objects: dict,
+        object_: Optional[RQJobsMixin] = None,
+        request: Optional[HttpRequest] = None,
+    ) -> tuple[list[Job], list[RQJob]]:
         Action = action_class
         action_name = Action.__name__
 
@@ -111,11 +120,10 @@ class ActionManageMixin:
                     request,
                     format_html(
                         "New email ({}) was scheduled to run "
-                        '<relative-time datetime="{}">{}</relative-time>: '
-                        '<a href="{}">{}</a>.',
+                        '<relative-time datetime="{}"></relative-time>: '
+                        '<a href="{}"><code>{}</code></a>.',
                         trigger.get_action_display(),
                         scheduled_at.isoformat(),
-                        "{:%Y-%m-%d %H:%M}".format(scheduled_at),
                         reverse("admin:autoemails_rqjob_preview", args=[rqj.pk]),
                         job.id,
                     ),
@@ -148,14 +156,14 @@ class ActionManageMixin:
 
     @staticmethod
     def remove(
-        action_class,
-        logger,
-        scheduler,
-        connection,
-        jobs,
-        object_,
-        request=None,
-    ):
+        action_class: Type[BaseAction],
+        logger: Logger,
+        scheduler: DjangoScheduler,
+        connection: Union[Redis, StrictRedis],
+        jobs: Sequence[str],
+        object_: RQJobsMixin,
+        request: Optional[HttpRequest] = None,
+    ) -> None:
         Action = action_class
         action_name = Action.__name__
 
@@ -196,8 +204,8 @@ class ActionManageMixin:
                     messages.info(
                         request,
                         format_html(
-                            "Scheduled email {} was removed because action "
-                            "conditions have changed. "
+                            "Scheduled email <code>{}</code> was removed because "
+                            "action conditions have changed. "
                             '<a href="{}">See other scheduled jobs</a>.',
                             job,
                             reverse("admin:autoemails_rqjob_changelist"),

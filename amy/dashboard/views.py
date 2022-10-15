@@ -1,24 +1,36 @@
+from datetime import date, timedelta
 import re
 from typing import Dict, Optional
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
+from django.views.generic import View
+from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 
+from autoemails.utils import safe_next_or_default_url
+from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, TermOption
+from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
+    LessonContributionForm,
     SearchForm,
-    SendHomeworkForm,
+    SignupForRecruitmentForm,
 )
+from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from recruitment.views import RecruitmentEnabledMixin
+from workshops.base_views import AMYListView, ConditionallyEnabledMixin
 from workshops.models import (
     Airport,
     Badge,
@@ -31,21 +43,22 @@ from workshops.models import (
     Task,
     TrainingProgress,
     TrainingRequest,
+    TrainingRequirement,
 )
-from workshops.util import admin_required, login_required
+from workshops.utils.access import admin_required, login_required
 
-# Terms shown on the trainee dashboard and can be updated by the user.
+# Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = ["may-contact", "public-profile", "may-publish-name"]
 
 
 @login_required
 def dispatch(request):
     """If user is admin, then show them admin dashboard; otherwise redirect
-    them to trainee dashboard."""
+    them to instructor dashboard."""
     if request.user.is_admin:
         return redirect(reverse("admin-dashboard"))
     else:
-        return redirect(reverse("trainee-dashboard"))
+        return redirect(reverse("instructor-dashboard"))
 
 
 @admin_required
@@ -99,11 +112,11 @@ def admin_dashboard(request):
 
 
 # ------------------------------------------------------------
-# Views for trainees
+# Views for instructors and trainees
 
 
 @login_required
-def trainee_dashboard(request):
+def instructor_dashboard(request):
     qs = Person.objects.select_related("airport").prefetch_related(
         "badges",
         "lessons",
@@ -134,7 +147,7 @@ def trainee_dashboard(request):
         consent_by_term_slug_label[label] = consent.term_option
 
     context = {"title": "Your profile", "user": user, **consent_by_term_slug_label}
-    return render(request, "dashboard/trainee_dashboard.html", context)
+    return render(request, "dashboard/instructor_dashboard.html", context)
 
 
 @login_required
@@ -173,7 +186,7 @@ def autoupdate_profile(request):
 
             messages.success(request, "Your profile was updated.")
 
-            return redirect(reverse("trainee-dashboard"))
+            return redirect(reverse("instructor-dashboard"))
         else:
             messages.error(request, "Fix errors below.")
 
@@ -187,7 +200,7 @@ def autoupdate_profile(request):
 
 @login_required
 def training_progress(request):
-    homework_form = SendHomeworkForm()
+    lesson_contribution_form = LessonContributionForm()
 
     # Add information about instructor training progress to request.user.
     request.user = (
@@ -203,58 +216,267 @@ def training_progress(request):
     )
 
     progresses = request.user.trainingprogress_set.filter(discarded=False)
-    last_swc_homework = (
-        progresses.filter(requirement__name="SWC Homework")
+    last_lesson_contribution = (
+        progresses.filter(requirement__name="Lesson Contribution")
         .order_by("-created_at")
         .first()
-    )
-    request.user.swc_homework_in_evaluation = (
-        last_swc_homework is not None and last_swc_homework.state == "n"
-    )
-    last_dc_homework = (
-        progresses.filter(requirement__name="DC Homework")
-        .order_by("-created_at")
-        .first()
-    )
-    request.user.dc_homework_in_evaluation = (
-        last_dc_homework is not None and last_dc_homework.state == "n"
-    )
-    last_lc_homework = (
-        progresses.filter(requirement__name="LC Homework")
-        .order_by("-created_at")
-        .first()
-    )
-    request.user.lc_homework_in_evaluation = (
-        last_lc_homework is not None and last_lc_homework.state == "n"
     )
 
     if request.method == "POST":
-        homework_form = SendHomeworkForm(data=request.POST)
-        if homework_form.is_valid():
-            # read homework type from POST
-            hw_type = homework_form.cleaned_data["requirement"]
-
-            # create "empty" progress object and fill out
-            progress = TrainingProgress(
+        lesson_contribution_form = LessonContributionForm(data=request.POST)
+        if lesson_contribution_form.is_valid():
+            TrainingProgress.objects.create(
                 trainee=request.user,
                 state="n",  # not evaluated yet
-                requirement=hw_type,
+                requirement=TrainingRequirement.objects.get(name="Lesson Contribution"),
+                url=lesson_contribution_form.cleaned_data["url"],
             )
-
-            # create virtual form to validate and save
-            form = SendHomeworkForm(data=request.POST, instance=progress)
-            if form.is_valid():
-                form.save()
-                messages.success(
-                    request, "Your homework submission will be " "evaluated soon."
-                )
-                return redirect(reverse("training-progress"))
+            messages.success(
+                request, "Your Lesson Contribution submission will be evaluated soon."
+            )
+            return redirect(reverse("training-progress"))
 
     context = {
         "title": "Your training progress",
-        "homework_form": homework_form,
+        "lesson_contribution_form": lesson_contribution_form,
+        "lesson_contribution_in_evaluation": (
+            last_lesson_contribution is not None
+            and last_lesson_contribution.state == "n"
+        ),
     }
     return render(request, "dashboard/training_progress.html", context)
+
+
+# ------------------------------------------------------------
+# Views for instructors - upcoming teaching opportunities
+
+
+class UpcomingTeachingOpportunitiesList(
+    LoginRequiredMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+):
+    permission_required = "recruitment.view_instructorrecruitment"
+    title = "Upcoming Teaching Opportunities"
+    template_name = "dashboard/upcoming_teaching_opportunities.html"
+    filter_class = UpcomingTeachingOpportunitiesFilter
+
+    def get_queryset(self):
+        today = date.today()
+
+        # this condition means: either venue, latitude and longitude are provided, or
+        # the event has "online" tag
+        location = (
+            ~Q(event__venue="")
+            & Q(event__latitude__isnull=False)
+            & Q(event__longitude__isnull=False)
+        ) | Q(event__tags__name="online")
+
+        self.queryset = (
+            InstructorRecruitment.objects.annotate_with_priority()
+            .select_related("event", "event__host")
+            .filter(status="o", event__start__gte=today)
+            .filter(location)
+            .prefetch_related(
+                "event__curricula",
+                Prefetch(
+                    "signups",
+                    queryset=InstructorRecruitmentSignup.objects.filter(
+                        person=self.request.user,
+                    ),
+                    to_attr="person_signup",
+                ),
+            )
+            .order_by("event__start")
+            .distinct()
+        )
+        return super().get_queryset()
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # person details with tasks counted
+        context["person"] = (
+            Person.objects.annotate_with_role_count()
+            .select_related("airport")
+            .get(pk=self.request.user.pk)
+        )
+        context["person_instructor_tasks_slugs"] = Task.objects.filter(
+            role__name="instructor", person__pk=self.request.user.pk
+        ).values_list("event__slug", flat=True)
+
+        context["person_instructor_task_events"] = {
+            task.event
+            for task in Task.objects.filter(
+                role__name="instructor", person__pk=self.request.user.pk
+            ).select_related("event")
+        }
+
+        context["person_signups"] = InstructorRecruitmentSignup.objects.filter(
+            person=self.request.user
+        ).select_related("recruitment", "recruitment__event")
+
+        return context
+
+
+class SignupForRecruitment(
+    LoginRequiredMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    AMYCreateAndFetchObjectView,
+):
+    permission_required = [
+        "recruitment.view_instructorrecruitment",
+        "recruitment.add_instructorrecruitmentsignup",
+    ]
+    title = "Signup for workshop"
+    model = InstructorRecruitmentSignup
+    queryset_other = InstructorRecruitment.objects.filter(status="o").select_related(
+        "event"
+    )
+    context_other_object_name = "recruitment"
+    pk_url_kwarg = "recruitment_pk"
+
+    form_class = SignupForRecruitmentForm
+    template_name = "dashboard/signup_for_recruitment.html"
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
+
+    def get_context_data(self, **kwargs):
+        self.other_object: InstructorRecruitment
+        event = self.other_object.event
+
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Signup for workshop {event}"
+
+        # person details with tasks counted
+        context["person"] = (
+            Person.objects.annotate_with_role_count()
+            .select_related("airport")
+            .get(pk=self.request.user.pk)
+        )
+
+        return context
+
+    def get_success_message(self, cleaned_data):
+        self.other_object: InstructorRecruitment
+        event = self.other_object.event
+        return (
+            f"Your interest in teaching at {event} has been recorded and is now "
+            "pending."
+        )
+
+    def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next", None)
+        success_url = reverse("upcoming-teaching-opportunities")
+        return safe_next_or_default_url(next_url, success_url)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"person": self.request.user, "recruitment": self.other_object})
+        return kwargs
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.recruitment = self.other_object
+        obj.person = self.request.user
+        obj.save()
+
+        # Check and display warnings
+        recruitment: InstructorRecruitment = self.other_object
+        event: Event = recruitment.event
+
+        # existing instructor tasks within +-14days of this event
+        if tasks_nearby := Task.objects.exclude(event=event).filter(
+            person=self.request.user,
+            role__name="instructor",
+            event__start__lte=event.end + timedelta(days=14),
+            event__end__gte=event.start - timedelta(days=14),
+        ):
+            messages.warning(
+                self.request,
+                "Selected event dates fall within 14 days of your other workshops: "
+                f"{', '.join(task.event.slug for task in tasks_nearby)}",
+            )
+
+        # instructor has applied for opportunities in the same dates
+        if conflicting_signups := InstructorRecruitmentSignup.objects.exclude(
+            recruitment=recruitment
+        ).filter(
+            person=self.request.user,
+            recruitment__event__start__lte=event.end,
+            recruitment__event__end__gte=event.start,
+        ):
+            gen = (signup.recruitment.event.slug for signup in conflicting_signups)
+            messages.warning(
+                self.request,
+                "You have applied to other workshops on the same dates: "
+                f"{', '.join(gen)}",
+            )
+
+        return super().form_valid(form)
+
+
+class ResignFromRecruitment(
+    LoginRequiredMixin,
+    RecruitmentEnabledMixin,
+    ConditionallyEnabledMixin,
+    SingleObjectMixin,
+    View,
+):
+    permission_required = [
+        "recruitment.view_instructorrecruitmentsignup",
+        "recruitment.delete_instructorrecruitmentsignup",
+    ]
+    default_redirect_url = reverse_lazy("upcoming-teaching-opportunities")
+    pk_url_kwarg = "signup_pk"
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+
+        signup = self.get_object()
+        recruitment = signup.recruitment
+        signup.delete()
+
+        messages.success(
+            self.request,
+            f"Your teaching request was removed from recruitment {recruitment.event}",
+        )
+
+        redirect_url = self.get_redirect_url()
+        return redirect(redirect_url)
+
+    def get_view_enabled(self) -> bool:
+        try:
+            role = CommunityRole.objects.get(
+                person=self.request.user, config__name="instructor"
+            )
+            return role.is_active() and super().get_view_enabled()
+        except CommunityRole.DoesNotExist:
+            return False
+
+    def get_queryset(self):
+        return InstructorRecruitmentSignup.objects.filter(
+            person=self.request.user, recruitment__status="o"
+        )
+
+    def get_redirect_url(self) -> str:
+        next_url = self.request.POST.get("next", None)
+        return safe_next_or_default_url(next_url, self.default_redirect_url)
 
 
 # ------------------------------------------------------------
@@ -319,7 +541,7 @@ def search(request):
                     | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
                 )
-                persons = list(Person.objects.filter(complex_q))
+                persons = list(Person.objects.filter(complex_q).order_by("family"))
             else:
                 persons = list(
                     Person.objects.filter(
@@ -340,17 +562,36 @@ def search(request):
             )
             results_combined += airports
 
-            training_requests = list(
-                TrainingRequest.objects.filter(
+            if len(tokens) == 2:
+                name1, name2 = tokens
+                complex_q = (
                     Q(group_name__icontains=term)
-                    | Q(family__icontains=term)
+                    | (Q(personal__icontains=name1) & Q(family__icontains=name2))
+                    | (Q(personal__icontains=name2) & Q(family__icontains=name1))
                     | Q(email__icontains=term)
+                    | Q(secondary_email__icontains=term)
                     | Q(github__icontains=term)
                     | Q(affiliation__icontains=term)
                     | Q(location__icontains=term)
                     | Q(user_notes__icontains=term)
                 )
-            )
+                training_requests = list(
+                    TrainingRequest.objects.filter(complex_q).order_by("family")
+                )
+
+            else:
+                training_requests = list(
+                    TrainingRequest.objects.filter(
+                        Q(group_name__icontains=term)
+                        | Q(family__icontains=term)
+                        | Q(email__icontains=term)
+                        | Q(github__icontains=term)
+                        | Q(affiliation__icontains=term)
+                        | Q(location__icontains=term)
+                        | Q(user_notes__icontains=term)
+                    ).order_by("family")
+                )
+
             results_combined += training_requests
 
             comments = list(

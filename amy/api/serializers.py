@@ -3,6 +3,7 @@ from rest_framework import serializers
 from autoemails.models import EmailTemplate
 from communityroles.models import CommunityRoleConfig
 from consents.models import Consent, Term
+from recruitment.models import InstructorRecruitment
 from workshops.models import (
     Airport,
     Award,
@@ -524,7 +525,22 @@ class CommunityRoleConfigSerializer(serializers.ModelSerializer):
             "display_name",
             "link_to_award",
             "award_badge_limit",
+            "autoassign_when_award_created",
             "link_to_membership",
             "additional_url",
             "generic_relation_content_type",
+        ]
+
+
+class InstructorRecruitmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstructorRecruitment
+        fields = [
+            "id",
+            "created_at",
+            "last_updated_at",
+            "assigned_to",
+            "status",
+            "notes",
+            "event",
         ]

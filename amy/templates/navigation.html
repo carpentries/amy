@@ -23,6 +23,8 @@
               {% navbar_element "Airports" "all_airports" True %}
               {% navbar_element "Events with changed metadata" "events_metadata_changed" True %}
               <div class="dropdown-divider"></div>
+              {% navbar_element "Instructor Selection / Recruitment" "all_instructorrecruitment" True %}
+              <div class="dropdown-divider"></div>
               {% navbar_element_permed "Bulk add people" "person_bulk_add" "workshops.add_person" True %}
               {% navbar_element_permed "Merge persons" "persons_merge" "workshops.delete_person" True %}
               {% navbar_element_permed "Merge events" "events_merge" "workshops.change_event,workshops.delete_event" True %}
@@ -76,11 +78,10 @@
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Hello, {{ user.get_short_name }}</a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-              {% if user.is_admin %}
+
               <a class="dropdown-item" href="{% url 'person_details' user.id %}">Your profile</a>
-              {% else %}
-              <a class="dropdown-item" href="{% url 'autoupdate_profile' %}">Your profile</a>
-              {% endif %}
+              <a class="dropdown-item" href="https://carpentries.github.io/amy/users_guide/" target="_blank" rel="noreferrer nofollow">Users Guide</a>
+
               <a class="dropdown-item" href="{% url 'api:export-person-data' %}?format=json">Download your data</a>
               <a class="dropdown-item" href="{% url 'person_password' user.id %}">Change password</a>
               <div class="dropdown-divider"></div>

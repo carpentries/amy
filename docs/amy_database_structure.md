@@ -202,7 +202,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Discussion, etc.)
     * `id`  Sequential, automatically assigned integer.
     * `name` Name of requirement (*DC Homework*, *LC Demo*, etc.)
-    * `url_required` Notes whether a URL is required for this type of training requirement.  This only applies to the *Homework* (lesson contribution) requirements.
+    * `url_required` Notes whether a URL is required for this type of training requirement.  This only applies to the *Lesson Contribution* requirements.
     * `event_required` Notes whether an event is required for this type of training requirement.  This only applies to the *Training* (the actual event they attended).
 
 * `workshops_trainingprogress` Connects `workshops_trainingrequirement` and `workshops_person` to show what Persons have completed what steps of the checkout process.
@@ -213,7 +213,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
         * `a`: ask to repeat
         * `f`: fail
         * `n`: not evaluated yet
-    * `url` Only for *Homework* (lesson contribution) requirement; links to the trainee's GitHub contribution
+    * `url` Only for *Lesson Contribution* requirement; links to the trainee's GitHub contribution
     * `notes` Any human generated notes
     * `evaluated_by_id` id of the user entering this record.  This is linked to the `workshops_person` table
     * `event_id` id of the event this trainee was at.  This is linked to the `workshops_event` table
@@ -222,7 +222,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 
 ### Term
 
-`consents_term` - Stores all Terms in AMY (i.e. the privary policy). 
+`consents_term` - Stores all Terms in AMY (i.e. the privary policy).
 
 #### Archive Behavior
 
@@ -253,7 +253,7 @@ When TermOptions are archived (`archived_at` timestamp is set), any `Consents` t
 
 ### Consent
 
-`consents_consent` - Stores all consents for all users in AMY. 
+`consents_consent` - Stores all consents for all users in AMY.
 
 #### Archive Behavior
 

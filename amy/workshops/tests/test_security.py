@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from config import urls
 from workshops.models import Person
 from workshops.tests.base import TestBase
-from workshops.util import (
+from workshops.utils.access import (
     LoginNotRequiredMixin,
     OnlyForAdminsMixin,
     admin_required,
@@ -160,7 +160,7 @@ class TestViews(TestBase):
         Test that a view decorated with @login_required is accessible
         only for Admins and Trainees.
         """
-        view_name = "trainee-dashboard"
+        view_name = "instructor-dashboard"
         view = get_view_by_name(view_name)
         assert view._access_control_list == [login_required]
         url = reverse(view_name)

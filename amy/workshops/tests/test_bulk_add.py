@@ -10,19 +10,22 @@ from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
-from workshops.util import upload_person_task_csv, verify_upload_person_task
+from workshops.utils.person_upload import (
+    upload_person_task_csv,
+    verify_upload_person_task,
+)
 import workshops.views
 
 
 class UploadPersonTaskCSVTestCase(TestBase):
     def compute_from_string(self, csv_str):
-        """ wrap up buffering the raw string & parsing """
+        """wrap up buffering the raw string & parsing"""
         csv_buf = StringIO(csv_str)
         # compute and return
         return upload_person_task_csv(csv_buf)
 
     def test_basic_parsing(self):
-        """ See Person.PERSON_UPLOAD_FIELDS for field ordering """
+        """See Person.PERSON_UPLOAD_FIELDS for field ordering"""
         csv = """personal,family,email
 john,doe,johndoe@email.com
 jane,doe,janedoe@email.com"""
@@ -35,14 +38,14 @@ jane,doe,janedoe@email.com"""
         self.assertTrue(set(person.keys()).issuperset(set(Person.PERSON_UPLOAD_FIELDS)))
 
     def test_csv_without_required_field(self):
-        """ All fields in Person.PERSON_UPLOAD_FIELDS must be in csv """
+        """All fields in Person.PERSON_UPLOAD_FIELDS must be in csv"""
         bad_csv = """personal,family
 john,doe"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue("email" in empty_fields)
 
     def test_csv_with_mislabeled_field(self):
-        """ It pays to be strict """
+        """It pays to be strict"""
         bad_csv = """personal,family,emailaddress
 john,doe,john@doe.com"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
@@ -58,7 +61,7 @@ john,doe,john@doe.com
         self.assertEqual(person["personal"], "john")
 
     def test_empty_field(self):
-        """ Ensure we don't mis-order fields given blank data """
+        """Ensure we don't mis-order fields given blank data"""
         csv = """personal,family,email
 john,,johndoe@email.com"""
         person_tasks, _ = self.compute_from_string(csv)
@@ -337,7 +340,7 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         self.assertEqual(rv.status_code, 200)
         _, params = cgi.parse_header(rv["content-type"])
         charset = params["charset"]
-        content = rv.content.decode(charset)
+        content = rv.content.decode(charset)  # type: ignore
         self.assertNotIn("foobar", content)
 
     def test_upload_existing_user(self):
@@ -687,6 +690,6 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
         self.assertEqual(len(rqjobs_post), 2)
 
         # ensure the job ids are mentioned in the page output
-        content = rv.content.decode("utf-8")
+        content = rv.content.decode("utf-8")  # type: ignore
         for job in rqjobs_post:
             self.assertIn(job.job_id, content)

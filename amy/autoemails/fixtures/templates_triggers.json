@@ -195,6 +195,40 @@
         }
     },
     {
+        "model": "autoemails.emailtemplate",
+        "pk": 12,
+        "fields": {
+            "active": true,
+            "created_at": "2020-09-14T20:35:29.650Z",
+            "last_updated_at": "2021-12-07T18:43:28.589Z",
+            "slug": "profile-update",
+            "subject": "The Carpentries Profile Update Reminder",
+            "to_header": "{{ request.email }}",
+            "from_header": "amy-no-reply@carpentries.org",
+            "cc_header": "",
+            "bcc_header": "",
+            "reply_to_header": "",
+            "body_template": "Dear {{ person_full_name }},\r\n\r\nOnce a year, we ask you to check that the information we store about you and your activities with The Carpentries are up-to-date. It is important that we have current information so we can inform you of new teaching or volunteering opportunities.\r\n\r\nPlease go to <https://amy.carpentries.org> to log in to your AMY account. Check that your email address and affiliation are current, that your knowledge domain and the lessons you can teach are current, and that all the workshops you have taught are reflected on your profile. If you need help updating your profile, do not hesitate to contact us at [team@carpentries.org](mailto:team@carpentries.org).\r\n\r\nThank you for everything you do with The Carpentries!\r\n\r\nSincerely,\r\nThe Carpentries\r\n\r\n\r\n\r\nYou are receiving this message because your email address was provided for this AMY account. Please note that this email is a legal notice, and you cannot unsubscribe. If you believe you received this message in error, do not hesitate to contact [team@carpentries.org](mailto:team@carpentries.org)."
+        }
+    },
+    {
+        "model": "autoemails.emailtemplate",
+        "pk": 13,
+        "fields": {
+            "active": true,
+            "created_at": "2022-05-25T07:55:00.000Z",
+            "last_updated_at": "2022-05-25T07:55:00.000Z",
+            "slug": "declined-instructor-signups",
+            "subject": "Thank you for signing up to teach at{% if workshop_main_type %} {{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }}{% if dates %} on {{ dates }}{% endif %}",
+            "to_header": "{{ email }}",
+            "from_header": "amy-no-reply@carpentries.org",
+            "cc_header": "",
+            "bcc_header": "",
+            "reply_to_header": "",
+            "body_template": "Thank you for your interest in {{ workshop.slug }}. Unfortunately we have placed other Instructors."
+        }
+    },
+    {
         "model": "autoemails.trigger",
         "pk": 1,
         "fields": {
@@ -316,20 +350,14 @@
         }
     },
     {
-        "model": "autoemails.emailtemplate",
+        "model": "autoemails.trigger",
         "pk": 12,
         "fields": {
             "active": true,
-            "created_at": "2020-09-14T20:35:29.650Z",
-            "last_updated_at": "2021-12-07T18:43:28.589Z",
-            "slug": "profile-update",
-            "subject": "The Carpentries Profile Update Reminder",
-            "to_header": "{{ request.email }}",
-            "from_header": "amy-no-reply@carpentries.org",
-            "cc_header": "",
-            "bcc_header": "",
-            "reply_to_header": "",
-            "body_template": "Dear {{ person_full_name }},\r\n\r\nOnce a year, we ask you to check that the information we store about you and your activities with The Carpentries are up-to-date. It is important that we have current information so we can inform you of new teaching or volunteering opportunities.\r\n\r\nPlease go to <https://amy.carpentries.org> to log in to your AMY account. Check that your email address and affiliation are current, that your knowledge domain and the lessons you can teach are current, and that all the workshops you have taught are reflected on your profile. If you need help updating your profile, do not hesitate to contact us at [team@carpentries.org](mailto:team@carpentries.org).\r\n\r\nThank you for everything you do with The Carpentries!\r\n\r\nSincerely,\r\nThe Carpentries\r\n\r\n\r\n\r\nYou are receiving this message because your email address was provided for this AMY account. Please note that this email is a legal notice, and you cannot unsubscribe. If you believe you received this message in error, do not hesitate to contact [team@carpentries.org](mailto:team@carpentries.org)."
+            "created_at": "2022-05-25T07:55:00.000Z",
+            "last_updated_at": "2022-05-25T07:55:00.000Z",
+            "action": "declined-instructors",
+            "template": 13
         }
     }
 ]

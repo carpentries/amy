@@ -1,0 +1,22 @@
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Profile snapshot</h5>
+    <ul>
+      <li><strong>Name:</strong> {{ person }}</li>
+      <li><strong>Email:</strong> {{ person.email|default:"&mdash;" }}</li>
+      <li><strong>Country:</strong> {% include "includes/country_flag.html" with country=person.country %}</li>
+      <li><strong>Airport:</strong> {{ person.airport|default:"&mdash;" }}</li>
+      <li><strong>Teaching experience:</strong>
+        <ul>
+          <li><strong>Helper:</strong> {{ person.num_helper }} time{{ person.num_helper|pluralize }}</li>
+          <li><strong>Supporting Instructor:</strong> {{ person.num_supporting }} time{{ person.num_supporting|pluralize }}</li>
+          <li><strong>Instructor:</strong> {{ person.num_instructor }} time{{ person.num_instructor|pluralize }}</li>
+        </ul>
+      </li>
+    </ul>
+    <p class="card-text">
+      If any of this information is incorrect, please edit your information on your
+      <a href="{% url 'autoupdate_profile' %}">profile page in AMY</a>.
+    </p>
+  </div>
+</div>

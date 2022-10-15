@@ -387,13 +387,92 @@ Admin users will have rights to view and edit many other parts of the AMY databa
 
 An admin user can view their profile as if they were an ordinary user on [this dashboard page](https://amy.carpentries.org/dashboard/trainee/).
 
+
+### Automated emails
+
+AMY sends automated emails for workshop administration.  The following seven email automations are currently enabled.  The content of each email can be viewed by authorized users only. View by selecting `Django Admin` in the top right menu, and select `Email Templates` from the admin page.
+
+**Email description:** Introduction of instructors and host. See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L703)  
+**Sent to:**  All Workshop Hosts + Instructors  
+**Sent from:**  Regional coordinator email  
+**Subject:** Instructors for {{ workshop_main_type }} workshop organized by {{ workshop_host.fullname }} {% if dates %} on {{ dates }}{% endif %}  
+**Date sent:** One hour from when conditions are met.  
+**Conditions:**  Start date more than seven days in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least two instructors and at least one host. Has at least one supporting instructor if online.  Centrally organized only.  
+
+**Email description:** Recruit Helpers.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L973)  
+**Sent to:**  All Workshop Hosts + Instructors  
+**Sent from:** Regional coordinator email (admin-xx@carpentries.org)  
+**Subject:** Time to Recruit Helpers for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}  
+**Date sent:** 21 days before start date.  
+**Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least one instructor or at least one host.  Has no helpers.  Centrally organized only.  
+
+**Email description:** Website URL is missing.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L839)  
+**Sent to:**  All Instructors  
+**Sent from:**  Regional coordinator email  
+**Subject:** Workshop Website needed for  {DC, SWC, LC} workshop at {site} on {dates}  
+**Date sent:**  30 days before start date.  
+**Conditions:** Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  No workshop URL. At least one instructor. Centrally organized or Self organized.  
+ 
+**Email description:**  Supporting Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L348)  
+**Sent to:**  Single new supporting instructor  
+**Sent from:**  Regional coordinator email  
+**Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}  
+**Date sent:**  One hour after conditions are met.  
+**Conditions:**  New role of supporting instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Online workshop. Centrally organized only.  
+
+**Email description:** Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L256)	 
+**Sent to:**  Single new instructor  
+**Sent from:**  Regional coordinator email  
+**Subject:** Confirmation of your participation as an instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %} ({{ dates }}){% endif %}  
+**Date sent:** One hour after conditions are met.  
+**Conditions:** New role of instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Centrally organized only.  
+
+**Email description:** A new event is created from Self-Organised Request Form.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L594)	 
+**Sent to:**  Form submitter and additional contacts  
+**Sent from:**  Regional coordinator email  
+**Subject:**  {{ workshop.host.fullname }} ({{ workshop.slug }}) Workshop  
+**Date sent:** One hour after conditions are met.  
+**Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive.  Event created from SO form.  Self organized only.  
+
+**Email description:** 7 days past the end date of an active workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L430)  
+**Sent to:**  All Workshop Hosts + Instructors  
+**Sent from:**  Regional coordinator email  
+**Subject:** Completed {% if workshop_main_type %}{{ workshop_main_type }}{% else %}Carpentries{% endif %} workshop at {{ workshop.venue }} on {{ dates }} ({{ workshop.slug }})  
+**Date sent:** 7 days after end date.  
+**Conditions:** End date in past.  Tag is not stalled, canceled, or unresponsive. Tag is one of ["LC", "DC", "SWC", "Circuits"].  Centrally organized or Self organized.  
+
 ### Other Tasks
 
 #### Merging Duplicate Persons, Training Requests, or Events
 
-If duplicate Person, Training Request, or Event records exist, they can be merged.  Select the appropriate option from the "More" menu.
+If duplicate Person, Training Request, or Event records exist, they can be merged.  If you know which two records should be merged, you can select them directly.  You can also search for possible duplicate records.
 
-Choose the two records to be merged, and click "Submit" to see merge options. Here you can choose to keep the value from Record A, from Record B, or to combine the values.  By default, keeping the value in Record A is checked.
+##### Merging two known duplicate records.
+
+![AMY merge duplicates menu](images/merge_menu.png)
+
+Once you select "Merge Persons" or "Merge Events" you will be taken to a screen to select the two Persons or Events you would like to merge. Start typing in the Person's name or the Event's slug, and AMY will autocomplete with possible options.
+
+![AMY select Persons to merge](images/select_merge_persons.png)
+
+This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values).  Click "Submit" on the bottom of this screen to complete the merge process.
+
+![AMY merge Persons](images/merge_persons.png)
+
+##### Searching for possible duplicate Person or Training Request records
+
+If you want to check for duplicate Person or Training Requests in general, you can review a list of possible duplicate records. Select the appropriate option from the "Reports" menu.
+
+![AMY find duplicates menu](images/find_duplicate_menu.png)
+
+Here, you will see two lists:
+
+* **Possible duplicate persons**. This will include records where another record exists with the personal and family names switched, or a single person with the same personal and family name.  
+* **Persons with the same names**.  This compares people with the same personal and family names.  
+
+In either case, if these records should be merged, select records A and B.  This will take you to the Merge Persons screen (see above).  If these individuals are not the same person, select "Mark as Reviewed" and they will not show up in the list of possible duplicates again.
+
+![AMY search duplicates](images/search_duplicates.png)
 
 ### Searching
 

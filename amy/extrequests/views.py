@@ -47,6 +47,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
     StateFilterMixin,
 )
+from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
@@ -63,21 +64,16 @@ from workshops.models import (
     TrainingRequest,
     WorkshopRequest,
 )
-from workshops.util import (
-    InternalError,
-    OnlyForAdminsMixin,
-    WrongWorkshopURL,
-    admin_required,
+from workshops.utils.access import OnlyForAdminsMixin, admin_required
+from workshops.utils.merge import merge_objects
+from workshops.utils.metadata import fetch_workshop_metadata, parse_workshop_metadata
+from workshops.utils.trainingrequest_upload import (
     clean_upload_trainingrequest_manual_score,
-    create_username,
-    failed_to_delete,
-    fetch_workshop_metadata,
-    merge_objects,
-    parse_workshop_metadata,
-    redirect_with_next_support,
     update_manual_score,
     upload_trainingrequest_manual_score_csv,
 )
+from workshops.utils.usernames import create_username
+from workshops.utils.views import failed_to_delete, redirect_with_next_support
 
 logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler("default")

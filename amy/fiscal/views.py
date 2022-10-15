@@ -36,7 +36,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
 )
 from workshops.models import Award, Member, MemberRole, Membership, Organization, Task
-from workshops.util import OnlyForAdminsMixin
+from workshops.utils.access import OnlyForAdminsMixin
 
 # ------------------------------------------------------------
 # Organization related views
@@ -73,11 +73,11 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
         related = ["host", "sponsor", "membership"]
         context["all_events"] = (
             self.object.hosted_events.select_related(*related)
+            .prefetch_related("tags")
             .union(
                 self.object.sponsored_events.select_related(*related),
                 self.object.administered_events.select_related(*related),
             )
-            .prefetch_related("tags")
         )
         context["main_organisation_memberships"] = Membership.objects.filter(
             member__role__name="main", member__organization=self.object
@@ -509,7 +509,7 @@ class MembershipCreateRollOver(
             "consortium": self.membership.consortium,
             "public_status": self.membership.public_status,
             "variant": self.membership.variant,
-            "agreement_start": self.membership.agreement_end,
+            "agreement_start": self.membership.agreement_end + timedelta(days=1),
             "agreement_end": date(
                 self.membership.agreement_end.year + 1,
                 self.membership.agreement_end.month,

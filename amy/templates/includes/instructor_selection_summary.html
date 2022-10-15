@@ -7,10 +7,14 @@
         <a href="{{ event.instructorrecruitment.get_absolute_url }}">See details</a>
       {% elif event.instructorrecruitment.status == "c" %}
         <span class="text-success">closed</span> <br>
-        <a href="">See details or reopen</a>
+        <a href="{{ event.instructorrecruitment.get_absolute_url }}">See details or reopen</a>
       {% else %}
+        {% if event.eligible_for_instructor_recruitment %}
         <span class="text-danger">inactive</span> <br>
         <a href="{% url 'instructorrecruitment_add' event.pk %}">Begin Instructor Selection process</a>
+        {% else %}
+        <span class="text-danger">unavailable (start in past or no location data, or not online)</span>
+        {% endif %}
       {% endif %}
     </td>
   </tr>

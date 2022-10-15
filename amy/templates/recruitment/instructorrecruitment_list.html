@@ -1,0 +1,69 @@
+{% extends "base_nav_sidebar.html" %}
+
+{% load dates %}
+{% load instructorrecruitment %}
+{% load pagination %}
+{% load static %}
+
+{% block content %}
+  {% for object in object_list %}
+  <hr>
+  <h4 class="mt-4">
+    <a href="{{ object.event.get_absolute_url }}">{{ object.event.slug }}</a>
+    <span class="badge {% if object.status == "o" %}badge-warning{% elif object.status == "c" %}badge-success{% else %}badge-dark{% endif %}">
+      {{ object.get_status_display }}
+    </span>
+  </h4>
+  <p class="lead">
+    <table>
+      <tr>
+        <td width="25px"><i class="far fa-calendar"></i></td>
+        <td>{% human_daterange object.event.start object.event.end %}</td>
+      </tr>
+      <tr>
+        {% if "online" in object.event.tags.strings %}
+        <td><i class="fa fa-globe"></i></td>
+        <td>online</td>
+        {% else %}
+        <td><i class="fa fa-users"></td>
+        <td>in-person</td>
+        {% endif %}
+      </tr>
+      <tr>
+        <td><i class="fa fa-exclamation"></i></td>
+        <td>
+          {% if object.priority is not None %}manual priority: {{ object.priority|priority_label }}{% else %}automatic priority: {{ object.automatic_priority|priority_label }}{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <td><i class="fas fa-user-cog"></i></td>
+        <td>{% if object.assigned_to %}Assigned to: <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a>{% else %}Unassigned{% endif %}</td>
+      </tr>
+    </table>
+  </p>
+  <div class="card recruitment-notes">
+    <div class="card-body">
+      <div class="notes">
+        <div class="notes-content">{{ object.notes }}</div>
+        {% if object.notes %}
+        <button type="button" class="btn btn-outline-primary btn-sm edit-notes" onclick="editInstructorRecruitmentNotes(this)">Edit notes</button>
+        {% else %}
+        <button type="button" class="btn btn-outline-primary btn-sm add-notes" onclick="editInstructorRecruitmentNotes(this)">Add notes</button>
+        {% endif %}
+      </div>
+      <div class="notes-editing d-none">
+        <textarea class="form-control notes-content-editable" rows=5>{{ object.notes }}</textarea>
+        <div class="invalid-feedback d-none">Error when saving notes. Please try again later.</div>
+        <button type="button" class="btn btn-primary btn-sm save-notes" onclick="saveInstructorRecruitmentNotes(this, {{ object.id }})">Save</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm cancel-notes" onclick="cancelSavingInstructorRecruitmentNotes(this)">Cancel</button>
+      </div>
+    </div>
+  </div>
+  {% include "includes/instructorrecruitment.html" with object=object personal_conflicts=personal_conflicts %}
+  {% endfor %}
+  {% pagination object_list %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{% static 'instructor_recruitment.js' %}"></script>
+{% endblock %}

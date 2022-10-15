@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group, Permission
-from django.core.validators import ValidationError
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django_comments.models import Comment
 from reversion.models import Version
@@ -131,12 +131,12 @@ class TestPerson(TestBase):
         url = reverse("person_edit", args=[self.spiderman.pk])
         person_edit = self.app.get(url, user="admin")
         award_form = person_edit.forms[2]
-        award_form["award-badge"] = self.swc_instructor.pk
+        award_form["award-badge"] = self.instructor_badge.pk
 
         self.assertEqual(self.spiderman.award_set.count(), 0)
         self.assertRedirects(award_form.submit(), url)
         self.assertEqual(self.spiderman.award_set.count(), 1)
-        self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
+        self.assertEqual(self.spiderman.award_set.first().badge, self.instructor_badge)
 
     def test_person_failed_training_warning(self):
         """
@@ -353,21 +353,20 @@ class TestPerson(TestBase):
     def test_person_email_auto_lowercase(self):
         """Make sure PersonForm/PersonCreateForm lowercases user's email."""
         data = {
-            "username": "curie_marie",
             "personal": "Marie",
-            "family": "Curie",
+            "family": "Skłodowska-Curie",
             "gender": "F",
-            "email": "M.CURIE@sorbonne.fr",
+            "email": "M.SKLODOWSKA-CURIE@sorbonne.fr",
         }
         url = reverse("person_add")
         self.client.post(url, data)
-        person = Person.objects.get(username="curie_marie")
-        self.assertEqual(person.email, "m.curie@sorbonne.fr")
+        person = Person.objects.get(username="skodowska-curie_marie")
+        self.assertEqual(person.email, "m.sklodowska-curie@sorbonne.fr")
 
         url = reverse("person_edit", args=[person.pk])
         self.client.post(url, data)
         person.refresh_from_db()
-        self.assertEqual(person.email, "m.curie@sorbonne.fr")
+        self.assertEqual(person.email, "m.sklodowska-curie@sorbonne.fr")
 
     def test_edit_permission_of_person_without_email(self):
         """
@@ -460,25 +459,10 @@ class TestPerson(TestBase):
         self.assertEqual(
             int(swc_res.forms["main-form"]["award-event"].value), training.pk
         )
-        swc_res.forms["main-form"]["award-badge"].select(self.swc_instructor.pk)
+        swc_res.forms["main-form"]["award-badge"].select(self.instructor_badge.pk)
         res = swc_res.forms["main-form"].submit()
         self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
-
-        # clear trainee awards so that .last() always returns the exact badge
-        # we want
-        trainee.award_set.all().delete()
-
-        # Test workflow starting from clicking at "instructor badge" label
-        dc_res = trainees.click("^<strike>instructor badge</strike>$")
-        self.assertSelected(dc_res.forms["main-form"]["award-badge"], "---------")
-        self.assertEqual(
-            int(dc_res.forms["main-form"]["award-event"].value), training.pk
-        )
-        dc_res.forms["main-form"]["award-badge"].select(self.dc_instructor.pk)
-        res = dc_res.forms["main-form"].submit()
-        self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
+        self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)
 
     def test_person_github_username_validation(self):
         """Ensure GitHub username doesn't allow for spaces or commas."""
@@ -540,6 +524,73 @@ class TestPerson(TestBase):
         comment = Comment.objects.first()
         self.assertEqual(comment.comment, "This is a test comment.")
         self.assertIn(comment, Comment.objects.for_model(obj))
+
+    def test_annotate_with_role_count(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        person = Person.objects.create(personal="Test", family="Person")
+
+        instructor = Role.objects.get(name="instructor")
+        helper = Role.objects.get(name="helper")
+        learner = Role.objects.get(name="learner")
+        supporting_instructor = Role.objects.get(name="supporting-instructor")
+        organizer = Role.objects.get(name="organizer")
+
+        Organization.objects.create(
+            domain="carpentries.org", fullname="Instructor Training"
+        )
+
+        workshop = Event.objects.create(
+            slug="workshop-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="self-organized"),
+        )
+        training = Event.objects.create(
+            slug="training-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="carpentries.org"),
+        )
+
+        Task.objects.bulk_create(
+            [
+                Task(person=person, event=workshop, role=instructor),
+                Task(person=person, event=training, role=instructor),
+                Task(person=person, event=workshop, role=helper),
+                Task(person=person, event=training, role=helper),
+                Task(person=person, event=training, role=learner),
+                Task(person=person, event=workshop, role=supporting_instructor),
+                Task(person=person, event=training, role=supporting_instructor),
+                Task(person=person, event=training, role=organizer),
+            ]
+        )
+
+        # When badges were used in filter, they were duplicating counting results:
+        # https://github.com/carpentries/amy/issues/2138
+        # Solution was to use COUNT(DISTINCT), and here we are regression-testing
+        # this bugfix.
+        Award.objects.bulk_create(
+            [
+                Award(person=person, badge=self.swc_instructor, event=workshop),
+                Award(person=person, badge=self.dc_instructor),
+                Award(person=person, badge=self.lc_instructor, event=training),
+            ]
+        )
+
+        # Act
+        result = (
+            Person.objects.annotate_with_role_count()
+            .filter(
+                badges__in=[self.swc_instructor, self.dc_instructor, self.lc_instructor]
+            )
+            .get(pk=person.pk)
+        )
+        # Assert
+        self.assertEqual(result.num_instructor, 1)
+        self.assertEqual(result.num_trainer, 1)
+        self.assertEqual(result.num_helper, 2)
+        self.assertEqual(result.num_learner, 1)
+        self.assertEqual(result.num_supporting, 2)
+        self.assertEqual(result.num_organizer, 1)
 
 
 class TestPersonPassword(TestBase):
@@ -688,7 +739,9 @@ class TestPersonMerging(TestBase):
 
         # create training requirement
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.homework = TrainingRequirement.objects.get(name="SWC Homework")
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
+        )
 
         # create first person
         self.person_a = Person.objects.create(
@@ -785,7 +838,7 @@ class TestPersonMerging(TestBase):
         self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
         self.person_b.trainingprogress_set.create(requirement=self.training)
-        self.person_b.trainingprogress_set.create(requirement=self.homework)
+        self.person_b.trainingprogress_set.create(requirement=self.lesson_contribution)
 
         # comments made by this person
         self.cb_1 = Comment.objects.create(
@@ -1198,28 +1251,30 @@ class TestPersonAndUserSocialAuth(TestBase):
                 self.client.get(reverse("sync_usersocialauth", args=(self.admin.pk,)))
 
 
-class TestGetMissingSWCInstructorRequirements(TestBase):
+class TestGetMissingInstructorRequirements(TestBase):
     def setUp(self):
         self.person = Person.objects.create(username="person")
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.swc_homework = TrainingRequirement.objects.get(name="SWC Homework")
-        self.dc_homework = TrainingRequirement.objects.get(name="DC Homework")
+        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
+        )
         self.discussion = TrainingRequirement.objects.get(name="Discussion")
-        self.swc_demo = TrainingRequirement.objects.get(name="SWC Demo")
-        self.dc_demo = TrainingRequirement.objects.get(name="DC Demo")
+        self.demo, _ = TrainingRequirement.objects.get_or_create(
+            name="Demo", defaults={}
+        )
 
     def test_all_requirements_satisfied(self):
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.training
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_homework
+            trainee=self.person, state="p", requirement=self.lesson_contribution
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.discussion
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_demo
+            trainee=self.person, state="p", requirement=self.demo
         )
 
         person = Person.objects.annotate_with_instructor_eligibility().get(
@@ -1228,20 +1283,16 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
         self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
-        # Homework was accepted, the second time.
+        # Lesson Contribution was accepted, the second time.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.swc_homework
+            trainee=self.person, state="f", requirement=self.lesson_contribution
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_homework
-        )
-        # Dc-demo records should be ignored
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_demo
+            trainee=self.person, state="p", requirement=self.lesson_contribution
         )
         # Not passed progress should be ignored.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.swc_demo
+            trainee=self.person, state="f", requirement=self.demo
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="n", requirement=self.discussion
@@ -1255,7 +1306,8 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
             username="person"
         )
         self.assertEqual(
-            person.get_missing_instructor_requirements(), ["Training", "Discussion"]
+            person.get_missing_instructor_requirements(),
+            ["Training", "Discussion", "Demo"],
         )
 
     def test_none_requirement_is_fulfilled(self):
@@ -1264,78 +1316,7 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Homework (SWC/DC/LC)", "Discussion", "Demo (SWC/DC/LC)"],
-        )
-
-
-class TestGetMissingDCInstructorRequirements(TestBase):
-    def setUp(self):
-        self.person = Person.objects.create(username="person")
-        self.training = TrainingRequirement.objects.get(name="Training")
-        self.swc_homework = TrainingRequirement.objects.get(name="SWC Homework")
-        self.dc_homework = TrainingRequirement.objects.get(name="DC Homework")
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
-        self.swc_demo = TrainingRequirement.objects.get(name="SWC Demo")
-        self.dc_demo = TrainingRequirement.objects.get(name="DC Demo")
-
-    def test_all_requirements_satisfied(self):
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training
-        )
-
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_homework
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.discussion
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_demo
-        )
-
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
-        self.assertEqual(person.get_missing_instructor_requirements(), [])
-
-    def test_some_requirements_are_fulfilled(self):
-        # Homework was accepted, the second time.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.dc_homework
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.dc_homework
-        )
-        # Swc-demo should be ignored
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.swc_demo
-        )
-        # Not passed progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.dc_demo
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="n", requirement=self.discussion
-        )
-        # Passed discarded progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training, discarded=True
-        )
-
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
-        self.assertEqual(
-            person.get_missing_instructor_requirements(), ["Training", "Discussion"]
-        )
-
-    def test_none_requirement_is_fulfilled(self):
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
-        self.assertEqual(
-            person.get_missing_instructor_requirements(),
-            ["Training", "Homework (SWC/DC/LC)", "Discussion", "Demo (SWC/DC/LC)"],
+            ["Training", "Lesson Contribution", "Discussion", "Demo"],
         )
 
 

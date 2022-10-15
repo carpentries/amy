@@ -23,7 +23,7 @@ from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
 
-from workshops.util import login_required
+from workshops.utils.access import login_required
 from workshops.views import logout_then_login_with_msg
 
 urlpatterns = [
@@ -104,7 +104,7 @@ urlpatterns = [
 redirect_urlpatterns = [
     path('workshops/', RedirectView.as_view(pattern_name='dispatch')),
     path('workshops/admin-dashboard/', RedirectView.as_view(pattern_name='admin-dashboard')),
-    path('workshops/trainee-dashboard/', RedirectView.as_view(pattern_name='trainee-dashboard')),
+    path('workshops/trainee-dashboard/', RedirectView.as_view(pattern_name='instructor-dashboard')),
     path('workshops/trainee-dashboard/training_progress/', RedirectView.as_view(pattern_name='training-progress')),
     path('workshops/autoupdate_profile/', RedirectView.as_view(pattern_name='autoupdate_profile')),
 

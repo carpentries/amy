@@ -19,6 +19,7 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.models import (
     AcademicLevel,
     Airport,
@@ -45,7 +46,7 @@ from workshops.models import (
     TrainingRequirement,
     WorkshopRequest,
 )
-from workshops.util import create_username
+from workshops.utils.usernames import create_username
 
 
 def randbool(chances_of_true):
@@ -189,44 +190,6 @@ class Command(BaseCommand):
                 name=tag, defaults=dict(priority=priority, details=details)
             )
 
-    def fake_badges(self):
-        """Provide fixed badges."""
-        badges = [
-            ("creator", "Creator", "Creating learning materials and other " "content"),
-            (
-                "swc-instructor",
-                "Software Carpentry Instructor",
-                "Teaching at Software Carpentry workshops or online",
-            ),
-            ("member", "Member", "Software Carpentry Foundation member"),
-            ("organizer", "Organizer", "Organizing workshops and learning " "groups"),
-            (
-                "dc-instructor",
-                "Data Carpentry Instructor",
-                "Teaching at Data Carpentry workshops or online",
-            ),
-            (
-                "maintainer",
-                "Maintainer",
-                "Maintainer of Software or Data " "Carpentry lesson",
-            ),
-            ("trainer", "Trainer", "Teaching instructor training workshops"),
-            ("mentor", "Mentor", "Mentor of Carpentry Instructors"),
-            ("mentee", "Mentee", "Mentee in Carpentry Mentorship Program"),
-            (
-                "lc-instructor",
-                "Library Carpentry Instructor",
-                "Teaching at Library Carpentry workshops or online",
-            ),
-        ]
-
-        self.stdout.write("Generating {} fake badges...".format(len(badges)))
-
-        for name, title, criteria in badges:
-            Badge.objects.get_or_create(
-                name=name, defaults=dict(title=title, criteria=criteria)
-            )
-
     def fake_instructors(self, count=30):
         self.stdout.write("Generating {} fake instructors...".format(count))
         for _ in range(count):
@@ -282,7 +245,9 @@ class Command(BaseCommand):
         for r in TrainingRequirement.objects.all():
             if randbool(0.4):
                 notes = ""
-                if "Homework" in r.name and randbool(0.5):
+                if (
+                    "Homework" in r.name or "Lesson Contribution" in r.name
+                ) and randbool(0.5):
                     state = "n"
                 else:
                     if randbool(0.90):
@@ -295,7 +260,11 @@ class Command(BaseCommand):
 
                 evaluated_by = None if state == "n" else choice(trainers)
                 event = training if r.name == "Training" else None
-                url = self.faker.url() if "Homework" in r.name else None
+                url = (
+                    self.faker.url()
+                    if ("Homework" in r.name or "Lesson Contribution" in r.name)
+                    else None
+                )
                 TrainingProgress.objects.create(
                     trainee=p,
                     requirement=r,
@@ -538,11 +507,13 @@ class Command(BaseCommand):
         self.stdout.write(
             "Generating {} fake train-the-trainer events...".format(count)
         )
-
+        ttt_tag = Tag.objects.get(name="TTT")
+        carpentries_org = Organization.objects.get(domain="carpentries.org")
         for _ in range(count):
             e = self.fake_event()
             e.slug += "-ttt"
-            e.tags.set([Tag.objects.get(name="TTT")])
+            e.administrator = carpentries_org
+            e.tags.set([ttt_tag])
             e.save()
 
     def fake_event(
@@ -552,7 +523,7 @@ class Command(BaseCommand):
         self_organized=False,
         add_tags=True,
         future_date=False,
-    ):
+    ) -> Event:
         if future_date:
             start = self.faker.date_time_between(
                 start_date="now", end_date="+120d"
@@ -562,8 +533,10 @@ class Command(BaseCommand):
         city = self.faker.city().replace(" ", "-").lower()
         if self_organized:
             org = Organization.objects.get(domain="self-organized")
+            administrator = org
         else:
             org = choice(Organization.objects.exclude(domain="self-organized"))
+            administrator = None
 
         # The following line may result in IntegrityError from time to time,
         # because we don't guarantee that the url is unique. In that case,
@@ -576,6 +549,7 @@ class Command(BaseCommand):
             end=start + timedelta(days=2),
             url=self.faker.unique_url(),
             host=org,
+            administrator=administrator,
             # needed in order for event to be published
             country=choice(Countries)[0] if location_data else None,
             venue=self.faker.word().title() if location_data else "",
@@ -904,6 +878,67 @@ class Command(BaseCommand):
         ).active().update(archived_at=timezone.now())
         Consent.objects.bulk_create(consents)
 
+    def fake_instructor_recruitments(self) -> list[InstructorRecruitment]:
+        """Create recruitments for new fake events.
+
+        Two new recruitments will be created, one should be open, the other should be
+        closed."""
+        self.stdout.write("Generating 2 fake instructor recruitments...")
+
+        assignee = Person.objects.get(username="admin")
+        event1 = self.fake_event()
+        recruitment1 = InstructorRecruitment.objects.create(
+            assigned_to=assignee,
+            status="o",
+            notes=self.faker.paragraph(nb_sentences=1),
+            event=event1,
+        )
+        event2 = self.fake_event()
+        recruitment2 = InstructorRecruitment.objects.create(
+            assigned_to=assignee,
+            status="c",
+            notes=self.faker.paragraph(nb_sentences=1),
+            event=event2,
+        )
+        return [recruitment1, recruitment2]
+
+    def fake_instructor_recruitment_signups(
+        self, recruitments: list[InstructorRecruitment]
+    ) -> None:
+        self.stdout.write(
+            f"Generating {3 * len(recruitments)} fake instructor recruitment signups..."
+        )
+
+        person1 = self.fake_person(is_instructor=True)
+        person2 = self.fake_person(is_instructor=True)
+        person3 = self.fake_person(is_instructor=True)
+
+        for recruitment in recruitments:
+            InstructorRecruitmentSignup.objects.create(
+                state="p",
+                recruitment=recruitment,
+                person=person1,
+                interest="session",
+                user_notes=self.faker.paragraph(nb_sentences=2),
+                notes=self.faker.paragraph(nb_sentences=1),
+            )
+            InstructorRecruitmentSignup.objects.create(
+                state="d",
+                recruitment=recruitment,
+                person=person2,
+                interest="session",
+                user_notes=self.faker.paragraph(nb_sentences=2),
+                notes=self.faker.paragraph(nb_sentences=1),
+            )
+            InstructorRecruitmentSignup.objects.create(
+                state="a",
+                recruitment=recruitment,
+                person=person3,
+                interest="session",
+                user_notes=self.faker.paragraph(nb_sentences=2),
+                notes=self.faker.paragraph(nb_sentences=1),
+            )
+
     def handle(self, *args, **options):
         seed = options["seed"]
         if seed is not None:
@@ -914,7 +949,6 @@ class Command(BaseCommand):
             self.fake_airports()
             self.fake_roles()
             self.fake_tags()
-            self.fake_badges()
             self.fake_instructors()
             self.fake_trainers()
             self.fake_admins()
@@ -933,6 +967,8 @@ class Command(BaseCommand):
             self.fake_workshop_inquiries()
             self.fake_selforganised_submissions()
             self.fake_consents()
+            recruitments = self.fake_instructor_recruitments()
+            self.fake_instructor_recruitment_signups(recruitments)
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")

@@ -1,0 +1,15 @@
+{% spaceless %}
+<div class="dynamic-array-widget">
+  <ul class="list-unstyled">
+    {% for subwidget in widget.subwidgets %}
+      <li>
+        <label>{{ subwidget.label }}:
+        {% with widget=subwidget %}
+          {% include widget.template_name %}
+        {% endwith %}
+        </label>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endspaceless %}

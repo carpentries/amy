@@ -183,3 +183,35 @@ select[readonly].select2-hidden-accessible + .select2-container
 .form-group.row input + input {
     margin-top: 0.25em;
 }
+
+/* RECRUITMENT NOTES */
+.recruitment-notes {
+    border-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.recruitment-notes .save-notes, .recruitment-notes .cancel-notes {
+    margin-top: 0.5rem;
+}
+.recruitment-notes .add-notes {
+    margin-top: -1.5rem;
+}
+.notes-content {
+    white-space: pre-line;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    border-width: 2px !important;
+}
+.display-white-space {
+    white-space: pre-line;
+}
+
+/* RELATIVE TIME */
+relative-time {
+    text-decoration: dotted underline 10%;
+}
+
+/* FORM inside btn-group  */
+.btn-group > form.btn-group:not(:first-child) {
+    margin-left: 0px;
+}

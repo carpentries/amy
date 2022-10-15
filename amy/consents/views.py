@@ -9,7 +9,7 @@ from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
 from consents.models import Consent
 from consents.util import person_has_consented_to_required_terms
 from workshops.base_views import AMYCreateView, RedirectSupportMixin
-from workshops.util import login_required
+from workshops.utils.access import login_required
 
 
 class ConsentsUpdate(RedirectSupportMixin, AMYCreateView, LoginRequiredMixin):

@@ -2,45 +2,30 @@
 import datetime
 from datetime import timedelta
 
-from django.http import Http404
 from django.test import RequestFactory
 from django.utils import timezone
 import requests.exceptions
 import requests_mock
 
 from consents.models import Consent, Term
-from workshops.models import (
-    Award,
-    Badge,
-    Event,
-    Language,
-    Organization,
-    Person,
-    Role,
-    Task,
-    WorkshopRequest,
-)
+from workshops.exceptions import InternalError
+from workshops.models import Event, Language, Organization, Person, WorkshopRequest
 from workshops.tests.base import TestBase
-from workshops.util import (
-    InternalError,
-    Paginator,
-    archive_least_recent_active_consents,
-    assign,
-    create_username,
-    default_membership_cutoff,
+from workshops.utils.consents import archive_least_recent_active_consents
+from workshops.utils.dates import human_daterange
+from workshops.utils.emails import match_notification_email
+from workshops.utils.metadata import (
     fetch_workshop_metadata,
     find_workshop_HTML_metadata,
     find_workshop_YAML_metadata,
     generate_url_to_event_index,
-    get_members,
-    human_daterange,
-    match_notification_email,
     parse_workshop_metadata,
-    reports_link,
-    reports_link_hash,
-    str2bool,
     validate_workshop_metadata,
 )
+from workshops.utils.pagination import Paginator
+from workshops.utils.reports import reports_link, reports_link_hash
+from workshops.utils.usernames import create_username
+from workshops.utils.views import assign
 
 
 class TestHandlingEventMetadata(TestBase):
@@ -758,86 +743,6 @@ Other content.
         self.assertEqual(warnings, [])
 
 
-class TestMembership(TestBase):
-    """Tests for SCF membership."""
-
-    def setUp(self):
-        super().setUp()
-        self._setUpUsersAndLogin()
-
-        one_day = datetime.timedelta(days=1)
-        one_month = datetime.timedelta(days=30)
-        three_years = datetime.timedelta(days=3 * 365)
-
-        today = datetime.date.today()
-        yesterday = today - one_day
-        tomorrow = today + one_day
-
-        # Set up events in the past, at present, and in future.
-        past = Event.objects.create(
-            host=self.org_alpha,
-            slug="in-past",
-            start=today - three_years,
-            end=tomorrow - three_years,
-        )
-
-        present = Event.objects.create(
-            host=self.org_alpha, slug="at-present", start=today - one_month
-        )
-
-        future = Event.objects.create(
-            host=self.org_alpha,
-            slug="in-future",
-            start=today + one_month,
-            end=tomorrow + one_month,
-        )
-
-        # Roles and badges.
-        instructor_role = Role.objects.create(name="instructor")
-        member_badge = Badge.objects.create(name="member")
-
-        # Spiderman is an explicit member.
-        Award.objects.create(
-            person=self.spiderman, badge=member_badge, awarded=yesterday
-        )
-
-        # Hermione teaches in the past, now, and in future, so she's a member.
-        Task.objects.create(event=past, person=self.hermione, role=instructor_role)
-        Task.objects.create(event=present, person=self.hermione, role=instructor_role)
-        Task.objects.create(event=future, person=self.hermione, role=instructor_role)
-
-        # Ron only teaches in the distant past, so he's not a member.
-        Task.objects.create(event=past, person=self.ron, role=instructor_role)
-
-        # Harry only teaches in the future, so he's not a member.
-        Task.objects.create(event=future, person=self.harry, role=instructor_role)
-
-    def test_members_default_cutoffs(self):
-        """Make sure default membership rules are obeyed."""
-        earliest, latest = default_membership_cutoff()
-        members = get_members(earliest=earliest, latest=latest)
-
-        self.assertIn(self.hermione, members)  # taught recently
-        self.assertNotIn(self.ron, members)  # taught too long ago
-        self.assertNotIn(self.harry, members)  # only teaching in the future
-        self.assertIn(self.spiderman, members)  # explicit member
-        self.assertEqual(len(members), 2)
-
-    def test_members_explicit_earliest(self):
-        """Make sure membership rules are obeyed with explicit earliest
-        date."""
-        # Set start date to exclude Hermione.
-        earliest = datetime.date.today() - datetime.timedelta(days=1)
-        _, latest = default_membership_cutoff()
-        members = get_members(earliest=earliest, latest=latest)
-
-        self.assertNotIn(self.hermione, members)  # taught recently
-        self.assertNotIn(self.ron, members)  # taught too long ago
-        self.assertNotIn(self.harry, members)  # only teaching in the future
-        self.assertIn(self.spiderman, members)  # explicit member
-        self.assertEqual(len(members), 1)
-
-
 class TestUsernameGeneration(TestBase):
     def setUp(self):
         Person.objects.create_user(
@@ -946,122 +851,42 @@ class TestPaginatorSections(TestBase):
 class TestAssignUtil(TestBase):
     def setUp(self):
         """Set up RequestFactory for making fast fake requests."""
-        Person.objects.create_user(
+        self.person = Person.objects.create_user(  # type: ignore
             username="test_user", email="user@test", personal="User", family="Test"
         )
         self.factory = RequestFactory()
         self.event = Event.objects.create(
-            slug="event-for-assignment", host=Organization.objects.first()
+            slug="event-for-assignment",
+            host=Organization.objects.first(),
+            assigned_to=None,
         )
-
-    def test_no_integer_pk(self):
-        """Ensure we fail with 404 when person PK is string, not integer."""
-        tests = [
-            (self.factory.get("/"), "alpha"),
-            (self.factory.post("/", {"person": "alpha"}), None),
-        ]
-        for request, person_id in tests:
-            with self.subTest(method=request.method):
-                with self.assertRaises(Http404):
-                    assign(request, self.event, person_id=person_id)
-
-                # just reset the link, for safety sake
-                self.event.assigned_to = None
-                self.event.save()
 
     def test_assigning(self):
         """Ensure that with assignment is set correctly."""
-        first_person = Person.objects.first()
-        tests = [
-            (self.factory.get("/"), first_person.pk),
-            (self.factory.post("/", {"person": first_person.pk}), None),
-        ]
-        for request, person_id in tests:
-            with self.subTest(method=request.method):
-                # just reset the link, for safety sake
-                self.event.assigned_to = None
-                self.event.save()
-
-                assign(request, self.event, person_id=person_id)
-                self.event.refresh_from_db()
-                self.assertEqual(self.event.assigned_to, first_person)
+        # Act
+        assign(self.event, person=self.person)
+        # Assert
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.assigned_to, self.person)
 
     def test_removing_assignment(self):
         """Ensure that with person_id=None, the assignment is removed."""
-        first_person = Person.objects.first()
-        tests = [
-            (self.factory.get("/"), None),
-            (self.factory.post("/"), None),
-        ]
-        for request, person_id in tests:
-            with self.subTest(method=request.method):
-                # just re-set the link to first person, for safety sake
-                self.event.assigned_to = first_person
-                self.event.save()
-
-                assign(request, self.event, person_id=person_id)
-
-                self.event.refresh_from_db()
-                self.assertEqual(self.event.assigned_to, None)
-
-
-class TestStr2Bool(TestBase):
-    """Tests for ensuring str2bool works as expected."""
-
-    def setUp(self):
-        self.expected_true = (
-            "True",
-            "TRUE",
-            "true",
-            "tRuE",
-            "1",
-            "t",
-            "T",
-            "yes",
-            "YES",
-            "yEs",
-        )
-        self.expected_false = (
-            "False",
-            "FALSE",
-            "false",
-            "fAlSe",
-            "0",
-            "f",
-            "F",
-            "no",
-            "NO",
-            "nO",
-        )
-        self.expected_none = (
-            "",
-            " ",
-            "dummy",
-            "None",
-            "asdgfh",
-        )
-
-    def test_true(self):
-        """Ensure `True` is returned for correct input data."""
-        for element in self.expected_true:
-            self.assertEqual(str2bool(element), True, element)
-
-    def test_false(self):
-        """Ensure `False` is returned for correct input data."""
-        for element in self.expected_false:
-            self.assertEqual(str2bool(element), False, element)
-
-    def test_none(self):
-        """Ensure `None` is returned for correct input data."""
-        for element in self.expected_none:
-            self.assertIsNone(str2bool(element), element)
+        # Arrange
+        self.event.assigned_to = self.person
+        self.event.save()
+        # Act
+        assign(self.event, person=None)
+        # Assert
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.assigned_to, None)
 
 
 class TestHumanDaterange(TestBase):
     def setUp(self):
         self.formats = {
-            "no_date": "????",
-            "range_char": " - ",
+            "no_date_left": "????",
+            "no_date_right": "!!!!",
+            "separator": " - ",
         }
         self.inputs = (
             (datetime.datetime(2018, 9, 1), datetime.datetime(2018, 9, 30)),
@@ -1077,9 +902,9 @@ class TestHumanDaterange(TestBase):
             "Sep 30 - 01, 2018",
             "Sep 01 - Dec 01, 2018",
             "Sep 01, 2018 - Dec 01, 2019",
-            "Sep 01, 2018 - ????",
+            "Sep 01, 2018 - !!!!",
             "???? - Sep 01, 2018",
-            "???? - ????",
+            "???? - !!!!",
         )
 
     def test_function(self):

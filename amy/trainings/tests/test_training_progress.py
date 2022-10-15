@@ -28,7 +28,7 @@ class TestTrainingProgressValidation(TestBase):
             name="Discussion", url_required=False, event_required=False
         )
         self.url_required = TrainingRequirement.objects.create(
-            name="SWC Homework", url_required=True, event_required=False
+            name="Lesson Contribution", url_required=True, event_required=False
         )
         self.event_required = TrainingRequirement.objects.create(
             name="Training", url_required=False, event_required=True

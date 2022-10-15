@@ -1,0 +1,15 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+<div class="col-lg-8 offset-lg-2">
+  {{ block.super }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="col-lg-8 offset-lg-2">
+  {% crispy form %}
+</div>
+{% endblock %}

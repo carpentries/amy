@@ -4,7 +4,6 @@ import logging
 import operator
 import re
 
-from django.conf.urls import url
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
@@ -12,11 +11,12 @@ from django.db.models import Count, Q
 from django.db.models.query import QuerySet
 from django.http import JsonResponse
 from django.http.response import Http404
+from django.urls import path
 from django_select2.views import AutoResponseView
 
 from fiscal.models import MembershipPersonRole
 from workshops import models
-from workshops.util import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
+from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 logger = logging.getLogger("amy.server_logs")
 
@@ -206,6 +206,37 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class InstructorLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    """Lookup view for instructors using Community Roles approach (Instructor Role)."""
+
+    def get_queryset(self):
+        results = models.Person.objects.filter(
+            communityrole__config__name="instructor"
+        ).distinct()
+
+        if self.term:
+            filters = [
+                Q(personal__icontains=self.term),
+                Q(family__icontains=self.term),
+                Q(email__icontains=self.term),
+                Q(secondary_email__icontains=self.term),
+                Q(username__icontains=self.term),
+            ]
+
+            # split query into first and last names
+            tokens = re.split(r"\s+", self.term)
+            if len(tokens) == 2:
+                name1, name2 = tokens
+                complex_q = (
+                    Q(personal__icontains=name1) & Q(family__icontains=name2)
+                ) | (Q(personal__icontains=name2) & Q(family__icontains=name1))
+                filters.append(complex_q)
+
+            results = results.filter(reduce(operator.or_, filters))
+
+        return results
+
+
 class AdminLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     """The same as PersonLookup, but allows only to select administrators.
 
@@ -326,6 +357,9 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         if badge := self.request.GET.get("badge"):
             results = results.filter(badge__pk=badge)
 
+        if person := self.request.GET.get("person"):
+            results = results.filter(person__pk=person)
+
         if self.term:
             results = results.filter(
                 Q(person__personal__icontains=self.term)
@@ -397,42 +431,42 @@ class GenericObjectLookupView(
 
 
 urlpatterns = [
-    url(r"^tags/$", TagLookupView.as_view(), name="tag-lookup"),
-    url(r"^badges/$", BadgeLookupView.as_view(), name="badge-lookup"),
-    url(r"^lessons/$", LessonLookupView.as_view(), name="lesson-lookup"),
-    url(r"^events/$", EventLookupView.as_view(), name="event-lookup"),
-    url(r"^ttt_events/$", TTTEventLookupView.as_view(), name="ttt-event-lookup"),
-    url(
-        r"^organizations/$",
-        OrganizationLookupView.as_view(),
-        name="organization-lookup",
+    path("tags/", TagLookupView.as_view(), name="tag-lookup"),
+    path("badges/", BadgeLookupView.as_view(), name="badge-lookup"),
+    path("lessons/", LessonLookupView.as_view(), name="lesson-lookup"),
+    path("events/", EventLookupView.as_view(), name="event-lookup"),
+    path("ttt_events/", TTTEventLookupView.as_view(), name="ttt-event-lookup"),
+    path(
+        "organizations/", OrganizationLookupView.as_view(), name="organization-lookup"
     ),
-    url(
-        r"^admin_orgs/$",
+    path(
+        "admin_orgs/",
         AdministratorOrganizationLookupView.as_view(),
         name="administrator-org-lookup",
     ),
-    url(r"^memberships/$", MembershipLookupView.as_view(), name="membership-lookup"),
-    url(r"^member-roles/$", MemberRoleLookupView.as_view(), name="memberrole-lookup"),
-    url(
-        r"^membership-person-roles/$",
+    path("memberships/", MembershipLookupView.as_view(), name="membership-lookup"),
+    path("member-roles/", MemberRoleLookupView.as_view(), name="memberrole-lookup"),
+    path(
+        "membership-person-roles/",
         MembershipPersonRoleLookupView.as_view(),
         name="membershippersonrole-lookup",
     ),
-    url(r"^persons/$", PersonLookupView.as_view(), name="person-lookup"),
-    url(r"^admins/$", AdminLookupView.as_view(), name="admin-lookup"),
-    url(r"^airports/$", AirportLookupView.as_view(), name="airport-lookup"),
-    url(r"^languages/$", LanguageLookupView.as_view(), name="language-lookup"),
-    url(
-        r"^knowledge_domains/$",
+    path("persons/", PersonLookupView.as_view(), name="person-lookup"),
+    path("admins/", AdminLookupView.as_view(), name="admin-lookup"),
+    # uses community role
+    path("instructors/", InstructorLookupView.as_view(), name="instructor-lookup"),
+    path("airports/", AirportLookupView.as_view(), name="airport-lookup"),
+    path("languages/", LanguageLookupView.as_view(), name="language-lookup"),
+    path(
+        "knowledge_domains/",
         KnowledgeDomainLookupView.as_view(),
         name="knowledge-domains-lookup",
     ),
-    url(
-        r"^training_requests/$",
+    path(
+        "training_requests/",
         TrainingRequestLookupView.as_view(),
         name="trainingrequest-lookup",
     ),
-    url(r"^awards/$", AwardLookupView.as_view(), name="award-lookup"),
-    url(r"^generic/$", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
+    path("awards/", AwardLookupView.as_view(), name="award-lookup"),
+    path("generic/", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
 ]

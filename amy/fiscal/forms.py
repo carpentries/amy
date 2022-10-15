@@ -236,9 +236,6 @@ class MembershipCreateForm(MembershipForm):
             "membership."
         ).format(reverse("organization_add"))
 
-        # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
-
         # add warning alert for dates falling within next 2-3 months
         STANDARD_PACKAGES_PREPOPULATION_WARNING = (
             "<b>Workshops without admin fee per agreement</b> and "

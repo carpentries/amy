@@ -155,6 +155,7 @@ class TestGenericObjectLookupView(TestBase):
         content_type = ContentType.objects.get_for_model(Badge)
         view = self.setUpView(content_type=content_type)
         request = self.setUpRequest("/")
+
         # Act
         result = view.get(request)
         # Assert
@@ -167,7 +168,10 @@ class TestGenericObjectLookupView(TestBase):
             '{"text": "Trainer", "id": 4}, '
             '{"text": "Mentor", "id": 5}, '
             '{"text": "Mentee", "id": 6}, '
-            '{"text": "Library Carpentry Instructor", "id": 7}]}',
+            '{"text": "Library Carpentry Instructor", "id": 7}, '
+            '{"text": "Instructor", "id": '
+            f"{self.instructor_badge.pk}"
+            "}]}",
         )
 
     def test_permissions_no_content_type(self):

@@ -37,8 +37,8 @@ def filter_trainees_by_trainee_name_or_email(queryset, name, value):
         return queryset
 
 
-def filter_trainees_by_unevaluated_homework_presence(queryset, name, flag):
-    if flag:  # return only trainees with an unevaluated homework
+def filter_trainees_by_unevaluated_lesson_contribution_presence(queryset, name, flag):
+    if flag:  # return only trainees with an unevaluated lesson contribution
         return queryset.filter(trainingprogress__state="n").distinct()
     else:
         return queryset
@@ -54,33 +54,15 @@ def filter_trainees_by_training_request_presence(queryset, name, flag):
 
 
 def filter_trainees_by_instructor_status(queryset, name, choice):
-    if choice == "all":
-        return queryset.filter(
-            is_swc_instructor=True,
-            is_dc_instructor=True,
-            is_lc_instructor=True,
-        )
-    elif choice == "any":
-        return queryset.filter(
-            Q(is_swc_instructor=True)
-            | Q(is_dc_instructor=True)
-            | Q(is_lc_instructor=True)
-        )
-    elif choice == "swc":
-        return queryset.filter(is_swc_instructor=True)
-    elif choice == "dc":
-        return queryset.filter(is_dc_instructor=True)
-    elif choice == "lc":
-        return queryset.filter(is_lc_instructor=True)
+    if choice == "yes":
+        return queryset.filter(is_instructor=True)
     elif choice == "eligible":
         # Instructor eligible but without any badge.
         # This code is kept in Q()-expressions to allow for fast condition
         # change.
         return queryset.filter(Q(instructor_eligible__gte=1) & Q(is_instructor=False))
     elif choice == "no":
-        return queryset.filter(
-            is_instructor=False,
-        )
+        return queryset.filter(is_instructor=False)
     else:
         return queryset
 
@@ -105,10 +87,10 @@ class TraineeFilter(AMYFilterSet):
         widget=widgets.CheckboxInput,
     )
 
-    homework = django_filters.BooleanFilter(
-        label="Only trainees with unevaluated homework",
+    lesson_contribution = django_filters.BooleanFilter(
+        label="Only trainees with unevaluated Lesson Contribution",
         widget=widgets.CheckboxInput,
-        method=filter_trainees_by_unevaluated_homework_presence,
+        method=filter_trainees_by_unevaluated_lesson_contribution_presence,
     )
 
     training_request = django_filters.BooleanFilter(
@@ -121,11 +103,7 @@ class TraineeFilter(AMYFilterSet):
         method=filter_trainees_by_instructor_status,
         choices=[
             ("", "Unknown"),
-            ("all", "All instructor badges"),
-            ("any", "Any instructor badge "),
-            ("swc", "SWC instructor"),
-            ("dc", "DC instructor"),
-            ("lc", "LC instructor"),
+            ("yes", "Yes, has Instructor badge"),
             ("eligible", "No, but eligible to be certified"),
             ("no", "No instructor badge"),
         ],
@@ -153,7 +131,7 @@ class TraineeFilter(AMYFilterSet):
         fields = [
             "search",
             "all_persons",
-            "homework",
+            "lesson_contribution",
             "is_instructor",
             "training",
         ]

@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from workshops.base_views import (
@@ -7,9 +8,9 @@ from workshops.base_views import (
     AMYUpdateView,
     RedirectSupportMixin,
 )
-from workshops.util import OnlyForAdminsMixin
+from workshops.utils.access import OnlyForAdminsMixin
 
-from .forms import CommunityRoleForm
+from .forms import CommunityRoleForm, CommunityRoleUpdateForm
 from .models import CommunityRole
 
 # ------------------------------------------------------------
@@ -43,11 +44,17 @@ class CommunityRoleCreate(
 class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     permission_required = "communityroles.change_communityrole"
     model = CommunityRole
-    form_class = CommunityRoleForm
+    form_class = CommunityRoleUpdateForm
 
     def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
-        kwargs.update({"prefix": "communityrole"})
+        kwargs.update(
+            {
+                "prefix": "communityrole",
+                "community_role_config": self.object.config,
+                "widgets": {"person": forms.HiddenInput()},
+            }
+        )
         return kwargs
 
 
