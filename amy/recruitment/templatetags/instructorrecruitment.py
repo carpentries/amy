@@ -23,11 +23,19 @@ def is_instructor_recruitment_enabled() -> bool:
 
 
 @register.simple_tag
-def get_event_conflicts(events: Sequence[Event], event: Event) -> list[Event]:
+def get_event_conflicts(events_to_check: Sequence[Event], event: Event) -> list[Event]:
     conflicts: list[Event] = []
 
-    for event_to_check in events:
+    # event must have start and end dates, otherwise we can't get conflicts
+    if not (event.start and event.end):
+        return conflicts
+
+    for event_to_check in events_to_check:
         if event == event_to_check:
+            continue
+
+        # event getting checked must have start and end dates
+        if not (event_to_check.start and event_to_check.end):
             continue
 
         if event.start <= event_to_check.end and event.end >= event_to_check.start:
@@ -38,12 +46,24 @@ def get_event_conflicts(events: Sequence[Event], event: Event) -> list[Event]:
 
 @register.simple_tag
 def get_events_nearby(
-    events: Sequence[Event], event: Event, days_before: int = 14, days_after: int = 14
+    events_to_check: Sequence[Event],
+    event: Event,
+    days_before: int = 14,
+    days_after: int = 14,
 ) -> list[Event]:
+    """Get events nearby another event time-wise."""
     nearby: list[Event] = []
 
-    for event_to_check in events:
+    # event must have start and end dates, otherwise we can't get nearby events
+    if not (event.start and event.end):
+        return nearby
+
+    for event_to_check in events_to_check:
         if event == event_to_check:
+            continue
+
+        # event getting checked must have start and end dates
+        if not (event_to_check.start and event_to_check.end):
             continue
 
         if (
@@ -57,12 +77,24 @@ def get_events_nearby(
 
 @register.simple_tag
 def get_signup_conflicts(
-    signups: Sequence[InstructorRecruitmentSignup], recruitment: InstructorRecruitment
+    signups_to_check: Sequence[InstructorRecruitmentSignup],
+    recruitment: InstructorRecruitment,
 ) -> list[InstructorRecruitmentSignup]:
     conflicts: list[InstructorRecruitmentSignup] = []
 
-    for signup_to_check in signups:
+    # recruitment event must have start and end dates, otherwise we can't get conflicts
+    if not (recruitment.event.start and recruitment.event.end):
+        return conflicts
+
+    for signup_to_check in signups_to_check:
         if recruitment == signup_to_check.recruitment:
+            continue
+
+        # event getting checked must have start and end dates
+        if not (
+            signup_to_check.recruitment.event.start
+            and signup_to_check.recruitment.event.end
+        ):
             continue
 
         if (
