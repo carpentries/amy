@@ -140,6 +140,9 @@ class AMYDeleteView(DeleteView):
     def after_delete(self, *args, **kwargs):
         return None
 
+    def back_address(self) -> Optional[str]:
+        return None
+
     def delete(self, request, *args, **kwargs):
         # Workaround for https://code.djangoproject.com/ticket/21926
         # Replicates the `delete` method of DeleteMixin
@@ -153,7 +156,10 @@ class AMYDeleteView(DeleteView):
             messages.success(self.request, self.success_message.format(object_str))
             return HttpResponseRedirect(success_url)
         except ProtectedError as e:
-            return failed_to_delete(self.request, self.object, e.protected_objects)
+            back = self.back_address()
+            return failed_to_delete(
+                self.request, self.object, e.protected_objects, back=back
+            )
 
     def get(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request, *args, **kwargs)
