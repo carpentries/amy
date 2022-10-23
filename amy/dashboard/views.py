@@ -124,7 +124,9 @@ def instructor_dashboard(request):
         "languages",
         Prefetch(
             "task_set",
-            queryset=Task.objects.select_related("event", "role"),
+            queryset=Task.objects.select_related("event", "role").order_by(
+                "event__start", "event__slug"
+            ),
         ),
         Prefetch(
             "membershiptask_set",

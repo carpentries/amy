@@ -150,11 +150,7 @@
           {% endif %}
         </td>
         <td>
-          {% if role.award %}
-          <a href="{{ role.award.get_absolute_url }}">{{ role.award }}</a>
-          {% else %}
-          &mdash;
-          {% endif %}
+          {{ role.award|default_if_none:"&mdash;" }}
         </td>
         <td>{{ role.inactivation|default_if_none:"&mdash;" }}</td>
         <td>

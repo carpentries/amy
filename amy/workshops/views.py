@@ -38,6 +38,7 @@ from django.forms import BaseForm, HiddenInput
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 import django_rq
 from github.GithubException import GithubException
 import requests
@@ -2220,6 +2221,17 @@ class AwardCreate(RedirectSupportMixin, MockAwardCreate):
 class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Award
     permission_required = "workshops.delete_award"
+
+    def back_address(self) -> Optional[str]:
+        fallback_url = reverse(
+            "person_edit", args=[self.get_object().person.id]  # type: ignore
+        )
+        referrer = self.request.headers.get("Referer", fallback_url)
+        return (
+            referrer
+            if url_has_allowed_host_and_scheme(referrer, settings.ALLOWED_HOSTS)
+            else fallback_url
+        )
 
     def get_success_url(self):
         return reverse("badge_details", args=[self.get_object().badge.name])
