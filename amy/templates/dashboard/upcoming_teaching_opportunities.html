@@ -33,7 +33,7 @@
       </div>
       {% endif %}
 
-      {% get_event_conflicts events=person_instructor_task_events event=object.event as event_conflicts %}
+      {% get_event_conflicts events_to_check=person_instructor_task_events event=object.event as event_conflicts %}
 
       {% if event_conflicts %}
       <div class="alert alert-danger" role="alert">
@@ -46,14 +46,14 @@
       </div>
 
       {% elif not signup or not object.person_signup %}
-        {% get_events_nearby events=person_instructor_task_events event=object.event as events_nearby %}
+        {% get_events_nearby events_to_check=person_instructor_task_events event=object.event as events_nearby %}
         {% if events_nearby %}
         <div class="alert alert-warning" role="alert">
           <p>You are teaching workshops within 14 days: {% for event in events_nearby %}<span class="badge badge-warning">{{ event }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
         </div>
         {% endif %}
 
-        {% get_signup_conflicts signups=person_signups recruitment=object as signup_conflicts %}
+        {% get_signup_conflicts signups_to_check=person_signups recruitment=object as signup_conflicts %}
         {% if signup_conflicts %}
         <div class="alert alert-warning" role="alert">
           <p>You have workshop applications on the same dates: {% for signup in signup_conflicts %}<span class="badge badge-warning">{{ signup.recruitment.event }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
