@@ -33,3 +33,16 @@ The Carpentries can maintain the following information about individuals in our 
     * Do you consent to have your name or identity associated with lesson publications?
     * Can we contact you for volunteering opportunities, surveys, feedback, etc.?
     * Consent to making profile public
+
+
+### Additional user information
+
+In addition to the following information, The Carpentries also maintains data on user activity.  This may include:
+
+* tasks at an event (learner, helper, Instructor, Host, etc.)
+* progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc.
+* awards received such as *Trainer*, *Instructor*, *Maintainer*, etc.
+* other roles the individual may have or have had, such as Core Team member, Executive Team member, etc.
+* whether the individual is actively serving in a role
+
+Individuals can view this information but can not edit it directly.  Please contact team@carpentries.org with questions about this information.
