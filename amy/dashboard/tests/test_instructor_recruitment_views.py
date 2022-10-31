@@ -1,5 +1,6 @@
 from datetime import date
 from unittest.mock import MagicMock, call, patch
+from urllib.parse import quote
 
 from django.contrib.messages.api import MessageFailure
 from django.test import TestCase, override_settings
@@ -313,24 +314,21 @@ class TestSignupForRecruitment(TestCase):
             "pending.",
         )
 
-    def test_get_success_url__no_next_param(self):
+    def test_get_success_url(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
-        view = SignupForRecruitment(request=request)
-        # Act
-        url = view.get_success_url()
-        # Assert
-        self.assertEqual(url, reverse("upcoming-teaching-opportunities"))
-
-    def test_get_success_url__with_next_param(self):
-        # Arrange
-        next_url = "/dashboard"
-        request = RequestFactory().get(f"/?next={next_url}")
-        view = SignupForRecruitment(request=request)
-        # Act
-        url = view.get_success_url()
-        # Assert
-        self.assertEqual(url, next_url)
+        url_redirect = {
+            "/asdasd": "/asdasd",
+            "/asdasd?status=o": "/asdasd?status=o",
+            "https://google.com/": reverse("upcoming-teaching-opportunities"),
+            None: reverse("upcoming-teaching-opportunities"),
+        }
+        for url, redirect in url_redirect.items():
+            request = RequestFactory().get(f"/?next={quote(url)}" if url else "/")
+            view = SignupForRecruitment(request=request)
+            # Act
+            result = view.get_success_url()
+            # Assert
+            self.assertEqual(result, redirect)
 
     def test_get_form_kwargs(self):
         # Arrange
