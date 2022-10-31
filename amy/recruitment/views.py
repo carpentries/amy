@@ -1,5 +1,6 @@
 from datetime import date
 import logging
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib import messages
@@ -321,7 +322,9 @@ class InstructorRecruitmentAddSignup(
         return InstructorRecruitment.objects.get(pk=self.kwargs["pk"])
 
     def get_success_url(self) -> str:
-        next_url = self.request.POST.get("next", None)
+        next_url = self.request.GET.get("next", None)
+        if next_url:
+            next_url = unquote(next_url)
         default_url = reverse("all_instructorrecruitment")
         return safe_next_or_default_url(next_url, default_url)
 
