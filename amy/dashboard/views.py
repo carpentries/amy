@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 import re
 from typing import Dict, Optional
+from urllib.parse import unquote
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -384,6 +385,8 @@ class SignupForRecruitment(
 
     def get_success_url(self) -> str:
         next_url = self.request.GET.get("next", None)
+        if next_url:
+            next_url = unquote(next_url)
         success_url = reverse("upcoming-teaching-opportunities")
         return safe_next_or_default_url(next_url, success_url)
 

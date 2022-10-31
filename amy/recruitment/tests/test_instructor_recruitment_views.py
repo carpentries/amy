@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from unittest import mock
+from urllib.parse import quote
 
 from django.http import Http404
 from django.test import override_settings
@@ -488,11 +489,12 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         # Arrange
         url_redirect = {
             "/asdasd": "/asdasd",
+            "/asdasd?status=o": "/asdasd?status=o",
             "https://google.com/": reverse("all_instructorrecruitment"),
             None: reverse("all_instructorrecruitment"),
         }
         for url, redirect in url_redirect.items():
-            request = RequestFactory().post("/", {"next": url} if url else {})
+            request = RequestFactory().post(f"/?next={quote(url)}" if url else "/")
             pk = 120000
             view = InstructorRecruitmentAddSignup(kwargs={"pk": pk})
             with mock.patch("recruitment.views.InstructorRecruitment"):
@@ -661,45 +663,24 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         # Assert
         mock_signup.objects.get.assert_called_once_with(pk=pk)
 
-    def test_get_success_url__safe_next_provided(self) -> None:
+    def test_get_success_url(self) -> None:
         # Arrange
-        safe_next = "/asdasd"
-        request = RequestFactory().post("/", {"next": safe_next})
-        pk = 120000
-        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
-        with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
-            view.post(request)
-        # Act
-        result = view.get_success_url()
-        # Assert
-        self.assertEqual(result, safe_next)
-
-    def test_get_success_url__unsafe_next_provided(self) -> None:
-        # Arrange
-        unsafe_next = "https://google.com/"
-        default_success_url = reverse("all_instructorrecruitment")
-        request = RequestFactory().post("/", {"next": unsafe_next})
-        pk = 120000
-        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
-        with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
-            view.post(request)
-        # Act
-        result = view.get_success_url()
-        # Assert
-        self.assertEqual(result, default_success_url)
-
-    def test_get_success_url__next_not_provided(self) -> None:
-        # Arrange
-        default_success_url = reverse("all_instructorrecruitment")
-        request = RequestFactory().post("/")
-        pk = 120000
-        view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
-        with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
-            view.post(request)
-        # Act
-        result = view.get_success_url()
-        # Assert
-        self.assertEqual(result, default_success_url)
+        url_redirect = {
+            "/asdasd": "/asdasd",
+            "/asdasd?status=o": "/asdasd?status=o",
+            "https://google.com/": reverse("all_instructorrecruitment"),
+            None: reverse("all_instructorrecruitment"),
+        }
+        for url, redirect in url_redirect.items():
+            request = RequestFactory().post("/", {"next": url} if url else {})
+            pk = 120000
+            view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
+            with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
+                view.post(request)
+            # Act
+            result = view.get_success_url()
+            # Assert
+            self.assertEqual(result, redirect)
 
     def test_form_invalid__redirects_to_success_url(self) -> None:
         # Arrange
@@ -1015,6 +996,7 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         # Arrange
         url_redirect = {
             "/asdasd": "/asdasd",
+            "/asdasd?status=o": "/asdasd?status=o",
             "https://google.com/": reverse("all_instructorrecruitment"),
             None: reverse("all_instructorrecruitment"),
         }
