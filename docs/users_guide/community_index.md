@@ -41,16 +41,22 @@ The Carpentries can maintain the following information about individuals in our 
 In addition to the following information, The Carpentries also maintains data on user activity.  This may include:
 
 * tasks at an event (learner, helper, Instructor, Host, etc.)
-* progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc.
+* progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc. See the [Instructor Training section](#instructor-training) for more inforamtion.
 * awards received such as *Trainer*, *Instructor*, *Maintainer*, etc.
 * other roles the individual may have or have had, such as Core Team member, Executive Team member, etc.
 * whether the individual is actively serving in a role
 
 Individuals can view this information but can not edit it directly.  Please contact team@carpentries.org with questions about this information.
 
+### Instructor Training
+
+Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge.  Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge is correctly displayed, you are in good standing. 
+
+Carpentries Instructor trainees can also submit their lesson contribution for checkout directly in AMY.  Read more in the [Instructor Training curriculum](https://carpentries.github.io/instructor-training/checkout/index.html).
+
 ### Viewing teaching opportunities
 
-Currently badged and active Instructors can view and sign up for upcoming teaching opportunities at Centrally-Organised workshops by clicking the "" button at the top of their profile page. This button is available only to currently badged and active Instructors.
+Currently badged and active Instructors can view and sign up for upcoming teaching opportunities at Centrally-Organised workshops by clicking the "View upcoming teaching opportunities with The Carpentries" button at the top of their profile page. This button is available only to currently badged and active Instructors.
 
 ![AMY Instructor Signup button](images/amy_instructor_signup.png)
 
