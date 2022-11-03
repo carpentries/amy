@@ -26,7 +26,9 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
     )
 
     country = AllCountriesMultipleFilter(
-        field_name="event__country", widget=Select2MultipleWidget
+        field_name="event__country",
+        widget=Select2MultipleWidget,
+        extend_countries=False,
     )
 
     curricula = filters.ModelMultipleChoiceFilter(

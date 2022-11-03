@@ -41,7 +41,7 @@ def extend_country_choices(
     For example this: ['AZ', 'BA', 'BY', 'FM', 'GD', 'W3']  # W3 is custom
     will be changes to this: ['AZ', 'BA', 'BY', 'FM', 'GD', ('W3', 'Online')]
     """
-    countries: list = list(choices)
+    countries: list[Union[str, tuple[str, str]]] = list(choices)
     common: set[str] = countries_override.keys() & set(choices)
     for country in common:
         countries.remove(country)
@@ -49,9 +49,13 @@ def extend_country_choices(
     return countries
 
 
-class AllCountriesFilter(django_filters.ChoiceFilter):
+class BaseCountriesFilter(django_filters.Filter):
+    def __init__(self, *args, **kwargs):
+        self.extend_countries = kwargs.pop("extend_countries", True)
+        super().__init__(*args, **kwargs)
+
     def _get_countries(self):
-        qs = self.model._default_manager.distinct()
+        qs = self.model._default_manager.distinct()  # type: ignore
         qs = qs.order_by(self.field_name).values_list(self.field_name, flat=True)
         choices = [o for o in qs if o]
         return choices
@@ -59,30 +63,29 @@ class AllCountriesFilter(django_filters.ChoiceFilter):
     @property
     def field(self):
         choices = self._get_countries()
-        overrides = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
-        countries = Countries()
-        countries.only = overrides
+        if self.extend_countries:
+            only = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
+        else:
+            only = {
+                abbrv: name
+                for abbrv, name in Countries().countries.items()
+                if abbrv in choices
+            }
 
+        countries = Countries()
+        countries.only = only  # type: ignore
         self.extra["choices"] = list(countries)
         return super().field
 
 
-class AllCountriesMultipleFilter(django_filters.MultipleChoiceFilter):
-    def _get_countries(self):
-        qs = self.model._default_manager.distinct()
-        qs = qs.order_by(self.field_name).values_list(self.field_name, flat=True)
-        choices = [o for o in qs if o]
-        return choices
+class AllCountriesFilter(BaseCountriesFilter, django_filters.ChoiceFilter):
+    pass
 
-    @property
-    def field(self):
-        choices = self._get_countries()
-        overrides = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
-        countries = Countries()
-        countries.only = overrides
 
-        self.extra["choices"] = list(countries)
-        return super().field
+class AllCountriesMultipleFilter(
+    BaseCountriesFilter, django_filters.MultipleChoiceFilter
+):
+    pass
 
 
 class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
