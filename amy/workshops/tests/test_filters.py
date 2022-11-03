@@ -57,7 +57,7 @@ class TestAllCountriesFilterCustomCountries(TestCase):
         """Regression test for https://github.com/carpentries/amy/issues/1996."""
         # Arrange
         filter_ = AllCountriesFilter()
-        filter_._get_countries = MagicMock(return_value=["PL", "US", "GB", "W3", "EU"])
+        filter_._get_countries = MagicMock(return_value=["PL", "GB", "US"])
 
         # Act
         filter_.field
@@ -74,13 +74,31 @@ class TestAllCountriesFilterCustomCountries(TestCase):
             ],
         )
 
+    def test_extra_choices_not_extended(self) -> None:
+        # Arrange
+        filter_ = AllCountriesFilter(extend_countries=False)
+        filter_._get_countries = MagicMock(return_value=["PL", "GB", "US"])
+
+        # Act
+        filter_.field
+
+        # Assert
+        self.assertEqual(
+            filter_.extra["choices"],
+            [
+                ("PL", "Poland"),
+                ("GB", "United Kingdom"),
+                ("US", "United States"),
+            ],
+        )
+
 
 class TestAllCountriesMultipleFilterCustomCountries(TestCase):
     def test_extra_choices(self):
         """Regression test for https://github.com/carpentries/amy/issues/1996."""
         # Arrange
         filter_ = AllCountriesMultipleFilter()
-        filter_._get_countries = MagicMock(return_value=["PL", "US", "GB", "W3", "EU"])
+        filter_._get_countries = MagicMock(return_value=["PL", "GB", "US"])
 
         # Act
         filter_.field
@@ -91,6 +109,24 @@ class TestAllCountriesMultipleFilterCustomCountries(TestCase):
             [
                 ("EU", "European Union"),
                 ("W3", "Online"),
+                ("PL", "Poland"),
+                ("GB", "United Kingdom"),
+                ("US", "United States"),
+            ],
+        )
+
+    def test_extra_choices_not_extended(self) -> None:
+        # Arrange
+        filter_ = AllCountriesMultipleFilter(extend_countries=False)
+        filter_._get_countries = MagicMock(return_value=["PL", "GB", "US"])
+
+        # Act
+        filter_.field
+
+        # Assert
+        self.assertEqual(
+            filter_.extra["choices"],
+            [
                 ("PL", "Poland"),
                 ("GB", "United Kingdom"),
                 ("US", "United States"),
