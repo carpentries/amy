@@ -57,7 +57,7 @@ JavaScript.
 A big project from 2019-2020. Contains actions that trigger sending emails on
 specific time after the action has taken place.
 
-TODO: document design
+[Automated emails project documentation](./projects/2019_automated_emails.md).
 
 ### Community Roles
 2021-2022 Project to implement badge-like mechanism for assigning roles to people in
@@ -68,7 +68,7 @@ The Carpentries community.
 users.
 2021+ Project for archiving person profile.
 
-TODO: document design
+[Consents project documentation](./projects/2021_consents.md).
 
 ### Dashboard
 Contains generic views for admins, and logic for instructor dashboard.

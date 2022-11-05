@@ -18,6 +18,7 @@ nav:
         - 'Procedures': 'procedures.md'
         - 'Sending Mails': 'sending_mails.md'
         - 'Releases': './releases/README.md'
+        - 'Projects': './design/projects/README.md'
     - 'About The Carpentries':
         - 'The Carpentries': 'https://carpentries.org'
         - 'Data Carpentry': 'https://datacarpentry.org/'
