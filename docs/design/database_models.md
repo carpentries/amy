@@ -4,6 +4,8 @@ This document describes and summarizes roles of database models used in AMY. Mod
 stored in each of the applications, in `models.py` file, for example:
 `workshops/models.py`.
 
+----------------------------------------------------------------------------------------
+
 ## Mixins
 
 Following classes are used to extend models with some features:
@@ -94,12 +96,18 @@ Adds multiple fields in common between workshop requests models
 [`WorkshopInquiryRequest`](#workshopinquiryrequest),
 [`SelfOrganisedSubmission`](#selforganisedsubmission)).
 
-## Reversion mechanism
+----------------------------------------------------------------------------------------
+
+## Versioning mechanism
 
 Some of the models are using a `@reversion.register` decorator. This
 decorator comes from a `django-reversion`
 [package](https://django-reversion.readthedocs.io/en/stable/) indended for
 storing and easily restoring of historic "versions" of model instances.
+
+See [versioning](./model_versioning.md) documentation for more.
+
+----------------------------------------------------------------------------------------
 
 ## Auxiliary functions and models
 
@@ -112,11 +120,13 @@ location purposes within `Airport`, `Organization` and
 a package previously included in the Django itself. It's used as a comments framework.
 Comments can be added to any model instance.
 
+----------------------------------------------------------------------------------------
 
 ## User management and authentication
 
 A custom user model (`Person`) was defined according to Django documentation.
 
+----------------------------------------------------------------------------------------
 
 ## Core models - `workshops/models.py`
 
@@ -184,7 +194,7 @@ was awarded.
 ### `KnowledgeDomain`
 Represents a knowledge domain (like High Performance Computing) a person is engaged in.
 
-### Training Request
+### `Training Request`
 Represents a request for instructor training. Usually these requests come from people
 who are not AMY users.
 
@@ -220,6 +230,7 @@ Used in external requests / forms.
 
 ### `CommonRequest` - see mixins
 A common ancestor for:
+
 * [`WorkshopRequest`](#workshoprequest)
 * [`WorkshopInquiryRequest`](#workshopinquiryrequest)
 * [`SelfOrganisedSubmission`](#selforganisedsubmission)
@@ -232,14 +243,19 @@ Represents a request for teaching a Carpentries workshop.
 
 This model falls into `external requests` domain.
 
+----------------------------------------------------------------------------------------
+
 ## Fiscal application - `fiscal/models.py`
 
 ### `MembershipPersonRole`
-Simple model, represents person role within a membership (see [`Membership`](#membership) for more).
+Simple model, represents person role within a membership (see
+[`Membership`](#membership) for more).
 
 ### `MembershipTask`
 Similar to [`Task`](#task) model, but it's for a person task within a membership. Links
 to `MembershipPersonRole`.
+
+----------------------------------------------------------------------------------------
 
 ## External requests application - `extrequests/models.py`
 
@@ -259,6 +275,8 @@ Carpentries).
 
 This model falls into `external requests` domain.
 
+----------------------------------------------------------------------------------------
+
 ## Dashboard application - `dashboard/models.py`
 
 ### `Criterium`
@@ -268,6 +286,8 @@ emails to a specific admin (for example UK admin) mailbox.
 ### `Continent`
 Represents a group of countries. Used in some internal forms, e.g. for filtering events.
 
+----------------------------------------------------------------------------------------
+
 ## Recruitment application - `recruitment/models.py`
 
 ### `InstructorRecruitment`
@@ -276,6 +296,8 @@ Represents a recruitment of instructors for a given event ([`Event`](#event)).
 ### `InstructorRecruitmentSignup`
 Represents an application of a single instructor for a given instructor recruitment
 ([`InstructorRecruitment`](#instructorrecruitment)).
+
+----------------------------------------------------------------------------------------
 
 ## Consents application - `consents/models.py`
 
@@ -287,7 +309,10 @@ Represents a response for a `Term` with custom text and boolean `agree` / `decli
 type.
 
 ### `Consent`
-Represents a consent person gives (or not) to a given term. Intermediate table for M2M between `Person` and `Term`, and `TermOption`.
+Represents a consent person gives (or not) to a given term. Intermediate table for M2M
+between `Person` and `Term`, and `TermOption`.
+
+----------------------------------------------------------------------------------------
 
 ## Community Roles application - `communityroles/models.py`
 
@@ -301,6 +326,8 @@ Simple model represents reason for making a `CommunityRole` inactive.
 ### `CommunityRole`
 Represents person's role in a community. It's an extension of `Task`, but instead of
 events, it works for The Carpentries' community.
+
+----------------------------------------------------------------------------------------
 
 ## Automated Emails application - `autoemails/models.py`
 
