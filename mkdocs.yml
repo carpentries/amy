@@ -18,7 +18,15 @@ nav:
         - 'Procedures': 'procedures.md'
         - 'Sending Mails': 'sending_mails.md'
         - 'Releases': './releases/README.md'
-        - 'Projects': './design/projects/README.md'
+        - 'Projects':
+          - 'Projects': './design/projects/README.md'
+          - 'Automated emails': './design/projects/2019_automated_emails.md'
+          - 'Memberships': './design/projects/2021_memberships.md'
+          - 'Consents': './design/projects/2021_consents.md'
+          - 'Profile Archival': './design/projects/2021_profile_archival.md'
+          - 'Community Roles': './design/projects/2021_community_roles.md'
+          - 'Instructor Selection': './design/projects/2021_instructor_selection.md'
+          - 'Single Instructor Badge': './design/projects/2021_single_instructor_badge.md'
     - 'About The Carpentries':
         - 'The Carpentries': 'https://carpentries.org'
         - 'Data Carpentry': 'https://datacarpentry.org/'
