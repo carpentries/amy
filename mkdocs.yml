@@ -17,7 +17,7 @@ nav:
         - 'Server Infrastructure': 'design/server_infrastructure.md'
         - 'Procedures': 'procedures.md'
         - 'Sending Mails': 'sending_mails.md'
-        - 'Releases': 'releases'
+        - 'Releases': './releases/README.md'
     - 'About The Carpentries':
         - 'The Carpentries': 'https://carpentries.org'
         - 'Data Carpentry': 'https://datacarpentry.org/'
