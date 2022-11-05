@@ -10,7 +10,9 @@ nav:
         - 'Database Structure': 'amy_database_structure.md'
     - 'For AMY Developers':
         - 'Design': 'design/index.md'
-        - 'Database Models': 'design/database_models.md'
+        - 'Application design': 'design/application_design.md'
+        - 'Database models': 'design/database_models.md'
+        - 'Model versioning': 'design/model_versioning.md'
         - 'Template Hierarchy': 'design/template_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
         - 'Procedures': 'procedures.md'

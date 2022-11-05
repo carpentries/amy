@@ -29,7 +29,7 @@ every model instance save.
 
 ### `CreatedUpdatedArchivedMixin`
 Extends `CreatedUpdatedMixin` with `archived_at` field, empty and nullable. This is
-used by consents feature.  #TODO: add link to consents project
+used by [consents feature](./application_design.md#consents).
 
 ### `DataPrivacyAgreementMixin`
 Adds boolean field for storing agreement to privacy policy. Used by [`Person`](#person)
