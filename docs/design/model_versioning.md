@@ -8,9 +8,10 @@ application and `extforms` for showing forms to the external users.
 
 `workshops` grew to a massive size and needed splitting into smaller applications.
 However, some previous design decisions made the split complicated. Namely versioning
-system, provided by [django-reversion][], due to [model instance serialization][], was
-not flexible when it came to data migration, and very difficult when it came to
-move the underlying model to another app.
+system, provided by
+[django-reversion](https://django-reversion.readthedocs.io/en/stable/), due to
+model instance serialization, was not flexible when it came to data migration, and
+very difficult when it came to move the underlying model to another app.
 
 Not all models have versioning system enabled. Those that don't were moved to
 corresponding applications.

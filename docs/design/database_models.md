@@ -194,7 +194,7 @@ was awarded.
 ### `KnowledgeDomain`
 Represents a knowledge domain (like High Performance Computing) a person is engaged in.
 
-### `Training Request`
+### `TrainingRequest`
 Represents a request for instructor training. Usually these requests come from people
 who are not AMY users.
 
