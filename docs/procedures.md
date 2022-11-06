@@ -17,18 +17,17 @@ which will help with generating changelogs and bumping versions accordingly.
 
 ## On the End of Each Milestone
 
-1.  Close milestone using [GitHub UI](https://github.com/carpentries/amy/milestones).
+1. Close milestone using [GitHub UI](https://github.com/carpentries/amy/milestones).
 
-2.  Write down release notes and add it to the repository in `docs/releases` directory.
-    Release notes should have two sections: new features and bugfixes, each one enumerating changes and mentioning their authors.
-    Base your work on the list of all closed pull requests for given milestone, available on GitHub.
+2. Run `python docs/generate_changelog.py MILESTONE_NAME` to generate changelog for given
+   release; paste command's output into `CHANGELOG.md` file.
 
-3.  Follow [Release Procedure](#release-procedure).
+3. Follow [Release Procedure](#release-procedure).
 
-4.  Follow [Deployment Procedure](#deployment-procedure-using-ansible).
+4. Follow [Deployment Procedure](#deployment-procedure-using-ansible).
 
-5.  Write to <amy@lists.carpentries.org> mailing list.
-    The suggested subject of the new thread is "[AMY] New release v2.X.Y".
+5. Write to <amy@lists.carpentries.org> mailing list.
+   The suggested subject of the new thread is "[AMY] New release v2.X.Y".
 
 ## Release Procedure
 
