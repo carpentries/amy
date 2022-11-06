@@ -1,7 +1,7 @@
 ![](amy/static/amy-logo.png)
 
 ![develop branch](https://github.com/carpentries/amy/actions/workflows/python-test.yml/badge.svg?branch=develop)
-[![](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![](https://img.shields.io/badge/django-2.2+-blue.svg)](https://www.djangoproject.com/)
 [![](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE.md)
 
