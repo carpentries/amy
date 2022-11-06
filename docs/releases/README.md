@@ -1,5 +1,7 @@
 # Release notes
 
+[CHANGELOG](https://github.com/carpentries/amy/blob/develop/CHANGELOG.md).
+
 * [v4.0.4 (2022-11-04)](./v4.0.4.md)
 * [v4.0.3 (2022-10-31)](./v4.0.3.md)
 * [v4.0.2 (2022-10-24)](./v4.0.2.md)
