@@ -34,6 +34,4 @@ class FakeRedisTestCaseMixin:
             self.scheduler.cancel(job)
         assert not bool(list(self.scheduler.get_jobs()))
         assert self.scheduler.count() == 0
-        self.queue.empty()
-        assert self.queue.count == 0
         super().tearDown()
