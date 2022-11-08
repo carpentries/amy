@@ -29,11 +29,11 @@ services:
     image: amy:latest
     environment:
       - AMY_REDIS_URL=redis://redis:6379/
-      - AMY_DATABASE_URL=postgres://amy:amypostgresql@postgres:5432/amy
+      - DATABASE_URL=postgres://amy:amypostgresql@postgres:5432/amy
     # volumes:
     #   - .:/amy
     ports:
-      - "8000:80"
+      - "8000:8000"
     depends_on:
       - database
       - redis

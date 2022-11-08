@@ -19,7 +19,7 @@ htmlcov
 # dir for collected static files
 staticfiles/*
 # JS, CSS dependencies (installed via yarn)
-node_modules
+node_modules/*
 # dir for media (uploaded by users) files
 mediafiles/*
 
@@ -44,3 +44,6 @@ docker/redis/*
 
 # mkdocs output folder
 site/
+
+# mypy cache
+.mypy_cache/*

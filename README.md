@@ -1,7 +1,7 @@
 ![](amy/static/amy-logo.png)
 
 ![develop branch](https://github.com/carpentries/amy/actions/workflows/python-test.yml/badge.svg?branch=develop)
-[![](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![](https://img.shields.io/badge/django-2.2+-blue.svg)](https://www.djangoproject.com/)
 [![](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE.md)
 
@@ -91,6 +91,19 @@ before starting work on new features.
     ~~~
     $ docker compose -f docker/docker-compose.yml -p amy down
     ~~~
+
+## How to build the docker image?
+
+```shell
+$ LAST_COMMIT=`git rev-parse --short HEAD`
+$ docker build -t amy:latest -t amy:${LAST_COMMIT} --label commit=${LAST_COMMIT} -f docker/Dockerfile .
+```
+
+First command sets `LAST_COMMIT` environment variable to short commit hash of the
+last commit in the repository.
+
+Second command builds `docker/Dockerfile` in `.` as a context (should be your repository
+directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
 
 ## Upgrading
 
