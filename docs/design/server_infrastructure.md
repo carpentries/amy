@@ -89,3 +89,73 @@ Additional backups are created before starting any deployment with `pg_dump`.
 AMY is deployed with [Ansible](https://docs.ansible.com/) scripts. The standard
 deployment procedure is documented in a file in separate repository containing these
 scripts.
+
+
+# Infrastructure shortcomings and future plans
+
+There are couple of issues with current approach to deployment:
+
+1. Redis is on the same server as the application
+2. Application server runs `certbot` to refresh TLS certificate
+3. RQ worker and scheduler are on the same server as the application
+4. Application requires a SSH-enabled server and is not immutable
+5. There's no CI/CD pipeline set up - deployment is manual
+6. There's downtime during deployment
+7. It's not scalable
+8. It requires custom deployment scripts (Ansible).
+
+Below are propositions how to resolve each problem individually.
+
+### Migrate Redis
+
+Redis should be on a separate machine. [AWS offers](https://aws.amazon.com/redis/)
+multiple services for hosted Redis solutions, but they may not be needed. Perhaps
+a small EC2 sever dedicated to Redis could work, too?
+
+### Replace `certbot` with AWS services
+
+There is better and also free alternative to `certbot`. It's
+[Route 53](https://aws.amazon.com/route53/) for keeping domain records, and
+[Certificate Manager](https://aws.amazon.com/certificate-manager/) for generating free
+TLS certificates.
+
+Finally, Route 53 also works with Elastic Load Balancing, which should be used to
+resolve issues like lack of scalability or CI/CD.
+
+### Decouple RQ worker and scheduler from application
+
+Unfortunately this is not easy.
+[RQ worker and scheduler](https://python-rq.org/docs/scheduling/) are tightly coupled
+with the application because they use objects from application's memory pickled and
+stored in Redis database. This means that RQ worker and scheduler require access to the
+same source code.
+
+It would be the best to completely decouple RQ jobs from AMY source code. Even better if
+the jobs themselves became JSON configuration files, and code to run them could be run
+on a [Lambda](https://aws.amazon.com/lambda/).
+
+These are all pretty big changes to the application, because Redis and RQ are used in
+automated emails feature.
+
+### Containerize the application to make it immutable
+
+AMY should be containerized. It's already possible to build a Docker image with AMY,
+but it probably should run migrations automatically (it doesn't yet).
+
+Containerization is also required to run AMY in a scalable manner on ECS / EKS.
+
+### Build CI/CD pipeline
+
+Probably using GitHub Actions (see [docs](https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-amazon-elastic-container-service)).
+
+### Use ECS for blue/green deployments and load balancing
+
+[ECS](https://aws.amazon.com/ecs/) should be used to deploy AMY. Blue/green deployment
+strategy should be used, and a load balancer (which helps resolve multiple issues
+mentioned above).
+
+### Deployment
+
+AMY should be deployed using IaC (Infrastructure as Code) solution, for example.
+[Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/infrastructure-as-code)
+or [Cloud Formation](https://aws.amazon.com/cloudformation/).
