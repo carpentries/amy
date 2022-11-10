@@ -1,100 +1,91 @@
 # Server infrastructure
 
-AMY is hosted by the
-[Software Carpentry Foundation](https://software-carpentry.org/scf/)
-on [Rackspace](http://rackspace.com/) server.
+AMY is hosted in [AWS](https://aws.amazon.com/) cloud.
+
+## AWS services used
+
+Server is hosted on [EC2](https://aws.amazon.com/ec2/) instance. Database uses separate
+EC2 instance through [RDS service](https://aws.amazon.com/rds/). Additionally
+[CloudFront](https://aws.amazon.com/cloudfront/) is used as CDN for assets (images,
+CSS, JavaScript, including NPM dependencies).
+
+## Environments / stages
+
+Currently there are two stages:
+
+* test,
+* production.
 
 ## WWW server
 
 AMY is hosted by [Nginx](https://www.nginx.com/) and has 4 roles:
 
-1. handles TLS
-2. handles static files at `/static`
-3. serves a [Django](https://djangoproject.com/) application through
-   [uWSGI](http://uwsgi-docs.readthedocs.org/) (working as a proxy)
-4. serves a maintenance page when upstream proxy is not available, for
+1. handles TLS,
+2. serves a [Django](https://djangoproject.com/) application through
+   [gunicorn](https://gunicorn.org/) (working as a proxy),
+3. serves a maintenance page when upstream proxy is not available, for
    example during upgrade.
 
 Nginx configuration is similar to vhost-like Apache configuration.
 The web server was installed through Ubuntu repositories and should
 start automatically with system's boot.
 
-With `service nginx` it's possible to control the server's behavior.
-All configuration is stored in `/etc/nginx`, but AMY-related config files
-(for example a site/vhost configuration file) are symlinked.
+Nginx is configured to check for existence of `maintenance_on.html` file in
+`/webapps/{domain}`. If it's there, then `503 Service Unavailable` is served with that
+HTML file on all requests.
 
-All Nginx AMY-related configuration is stored in AMY catalog.
+## gunicorn
 
-Both Nginx and uWSGI run as separate users and separate groups.
+AMY, as a WSGI application, is run by [gunicorn](https://gunicorn.org/) on a separate
+user/group. Gunicorn creates 3 (configurable value) workers for handling the incoming
+requests. Logs are located in `/webapps/{domain}/logs/gunicorn_supervisor.log` and
+rotated.
 
-Nginx logs are located in `/var/log/nginx/`.
+## TLS certificate
 
-### uWSGI
+[Certbot](https://certbot.eff.org/) is used to acquire the TLS domain certificate.
 
-AMY, as a WSGI application, is run by uWSGI in an
-[emperor-mode](http://uwsgi-docs.readthedocs.io/en/latest/Emperor.html).
+## Application directory
 
-In this mode, uWSGI creates a fixed number of AMY processes based on
-a configuration file `amy_uwsgi.ini`. Additionally it watches this file,
-and upon detecting any changes, it automatically reloads the whole
-application, which makes it easy to bring changes to the production.
+AMY directory is located on the server under `/webapps/{domain}`. It contains:
 
-There's a special script, `/etc/init/uwsgi-emperor.conf`, that helps
-manage uWSGI with `initctl` manager. It provides for example these commands:
-
-* `start uwsgi-emperor`
-* `stop uwsgi-emperor`
-
-All the uWSGI configuration is stored in AMY catalog.
-
-uWSGI logs are located in `/etc/uwsgi/emperor.log` and in AMY catalog.
-
-### AMY catalog
-
-In `amy_site` (AMY catalog) there are stored:
-
-* `amy` - application source from Git
-* `amy.log.gz` - compressed log file
-* `amy_nginx.conf` - Nginx site configuration for AMY
-* `amy.pid`, `amy.sock` - uWSGI-generated files
-* `amy_uwsgi.ini` - uWSGI configuration file
-* `static_html` - a maintenace page catalog
-* `uwsgi_env` - file with all environment variables required to run
-  AMY (one variable per line); this file is read in by uWSGI
-* `venv` - a Python
-[virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
-catalog.
+* `DB_backups` - directory with old regular DB backups and backups created before every
+  deployment,
+* `logs` - directory with logs from various components,
+* `repo` - directory with application source code and virtual environment,
+* `maintenance_off.html` - file used for entering maintenance mode (when renamed to
+  `maintenance_on.html`).
 
 ### Virtual environment
 
-To get into AMY's virtual environment, issue
-`source ~/amy_site/venv/bin/activate`. You should now be able to control
-installed Python packages.
+To get into AMY's virtual environment, issue:
 
-The standard deployment procedure is documented in a separate file.
+```shell
+$ source /webapps/{domain}/repo/.venv/bin/activate
+```
 
-## Database server
+You may need to do this from root's (superuser) privilege level.
 
-There is none. AMY uses SQLite database, so the only database file that's
-important lives in AMY's installation directory.
+It's also important to activate environment variables used by the project. You can do
+that with:
 
-Plans to migrate to PostgreSQL database server were ceased due to bigger
-development efforts for beginners, but should they be reconsidered, the
-database server may need to be on a separate machine. Backup will require
-adjusting to the new database server.
+```shell
+$ source /webapps/{domain}/repo/.venv/bin/postactivate
+```
+
+## Redis
+
+Redis is installed and served from the application server itself. There is no special
+configuration used for it, and it's not exposed.
 
 ## Backup
 
-For now, only the database is being backed-up. There aren't any other assets
-like user-uploaded graphics that would require a regular copy.
+The database servers are regularly backed-up by AWS.
 
-Since currently the whole AMY database is contained in a single file, the
-backup process is done with a simple
-`scp amy_server:path_to_db_file ./current_time` command. It copies the
-remote database file into local directory while adjusting file's name to
-contain current timestamp.
+Additional backups are created before starting any deployment with `pg_dump`.
 
-There are two backup servers running, both in different locations than AMY
-server. Backup is being made every 1 hour on both, but the offset is
-different: one server backs-up on 1:00, 2:00, 3:00, etc., the other backs-up
-on 1:30, 2:30, 3:30, etc.
+## Deployment
+
+AMY is deployed with [Ansible](https://docs.ansible.com/) scripts. The standard
+deployment procedure is documented in a file in separate repository containing these
+scripts.
