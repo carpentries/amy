@@ -158,35 +158,25 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
 
 1. Make sure you have Redis running. See instructions above.
 
-1. Create dev database (it will add a super user, too!):
+1. Create dev database (it will add a super user and predefined database entries, too!):
 
-    ~~~
+    ```shell
     $ pipenv run make dev_database
-    ~~~
-
-1. Install required objects in database:
-
-    ~~~
-    $ pipenv run python manage.py loaddata amy/autoemails/fixtures/templates_triggers.json
-    ~~~
+    ```
 
 1. Run the server:
 
-    ~~~
+    ```shell
     $ pipenv run python manage.py runserver
-    ~~~
+    ```
 
-1. Check if you have a Tag `automated-email` available. If not, create one (you can use
-   Django admin interface for that). Use superuser account (admin:admin). Now scheduling
-   the emails should work, however there's no worker to execute them.
+1. Run the RQ worker and scheduler (use separate terminals or processes for each
+   command):
 
-1. (Optional) Run the RQ worker and scheduler (use separate terminals or processes for
-   each command):
-
-    ~~~
+    ```shell
     $ pipenv run python manage.py rqworker
     $ pipenv run python manage.py rqscheduler
-    ~~~
+    ```
 
 
 [bootstrap]: https://getbootstrap.com/

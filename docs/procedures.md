@@ -15,12 +15,19 @@ which will help with generating changelogs and bumping versions accordingly.
 **Milestone name should indicate the release version**. For example, if next release is
 `v3.15.0`, then the milestone collecting issues and PRs should be named `v3.15` or `v3.15.0`.
 
+## Feature development
+
+Developers are encouraged to use
+[feature flags](https://launchdarkly.com/blog/what-are-feature-flags/) for development
+of new features in case they would have to be released to production
+[in dark](https://www.flagship.io/glossary/dark-launch/).
+
 ## On the End of Each Milestone
 
 1. Close milestone using [GitHub UI](https://github.com/carpentries/amy/milestones).
 
 2. Run `python docs/generate_changelog.py MILESTONE_NAME` to generate changelog for given
-   release; paste command's output into `CHANGELOG.md` file.
+   release; paste command's output to the top of `CHANGELOG.md` file.
 
 3. Follow [Release Procedure](#release-procedure).
 
@@ -104,6 +111,20 @@ Execute the following commands on your local machine, not production.
 
         $ git push upstream develop
         $ git push origin develop
+
+---
+
+**Note:** it is acceptable to use a release branch as a base for release. This is very
+useful for example if a bugfix release must be created, but a feature from upcoming
+minor/major release has already been merged to `develop`. This is also useful when multiple
+features are worked on simultaneously.
+
+What are the changes:
+
+1. Code is branched out from `develop` (not necessarily the `HEAD`) to `release/vX.Y.Z`
+   branch.
+2. Optional cherry-picks follow from `develop` to `release/vX.Y.Z`.
+3. Release branch is merged to `main` with `--no-ff` option.
 
 
 ## Deployment procedure using Ansible
