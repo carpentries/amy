@@ -55,11 +55,8 @@ jobs:
         python -m pip install pipenv
         pipenv sync --dev
 
-    - name: Install Yarn
-      run: npm install -g yarn
-
     - name: Install NodeJS dependencies
-      run: yarn install
+      run: npm install
 
     - name: Check migrations
       run: |

@@ -36,9 +36,9 @@ dev_database :
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
 
-## node_modules : install front-end dependencies using Yarn
+## node_modules : install front-end dependencies
 node_modules : package.json
-	yarn install --frozen-lockfile
+	npm install
 	touch node_modules
 
 ## serve        : run a server
@@ -48,7 +48,7 @@ serve :
 ## outdated     : show outdated dependencies
 outdated :
 	-${PYTHON} -m pip list --outdated
-	-yarn outdated
+	-npm outdated
 
 ## clean        : clean up.
 clean :
