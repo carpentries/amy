@@ -16,7 +16,6 @@ nav:
         - 'Templates': 'design/template_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
         - 'Procedures': 'procedures.md'
-        - 'Sending Mails': 'sending_mails.md'
         - 'Releases': './releases/README.md'
         - 'Projects':
           - 'Projects': './design/projects/README.md'
