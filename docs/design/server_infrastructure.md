@@ -103,6 +103,9 @@ There are couple of issues with current approach to deployment:
 6. There's downtime during deployment
 7. It's not scalable
 8. It requires custom deployment scripts (Ansible).
+9. There's multiple log outputs from various services in one server (two or three from
+   AMY, one  from `rqworker`, one from `rqscheduler`, one from `gunicorn`, one from
+   a cronjob, two from nginx)
 
 Below are propositions how to resolve each problem individually.
 
@@ -159,3 +162,9 @@ mentioned above).
 AMY should be deployed using IaC (Infrastructure as Code) solution, for example.
 [Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/infrastructure-as-code)
 or [Cloud Formation](https://aws.amazon.com/cloudformation/).
+
+### Simplified logs
+
+Once AMY resides on a single VM (for example ECS task instance), it should produce one
+stream of logs; these logs should be stored in
+[CloudWatch](https://aws.amazon.com/cloudwatch/features/).
