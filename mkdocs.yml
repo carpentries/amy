@@ -5,8 +5,10 @@ edit_uri: 'edit/develop/docs/'
 theme: readthedocs
 nav:
     - 'Home': 'index.md'
+    - 'For Carpentries Community members':
+        - 'Community Users Guide': 'users_guide/community_index.md'
     - 'For AMY Administrators':
-        - 'Users Guide': 'users_guide/index.md'
+        - 'Users Guide': 'users_guide/admin_index.md'
         - 'Database Structure': 'amy_database_structure.md'
     - 'For AMY Developers':
         - 'Design': 'design/index.md'
