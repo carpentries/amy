@@ -16,6 +16,7 @@ nav:
         - 'Database models': 'design/database_models.md'
         - 'Model versioning': 'design/model_versioning.md'
         - 'Templates': 'design/template_hierarchy.md'
+        - 'Views': 'design/views_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
         - 'Procedures': 'procedures.md'
         - 'Releases': './releases/README.md'
