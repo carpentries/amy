@@ -1,7 +1,7 @@
 ![](amy/static/amy-logo.png)
 
 ![develop branch](https://github.com/carpentries/amy/actions/workflows/python-test.yml/badge.svg?branch=develop)
-[![](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![](https://img.shields.io/badge/django-2.2+-blue.svg)](https://www.djangoproject.com/)
 [![](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE.md)
 
@@ -55,9 +55,16 @@ before starting work on new features.
     have to create one yourself.
     The `--dev` flag installs development dependencies, required e.g. for testing.
 
-1.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
+1.  Install [node][nodejs] for front-end packages management.
 
-1. Start running a local instance of Postgres and Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
+1.  Install CSS, JS dependencies with (`npm` was installed in previous step when you
+    installed `node`):
+
+    ~~~
+    $ npm install
+    ~~~
+
+1.  Start running a local instance of Postgres and Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
 
     ~~~
     $ docker compose -f docker/docker-compose.yml -p amy up -d database redis
@@ -91,6 +98,19 @@ before starting work on new features.
     ~~~
     $ docker compose -f docker/docker-compose.yml -p amy down
     ~~~
+
+## How to build the docker image?
+
+```shell
+$ LAST_COMMIT=`git rev-parse --short HEAD`
+$ docker build -t amy:latest -t amy:${LAST_COMMIT} --label commit=${LAST_COMMIT} -f docker/Dockerfile .
+```
+
+First command sets `LAST_COMMIT` environment variable to short commit hash of the
+last commit in the repository.
+
+Second command builds `docker/Dockerfile` in `.` as a context (should be your repository
+directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
 
 ## Upgrading
 
@@ -184,4 +204,4 @@ before starting work on new features.
 [tc]: https://carpentries.org/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/userguide.html
 [venv]: https://docs.python.org/3/library/venv.html
-[yarn]: https://yarnpkg.com/lang/en/docs/install
+[nodejs]: https://nodejs.org/en/
