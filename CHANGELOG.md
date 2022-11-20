@@ -13,6 +13,18 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+
+## v4.0.5 - 2022-11-20
+
+### Bugfixes
+* Fix re-try button (switch from GET to POST) - [#2295](https://github.com/carpentries/amy/pull/2295) by @pbanaszkiewicz
+
+### Features
+* Switch from Yarn to NPM - [#2289](https://github.com/carpentries/amy/pull/2289) by @pbanaszkiewicz
+* Update docker commands - [#2278](https://github.com/carpentries/amy/pull/2278) by @pbanaszkiewicz
+* [#2268][#2273] Documentation: update applications documentation, update releases - [#2276](https://github.com/carpentries/amy/pull/2276) by @pbanaszkiewicz
+* [#2267] Documentation: update database models - [#2275](https://github.com/carpentries/amy/pull/2275) by @pbanaszkiewicz
+
 ## v4.0.4 - 2022-11-03
 
 ### Bugfixes
