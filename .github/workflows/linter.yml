@@ -5,7 +5,7 @@ name: Lint Code Base
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches: [ main, develop ]
 
 jobs:
   build:
