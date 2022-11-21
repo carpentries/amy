@@ -1,9 +1,13 @@
 from collections import namedtuple
+from collections.abc import Iterable
 import datetime
+from functools import partial
+import json
 import re
 from typing import Optional
 
 import requests
+from rest_framework.utils.encoders import JSONEncoder
 import yaml
 
 from workshops.exceptions import WrongWorkshopURL
@@ -268,3 +272,72 @@ def validate_workshop_metadata(metadata):
                 pass
 
     return errors, warnings
+
+
+def datetime_match(string):
+    """Convert string date/datetime/time to date/datetime/time."""
+    formats = (
+        # date
+        ("%Y-%m-%d", "date"),
+        # datetime (no microseconds, timezone unaware)
+        ("%Y-%m-%dT%H:%M:%S", None),
+        # datetime (w/ microseconds, timezone unaware)
+        ("%Y-%m-%dT%H:%M:%S.%f", None),
+        # time (no microseconds, timezone unaware)
+        ("%H:%M:%S", "time"),
+        # try parsing time (w/ microseconds, timezone unaware)
+        ("%H:%M:%S.%f", "time"),
+    )
+    for format_, method in formats:
+        try:
+            v = datetime.datetime.strptime(string, format_)
+            if method is not None:
+                return getattr(v, method)()
+            return v
+        except ValueError:
+            pass
+
+    # TODO: Implement timezone-aware datetime parsing (currently
+    #       not available because datetime.datetime.strptime
+    #       doesn't support "+HH:MM" format [only "+HHMM"]; nor
+    #       does it support "Z" at the end)
+
+    return string
+
+
+def datetime_decode(obj):
+    """Recursively call for each iterable, and try to decode each string."""
+    iterator = None
+    if isinstance(obj, dict):
+        iterator = obj.items
+    elif isinstance(obj, list):
+        iterator = partial(enumerate, obj)
+
+    if iterator:
+        for k, item in iterator():
+            if isinstance(item, str):
+                obj[k] = datetime_match(item)
+
+            elif isinstance(item, Iterable):
+                # recursive call
+                obj[k] = datetime_decode(item)
+
+        return obj
+
+    elif isinstance(obj, str):
+        return datetime_match(obj)
+
+    else:
+        return obj
+
+
+def metadata_serialize(obj):
+    """Serialize object to be put in the database."""
+    return json.dumps(obj, cls=JSONEncoder)
+
+
+def metadata_deserialize(obj: str):
+    """Deserialize object from the database."""
+    objs = json.loads(obj)
+    # convert strings to datetimes (if they match format)
+    return datetime_decode(objs)

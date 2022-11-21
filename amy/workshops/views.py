@@ -97,9 +97,6 @@ from workshops.forms import (
     TaskForm,
     WorkshopStaffForm,
 )
-from workshops.management.commands.check_for_workshop_websites_updates import (
-    Command as WebsiteUpdatesCommand,
-)
 from workshops.models import (
     Airport,
     Award,
@@ -119,6 +116,8 @@ from workshops.utils.comments import add_comment
 from workshops.utils.merge import merge_objects
 from workshops.utils.metadata import (
     fetch_workshop_metadata,
+    metadata_deserialize,
+    metadata_serialize,
     parse_workshop_metadata,
     validate_workshop_metadata,
 )
@@ -1555,8 +1554,7 @@ def event_review_metadata_changes(request, slug):
 
     # save serialized metadata in session so in case of acceptance we don't
     # reload them
-    cmd = WebsiteUpdatesCommand()
-    metadata_serialized = cmd.serialize(metadata)
+    metadata_serialized = metadata_serialize(metadata)
     request.session["metadata_from_event_website"] = metadata_serialized
 
     context = {
@@ -1580,8 +1578,8 @@ def event_accept_metadata_changes(request, slug):
     metadata_serialized = request.session.get("metadata_from_event_website")
     if not metadata_serialized:
         raise Http404("Nothing to update.")
-    cmd = WebsiteUpdatesCommand()
-    metadata = cmd.deserialize(metadata_serialized)
+
+    metadata = metadata_deserialize(metadata_serialized)
 
     # update values
     ALLOWED_METADATA = (
