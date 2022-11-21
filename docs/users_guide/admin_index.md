@@ -280,6 +280,9 @@ Automatic priority is defined as follows:
 
 ![AMY workshop signup info](images/instructor_signup_details.png)
 
+At this point, the workshop will be available for badged and active Instructors to [view and consider](../community_index/#viewing-teaching-opportunities).
+
+
 ### Assigning People to Events
 
 Regardless of how events are created, adding the people associated with each event can not easily be automated. [Name matching is hard](http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/).
