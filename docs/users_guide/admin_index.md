@@ -257,6 +257,8 @@ This will open a page with a side by side view of the request details and view t
 
 ![AMY workshop accept request](images/event_from_request.png)
 
+
+
 ### Recruiting Instructors for Workshops
 
 AMY admins can create a sign up process for badged and active Instructors to express interest in teaching opportunities. The following criteria must be met to begin the instructor signup process:
@@ -268,6 +270,15 @@ AMY admins can create a sign up process for badged and active Instructors to exp
 Once these criteria are met, the admin will see an option to begin the Instructor signup (selection) process:
 
 ![AMY workshop begin signup process](images/begin_instructor_signup.png)
+
+You will then be taken to a screen to add in more information about this workshop.  A priority can be automatically assigned based on how far out the workshop is.  This priority can be changed here. You can also share additional notes such as a description of the workshop audience, COVID policy, or other information.  Click "Add sign up page" to add this to the sign up page visible to badged and active Instructors.
+
+Automatic priority is defined as follows:
+
+* For online events: **LOW** if start >= 60 days; **MEDIUM** if start > 30 days; **HIGH** otherwise.
+* For in-person events: **LOW** if start >= 90 days; **MEDIUM** if start > 60 days; **HIGH** otherwise.
+
+![AMY workshop signup info](images/instructor_signup_details.png)
 
 ### Assigning People to Events
 
