@@ -257,6 +257,18 @@ This will open a page with a side by side view of the request details and view t
 
 ![AMY workshop accept request](images/event_from_request.png)
 
+### Recruiting Instructors for Workshops
+
+AMY admins can create a sign up process for badged and active Instructors to express interest in teaching opportunities. The following criteria must be met to begin the instructor signup process:
+
+* Centrally-Organised workshop
+* Start date in future
+* Complete location information
+
+Once these criteria are met, the admin will see an option to begin the Instructor signup (selection) process:
+
+![AMY workshop begin signup process](images/begin_instructor_signup.png)
+
 ### Assigning People to Events
 
 Regardless of how events are created, adding the people associated with each event can not easily be automated. [Name matching is hard](http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/).
