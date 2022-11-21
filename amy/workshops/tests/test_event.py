@@ -18,9 +18,6 @@ from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.forms import EventCreateForm, EventForm, EventsMergeForm
-from workshops.management.commands.check_for_workshop_websites_updates import (
-    Command as WebsiteUpdatesCommand,
-)
 from workshops.models import (
     Award,
     Badge,
@@ -33,6 +30,7 @@ from workshops.models import (
     Task,
 )
 from workshops.tests.base import SuperuserMixin, TestBase
+from workshops.utils.metadata import metadata_serialize
 import workshops.views
 
 
@@ -1240,8 +1238,6 @@ class TestEventReviewingRepoChanges(TestBase):
         self._setUpUsersAndLogin()
         self._setUpOrganizations()
 
-        self.cmd = WebsiteUpdatesCommand()
-
         self.metadata = {
             "slug": "2015-07-13-test",
             "language": "US",
@@ -1257,7 +1253,7 @@ class TestEventReviewingRepoChanges(TestBase):
             "helpers": ["Peter Parker", "Tony Stark", "Natasha Romanova"],
             "contact": "hermione@granger.co.uk, rweasley@ministry.gov",
         }
-        self.metadata_serialized = self.cmd.serialize(self.metadata)
+        self.metadata_serialized = metadata_serialize(self.metadata)
 
         # create event with some changes detected
         self.event = Event.objects.create(
