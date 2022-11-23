@@ -257,6 +257,40 @@ This will open a page with a side by side view of the request details and view t
 
 ![AMY workshop accept request](images/event_from_request.png)
 
+
+
+### Recruiting Instructors for Workshops
+
+AMY admins can create a sign up process for badged and active Instructors to express interest in teaching opportunities. The following criteria must be met to begin the instructor signup process:
+
+* Centrally-Organised workshop
+* Start date in future
+* Complete location information
+
+Once these criteria are met, the admin will see an option to begin the Instructor signup (selection) process:
+
+![AMY workshop begin signup process](images/begin_instructor_signup.png)
+
+You will then be taken to a screen to add in more information about this workshop.  A priority can be automatically assigned based on how far out the workshop is.  This priority can be changed here. You can also share additional notes such as a description of the workshop audience, COVID policy, or other information.  Click "Add sign up page" to add this to the sign up page visible to badged and active Instructors.
+
+Automatic priority is defined as follows:
+
+* For online events: **LOW** if start >= 60 days; **MEDIUM** if start > 30 days; **HIGH** otherwise.
+* For in-person events: **LOW** if start >= 90 days; **MEDIUM** if start > 60 days; **HIGH** otherwise.
+
+![AMY workshop signup info](images/instructor_signup_details.png)
+
+At this point, the workshop will be available for badged and active Instructors to [view and consider](../community_index/#viewing-teaching-opportunities).
+
+As Instructors register their interest, an admin can track their status from the event page itself to view details of just that workshop, or by selecting the "More >> Instructor selection/recruitment" menu option.  The next screen will show who has signed up so far, a summary of their activity as a Helper and Instructor; the Instructor's country; and notes left by the Instructor.
+
+The admin can edit their own notes for each person using the blue edit button, and confirm or decline the Instructor to teach using the confirm or decline buttons.  Once an Instructor has been confirmed in this way, an Instructor task is automatically created for this individual.
+
+Once at least two Instructors have been confirmed, the admin may close signups for this workshop.  This workshop will then no longer appear on the list of Instructor opportunities.
+
+![AMY workshop signup summary](images/instructor_signup_status_view.png)
+
+
 ### Assigning People to Events
 
 Regardless of how events are created, adding the people associated with each event can not easily be automated. [Name matching is hard](http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/).
