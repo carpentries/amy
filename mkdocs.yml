@@ -2,7 +2,13 @@ site_name: AMY documentation
 repo_url: https://github.com/carpentries/amy/
 edit_uri: 'edit/develop/docs/'
 
-theme: readthedocs
+extra_javascript:
+    - 'js/navigation.js'
+
+theme:
+    name: readthedocs
+    collapse_navigation: true
+
 nav:
     - 'Home': 'index.md'
     - 'For Carpentries Community members':
