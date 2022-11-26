@@ -70,4 +70,5 @@ COPY --from=node_dependencies /app/node_modules /app/node_modules
 
 WORKDIR /app
 EXPOSE 8000
-CMD /venv/amy/bin/gunicorn --workers=4 --bind=0.0.0.0:8000 --env DJANGO_SETTINGS_MODULE=config.settings config.wsgi
+
+CMD ./start.sh
