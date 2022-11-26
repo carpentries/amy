@@ -14,11 +14,11 @@ htmlerror
 htmlcov
 
 # dir for collected static files
-staticfiles/*
+staticfiles/
 # JS, CSS dependencies
-node_modules
+node_modules/
 # dir for media (uploaded by users) files
-mediafiles/*
+mediafiles/
 
 # Python cache files
 *.pyc
@@ -35,11 +35,8 @@ __pycache__
 # test database files
 test_db*
 
-# Database backup files
-DB_backups/*
-
-# log file
-logs/*
+# log files
+logs/
 
 # Docker local volumes
 docker/database/*

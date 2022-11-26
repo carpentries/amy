@@ -17,26 +17,29 @@ htmlerror
 htmlcov
 
 # dir for collected static files
-staticfiles/*
+staticfiles/
 # JS, CSS dependencies
-node_modules/*
+node_modules/
 # dir for media (uploaded by users) files
-mediafiles/*
+mediafiles/
 
 # Python cache files
 *.pyc
 __pycache__
+
+# MyPy cache files
+.mypy_cache
+
+# Pytest cache files
+.pytest_cache
 
 # databases
 *.sqlite3*
 # test database files
 test_db*
 
-# Database backup files
-DB_backups/*
-
 # log file
-logs/*
+logs/
 
 # Docker local volumes
 docker/database/*
@@ -45,5 +48,5 @@ docker/redis/*
 # mkdocs output folder
 site/
 
-# mypy cache
-.mypy_cache/*
+# environment variables
+.env
