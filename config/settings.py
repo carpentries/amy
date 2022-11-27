@@ -497,11 +497,13 @@ LOGGING = {
     "disable_existing_loggers": False,  # merge with default configuration
     "formatters": {
         "verbose": {
-            "format": "{asctime}::{levelname}::{message}",
+            "format": (
+                "[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"
+            ),
             "style": "{",
         },
         "simple": {
-            "format": "{levelname}::{message}",
+            "format": "[{asctime}][{levelname}] {message}",
             "style": "{",
         },
     },
@@ -509,29 +511,15 @@ LOGGING = {
         "null": {
             "class": "logging.NullHandler",
         },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
         "mail_admins": {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
             "email_backend": EMAIL_BACKEND,
             "include_html": True,
-        },
-        "log_file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "formatter": "verbose",
-            "filename": env("AMY_SERVER_LOGFILE"),
-        },
-        "debug_log_file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "formatter": "verbose",
-            "filename": env("AMY_DEBUG_LOGFILE"),
-        },
-        "worker_log_file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "formatter": "verbose",
-            "filename": env("AMY_WORKER_LOGFILE"),
         },
     },
     "loggers": {
@@ -541,21 +529,7 @@ LOGGING = {
             "propagate": False,
         },
         "amy": {
-            "handlers": ["null"],
-            "level": "WARNING",
-        },
-        "amy.signals": {
-            "handlers": ["debug_log_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "amy.server_logs": {
-            "handlers": ["log_file"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "rq.worker": {
-            "handlers": ["worker_log_file"],
+            "handlers": ["console"],
             "level": "DEBUG",
         },
     },

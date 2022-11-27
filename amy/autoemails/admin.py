@@ -20,7 +20,7 @@ from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 from workshops.utils.access import admin_required
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 
 

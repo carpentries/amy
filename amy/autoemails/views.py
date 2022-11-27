@@ -15,7 +15,7 @@ from .forms import GenericEmailScheduleForm
 from .models import EmailTemplate, Trigger
 from .utils import check_status, safe_next_or_default_url, scheduled_execution_time
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 

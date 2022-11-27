@@ -12,7 +12,7 @@ from autoemails.actions import NewConsentRequiredAction
 from consents.models import Consent, Term, TermOption
 from consents.util import send_consent_email
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 
