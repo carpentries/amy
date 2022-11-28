@@ -75,7 +75,7 @@ from workshops.utils.trainingrequest_upload import (
 from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete, redirect_with_next_support
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 

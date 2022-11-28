@@ -2,27 +2,54 @@
 Django settings for AMY project.
 """
 
+from pathlib import Path
+
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 import environ
 
-ROOT_DIR = environ.Path(__file__) - 2  # (amy/config/settings.py - 2 = amy/)
-BASE_DIR = ROOT_DIR()
-APPS_DIR = ROOT_DIR.path("amy")
+ROOT_DIR = Path(__file__).parent.parent  # amy/
+APPS_DIR = ROOT_DIR / "amy"
 
-env = environ.Env()
+# set default values
+env = environ.Env(
+    CI=(bool, False),
+    AMY_DEBUG=(bool, True),
+    AMY_SITE_ID=(int, 2),
+    AMY_ALLOWED_HOSTS=(list, ["amy.carpentries.org"]),
+    DATABASE_URL=(str, "postgres://amy:amypostgresql@localhost/amy"),
+    AMY_RECAPTCHA_PUBLIC_KEY=(str, "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"),
+    AMY_RECAPTCHA_PRIVATE_KEY=(str, "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"),
+    AMY_SOCIAL_AUTH_GITHUB_KEY=(str, ""),
+    AMY_SOCIAL_AUTH_GITHUB_SECRET=(str, ""),
+    AMY_GITHUB_API_TOKEN=(str, ""),
+    AMY_REDIS_URL=(str, "redis://localhost:6379/"),
+    AMY_STATIC_HOST=(str, ""),
+    AMY_LIVE_EMAIL=(bool, False),
+    AMY_SERVER_EMAIL=(str, "root@localhost"),
+    AMY_DEFAULT_FROM_EMAIL=(str, "webmaster@localhost"),
+    AMY_MAILGUN_API_KEY=(str, ""),
+    AMY_MAILGUN_SENDER_DOMAIN=(str, ""),
+    AMY_ADMIN_URL=(str, "admin/"),
+    AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS=(str, ""),
+    AMY_REPORTS_SALT_FRONT=(str, ""),
+    AMY_REPORTS_SALT_BACK=(str, ""),
+    AMY_REPORTS_LINK=(
+        str,
+        "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
+    ),
+    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
+)
 
-READ_DOT_ENV_FILE = env.bool("AMY_READ_DOT_ENV_FILE", default=False)
-if READ_DOT_ENV_FILE:
-    # OS environment variables take precedence over variables from .env
-    env.read_env(str(ROOT_DIR.path(".env")))
+# OS environment variables take precedence over variables from .env
+env.read_env(str(ROOT_DIR / ".env"))
 
-CONTINUOUS_INTEGRATION = env.bool("CI", default=False)
+CONTINUOUS_INTEGRATION = env("CI")
 
 # GENERAL
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = env.bool("AMY_DEBUG", True)
+DEBUG = env("AMY_DEBUG")
 # Local time zone. Choices are
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # though not all of them may be available with every OS.
@@ -38,7 +65,7 @@ USE_L10N = True
 USE_TZ = True
 # Secret key must be kept secret
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
-SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)
+SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)  # type: ignore
 if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
     raise ImproperlyConfigured(
         "You must specify non-default value for "
@@ -46,8 +73,8 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
     )
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
-SITE_ID = env.int("AMY_SITE_ID", default=2)
-ALLOWED_HOSTS = env.list("AMY_ALLOWED_HOSTS", default=["amy.carpentries.org"])
+SITE_ID = env("AMY_SITE_ID")
+ALLOWED_HOSTS = env("AMY_ALLOWED_HOSTS")
 if DEBUG:
     ALLOWED_HOSTS.append("127.0.0.1")
 
@@ -56,9 +83,7 @@ if DEBUG:
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
 DATABASES = {
-    "default": env.db(
-        "DATABASE_URL", default="postgres://amy:amypostgresql@localhost/amy"
-    ),
+    "default": env.db(),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 # Default primary key field type
@@ -74,14 +99,8 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # ReCaptcha
 # -----------------------------------------------------------------------------
-RECAPTCHA_PUBLIC_KEY = env.str(
-    "AMY_RECAPTCHA_PUBLIC_KEY",
-    default="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
-)
-RECAPTCHA_PRIVATE_KEY = env.str(
-    "AMY_RECAPTCHA_PRIVATE_KEY",
-    default="6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
-)
+RECAPTCHA_PUBLIC_KEY = env("AMY_RECAPTCHA_PUBLIC_KEY")
+RECAPTCHA_PRIVATE_KEY = env("AMY_RECAPTCHA_PRIVATE_KEY")
 RECAPTCHA_USE_SSL = True
 NOCAPTCHA = True
 if DEBUG:
@@ -150,8 +169,8 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ["github"]
-SOCIAL_AUTH_GITHUB_KEY = env.str("AMY_SOCIAL_AUTH_GITHUB_KEY", default="")
-SOCIAL_AUTH_GITHUB_SECRET = env.str("AMY_SOCIAL_AUTH_GITHUB_SECRET", default="")
+SOCIAL_AUTH_GITHUB_KEY = env("AMY_SOCIAL_AUTH_GITHUB_KEY")
+SOCIAL_AUTH_GITHUB_SECRET = env("AMY_SOCIAL_AUTH_GITHUB_SECRET")
 if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
     raise ImproperlyConfigured(
         "Logging using github account will *not* work, "
@@ -160,7 +179,7 @@ if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
     )
 # Github API token (optional). Setting this token reduces limits and quotes
 # on Github API.
-GITHUB_API_TOKEN = env("AMY_GITHUB_API_TOKEN", default=None)
+GITHUB_API_TOKEN = env("AMY_GITHUB_API_TOKEN")
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
@@ -222,14 +241,14 @@ AUTH_PASSWORD_VALIDATORS = [
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env.str("AMY_REDIS_URL", "redis://localhost:6379/") + "0",
+        "LOCATION": env("AMY_REDIS_URL") + "0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     },
     "select2": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env.str("AMY_REDIS_URL", "redis://localhost:6379/") + "1",
+        "LOCATION": env("AMY_REDIS_URL") + "1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -257,31 +276,31 @@ MIDDLEWARE = [
 # STATIC
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = str(ROOT_DIR("staticfiles"))
-STATIC_HOST = env.str("AMY_STATIC_HOST", default="")
+STATIC_ROOT = str(ROOT_DIR / "staticfiles")
+STATIC_HOST = env("AMY_STATIC_HOST")
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = f"{STATIC_HOST}/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
 STATICFILES_DIRS = [
-    str(APPS_DIR.path("static")),
-    str(ROOT_DIR.path("node_modules/@fortawesome/fontawesome-free/")),
-    str(ROOT_DIR.path("node_modules/@github/time-elements/dist")),
-    str(ROOT_DIR.path("node_modules/bootstrap/dist/css")),
-    str(ROOT_DIR.path("node_modules/bootstrap/dist/js")),
-    str(ROOT_DIR.path("node_modules/bootstrap-datepicker/dist/css")),
-    str(ROOT_DIR.path("node_modules/bootstrap-datepicker/dist/js")),
-    str(ROOT_DIR.path("node_modules/bootstrap-datepicker/dist/locales")),
-    str(ROOT_DIR.path("node_modules/popper.js/dist/umd")),
-    str(ROOT_DIR.path("node_modules/datatables.net/js")),
-    str(ROOT_DIR.path("node_modules/datatables.net-bs4/css")),
-    str(ROOT_DIR.path("node_modules/datatables.net-bs4/js")),
-    str(ROOT_DIR.path("node_modules/select2/dist/css")),
-    str(ROOT_DIR.path("node_modules/select2/dist/js")),
-    str(ROOT_DIR.path("node_modules/@ttskch/select2-bootstrap4-theme/dist")),
-    str(ROOT_DIR.path("node_modules/jquery/dist")),
-    str(ROOT_DIR.path("node_modules/jquery-stickytabs")),
-    str(ROOT_DIR.path("node_modules/js-cookie/dist")),
-    str(ROOT_DIR.path("node_modules/urijs/src")),
+    str(APPS_DIR / "static"),
+    str(ROOT_DIR / "node_modules" / "@fortawesome" / "fontawesome-free"),
+    str(ROOT_DIR / "node_modules" / "@github" / "time-elements" / "dist"),
+    str(ROOT_DIR / "node_modules" / "bootstrap" / "dist" / "css"),
+    str(ROOT_DIR / "node_modules" / "bootstrap" / "dist" / "js"),
+    str(ROOT_DIR / "node_modules" / "bootstrap-datepicker" / "dist" / "css"),
+    str(ROOT_DIR / "node_modules" / "bootstrap-datepicker" / "dist" / "js"),
+    str(ROOT_DIR / "node_modules" / "bootstrap-datepicker" / "dist" / "locales"),
+    str(ROOT_DIR / "node_modules" / "popper.js" / "dist" / "umd"),
+    str(ROOT_DIR / "node_modules" / "datatables.net" / "js"),
+    str(ROOT_DIR / "node_modules" / "datatables.net-bs4" / "css"),
+    str(ROOT_DIR / "node_modules" / "datatables.net-bs4" / "js"),
+    str(ROOT_DIR / "node_modules" / "select2" / "dist" / "css"),
+    str(ROOT_DIR / "node_modules" / "select2" / "dist" / "js"),
+    str(ROOT_DIR / "node_modules" / "@ttskch" / "select2-bootstrap4-theme" / "dist"),
+    str(ROOT_DIR / "node_modules" / "jquery" / "dist"),
+    str(ROOT_DIR / "node_modules" / "jquery-stickytabs"),
+    str(ROOT_DIR / "node_modules" / "js-cookie" / "dist"),
+    str(ROOT_DIR / "node_modules" / "urijs" / "src"),
 ]
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
 STATICFILES_FINDERS = [
@@ -294,7 +313,7 @@ WHITENOISE_AUTOREFRESH = DEBUG or CONTINUOUS_INTEGRATION  # faster tests
 # MEDIA
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-root
-MEDIA_ROOT = str(ROOT_DIR("mediafiles"))
+MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "/media/"
 
@@ -314,7 +333,7 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # https://docs.djangoproject.com/en/dev/ref/settings/#template-dirs
         "DIRS": [
-            str(APPS_DIR.path("templates")),
+            str(APPS_DIR / "templates"),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -365,26 +384,26 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # FIXTURES
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#fixture-dirs
-FIXTURE_DIRS = (str(APPS_DIR.path("fixtures")),)
+FIXTURE_DIRS = (str(APPS_DIR / "fixtures"),)
 
 # EMAIL
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
-if DEBUG and not env.bool("AMY_LIVE_EMAIL", default=False):
+if DEBUG and not env("AMY_LIVE_EMAIL"):
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # sender for error emails
-SERVER_EMAIL = env("AMY_SERVER_EMAIL", default="root@localhost")
+SERVER_EMAIL = env("AMY_SERVER_EMAIL")
 
 # default sender for non-error messages
-DEFAULT_FROM_EMAIL = env("AMY_DEFAULT_FROM_EMAIL", default="webmaster@localhost")
+DEFAULT_FROM_EMAIL = env("AMY_DEFAULT_FROM_EMAIL")
 
 # django-anymail configuration for Mailgun
 ANYMAIL = {
-    "MAILGUN_API_KEY": env("AMY_MAILGUN_API_KEY", default=None),
-    "MAILGUN_SENDER_DOMAIN": env("AMY_MAILGUN_SENDER_DOMAIN", default=None),
+    "MAILGUN_API_KEY": env("AMY_MAILGUN_API_KEY"),
+    "MAILGUN_SENDER_DOMAIN": env("AMY_MAILGUN_SENDER_DOMAIN"),
     # This should be in format `long_random:another_long_random`, as it's used
     # for HTTP Basic Auth when Mailgun logs in to tell us about email tracking
     # event.
@@ -412,7 +431,7 @@ BULK_EMAIL_LIMIT = 1000
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL.
-ADMIN_URL = env("AMY_ADMIN_URL", default="admin/")
+ADMIN_URL = env("AMY_ADMIN_URL")
 if not ADMIN_URL.endswith("/"):
     ADMIN_URL += "/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
@@ -475,11 +494,13 @@ LOGGING = {
     "disable_existing_loggers": False,  # merge with default configuration
     "formatters": {
         "verbose": {
-            "format": "{asctime}::{levelname}::{message}",
+            "format": (
+                "[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"
+            ),
             "style": "{",
         },
         "simple": {
-            "format": "{levelname}::{message}",
+            "format": "[{asctime}][{levelname}] {message}",
             "style": "{",
         },
     },
@@ -487,35 +508,15 @@ LOGGING = {
         "null": {
             "class": "logging.NullHandler",
         },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
         "mail_admins": {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
             "email_backend": EMAIL_BACKEND,
             "include_html": True,
-        },
-        "log_file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "formatter": "verbose",
-            "filename": env.path(
-                "AMY_SERVER_LOGFILE", default=ROOT_DIR("logs", "amy.log")
-            ),
-        },
-        "debug_log_file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "formatter": "verbose",
-            "filename": env.path(
-                "AMY_DEBUG_LOGFILE", default=ROOT_DIR("logs", "amy_debug.log")
-            ),
-        },
-        "worker_log_file": {
-            "level": "DEBUG",
-            "class": "logging.FileHandler",
-            "formatter": "verbose",
-            "filename": env.path(
-                "AMY_WORKER_LOGFILE", default=ROOT_DIR("logs", "worker_debug.log")
-            ),
         },
     },
     "loggers": {
@@ -525,21 +526,7 @@ LOGGING = {
             "propagate": False,
         },
         "amy": {
-            "handlers": ["null"],
-            "level": "WARNING",
-        },
-        "amy.signals": {
-            "handlers": ["debug_log_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "amy.server_logs": {
-            "handlers": ["log_file"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "rq.worker": {
-            "handlers": ["worker_log_file"],
+            "handlers": ["console"],
             "level": "DEBUG",
         },
     },
@@ -568,11 +555,11 @@ SELECT2_CACHE_BACKEND = "select2"
 # https://github.com/rq/django-rq
 RQ_QUEUES = {
     "default": {
-        "URL": env.str("AMY_REDIS_URL", "redis://localhost:6379/") + "2",
+        "URL": env("AMY_REDIS_URL") + "2",
         "DEFAULT_TIMEOUT": 360,
     },
     "testing": {
-        "URL": env.str("AMY_REDIS_URL", "redis://localhost:6379/") + "15",
+        "URL": env("AMY_REDIS_URL") + "15",
         "DEFAULT_TIMEOUT": 360,
     },
 }
@@ -590,30 +577,23 @@ RQ = {
 # Autoemails application settings
 # -----------------------------------------------------------------------------
 # These settings describe internal `autoemails` application behavior.
-AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env.str(
-    "AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS",
-    default=None,  # On test server: 'amy-tests@carpentries.org'
-)
+# On test server: 'amy-tests@carpentries.org'
+AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS")
 
 # Reports
 # -----------------------------------------------------------------------------
 # Settings for workshop-reports integration
-REPORTS_SALT_FRONT = env.str("AMY_REPORTS_SALT_FRONT", default="")
-REPORTS_SALT_BACK = env.str("AMY_REPORTS_SALT_BACK", default="")
+REPORTS_SALT_FRONT = env("AMY_REPORTS_SALT_FRONT")
+REPORTS_SALT_BACK = env("AMY_REPORTS_SALT_BACK")
 if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
     raise ImproperlyConfigured(
         "Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK"
         " in settings."
     )
 
-REPORTS_LINK = env.str(
-    "AMY_REPORTS_LINK",
-    default="https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
-)
+REPORTS_LINK = env("AMY_REPORTS_LINK")
 
 # Instructor Recruitment Process
 # -----------------------------------------------------------------------------
 # Settings for Instructor Recruitment project
-INSTRUCTOR_RECRUITMENT_ENABLED = env.bool(
-    "AMY_INSTRUCTOR_RECRUITMENT_ENABLED", default=False
-)
+INSTRUCTOR_RECRUITMENT_ENABLED = env("AMY_INSTRUCTOR_RECRUITMENT_ENABLED")

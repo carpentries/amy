@@ -20,7 +20,7 @@ from workshops.utils.dates import human_daterange
 from workshops.utils.emails import match_notification_email
 from workshops.utils.reports import reports_link
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 DAY_IN_SECONDS = 86400
 

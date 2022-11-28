@@ -46,7 +46,7 @@ from workshops.utils.access import OnlyForAdminsMixin
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 

@@ -18,7 +18,7 @@ from fiscal.models import MembershipPersonRole
 from workshops import models
 from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
-logger = logging.getLogger("amy.server_logs")
+logger = logging.getLogger("amy")
 
 
 class ExtensibleAutoResponseView(AutoResponseView):

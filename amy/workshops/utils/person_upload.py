@@ -15,7 +15,7 @@ from workshops.exceptions import InternalError
 from workshops.models import Event, Person, Role, Task
 from workshops.utils.usernames import create_username
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 
 
