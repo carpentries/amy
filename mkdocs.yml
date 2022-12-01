@@ -6,7 +6,7 @@ extra_javascript:
     - 'js/navigation.js'
 
 theme:
-    name: readthedocs
+    name: material
     collapse_navigation: true
 
 nav:
