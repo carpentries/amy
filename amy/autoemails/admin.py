@@ -65,27 +65,30 @@ class RQJobAdmin(admin.ModelAdmin):
         "manage_links",
         "created_at",
         "scheduled_execution",
-        "trigger",
         "status",
-        "mail_status",
         "event_slug",
         "recipients",
-        "interval",
-        "result_ttl",
     ]
     date_hierarchy = "created_at"
     readonly_fields = [
         "scheduled_execution",
         "action_name",
         "status",
-        "mail_status",
         "event_slug",
         "recipients",
-        "interval",
-        "result_ttl",
     ]
     actions = [
         "action_refresh_state",
+    ]
+    list_filter = [
+        "action_name",
+        "status",
+    ]
+    search_fields = [
+        "job_id",
+        "action_name",
+        "event_slug",
+        "recipients",
     ]
 
     def action_refresh_state(self, request, queryset):
@@ -305,8 +308,7 @@ class RQJobAdmin(admin.ModelAdmin):
             logger.debug(f"Job {rqjob.job_id} could not be rescheduled.")
             messages.warning(
                 request,
-                f"The job {rqjob.job_id} was not "
-                "rescheduled. It is probably already "
+                f"The job {rqjob.job_id} was not rescheduled. It is probably already "
                 "executing or has recently executed.",
             )
 
