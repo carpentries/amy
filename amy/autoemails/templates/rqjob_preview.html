@@ -298,7 +298,7 @@
 
 {% if job and job.is_failed %}
 <div class="submit-row">
-    <form method="POST" action="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}">
+    <form method="POST" action="{% url 'admin:autoemails_rqjob_retry' object_id=rqjob.pk %}">
         {% csrf_token %}
         <input type="submit" value="Re-try" class="danger">
     </form>

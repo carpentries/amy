@@ -305,8 +305,7 @@ class RQJobAdmin(admin.ModelAdmin):
             logger.debug(f"Job {rqjob.job_id} could not be rescheduled.")
             messages.warning(
                 request,
-                f"The job {rqjob.job_id} was not "
-                "rescheduled. It is probably already "
+                f"The job {rqjob.job_id} was not rescheduled. It is probably already "
                 "executing or has recently executed.",
             )
 
