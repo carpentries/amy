@@ -14,6 +14,11 @@ Then paste output from that script here.
 -----------------------------------------------------------------
 
 
+## v4.0.6 - 2022-12-05
+
+### Bugfixes
+* Fix Re-try button in Admin panel for RQJobs - [#2304](https://github.com/carpentries/amy/pull/2304) by @pbanaszkiewicz
+
 ## v4.0.5 - 2022-11-20
 
 ### Bugfixes
