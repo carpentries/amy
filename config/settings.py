@@ -2,6 +2,8 @@
 Django settings for AMY project.
 """
 
+import json
+import os
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -81,6 +83,16 @@ if DEBUG:
 # DATABASES
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
+
+if "DATABASE_JSON" in env:
+    # If database credentials are provided via AWS Secrets Manager secret JSON, then
+    # decompose it and create a database URL.
+    database_json = json.loads(env("DATABASE_JSON"))
+    database_url = (
+        f"postgres://{database_json['username']}:{database_json['password']}"
+        f"@{database_json['host']}:{database_json['port']}/{database_json['dbname']}"
+    )
+    os.environ["DATABASE_URL"] = database_url
 
 DATABASES = {
     "default": env.db(),
