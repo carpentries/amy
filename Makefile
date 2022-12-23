@@ -43,7 +43,14 @@ node_modules : package.json
 
 ## serve        : run a server
 serve :
-	gunicorn --workers=4 --bind=127.0.0.1:8000 --reload --env DJANGO_SETTINGS_MODULE=config.settings config.wsgi
+	gunicorn \
+		--workers=4 \
+		--bind=127.0.0.1:8000 \
+		--access-logfile - \
+		--capture-output \
+		--reload \
+		--env DJANGO_SETTINGS_MODULE=config.settings \
+		config.wsgi
 
 ## outdated     : show outdated dependencies
 outdated :

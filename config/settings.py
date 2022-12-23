@@ -2,6 +2,8 @@
 Django settings for AMY project.
 """
 
+import json
+import os
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -81,6 +83,16 @@ if DEBUG:
 # DATABASES
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
+
+if "DATABASE_JSON" in env:
+    # If database credentials are provided via AWS Secrets Manager secret JSON, then
+    # decompose it and create a database URL.
+    database_json = json.loads(env("DATABASE_JSON"))
+    database_url = (
+        f"postgres://{database_json['username']}:{database_json['password']}"
+        f"@{database_json['host']}:{database_json['port']}/{database_json['dbname']}"
+    )
+    os.environ["DATABASE_URL"] = database_url
 
 DATABASES = {
     "default": env.db(),
@@ -259,6 +271,7 @@ CACHES = {
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
+    "workshops.middleware.version_check.VersionCheckMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -269,7 +282,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "workshops.github_auth.GithubAuthMiddleware",
+    "workshops.middleware.github_auth.GithubAuthMiddleware",
     "consents.middleware.TermsMiddleware",
 ]
 
