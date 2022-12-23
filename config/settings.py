@@ -271,6 +271,7 @@ CACHES = {
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
+    "workshops.middleware.version_check.VersionCheckMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -281,7 +282,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "workshops.github_auth.GithubAuthMiddleware",
+    "workshops.middleware.github_auth.GithubAuthMiddleware",
     "consents.middleware.TermsMiddleware",
 ]
 
