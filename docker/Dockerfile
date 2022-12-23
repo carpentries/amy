@@ -69,7 +69,7 @@ COPY --from=staticfiles /app /app
 COPY --from=node_dependencies /app/node_modules /app/node_modules
 
 WORKDIR /app
-EXPOSE 8000
+EXPOSE 80
 
 ENV PATH="${PATH}:/venv/amy/bin"
 CMD ./start.sh

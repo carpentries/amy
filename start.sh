@@ -8,6 +8,6 @@
 
 /venv/amy/bin/gunicorn \
     --workers=4 \
-    --bind=0.0.0.0:8000 \
+    --bind=0.0.0.0:80 \
     --env DJANGO_SETTINGS_MODULE=config.settings \
     config.wsgi
