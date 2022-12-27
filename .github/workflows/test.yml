@@ -59,7 +59,11 @@ jobs:
           exit 1;
         fi;
       env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_amy
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
 
     - name: Collect static files
       run: |
@@ -71,4 +75,9 @@ jobs:
     - name: Test
       run: pipenv run python manage.py test
       env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_amy
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
+
