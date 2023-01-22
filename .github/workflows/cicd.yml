@@ -81,8 +81,8 @@ jobs:
   build:
     name: Build Docker image and push to ECR
     needs: test
-    # conditionally run only on pushes to develop
-    if: github.event == 'push' && github.ref == 'refs/heads/develop' && needs.test.status == 'success'
+    # conditionally run only on PR merges to develop
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.ref == 'refs/heads/develop' && needs.test.status == 'success'
     runs-on: ubuntu-latest
 
     permissions:
