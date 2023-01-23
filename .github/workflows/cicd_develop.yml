@@ -15,6 +15,7 @@ jobs:
   build:
     name: Build Docker image and push to ECR
     needs: test
+    environment: staging
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
