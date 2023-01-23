@@ -83,4 +83,5 @@ jobs:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: ${{ vars.AMY_ECS_SERVICE_NAME }}
         cluster: ${{ vars.AMY_ECS_CLUSTER_NAME }}
+        force-new-deployment: true
         wait-for-service-stability: true
