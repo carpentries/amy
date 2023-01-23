@@ -34,6 +34,7 @@ jobs:
       with:
         role-to-assume: ${{ vars.AWS_ECR_ROLE_TO_ASSUME }}
         aws-region: ${{ vars.AWS_REGION }}
+        mask-aws-account-id: false
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -65,6 +66,7 @@ jobs:
       with:
         role-to-assume: ${{ vars.AWS_ECS_ROLE_TO_ASSUME }}
         aws-region: ${{ vars.AWS_REGION }}
+        mask-aws-account-id: false
 
     - name: Download task definition
       env:
