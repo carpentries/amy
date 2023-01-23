@@ -19,6 +19,9 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
+    outputs:
+      image: ${{ steps.build-image.outputs.image }}
+
     permissions:
       id-token: write
 
@@ -75,7 +78,7 @@ jobs:
       with:
         task-definition: task-definition.json
         container-name: ${{ vars.AMY_ECS_TASK_DEFINITION_CONTAINER_NAME }}
-        image: ${{ needs.build-image.outputs.image }}
+        image: ${{ needs.build.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
