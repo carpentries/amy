@@ -37,10 +37,50 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push image to Amazon ECR
+      id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.AMY_ECR_REPO_NAME }}
+        ECR_REPOSITORY: ${{ env.AMY_ECR_REPO_NAME }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA -f docker/Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA" >> $GITHUB_OUTPUT
 
+  deploy:
+    name: Deploy to ECS
+    needs: build
+    environment: staging
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        role-to-assume: ${{ secrets.AWS_ECS_ROLE_TO_ASSUME }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Download task definition
+      env:
+        TASK_DEFINITION_FAMILY: ${{ env.AMY_ECS_TASK_DEFINITION_FAMILY }}
+      run: |
+        aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --query taskDefinition > task-definition.json
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: ${{ env.AMY_ECS_TASK_DEFINITION_CONTAINER_NAME }}
+        image: ${{ needs.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.AMY_ECS_SERVICE_NAME }}
+        cluster: ${{ env.AMY_ECS_CLUSTER_NAME }}
+        wait-for-service-stability: true
