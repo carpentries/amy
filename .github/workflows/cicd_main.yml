@@ -1,0 +1,13 @@
+# CI/CD for main branch - contains only test runs
+
+name: CI/CD (main)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
