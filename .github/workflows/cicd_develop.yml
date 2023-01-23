@@ -32,8 +32,8 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
-        role-to-assume: ${{ secrets.AWS_ECR_ROLE_TO_ASSUME }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        role-to-assume: ${{ vars.AWS_ECR_ROLE_TO_ASSUME }}
+        aws-region: ${{ vars.AWS_REGION }}
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -63,8 +63,8 @@ jobs:
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
-        role-to-assume: ${{ secrets.AWS_ECS_ROLE_TO_ASSUME }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        role-to-assume: ${{ vars.AWS_ECS_ROLE_TO_ASSUME }}
+        aws-region: ${{ vars.AWS_REGION }}
 
     - name: Download task definition
       env:
