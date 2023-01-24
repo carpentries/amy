@@ -2,8 +2,6 @@
 Django settings for AMY project.
 """
 
-import json
-import os
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -19,7 +17,11 @@ env = environ.Env(
     AMY_DEBUG=(bool, True),
     AMY_SITE_ID=(int, 2),
     AMY_ALLOWED_HOSTS=(list, ["amy.carpentries.org"]),
-    DATABASE_URL=(str, "postgres://amy:amypostgresql@localhost/amy"),
+    AMY_DATABASE_HOST=(str, "localhost"),
+    AMY_DATABASE_PORT=(int, 5432),
+    AMY_DATABASE_NAME=(str, "amy"),
+    AMY_DATABASE_USER=(str, "amy"),
+    AMY_DATABASE_PASSWORD=(str, "amypostgresql"),
     AMY_RECAPTCHA_PUBLIC_KEY=(str, "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"),
     AMY_RECAPTCHA_PRIVATE_KEY=(str, "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"),
     AMY_SOCIAL_AUTH_GITHUB_KEY=(str, ""),
@@ -84,20 +86,18 @@ if DEBUG:
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
-if "DATABASE_JSON" in env:
-    # If database credentials are provided via AWS Secrets Manager secret JSON, then
-    # decompose it and create a database URL.
-    database_json = json.loads(env("DATABASE_JSON"))
-    database_url = (
-        f"postgres://{database_json['username']}:{database_json['password']}"
-        f"@{database_json['host']}:{database_json['port']}/{database_json['dbname']}"
-    )
-    os.environ["DATABASE_URL"] = database_url
-
 DATABASES = {
-    "default": env.db(),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("AMY_DATABASE_NAME"),
+        "USER": env("AMY_DATABASE_USER"),
+        "PASSWORD": env("AMY_DATABASE_PASSWORD"),
+        "HOST": env("AMY_DATABASE_HOST"),
+        "PORT": env("AMY_DATABASE_PORT"),
+        "ATOMIC_REQUESTS": True,
+    }
 }
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/dev/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
