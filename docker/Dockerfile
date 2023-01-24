@@ -72,4 +72,5 @@ WORKDIR /app
 EXPOSE 80
 
 ENV PATH="${PATH}:/venv/amy/bin"
+RUN chmod +x ./start.sh
 CMD ./start.sh
