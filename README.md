@@ -99,6 +99,24 @@ before starting work on new features.
     $ docker compose -f docker/docker-compose.yml -p amy down
     ~~~
 
+## Set up tests
+
+1. Ensure all dependencies are installed (steps 1-6 above)
+
+1. Ensure the local instances of Postgres and Redis are running (step 7 above)
+
+1. Collect static files:
+    
+    ~~~
+    $ pipenv run python manage.py collectstatic
+    ~~~
+
+1. Run tests with:
+
+    ~~~
+    $ pipenv run make test
+    ~~~
+
 ## How to build the docker image?
 
 ```shell
