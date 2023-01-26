@@ -37,7 +37,10 @@
 
       {% if event_conflicts %}
       <div class="alert alert-danger" role="alert">
-        <p>You cannot apply for this workshop. You are teaching at a conflicting workshop: <span class="badge badge-danger">{{ event_conflicts.0.slug }}</span>.</p>
+        <p>
+          You cannot apply for this workshop. You are teaching at a conflicting workshop: <span class="badge badge-danger">{{ event_conflicts.0.slug }}</span>. 
+          If you are still interested in teaching at this workshop, please contact <a href="mailto:workshops@carpentries.org">workshops@carpentries.org</a>.
+        </p>
       </div>
 
       {% elif object.event.slug in person_instructor_tasks_slugs %}
