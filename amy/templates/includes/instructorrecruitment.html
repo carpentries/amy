@@ -8,6 +8,8 @@
       <th>Notes from Instructor</th>
       <th>Notes from admin</th>
       <th>Date conflicts</th>
+      <th>Submission date</th>
+      <th>Last change</th>
       <th>
         State
         <i
@@ -58,6 +60,8 @@
           {% endif %}
         {% endfor %}
       </td>
+      <td>{{ signup.created_at|date:'Y-m-d' }}</td>
+      <td>{{ signup.last_updated_at|date:'Y-m-d'|default:"&mdash;" }}</td>
       <td>
         <span class="{% state_label signup %}">
           {{ signup.get_state_display }}
