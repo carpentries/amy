@@ -13,6 +13,10 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.0.7 - 2023-01-28
+
+### Bugfixes
+* dev: Fix server error on organizations membership - [#2324](https://github.com/carpentries/amy/pull/2324) by @elichad
 
 ## v4.0.6 - 2022-12-05
 
