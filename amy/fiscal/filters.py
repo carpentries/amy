@@ -11,7 +11,7 @@ from workshops.models import Membership, Organization
 class OrganizationFilter(AMYFilterSet):
     country = AllCountriesFilter(widget=Select2Widget)
 
-    membership__variant = django_filters.MultipleChoiceFilter(
+    memberships__variant = django_filters.MultipleChoiceFilter(
         label="Memberships (current or past)",
         choices=Membership.MEMBERSHIP_CHOICES,
         widget=Select2MultipleWidget,
