@@ -66,7 +66,7 @@ The next page will list all upcoming teaching opportunites.  This list can be so
 
 Instructors can then register their interest in teaching specific workshop.  A workshop administrator will follow up shortly to confirm or decline each instructor.
 
-### 
+#### Notes about signing up 
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
 * Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact workshops@carpentries.org if they are interested in teaching concurrent workshops to discuss scheduling options.
