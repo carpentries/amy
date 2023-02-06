@@ -70,10 +70,11 @@ If *Consortium* is checked, additional affiliated sites can be added to that mem
 
 #### Membership Contacts
 
-Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of two roles:
+Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of three roles:
 
 * **Billing Contact** Person responsible for contracts and invoicing.
 * **Programmatic Contact** Person responsible for coordination of workshops and instructor training
+* **Trainer** Person responsible for delivering instructor training
 
 When a new membership is created, a new field called `Persons` will display. Click `Edit` in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. These Persons must first be [listed as a Person in AMY](#adding-a-new-person).
 
@@ -375,7 +376,7 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 
 * **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
 * **Evaluated by** This will default to the current admin user.
-* **Type** This will be the training event (Training), the discussion session (Discussion), the teaching demo (DC Demo, LC Demo, or SWC Demo), or the lesson contribution (DC Homework, LC Homework, SWC Homework).  The lesson contribution type requires a link to the GitHub issue or PR.
+* **Type** This will be the training event (Training), the discussion session (Discussion), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
 * **Discarded** This field is not currently used.
 * **Notes** Any free notes from the admin.
@@ -529,8 +530,7 @@ Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the
 * **Airport**: This returns a list of all Instructors beginning with those who list that airport as their closest airport, and then continues reaching farther out.
 * **Country**: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.
 * **Latitude** and **Longitude**: Like the *Airport* search, this begins with people whose listed airport is closest to that latitude and longitude, and then continues reaching farther out.
-* **Badges**: Selecting more than one Instructor badge will return a list of Instructors who have *any* of those badges. If no badge is selected, the search will return unbadged Persons.
-* **Was helper at least once before**, **Was organiser at least once before**, **Is an in-progress instructor trainee** are based on AMY's current records
+* **Has active Instructor Community Role**, **Has Trainer badge**, **Was helper at least once before**, **Was organiser at least once before**, **Is an in-progress instructor trainee** are based on AMY's current records
 * **Languages**, **Knowledge Domains**, **Gender**, and **Lessons** come from the Person record for that individual.
 
 #### Searching for Events

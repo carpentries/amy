@@ -21,7 +21,7 @@ If you would like to know what we need help with, please see the
 The AMY logo was made using the Bradley Hand font from LibreOffice.
 
 [conduct]: CONDUCT.md
-[issues]: https://github.com/swcarpentry/amy/issues
+[issues]: https://github.com/carpentries/amy/issues
 [license]: LICENSE.md
 [pep8]: https://www.python.org/dev/peps/pep-0008/
 [pep257]: https://www.python.org/dev/peps/pep-0257/
