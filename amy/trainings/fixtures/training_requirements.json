@@ -1,92 +1,92 @@
 [
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 1,
-  "fields": {
-    "name": "Training",
-    "url_required": false,
-    "event_required": true
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 1,
+    "fields": {
+      "name": "Training",
+      "url_required": false,
+      "event_required": true
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 2,
+    "fields": {
+      "name": "DC Homework",
+      "url_required": true,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 3,
+    "fields": {
+      "name": "SWC Homework",
+      "url_required": true,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 4,
+    "fields": {
+      "name": "Discussion",
+      "url_required": false,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 5,
+    "fields": {
+      "name": "DC Demo",
+      "url_required": false,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 6,
+    "fields": {
+      "name": "SWC Demo",
+      "url_required": false,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 7,
+    "fields": {
+      "name": "LC Demo",
+      "url_required": false,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 8,
+    "fields": {
+      "name": "LC Homework",
+      "url_required": true,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 9,
+    "fields": {
+      "name": "Lesson Contribution",
+      "url_required": true,
+      "event_required": false
+    }
+  },
+  {
+    "model": "workshops.trainingrequirement",
+    "pk": 10,
+    "fields": {
+      "name": "Demo",
+      "url_required": false,
+      "event_required": false
+    }
   }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 2,
-  "fields": {
-    "name": "DC Homework",
-    "url_required": true,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 3,
-  "fields": {
-    "name": "SWC Homework",
-    "url_required": true,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 4,
-  "fields": {
-    "name": "Discussion",
-    "url_required": false,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 5,
-  "fields": {
-    "name": "DC Demo",
-    "url_required": false,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 6,
-  "fields": {
-    "name": "SWC Demo",
-    "url_required": false,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 7,
-  "fields": {
-    "name": "LC Demo",
-    "url_required": false,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 8,
-  "fields": {
-    "name": "LC Homework",
-    "url_required": true,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 9,
-  "fields": {
-    "name": "Lesson Contribution",
-    "url_required": true,
-    "event_required": false
-  }
-},
-{
-  "model": "workshops.trainingrequirement",
-  "pk": 10,
-  "fields": {
-    "name": "Demo",
-    "url_required": false,
-    "event_required": false
-  }
-}
 ]
