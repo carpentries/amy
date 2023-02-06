@@ -65,7 +65,7 @@ def filter_nonpositive_remaining_seats(queryset, name, seats):
 
 class MembershipFilter(AMYFilterSet):
     organization_name = django_filters.CharFilter(
-        label="Organisation name",
+        label="Organization name",
         field_name="organizations__fullname",
         lookup_expr="icontains",
     )
