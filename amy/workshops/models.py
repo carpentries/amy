@@ -1988,7 +1988,7 @@ class TrainingRequest(
     family = models.CharField(
         max_length=STR_LONG,
         verbose_name="Family name (surname)",
-        blank=False,
+        blank=True,
     )
 
     email = models.EmailField(
@@ -2089,9 +2089,7 @@ class TrainingRequest(
         max_length=STR_LONGEST,
         blank=True,
         default="",
-        verbose_name="If you are comfortable doing so, please share more "
-        "details. Your response is optional, and these details "
-        "will not impact your application's ranking.",
+        verbose_name="If you are comfortable doing so, please share more details.",
         help_text="This response is optional and doesn't impact your "
         "application's ranking.",
     )
