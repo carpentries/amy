@@ -205,7 +205,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Lessons covered** *Placeholder section for lessons covered*
 
-* **URL** Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
+* **URL** Enter in the workshop's url (to the website, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
 
 
 * **Language**  Enter in the human language the workshop is taught in. This is especially important for The Carpentries to track workshops in languages other than English.
@@ -531,7 +531,7 @@ Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the
 * **Country**: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.
 * **Latitude** and **Longitude**: Like the *Airport* search, this begins with people whose listed airport is closest to that latitude and longitude, and then continues reaching farther out.
 * **Has active Instructor Community Role**, **Has Trainer badge**, **Was helper at least once before**, **Was organiser at least once before**, **Is an in-progress instructor trainee** are based on AMY's current records
-* **Languages**, **Knowledge Domains**, **Gender**, and **Lessons** come from the Person record for that individual.
+* **Languages**, **Knowledge Domains**, **Gender**, and **Lessons** come from the Person record for that individual. If multiple options are selected, only Instructors who have *all* of those options on their record will be shown.
 
 #### Searching for Events
 

@@ -564,22 +564,24 @@ class EventForm(forms.ModelForm):
         """Validate tags when some curricula are selected."""
         curricula = self.cleaned_data["curricula"]
         tags = self.cleaned_data["tags"]
-
         try:
-            expected_tags = []
+            expected_tags = set()
             for c in curricula:
                 if c.active and c.carpentry:
-                    expected_tags.append(c.carpentry)
+                    expected_tags.add(c.carpentry)
                 elif c.active and c.mix_match:
-                    expected_tags.append("Circuits")
+                    expected_tags.add("Circuits")
         except (ValueError, TypeError):
-            expected_tags = []
+            expected_tags = set()
 
+        missing_tags = set()
         for tag in expected_tags:
             if not tags.filter(name=tag):
-                raise forms.ValidationError(
-                    "You must add tags corresponding to these curricula."
-                )
+                missing_tags.add(tag)
+        if missing_tags:
+            raise forms.ValidationError(
+                f"You must add tags corresponding to these curricula. Missing tags: {', '.join(missing_tags)}"
+            )
 
         return curricula
 
