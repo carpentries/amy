@@ -13,7 +13,7 @@ from django_countries import countries as Countries
 from faker import Faker
 from faker.providers import BaseProvider
 
-from consents.models import Consent, Term
+from consents.models import Consent, Term, TermEnum, TermOptionChoices
 from extrequests.models import (
     DataVariant,
     SelfOrganisedSubmission,
@@ -858,6 +858,29 @@ class Command(BaseCommand):
             req.save()
 
     def fake_consents(self):
+        def change_person_old_consent(person: Person, new_consent: Consent) -> Person:
+            # TODO: should be removed as part of #2293 once old consent fields in
+            # `Person` are removed
+            if new_consent.term.slug == TermEnum.MAY_CONTACT:
+                person.may_contact = (
+                    new_consent.term_option.option_type == TermOptionChoices.AGREE
+                )
+            elif new_consent.term.slug == TermEnum.PUBLIC_PROFILE:
+                person.publish_profile = (
+                    new_consent.term_option.option_type == TermOptionChoices.AGREE
+                )
+            elif new_consent.term.slug == TermEnum.PRIVACY_POLICY:
+                person.data_privacy_agreement = (
+                    new_consent.term_option.option_type == TermOptionChoices.AGREE
+                )
+            elif new_consent.term.slug == TermEnum.MAY_PUBLISH_NAME:
+                person.lesson_publication_consent = (
+                    "yes-profile"
+                    if (new_consent.term_option.option_type == TermOptionChoices.AGREE)
+                    else "no"
+                )
+            return person
+
         terms = Term.objects.active().prefetch_active_options()
         count = Person.objects.all().count() * len(
             terms
@@ -866,17 +889,32 @@ class Command(BaseCommand):
 
         consents: List[Consent] = []
         people = Person.objects.all()
+        people_changes = []
         for person in people:
             for term in terms:
-                consents.append(
-                    Consent(person=person, term_option=choice(term.options), term=term)
+                consent = Consent(
+                    person=person, term_option=choice(term.options), term=term
                 )
+                consents.append(consent)
+                people_changes.append(change_person_old_consent(person, consent))
+
         # Archive unset old consents before adding new ones
         Consent.objects.filter(
             person__in=people,
             term__in=terms,
         ).active().update(archived_at=timezone.now())
         Consent.objects.bulk_create(consents)
+
+        # Update persons to reflect new consent values in old consent fields
+        Person.objects.bulk_update(
+            people_changes,
+            [
+                "may_contact",
+                "publish_profile",
+                "data_privacy_agreement",
+                "lesson_publication_consent",
+            ],
+        )
 
     def fake_instructor_recruitments(self) -> list[InstructorRecruitment]:
         """Create recruitments for new fake events.
