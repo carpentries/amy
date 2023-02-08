@@ -49,11 +49,11 @@ def deprecate_models(
     _info(f"Start of {class_name} deprecation.")
 
     for i, model_id in enumerate(model_id_list):
-        if not model_class._default_manager.filter({lookup_field: model_id}).exists():
+        if not model_class._default_manager.filter(**{lookup_field: model_id}).exists():
             _info(f"{i} {class_name} <{model_id}> doesn't exist, skipping.")
             continue
 
         _info(f"{i} {class_name} <{model_id}> exists, removing.")
-        model_class._default_manager.filter({lookup_field: model_id}).delete()
+        model_class._default_manager.filter(**{lookup_field: model_id}).delete()
 
     _info(f"End of {class_name} deprecation.")
