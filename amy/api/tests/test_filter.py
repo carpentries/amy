@@ -3,21 +3,21 @@ from typing import Any, Dict
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from consents.models import Consent, Term, TermOption
+from consents.models import Consent, Term, TermEnum, TermOption, TermOptionChoices
 from workshops.models import Airport, Person
 from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestFilter(APITestCase):
     def setUp(self):
-        def get_option(term_slug: str, option_type: str) -> TermOption:
+        def get_option(term_slug: TermEnum, option_type: str) -> TermOption:
             return [
                 option
                 for option in terms_dict[term_slug].options
                 if option.option_type == option_type
             ][0]
 
-        def get_consent(term_slug: str, person: Person) -> Consent:
+        def get_consent(term_slug: TermEnum, person: Person) -> Consent:
             return [
                 consent
                 for consent in old_consents
@@ -47,40 +47,48 @@ class TestFilter(APITestCase):
         self.admin_2.save()
 
         terms = (
-            Term.objects.filter(slug__in=["may-contact", "public-profile"])
+            Term.objects.filter(
+                slug__in=[TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE]
+            )
             .active()
             .prefetch_active_options()
         )
         terms_dict = {term.slug: term for term in terms}
-        may_contact_agree = get_option("may-contact", TermOption.AGREE)
-        may_contact_decline = get_option("may-contact", TermOption.DECLINE)
-        publish_profile_agree = get_option("public-profile", TermOption.AGREE)
-        publish_profile_decline = get_option("public-profile", TermOption.DECLINE)
+        may_contact_agree = get_option(TermEnum.MAY_CONTACT, TermOptionChoices.AGREE)
+        may_contact_decline = get_option(
+            TermEnum.MAY_CONTACT, TermOptionChoices.DECLINE
+        )
+        public_profile_agree = get_option(
+            TermEnum.PUBLIC_PROFILE, TermOptionChoices.AGREE
+        )
+        public_profile_decline = get_option(
+            TermEnum.PUBLIC_PROFILE, TermOptionChoices.DECLINE
+        )
 
         old_consents = (
             Consent.objects.filter(
                 person__in=[self.admin_1, self.admin_2],
-                term__slug__in=["may-contact", "public-profile"],
+                term__slug__in=[TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE],
             )
             .active()
             .select_related("term", "person")
         )
 
         Consent.reconsent(
-            consent=get_consent("may-contact", self.admin_1),
+            consent=get_consent(TermEnum.MAY_CONTACT, self.admin_1),
             term_option=may_contact_agree,
         )
         Consent.reconsent(
-            consent=get_consent("may-contact", self.admin_2),
+            consent=get_consent(TermEnum.MAY_CONTACT, self.admin_2),
             term_option=may_contact_decline,
         )
         Consent.reconsent(
-            consent=get_consent("public-profile", self.admin_1),
-            term_option=publish_profile_agree,
+            consent=get_consent(TermEnum.PUBLIC_PROFILE, self.admin_1),
+            term_option=public_profile_agree,
         )
         Consent.reconsent(
-            consent=get_consent("public-profile", self.admin_2),
-            term_option=publish_profile_decline,
+            consent=get_consent(TermEnum.PUBLIC_PROFILE, self.admin_2),
+            term_option=public_profile_decline,
         )
 
         self.client.login(username="admin1", password="admin")
