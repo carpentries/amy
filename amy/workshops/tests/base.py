@@ -1,5 +1,5 @@
 import datetime
-from typing import Iterable, Optional
+from typing import Iterable
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
@@ -534,9 +534,7 @@ class TestBase(
         )
 
     @staticmethod
-    def reconsent(
-        person: Person, term: Term, term_option: Optional[TermOption]
-    ) -> Consent:
+    def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
         consent = Consent.objects.get(
             person=person, term=term, archived_at__isnull=True
         )

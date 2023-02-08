@@ -54,7 +54,7 @@ class CommunityRoleInactivation(CreatedUpdatedMixin, models.Model):
         return self.name
 
 
-class CommunityRoleQuery(models.query.QuerySet):
+class CommunityRoleQuerySet(models.query.QuerySet):
     def active(self):
         today = date.today()
         return self.filter(
@@ -114,7 +114,7 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
     # ]
     custom_keys = models.JSONField(default=str, blank=True, null=True)
 
-    objects = CommunityRoleQuery.as_manager()
+    objects = CommunityRoleQuerySet.as_manager()
 
     def __str__(self) -> str:
         return f'Community Role "{self.config}" for {self.person}'

@@ -1712,7 +1712,7 @@ class Task(RQJobsMixin, models.Model):
         return "{0}/{1}={2}".format(self.event, self.person, self.role)
 
     def get_absolute_url(self):
-        return reverse("task_details", kwargs={"task_id": self.id})
+        return reverse("task_details", kwargs={"task_id": self.pk})
 
     def clean(self):
         """Additional model validation."""

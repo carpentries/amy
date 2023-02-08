@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Iterable, Optional
+from typing import Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -74,11 +74,9 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
 
     @cached_property
     def options(self) -> Iterable[TermOption]:
-        # If you've already prefetched_active_options
+        # If you've already prefetched active_options
         # Use that instead. Otherwise query for the options
-        if hasattr(self, "active_options"):
-            return self.active_options
-        return self._fetch_options()
+        return getattr(self, "active_options", self._fetch_options())
 
     def _fetch_options(self) -> Iterable[TermOption]:
         return TermOption.objects.active().filter(term=self)
@@ -190,7 +188,7 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        if self.term_option and self.term_id != self.term_option.term_id:
+        if self.term_option and self.term.pk != self.term_option.term.pk:
             raise ValidationError("Consent term.id must match term_option.term_id")
         return super().save(*args, **kwargs)
 
@@ -226,11 +224,11 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         cls.archive_all(consents)
 
     @classmethod
-    def archive_all(cls, consents: Iterable[Consent]) -> None:
+    def archive_all(cls, consents: models.query.QuerySet[Consent]) -> None:
         new_consents = [
             cls(
-                person_id=consent.person_id,
-                term_id=consent.term_id,
+                person_id=consent.person.pk,
+                term_id=consent.term.pk,
                 term_option=None,
             )
             for consent in consents
@@ -239,10 +237,10 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         cls.objects.bulk_create(new_consents)
 
     @classmethod
-    def reconsent(cls, consent: Consent, term_option: Optional[TermOption]) -> Consent:
+    def reconsent(cls, consent: Consent, term_option: TermOption) -> Consent:
         consent.archive()
         return Consent.objects.create(
-            term_id=term_option.term_id,
+            term_id=term_option.term.pk,
             term_option=term_option,
-            person_id=consent.person_id,
+            person_id=consent.person.pk,
         )
