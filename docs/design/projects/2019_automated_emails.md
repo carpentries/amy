@@ -45,7 +45,7 @@ There's a few steps that should be taken when implementing a new action.
     * implement static `check()` method for determining if the action conditions are met
       or not
 2. Define template corresponding with that action, add it to
-   `autoemails/fixtures/templates_triggers.json`.
+   `autoemails/fixtures/templates_triggers.json` (now moved to `scripts/seed_autoemails.py`).
 3. Update `Trigger.ACTION_CHOICES` in `autoemails/models.py` with new action.
 4. Provide extensive tests for the action itself (see
    `autoemails/tests/test_postworkshopaction.py` for example)

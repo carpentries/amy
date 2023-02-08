@@ -118,8 +118,8 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         pass
 
     def _setUpTrainingRequirements(self):
-        """Add some Training Requirements created through fixture
-        (amy/trainings/fixtures/training_requirements.json)"""
+        """Add some Training Requirements created through seeding
+        (amy/scripts/seed_training_requirements.py)"""
         self.demo, _ = TrainingRequirement.objects.get_or_create(
             name="Demo", defaults={"url_required": True}
         )

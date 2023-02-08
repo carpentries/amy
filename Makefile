@@ -27,11 +27,10 @@ fast_test_fail:
 dev_database :
 	${MANAGE} reset_db
 	${MANAGE} migrate
-	${MANAGE} loaddata amy/workshops/fixtures/badges.json
-	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
-	${MANAGE} loaddata amy/communityroles/fixtures/inactivations.json
-	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
-	${MANAGE} loaddata amy/trainings/fixtures/training_requirements.json
+	${MANAGE} runscript seed_badges
+	${MANAGE} runscript seed_autoemails
+	${MANAGE} runscript seed_communityroles
+	${MANAGE} runscript seed_training_requirements
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
