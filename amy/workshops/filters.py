@@ -132,23 +132,19 @@ class NamesOrderingFilter(django_filters.OrderingFilter):
             ("-firstname", "First name (descending)"),
         ]
 
-    def filter(self, qs, value):
-        ordering = super().filter(qs, value)
-
+    def filter(self, qs, value: list | None):
         if not value:
-            return ordering
-
-        # `value` is a list
-        if any(v in ["lastname"] for v in value):
-            return ordering.order_by("family", "middle", "personal")
+            return super().filter(qs, value)
+        elif any(v in ["lastname"] for v in value):
+            return super().filter(qs, ("family", "middle", "personal"))
         elif any(v in ["-lastname"] for v in value):
-            return ordering.order_by("-family", "-middle", "-personal")
+            return super().filter(qs, ("-family", "-middle", "-personal"))
         elif any(v in ["firstname"] for v in value):
-            return ordering.order_by("personal", "middle", "family")
+            return super().filter(qs, ("personal", "middle", "family"))
         elif any(v in ["-firstname"] for v in value):
-            return ordering.order_by("-personal", "-middle", "-family")
-
-        return ordering
+            return super().filter(qs, ("-personal", "-middle", "-family"))
+        else:
+            return super().filter(qs, value)
 
 
 class ContinentFilter(django_filters.ChoiceFilter):
