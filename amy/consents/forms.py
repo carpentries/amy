@@ -57,8 +57,8 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
             self.fields[term.slug] = self.create_options_field(term)
 
     def create_options_field(self, term: Term):
-        consent = self.term_id_by_consent.get(term.id, None)
-        options = [(opt.id, option_display_value(opt)) for opt in term.options]
+        consent = self.term_id_by_consent.get(term.pk, None)
+        options = [(opt.pk, option_display_value(opt)) for opt in term.options]
         required = term.required_type != Term.OPTIONAL_REQUIRE_TYPE
         initial = consent.term_option_id if consent else None
         attrs = {"class": "border border-warning"} if initial is None else {}
@@ -78,14 +78,14 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         new_consents: List[Consent] = []
         for term in self.terms:
             option_id = self.cleaned_data.get(term.slug)
-            consent = self.term_id_by_consent.get(term.id)
+            consent = self.term_id_by_consent.get(term.pk)
             has_changed = option_id != str(consent.term_option_id) if consent else True
             if not option_id or not has_changed:
                 continue
             if consent:
                 consent.archive()
             new_consents.append(
-                Consent(person=person, term_option_id=option_id, term_id=term.id)
+                Consent(person=person, term_option_id=option_id, term_id=term.pk)
             )
         Consent.objects.bulk_create(new_consents)
 
