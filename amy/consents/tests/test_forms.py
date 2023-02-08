@@ -2,7 +2,7 @@ from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils import timezone
 
 from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
-from consents.models import Term, TermOption
+from consents.models import Term, TermOption, TermOptionChoices
 from consents.tests.base import ConsentTestBase
 from workshops.models import Person
 
@@ -18,22 +18,22 @@ class TestActiveTermConsentsForm(ConsentTestBase):
         term1 = Term.objects.create(content="term1", slug="term1")
         term1_option1 = TermOption.objects.create(
             term=term1,
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
             content="term1_option1",
         )
         term1_option2 = TermOption.objects.create(
             term=term1,
-            option_type=TermOption.DECLINE,
+            option_type=TermOptionChoices.DECLINE,
             content="term1_option2",
         )
         term2 = Term.objects.create(content="term2", slug="term2")
         term2_option1 = TermOption.objects.create(
             term=term2,
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
         )
         term2_option2 = TermOption.objects.create(
             term=term2,
-            option_type=TermOption.DECLINE,
+            option_type=TermOptionChoices.DECLINE,
         )
         self.reconsent(
             person=self.person,
@@ -99,7 +99,7 @@ class TestRequiredConsentsForm(ConsentTestBase):
         )
         answered_required_term_yes = TermOption.objects.create(
             term=answered_required_term,
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
             content="Yes",
         )
         self.reconsent(self.person, answered_required_term, answered_required_term_yes)

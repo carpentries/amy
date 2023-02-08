@@ -3,18 +3,18 @@ from typing import Iterable, List
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
 
-from consents.models import Consent, Term, TermOption
+from consents.models import Consent, Term, TermOption, TermOptionChoices
 from workshops.forms import BootstrapHelper, WidgetOverrideMixin
 from workshops.models import Person
 
 OPTION_DISPLAY = {
-    TermOption.AGREE: "Yes",
-    TermOption.DECLINE: "No",
+    TermOptionChoices.AGREE: "Yes",
+    TermOptionChoices.DECLINE: "No",
 }
 
 
 def option_display_value(option: TermOption) -> str:
-    return option.content or OPTION_DISPLAY[option.option_type]
+    return option.content or OPTION_DISPLAY[TermOptionChoices(option.option_type)]
 
 
 class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):

@@ -3,7 +3,7 @@ from typing import Literal
 
 from django_filters import rest_framework as filters
 
-from consents.models import Consent, TermEnum, TermOption
+from consents.models import Consent, TermEnum, TermOptionChoices
 from extrequests.filters import TrainingRequestFilter
 from workshops.filters import NamesOrderingFilter
 from workshops.models import Badge, Event, Person, Tag, Task
@@ -80,7 +80,7 @@ def filter_consent(
         )
         return queryset.filter(person_id__in=people_ids)
 
-    option = TermOption.AGREE if value is True else TermOption.DECLINE
+    option = TermOptionChoices.AGREE if value is True else TermOptionChoices.DECLINE
     people_ids = consents.filter(term_option__option_type=option).values_list(
         "person_id", flat=True
     )

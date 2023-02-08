@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from consents.models import Term, TermOption
+from consents.models import Term, TermOption, TermOptionChoices
 from consents.tests.base import ConsentTestBase
 from consents.util import person_has_consented_to_required_terms
 from workshops.models import Person
@@ -28,7 +28,7 @@ class TestActiveTermConsentsForm(ConsentTestBase):
         )
         TermOption.objects.create(
             term=required_terms[0],
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
             archived_at=timezone.now(),
         )
         person = Person.objects.create(

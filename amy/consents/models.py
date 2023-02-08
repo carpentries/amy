@@ -101,7 +101,7 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
         is_required = self.required_type != self.OPTIONAL_REQUIRE_TYPE
         has_yes_option = False
         for option in self._fetch_options():
-            if option.option_type == option.AGREE:
+            if option.option_type == TermOptionChoices.AGREE:
                 has_yes_option = True
         if is_required and self.archived_at is None and not has_yes_option:
             raise ValidationError(
@@ -111,13 +111,17 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
             )
 
 
+class TermOptionChoices(models.TextChoices):
+    AGREE = "agree", "Agree"
+    DECLINE = "decline", "Decline"
+
+
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
-    AGREE = "agree"
-    DECLINE = "decline"
-    OPTION_TYPE = ((AGREE, "Agree"), (DECLINE, "Decline"))
 
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    option_type = models.CharField(max_length=STR_MED, choices=OPTION_TYPE)
+    option_type = models.CharField(
+        max_length=STR_MED, choices=TermOptionChoices.choices
+    )
     content = models.TextField(verbose_name="Content", blank=True)
     objects = TermOptionQuerySet.as_manager()
 
@@ -150,7 +154,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
         do not allow the user to archive the term option.
         """
         if (
-            self.option_type == self.AGREE
+            self.option_type == TermOptionChoices.AGREE
             and self.archived_at is None
             and self.term.required_type != self.term.OPTIONAL_REQUIRE_TYPE
             and self.term.archived_at is None
@@ -159,14 +163,14 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
                 [
                     option
                     for option in self.term._fetch_options()
-                    if option.option_type == self.AGREE
+                    if option.option_type == TermOptionChoices.AGREE
                 ]
             )
             if num_agree_options == 1:
                 raise ValidationError(
-                    f"Term option {self} is the only {self.AGREE} term option for"
-                    f" required term {self.term}. Please add an additional"
-                    f" {self.AGREE} option or archive the term instead."
+                    f"Term option {self} is the only {TermOptionChoices.AGREE} term"
+                    f" option for required term {self.term}. Please add an additional"
+                    f" {TermOptionChoices.AGREE} option or archive the term instead."
                 )
 
 

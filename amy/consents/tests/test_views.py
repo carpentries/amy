@@ -1,7 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 
-from consents.models import Consent, Term, TermOption
+from consents.models import Consent, Term, TermOption, TermOptionChoices
 from consents.tests.base import ConsentTestBase
 from workshops.models import Person
 
@@ -25,22 +25,22 @@ class ConsentsUpdateTest(ConsentTestBase):
         term1 = Term.objects.create(content="term1", slug="term1")
         term1_option1 = TermOption.objects.create(
             term=term1,
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
             content="term1_option1",
         )
         TermOption.objects.create(
             term=term1,
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
             content="term1_option2",
         )
         term2 = Term.objects.create(content="term2", slug="term2")
         term2_option1 = TermOption.objects.create(
             term=term2,
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
         )
         term2_option2 = TermOption.objects.create(
             term=term2,
-            option_type=TermOption.DECLINE,
+            option_type=TermOptionChoices.DECLINE,
         )
         original_term2_consent = self.reconsent(
             term=term2,
@@ -50,11 +50,11 @@ class ConsentsUpdateTest(ConsentTestBase):
         term3 = Term.objects.create(content="term3", slug="term3")
         TermOption.objects.create(
             term=term3,
-            option_type=TermOption.AGREE,
+            option_type=TermOptionChoices.AGREE,
         )
         term3_option2 = TermOption.objects.create(
             term=term3,
-            option_type=TermOption.DECLINE,
+            option_type=TermOptionChoices.DECLINE,
         )
         original_term3_consent = self.reconsent(
             term=term3,
