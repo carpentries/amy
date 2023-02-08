@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Iterable, Optional
 
 from django.core.exceptions import ValidationError
@@ -41,6 +42,18 @@ class TermOptionQuerySet(models.query.QuerySet):
 class ConsentQuerySet(models.query.QuerySet):
     def active(self):
         return self.filter(archived_at=None)
+
+
+class TermEnum(StrEnum):
+    """Base terms that were introduced via migration
+    `amy/consents/migrations/0005_auto_20210411_2325.py`.
+
+    They (used to) have corresponding flags in Person model."""
+
+    MAY_PUBLISH_NAME = "may-publish-name"
+    PUBLIC_PROFILE = "public-profile"
+    MAY_CONTACT = "may-contact"
+    PRIVACY_POLICY = "privacy-policy"
 
 
 class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
