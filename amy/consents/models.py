@@ -34,6 +34,16 @@ class TermQuerySet(QuerySet):
         )
 
 
+class TermManager(Manager):
+    def filter_by_key(self, key: str) -> QuerySet["Term"]:
+        slug = Term.key_to_slug(key)
+        return self.get_queryset().filter(slug=slug)
+
+    def get_by_key(self, key: str) -> QuerySet["Term"]:
+        slug = Term.key_to_slug(key)
+        return self.get_queryset().get(slug=slug)
+
+
 class TermOptionQuerySet(QuerySet):
     def active(self):
         return self.filter(archived_at=None)
@@ -70,11 +80,24 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
     help_text = models.TextField(verbose_name="Help Text", blank=True)
-    objects = TermQuerySet.as_manager()
+    objects = TermManager.from_queryset(TermQuerySet)()
+
+    @staticmethod
+    def key_to_slug(key: str) -> str:
+        return key.replace("_", "-")
+
+    @staticmethod
+    def slug_to_key(slug: str) -> str:
+        return slug.replace("-", "_")
+
+    @cached_property
+    def key(self) -> str:
+        return self.slug_to_key(self.slug)
 
     @cached_property
     def options(self) -> Iterable[TermOption]:
-        # If you've already prefetched active_options
+        # If you've already prefetched active_options with
+        # `.objects.prefetch_active_options()`.
         # Use that instead. Otherwise query for the options
         return getattr(self, "active_options", self._fetch_options())
 
