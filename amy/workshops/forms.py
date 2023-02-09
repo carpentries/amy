@@ -580,7 +580,8 @@ class EventForm(forms.ModelForm):
                 missing_tags.add(tag)
         if missing_tags:
             raise forms.ValidationError(
-                f"You must add tags corresponding to these curricula. Missing tags: {', '.join(missing_tags)}"
+                f"""You must add tags corresponding to these curricula. """
+                f"""Missing tags: {', '.join(missing_tags)}"""
             )
 
         return curricula
