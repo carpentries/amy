@@ -135,6 +135,7 @@ def workshop_issues(request):
                 | Q(role__name="instructor")
             )
             .filter(
+                person__consent__archived_at__isnull=True,
                 person__consent__term_option__option_type=TermOptionChoices.AGREE,
                 person__consent__term__slug=TermEnum.MAY_CONTACT,
             )

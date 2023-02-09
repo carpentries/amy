@@ -58,7 +58,7 @@ from autoemails.models import Trigger
 from communityroles.forms import CommunityRoleForm
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
-from consents.models import Consent, TermEnum
+from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
 from fiscal.models import MembershipTask
 from workshops.base_views import (
@@ -947,36 +947,19 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 @admin_required
 def event_details(request, slug):
     """List details of a particular event."""
-    try:
-        task_prefetch = Prefetch(
-            "task_set",
-            to_attr="contacts",
-            queryset=Task.objects.select_related("person")
-            .filter(
-                # we only want hosts, organizers and instructors
-                Q(role__name="host")
-                | Q(role__name="organizer")
-                | Q(role__name="instructor")
-            )
-            .filter(person__may_contact=True)
-            .exclude(Q(person__email="") | Q(person__email=None)),
-        )
-        event = (
-            Event.objects.attendance()
-            .prefetch_related(task_prefetch)
-            .select_related(
-                "assigned_to",
-                "host",
-                "administrator",
-                "sponsor",
-                "membership",
-                "instructorrecruitment",
-            )
-            .get(slug=slug)
-        )
-        member_sites = Membership.objects.filter(task__event=event).distinct()
-    except Event.DoesNotExist:
-        raise Http404("Event matching query does not exist.")
+    event = get_object_or_404(
+        Event.objects.attendance().select_related(
+            "assigned_to",
+            "host",
+            "administrator",
+            "sponsor",
+            "membership",
+            "instructorrecruitment",
+        ),
+        slug=slug,
+    )
+
+    member_sites = Membership.objects.filter(task__event=event).distinct()
 
     try:
         recruitment_stats = event.instructorrecruitment.signups.aggregate(
@@ -1033,7 +1016,11 @@ def event_details(request, slug):
         "event": event,
         "tasks": tasks,
         "member_sites": member_sites,
-        "all_emails": tasks.filter(person__may_contact=True)
+        "all_emails": tasks.filter(
+            person__consent__archived_at__isnull=True,
+            person__consent__term_option__option_type=TermOptionChoices.AGREE,
+            person__consent__term__slug=TermEnum.MAY_CONTACT,
+        )
         .exclude(person__email=None)
         .values_list("person__email", flat=True),
         "today": datetime.date.today(),
