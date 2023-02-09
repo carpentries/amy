@@ -794,22 +794,22 @@ class TestEventViews(TestBase):
             ],
         }
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding SWC tag
         data["tags"].append(Tag.objects.get(name="SWC").pk)
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding DC tag
         data["tags"].append(Tag.objects.get(name="DC").pk)
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding LC tag
         data["tags"].append(Tag.objects.get(name="LC").pk)
         form = EventForm(data)
-        self.assertNotIn("curricula", form.errors)
+        self.assertNotIn("tags", form.errors)
 
     def test_curricula_circuits_tag(self):
         """Ensure validation of `curricula` and `tags` fields."""
@@ -827,18 +827,18 @@ class TestEventViews(TestBase):
         }
         form = EventForm(data)
         # we're missing SWC and Circuits
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding SWC tag
         data["tags"].append(Tag.objects.get(name="SWC").pk)
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
         # now we're missing only circuits
 
         # try adding Circuits tag
         data["tags"].append(Tag.objects.get(name="Circuits").pk)
         form = EventForm(data)
-        self.assertNotIn("curricula", form.errors)
+        self.assertNotIn("tags", form.errors)
 
     def test_event_recruitment_statistics(self):
         # Arrange

@@ -476,9 +476,9 @@ class EventForm(forms.ModelForm):
             "administrator",
             "public_status",
             "assigned_to",
+            "curricula",
             "tags",
             "open_TTT_applications",
-            "curricula",
             "url",
             "language",
             "reg_key",
@@ -560,8 +560,10 @@ class EventForm(forms.ModelForm):
 
         return open_TTT_applications
 
-    def clean_curricula(self):
-        """Validate tags when some curricula are selected."""
+    def _clean_tags(self):
+        """Validate tags when some curricula are selected.
+
+        Called during clean(), not during individual field validation."""
         curricula = self.cleaned_data["curricula"]
         tags = self.cleaned_data["tags"]
         try:
@@ -574,17 +576,15 @@ class EventForm(forms.ModelForm):
         except (ValueError, TypeError):
             expected_tags = set()
 
-        missing_tags = set()
-        for tag in expected_tags:
-            if not tags.filter(name=tag):
-                missing_tags.add(tag)
+        missing_tags = expected_tags - set(tags.values_list("name", flat=True))
         if missing_tags:
-            raise forms.ValidationError(
-                f"""You must add tags corresponding to these curricula. """
-                f"""Missing tags: {', '.join(missing_tags)}"""
+            self.add_error(
+                "tags",
+                forms.ValidationError(
+                    "You must add tags corresponding to the selected curricula. "
+                    f"Missing tags: {', '.join(missing_tags)}"
+                ),
             )
-
-        return curricula
 
     def clean_manual_attendance(self):
         """Regression: #1608 - fix 500 server error when field is cleared."""
@@ -604,6 +604,11 @@ class EventForm(forms.ModelForm):
             )
 
         return res
+
+    def clean(self):
+        super().clean()
+
+        self._clean_tags()
 
 
 class EventCreateForm(EventForm):
