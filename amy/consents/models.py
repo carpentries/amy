@@ -5,7 +5,7 @@ from typing import Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
+from django.db.models import Manager, Prefetch, QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 
@@ -14,7 +14,7 @@ from workshops.mixins import CreatedUpdatedArchivedMixin
 from workshops.models import STR_MED, Person
 
 
-class TermQuerySet(models.query.QuerySet):
+class TermQuerySet(QuerySet):
     def active(self):
         return self.filter(archived_at=None)
 
@@ -34,12 +34,12 @@ class TermQuerySet(models.query.QuerySet):
         )
 
 
-class TermOptionQuerySet(models.query.QuerySet):
+class TermOptionQuerySet(QuerySet):
     def active(self):
         return self.filter(archived_at=None)
 
 
-class ConsentQuerySet(models.query.QuerySet):
+class ConsentQuerySet(QuerySet):
     def active(self):
         return self.filter(archived_at=None)
 
@@ -121,7 +121,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
         max_length=STR_MED, choices=TermOptionChoices.choices
     )
     content = models.TextField(verbose_name="Content", blank=True)
-    objects = TermOptionQuerySet.as_manager()
+    objects = Manager.from_queryset(TermOptionQuerySet)()
 
     def __str__(self):
         return f"{self.content} ({self.option_type})"
@@ -176,7 +176,7 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
     term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT, null=True)
-    objects = ConsentQuerySet.as_manager()
+    objects = Manager.from_queryset(ConsentQuerySet)()
 
     class Meta:
         constraints = [

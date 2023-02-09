@@ -16,6 +16,7 @@ from django.db.models import (
     Count,
     F,
     IntegerField,
+    Manager,
     PositiveIntegerField,
     Q,
     QuerySet,
@@ -1061,7 +1062,7 @@ class Person(
 # ------------------------------------------------------------
 
 
-class TagQuerySet(models.query.QuerySet):
+class TagQuerySet(QuerySet):
     def main_tags(self):
         names = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
         return self.filter(name__in=names)
@@ -1090,7 +1091,7 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
-    objects = TagQuerySet.as_manager()
+    objects = Manager.from_queryset(TagQuerySet)()
 
     class Meta:
         ordering = ["priority", "name"]
@@ -1124,7 +1125,7 @@ class Language(models.Model):
 # ------------------------------------------------------------
 
 
-class EventQuerySet(models.query.QuerySet):
+class EventQuerySet(QuerySet):
     """Handles finding past, ongoing and upcoming events"""
 
     def not_cancelled(self):
@@ -1497,7 +1498,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         help_text="Public workshops will show up in public Carpentries feeds.",
     )
 
-    objects = EventQuerySet.as_manager()
+    objects = Manager.from_queryset(EventQuerySet)()
 
     class Meta:
         ordering = ("-start",)
@@ -1798,7 +1799,7 @@ class Qualification(models.Model):
 # ------------------------------------------------------------
 
 
-class BadgeQuerySet(models.query.QuerySet):
+class BadgeQuerySet(QuerySet):
     """Custom QuerySet that provides easy way to get instructor badges
     (we use that a lot)."""
 
@@ -1832,7 +1833,7 @@ class Badge(models.Model):
     title = models.CharField(max_length=STR_MED)
     criteria = models.CharField(max_length=STR_LONG)
 
-    objects = BadgeQuerySet.as_manager()
+    objects = Manager.from_queryset(BadgeQuerySet)()
 
     def __str__(self):
         return self.title
