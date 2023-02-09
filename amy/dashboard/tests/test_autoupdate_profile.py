@@ -1,6 +1,6 @@
 from django.urls import reverse
 
-from consents.models import Consent, Term
+from consents.models import Consent, Term, TermEnum
 from workshops.models import KnowledgeDomain, Person, Qualification
 from workshops.tests.base import TestBase
 
@@ -39,9 +39,9 @@ class TestAutoUpdateProfile(TestBase):
 
     def test_update_profile(self):
         term_slugs = [
-            "may-contact",
-            "may-publish-name",
-            "public-profile",
+            TermEnum.MAY_CONTACT,
+            TermEnum.MAY_PUBLISH_NAME,
+            TermEnum.PUBLIC_PROFILE,
         ]
         terms_by_term_slug = {
             term.slug: term

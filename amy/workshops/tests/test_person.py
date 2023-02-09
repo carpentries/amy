@@ -13,7 +13,7 @@ from social_django.models import UserSocialAuth
 import webtest
 from webtest.forms import Upload
 
-from consents.models import Consent, Term
+from consents.models import Consent, Term, TermEnum
 from workshops.filters import filter_taught_workshops
 from workshops.forms import PersonForm, PersonsMergeForm
 from workshops.mixins import GenderMixin
@@ -804,12 +804,12 @@ class TestPersonMerging(TestBase):
         }
         # no privacy policy consent
         Consent.reconsent(
-            person_a_consents_by_term_slug["may-contact"],
-            next(term_options_by_term_slug["may-contact"]),
+            person_a_consents_by_term_slug[TermEnum.MAY_CONTACT],
+            next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
         Consent.reconsent(
-            person_a_consents_by_term_slug["public-profile"],
-            next(term_options_by_term_slug["public-profile"]),
+            person_a_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
+            next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
 
         # create second person
@@ -865,16 +865,16 @@ class TestPersonMerging(TestBase):
             .select_related("term", "term_option")
         }
         Consent.reconsent(
-            person_b_consents_by_term_slug["privacy-policy"],
-            next(term_options_by_term_slug["privacy-policy"]),
+            person_b_consents_by_term_slug[TermEnum.PRIVACY_POLICY],
+            next(term_options_by_term_slug[TermEnum.PRIVACY_POLICY]),
         )
         Consent.reconsent(
-            person_b_consents_by_term_slug["may-contact"],
-            next(term_options_by_term_slug["may-contact"]),
+            person_b_consents_by_term_slug[TermEnum.MAY_CONTACT],
+            next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
         Consent.reconsent(
-            person_b_consents_by_term_slug["public-profile"],
-            next(term_options_by_term_slug["public-profile"]),
+            person_b_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
+            next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
 
         # set up a strategy

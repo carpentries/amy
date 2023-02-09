@@ -58,7 +58,7 @@ from autoemails.models import Trigger
 from communityroles.forms import CommunityRoleForm
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
-from consents.models import Consent
+from consents.models import Consent, TermEnum
 from dashboard.forms import AssignmentForm
 from fiscal.models import MembershipTask
 from workshops.base_views import (
@@ -276,12 +276,12 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
         )
         consent_by_term_slug = {consent.term.slug: consent for consent in consents}
         context["consents"] = {
-            "May contact": consent_by_term_slug["may-contact"],
-            "Consent to publish profile": consent_by_term_slug["public-profile"],
+            "May contact": consent_by_term_slug[TermEnum.MAY_CONTACT],
+            "Consent to publish profile": consent_by_term_slug[TermEnum.PUBLIC_PROFILE],
             "Consent to include name when publishing lessons": consent_by_term_slug[
-                "may-publish-name"
+                TermEnum.MAY_PUBLISH_NAME
             ],
-            "Privacy policy agreement": consent_by_term_slug["privacy-policy"],
+            "Privacy policy agreement": consent_by_term_slug[TermEnum.PRIVACY_POLICY],
         }
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
