@@ -1649,7 +1649,13 @@ class AllTasks(OnlyForAdminsMixin, AMYListView):
     context_object_name = "all_tasks"
     template_name = "workshops/all_tasks.html"
     filter_class = TaskFilter
-    queryset = Task.objects.select_related("event", "person", "role")
+    queryset = Task.objects.select_related("event", "person", "role").prefetch_related(
+        Prefetch(
+            "person__consent_set",
+            to_attr="active_consents",
+            queryset=Consent.objects.active().select_related("term", "term_option"),
+        ),
+    )
     title = "All Tasks"
 
 
