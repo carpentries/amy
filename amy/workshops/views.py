@@ -1008,7 +1008,15 @@ def event_details(request, slug):
     tasks = (
         Task.objects.filter(event__id=event.id)
         .select_related("event", "person", "role")
-        .prefetch_related(person_important_badges, person_instructor_community_roles)
+        .prefetch_related(
+            person_important_badges,
+            person_instructor_community_roles,
+            Prefetch(
+                "person__consent_set",
+                to_attr="active_consents",
+                queryset=Consent.objects.active().select_related("term", "term_option"),
+            ),
+        )
         .order_by("role__name")
     )
 
@@ -1159,6 +1167,15 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             {
                 "tasks": self.get_object()
                 .task_set.select_related("person", "role")
+                .prefetch_related(
+                    Prefetch(
+                        "person__consent_set",
+                        to_attr="active_consents",
+                        queryset=Consent.objects.active().select_related(
+                            "term", "term_option"
+                        ),
+                    ),
+                )
                 .order_by("role__name"),
                 "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
             }
@@ -2273,7 +2290,17 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         context["title"] = "Badge {0}".format(self.object)
         filter = BadgeAwardsFilter(
             self.request.GET,
-            queryset=self.object.award_set.select_related("event", "person", "badge"),
+            queryset=self.object.award_set.select_related(
+                "event", "person", "badge"
+            ).prefetch_related(
+                Prefetch(
+                    "person__consent_set",
+                    to_attr="active_consents",
+                    queryset=Consent.objects.active().select_related(
+                        "term", "term_option"
+                    ),
+                ),
+            ),
         )
         context["filter"] = filter
 
@@ -2325,6 +2352,11 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
                 "communityrole_set",
                 to_attr="instructor_community_roles",
                 queryset=CommunityRole.objects.filter(config__name="instructor"),
+            ),
+            Prefetch(
+                "consent_set",
+                to_attr="active_consents",
+                queryset=Consent.objects.active().select_related("term", "term_option"),
             ),
         )
         .order_by("family", "personal")

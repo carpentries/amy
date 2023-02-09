@@ -3,6 +3,7 @@
 {% load crispy_forms_tags %}
 {% load pagination %}
 {% load tags %}
+{% load consents %}
 
 {% block sidebar %}
   <h3>Filter</h3>
@@ -30,7 +31,11 @@
         <td><input type="checkbox" email="{{ p.email }}" respond-to-select-all-checkbox /></td>
         <td>{% for role in p.instructor_community_roles %}{% include "includes/instructor_role_badge.html" with role=role %}{% empty %}&mdash;{% endfor %}</td>
         <td>{% if p.is_trainer %}{% bootstrap_tag 'TRAINER' %}{% else %}&mdash;{% endif %}</td>
-        <td><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
+        <td>
+          <a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>
+          {% consent_agreed p.active_consents TermEnum.MAY_CONTACT as may_contact %}
+          {% if p.email and may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}
+        </td>
         <td>{{ p.num_instructor|add:p.num_trainer }}</td>
         <td>{{ p.is_trainee|yesno }}</td>
         <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}&mdash;{% endif %}</td>
