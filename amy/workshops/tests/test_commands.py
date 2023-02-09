@@ -4,6 +4,7 @@ These commands are run via `./manage.py command`."""
 
 from datetime import date
 
+from django.core.management.base import BaseCommand
 from django.test import TestCase
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
@@ -13,6 +14,7 @@ from workshops.management.commands.assign_instructor_community_role import (
 from workshops.management.commands.assign_trainer_community_role import (
     Command as AssignTrainerCommunityRole,
 )
+from workshops.management.commands.create_superuser import Command as CreateSuperuser
 from workshops.management.commands.migrate_inactive_trainers_to_trainer_badges import (
     Command as MigrateInactiveTrainersToTrainerBadges,
 )
@@ -596,3 +598,49 @@ class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
         self.assertEqual(award2.badge, self.trainer_badge)  # Changed
         self.assertEqual(award2.awarded, date(2021, 1, 1))
         self.assertEqual(award1.badge, self.trainer_badge)  # Not changed
+
+
+class TestCreateSuperuserCommand(TestCase):
+    command: BaseCommand
+
+    def setUp(self) -> None:
+        self.command = CreateSuperuser()
+        instructor_badge = Badge.objects.create(name="instructor", title="Instructor")
+        CommunityRoleConfig.objects.create(
+            name="instructor",
+            link_to_award=True,
+            award_badge_limit=instructor_badge,
+            link_to_membership=False,
+            additional_url=False,
+        )
+
+    def test_admin_created(self) -> None:
+        """When `admin` account doesn't exist, it gets created."""
+        # Act
+        self.command.handle()
+
+        # Assert
+        Person.objects.get(username="admin")
+
+    def test_admin_not_created(self) -> None:
+        """When `admin` account exists, the command doesn't change it or create other
+        superuser accounts."""
+        # Arrange
+        superuser = Person.objects.create_superuser(
+            username="admin",
+            personal="admin",
+            family="admin",
+            email="admin@example.org",
+            password="admin",
+        )
+        superuser.is_active = False
+        superuser.save()
+
+        # Act
+        self.command.handle()
+
+        # Assert
+        Person.objects.get(username="admin")
+        self.assertEqual(Person.objects.filter(is_superuser=True).count(), 1)
+        superuser.refresh_from_db()
+        self.assertFalse(superuser.is_active)

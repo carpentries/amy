@@ -9,9 +9,15 @@ class Command(BaseCommand):
     help = 'Create a superuser called "admin" with password "admin".'
 
     def handle(self, *args, **options):
+        username = "admin"
+
+        if Person.objects.filter(username=username).exists():
+            print("Admin user exists, quitting.")
+            return
+
         try:
             admin = Person.objects.create_superuser(
-                username="admin",
+                username=username,
                 personal="admin",
                 family="admin",
                 email="admin@example.org",
