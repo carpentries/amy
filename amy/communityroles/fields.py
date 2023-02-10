@@ -17,7 +17,10 @@ class CustomKeysWidget(forms.TextInput):
 
     def get_context(self, name: str, value: str, attrs: dict):
         value_deserialized = json.loads(value)
-        value_deserialized_dict = dict(value_deserialized)
+        if value_deserialized is not None:
+            value_deserialized_dict = dict(value_deserialized)
+        else:
+            value_deserialized_dict = {}
         default_values = dict([(label, "") for label in self.labels])
         context_value = default_values | value_deserialized_dict
 
