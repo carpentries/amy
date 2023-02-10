@@ -1,6 +1,5 @@
-from django.core.exceptions import ValidationError
-
 import json
+
 from communityroles.fields import CustomKeysWidget
 from workshops.tests.base import TestBase
 
