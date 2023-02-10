@@ -76,12 +76,6 @@ before starting work on new features.
     $ pipenv run make dev_database
     ~~~
 
-1. Create cache tables for use with the database cache backend.
-
-    ~~~
-    $ pipenv run python manage.py createcachetable
-    ~~~
-
 1.  Start a local Django development server by running:
 
     ~~~
