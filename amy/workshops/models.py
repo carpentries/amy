@@ -1548,20 +1548,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             return self.url
 
     @cached_property
-    def contacts(self):
-        return (
-            self.task_set.filter(
-                # we only want hosts, organizers and instructors
-                Q(role__name="host")
-                | Q(role__name="organizer")
-                | Q(role__name="instructor")
-            )
-            .filter(person__may_contact=True)
-            .exclude(Q(person__email="") | Q(person__email=None))
-            .values_list("person__email", flat=True)
-        )
-
-    @cached_property
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
