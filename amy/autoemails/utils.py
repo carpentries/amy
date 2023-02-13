@@ -2,23 +2,18 @@ from typing import Optional, Union
 
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
-import django_rq
 import pytz
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
 
 
-def scheduled_execution_time(job_id, scheduler=None, naive=True):
+def scheduled_execution_time(job_id, scheduler, naive=True):
     """Get RQ-Scheduler scheduled execution time for specific job."""
-    _scheduler = scheduler
-    if not scheduler:
-        _scheduler = django_rq.get_scheduler("default")
-
     # Scheduler keeps jobs in a single key, they are sorted by score, which is
     # scheduled execution time (linux epoch).  We can retrieve single
     # entry's score.
-    time = _scheduler.connection.zscore(_scheduler.scheduled_jobs_key, job_id)
+    time = scheduler.connection.zscore(scheduler.scheduled_jobs_key, job_id)
 
     # Convert linux time epoch to UTC.
     if time:
@@ -51,14 +46,10 @@ def compare_emails(a, b):
             return False
 
 
-def check_status(job: Union[str, Job], scheduler=None):
-    _scheduler = scheduler
-    if not scheduler:
-        _scheduler = django_rq.get_scheduler("default")
-
+def check_status(job: Union[str, Job], scheduler):
     if not isinstance(job, Job):
         try:
-            job = Job.fetch(job, connection=_scheduler.connection)
+            job = Job.fetch(job, connection=scheduler.connection)
         except NoSuchJobError:
             return None
 
