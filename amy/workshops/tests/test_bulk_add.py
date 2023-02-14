@@ -10,6 +10,7 @@ from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
+import workshops.utils.person_upload
 from workshops.utils.person_upload import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -606,10 +607,12 @@ class TestBulkUploadAddsEmailAction(FakeRedisTestCaseMixin, CSVBulkUploadTestBas
         Trigger.objects.create(action="new-instructor", template=template)
 
         # save scheduler and connection data
-        self._saved_scheduler = workshops.views.scheduler
+        self._saved_scheduler1 = workshops.views.scheduler
+        self._saved_scheduler2 = workshops.utils.person_upload.scheduler
         self._saved_redis_connection = workshops.views.redis_connection
         # overwrite them
         workshops.views.scheduler = self.scheduler
+        workshops.utils.person_upload.scheduler = self.scheduler
         workshops.views.redis_connection = self.connection
 
         self.csv = """personal,family,email,event,role
@@ -620,7 +623,8 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
 
     def tearDown(self):
         super().tearDown()
-        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.scheduler = self._saved_scheduler1
+        workshops.utils.person_upload.scheduler = self._saved_scheduler2
         workshops.views.redis_connection = self._saved_redis_connection
 
     def test_jobs_created(self):

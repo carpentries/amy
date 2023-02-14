@@ -10,8 +10,10 @@ from django.test import TestCase, override_settings
 from django.test.client import RequestFactory
 
 from autoemails.actions import BaseAction
+import autoemails.bulk_email
 from autoemails.bulk_email import send_bulk_email
 from autoemails.models import EmailTemplate, RQJob, Trigger
+from autoemails.tests.base import FakeRedisTestCaseMixin
 from consents.models import Term
 
 
@@ -352,7 +354,7 @@ Regional Coordinator""",
         self.assertEqual(email.from_email, "sender@example.org")
 
 
-class BulkEmailTest(TestCase):
+class BulkEmailTest(FakeRedisTestCaseMixin, TestCase):
     class ExampleAction(BaseAction):
         """
         Example action class used exclusively for these tests
@@ -362,6 +364,18 @@ class BulkEmailTest(TestCase):
 
         def all_recipients(self) -> str:
             return ",".join(self.context_objects["person_emails"])
+
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = autoemails.bulk_email.scheduler
+        # overwrite them
+        autoemails.bulk_email.scheduler = self.scheduler
+
+    def tearDown(self):
+        super().tearDown()
+        autoemails.bulk_email.scheduler = self._saved_scheduler
 
     def test_send_bulk_email(self) -> None:
         term = Term.objects.active()[0]

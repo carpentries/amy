@@ -25,7 +25,7 @@ def clear_scheduled_jobs():
             RQJob.objects.filter(job_id=job.get_id()).delete()
 
 
-def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler=None):
+def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, scheduler):
     action_name = action_class.__name__
     action = action_class(trigger=trigger)
     meta = dict(
@@ -35,7 +35,7 @@ def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler
         context=None,
         email_action_class=action_class.EMAIL_ACTION_CLASS,
     )
-    job = _scheduler.schedule(
+    job = scheduler.schedule(
         scheduled_time=datetime.utcnow(),  # Time for first execution, in UTC timezone
         func=action,  # Function to be queued
         interval=action.INTERVAL,  # Time before the function is called again
@@ -57,7 +57,7 @@ def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, _scheduler
         job_id=job.get_id(),
         trigger=trigger,
         scheduled_execution=scheduled_at,
-        status=check_status(job),
+        status=check_status(job, scheduler),
         mail_status="",
         interval=job.meta.get("interval"),
         result_ttl=job.result_ttl,

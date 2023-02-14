@@ -81,7 +81,7 @@ def generic_schedule_email(request, pk):
             job_id=job.get_id(),
             trigger=trigger,
             scheduled_execution=scheduled_at,
-            status=check_status(job),
+            status=check_status(job, scheduler),
             mail_status="",
             event_slug=action.event_slug(),
             recipients=action.all_recipients(),

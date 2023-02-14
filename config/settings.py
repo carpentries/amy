@@ -252,18 +252,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.2/topics/cache/#database-caching
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("AMY_REDIS_URL") + "0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "default_cache_table",
     },
     "select2": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("AMY_REDIS_URL") + "1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "select2_cache_table",
     },
 }
 

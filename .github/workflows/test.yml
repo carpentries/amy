@@ -65,6 +65,16 @@ jobs:
         AMY_DATABASE_USER: postgres
         AMY_DATABASE_PASSWORD: postgres
 
+    - name: Create cache tables
+      run: |
+        pipenv run python manage.py createcachetable
+      env:
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
+
     - name: Collect static files
       run: |
         pipenv run python manage.py collectstatic --no-input;

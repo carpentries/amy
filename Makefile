@@ -34,6 +34,7 @@ dev_database :
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
+	${MANAGE} createcachetable
 
 ## node_modules : install front-end dependencies
 node_modules : package.json
