@@ -27,16 +27,23 @@ from workshops.utils.pagination import get_pagination_items
 def membership_trainings_stats(request):
     """Display basic statistics for memberships and instructor trainings."""
     data = Membership.objects.prefetch_related("organizations", "task_set").annotate(
-        instructor_training_seats_public_total=(
+        instructor_training_seats_total=(
+            # Public
             F("public_instructor_training_seats")
             + F("additional_public_instructor_training_seats")
             # Coalesce returns first non-NULL value
             + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+            # Inhouse
+            + F("inhouse_instructor_training_seats")
+            + F("additional_inhouse_instructor_training_seats")
+            # Coalesce returns first non-NULL value
+            + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
         ),
-        instructor_training_seats_public_utilized=(
-            Count("task", filter=Q(task__role__name="learner", task__seat_public=True))
+        instructor_training_seats_utilized=(
+            Count("task", filter=Q(task__role__name="learner"))
         ),
-        instructor_training_seats_public_remaining=(
+        instructor_training_seats_remaining=(
+            # Public
             F("public_instructor_training_seats")
             + F("additional_public_instructor_training_seats")
             + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
@@ -44,21 +51,8 @@ def membership_trainings_stats(request):
                 "task", filter=Q(task__role__name="learner", task__seat_public=True)
             )
             - Coalesce("public_instructor_training_seats_rolled_over", 0)
-        ),
-        instructor_training_seats_inhouse_total=(
-            F("inhouse_instructor_training_seats")
-            + F("additional_inhouse_instructor_training_seats")
-            # Coalesce returns first non-NULL value
-            + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
-        ),
-        instructor_training_seats_inhouse_utilized=(
-            Count(
-                "task",
-                filter=Q(task__role__name="learner", task__seat_public=False),
-            )
-        ),
-        instructor_training_seats_inhouse_remaining=(
-            F("inhouse_instructor_training_seats")
+            # Inhouse
+            + F("inhouse_instructor_training_seats")
             + F("additional_inhouse_instructor_training_seats")
             + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
             - Count(

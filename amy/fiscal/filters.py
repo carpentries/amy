@@ -1,7 +1,6 @@
 from datetime import date
 
 from django.forms import widgets
-from django.db.models import Q
 import django_filters
 
 from workshops.fields import Select2MultipleWidget, Select2Widget
@@ -121,13 +120,13 @@ class MembershipTrainingsFilter(AMYFilterSet):
     )
 
     training_seats_only = django_filters.BooleanFilter(
-        label="Only show memberships with more than zero allowed training seats (public or in-house)",
+        label="Only show memberships with more than zero allowed training seats",
         method=filter_training_seats_only,
         widget=widgets.CheckboxInput,
     )
 
     nonpositive_remaining_seats_only = django_filters.BooleanFilter(
-        label="Only show memberships with less than zero remaining seats (public or in-house)",
+        label="Only show memberships with less than zero remaining seats",
         method=filter_nonpositive_remaining_seats,
         widget=widgets.CheckboxInput,
     )
@@ -137,12 +136,9 @@ class MembershipTrainingsFilter(AMYFilterSet):
             "name",
             "agreement_start",
             "agreement_end",
-            "instructor_training_seats_public_total",
-            "instructor_training_seats_public_utilized",
-            "instructor_training_seats_public_remaining",
-            "instructor_training_seats_inhouse_total",
-            "instructor_training_seats_inhouse_utilized",
-            "instructor_training_seats_inhouse_remaining",
+            "instructor_training_seats_total",
+            "instructor_training_seats_utilized",
+            "instructor_training_seats_remaining",
         ),
     )
 
