@@ -131,7 +131,19 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     filter_class = MembershipFilter
     queryset = (
         Membership.objects.annotate(
+            instructor_training_seats_total=(
+                # Public
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+                # Inhouse
+                + F("inhouse_instructor_training_seats")
+                + F("additional_inhouse_instructor_training_seats")
+                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+            ),
             instructor_training_seats_remaining=(
+                # Public
                 F("public_instructor_training_seats")
                 + F("additional_public_instructor_training_seats")
                 # Coalesce returns first non-NULL value
@@ -140,6 +152,15 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
                     "task", filter=Q(task__role__name="learner", task__seat_public=True)
                 )
                 - Coalesce("public_instructor_training_seats_rolled_over", 0)
+                # Inhouse
+                + F("inhouse_instructor_training_seats")
+                + F("additional_inhouse_instructor_training_seats")
+                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+                - Count(
+                    "task",
+                    filter=Q(task__role__name="learner", task__seat_public=False),
+                )
+                - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
             ),
         )
         .prefetch_related("organizations")

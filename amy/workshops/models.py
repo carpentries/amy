@@ -499,13 +499,6 @@ class Membership(models.Model):
         c = self.inhouse_instructor_training_seats_rolled_over or 0
         return a - b - c
 
-    @property
-    def instructor_training_seats_total(self):
-        a = self.inhouse_instructor_training_seats_total
-        b = self.public_instructor_training_seats_total
-        return a + b
-
-
 
 # ------------------------------------------------------------
 

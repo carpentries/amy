@@ -44,10 +44,7 @@ def filter_active_memberships_only(queryset, name, active):
 def filter_training_seats_only(queryset, name, seats):
     """Limit Memberships to only entries with some training seats allowed."""
     if seats:
-        return queryset.filter(
-            Q(instructor_training_seats_public_total__gt=0)
-            | Q(instructor_training_seats_inhouse_total__gt=0)
-        )
+        return queryset.filter(instructor_training_seats_total__gt=0)
     else:
         return queryset
 
@@ -55,10 +52,7 @@ def filter_training_seats_only(queryset, name, seats):
 def filter_nonpositive_remaining_seats(queryset, name, seats):
     """Limit Memberships to only entries with negative remaining seats."""
     if seats:
-        return queryset.filter(
-            Q(instructor_training_seats_public_remaining__lt=0)
-            | Q(instructor_training_seats_inhouse_remaining__lt=0)
-        )
+        return queryset.filter(instructor_training_seats_remaining__lt=0)
     else:
         return queryset
 
