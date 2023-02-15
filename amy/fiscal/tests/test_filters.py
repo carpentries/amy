@@ -11,8 +11,30 @@ from workshops.models import Organization, Member, MemberRole
 
 
 class TestMembershipFilter(TestCase):
-    def setUp(self):
-        self.model = Membership
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.model = Membership
+        # create a test membership with one organization
+        cls.organization = Organization.objects.create(
+            fullname="Test Organization", domain="example.org"
+        )
+        cls.membership = Membership.objects.create(
+            name="Test Membership",
+            variant="Bronze",
+            agreement_start=date.today(),
+            agreement_end=date.today(),
+            contribution_type="Financial",
+        )
+        role = MemberRole.objects.first()
+        cls.member = Member.objects.create(
+            membership=cls.membership, organization=cls.organization, role=role
+        )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.member.delete()
+        cls.membership.delete()
+        cls.organization.delete()
 
     def test_fields(self):
         # Arrange
@@ -42,8 +64,8 @@ class TestMembershipFilter(TestCase):
         name = "active_only"
         # Act
         filterset.filters[name].filter(qs_mock, True)
-        # Assert
         today = date.today()
+        # Assert
         qs_mock.filter.assert_called_once_with(
             agreement_start__lte=today, agreement_end__gte=today
         )
@@ -52,22 +74,11 @@ class TestMembershipFilter(TestCase):
     def test_filter_organization_name(self):
         # Arrange
         filterset = MembershipFilter({})
-        name = "organization_name"
-        value = "Test"
-        organization = Organization.objects.create(fullname=value, domain="example.org")
-        membership = Membership.objects.create(
-            name=value,
-            variant="Bronze",
-            agreement_start=date.today(),
-            agreement_end=date.today(),
-            contribution_type="Financial",
-        )
-        role = MemberRole.objects.first()
-        member = Member.objects.create(
-            membership=membership, organization=organization, role=role
-        )
+        filter_name = "organization_name"
+        value = "Test Organization"
         qs = Membership.objects.all()
+
         # Act
-        result = filterset.filters[name].filter(qs, value)
+        result = filterset.filters[filter_name].filter(qs, value)
         # Assert
-        self.assertQuerysetEqual(result, qs)
+        self.assertQuerysetEqual(result, [self.membership])
