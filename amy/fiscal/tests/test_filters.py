@@ -217,15 +217,23 @@ class TestMembershipFilter(TestCase):
 
     def test_filter_order_by(self):
         # Arrange
-        filter_name = "nonpositive_remaining_seats_only"
-        value = True
+        filter_name = "order_by"
+        results = {}
+        expected_results = {
+            "agreement_start": [self.membership2, self.membership],
+            "agreement_end": [self.membership2, self.membership],
+            "instructor_training_seats_remaining": [self.membership, self.membership2],
+        }
 
         # Act
-        result = self.filterset.filters[filter_name].filter(self.qs, value)
+        for value in expected_results.keys():
+            results[value] = self.filterset.filters[filter_name].filter(
+                self.qs, [value]
+            )
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
+        for value in results.keys():
+            self.assertQuerysetEqual(results[value], expected_results[value])
 
 
 class TestMembershipTrainingsFilter(TestCase):
@@ -279,6 +287,9 @@ class TestMembershipTrainingsFilter(TestCase):
                 + F("inhouse_instructor_training_seats")
                 + F("additional_inhouse_instructor_training_seats")
                 + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+            ),
+            instructor_training_seats_utilized=(
+                Count("task", filter=Q(task__role__name="learner"))
             ),
             instructor_training_seats_remaining=(
                 # Public
@@ -408,3 +419,27 @@ class TestMembershipTrainingsFilter(TestCase):
         # Assert
         self.assertTrue(self.membership in result)
         self.assertFalse(self.membership2 in result)
+
+    def test_filter_order_by(self):
+        # Arrange
+        filter_name = "order_by"
+        results = {}
+        # default ordering is ascending
+        expected_results = {
+            "name": [self.membership, self.membership2],
+            "agreement_start": [self.membership2, self.membership],
+            "agreement_end": [self.membership2, self.membership],
+            "instructor_training_seats_total": [self.membership2, self.membership],
+            "instructor_training_seats_utilized": [self.membership2, self.membership],
+            "instructor_training_seats_remaining": [self.membership, self.membership2],
+        }
+
+        # Act
+        for value in expected_results.keys():
+            results[value] = self.filterset.filters[filter_name].filter(
+                self.qs, [value]
+            )
+
+        # Assert
+        for value in results.keys():
+            self.assertQuerysetEqual(results[value], expected_results[value])
