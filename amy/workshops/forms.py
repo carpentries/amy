@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timezone
 import re
 
@@ -476,9 +477,9 @@ class EventForm(forms.ModelForm):
             "administrator",
             "public_status",
             "assigned_to",
+            "curricula",
             "tags",
             "open_TTT_applications",
-            "curricula",
             "url",
             "language",
             "reg_key",
@@ -560,28 +561,24 @@ class EventForm(forms.ModelForm):
 
         return open_TTT_applications
 
-    def clean_curricula(self):
-        """Validate tags when some curricula are selected."""
+    def get_missing_tags(self):
+        """Validate tags when some curricula are selected.
+
+        Called during clean(), not during individual field validation."""
         curricula = self.cleaned_data["curricula"]
         tags = self.cleaned_data["tags"]
-
         try:
-            expected_tags = []
+            expected_tags = set()
             for c in curricula:
                 if c.active and c.carpentry:
-                    expected_tags.append(c.carpentry)
+                    expected_tags.add(c.carpentry)
                 elif c.active and c.mix_match:
-                    expected_tags.append("Circuits")
+                    expected_tags.add("Circuits")
         except (ValueError, TypeError):
-            expected_tags = []
+            expected_tags = set()
 
-        for tag in expected_tags:
-            if not tags.filter(name=tag):
-                raise forms.ValidationError(
-                    "You must add tags corresponding to these curricula."
-                )
-
-        return curricula
+        missing_tags = expected_tags - set(tags.values_list("name", flat=True))
+        return missing_tags
 
     def clean_manual_attendance(self):
         """Regression: #1608 - fix 500 server error when field is cleared."""
@@ -601,6 +598,26 @@ class EventForm(forms.ModelForm):
             )
 
         return res
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data:
+            return cleaned_data
+
+        errors: defaultdict[str, list[ValidationError]] = defaultdict(list)
+
+        if missing_tags := self.get_missing_tags():
+            errors["tags"].append(
+                ValidationError(
+                    "You must add tags corresponding to the selected curricula. "
+                    f"Missing tags: {', '.join(missing_tags)}"
+                ),
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+        return cleaned_data
 
 
 class EventCreateForm(EventForm):

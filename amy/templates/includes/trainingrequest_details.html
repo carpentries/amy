@@ -62,7 +62,7 @@
         <td>{{ object.domains_other|default:"&mdash;" }}</td></tr>
     <tr><th>I self-identify as a member of a group that is under-represented in research and/or computing:</th>
         <td>{{ object.get_underrepresented_display }}</td></tr>
-    <tr><th>If you are comfortable doing so, please share more details. Your response is optional, and these details will not impact your application's ranking.</th>
+    <tr><th>If you are comfortable doing so, please share more details.</th>
         <td>
             {% if object.underrepresented_details %}
             {{ object.underrepresented_details }}

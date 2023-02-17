@@ -44,7 +44,7 @@ nav:
 
 
 markdown_extensions:
-    - toc:
-        permalink: 
+  - toc:
+      permalink: True
 
 extra_css: [extra.css]
