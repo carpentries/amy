@@ -218,7 +218,9 @@ class TestMembershipFilter(TestCase):
     def test_filter_order_by(self):
         # Arrange
         filter_name = "order_by"
+        fields = self.filterset.filters[filter_name].param_map
         results = {}
+        # default ordering is ascending
         expected_results = {
             "agreement_start": [self.membership2, self.membership],
             "agreement_end": [self.membership2, self.membership],
@@ -226,14 +228,17 @@ class TestMembershipFilter(TestCase):
         }
 
         # Act
-        for value in expected_results.keys():
-            results[value] = self.filterset.filters[filter_name].filter(
-                self.qs, [value]
+        for field in fields.keys():
+            results[field] = self.filterset.filters[filter_name].filter(
+                self.qs, [field]
             )
 
         # Assert
-        for value in results.keys():
-            self.assertQuerysetEqual(results[value], expected_results[value])
+        # we don't have any unexpected fields
+        self.assertListEqual(list(fields.keys()), list(expected_results.keys()))
+        # each field was filtered correctly
+        for field in fields.keys():
+            self.assertQuerysetEqual(results[field], expected_results[field])
 
 
 class TestMembershipTrainingsFilter(TestCase):
@@ -423,6 +428,7 @@ class TestMembershipTrainingsFilter(TestCase):
     def test_filter_order_by(self):
         # Arrange
         filter_name = "order_by"
+        fields = self.filterset.filters[filter_name].param_map
         results = {}
         # default ordering is ascending
         expected_results = {
@@ -435,11 +441,14 @@ class TestMembershipTrainingsFilter(TestCase):
         }
 
         # Act
-        for value in expected_results.keys():
-            results[value] = self.filterset.filters[filter_name].filter(
-                self.qs, [value]
+        for field in fields.keys():
+            results[field] = self.filterset.filters[filter_name].filter(
+                self.qs, [field]
             )
 
         # Assert
-        for value in results.keys():
-            self.assertQuerysetEqual(results[value], expected_results[value])
+        # we don't have any unexpected fields
+        self.assertListEqual(list(fields.keys()), list(expected_results.keys()))
+        # each field was filtered correctly
+        for field in fields.keys():
+            self.assertQuerysetEqual(results[field], expected_results[field])
