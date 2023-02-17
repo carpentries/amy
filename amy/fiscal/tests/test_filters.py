@@ -4,9 +4,9 @@ from django.db.models import Count, F, Q
 from django.db.models.functions import Coalesce
 from django.test import TestCase
 
-from fiscal.models import Membership
 from fiscal.filters import MembershipFilter, MembershipTrainingsFilter
-from workshops.models import Organization, Member, MemberRole, Role, Person, Task, Event
+from fiscal.models import Membership
+from workshops.models import Event, Member, MemberRole, Organization, Person, Role, Task
 
 
 class TestMembershipFilter(TestCase):
