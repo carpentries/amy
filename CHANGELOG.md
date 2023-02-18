@@ -13,6 +13,11 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.0.8 - 2023-02-18
+
+### Bugfixes
+* hotfix: check for null values when loading custom keys - [#2339](https://github.com/carpentries/amy/pull/2339) by @elichad
+
 ## v4.0.7 - 2023-01-28
 
 ### Bugfixes
