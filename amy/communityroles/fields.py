@@ -1,8 +1,11 @@
 import json
+import logging
 
 from django import forms
 from django.http import QueryDict
 from django.utils.datastructures import MultiValueDict
+
+logger = logging.getLogger("amy")
 
 
 class CustomKeysWidget(forms.TextInput):
@@ -17,7 +20,14 @@ class CustomKeysWidget(forms.TextInput):
 
     def get_context(self, name: str, value: str, attrs: dict):
         value_deserialized = json.loads(value)
-        value_deserialized_dict = dict(value_deserialized)
+        try:
+            value_deserialized_dict = dict(value_deserialized)
+        except (ValueError, TypeError) as e:
+            logger.debug(
+                f"Failed to load custom key values {value_deserialized} to dict: {e}."
+            )
+            logger.debug("Proceeding without custom key values...")
+            value_deserialized_dict = {}
         default_values = dict([(label, "") for label in self.labels])
         context_value = default_values | value_deserialized_dict
 
