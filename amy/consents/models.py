@@ -44,16 +44,6 @@ class TermManager(Manager):
         return self.get_queryset().get(slug=slug)
 
 
-class TermOptionQuerySet(QuerySet):
-    def active(self):
-        return self.filter(archived_at=None)
-
-
-class ConsentQuerySet(QuerySet):
-    def active(self):
-        return self.filter(archived_at=None)
-
-
 class TermEnum(StrEnum):
     """Base terms that were introduced via migration
     `amy/consents/migrations/0005_auto_20210411_2325.py`.
@@ -132,13 +122,23 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
             )
 
 
+class TermOptionQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
+
+    def get_agree_term_option(self) -> "TermOption":
+        return self.active().get(option_type=TermOptionChoices.AGREE)
+
+    def get_decline_term_option(self) -> "TermOption":
+        return self.active().get(option_type=TermOptionChoices.DECLINE)
+
+
 class TermOptionChoices(models.TextChoices):
     AGREE = "agree", "Agree"
     DECLINE = "decline", "Decline"
 
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
-
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
     option_type = models.CharField(
         max_length=STR_MED, choices=TermOptionChoices.choices
@@ -193,6 +193,11 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
                     f" option for required term {self.term}. Please add an additional"
                     f" {TermOptionChoices.AGREE} option or archive the term instead."
                 )
+
+
+class ConsentQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
 
 
 class Consent(CreatedUpdatedArchivedMixin, models.Model):
@@ -259,8 +264,8 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         consents.update(archived_at=timezone.now())
         cls.objects.bulk_create(new_consents)
 
-    @classmethod
-    def reconsent(cls, consent: Consent, term_option: TermOption) -> Consent:
+    @staticmethod
+    def reconsent(consent: Consent, term_option: TermOption) -> "Consent":
         consent.archive()
         return Consent.objects.create(
             term_id=term_option.term.pk,
