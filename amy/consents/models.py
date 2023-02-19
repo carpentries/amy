@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 
 from autoemails.mixins import RQJobsMixin
+from consents.exceptions import TermOptionDoesNotBelongToTermException
 from workshops.mixins import CreatedUpdatedArchivedMixin
 from workshops.models import STR_MED, Person
 
@@ -217,8 +218,16 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
 
     def save(self, *args, **kwargs):
         if self.term_option and self.term.pk != self.term_option.term.pk:
-            raise ValidationError("Consent term.id must match term_option.term_id")
+            raise TermOptionDoesNotBelongToTermException(
+                f"Consent {self.term.pk=} must match {self.term_option.term.pk=}"
+            )
         return super().save(*args, **kwargs)
+
+    def is_archived(self) -> bool:
+        return self.archived_at is not None
+
+    def is_active(self) -> bool:
+        return self.archived_at is None
 
     @classmethod
     def create_unset_consents_for_term(cls, term: Term) -> None:

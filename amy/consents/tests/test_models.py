@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
+from consents.exceptions import TermOptionDoesNotBelongToTermException
 from consents.models import Consent, Term, TermOption
 from consents.tests.base import ConsentTestBase
 from workshops.models import Person
@@ -73,6 +74,39 @@ class TestQuerySet(ConsentTestBase):
 
 
 class TestConsentModel(ConsentTestBase):
+    def test_is_archived_is_active_before_archiving(self) -> None:
+        # Arrange
+        term = Term.objects.create(content="term", slug="term")
+        person = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+        consent = Consent.objects.get(person=person, term=term)
+
+        # Act
+        is_archived = consent.is_archived()
+        is_active = consent.is_active()
+
+        # Arrange
+        self.assertFalse(is_archived)
+        self.assertTrue(is_active)
+
+    def test_is_archived_is_active_after_archiving(self) -> None:
+        # Arrange
+        term = Term.objects.create(content="term", slug="term")
+        person = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+        consent = Consent.objects.get(person=person, term=term)
+        consent.archive()
+
+        # Act
+        is_archived = consent.is_archived()
+        is_active = consent.is_active()
+
+        # Arrange
+        self.assertTrue(is_archived)
+        self.assertFalse(is_active)
+
     def test_unique_constraint(self) -> None:
         term1 = Term.objects.create(content="term1", slug="term1")
         TermOption.objects.create(
@@ -101,19 +135,25 @@ class TestConsentModel(ConsentTestBase):
     def test_term_and_term_option_should_match(self):
         """Term was added to the Consent model to avoid too many complicated joins.
         The term option should always be related to the term stored in the table."""
+        # Arrange
         term1 = Term.objects.create(content="term1", slug="term1")
-        term2_option1 = TermOption.objects.create(
-            term=Term.objects.create(content="term2", slug="term2"),
+        term2 = Term.objects.create(content="term2", slug="term2")
+        term2_option = TermOption.objects.create(
+            term=term2,
             option_type="agree",
             content="option1",
         )
         person = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk"
         )
+
+        # Act & Assert
         with self.assertRaisesRegex(
-            ValidationError, "Consent term.id must match term_option.term_id"
+            TermOptionDoesNotBelongToTermException,
+            f"Consent self.term.pk={term1.pk} must match "
+            f"self.term_option.term.pk={term2.pk}",
         ):
-            Consent.objects.create(person=person, term=term1, term_option=term2_option1)
+            Consent.objects.create(person=person, term=term1, term_option=term2_option)
 
     def test_term_options(self) -> None:
         term1 = Term.objects.create(content="term1", slug="term1")
