@@ -48,7 +48,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `secondary_email` Alternate email address. Optional.
 * `gender` Options are `Prefer not to say (undisclosed)` `Female` `Gender variant / non-conforming` `Male` `Other`.
     * `gender_other` Text if individual selected `Other`
-* `may_contact` A boolean field. We may not contact people if this field is false
+* `may_contact` A boolean field. We may not contact people if this field is false. This field has been replaced by new-style consents.
 * `github` Individual's GitHub user id
 * `twitter` Individual's Twitter user id
 * `orcid` Individual's ORCID iD
@@ -57,9 +57,9 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `affiliation` A free text field representing the person's self identified institutional affliation. This is **not** linked to the `workshops_organization` table.
 * `occupation` A free text field representing the person's self identified occupation
 * `user_notes` Free text field with notes from the individual
-* `publish_profile` A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the [Instructors](https://carpentries.org/instructors/), [Trainers](https://carpentries.org/trainers/), or [Maintainers](https://carpentries.org/maintainers/) pages
+* `publish_profile` A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the [Instructors](https://carpentries.org/instructors/), [Trainers](https://carpentries.org/trainers/), or [Maintainers](https://carpentries.org/maintainers/) pages. This field has been replaced by new-style consents.
 * `country` Self identified country of residence. Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
-* `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity.
+* `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity. This field has been replaced by new-style consents.
 
 #### Less commonly used fields
 
