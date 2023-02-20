@@ -1455,8 +1455,6 @@ class TestArchivePerson(TestBase):
             password="pass",
         )
         self.person_consent_required_terms(self.user)
-        self.user.may_contact = True
-        self.user.publish_profile = True
         self.user.is_active = True
         self.user.secondary_email = "user@second_example.org"
         self.user.gender = GenderMixin.OTHER
@@ -1559,11 +1557,6 @@ class TestArchivePerson(TestBase):
         self.assertEqual(archived_profile.orcid, "")
         self.assertEqual(archived_profile.gender, GenderMixin.UNDISCLOSED)
         self.assertEqual(archived_profile.gender_other, "")
-
-        # Old-style consents should be unset
-        self.assertFalse(archived_profile.data_privacy_agreement)
-        self.assertFalse(archived_profile.may_contact)
-        self.assertFalse(archived_profile.publish_profile)
 
         # All Consents should be unset
         consents = Consent.objects.filter(person=archived_profile).active()

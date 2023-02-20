@@ -1035,10 +1035,6 @@ class Person(
         self.secondary_email = ""
         self.gender = GenderMixin.UNDISCLOSED
         self.gender_other = ""
-        # TODO(lb): Remove references to agreements when Consents project is launched
-        self.data_privacy_agreement = False
-        self.may_contact = False
-        self.publish_profile = False
         # Remove permissions
         self.is_superuser = False
         self.groups.clear()
@@ -1052,7 +1048,8 @@ class Person(
         versions = Version.objects.get_for_object(self)
         versions.delete()
 
-        # Send a signal that the profile has been archived
+        # Send a signal that the profile has been archived. It archives all consents
+        # for a person.
         person_archived_signal.send(
             sender=self.__class__,
             person=self,
