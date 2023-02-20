@@ -780,7 +780,7 @@ def persons_merge(request):
             "title": "Merge Persons",
             "form": PersonsSelectionForm(),
         }
-        messages.warning(request, "You cannot merge the same person with " "themself.")
+        messages.warning(request, "You cannot merge the same person with themself.")
         if "next" in request.GET:
             return redirect(request.GET.get("next", "/"))
         return render(request, "generic_form.html", context)
@@ -819,8 +819,6 @@ def persons_merge(request):
                 "family",
                 "email",
                 "secondary_email",
-                "may_contact",
-                "publish_profile",
                 "gender",
                 "gender_other",
                 "airport",

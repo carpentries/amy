@@ -990,7 +990,6 @@ class TestPersonMerging(TestBase):
             "family": self.person_a.family,
             "email": self.person_b.email,
             "secondary_email": self.person_b.secondary_email,
-            "may_contact": self.person_a.may_contact,
             "gender": self.person_b.gender,
             "gender_other": self.person_b.gender_other,
             "airport": self.person_a.airport,
