@@ -689,7 +689,6 @@ class PersonManager(BaseUserManager):
 class Person(
     AbstractBaseUser,
     PermissionsMixin,
-    DataPrivacyAgreementMixin,
     CreatedUpdatedArchivedMixin,
     GenderMixin,
     RQJobsMixin,
@@ -732,19 +731,6 @@ class Person(
         blank=True,
         verbose_name="Email address",
         help_text="Primary email address, used for communication and as a login.",
-    )
-    may_contact = models.BooleanField(
-        default=True,
-        help_text="Allow to contact from The Carpentries according to the "
-        '<a href="https://docs.carpentries.org/topic_folders/policies/privacy.html" '
-        'target="_blank" rel="noreferrer">Privacy Policy</a>.',
-    )
-    publish_profile = models.BooleanField(
-        default=False,
-        verbose_name="Consent to making profile public",
-        help_text="Allow to post your name and any public profile you list "
-        "(website, Twitter) on our instructors website. Emails will"
-        " not be posted.",
     )
     country = CountryField(
         null=False,
@@ -832,27 +818,6 @@ class Person(
         verbose_name="ORCID ID",
         blank=True,
         default="",
-    )
-
-    LESSON_PUBLICATION_CHOICES = (
-        ("yes-profile", "Yes, and use the name associated with my profile"),
-        ("yes-orcid", "Yes, and use the name associated with my ORCID profile"),
-        ("yes-github", "Yes, and only use my GitHub handle"),
-        ("no", "No"),
-        ("unset", "Unset"),
-    )
-    lesson_publication_consent = models.CharField(
-        max_length=STR_MED,
-        choices=LESSON_PUBLICATION_CHOICES,
-        blank=True,
-        default="unset",
-        null=False,
-        verbose_name="Do you consent to have your name or identity associated "
-        "with lesson publications?",
-        help_text="When we publish our lessons, we like to include everyone "
-        "who has contributed via pull request as an author. If you "
-        "do make any contributions, would you like to be included "
-        "as an author when we publish the lesson?",
     )
 
     duplication_reviewed_on = models.DateTimeField(
