@@ -3,6 +3,7 @@ Django settings for AMY project.
 """
 
 from pathlib import Path
+from typing import cast
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
@@ -251,14 +252,17 @@ AUTH_PASSWORD_VALIDATORS = [
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/2.2/topics/cache/#database-caching
 CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-        "LOCATION": "default_cache_table",
-    },
-    "select2": {
-        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-        "LOCATION": "select2_cache_table",
-    },
+    # For Redis use:
+    # redis://127.0.0.1:6379/0?client_class=django_redis.client.DefaultClient
+    # redis://127.0.0.1:6379/1?client_class=django_redis.client.DefaultClient
+    "default": env.cache_url(
+        "AMY_CACHE_DEFAULT",
+        cast(environ.NoValue, "dbcache://default_cache_table"),
+    ),
+    "select2": env.cache_url(
+        "AMY_CACHE_SELECT2",
+        cast(environ.NoValue, "dbcache://select2_cache_table"),
+    ),
 }
 
 # MIDDLEWARE
