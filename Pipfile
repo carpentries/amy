@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "~=3.2"
+django = "~=3.2.0"
 argon2-cffi = "~=21.3.0"
 django-anymail = "~=8.4"
 django-contrib-comments = "~=2.1.0"
@@ -17,7 +17,7 @@ django-filter = "~=21.1"
 django-markdownx = "~=3.0.1"
 django-recaptcha = "~=3.0.0"
 django-reversion = "~=4.0.0"
-django-reversion-compare = "~=0.14.1"
+django-reversion-compare = "~=0.15"
 django-redis = "~=5.0.0"
 django-rq = "~=2.4.1"
 django-select2 = "~=7.10.0"
