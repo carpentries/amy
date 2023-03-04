@@ -22,27 +22,39 @@ class SilenceLogsRunner(DiscoverRunner):
             help="Prints logger entries after the test suite finishes.",
         )
 
+    def get_all_loggers(self) -> list[logging.Logger]:
+        root_logger = logging.getLogger()
+        return [root_logger] + [
+            logging.getLogger(name) for name in logging.root.manager.loggerDict
+        ]
+
+    def print_handler_stream_to_stderr(self, handler: logging.StreamHandler) -> None:
+        stream_value = handler.stream.getvalue()
+        if stream_value:
+            print(stream_value, file=sys.stderr)
+
     def setup_test_environment(self, **kwargs) -> None:
-        logger = logging.getLogger("amy")
+        loggers = self.get_all_loggers()
+        for logger in loggers:
+            for handler in logger.handlers:
+                if not isinstance(handler, logging.StreamHandler):
+                    continue
 
-        for handler in logger.handlers:
-            if not hasattr(handler, "stream"):
-                continue
-
-            new_io_stream = io.StringIO()
-            setattr(handler, "stream", new_io_stream)
+                handler.stream = io.StringIO()
 
         return super().setup_test_environment(**kwargs)
 
     def teardown_test_environment(self, **kwargs) -> None:
         if self.log_output:
-            print("---------------------- Logger output ----------------------")
-            logger = logging.getLogger("amy")
-            for handler in logger.handlers:
-                try:
-                    stream_value = handler.stream.getvalue()  # type: ignore
-                    print(stream_value, file=sys.stderr)
-                except AttributeError:
-                    pass
+            print(
+                "--------------------------- Logger output ----------------------------"
+            )
+            loggers = self.get_all_loggers()
+            for logger in loggers:
+                for handler in logger.handlers:
+                    if not isinstance(handler, logging.StreamHandler):
+                        continue
+
+                    self.print_handler_stream_to_stderr(handler)
 
         return super().teardown_test_environment(**kwargs)
