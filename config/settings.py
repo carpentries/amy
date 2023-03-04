@@ -44,6 +44,7 @@ env = environ.Env(
         "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
     ),
     AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
+    AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
 )
 
 # OS environment variables take precedence over variables from .env
@@ -362,6 +363,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 # AMY version
                 "workshops.context_processors.version",
+                "workshops.context_processors.site_banner",
                 # Consent enums
                 "consents.context_processors.terms",
                 # GitHub auth
@@ -610,3 +612,13 @@ REPORTS_LINK = env("AMY_REPORTS_LINK")
 # -----------------------------------------------------------------------------
 # Settings for Instructor Recruitment project
 INSTRUCTOR_RECRUITMENT_ENABLED = env("AMY_INSTRUCTOR_RECRUITMENT_ENABLED")
+
+# Site banner style
+# -----------------------------------------------------------------------------
+# This should show a special banner on all sites so that users are aware of
+# local/dev/test stage they are using.
+SITE_BANNER_STYLE = env("AMY_SITE_BANNER")
+if SITE_BANNER_STYLE not in ("local", "testing", "production"):
+    raise ImproperlyConfigured(
+        "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
+    )
