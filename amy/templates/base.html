@@ -32,6 +32,12 @@
   </head>
   <body>
 
+    {% if SITE_BANNER_STYLE == "local" %}
+    <section class="banner banner-local">This is a local version of AMY.</section>
+    {% elif SITE_BANNER_STYLE == "testing" %}
+    <section class="banner banner-testing">You are on the test version of AMY. Do not use real data. Data may not be persistent.</section>
+    {% endif %}
+
     {% block navbar %}{% endblock navbar %}
     <div class="container-fluid">
       {% block main %}
