@@ -579,6 +579,11 @@ RQ = {
     "DEFAULT_RESULT_TTL": 31536000,  # 1 year in seconds for keeping job results
 }
 
+# Test runner
+# -----------------------------------------------------------------------------
+# A custom test runner tailored for our needs.
+# https://docs.djangoproject.com/en/4.1/topics/testing/advanced/#defining-a-test-runner
+TEST_RUNNER = "workshops.tests.runner.SilenceLogsRunner"
 
 # Autoemails application settings
 # -----------------------------------------------------------------------------
