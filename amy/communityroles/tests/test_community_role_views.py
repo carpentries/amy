@@ -119,6 +119,26 @@ class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):
         self.assertEqual(page.status_code, 302)  # should redirect to new object
         self.assertRedirects(page, redirect)
 
+    def test_invalid_form_data_returns_page_with_error(self):
+        """
+        Regression test for issue #2336.
+        """
+        # Arrange
+        url = reverse("communityrole_edit", args=[self.community_role.pk])
+        data = self.data.copy()
+        data.pop(
+            "communityrole-award"
+        )  # creates a validation error as link_to_award is True
+
+        # Act
+        page = self.client.post(url, data)
+
+        # Assert
+        self.assertIn(
+            "Award is required with community role Test Role",
+            page.content.decode("utf-8"),
+        )
+
 
 class TestCommunityRoleDeleteView(TestCommunityRoleMixin, TestBase):
     def setUp(self):
