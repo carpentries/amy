@@ -63,7 +63,7 @@ class CustomKeysWidget(forms.TextInput):
             values = data.getlist(name)
         except AttributeError:
             values = data.get(name, [])
-        return list(zip(self.labels, values))
+        return json.dumps(list(zip(self.labels, values)))
 
     def value_omitted_from_data(
         self, data: QueryDict, files: MultiValueDict, name: str
