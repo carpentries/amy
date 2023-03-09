@@ -22,7 +22,7 @@ from django.db.models import (
     Sum,
     When,
 )
-from django.db.models.functions import Greatest
+from django.db.models.functions import Coalesce, Greatest
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -129,6 +129,46 @@ class Member(models.Model):
                 name="unique_member_role_in_membership",
             )
         ]
+
+
+class MembershipManager(models.Manager):
+    def annotate_with_seat_usage(self):
+        return self.get_queryset().annotate(
+            instructor_training_seats_total=(
+                # Public
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+                # Inhouse
+                + F("inhouse_instructor_training_seats")
+                + F("additional_inhouse_instructor_training_seats")
+                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+            ),
+            instructor_training_seats_utilized=(
+                Count("task", filter=Q(task__role__name="learner"))
+            ),
+            instructor_training_seats_remaining=(
+                # Public
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+                - Count(
+                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
+                )
+                - Coalesce("public_instructor_training_seats_rolled_over", 0)
+                # Inhouse
+                + F("inhouse_instructor_training_seats")
+                + F("additional_inhouse_instructor_training_seats")
+                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+                - Count(
+                    "task",
+                    filter=Q(task__role__name="learner", task__seat_public=False),
+                )
+                - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
+            ),
+        )
 
 
 @reversion.register
@@ -301,6 +341,8 @@ class Membership(models.Model):
         related_name="rolled_from_membership",
         null=True,
     )
+
+    objects = MembershipManager()
 
     def __str__(self):
         dates = human_daterange(self.agreement_start, self.agreement_end)

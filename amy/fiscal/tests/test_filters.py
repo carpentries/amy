@@ -1,11 +1,8 @@
 from datetime import date
 
-from django.db.models import Count, F, Q
-from django.db.models.functions import Coalesce
-
 from fiscal.filters import MembershipFilter, MembershipTrainingsFilter
 from fiscal.models import Membership
-from workshops.models import Event, Member, MemberRole, Organization, Person, Role, Task
+from workshops.models import Event, Member, MemberRole, Role, Task
 from workshops.tests.base import TestBase
 
 
@@ -49,39 +46,7 @@ class TestMembershipFilter(TestBase):
             organization=self.org_beta,
             role=member_role,
         )
-        self.qs = Membership.objects.all().annotate(
-            instructor_training_seats_total=(
-                # Public
-                F("public_instructor_training_seats")
-                + F("additional_public_instructor_training_seats")
-                # Coalesce returns first non-NULL value
-                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-                # Inhouse
-                + F("inhouse_instructor_training_seats")
-                + F("additional_inhouse_instructor_training_seats")
-                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
-            ),
-            instructor_training_seats_remaining=(
-                # Public
-                F("public_instructor_training_seats")
-                + F("additional_public_instructor_training_seats")
-                # Coalesce returns first non-NULL value
-                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-                - Count(
-                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
-                )
-                - Coalesce("public_instructor_training_seats_rolled_over", 0)
-                # Inhouse
-                + F("inhouse_instructor_training_seats")
-                + F("additional_inhouse_instructor_training_seats")
-                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
-                - Count(
-                    "task",
-                    filter=Q(task__role__name="learner", task__seat_public=False),
-                )
-                - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
-            ),
-        )
+        self.qs = Membership.objects.annotate_with_seat_usage()
 
         # create 2 used seats on test membership
         # will make remaining seats negative
@@ -299,42 +264,7 @@ class TestMembershipTrainingsFilter(TestBase):
             organization=self.org_beta,
             role=member_role,
         )
-        self.qs = Membership.objects.all().annotate(
-            instructor_training_seats_total=(
-                # Public
-                F("public_instructor_training_seats")
-                + F("additional_public_instructor_training_seats")
-                # Coalesce returns first non-NULL value
-                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-                # Inhouse
-                + F("inhouse_instructor_training_seats")
-                + F("additional_inhouse_instructor_training_seats")
-                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
-            ),
-            instructor_training_seats_utilized=(
-                Count("task", filter=Q(task__role__name="learner"))
-            ),
-            instructor_training_seats_remaining=(
-                # Public
-                F("public_instructor_training_seats")
-                + F("additional_public_instructor_training_seats")
-                # Coalesce returns first non-NULL value
-                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-                - Count(
-                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
-                )
-                - Coalesce("public_instructor_training_seats_rolled_over", 0)
-                # Inhouse
-                + F("inhouse_instructor_training_seats")
-                + F("additional_inhouse_instructor_training_seats")
-                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
-                - Count(
-                    "task",
-                    filter=Q(task__role__name="learner", task__seat_public=False),
-                )
-                - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
-            ),
-        )
+        self.qs = Membership.objects.annotate_with_seat_usage()
 
         # create 2 used seats on test membership
         # will make remaining seats negative
