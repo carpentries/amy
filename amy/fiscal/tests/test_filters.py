@@ -2,50 +2,54 @@ from datetime import date
 
 from django.db.models import Count, F, Q
 from django.db.models.functions import Coalesce
-from django.test import TestCase
 
 from fiscal.filters import MembershipFilter, MembershipTrainingsFilter
 from fiscal.models import Membership
 from workshops.models import Event, Member, MemberRole, Organization, Person, Role, Task
+from workshops.tests.base import TestBase
 
 
-class TestMembershipFilter(TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.model = Membership
+class TestMembershipFilter(TestBase):
+    """
+    A test should exist for each filter listed in test_fields().
+    """
+
+    def setUp(self) -> None:
+        super().setUp()  # create some organizations and persons
+        self._setUpRoles()  # create the learner role
+
+        self.model = Membership
         member_role = MemberRole.objects.first()
 
-        # create a test membership that should be selected in filters
-        cls.organization = Organization.objects.create(
-            fullname="Test Organization", domain="example.org"
-        )
-        cls.membership = Membership.objects.create(
+        self.membership = Membership.objects.create(
             name="Test Membership",
             variant="Bronze",
             agreement_start=date.today(),
             agreement_end=date.today(),
             contribution_type="Financial",
             public_instructor_training_seats=1,
+            consortium=True,
+            public_status="public",
         )
-        cls.member = Member.objects.create(
-            membership=cls.membership, organization=cls.organization, role=member_role
+        self.member = Member.objects.create(
+            membership=self.membership, organization=self.org_alpha, role=member_role
         )
-        # create a test membership that sphould be filtered out
-        cls.organization2 = Organization.objects.create(
-            fullname="To Be Filtered Out", domain="example2.org"
-        )
-        cls.membership2 = Membership.objects.create(
+        self.membership2 = Membership.objects.create(
             name="To Be Filtered Out",
             variant="Silver",
             agreement_start=date(2015, 1, 1),
             agreement_end=date(2016, 1, 1),
             contribution_type="Person-days",
             public_instructor_training_seats=0,
+            consortium=False,
+            public_status="private",
         )
-        cls.member2 = Member.objects.create(
-            membership=cls.membership2, organization=cls.organization2, role=member_role
+        self.member2 = Member.objects.create(
+            membership=self.membership2,
+            organization=self.org_beta,
+            role=member_role,
         )
-        cls.qs = Membership.objects.all().annotate(
+        self.qs = Membership.objects.all().annotate(
             instructor_training_seats_total=(
                 # Public
                 F("public_instructor_training_seats")
@@ -81,53 +85,47 @@ class TestMembershipFilter(TestCase):
 
         # create 2 used seats on test membership
         # will make remaining seats negative
-        cls.event = Event.objects.create(
-            host=cls.organization,
-            sponsor=cls.organization,
-            membership=cls.membership,
+        self.event = Event.objects.create(
+            host=self.org_alpha,
+            sponsor=self.org_alpha,
+            membership=self.membership,
             slug="2023-02-16-ttt-test",
         )
-        cls.person = Person.objects.create(personal="Test", username="test")
-        cls.person2 = Person.objects.create(personal="Test2", username="test2")
-        cls.role = Role.objects.create(name="learner", verbose_name="Learner")
-        cls.task = Task.objects.create(
-            event=cls.event,
-            person=cls.person,
-            role=cls.role,
-            seat_membership=cls.membership,
+        role_learner = Role.objects.get(name="learner")
+        self.task = Task.objects.create(
+            event=self.event,
+            person=self.ironman,
+            role=role_learner,
+            seat_membership=self.membership,
             seat_public=True,
         )
-        cls.task2 = Task.objects.create(
-            event=cls.event,
-            person=cls.person2,
-            role=cls.role,
-            seat_membership=cls.membership,
+        self.task2 = Task.objects.create(
+            event=self.event,
+            person=self.blackwidow,
+            role=role_learner,
+            seat_membership=self.membership,
             seat_public=True,
         )
 
         # get filterset
-        cls.filterset = MembershipFilter({})
+        self.filterset = MembershipFilter({})
 
-    @classmethod
-    def tearDownClass(cls) -> None:
+    def tearDown(self) -> None:
         # clean up used seats
-        cls.task.delete()
-        cls.task2.delete()
-        cls.event.delete()
-        cls.person.delete()
-        cls.person2.delete()
-        cls.role.delete()
+        self.task.delete()
+        self.task2.delete()
+        self.event.delete()
 
         # clean up memberships
-        cls.member.delete()
-        cls.membership.delete()
-        cls.organization.delete()
-        cls.member2.delete()
-        cls.membership2.delete()
-        cls.organization2.delete()
+        self.member.delete()
+        self.membership.delete()
+        self.member2.delete()
+        self.membership2.delete()
+
+        super().tearDown()
 
     def test_fields(self):
-        # Arrange & Act stages happen in setUpClass()
+        # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
             set(self.filterset.filters.keys()),
@@ -144,22 +142,32 @@ class TestMembershipFilter(TestCase):
             },
         )
 
-    def test_filter_active_only(self):
-        # Arrange
-        name = "active_only"
-        value = True
-
-        # Act
-        result = self.filterset.filters[name].filter(self.qs, value)
-
-        # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
-
     def test_filter_organization_name(self):
         # Arrange
         filter_name = "organization_name"
-        value = "Test Organization"
+        value = "Alpha Organization"
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.membership])
+
+    def test_filter_consortium(self):
+        # Arrange
+        filter_name = "consortium"
+        value = True
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.membership])
+
+    def test_filter_public_status(self):
+        # Arrange
+        filter_name = "public_status"
+        value = "public"
 
         # Act
         result = self.filterset.filters[filter_name].filter(self.qs, value)
@@ -176,8 +184,8 @@ class TestMembershipFilter(TestCase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
 
     def test_filter_contribution_type(self):
         # Arrange
@@ -188,8 +196,20 @@ class TestMembershipFilter(TestCase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
+
+    def test_filter_active_only(self):
+        # Arrange
+        name = "active_only"
+        value = True
+
+        # Act
+        result = self.filterset.filters[name].filter(self.qs, value)
+
+        # Assert
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
 
     def test_filter_training_seats_only(self):
         # Arrange
@@ -200,8 +220,8 @@ class TestMembershipFilter(TestCase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
 
     def test_filter_negative_remaining_seats_only(self):
         # Arrange
@@ -212,8 +232,8 @@ class TestMembershipFilter(TestCase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
 
     def test_filter_order_by(self):
         # Arrange
@@ -235,27 +255,27 @@ class TestMembershipFilter(TestCase):
 
         # Assert
         # we don't have any unexpected fields
-        self.assertListEqual(list(fields.keys()), list(expected_results.keys()))
+        self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
             self.assertQuerysetEqual(results[field], expected_results[field])
 
 
-class TestMembershipTrainingsFilter(TestCase):
+class TestMembershipTrainingsFilter(TestBase):
     """
-    Duplicate of TestMembershipFilter with some fields removed.
+    A test should exist for each filter listed in test_fields().
+    There is overlap in filters between MembershipFilter and MembershipTrainingsFilter,
+    so tests have been duplicated from TestMembershipFilter where possible.
     """
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.model = Membership
+    def setUp(self) -> None:
+        super().setUp()  # create some organizations and persons
+        self._setUpRoles()  # create the learner role
+
+        self.model = Membership
         member_role = MemberRole.objects.first()
 
-        # create a test membership that should be selected in filters
-        cls.organization = Organization.objects.create(
-            fullname="Test Organization", domain="example.org"
-        )
-        cls.membership = Membership.objects.create(
+        self.membership = Membership.objects.create(
             name="Test Membership",
             variant="Bronze",
             agreement_start=date.today(),
@@ -263,14 +283,10 @@ class TestMembershipTrainingsFilter(TestCase):
             contribution_type="Financial",
             public_instructor_training_seats=1,
         )
-        cls.member = Member.objects.create(
-            membership=cls.membership, organization=cls.organization, role=member_role
+        self.member = Member.objects.create(
+            membership=self.membership, organization=self.org_alpha, role=member_role
         )
-        # create a test membership that sphould be filtered out
-        cls.organization2 = Organization.objects.create(
-            fullname="To Be Filtered Out", domain="example2.org"
-        )
-        cls.membership2 = Membership.objects.create(
+        self.membership2 = Membership.objects.create(
             name="To Be Filtered Out",
             variant="Silver",
             agreement_start=date(2015, 1, 1),
@@ -278,10 +294,12 @@ class TestMembershipTrainingsFilter(TestCase):
             contribution_type="Person-days",
             public_instructor_training_seats=0,
         )
-        cls.member2 = Member.objects.create(
-            membership=cls.membership2, organization=cls.organization2, role=member_role
+        self.member2 = Member.objects.create(
+            membership=self.membership2,
+            organization=self.org_beta,
+            role=member_role,
         )
-        cls.qs = Membership.objects.all().annotate(
+        self.qs = Membership.objects.all().annotate(
             instructor_training_seats_total=(
                 # Public
                 F("public_instructor_training_seats")
@@ -320,52 +338,47 @@ class TestMembershipTrainingsFilter(TestCase):
 
         # create 2 used seats on test membership
         # will make remaining seats negative
-        cls.event = Event.objects.create(
-            host=cls.organization,
-            sponsor=cls.organization,
-            membership=cls.membership,
+        self.event = Event.objects.create(
+            host=self.org_alpha,
+            sponsor=self.org_alpha,
+            membership=self.membership,
             slug="2023-02-16-ttt-test",
         )
-        cls.person = Person.objects.create(personal="Test", username="test")
-        cls.person2 = Person.objects.create(personal="Test2", username="test2")
-        cls.role = Role.objects.create(name="learner", verbose_name="Learner")
-        cls.task = Task.objects.create(
-            event=cls.event,
-            person=cls.person,
-            role=cls.role,
-            seat_membership=cls.membership,
+        role_learner = Role.objects.get(name="learner")
+        self.task = Task.objects.create(
+            event=self.event,
+            person=self.ironman,
+            role=role_learner,
+            seat_membership=self.membership,
             seat_public=True,
         )
-        cls.task2 = Task.objects.create(
-            event=cls.event,
-            person=cls.person2,
-            role=cls.role,
-            seat_membership=cls.membership,
+        self.task2 = Task.objects.create(
+            event=self.event,
+            person=self.blackwidow,
+            role=role_learner,
+            seat_membership=self.membership,
             seat_public=True,
         )
 
-        cls.filterset = MembershipTrainingsFilter({})
+        # get filterset
+        self.filterset = MembershipTrainingsFilter({})
 
-    @classmethod
-    def tearDownClass(cls) -> None:
+    def tearDown(self) -> None:
         # clean up used seats
-        cls.task.delete()
-        cls.task2.delete()
-        cls.event.delete()
-        cls.person.delete()
-        cls.person2.delete()
-        cls.role.delete()
+        self.task.delete()
+        self.task2.delete()
+        self.event.delete()
 
         # clean up memberships
-        cls.member.delete()
-        cls.membership.delete()
-        cls.organization.delete()
-        cls.member2.delete()
-        cls.membership2.delete()
-        cls.organization2.delete()
+        self.member.delete()
+        self.membership.delete()
+        self.member2.delete()
+        self.membership2.delete()
+
+        super().tearDown()
 
     def test_fields(self):
-        # Arrange & Act stages happen in setUpClass()
+        # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
             set(self.filterset.filters.keys()),
@@ -378,6 +391,17 @@ class TestMembershipTrainingsFilter(TestCase):
             },
         )
 
+    def test_filter_organization_name(self):
+        # Arrange
+        filter_name = "organization_name"
+        value = "Alpha Organization"
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.membership])
+
     def test_filter_active_only(self):
         # Arrange
         name = "active_only"
@@ -387,19 +411,8 @@ class TestMembershipTrainingsFilter(TestCase):
         result = self.filterset.filters[name].filter(self.qs, value)
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
-
-    def test_filter_organization_name(self):
-        # Arrange
-        filter_name = "organization_name"
-        value = "Test Organization"
-
-        # Act
-        result = self.filterset.filters[filter_name].filter(self.qs, value)
-
-        # Assert
-        self.assertQuerysetEqual(result, [self.membership])
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
 
     def test_filter_training_seats_only(self):
         # Arrange
@@ -410,8 +423,8 @@ class TestMembershipTrainingsFilter(TestCase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
 
     def test_filter_negative_remaining_seats_only(self):
         # Arrange
@@ -422,8 +435,8 @@ class TestMembershipTrainingsFilter(TestCase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertTrue(self.membership in result)
-        self.assertFalse(self.membership2 in result)
+        self.assertIn(self.membership, result)
+        self.assertNotIn(self.membership2, result)
 
     def test_filter_order_by(self):
         # Arrange
@@ -448,7 +461,7 @@ class TestMembershipTrainingsFilter(TestCase):
 
         # Assert
         # we don't have any unexpected fields
-        self.assertListEqual(list(fields.keys()), list(expected_results.keys()))
+        self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
             self.assertQuerysetEqual(results[field], expected_results[field])
