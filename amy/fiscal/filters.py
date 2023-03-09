@@ -48,7 +48,7 @@ def filter_training_seats_only(queryset, name, seats):
         return queryset
 
 
-def filter_nonpositive_remaining_seats(queryset, name, seats):
+def filter_negative_remaining_seats(queryset, name, seats):
     """Limit Memberships to only entries with negative remaining seats."""
     if seats:
         return queryset.filter(instructor_training_seats_remaining__lt=0)
@@ -81,9 +81,9 @@ class MembershipFilter(AMYFilterSet):
         widget=widgets.CheckboxInput,
     )
 
-    nonpositive_remaining_seats_only = django_filters.BooleanFilter(
+    negative_remaining_seats_only = django_filters.BooleanFilter(
         label="Only show memberships with less than zero remaining seats",
-        method=filter_nonpositive_remaining_seats,
+        method=filter_negative_remaining_seats,
         widget=widgets.CheckboxInput,
     )
 
@@ -125,9 +125,9 @@ class MembershipTrainingsFilter(AMYFilterSet):
         widget=widgets.CheckboxInput,
     )
 
-    nonpositive_remaining_seats_only = django_filters.BooleanFilter(
+    negative_remaining_seats_only = django_filters.BooleanFilter(
         label="Only show memberships with less than zero remaining seats",
-        method=filter_nonpositive_remaining_seats,
+        method=filter_negative_remaining_seats,
         widget=widgets.CheckboxInput,
     )
 

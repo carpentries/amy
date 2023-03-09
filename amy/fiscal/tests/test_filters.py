@@ -139,7 +139,7 @@ class TestMembershipFilter(TestCase):
                 "contribution_type",
                 "active_only",
                 "training_seats_only",
-                "nonpositive_remaining_seats_only",
+                "negative_remaining_seats_only",
                 "order_by",
             },
         )
@@ -203,9 +203,9 @@ class TestMembershipFilter(TestCase):
         self.assertTrue(self.membership in result)
         self.assertFalse(self.membership2 in result)
 
-    def test_filter_nonpositive_remaining_seats_only(self):
+    def test_filter_negative_remaining_seats_only(self):
         # Arrange
-        filter_name = "nonpositive_remaining_seats_only"
+        filter_name = "negative_remaining_seats_only"
         value = True
 
         # Act
@@ -373,7 +373,7 @@ class TestMembershipTrainingsFilter(TestCase):
                 "organization_name",
                 "active_only",
                 "training_seats_only",
-                "nonpositive_remaining_seats_only",
+                "negative_remaining_seats_only",
                 "order_by",
             },
         )
@@ -413,9 +413,9 @@ class TestMembershipTrainingsFilter(TestCase):
         self.assertTrue(self.membership in result)
         self.assertFalse(self.membership2 in result)
 
-    def test_filter_nonpositive_remaining_seats_only(self):
+    def test_filter_negative_remaining_seats_only(self):
         # Arrange
-        filter_name = "nonpositive_remaining_seats_only"
+        filter_name = "negative_remaining_seats_only"
         value = True
 
         # Act
