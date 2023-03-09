@@ -126,10 +126,10 @@ class NamesOrderingFilter(django_filters.OrderingFilter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.extra["choices"] += [
-            ("family", "Last name"),
-            ("-family", "Last name (descending)"),
-            ("personal", "First name"),
-            ("-personal", "First name (descending)"),
+            ("lastname", "Last name"),
+            ("-lastname", "Last name (descending)"),
+            ("firstname", "First name"),
+            ("-firstname", "First name (descending)"),
         ]
 
     def filter(self, qs, value):
@@ -139,13 +139,13 @@ class NamesOrderingFilter(django_filters.OrderingFilter):
             return ordering
 
         # `value` is a list
-        if any(v in ["family"] for v in value):
+        if any(v in ["lastname"] for v in value):
             return ordering.order_by("family", "middle", "personal")
-        elif any(v in ["-family"] for v in value):
+        elif any(v in ["-lastname"] for v in value):
             return ordering.order_by("-family", "-middle", "-personal")
-        elif any(v in ["personal"] for v in value):
+        elif any(v in ["firstname"] for v in value):
             return ordering.order_by("personal", "middle", "family")
-        elif any(v in ["-personal"] for v in value):
+        elif any(v in ["-firstname"] for v in value):
             return ordering.order_by("-personal", "-middle", "-family")
 
         return ordering
