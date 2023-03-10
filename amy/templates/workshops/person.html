@@ -139,18 +139,11 @@
       {% with tasks=person.task_set.all %}
       {% if tasks %}
       <table class="table table-sm">
-        <tr><th>Role</th><th>Event</th><th>Survey results</th></tr>
+        <tr><th>Role</th><th>Event</th></tr>
         {% for task in tasks %}
         <tr>
           <td>{{ task.role }}</td>
           <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
-          <td>
-            {% if task.event.instructors_pre %}
-            <a href="{{ task.event.instructors_pre}}">Results for {{ task.event }}</span></a>
-            {% else %}
-            Not available
-            {% endif %}
-          </td>
         </tr>
         {% endfor %}
       </table>
