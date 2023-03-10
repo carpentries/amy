@@ -86,7 +86,7 @@ class TestConsentModel(ConsentTestBase):
         is_archived = consent.is_archived()
         is_active = consent.is_active()
 
-        # Arrange
+        # Assert
         self.assertFalse(is_archived)
         self.assertTrue(is_active)
 
@@ -103,7 +103,7 @@ class TestConsentModel(ConsentTestBase):
         is_archived = consent.is_archived()
         is_active = consent.is_active()
 
-        # Arrange
+        # Assert
         self.assertTrue(is_archived)
         self.assertFalse(is_active)
 

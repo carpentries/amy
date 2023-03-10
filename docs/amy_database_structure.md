@@ -48,7 +48,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `secondary_email` Alternate email address. Optional.
 * `gender` Options are `Prefer not to say (undisclosed)` `Female` `Gender variant / non-conforming` `Male` `Other`.
     * `gender_other` Text if individual selected `Other`
-* `may_contact` A boolean field. We may not contact people if this field is false. This field has been replaced by new-style consents.
+* `may_contact` A boolean field. We may not contact people if this field is false. This field has been replaced by [new-style consents](#consent) (see also [2021 Consents Project](./design/projects/2021_consents.md)).
 * `github` Individual's GitHub user id
 * `twitter` Individual's Twitter user id
 * `orcid` Individual's ORCID iD
