@@ -116,7 +116,7 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
               <td>{{ task.event.venue|default:'—' }}</td>
               <td>{{ task.role }}</td>
               <td>
-                {% if task.event.instructors_pre %}
+                {% if task.event.instructors_pre and task.role.name in 'host instructor supporting-instructor' %}
                 <a href="{{ task.event.instructors_pre}}">Results for {{ task.event }}</a>
                 {% else %}
                 Not available
