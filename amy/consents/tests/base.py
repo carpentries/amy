@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 
-from consents.models import Term, TermOption
+from consents.models import Term, TermOption, TermOptionChoices
 from workshops.tests.base import TestBase
 
 
@@ -15,8 +15,12 @@ class ConsentTestBase(TestBase):
             slug="optional-test-term",
             required_type=Term.OPTIONAL_REQUIRE_TYPE,
         )
-        TermOption.objects.create(term=optional_term, option_type=TermOption.AGREE)
-        TermOption.objects.create(term=optional_term, option_type=TermOption.DECLINE)
+        TermOption.objects.create(
+            term=optional_term, option_type=TermOptionChoices.AGREE
+        )
+        TermOption.objects.create(
+            term=optional_term, option_type=TermOptionChoices.DECLINE
+        )
         self.assert_required_terms()
 
     @contextmanager

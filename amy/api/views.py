@@ -280,7 +280,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
         Person.objects.all()
         .select_related("airport")
-        .prefetch_related("badges", "domains", "lessons")
+        .prefetch_related("badges", "domains", "lessons", "languages")
         .distinct()
     )
     serializer_class = PersonSerializer

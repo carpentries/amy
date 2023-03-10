@@ -13,7 +13,7 @@ from social_django.models import UserSocialAuth
 import webtest
 from webtest.forms import Upload
 
-from consents.models import Consent, Term
+from consents.models import Consent, Term, TermEnum
 from workshops.filters import filter_taught_workshops
 from workshops.forms import PersonForm, PersonsMergeForm
 from workshops.mixins import GenderMixin
@@ -804,12 +804,12 @@ class TestPersonMerging(TestBase):
         }
         # no privacy policy consent
         Consent.reconsent(
-            person_a_consents_by_term_slug["may-contact"],
-            next(term_options_by_term_slug["may-contact"]),
+            person_a_consents_by_term_slug[TermEnum.MAY_CONTACT],
+            next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
         Consent.reconsent(
-            person_a_consents_by_term_slug["public-profile"],
-            next(term_options_by_term_slug["public-profile"]),
+            person_a_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
+            next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
 
         # create second person
@@ -865,16 +865,16 @@ class TestPersonMerging(TestBase):
             .select_related("term", "term_option")
         }
         Consent.reconsent(
-            person_b_consents_by_term_slug["privacy-policy"],
-            next(term_options_by_term_slug["privacy-policy"]),
+            person_b_consents_by_term_slug[TermEnum.PRIVACY_POLICY],
+            next(term_options_by_term_slug[TermEnum.PRIVACY_POLICY]),
         )
         Consent.reconsent(
-            person_b_consents_by_term_slug["may-contact"],
-            next(term_options_by_term_slug["may-contact"]),
+            person_b_consents_by_term_slug[TermEnum.MAY_CONTACT],
+            next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
         Consent.reconsent(
-            person_b_consents_by_term_slug["public-profile"],
-            next(term_options_by_term_slug["public-profile"]),
+            person_b_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
+            next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
 
         # set up a strategy
@@ -990,7 +990,6 @@ class TestPersonMerging(TestBase):
             "family": self.person_a.family,
             "email": self.person_b.email,
             "secondary_email": self.person_b.secondary_email,
-            "may_contact": self.person_a.may_contact,
             "gender": self.person_b.gender,
             "gender_other": self.person_b.gender_other,
             "airport": self.person_a.airport,
@@ -1455,8 +1454,6 @@ class TestArchivePerson(TestBase):
             password="pass",
         )
         self.person_consent_required_terms(self.user)
-        self.user.may_contact = True
-        self.user.publish_profile = True
         self.user.is_active = True
         self.user.secondary_email = "user@second_example.org"
         self.user.gender = GenderMixin.OTHER
@@ -1559,11 +1556,6 @@ class TestArchivePerson(TestBase):
         self.assertEqual(archived_profile.orcid, "")
         self.assertEqual(archived_profile.gender, GenderMixin.UNDISCLOSED)
         self.assertEqual(archived_profile.gender_other, "")
-
-        # Old-style consents should be unset
-        self.assertFalse(archived_profile.data_privacy_agreement)
-        self.assertFalse(archived_profile.may_contact)
-        self.assertFalse(archived_profile.publish_profile)
 
         # All Consents should be unset
         consents = Consent.objects.filter(person=archived_profile).active()

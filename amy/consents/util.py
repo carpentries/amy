@@ -1,8 +1,12 @@
+import logging
+
 from autoemails.actions import NewConsentRequiredAction
 from autoemails.bulk_email import send_bulk_email
 from autoemails.models import Trigger
-from consents.models import Consent, Term
+from consents.models import Consent, Term, TermEnum, TermOptionChoices
 from workshops.models import Person
+
+logger = logging.getLogger("amy")
 
 
 def person_has_consented_to_required_terms(person: Person) -> bool:
@@ -49,3 +53,22 @@ def send_consent_email(request, term: Term) -> None:
         additional_context_objects={"term": term},
         object_=term,
     )
+
+
+def reconsent_for_term_option_type(
+    term_key: TermEnum,
+    term_option_type: TermOptionChoices,
+    person: Person,
+) -> Consent:
+    """Find term by its key and ensure new consent for this term and this person is
+    saved."""
+    term = Term.objects.get_by_key(term_key)
+    logger.debug(f"Found Term {term_key}: {term=}")
+
+    term_option = term.termoption_set.get(option_type=term_option_type)
+    logger.debug(f"Found Term {term_key} option: {term_option=}")
+
+    old_consent = Consent.objects.active().get(person=person, term=term)
+    new_consent = Consent.reconsent(old_consent, term_option)
+    logger.debug(f"Reconsented old consent for term {term_option}: {new_consent=}")
+    return new_consent

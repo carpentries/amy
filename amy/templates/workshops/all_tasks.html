@@ -2,6 +2,7 @@
 
 {% load pagination %}
 {% load links %}
+{% load consents %}
 
 {% block content %}
     {% if perms.workshops.add_task %}
@@ -22,7 +23,11 @@
     {% for task in all_tasks %}
         <tr>
             <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
-            <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}</td>
+            <td>
+                <a href="{{ task.person.get_absolute_url }}">{{ task.person.full_name }}</a>
+                {% consent_agreed task.person.active_consents TermEnum.MAY_CONTACT as may_contact %}
+                {% if task.person.email and may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}
+            </td>
             <td>{{ task.title|default:"—" }}</td>
             <td>{{ task.url|default:"—"|urlize_newtab }}</td>
             <td>{{ task.role }}</td>

@@ -97,33 +97,6 @@ class TestNewSupportingInstructorAction(TestCase):
         e.save()
         self.assertEqual(NewSupportingInstructorAction.check(t), False)
 
-    def testCheckForNonContactablePerson(self):
-        """Make sure `may_contact` doesn't impede `check()`."""
-        # totally fake Task, Role and Event data
-        LC_org = Organization.objects.get(domain="librarycarpentry.org")
-        e = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.first(),
-            administrator=LC_org,
-            start=date.today() + timedelta(days=7),
-            end=date.today() + timedelta(days=8),
-            country="GB",
-            venue="Ministry of Magic",
-            address="Underground",
-            latitude=20.0,
-            longitude=20.0,
-            url="https://test-event.example.com",
-        )
-        e.tags.set(Tag.objects.filter(name__in=["SWC", "DC", "LC", "automated-email"]))
-        p = Person(
-            personal="Harry", family="Potter", email="hp@magic.uk", may_contact=True
-        )  # contact allowed
-        r = Role(name="supporting-instructor")
-        t = Task(event=e, person=p, role=r)
-        self.assertEqual(NewSupportingInstructorAction.check(t), True)
-        p.may_contact = False  # contact disallowed
-        self.assertEqual(NewSupportingInstructorAction.check(t), True)
-
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
 

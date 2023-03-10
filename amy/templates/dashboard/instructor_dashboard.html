@@ -36,9 +36,18 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
       </i></small>
       </th><td>{{ user.secondary_email|default:"—" }}</td></tr>
     <tr><th>Gender:</th><td>{{ user.get_gender_display }}{{ user.gender_other }}</td></tr>
-    <tr><th>Can we contact you?</th><td>{{ may_contact|default:"Unset" }}</td></tr>
-    <tr><th>Do you consent to publish your profile<br>on The Carpentries website?</th><td>{{ public_profile|default:"Unset" }}</td></tr>
-    <tr><th>Do you consent to have your name or identity<br>associated with lesson publications?</th><td>{{ may_publish_name|default:"Unset" }}</td></tr>
+    <tr>
+      <th>Can we contact you?</th>
+      <td>{% if consents.may_contact %}{{ consents.may_contact.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
+    <tr>
+      <th>Do you consent to publish your profile<br>on The Carpentries website?</th>
+      <td>{% if consents.public_profile %}{{ consents.public_profile.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
+    <tr>
+      <th>Do you consent to have your name or identity<br>associated with lesson publications?</th>
+      <td>{% if consents.may_publish_name %}{{ consents.may_publish_name.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
     <tr><th>Country:</th><td>{% if user.country %}{% include "includes/country_flag.html" with country=user.country %}{% else %}—{% endif %}</td></tr>
     <tr><th>Airport:</th><td>{{ user.airport|default:"—"  }}</td></tr>
     <tr><th>Github:</th><td>{{ user.github|default:"—" }}</td></tr>

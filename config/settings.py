@@ -362,6 +362,8 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 # AMY version
                 "workshops.context_processors.version",
+                # Consent enums
+                "consents.context_processors.terms",
                 # GitHub auth
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",

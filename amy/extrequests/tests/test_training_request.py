@@ -10,6 +10,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django_comments.models import Comment
 
+from consents.models import Consent, Term, TermEnum, TermOptionChoices
 from extrequests.forms import TrainingRequestsMergeForm
 from extrequests.views import _match_training_request_to_person
 from workshops.models import (
@@ -47,6 +48,7 @@ def create_training_request(state, person, open_review=True, reg_code=""):
         max_travelling_frequency="yearly",
         state=state,
         person=person,
+        data_privacy_agreement=True,
     )
 
 
@@ -668,14 +670,28 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
             "occupation": req.get_occupation_display()
             if req.occupation
             else req.occupation_other,
-            "data_privacy_agreement": req.data_privacy_agreement,
-            "may_contact": True,
             "is_active": True,
         }
         for key, value in data_expected.items():
             self.assertEqual(
                 getattr(self.ironman, key), value, "Attribute: {}".format(key)
             )
+
+        # Ensure new style consents were created
+        Consent.objects.active().get(
+            person=self.ironman,
+            term=Term.objects.get_by_key(TermEnum.MAY_CONTACT),
+            # may-contact defaults to AGREE for matching training request to a person
+            term_option__option_type=TermOptionChoices.AGREE,
+        )
+        Consent.objects.active().get(
+            person=self.ironman,
+            term=Term.objects.get_by_key(TermEnum.PRIVACY_POLICY),
+            term_option__option_type=TermOptionChoices.AGREE
+            if req.data_privacy_agreement
+            else TermOptionChoices.DECLINE,
+        )
+
         self.assertEqual(set(self.ironman.domains.all()), set(req.domains.all()))
 
     def test_matching_with_new_account_works(self):
@@ -701,14 +717,28 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
             "occupation": req.get_occupation_display()
             if req.occupation
             else req.occupation_other,
-            "data_privacy_agreement": req.data_privacy_agreement,
-            "may_contact": True,
             "is_active": True,
         }
         for key, value in data_expected.items():
             self.assertEqual(
                 getattr(req.person, key), value, "Attribute: {}".format(key)
             )
+
+        # Ensure new style consents were created
+        Consent.objects.active().get(
+            person=req.person,
+            term=Term.objects.get_by_key(TermEnum.MAY_CONTACT),
+            # may-contact defaults to AGREE for matching training request to a person
+            term_option__option_type=TermOptionChoices.AGREE,
+        )
+        Consent.objects.active().get(
+            person=req.person,
+            term=Term.objects.get_by_key(TermEnum.PRIVACY_POLICY),
+            term_option__option_type=TermOptionChoices.AGREE
+            if req.data_privacy_agreement
+            else TermOptionChoices.DECLINE,
+        )
+
         self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
 
     def test_matching_in_transaction(self):
@@ -754,7 +784,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
         # matching fails because it can't rewrite email address due to
         # uniqueness constraint
-        self.assertFalse(_match_training_request_to_person(request, tr, create, person))
+        self.assertFalse(_match_training_request_to_person(request, tr, person, create))
         messages = request._messages._queued_messages
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0].level, WARNING)

@@ -58,7 +58,7 @@ from autoemails.models import Trigger
 from communityroles.forms import CommunityRoleForm
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
-from consents.models import Consent
+from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
 from fiscal.models import MembershipTask
 from workshops.base_views import (
@@ -276,12 +276,12 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
         )
         consent_by_term_slug = {consent.term.slug: consent for consent in consents}
         context["consents"] = {
-            "May contact": consent_by_term_slug["may-contact"],
-            "Consent to publish profile": consent_by_term_slug["public-profile"],
+            "May contact": consent_by_term_slug[TermEnum.MAY_CONTACT],
+            "Consent to publish profile": consent_by_term_slug[TermEnum.PUBLIC_PROFILE],
             "Consent to include name when publishing lessons": consent_by_term_slug[
-                "may-publish-name"
+                TermEnum.MAY_PUBLISH_NAME
             ],
-            "Privacy policy agreement": consent_by_term_slug["privacy-policy"],
+            "Privacy policy agreement": consent_by_term_slug[TermEnum.PRIVACY_POLICY],
         }
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
@@ -780,7 +780,7 @@ def persons_merge(request):
             "title": "Merge Persons",
             "form": PersonsSelectionForm(),
         }
-        messages.warning(request, "You cannot merge the same person with " "themself.")
+        messages.warning(request, "You cannot merge the same person with themself.")
         if "next" in request.GET:
             return redirect(request.GET.get("next", "/"))
         return render(request, "generic_form.html", context)
@@ -819,8 +819,6 @@ def persons_merge(request):
                 "family",
                 "email",
                 "secondary_email",
-                "may_contact",
-                "publish_profile",
                 "gender",
                 "gender_other",
                 "airport",
@@ -947,36 +945,19 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 @admin_required
 def event_details(request, slug):
     """List details of a particular event."""
-    try:
-        task_prefetch = Prefetch(
-            "task_set",
-            to_attr="contacts",
-            queryset=Task.objects.select_related("person")
-            .filter(
-                # we only want hosts, organizers and instructors
-                Q(role__name="host")
-                | Q(role__name="organizer")
-                | Q(role__name="instructor")
-            )
-            .filter(person__may_contact=True)
-            .exclude(Q(person__email="") | Q(person__email=None)),
-        )
-        event = (
-            Event.objects.attendance()
-            .prefetch_related(task_prefetch)
-            .select_related(
-                "assigned_to",
-                "host",
-                "administrator",
-                "sponsor",
-                "membership",
-                "instructorrecruitment",
-            )
-            .get(slug=slug)
-        )
-        member_sites = Membership.objects.filter(task__event=event).distinct()
-    except Event.DoesNotExist:
-        raise Http404("Event matching query does not exist.")
+    event = get_object_or_404(
+        Event.objects.attendance().select_related(
+            "assigned_to",
+            "host",
+            "administrator",
+            "sponsor",
+            "membership",
+            "instructorrecruitment",
+        ),
+        slug=slug,
+    )
+
+    member_sites = Membership.objects.filter(task__event=event).distinct()
 
     try:
         recruitment_stats = event.instructorrecruitment.signups.aggregate(
@@ -1008,7 +989,15 @@ def event_details(request, slug):
     tasks = (
         Task.objects.filter(event__id=event.id)
         .select_related("event", "person", "role")
-        .prefetch_related(person_important_badges, person_instructor_community_roles)
+        .prefetch_related(
+            person_important_badges,
+            person_instructor_community_roles,
+            Prefetch(
+                "person__consent_set",
+                to_attr="active_consents",
+                queryset=Consent.objects.active().select_related("term", "term_option"),
+            ),
+        )
         .order_by("role__name")
     )
 
@@ -1025,7 +1014,11 @@ def event_details(request, slug):
         "event": event,
         "tasks": tasks,
         "member_sites": member_sites,
-        "all_emails": tasks.filter(person__may_contact=True)
+        "all_emails": tasks.filter(
+            person__consent__archived_at__isnull=True,
+            person__consent__term_option__option_type=TermOptionChoices.AGREE,
+            person__consent__term__slug=TermEnum.MAY_CONTACT,
+        )
         .exclude(person__email=None)
         .values_list("person__email", flat=True),
         "today": datetime.date.today(),
@@ -1159,6 +1152,15 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             {
                 "tasks": self.get_object()
                 .task_set.select_related("person", "role")
+                .prefetch_related(
+                    Prefetch(
+                        "person__consent_set",
+                        to_attr="active_consents",
+                        queryset=Consent.objects.active().select_related(
+                            "term", "term_option"
+                        ),
+                    ),
+                )
                 .order_by("role__name"),
                 "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
             }
@@ -1649,7 +1651,13 @@ class AllTasks(OnlyForAdminsMixin, AMYListView):
     context_object_name = "all_tasks"
     template_name = "workshops/all_tasks.html"
     filter_class = TaskFilter
-    queryset = Task.objects.select_related("event", "person", "role")
+    queryset = Task.objects.select_related("event", "person", "role").prefetch_related(
+        Prefetch(
+            "person__consent_set",
+            to_attr="active_consents",
+            queryset=Consent.objects.active().select_related("term", "term_option"),
+        ),
+    )
     title = "All Tasks"
 
 
@@ -2267,7 +2275,17 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         context["title"] = "Badge {0}".format(self.object)
         filter = BadgeAwardsFilter(
             self.request.GET,
-            queryset=self.object.award_set.select_related("event", "person", "badge"),
+            queryset=self.object.award_set.select_related(
+                "event", "person", "badge"
+            ).prefetch_related(
+                Prefetch(
+                    "person__consent_set",
+                    to_attr="active_consents",
+                    queryset=Consent.objects.active().select_related(
+                        "term", "term_option"
+                    ),
+                ),
+            ),
         )
         context["filter"] = filter
 
@@ -2319,6 +2337,11 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
                 "communityrole_set",
                 to_attr="instructor_community_roles",
                 queryset=CommunityRole.objects.filter(config__name="instructor"),
+            ),
+            Prefetch(
+                "consent_set",
+                to_attr="active_consents",
+                queryset=Consent.objects.active().select_related("term", "term_option"),
             ),
         )
         .order_by("family", "personal")

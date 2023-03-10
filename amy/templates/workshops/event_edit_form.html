@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load links %}
+{% load consents %}
 
 {% block content %}
 <nav class="col-12">
@@ -35,7 +36,11 @@
     </tr>
     {% for t in tasks %}
     <tr>
-      <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
+      <td>
+        <a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>
+        {% consent_agreed t.person.active_consents TermEnum.MAY_CONTACT as may_contact %}
+        {% if t.person.email and may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}
+      </td>
       <td>{{ t.url|default:"—"|urlize_newtab }}</td>
       <td>{{ t.role.name }}</td>
       <td>

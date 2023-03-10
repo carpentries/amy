@@ -7,6 +7,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
+from consents.models import TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
 from fiscal.filters import MembershipTrainingsFilter
 from workshops.models import (
@@ -133,7 +134,11 @@ def workshop_issues(request):
                 | Q(role__name="organizer")
                 | Q(role__name="instructor")
             )
-            .filter(person__may_contact=True)
+            .filter(
+                person__consent__archived_at__isnull=True,
+                person__consent__term_option__option_type=TermOptionChoices.AGREE,
+                person__consent__term__slug=TermEnum.MAY_CONTACT,
+            )
             .exclude(Q(person__email="") | Q(person__email=None)),
         )
     )

@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, ProtectedError, Q
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 import django_rq
@@ -19,6 +20,8 @@ from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import EmailTemplate, Trigger
+from consents.models import Term, TermEnum, TermOption, TermOptionChoices
+from consents.util import reconsent_for_term_option_type
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
     SelfOrganisedSubmissionFilter,
@@ -658,8 +661,11 @@ def all_trainingrequests(request):
 
 @transaction.atomic
 def _match_training_request_to_person(
-    request, training_request, create=False, person=None
-):
+    request: HttpRequest,
+    training_request: TrainingRequest,
+    person: Person,
+    create: bool = False,
+) -> bool:
     if create:
         try:
             training_request.person = Person.objects.create_user(
@@ -697,15 +703,10 @@ def _match_training_request_to_person(
         training_request.person.affiliation = training_request.affiliation
         training_request.person.domains.set(training_request.domains.all())
         training_request.person.occupation = (
-            training_request.get_occupation_display()
+            training_request.get_occupation_display()  # type: ignore
             if training_request.occupation
             else training_request.occupation_other
         )
-        training_request.person.data_privacy_agreement = (
-            training_request.data_privacy_agreement
-        )
-
-        training_request.person.may_contact = True
         training_request.person.is_active = True
 
         training_request.person.save()
@@ -714,7 +715,6 @@ def _match_training_request_to_person(
 
         messages.success(request, "Request matched with the person.")
 
-        return True
     except IntegrityError:
         # email or github not unique
         messages.warning(
@@ -725,6 +725,56 @@ def _match_training_request_to_person(
             "are not unique amongst person entries.",
         )
         return False
+
+    # Create new style consents according to selection from the training request
+    # form.
+    try:
+        option_type = (
+            TermOptionChoices.AGREE
+            if training_request.data_privacy_agreement
+            else TermOptionChoices.DECLINE
+        )
+
+        reconsent_for_term_option_type(
+            term_key=TermEnum.PRIVACY_POLICY,
+            term_option_type=option_type,
+            person=training_request.person,
+        )
+
+    except (Term.DoesNotExist, TermOption.DoesNotExist):
+        logger.warning(
+            f"Either Term {TermEnum.PRIVACY_POLICY} or its term option was not found, "
+            "can't proceed."
+        )
+        messages.error(
+            request,
+            f"Error when setting person's consents. Term {TermEnum.PRIVACY_POLICY} or "
+            "related term option may not exist.",
+        )
+        return False
+
+    try:
+        # If they created a training request, we assume they agreed to "may contact"
+        # consent.
+        reconsent_for_term_option_type(
+            term_key=TermEnum.MAY_CONTACT,
+            term_option_type=TermOptionChoices.AGREE,
+            person=training_request.person,
+        )
+
+    except (Term.DoesNotExist, TermOption.DoesNotExist):
+        logger.warning(
+            f"Either Term {TermEnum.MAY_CONTACT} or its term option was not found, "
+            "can't proceed."
+        )
+        messages.error(
+            request,
+            f"Error when setting person's consents. Term {TermEnum.MAY_CONTACT} or "
+            "related term option may not exist.",
+        )
+        return False
+
+    return True
 
 
 @admin_required
@@ -738,7 +788,7 @@ def trainingrequest_details(request, pk):
             create = form.action == "create"
             person = form.cleaned_data["person"]
             ok = _match_training_request_to_person(
-                request, training_request=req, create=create, person=person
+                request, training_request=req, person=person, create=create
             )
             if ok:
                 return redirect_with_next_support(
@@ -970,7 +1020,6 @@ def bulk_upload_training_request_scores_confirmation(request):
 
     if request.method == "POST":
         if request.POST.get("confirm", None) and not request.POST.get("cancel", None):
-
             errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
 
             if not errors:
