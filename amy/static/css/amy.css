@@ -27,20 +27,25 @@ footer {
     text-align: center;
     font-size: 1rem;
     padding: 0.5em;
+    position: sticky;
+    top: 0;
+    left: 0;
+    height: 40px;
+    z-index: 1020; /* the same as Bootstrap's navbar */
 }
 
 .banner-local {
-    color: #222;
-    background-color: #000000;
-    opacity: 0.8;
-    background: repeating-linear-gradient(-45deg, hsl(56, 100%, 50%), hsl(56, 100%, 50%) 30px, hsl(56, 80%, 50%) 30px, hsl(56, 80%, 50%) 60px);
+    color: #000000;
+    background: linear-gradient(180deg, hsl(56, 100%, 50%), hsl(56, 80%, 50%));
 }
 
 .banner-testing {
-    color: #EEE;
-    background-color: #000000;
-    opacity: 0.9;
-    background: repeating-linear-gradient(-45deg, hsl(0, 100%, 50%), hsl(0, 100%, 50%) 30px, hsl(0, 80%, 50%) 30px, hsl(0, 80%, 50%) 60px);
+    color: #FFFFFF;
+    background: linear-gradient(180deg, hsl(0, 100%, 50%), hsl(0, 80%, 50%));
+}
+
+.navbar-banner-displacement {
+    top: 40px; /* height of .banner */
 }
 
 .sidebar select {
