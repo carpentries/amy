@@ -12,7 +12,7 @@ from django.utils.functional import cached_property
 from autoemails.mixins import RQJobsMixin
 from consents.exceptions import TermOptionDoesNotBelongToTermException
 from workshops.mixins import CreatedUpdatedArchivedMixin
-from workshops.models import STR_LONG, STR_MED, Person
+from workshops.models import STR_LONG, STR_MED, Person, TrainingRequest
 
 
 class TermQuerySet(QuerySet):
@@ -288,3 +288,16 @@ class Consent(BaseConsent):
             term_option=term_option,
             person_id=consent.person.pk,
         )
+
+
+class TrainingRequestConsent(BaseConsent):
+    training_request = models.ForeignKey(TrainingRequest, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["training_request", "term"],
+                name="training_request__term__unique__when__archived_at__null",
+                condition=models.Q(archived_at__isnull=True),
+            ),
+        ]
