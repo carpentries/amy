@@ -13,6 +13,11 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.0.9 - 2023-03-13
+
+### Bugfixes
+* fix 500 error after posting invalid community role - [#2358](https://github.com/carpentries/amy/pull/2358) by @elichad
+
 ## v4.0.8 - 2023-02-18
 
 ### Bugfixes
