@@ -3,8 +3,8 @@ from typing import Any, Dict
 
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Count, F, Prefetch, Q
-from django.db.models.functions import Coalesce, Now
+from django.db.models import Prefetch
+from django.db.models.functions import Now
 from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
@@ -130,18 +130,7 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     template_name = "fiscal/all_memberships.html"
     filter_class = MembershipFilter
     queryset = (
-        Membership.objects.annotate(
-            instructor_training_seats_remaining=(
-                F("public_instructor_training_seats")
-                + F("additional_public_instructor_training_seats")
-                # Coalesce returns first non-NULL value
-                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-                - Count(
-                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
-                )
-                - Coalesce("public_instructor_training_seats_rolled_over", 0)
-            ),
-        )
+        Membership.objects.annotate_with_seat_usage()
         .prefetch_related("organizations")
         .order_by("id")
     )

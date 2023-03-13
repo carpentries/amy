@@ -15,14 +15,10 @@
         <th rowspan="2">Variant</th>
         <th rowspan="2">Agreement</th>
         <th rowspan="2">Contribution</th>
-        <th colspan="3" class="text-center">Public instructor training seats</th>
-        <th colspan="3" class="text-center">In-house instructor training seats</th>
+        <th colspan="3" class="text-center">Instructor training seats (combined public and in-house)</th>
         <th rowspan="2" class="additional-links"></th>
       </tr>
       <tr>
-        <th>Total</th>
-        <th>Utilized</th>
-        <th>Remaining</th>
         <th>Total</th>
         <th>Utilized</th>
         <th>Remaining</th>
@@ -36,12 +32,9 @@
         <td>{{ result.get_variant_display }}</td>
         <td>{% human_daterange result.agreement_start result.agreement_end %}</td>
         <td>{{ result.get_contribution_type_display }}</td>
-        <td>{{ result.instructor_training_seats_public_total }}</td>
-        <td>{{ result.instructor_training_seats_public_utilized }}</td>
-        <td>{{ result.instructor_training_seats_public_remaining }}</td>
-        <td>{{ result.instructor_training_seats_inhouse_total }}</td>
-        <td>{{ result.instructor_training_seats_inhouse_utilized }}</td>
-        <td>{{ result.instructor_training_seats_inhouse_remaining }}</td>
+        <td>{{ result.instructor_training_seats_total }}</td>
+        <td>{{ result.instructor_training_seats_utilized }}</td>
+        <td>{{ result.instructor_training_seats_remaining }}</td>
         <td>
           <a href="{% url 'membership_details' result.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
         </td>
