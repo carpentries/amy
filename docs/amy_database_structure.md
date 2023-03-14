@@ -27,14 +27,14 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `open_TTT_applications` Used only for instructor training events
 * `adminstrator_id` An integer representing the event organizer.  This is linked to the `workshops_organization` table. Historically any organization could be listed as an administrator. Recent updates to AMY limit this to Data Carpentry, Library Carpentry, Software Carpentry, The Carpentries, or self-organized. This enforcement is at the AMY app level, not at the database level.
 * `reg_key` Eventbrite registration key
-
+* `instructors_pre` Link to both pre- and post-workshop surveys.
 
 #### Unused fields
 
 * `manual_attendance` We are no longer collecting or recording attendance
 * `admin_fee`, `invoice_status` We are not recording financial data in AMY
 * `repository_last_commit_hash`, `repository_metadata`, `metadata_all_changes`, `metadata_changed` Previously used to store metadata changes
-* `instructors_post` `instructors_pre` `learners_longterm` `learners_post` `learners_pre` Previously used to store links to surveys.
+* `instructors_post` `learners_longterm` `learners_post` `learners_pre` Previously used to store links to surveys.
 
 ### Persons
 
