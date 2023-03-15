@@ -33,7 +33,7 @@ The Carpentries can maintain the following information about individuals in our 
 * Consents (*Note consents can be changed by the individual at any time*)
     * Do you consent to have your name or identity associated with lesson publications?
     * Can we contact you for volunteering opportunities, surveys, feedback, etc.?
-    * Consent to making profile public
+    * Do you consent to publish your profile on The Carpentries website?
 
 
 ### Additional user information
