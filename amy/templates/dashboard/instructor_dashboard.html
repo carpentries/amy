@@ -112,6 +112,7 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
             <th>Dates</th>
             <th>Venue</th>
             <th>Your role</th>
+            <th>Survey results</th>
           </tr>
           {% for task in tasks %}
             <tr>
@@ -123,6 +124,13 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
               <td>{{ task.event.start|date:'Y-m-d' }} &mdash; {{ task.event.end|date:'Y-m-d' }}</td>
               <td>{{ task.event.venue|default:'—' }}</td>
               <td>{{ task.role }}</td>
+              <td>
+                {% if task.event.instructors_pre and task.role.name in 'host instructor supporting-instructor' %}
+                <a href="{{ task.event.instructors_pre}}">Results for {{ task.event }}</a>
+                {% else %}
+                Not available
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
         </table>
