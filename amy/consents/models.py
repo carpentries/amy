@@ -12,7 +12,7 @@ from django.utils.functional import cached_property
 from autoemails.mixins import RQJobsMixin
 from consents.exceptions import TermOptionDoesNotBelongToTermException
 from workshops.mixins import CreatedUpdatedArchivedMixin
-from workshops.models import STR_MED, Person
+from workshops.models import STR_LONG, STR_MED, Person
 
 
 class TermQuerySet(QuerySet):
@@ -71,6 +71,7 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
     help_text = models.TextField(verbose_name="Help Text", blank=True)
+    short_description = models.CharField(max_length=STR_LONG)
     objects = TermManager.from_queryset(TermQuerySet)()
 
     @staticmethod
