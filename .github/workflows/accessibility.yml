@@ -97,7 +97,7 @@ jobs:
       uses: browser-actions/setup-chrome@v1
       with:
         #v110 for Lighthouse compatibility https://github.com/GoogleChrome/lighthouse/issues/14885
-        chrome-version: 0d97e6692ff30da703ab615c89a59a975f8160dd 
+        chrome-version: 110.0.5481.204
 
     - name: run Lighthouse CI
       run: |
