@@ -93,13 +93,13 @@ jobs:
         AMY_DATABASE_USER: postgres
         AMY_DATABASE_PASSWORD: postgres
 
-    - name: Set up Chrome
+    - name: Set up Chromium
       uses: browser-actions/setup-chrome@v1
 
-    - name: Get Chrome location
-      id: chrome-location
+    - name: Get Chromium location
+      id: chromium-location
       run: |
-        echo "CHROME_PATH=$(which chrome)" >> $GITHUB_OUTPUT
+        echo "CHROMIUM_PATH=$(which chromium)" >> $GITHUB_OUTPUT
 
     - name: run Lighthouse CI
       run: |
@@ -107,4 +107,4 @@ jobs:
         npm install -g puppeteer
         lhci autorun
       env:
-        LIGHTHOUSE_CHROMIUM_PATH: ${{ steps.chrome-location.outputs.SELECTED_COLOR }}
+        LIGHTHOUSE_CHROMIUM_PATH: ${{ steps.chromium-location.outputs.SELECTED_COLOR }}
