@@ -83,7 +83,24 @@ jobs:
           exit 1;
         fi;
 
+    - name: Set up dev database
+      run: |
+        pipenv run make dev_database
+      env:
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
+
+    - name: Set up Chrome
+      uses: browser-actions/setup-chrome@v1
+      with:
+        #v110 for Lighthouse compatibility https://github.com/GoogleChrome/lighthouse/issues/14885
+        chrome-version: 0d97e6692ff30da703ab615c89a59a975f8160dd 
+
     - name: run Lighthouse CI
       run: |
-        npm install -g @lhci/cli@0.11.x
-            lhci autorun
+        npm install -g @lhci/cli@0.11.x 
+        npm install -g puppeteer
+        lhci autorun
