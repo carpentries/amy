@@ -107,4 +107,4 @@ jobs:
         npm install -g puppeteer
         lhci autorun
       env:
-        LIGHTHOUSE_CHROMIUM_PATH: ${{ steps.chromium-location.outputs.SELECTED_COLOR }}
+        LIGHTHOUSE_CHROMIUM_PATH: /opt/hostedtoolcache/chromium/latest/x64/chrome
