@@ -85,7 +85,7 @@ jobs:
 
     - name: Set up dev database
       run: |
-        pipenv run make dev_database
+        echo "yes" | pipenv run make dev_database
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432
