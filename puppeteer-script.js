@@ -6,6 +6,7 @@ module.exports = async (browser, context) => {
     // launch browser for LHCI
     const page = await browser.newPage();
     await page.goto('http://127.0.0.1:8000/account/login');
+    await page.waitForSelector("#id_username");
     await page.type('#id_username', 'admin');
     await page.type('#id_password', 'admin');
     await page.click('[type="submit"]');
