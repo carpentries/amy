@@ -95,10 +95,11 @@ jobs:
 
     - name: Set up Chrome
       uses: browser-actions/setup-chrome@v1
-      with:
-        #v110 for Lighthouse compatibility https://github.com/GoogleChrome/lighthouse/issues/14885
-        #version code from https://chromiumdash.appspot.com/branches
-        chrome-version: 1084008
+
+    - name: Get Chrome location
+      id: chrome-location
+      run: |
+        echo "CHROME_PATH=$(which chrome)" >> $GITHUB_OUTPUT
 
     - name: run Lighthouse CI
       run: |
@@ -106,4 +107,4 @@ jobs:
         npm install -g puppeteer
         lhci autorun
       env:
-        LIGHTHOUSE_CHROMIUM_PATH: 
+        LIGHTHOUSE_CHROMIUM_PATH: ${{ steps.chrome-location.outputs.SELECTED_COLOR }}
