@@ -97,10 +97,13 @@ jobs:
       uses: browser-actions/setup-chrome@v1
       with:
         #v110 for Lighthouse compatibility https://github.com/GoogleChrome/lighthouse/issues/14885
-        chrome-version: 1109519
+        #version code from https://chromiumdash.appspot.com/branches
+        chrome-version: 1084008
 
     - name: run Lighthouse CI
       run: |
         npm install -g @lhci/cli@0.11.x 
         npm install -g puppeteer
         lhci autorun
+      env:
+        LIGHTHOUSE_CHROMIUM_PATH: 
