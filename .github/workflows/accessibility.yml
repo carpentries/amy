@@ -50,6 +50,11 @@ jobs:
         python -m pip install pipenv
         pipenv sync --dev
 
+    - name: Set up Node
+      uses: actions/setup-node@v3
+      with: 
+        node-version: 16
+
     - name: Install NodeJS dependencies
       run: npm install
 
