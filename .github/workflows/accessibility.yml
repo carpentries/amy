@@ -102,4 +102,9 @@ jobs:
         npm install -g puppeteer
         lhci autorun
       env:
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
         LIGHTHOUSE_CHROMIUM_PATH: /opt/hostedtoolcache/chromium/latest/x64/chrome
