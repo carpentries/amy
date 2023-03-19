@@ -106,7 +106,6 @@ table .table-row-distinctive {
     line-height: inherit;
     overflow: visible;
     text-transform: none;
-    -webkit-appearance: button;
     color: #dc3545;
     background-color: transparent;
     display: inline-block;
