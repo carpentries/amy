@@ -291,6 +291,11 @@ class Consent(BaseConsent):
 
 
 class TrainingRequestConsent(BaseConsent):
+    """
+    A consent for a training request. People filling out the training request form
+    should accept all required consents. This model is used to store the consents.
+    """
+
     training_request = models.ForeignKey(TrainingRequest, on_delete=models.CASCADE)
 
     class Meta:
