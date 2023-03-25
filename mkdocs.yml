@@ -25,6 +25,7 @@ nav:
         - 'Views': 'design/views_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
         - 'Database backups': 'design/database_backups.md'
+        - 'CI/CD': 'design/cicd.md'
         - 'Procedures': 'procedures.md'
         - 'Releases': './releases/README.md'
         - 'Projects':
