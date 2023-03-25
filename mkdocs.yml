@@ -24,6 +24,7 @@ nav:
         - 'Templates': 'design/template_hierarchy.md'
         - 'Views': 'design/views_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
+        - 'Database backups': 'design/database_backups.md'
         - 'Procedures': 'procedures.md'
         - 'Releases': './releases/README.md'
         - 'Projects':
