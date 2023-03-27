@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
 
 from consents.forms import option_display_value
-from consents.models import Term
+from consents.models import Term, TrainingRequestConsent
 from extrequests.forms import (
     SelfOrganisedSubmissionBaseForm,
     WorkshopInquiryRequestBaseForm,
@@ -64,7 +64,7 @@ class TrainingRequestForm(forms.ModelForm):
             "max_travelling_frequency_other",
             "reason",
             "user_notes",
-            "data_privacy_agreement",
+            # "data_privacy_agreement",
             "code_of_conduct_agreement",
             "training_completion_agreement",
             "workshop_teaching_agreement",
@@ -215,6 +215,23 @@ class TrainingRequestForm(forms.ModelForm):
 
         if errors:
             raise ValidationError(errors)
+
+    def save(self, *args, **kwargs) -> None:
+        training_request = super().save(*args, **kwargs)
+        new_consents: list[TrainingRequestConsent] = []
+        for term in self.terms:
+            option_id = self.cleaned_data.get(term.slug)
+            if not option_id:
+                continue
+            new_consents.append(
+                TrainingRequestConsent(
+                    training_request=training_request,
+                    term_option_id=option_id,
+                    term_id=term.pk,
+                )
+            )
+        TrainingRequestConsent.objects.bulk_create(new_consents)
+        return training_request
 
 
 class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
