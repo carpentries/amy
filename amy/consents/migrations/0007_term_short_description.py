@@ -26,20 +26,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # add field and make it temporarily nullable
+        # add field
         migrations.AddField(
             model_name="term",
             name="short_description",
-            field=models.CharField(null=True, max_length=100),
+            field=models.CharField(default="", max_length=100),
+            preserve_default=False,
         ),
         # set descriptions for existing terms
         migrations.RunPython(
             set_term_descriptions, reverse_code=migrations.RunPython.noop
-        ),
-        # make field non-nullable
-        migrations.AlterField(
-            model_name="term",
-            name="short_description",
-            field=models.CharField(max_length=100),
         ),
     ]
