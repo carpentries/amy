@@ -10,7 +10,14 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django_comments.models import Comment
 
-from consents.models import Consent, Term, TermEnum, TermOptionChoices
+from consents.models import (
+    Consent,
+    Term,
+    TermEnum,
+    TermOption,
+    TermOptionChoices,
+    TrainingRequestConsent,
+)
 from extrequests.forms import TrainingRequestsMergeForm
 from extrequests.views import _match_training_request_to_person
 from workshops.models import (
@@ -677,21 +684,6 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
                 getattr(self.ironman, key), value, "Attribute: {}".format(key)
             )
 
-        # Ensure new style consents were created
-        Consent.objects.active().get(
-            person=self.ironman,
-            term=Term.objects.get_by_key(TermEnum.MAY_CONTACT),
-            # may-contact defaults to AGREE for matching training request to a person
-            term_option__option_type=TermOptionChoices.AGREE,
-        )
-        Consent.objects.active().get(
-            person=self.ironman,
-            term=Term.objects.get_by_key(TermEnum.PRIVACY_POLICY),
-            term_option__option_type=TermOptionChoices.AGREE
-            if req.data_privacy_agreement
-            else TermOptionChoices.DECLINE,
-        )
-
         self.assertEqual(set(self.ironman.domains.all()), set(req.domains.all()))
 
     def test_matching_with_new_account_works(self):
@@ -724,22 +716,61 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
                 getattr(req.person, key), value, "Attribute: {}".format(key)
             )
 
-        # Ensure new style consents were created
+        self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
+
+    def test_matching_updates_consents(self) -> None:
+        # Arrange
+        req = create_training_request(state="p", person=None)
+        may_contact_term = Term.objects.get_by_key(TermEnum.MAY_CONTACT)
+        privacy_policy_term = Term.objects.get_by_key(TermEnum.PRIVACY_POLICY)
+        public_profile_term = Term.objects.get_by_key(TermEnum.PUBLIC_PROFILE)
+        TrainingRequestConsent.objects.create(
+            training_request=req,
+            term=may_contact_term,
+            term_option=TermOption.objects.filter(
+                term=may_contact_term
+            ).get_decline_term_option(),
+        )
+        TrainingRequestConsent.objects.create(
+            training_request=req,
+            term=privacy_policy_term,
+            term_option=TermOption.objects.filter(
+                term=privacy_policy_term
+            ).get_agree_term_option(),
+        )
+        TrainingRequestConsent.objects.create(
+            training_request=req,
+            term=public_profile_term,
+            term_option=TermOption.objects.filter(
+                term=public_profile_term
+            ).get_agree_term_option(),
+        )
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_details", args=[req.pk]),
+            data={"person": self.ironman.pk, "match-selected-person": ""},
+            follow=True,
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        req.refresh_from_db()
         Consent.objects.active().get(
             person=req.person,
-            term=Term.objects.get_by_key(TermEnum.MAY_CONTACT),
-            # may-contact defaults to AGREE for matching training request to a person
+            term=may_contact_term,
+            term_option__option_type=TermOptionChoices.DECLINE,
+        )
+        Consent.objects.active().get(
+            person=req.person,
+            term=privacy_policy_term,
             term_option__option_type=TermOptionChoices.AGREE,
         )
         Consent.objects.active().get(
             person=req.person,
-            term=Term.objects.get_by_key(TermEnum.PRIVACY_POLICY),
-            term_option__option_type=TermOptionChoices.AGREE
-            if req.data_privacy_agreement
-            else TermOptionChoices.DECLINE,
+            term=public_profile_term,
+            term_option__option_type=TermOptionChoices.AGREE,
         )
-
-        self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
 
     def test_matching_in_transaction(self):
         """This is a regression test.
