@@ -20,7 +20,13 @@ from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import EmailTemplate, Trigger
-from consents.models import Term, TermEnum, TermOption, TermOptionChoices
+from consents.models import (
+    Term,
+    TermEnum,
+    TermOption,
+    TermOptionChoices,
+    TrainingRequestConsent,
+)
 from consents.util import reconsent_for_term_option_type
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
@@ -825,10 +831,20 @@ def trainingrequest_details(request, pk):
             ).first()  # may return None
         form = MatchTrainingRequestForm(initial={"person": person})
 
+    TERM_SLUGS = ["may-contact", "privacy-policy", "public-profile"]
     context = {
         "title": "Training request #{}".format(req.pk),
         "req": req,
         "form": form,
+        "consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=req)
+        },
+        "consents_content": {
+            term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
+        },
     }
     return render(request, "requests/trainingrequest.html", context)
 
