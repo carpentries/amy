@@ -9,8 +9,9 @@ one for testing and one for production. They use separate setups.
 
 ### AWS services used
 
-Server is hosted on [EC2](https://aws.amazon.com/ec2/) instance. Database uses separate
-EC2 instance through [RDS service](https://aws.amazon.com/rds/). Additionally
+Server is hosted on [Elastic Compute Cloud (EC2)](https://aws.amazon.com/ec2/) instance.
+Database uses separate EC2 instance through
+[Relational Database Service (RDS)](https://aws.amazon.com/rds/). Additionally
 [CloudFront](https://aws.amazon.com/cloudfront/) is used as CDN for assets (images,
 CSS, JavaScript, including NPM dependencies).
 
@@ -98,13 +99,14 @@ Testing stage has recently been updated to fix many of the shortcomings listed b
 
 ### AWS services used
 
-* [ECS](https://aws.amazon.com/ecs/) - for running a container with AMY with a load
-  balancer
-* [RDS](https://aws.amazon.com/rds/) - for database (serverless PostgreSQL-flavored Aurora)
+* [Elastic Container Service (ECS)](https://aws.amazon.com/ecs/) - for running
+  a container with AMY with a load balancer
+* [Relational Database Service (RDS)](https://aws.amazon.com/rds/) - for database
+  (serverless PostgreSQL-flavored Aurora)
 * [CloudFront](https://aws.amazon.com/cloudfront/) is used as CDN for assets
 * [Route 53](https://aws.amazon.com/route53/) for keeping domain records and managing
   TLS certificates
-* [ECR](https://aws.amazon.com/ecr/) - for storing Docker images
+* [Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/) - for storing Docker images
 * [CloudWatch](https://aws.amazon.com/cloudwatch/) - for log keeping
 * [CloudFormation](https://aws.amazon.com/cloudformation/) - for infrastructure as code
   and deployment of the infrastructure.
@@ -114,8 +116,8 @@ There is no Redis instance as it's not needed right now on the testing stage.
 ### Infrastructure as code
 
 Infrastructure is defined in a separate repository as
-a [CDK](https://aws.amazon.com/cdk/) project. It gets compiled into CloudFormation
-template.
+a [Cloud Development Kit (CDK)](https://aws.amazon.com/cdk/) project. It gets compiled
+into CloudFormation template.
 
 ### Deployment
 

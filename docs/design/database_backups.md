@@ -2,7 +2,7 @@
 
 Production database is backed-up by AWS with two of their services:
 
-1. [AWS RDS](https://aws.amazon.com/rds/) snapshots and backups
+1. [AWS Relational Database Service (RDS)](https://aws.amazon.com/rds/) snapshots and backups
 2. [AWS Backup](https://aws.amazon.com/backup/).
 
 Additional backups are:
@@ -16,7 +16,7 @@ Both services back the database by creating snapshots. They are incremental and 
 to restore the database as a complete service. So it doesn't matter which PostgreSQL
 database is restored, it will be the whole server as a new instance.
 
-## AWS RDS
+## AWS Relational Database Service (RDS)
 
 The database is set up to have a daily snapshot around 7 AM UTC. The rentention period
 is 35 days, and older snapshots are deleted.
@@ -38,6 +38,3 @@ a deployment. Manual snapshots are not deleted automatically.
 ## Automatic backup from inside of the server
 
 A script is set up to run every 30 minutes and upload a `pg_dump` of the database to S3.
-
-> **Note March 2023:** this script seems to be broken. It is a good idea to revise if
-> it's still needed.

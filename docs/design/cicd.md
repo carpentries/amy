@@ -10,7 +10,8 @@ During CI stage, the following happens:
 
 1. Code is pushed to GitHub.
 2. GitHub Actions runs tests.
-1. If tests pass, then a new Docker image is built and pushed to AWS ECR.
+1. If tests pass, then a new Docker image is built and pushed to
+[AWS Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/).
 
 Then CD stage starts:
 
@@ -43,6 +44,7 @@ The `deploy` stage is defined in `.github/workflows/cicd_develop.yml` file. It i
 run** when GitHub Actions is triggered by a push to `develop` branch, either through
 a PR merge or direct push.
 
-Deployment uses an ECS task definition downloaded to a GitHub agent. Then this file has
-the image tag updated to the one that was built in the `build` stage. Then the task
-definition is uploaded to AWS ECS and a new task is started.
+Deployment uses an [AWS Elastic Container Service (ECS)](https://aws.amazon.com/ecs/)
+task definition downloaded to a GitHub agent. Then this file has the image tag updated
+to the one that was built in the `build` stage. Then the task definition is uploaded to
+AWS ECS and a new task is started.
