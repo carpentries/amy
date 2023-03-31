@@ -920,6 +920,8 @@ def trainingrequests_merge(request):
             difficult = (
                 "domains",
                 "previous_involvement",
+                "comments",
+                "trainingrequestconsent_set",
             )
 
             try:
@@ -950,6 +952,18 @@ def trainingrequests_merge(request):
         "obj_a": obj_a,
         "obj_b": obj_b,
         "form": form,
+        "obj_a_consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=obj_a)
+        },
+        "obj_b_consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=obj_b)
+        },
     }
     return render(request, "requests/trainingrequests_merge.html", context)
 

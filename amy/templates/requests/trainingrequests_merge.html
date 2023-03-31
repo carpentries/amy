@@ -211,7 +211,7 @@
       <th>{% include "includes/merge_radio.html" with field=form.workshop_teaching_agreement %}</th>
     </tr>
     <tr>
-      <th>Data privacy agreement?</th>
+      <th><small>Deprecated old-style consent</small><br> Data privacy agreement?</th>
       <td>{{ obj_a.data_privacy_agreement|yesno }}</td><td>{{ obj_b.data_privacy_agreement|yesno }}</td>
       <th>{% include "includes/merge_radio.html" with field=form.data_privacy_agreement %}</th>
     </tr>
@@ -230,6 +230,26 @@
       <td>{% render_comment_list for obj_a %}</td>
       <td>{% render_comment_list for obj_b %}</td>
       <th>{% include "includes/merge_radio.html" with field=form.comments %}</th>
+    </tr>
+    <tr>
+      <th>New-style consents</th>
+      <td>
+        <dl>
+        {% for consent in obj_a_consents.values %}
+          <dt>{{ consent.term.content}}</dt>
+          <dd>{{ consent.term_option }}</dd>
+        {% endfor %}
+        </dl>
+      </td>
+      <td>
+        <dl>
+        {% for consent in obj_b_consents.values %}
+          <dt>{{ consent.term.content}}</dt>
+          <dd>{{ consent.term_option }}</dd>
+        {% endfor %}
+        </dl>
+      </td>
+      <th>{% include "includes/merge_radio.html" with field=form.trainingrequestconsent_set %}</th>
     </tr>
   </tbody>
 </table>
