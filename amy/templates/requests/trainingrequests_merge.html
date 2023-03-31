@@ -197,8 +197,8 @@
     </tr>
     <tr>
       <th>Additional comments by submitter</th>
-      <td>{% if obj_a.comment %}<pre>{{ obj_a.comment }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.comment %}<pre>{{ obj_b.comment }}</pre>{% else %}—{% endif %}</td>
-      <th>{% include "includes/merge_radio.html" with field=form.comment %}</th>
+      <td>{% if obj_a.user_notes %}<pre>{{ obj_a.user_notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.user_notes %}<pre>{{ obj_b.user_notes }}</pre>{% else %}—{% endif %}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.user_notes %}</th>
     </tr>
     <tr>
       <th>Training completion agreement?</th>
