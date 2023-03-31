@@ -110,7 +110,13 @@ class TermOptionInline(admin.TabularInline):
 
 
 class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
-    list_display = ("slug", "content", "required_type", "archived_at")
+    list_display = (
+        "slug",
+        "content",
+        "short_description",
+        "required_type",
+        "archived_at",
+    )
     inlines = [
         TermOptionInline,
     ]

@@ -234,6 +234,7 @@ When `Terms` are archived (`archived_at` timestamp is set), that `Term`'s `TermO
 * `content` content of the term. This text shown to users when they consent.
 * `required_type` determines whether or not a term is considered required for the user or not. If required it will be shown to the user when they log in to consent to.
 * `help_text` additional text shown to the user in order to give more context on the term.
+* `short_description` a short description of the consent, shown in the admin view of a profile
 
 ### TermOption
 

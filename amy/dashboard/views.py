@@ -17,7 +17,7 @@ from django_comments.models import Comment
 from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
-from consents.models import Consent, TermEnum
+from consents.models import Consent, Term, TermEnum
 from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
@@ -144,8 +144,17 @@ def instructor_dashboard(request):
         .select_related("term", "term_option")
     )
     consents_by_key = {consent.term.key: consent for consent in consents}
+    # get display content for all visible terms
+    consents_content = {
+        term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
+    }
 
-    context = {"title": "Your profile", "user": user, "consents": consents_by_key}
+    context = {
+        "title": "Your profile",
+        "user": user,
+        "consents": consents_by_key,
+        "consents_content": consents_content,
+    }
     return render(request, "dashboard/instructor_dashboard.html", context)
 
 
