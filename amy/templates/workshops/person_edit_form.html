@@ -133,10 +133,10 @@
       <tbody>
         {% for consent in consents %}
         <tr>
-          <td>{{ consent.term.content }}</td>
+          <td>{{ consent.term.short_description }}</td>
           <td>{{ consent.term_option }}</td>
           <td>{{ consent.created_at }}</td>
-          <td>{% if consent.is_active %}Active{% else %}Archived at {{ consent.archived_at }}{% endif %}</td>
+          <td>{% if consent.is_active %}Active{% else %}Archived {{ consent.archived_at }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
