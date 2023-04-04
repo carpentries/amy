@@ -621,6 +621,9 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 "tasks": self.object.task_set.select_related("role", "event").order_by(
                     "-event__slug"
                 ),
+                "consents": self.object.consent_set.select_related("term").order_by(
+                    "-archived_at"
+                ),
                 "consents_form": ActiveTermConsentsForm(
                     form_tag=False,
                     prefix="consents",

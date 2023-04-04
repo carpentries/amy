@@ -119,6 +119,32 @@
       <p>No Terms.</p>
     {% endif %}
 
+    {% if consents %}
+    <table class="table table-striped">
+      <caption><h2>All consents</h2></caption>
+      <thead>
+        <tr>
+          <th>Term</th>
+          <th>Option</th>
+          <th>Date created</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for consent in consents %}
+        <tr>
+          <td>{{ consent.term.content }}</td>
+          <td>{{ consent.term_option }}</td>
+          <td>{{ consent.created_at }}</td>
+          <td>{% if consent.is_active %}Active{% else %}Archived at {{ consent.archived_at }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No consents set.</p>
+    {% endif %}
+
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="communityroles-tab" id="communityroles">
     {% if perms.communityroles.add_communityroles %}
