@@ -137,6 +137,8 @@ AMY asks all users to consent or agree to the following:
 
 By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in a separate tab in the Person view. 
 
+Some of the questions above are also asked during the instructor training application. If a Person record is created from a training request, the consents from that training request will be carried across to the Person.
+
 ### Adding a New Airport
 
 Airports are used as approximate geographic identifiers for our instructors.  Instructors can self-select the airport closest to them or the airport they most frequently use. Instructors can select an airport only after it has been added to AMY by an admin.  Each airport is identified by its three character IATA code which can be looked up using [the link in AMY](https://www.world-airport-codes.com/).

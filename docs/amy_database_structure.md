@@ -266,3 +266,18 @@ When `Consents` are archived (`archived_at` timestamp is set), a new unset conse
 * `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
 * `term_option` - a nullable foreign key to TermOption. When this field is null, the Consent is unset.
 * `archived_at` - a nullable timestamp
+
+### TrainingRequestConsent
+
+`consents_trainingrequestconsent` - Stores all consents for all instructor training requests in AMY.
+
+#### Archive Behavior
+
+When `TrainingRequestConsents` are archived (`archived_at` timestamp is set), a new unset consent is created by AMY.
+
+#### Commonly used fields
+
+* `training_request` - required foreign key to `TrainingRequest`.
+* `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option` - a nullable foreign key to TermOption. When this field is null, the Consent is unset.
+* `archived_at` - a nullable timestamp
