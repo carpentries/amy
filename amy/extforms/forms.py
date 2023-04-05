@@ -177,13 +177,14 @@ class TrainingRequestForm(forms.ModelForm):
 
     def create_consent_field(self, term: Term) -> forms.ChoiceField:
         options = [(opt.pk, option_display_value(opt)) for opt in term.options]
+        label = term.training_request_content or term.content
         required = term.required_type == Term.PROFILE_REQUIRE_TYPE
         initial = None
         attrs = {"class": "border border-warning"} if initial is None else {}
 
         field = forms.ChoiceField(
             choices=BLANK_CHOICE_DASH + options,
-            label=term.content,
+            label=label,
             required=required,
             initial=initial,
             help_text=term.help_text or "",

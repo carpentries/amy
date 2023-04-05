@@ -67,6 +67,14 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
 
     slug = models.SlugField(unique=True)
     content = models.TextField(verbose_name="Content")
+    training_request_content = models.TextField(
+        verbose_name="Content for Training Request Form",
+        null=True,
+        help_text=(
+            "If set, the regular content will be replaced with this"
+            " text on the instructor training request form."
+        ),
+    )
     required_type = models.CharField(
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
