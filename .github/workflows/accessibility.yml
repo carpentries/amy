@@ -90,20 +90,13 @@ jobs:
 
     - name: Set up Chromium
       uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: 999338
 
     - name: Get Chromium location
       id: chromium-location
       run: |
         echo "CHROMIUM_PATH=$(which chromium)" >> $GITHUB_OUTPUT
-
-    - name: Start server in background
-      run: |
-        pipenv run make serve &
-    
-    - name: Run pa11y
-      run: |
-        npm install -g pa11y-ci
-        pa11y http://127.0.0.1:8000
 
     - name: run Lighthouse CI
       run: |
@@ -116,4 +109,13 @@ jobs:
         AMY_DATABASE_NAME: test_amy
         AMY_DATABASE_USER: postgres
         AMY_DATABASE_PASSWORD: postgres
-        LIGHTHOUSE_CHROMIUM_PATH: /opt/hostedtoolcache/chromium/latest/x64/chrome
+        LIGHTHOUSE_CHROMIUM_PATH: ${{ steps.chromium-location.outputs.CHROMIUM_PATH }}
+        
+    - name: Start server in background
+      run: |
+        pipenv run make serve &
+    
+    - name: Run pa11y
+      run: |
+        npm install -g pa11y-ci
+        pa11y http://127.0.0.1:8000
