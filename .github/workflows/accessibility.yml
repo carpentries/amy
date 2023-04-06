@@ -110,6 +110,7 @@ jobs:
         AMY_DATABASE_USER: postgres
         AMY_DATABASE_PASSWORD: postgres
         LIGHTHOUSE_CHROMIUM_PATH: ${{ steps.chromium-location.outputs.CHROMIUM_PATH }}
+        CHROME_PATH: ${{ steps.chromium-location.outputs.CHROMIUM_PATH }}
         
     - name: Start server in background
       run: |
