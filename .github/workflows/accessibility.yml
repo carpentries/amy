@@ -109,8 +109,8 @@ jobs:
         AMY_DATABASE_NAME: test_amy
         AMY_DATABASE_USER: postgres
         AMY_DATABASE_PASSWORD: postgres
-        LIGHTHOUSE_CHROMIUM_PATH: ${{ steps.chromium-location.outputs.CHROMIUM_PATH }}
-        CHROME_PATH: ${{ steps.chromium-location.outputs.CHROMIUM_PATH }}
+        LIGHTHOUSE_CHROMIUM_PATH: /opt/hostedtoolcache/chromium/999338/x64/chrome
+        CHROME_PATH: /opt/hostedtoolcache/chromium/999338/x64/chrome
         
     - name: Start server in background
       run: |
