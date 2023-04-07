@@ -876,6 +876,18 @@ def persons_merge(request):
         "form": form,
         "obj_a": obj_a,
         "obj_b": obj_b,
+        "obj_a_consents": {
+            consent.term.key: consent
+            for consent in Consent.objects.select_related("term", "term_option").filter(
+                person=obj_a
+            )
+        },
+        "obj_b_consents": {
+            consent.term.key: consent
+            for consent in Consent.objects.select_related("term", "term_option").filter(
+                person=obj_b
+            )
+        },
     }
     return render(request, "workshops/persons_merge.html", context)
 

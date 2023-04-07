@@ -906,7 +906,7 @@ class TestPersonMerging(TestBase):
             "trainingprogress_set": "combine",
             "comment_comments": "combine",  # made by this person
             "comments": "combine",  # regarding this person
-            "consent_set": "combine",
+            "consent_set": "obj_a",
         }
         base_url = reverse("persons_merge")
         query = urlencode({"person_a": self.person_a.pk, "person_b": self.person_b.pk})
@@ -937,6 +937,7 @@ class TestPersonMerging(TestBase):
             "occupation": "combine",
             "orcid": "combine",
             "is_active": "combine",
+            "consent_set": "combine",
         }
         # fields additionally accepting "combine"
         passing = {
@@ -948,7 +949,6 @@ class TestPersonMerging(TestBase):
             "trainingprogress_set": "combine",
             "comment_comments": "combine",
             "comments": "combine",
-            "consent_set": "combine",
         }
         data = hidden.copy()
         data.update(failing)
@@ -1111,25 +1111,6 @@ class TestPersonMerging(TestBase):
         self.assertEqual(
             set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),
             set(comments),
-        )
-
-    def test_merging_consents_combine(self):
-        """Ensure consents regarding persons are correctly merged using
-        `merge_objects`.
-        This test uses strategy 1 (combine)."""
-        self.strategy["consent_set"] = "combine"
-        expected_consents = list(
-            Consent.objects.filter(person__in=[self.person_a, self.person_b])
-        )
-        rv = self.client.post(self.url, data=self.strategy)
-        self.assertEqual(rv.status_code, 302)
-        self.person_b.refresh_from_db()
-        self.assertCountEqual(
-            [
-                (c.term, c.term_option, c.person)
-                for c in Consent.objects.filter(person=self.person_b)
-            ],
-            [(c.term, c.term_option, self.person_b) for c in expected_consents],
         )
 
     def test_merging_consents_obj_a(self):

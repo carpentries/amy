@@ -2,8 +2,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, transaction
 from django_comments.models import Comment
 
-from workshops.utils.consents import archive_least_recent_active_consents
-
 
 def merge_objects(
     object_a, object_b, easy_fields, difficult_fields, choices, base_a=True
@@ -108,8 +106,6 @@ def merge_objects(
 
             elif value == "combine":
                 to_add = None
-                if attr == "consent_set":
-                    archive_least_recent_active_consents(object_a, object_b, base_obj)
 
                 if manager == related_a:
                     to_add = related_b.all()

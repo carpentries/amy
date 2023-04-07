@@ -1003,7 +1003,7 @@ class PersonsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     consent_set = forms.ChoiceField(
-        choices=THREE,
+        choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )
