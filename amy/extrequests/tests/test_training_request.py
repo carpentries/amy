@@ -10,7 +10,14 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django_comments.models import Comment
 
-from consents.models import Consent, Term, TermEnum, TermOptionChoices
+from consents.models import (
+    Consent,
+    Term,
+    TermEnum,
+    TermOption,
+    TermOptionChoices,
+    TrainingRequestConsent,
+)
 from extrequests.forms import TrainingRequestsMergeForm
 from extrequests.views import _match_training_request_to_person
 from workshops.models import (
@@ -677,21 +684,6 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
                 getattr(self.ironman, key), value, "Attribute: {}".format(key)
             )
 
-        # Ensure new style consents were created
-        Consent.objects.active().get(
-            person=self.ironman,
-            term=Term.objects.get_by_key(TermEnum.MAY_CONTACT),
-            # may-contact defaults to AGREE for matching training request to a person
-            term_option__option_type=TermOptionChoices.AGREE,
-        )
-        Consent.objects.active().get(
-            person=self.ironman,
-            term=Term.objects.get_by_key(TermEnum.PRIVACY_POLICY),
-            term_option__option_type=TermOptionChoices.AGREE
-            if req.data_privacy_agreement
-            else TermOptionChoices.DECLINE,
-        )
-
         self.assertEqual(set(self.ironman.domains.all()), set(req.domains.all()))
 
     def test_matching_with_new_account_works(self):
@@ -724,22 +716,61 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
                 getattr(req.person, key), value, "Attribute: {}".format(key)
             )
 
-        # Ensure new style consents were created
+        self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
+
+    def test_matching_updates_consents(self) -> None:
+        # Arrange
+        req = create_training_request(state="p", person=None)
+        may_contact_term = Term.objects.get_by_key(TermEnum.MAY_CONTACT)
+        privacy_policy_term = Term.objects.get_by_key(TermEnum.PRIVACY_POLICY)
+        public_profile_term = Term.objects.get_by_key(TermEnum.PUBLIC_PROFILE)
+        TrainingRequestConsent.objects.create(
+            training_request=req,
+            term=may_contact_term,
+            term_option=TermOption.objects.filter(
+                term=may_contact_term
+            ).get_decline_term_option(),
+        )
+        TrainingRequestConsent.objects.create(
+            training_request=req,
+            term=privacy_policy_term,
+            term_option=TermOption.objects.filter(
+                term=privacy_policy_term
+            ).get_agree_term_option(),
+        )
+        TrainingRequestConsent.objects.create(
+            training_request=req,
+            term=public_profile_term,
+            term_option=TermOption.objects.filter(
+                term=public_profile_term
+            ).get_agree_term_option(),
+        )
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_details", args=[req.pk]),
+            data={"person": self.ironman.pk, "match-selected-person": ""},
+            follow=True,
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        req.refresh_from_db()
         Consent.objects.active().get(
             person=req.person,
-            term=Term.objects.get_by_key(TermEnum.MAY_CONTACT),
-            # may-contact defaults to AGREE for matching training request to a person
+            term=may_contact_term,
+            term_option__option_type=TermOptionChoices.DECLINE,
+        )
+        Consent.objects.active().get(
+            person=req.person,
+            term=privacy_policy_term,
             term_option__option_type=TermOptionChoices.AGREE,
         )
         Consent.objects.active().get(
             person=req.person,
-            term=Term.objects.get_by_key(TermEnum.PRIVACY_POLICY),
-            term_option__option_type=TermOptionChoices.AGREE
-            if req.data_privacy_agreement
-            else TermOptionChoices.DECLINE,
+            term=public_profile_term,
+            term_option__option_type=TermOptionChoices.AGREE,
         )
-
-        self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
 
     def test_matching_in_transaction(self):
         """This is a regression test.
@@ -785,7 +816,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         # matching fails because it can't rewrite email address due to
         # uniqueness constraint
         self.assertFalse(_match_training_request_to_person(request, tr, person, create))
-        messages = request._messages._queued_messages
+        messages = request._messages._queued_messages  # type: ignore
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0].level, WARNING)
 
@@ -864,6 +895,39 @@ class TestTrainingRequestMerging(TestBase):
         self.second_req.previous_involvement.set([self.helper])
         self.third_req.previous_involvement.set([self.instructor, self.contributor])
 
+        # consents
+        may_contact_term = Term.objects.get_by_key(TermEnum.MAY_CONTACT)
+        privacy_policy_term = Term.objects.get_by_key(TermEnum.PRIVACY_POLICY)
+        public_profile_term = Term.objects.get_by_key(TermEnum.PUBLIC_PROFILE)
+        self.may_contact_consent = TrainingRequestConsent.objects.create(
+            training_request=self.first_req,
+            term=may_contact_term,
+            term_option=TermOption.objects.filter(
+                term=may_contact_term
+            ).get_decline_term_option(),
+        )
+        TrainingRequestConsent.objects.create(
+            training_request=self.third_req,
+            term=may_contact_term,
+            term_option=TermOption.objects.filter(
+                term=may_contact_term
+            ).get_agree_term_option(),
+        )
+        TrainingRequestConsent.objects.create(
+            training_request=self.third_req,
+            term=privacy_policy_term,
+            term_option=TermOption.objects.filter(
+                term=privacy_policy_term
+            ).get_agree_term_option(),
+        )
+        TrainingRequestConsent.objects.create(
+            training_request=self.third_req,
+            term=public_profile_term,
+            term_option=TermOption.objects.filter(
+                term=public_profile_term
+            ).get_agree_term_option(),
+        )
+
         # prepare merge strategies (POST data to be sent to the merging view)
         self.strategy_1 = {
             "trainingrequest_a": self.first_req.pk,
@@ -909,6 +973,7 @@ class TestTrainingRequestMerging(TestBase):
             "code_of_conduct_agreement": "obj_a",
             "created_at": "obj_a",
             "comments": "combine",
+            "trainingrequestconsent_set": "obj_a",
         }
         self.strategy_2 = {
             "trainingrequest_a": self.first_req.pk,
@@ -954,6 +1019,7 @@ class TestTrainingRequestMerging(TestBase):
             "code_of_conduct_agreement": "obj_a",
             "created_at": "obj_a",
             "comments": "combine",
+            "trainingrequestconsent_set": "obj_b",
         }
 
         base_url = reverse("trainingrequests_merge")
@@ -1016,6 +1082,7 @@ class TestTrainingRequestMerging(TestBase):
             "data_privacy_agreement": "combine",
             "code_of_conduct_agreement": "combine",
             "created_at": "combine",
+            "trainingrequestconsent_set": "combine",
         }
         # fields additionally accepting "combine"
         passing = {
@@ -1032,10 +1099,8 @@ class TestTrainingRequestMerging(TestBase):
         form = TrainingRequestsMergeForm(data)
         self.assertFalse(form.is_valid())
 
-        for key in failing:
-            self.assertIn(key, form.errors)
-        for key in passing:
-            self.assertNotIn(key, form.errors)
+        self.assertEqual(form.errors.keys(), failing.keys())  # the same keys
+        self.assertTrue(form.errors.keys().isdisjoint(passing.keys()))  # no overlap
 
         # make sure no fields are added without this test being updated
         self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
@@ -1107,6 +1172,7 @@ class TestTrainingRequestMerging(TestBase):
         assertions = {
             "domains": set([self.chemistry, self.physics]),
             "previous_involvement": set([self.helper]),
+            "trainingrequestconsent_set": set([self.may_contact_consent]),
             # comments are not relational, they're related via generic FKs,
             # so they won't appear here
         }
@@ -1152,6 +1218,13 @@ class TestTrainingRequestMerging(TestBase):
         roles_set = set([self.helper, self.instructor, self.contributor])
         self.assertEqual(domains_set, set(self.third_req.domains.all()))
         self.assertEqual(roles_set, set(self.third_req.previous_involvement.all()))
+        self.assertEqual(self.third_req.trainingrequestconsent_set.count(), 3)
+        self.assertTrue(
+            all(
+                consent.term_option.option_type == TermOptionChoices.AGREE
+                for consent in self.third_req.trainingrequestconsent_set.all()
+            )
+        )
 
         # make sure no M2M related objects were removed from DB
         self.chemistry.refresh_from_db()
@@ -1168,6 +1241,10 @@ class TestTrainingRequestMerging(TestBase):
         # make sure no related persons were removed from DB
         self.ironman.refresh_from_db()
         self.spiderman.refresh_from_db()
+
+        # make sure the remaining consent from the first request was removed
+        with self.assertRaises(TrainingRequestConsent.DoesNotExist):
+            self.may_contact_consent.refresh_from_db()
 
     def test_merging_comments_strategy1(self):
         """Ensure comments regarding persons are correctly merged using

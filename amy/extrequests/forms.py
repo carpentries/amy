@@ -1590,3 +1590,8 @@ class TrainingRequestsMergeForm(forms.Form):
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )
+    trainingrequestconsent_set = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
