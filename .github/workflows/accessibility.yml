@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        package: ["lighthouse-ci", "pa11y-ci"]
+        package: ["lighthouse", "pa11y"]
 
     services:
       postgres:
