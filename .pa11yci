@@ -1,5 +1,42 @@
 {
     "urls": [
-        "http://127.0.0.1:8000/"
-    ]
-}
+        "http://127.0.0.1:8000/account/login/",
+        {
+            "url": "http://127.0.0.1:8000/dashboard/admin/",
+            "actions": [
+                "wait for path to be /account/login/",
+                "set field #id_username to admin",
+                "set field #id_password to admin",
+                "click element input[type='submit']",
+                "wait for path to not be /account/login/"
+            ]
+        },
+        {
+            "url": "http://127.0.0.1:8000/workshops/events/",
+            "actions": [
+                "wait for element table to be visible"
+            ],
+            "timeout": 20000
+        }
+    ],
+    "defaults": {
+        "runners": [
+            "axe",
+            "htmlcs"
+        ],
+        "timeout": 10000,
+        "reporters": [
+            "cli",
+            [
+                "pa11y-ci-reporter-html",
+                {
+                    "destination": "./pa11y-ci-report/"
+                }
+            ],
+            "chromeLaunchConfig": {
+                "executablePath": "/usr/bin/google-chrome-stable",
+                "ignoreHTTPSErrors": false
+            },
+            "useIncognitoBrowserContext": false
+        }
+    }
