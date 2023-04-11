@@ -29,6 +29,7 @@
 
     {% if awards %}
     <table class="table table-striped">
+      <caption><h2>All awards</h2></caption>
       <thead>
         <tr>
           <th>Badge</th>
@@ -72,6 +73,7 @@
 
     {% if tasks %}
     <table class="table table-striped">
+      <caption><h2>All tasks</h2></caption>
       <tr>
         <th>Event</th>
         <th>URL</th>
@@ -119,6 +121,32 @@
       <p>No Terms.</p>
     {% endif %}
 
+    {% if consents %}
+    <table class="table table-striped">
+      <caption><h2>All consents</h2></caption>
+      <thead>
+        <tr>
+          <th>Term</th>
+          <th>Option</th>
+          <th>Date created</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for consent in consents %}
+        <tr>
+          <td>{{ consent.term.short_description }}</td>
+          <td>{{ consent.term_option }}</td>
+          <td>{{ consent.created_at }}</td>
+          <td>{% if consent.is_active %}Active{% else %}Archived {{ consent.archived_at }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No consents set.</p>
+    {% endif %}
+
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="communityroles-tab" id="communityroles">
     {% if perms.communityroles.add_communityroles %}
@@ -129,6 +157,7 @@
 
     {% if community_roles %}
     <table class="table table-striped">
+      <caption><h2>All community roles</h2></caption>
       <tr>
         <th>Role</th>
         <th>Dates</th>
