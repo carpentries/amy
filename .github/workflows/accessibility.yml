@@ -12,6 +12,7 @@ jobs:
       matrix:
         python-version: ["3.11"]
         package: ["lighthouse", "pa11y"]
+      fail-fast: false # don't cancel lighthouse job if pa11y fails, and vice versa
 
     services:
       postgres:

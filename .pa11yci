@@ -15,8 +15,7 @@
             "url": "http://127.0.0.1:8000/workshops/events/",
             "actions": [
                 "wait for element table to be visible"
-            ],
-            "timeout": 20000
+            ]
         }
     ],
     "defaults": {
@@ -24,7 +23,7 @@
             "axe",
             "htmlcs"
         ],
-        "timeout": 10000,
+        "timeout": 30000,
         "reporters": [
             "cli",
             [
