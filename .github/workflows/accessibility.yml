@@ -94,13 +94,11 @@ jobs:
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: 999338
-        if: matrix.package == 'lighthouse'
 
       - name: Get Chromium location
         id: chromium-location
         run: |
           echo "CHROMIUM_PATH=$(which chromium)" >> $GITHUB_OUTPUT
-        if: matrix.package == 'lighthouse'
 
       - name: run Lighthouse CI
         run: |
