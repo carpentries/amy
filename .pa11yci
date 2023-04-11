@@ -33,10 +33,6 @@
                 }
             ]
         ],
-        "chromeLaunchConfig": {
-            "executablePath": "/usr/bin/google-chrome-stable",
-            "ignoreHTTPSErrors": false
-        },
         "useIncognitoBrowserContext": false
     }
 }
