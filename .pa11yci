@@ -32,11 +32,12 @@
                 {
                     "destination": "./pa11y-ci-report/"
                 }
-            ],
-            "chromeLaunchConfig": {
-                "executablePath": "/usr/bin/google-chrome-stable",
-                "ignoreHTTPSErrors": false
-            },
-            "useIncognitoBrowserContext": false
-        }
+            ]
+        ],
+        "chromeLaunchConfig": {
+            "executablePath": "/usr/bin/google-chrome-stable",
+            "ignoreHTTPSErrors": false
+        },
+        "useIncognitoBrowserContext": false
     }
+}
