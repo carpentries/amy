@@ -1,5 +1,5 @@
 name: Accessibility tests
-on: 
+on:
   push:
     branches:
       - feature/a11y-checks
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.11' ]
+        python-version: ["3.11"]
 
     services:
       postgres:
@@ -37,91 +37,91 @@ jobs:
           - 6379:6379
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install pipenv
-        pipenv sync --dev
-
-    - name: Set up Node
-      uses: actions/setup-node@v3
-      with: 
-        node-version: 16
-
-    - name: Install NodeJS dependencies
-      run: npm install
-
-    - name: Check migrations
-      run: |
-        pipenv run python manage.py makemigrations --dry-run --check;
-        if [[ $? != "0" ]]; then
-          exit 1;
-        fi;
-      env:
-        AMY_DATABASE_HOST: localhost
-        AMY_DATABASE_PORT: 5432
-        AMY_DATABASE_NAME: test_amy
-        AMY_DATABASE_USER: postgres
-        AMY_DATABASE_PASSWORD: postgres
-
-    - name: Collect static files
-      run: |
-        pipenv run python manage.py collectstatic --no-input;
-        if [[ $? != "0" ]]; then
-          exit 1;
-        fi;
-
-    - name: Set up dev database
-      run: |
-        echo "yes" | pipenv run make dev_database
-      env:
-        AMY_DATABASE_HOST: localhost
-        AMY_DATABASE_PORT: 5432
-        AMY_DATABASE_NAME: test_amy
-        AMY_DATABASE_USER: postgres
-        AMY_DATABASE_PASSWORD: postgres
-
-    - name: Set up Chromium
-      uses: browser-actions/setup-chrome@v1
-      with:
-        chrome-version: 999338
-
-    - name: Get Chromium location
-      id: chromium-location
-      run: |
-        echo "CHROMIUM_PATH=$(which chromium)" >> $GITHUB_OUTPUT
-
-    - name: run Lighthouse CI
-      run: |
-        npm install -g @lhci/cli@0.11.x 
-        npm install -g puppeteer
-        lhci autorun
-      env:
-        AMY_DATABASE_HOST: localhost
-        AMY_DATABASE_PORT: 5432
-        AMY_DATABASE_NAME: test_amy
-        AMY_DATABASE_USER: postgres
-        AMY_DATABASE_PASSWORD: postgres
-        CHROME_PATH: /opt/hostedtoolcache/chromium/999338/x64/chrome
-
-    - name: Start server in background
-      run: |
-        pipenv run make serve &
-    
-    - name: Run pa11y
-      run: |
-        npm install -g pa11y-ci pa11y-ci-reporter-html
-        pa11y-ci
-
-    - name: Upload pa11y test results
-      uses: actions/upload-artifact@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          name: pa11y-ci-report        
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install pipenv
+          pipenv sync --dev
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install NodeJS dependencies
+        run: npm install
+
+      - name: Check migrations
+        run: |
+          pipenv run python manage.py makemigrations --dry-run --check;
+          if [[ $? != "0" ]]; then
+            exit 1;
+          fi;
+        env:
+          AMY_DATABASE_HOST: localhost
+          AMY_DATABASE_PORT: 5432
+          AMY_DATABASE_NAME: test_amy
+          AMY_DATABASE_USER: postgres
+          AMY_DATABASE_PASSWORD: postgres
+
+      - name: Collect static files
+        run: |
+          pipenv run python manage.py collectstatic --no-input;
+          if [[ $? != "0" ]]; then
+            exit 1;
+          fi;
+
+      - name: Set up dev database
+        run: |
+          echo "yes" | pipenv run make dev_database
+        env:
+          AMY_DATABASE_HOST: localhost
+          AMY_DATABASE_PORT: 5432
+          AMY_DATABASE_NAME: test_amy
+          AMY_DATABASE_USER: postgres
+          AMY_DATABASE_PASSWORD: postgres
+
+      - name: Set up Chromium
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: 999338
+
+      - name: Get Chromium location
+        id: chromium-location
+        run: |
+          echo "CHROMIUM_PATH=$(which chromium)" >> $GITHUB_OUTPUT
+
+      - name: run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli@0.11.x 
+          npm install -g puppeteer
+          lhci autorun
+        env:
+          AMY_DATABASE_HOST: localhost
+          AMY_DATABASE_PORT: 5432
+          AMY_DATABASE_NAME: test_amy
+          AMY_DATABASE_USER: postgres
+          AMY_DATABASE_PASSWORD: postgres
+          CHROME_PATH: /opt/hostedtoolcache/chromium/999338/x64/chrome
+
+      - name: Start server in background
+        run: |
+          pipenv run make serve &
+
+      - name: Run pa11y
+        run: |
+          npm install -g pa11y-ci pa11y-ci-reporter-html
+          pa11y-ci
+
+      - name: Upload pa11y test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pa11y-ci-report
           path: pa11y-ci-report/
