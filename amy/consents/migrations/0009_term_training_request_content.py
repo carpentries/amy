@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                     "If set, the regular content will be replaced with this"
                     " text on the instructor training request form."
                 ),
-                null=True,
+                blank=True,
                 verbose_name="Content for Training Request Form",
             ),
         ),

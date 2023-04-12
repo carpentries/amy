@@ -69,7 +69,7 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
     content = models.TextField(verbose_name="Content")
     training_request_content = models.TextField(
         verbose_name="Content for Training Request Form",
-        null=True,
+        blank=True,
         help_text=(
             "If set, the regular content will be replaced with this"
             " text on the instructor training request form."
