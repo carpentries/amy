@@ -2,6 +2,7 @@ import re
 
 from django.db.models import Q
 from django.forms import widgets
+from django.http import QueryDict
 import django_filters
 
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
@@ -22,6 +23,16 @@ from workshops.models import Curriculum, Person, TrainingRequest, WorkshopReques
 
 
 class TrainingRequestFilter(AMYFilterSet):
+    def __init__(self, data=None, *args, **kwargs):
+        # if no filters are set, use a default
+        # avoids handling the full list of training requests
+        # client-side unless the user deliberately chooses to
+        # see https://github.com/carpentries/amy/issues/2314
+        if not data:
+            data = QueryDict("state=no_d&matched=u")
+
+        super().__init__(data, *args, **kwargs)
+
     search = django_filters.CharFilter(
         label="Name or Email",
         method="filter_by_person",
