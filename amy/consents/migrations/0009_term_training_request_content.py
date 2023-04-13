@@ -4,9 +4,9 @@ from django.db import migrations, models
 
 term_training_request_content = {
     "may-contact": (
-        "The Carpentries will contact you about the progress of your application."
-        " Once certified, may we also contact you for volunteering opportunities,"
-        " surveys, feedback, etc.?"
+        "The Carpentries will contact you about the progress of your application and,"
+        " once certified, about teaching opportunities. May we also contact you for"
+        " other volunteering opportunities, surveys, feedback, etc.?"
     ),
     "public-profile": (
         "The Carpentries will not make public any of your personal data when going"
