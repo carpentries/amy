@@ -24,10 +24,10 @@ from workshops.models import Curriculum, Person, TrainingRequest, WorkshopReques
 
 class TrainingRequestFilter(AMYFilterSet):
     def __init__(self, data=None, *args, **kwargs):
-        # if no filters are set, use a default
-        # avoids handling the full list of training requests
-        # client-side unless the user deliberately chooses to
-        # see https://github.com/carpentries/amy/issues/2314
+        # If no filters are set, use some default settings.
+        # This avoids handling the full list of training requests
+        # client-side unless the user deliberately chooses to do so.
+        # See https://github.com/carpentries/amy/issues/2314
         if not data:
             data = QueryDict("state=no_d&matched=u")
 
