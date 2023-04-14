@@ -185,6 +185,7 @@ class Membership(models.Model):
         ("silver", "Silver"),
         ("gold", "Gold"),
         ("platinum", "Platinum"),
+        ("titanium", "Titanium"),
         ("alacarte", "A la carte"),
     )
     variant = models.CharField(
