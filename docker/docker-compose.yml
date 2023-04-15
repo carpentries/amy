@@ -52,6 +52,8 @@ services:
     environment:
       - AMY_REDIS_URL=redis://redis:6379/
     command: python manage.py rqscheduler -v 2
+    environment:
+      - PIPENV_DONT_LOAD_ENV=false
     depends_on:
       - redis
       - amy
