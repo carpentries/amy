@@ -1003,8 +1003,8 @@ class PersonsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     consent_set = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
+        choices=(("most_recent", "Use the most recent consents"),),
+        initial="most_recent",
         widget=forms.RadioSelect,
     )
 

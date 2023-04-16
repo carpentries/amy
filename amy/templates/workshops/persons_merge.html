@@ -156,7 +156,10 @@
       <dl>
       {% for consent in obj_a_consents.values %}
         <dt>{{ consent.term.content}}</dt>
-        <dd>{{ consent.term_option|default:"Unset" }}</dd>
+        <dd>
+          <small class="d-block">{{ consent.created_at }}</small>
+          {{ consent.term_option|default:"Unset" }}
+        </dd>
       {% endfor %}
       </dl>
     </td>
@@ -164,7 +167,10 @@
       <dl>
       {% for consent in obj_b_consents.values %}
         <dt>{{ consent.term.content}}</dt>
-        <dd>{{ consent.term_option|default:"Unset" }}</dd>
+        <dd>
+          <small class="d-block">{{ consent.created_at }}</small>
+          {{ consent.term_option|default:"Unset" }}
+        </dd>
       {% endfor %}
       </dl>
     </td>
