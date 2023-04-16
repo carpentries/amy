@@ -2,6 +2,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, transaction
 from django_comments.models import Comment
 
+from workshops.utils.consents import archive_least_recent_active_consents
+
 
 def merge_objects(
     object_a, object_b, easy_fields, difficult_fields, choices, base_a=True
@@ -127,6 +129,9 @@ def merge_objects(
                             element.delete()
                         except IntegrityError as e:
                             integrity_errors.append(str(e))
+
+            elif attr == "consent_set" and value == "most_recent":
+                archive_least_recent_active_consents(object_a, object_b, base_obj)
 
         if "comments" in choices:
             value = choices["comments"]
