@@ -113,6 +113,7 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
     list_display = (
         "slug",
         "content",
+        "training_request_content",
         "short_description",
         "required_type",
         "archived_at",
