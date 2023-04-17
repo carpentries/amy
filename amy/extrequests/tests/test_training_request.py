@@ -290,7 +290,32 @@ class TestTrainingRequestsListView(TestBase):
         self.second_training.tags.add(self.ttt)
 
     def test_view_loads(self):
+        """
+        View should default to settings:
+            state=no_d (Pending or accepted)
+            matched=u (Unmatched)
+        """
+        # Act
         rv = self.client.get(reverse("all_trainingrequests"))
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(
+            set(rv.context["requests"]),
+            {self.second_req},
+        )
+
+    def test_view_loads_all_on_request(self):
+        """
+        Explicitly setting state and matched to null should return all requests.
+        """
+        # Arrange
+        query_string = "state=&matched="
+
+        # Act
+        rv = self.client.get(reverse("all_trainingrequests"), QUERY_STRING=query_string)
+
+        # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(
             set(rv.context["requests"]),
