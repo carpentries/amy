@@ -173,7 +173,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
-    @unittest.expectedFailure
+    @unittest.skip("No view uses @login_not_required decorator")
     def test_function_based_view_accessible_to_unauthorized_users(self):
         """
         Test that a view decorated with @login_not_required is accessible to
