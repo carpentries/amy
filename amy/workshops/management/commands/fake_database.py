@@ -121,15 +121,6 @@ class Command(BaseCommand):
                 name=name, defaults=dict(verbose_name=verbose_name)
             )
 
-    def fake_groups(self):
-        """Provide authentication groups."""
-        groups = ["administrators", "invoicing", "steering committee", "trainers"]
-
-        self.stdout.write("Generating {} auth groups...".format(len(groups)))
-
-        for group in groups:
-            Group.objects.get_or_create(name=group)
-
     def fake_tags(self):
         """Provide fixed tags. All other tags are pre-created through data
         migrations."""
@@ -945,7 +936,6 @@ class Command(BaseCommand):
             Faker.seed(seed)
 
         try:
-            self.fake_groups()
             self.fake_airports()
             self.fake_roles()
             self.fake_tags()
