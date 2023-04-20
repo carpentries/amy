@@ -23,7 +23,8 @@ from workshops.utils.access import (
 
 def get_resolved_urls(url_patterns):
     """Copy-pasted from
-    http://stackoverflow.com/questions/1275486/django-how-can-i-see-a-list-of-urlpatterns"""  # noqa: line too long
+    http://stackoverflow.com/questions/1275486/django-how-can-i-see-a-list-of-urlpatterns
+    """  # noqa: line too long
     url_patterns_resolved = []
     for entry in url_patterns:
         if hasattr(entry, "url_patterns"):
@@ -44,11 +45,12 @@ def get_view_by_name(name):
 class TestViews(TestBase):
     def setUp(self):
         super().setUp()
+        self._setUpGroups()
 
-        admins, _ = Group.objects.get_or_create(name="administrators")
-        steering_committee, _ = Group.objects.get_or_create(name="steering committee")
-        invoicing_group, _ = Group.objects.get_or_create(name="invoicing")
-        trainer_group, _ = Group.objects.get_or_create(name="trainers")
+        amy_admins = Group.objects.get(name="amy_administrators")
+        view_all = Group.objects.get(name="view_all")
+        membership_admins = Group.objects.get(name="membership_administrators")
+        workshop_admins = Group.objects.get(name="workshop_administrators")
 
         # superuser who doesn't belong to Admin group should have access to
         # admin dashboard
@@ -60,53 +62,56 @@ class TestViews(TestBase):
             password="superuser",
         )
         self.person_consent_required_terms(self.admin)
-        assert admins not in self.admin.groups.all()
+        assert view_all not in self.admin.groups.all()
 
         # user belonging to Admin group should have access to admin dashboard
-        self.mentor = Person.objects.create_user(
+        self.amy_admin = Person.objects.create_user(
             username="admin",
             personal="Bob",
             family="Admin",
             email="admin@example.org",
             password="admin",
         )
-        self.person_consent_required_terms(self.mentor)
-        self.mentor.groups.add(admins)
+        self.person_consent_required_terms(self.amy_admin)
+        self.amy_admin.groups.add(view_all)
+        self.amy_admin.groups.add(amy_admins)
 
-        # steering committee members should have access to admin dashboard too
-        self.committee = Person.objects.create_user(
-            username="committee",
+        # executive council members should have access to admin dashboard too
+        self.council = Person.objects.create_user(
+            username="council",
             personal="Bob",
-            family="Committee",
-            email="committee@example.org",
-            password="committee",
+            family="Council",
+            email="council@example.org",
+            password="council",
         )
-        self.person_consent_required_terms(self.committee)
-        self.committee.groups.add(steering_committee)
+        self.person_consent_required_terms(self.council)
+        self.council.groups.add(view_all)
 
-        # members of invoicing group should have access to admin dashboard too
-        self.invoicing = Person.objects.create_user(
-            username="invoicing",
+        # membership team should have access to admin dashboard too
+        self.membership_admin = Person.objects.create_user(
+            username="membership",
             personal="Bob",
-            family="Invoicing",
-            email="invoicing@example.org",
-            password="invoicing",
+            family="Membership",
+            email="membership@example.org",
+            password="membership",
         )
-        self.person_consent_required_terms(self.invoicing)
-        self.invoicing.groups.add(invoicing_group)
+        self.person_consent_required_terms(self.membership_admin)
+        self.membership_admin.groups.add(view_all)
+        self.membership_admin.groups.add(membership_admins)
 
-        # trainers should have access to admin dashboard too
-        self.trainer = Person.objects.create_user(
-            username="trainer",
+        # workshop admins should have access to admin dashboard too
+        self.workshop_admin = Person.objects.create_user(
+            username="workshop",
             personal="Bob",
-            family="Trainer",
-            email="trainer@example.org",
-            password="trainer",
+            family="Workshop",
+            email="workshop@example.org",
+            password="workshop",
         )
-        self.person_consent_required_terms(self.trainer)
-        self.trainer.groups.add(trainer_group)
+        self.person_consent_required_terms(self.workshop_admin)
+        self.workshop_admin.groups.add(view_all)
+        self.workshop_admin.groups.add(workshop_admins)
 
-        # user with access only to trainee dashboard
+        # user with access only to trainee/instructor dashboard
         self.trainee = Person.objects.create_user(
             username="trainee",
             personal="Bob",
@@ -115,8 +120,8 @@ class TestViews(TestBase):
             password="trainee",
         )
         self.person_consent_required_terms(self.trainee)
-        assert admins not in self.trainee.groups.all()
-        assert steering_committee not in self.trainee.groups.all()
+        assert amy_admins not in self.trainee.groups.all()
+        assert view_all not in self.trainee.groups.all()
 
     def assert_accessible(self, url, user=None):
         if user is not None:
@@ -149,9 +154,9 @@ class TestViews(TestBase):
 
         self.assert_accessible(url, user="superuser")
         self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
+        self.assert_accessible(url, user="council")
+        self.assert_accessible(url, user="membership")
+        self.assert_accessible(url, user="workshop")
         self.assert_inaccessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
@@ -167,9 +172,9 @@ class TestViews(TestBase):
 
         self.assert_accessible(url, user="superuser")
         self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
+        self.assert_accessible(url, user="council")
+        self.assert_accessible(url, user="membership")
+        self.assert_accessible(url, user="workshop")
         self.assert_accessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
@@ -186,9 +191,9 @@ class TestViews(TestBase):
 
         self.assert_accessible(url, user="superuser")
         self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
+        self.assert_accessible(url, user="council")
+        self.assert_accessible(url, user="membership")
+        self.assert_accessible(url, user="workshop")
         self.assert_accessible(url, user="trainee")
         self.assert_accessible(url, user=None)
 
@@ -203,9 +208,9 @@ class TestViews(TestBase):
 
         self.assert_accessible(url, user="superuser")
         self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
+        self.assert_accessible(url, user="council")
+        self.assert_accessible(url, user="membership")
+        self.assert_accessible(url, user="workshop")
         self.assert_inaccessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
@@ -220,11 +225,29 @@ class TestViews(TestBase):
 
         self.assert_accessible(url, user="superuser")
         self.assert_accessible(url, user="admin")
-        self.assert_accessible(url, user="committee")
-        self.assert_accessible(url, user="invoicing")
-        self.assert_accessible(url, user="trainer")
+        self.assert_accessible(url, user="council")
+        self.assert_accessible(url, user="membership")
+        self.assert_accessible(url, user="workshop")
         self.assert_accessible(url, user="trainee")
         self.assert_accessible(url, user=None)
+
+    # def test_membership_view(self):
+    #     """
+    #     Test that memberships can be viewed by all admins,
+    #     but only created by membership admins.
+    #     """
+    #     view_name = "membership_details"
+    #     view = get_view_by_name(view_name)
+    #     assert view._access_control_list == [login_required]
+    #     url = reverse(view_name)
+
+    #     self.assert_accessible(url, user="superuser")
+    #     self.assert_accessible(url, user="admin")
+    #     self.assert_accessible(url, user="council")
+    #     self.assert_accessible(url, user="membership")
+    #     self.assert_accessible(url, user="workshop")
+    #     self.assert_accessible(url, user="trainee")
+    #     self.assert_inaccessible(url, user=None)
 
     IGNORED_VIEWS = [
         # auth

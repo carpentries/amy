@@ -338,6 +338,154 @@ class TestBase(
         self.spiderman.groups.add(badge_admin)
         self.spiderman.user_permissions.add(add_badge)
 
+    def _setUpGroups(self):
+        """
+        Set up some permission groups.
+        view_all is the mandatory group for anyone with elevated access.
+        """
+        membership_admin_permissions = [
+            "add_person",
+            "view_person",
+            "add_membership",
+            "change_membership",
+            "delete_membership",
+            "view_membership",
+            "add_organization",
+            "view_organization",
+            "add_comment",
+            "change_comment",
+            "delete_comment",
+            "view_comment",
+            "add_member",
+            "change_member",
+            "delete_member",
+            "view_member",
+            "add_membershiptask",
+            "change_membershiptask",
+            "delete_membershiptask",
+            "view_membershiptask",
+        ]
+        amy_admin_permissions = [
+            "add_tag",
+            "change_tag",
+            "delete_tag",
+            "view_tag",
+            "add_role",
+            "change_role",
+            "delete_role",
+            "view_role",
+            "add_badge",
+            "change_badge",
+            "delete_badge",
+            "view_badge",
+            "view_logentry",
+            "add_lesson",
+            "change_lesson",
+            "delete_lesson",
+            "view_lesson",
+            "add_knowledgedomain",
+            "change_knowledgedomain",
+            "delete_knowledgedomain",
+            "view_knowledgedomain",
+            "add_academiclevel",
+            "change_academiclevel",
+            "delete_academiclevel",
+            "view_academiclevel",
+            "add_computingexperiencelevel",
+            "change_computingexperiencelevel",
+            "delete_computingexperiencelevel",
+            "view_computingexperiencelevel",
+            "add_language",
+            "change_language",
+            "delete_language",
+            "view_language",
+            "add_trainingrequirement",
+            "change_trainingrequirement",
+            "delete_trainingrequirement",
+            "view_trainingrequirement",
+            "add_usersocialauth",
+            "change_usersocialauth",
+            "delete_usersocialauth",
+            "add_curriculum",
+            "change_curriculum",
+            "delete_curriculum",
+            "view_curriculum",
+            "add_site",
+            "change_site",
+            "delete_site",
+            "view_site",
+            "add_criterium",
+            "change_criterium",
+            "delete_criterium",
+            "view_criterium",
+            "add_continent",
+            "change_continent",
+            "delete_continent",
+            "view_continent",
+            "add_infosource",
+            "change_infosource",
+            "delete_infosource",
+            "view_infosource",
+            "add_datavariant",
+            "change_datavariant",
+            "delete_datavariant",
+            "view_datavariant",
+            "add_emailtemplate",
+            "change_emailtemplate",
+            "delete_emailtemplate",
+            "view_emailtemplate",
+            "add_trigger",
+            "change_trigger",
+            "delete_trigger",
+            "view_trigger",
+            "add_rqjob",
+            "change_rqjob",
+            "delete_rqjob",
+            "view_rqjob",
+            "add_memberrole",
+            "change_memberrole",
+            "delete_memberrole",
+            "view_memberrole",
+            "add_membershippersonrole",
+            "change_membershippersonrole",
+            "delete_membershippersonrole",
+            "view_membershippersonrole",
+            "add_term",
+            "change_term",
+            "delete_term",
+            "view_term",
+            "add_termoption",
+            "change_termoption",
+            "delete_termoption",
+            "view_termoption",
+            "add_communityroleinactivation",
+            "change_communityroleinactivation",
+            "delete_communityroleinactivation",
+            "view_communityroleinactivation",
+            "add_communityroleconfig",
+            "change_communityroleconfig",
+            "delete_communityroleconfig",
+            "view_communityroleconfig",
+        ]
+        workshop_admin_permissions = []
+
+        view_all = Group.objects.create(name="view_all")
+        view_all.permissions.set(
+            Permission.objects.filter(codename__startswith="view_")
+        )
+        membership_admins = Group.objects.create(name="membership_administrators")
+        membership_admins.permissions.set(
+            Permission.objects.filter(codename__in=membership_admin_permissions)
+        )
+        amy_admins = Group.objects.create(name="amy_administrators")
+        amy_admins.permissions.set(
+            Permission.objects.filter(codename__in=amy_admin_permissions)
+        )
+        workshop_admins = Group.objects.create(name="workshop_administrators")
+        workshop_admins.permissions.set(
+            Permission.objects.filter(codename__in=workshop_admin_permissions)
+        )
+
     def _setUpTags(self):
         """Set up tags (the same as in production database, minus some added
         via migrations)."""

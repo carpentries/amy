@@ -956,7 +956,7 @@ class Person(
     def is_admin(self):
         return self._is_admin()
 
-    ADMIN_GROUPS = ("administrators", "steering committee", "invoicing", "trainers")
+    ADMIN_GROUPS = ("view_all",)
 
     def _is_admin(self) -> bool:
         try:
