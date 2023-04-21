@@ -2,6 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, transaction
 from django_comments.models import Comment
 
+from consents.models import Consent
 from workshops.utils.consents import archive_least_recent_active_consents
 
 
@@ -131,7 +132,16 @@ def merge_objects(
                             integrity_errors.append(str(e))
 
             elif attr == "consent_set" and value == "most_recent":
+                # Special case: consents should be merge with a "most recent" strategy.
                 archive_least_recent_active_consents(object_a, object_b, base_obj)
+
+                # Reassign consents to the base object
+                try:
+                    Consent.objects.active().filter(
+                        person__in=[object_a, object_b]
+                    ).update(person=base_obj)
+                except IntegrityError as e:
+                    integrity_errors.append(str(e))
 
         if "comments" in choices:
             value = choices["comments"]
