@@ -9,7 +9,6 @@ def archive_least_recent_active_consents(object_a, object_b, base_obj):
     """
     There is a unique database constraint on consents that only allows
     (person, term) when archived_at is null.
-
     This method archives one of the two active terms so
     that the combine merge method will be successful.
     """
