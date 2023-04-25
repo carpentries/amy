@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        package: ["lighthouse", "pa11y"]
+        package: ["pa11y"]
       fail-fast: false # don't cancel lighthouse job if pa11y fails, and vice versa
 
     services:
@@ -113,6 +113,13 @@ jobs:
       - name: Start server in background
         run: |
           pipenv run make serve &
+        if: matrix.package == 'pa11y'
+
+      - name: Run single pa11y test
+        run: |
+          chrome --version
+          npm install -g pa11y
+          pa11y --config pa11y-single-test.json -d http://127.0.0.1:8000/dashboard/admin/
         if: matrix.package == 'pa11y'
 
       - name: Run pa11y
