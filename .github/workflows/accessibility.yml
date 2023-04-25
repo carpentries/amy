@@ -91,18 +91,14 @@ jobs:
           AMY_DATABASE_PASSWORD: postgres
 
       - name: Set up Chromium
+        id: setup-chrome
         uses: browser-actions/setup-chrome@v1
         with:
-          chrome-version: 999338
-
-      - name: Get Chromium location
-        id: chromium-location
-        run: |
-          echo "CHROMIUM_PATH=$(which chromium)" >> $GITHUB_OUTPUT
+          version: latest
 
       - name: run Lighthouse CI
         run: |
-          npm install -g @lhci/cli@0.11.x 
+          npm install -g @lhci/cli@0.12.x 
           npm install -g puppeteer
           lhci autorun
         env:
@@ -111,7 +107,7 @@ jobs:
           AMY_DATABASE_NAME: test_amy
           AMY_DATABASE_USER: postgres
           AMY_DATABASE_PASSWORD: postgres
-          CHROME_PATH: /opt/hostedtoolcache/chromium/999338/x64/chrome
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         if: matrix.package == 'lighthouse'
 
       - name: Start server in background
@@ -121,6 +117,7 @@ jobs:
 
       - name: Run pa11y
         run: |
+          chrome --version
           npm install -g pa11y-ci pa11y-ci-reporter-html
           pa11y-ci
         if: matrix.package == 'pa11y'

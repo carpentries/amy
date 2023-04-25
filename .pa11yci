@@ -34,7 +34,7 @@
             ]
         ],
         "chromeLaunchConfig": {
-            "executablePath": "/opt/hostedtoolcache/chromium/999338/x64/chrome",
+            "executablePath": "chrome",
             "ignoreHTTPSErrors": false
         },
         "useIncognitoBrowserContext": false
