@@ -4,14 +4,13 @@
         {
             "url": "http://127.0.0.1:8000/dashboard/admin/",
             "actions": [
-                "wait for path to be /account/login/",
                 "wait for element #id_username to be visible",
                 "set field #id_username to admin",
                 "set field #id_password to admin",
                 "click element input[type='submit']",
                 "wait for path to not be /account/login/"
             ],
-            "timeout": 60000
+            "timeout": 30000
         },
         {
             "url": "http://127.0.0.1:8000/workshops/events/",
