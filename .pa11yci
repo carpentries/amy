@@ -2,7 +2,7 @@
     "urls": [
         "http://127.0.0.1:8000/account/login/",
         {
-            "url": "http://127.0.0.1:8000/dashboard/admin/",
+            "url": "http://127.0.0.1:8000/account/login/",
             "actions": [
                 "wait for element #id_username to be visible",
                 "set field #id_username to admin",
@@ -12,6 +12,7 @@
             ],
             "timeout": 30000
         },
+        "http://127.0.0.1:8000/dashboard/admin",
         {
             "url": "http://127.0.0.1:8000/workshops/events/",
             "actions": [
