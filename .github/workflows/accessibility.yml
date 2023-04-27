@@ -19,6 +19,7 @@ jobs:
       AMY_DATABASE_NAME: test_amy
       AMY_DATABASE_USER: postgres
       AMY_DATABASE_PASSWORD: postgres  
+      AMY_INSTRUCTOR_RECRUITMENT_ENABLED: True
 
     services:
       postgres:

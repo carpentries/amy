@@ -13,12 +13,52 @@
                 "wait for element table to be visible"
             ]
         },
+        "http://127.0.0.1:8000/communityroles/role/1/edit",
+        "http://127.0.0.1:8000/dashboard/instructor/autoupdate_profile/",
+        "http://127.0.0.1:8000/dashboard/instructor/",
+        "http://127.0.0.1:8000/dashboard/admin/search",
+        "http://127.0.0.1:8000/dashboard/instructor/training_progress/",
+        "http://127.0.0.1:8000/dashboard/instructor/teaching_opportunities/",
+        "http://127.0.0.1:8000/forms/workshop",
+        {
+            "url": "http://127.0.0.1:8000/requests/workshop_requests",
+            "actions": [
+                "wait for element table to be visible"
+            ]
+        },
+        "http://127.0.0.1:8000/requests/selforganised_submission/1",
+        "http://127.0.0.1:8000/requests/training_request/1",
+        "http://127.0.0.1:8000/requests/workshop_request/1/",
+        "http://127.0.0.1:8000/requests/workshop_request/1/edit/",
+        "http://127.0.0.1:8000/requests/workshop_request/1/accept_event/",
+        "http://127.0.0.1:8000/fiscal/membership/1/members/",
+        "http://127.0.0.1:8000/recruitment/process/1/add-signup",
+        "http://127.0.0.1:8000/recruitment/processes/",
+        {
+            "url": "http://127.0.0.1:8000/trainings/trainees/",
+            "actions": [
+                "wait for element table to be visible"
+            ]
+        },
         {
             "url": "http://127.0.0.1:8000/workshops/events/",
             "actions": [
                 "wait for element table to be visible"
             ]
-        }
+        },
+        {
+            "url": "http://127.0.0.1:8000/workshops/persons/",
+            "actions": [
+                "wait for element table to be visible"
+            ]
+        },
+        "http://127.0.0.1:8000/workshops/log/",
+        "http://127.0.0.1:8000/workshops/events/metadata_changed/",
+        "http://127.0.0.1:8000/workshops/person/1/",
+        "http://127.0.0.1:8000/workshops/person/1/archive/",
+        "http://127.0.0.1:8000/workshops/persons/add/",
+        "http://127.0.0.1:8000/workshops/persons/merge/?person_a=2&person_b=3",
+        "http://127.0.0.1:8000/workshops/task/1/"
     ],
     "defaults": {
         "runners": [
