@@ -13,6 +13,12 @@ jobs:
         python-version: ["3.11"]
         package: ["pa11y"]
       fail-fast: false # don't cancel lighthouse job if pa11y fails, and vice versa
+    env:
+      AMY_DATABASE_HOST: localhost
+      AMY_DATABASE_PORT: 5432
+      AMY_DATABASE_NAME: test_amy
+      AMY_DATABASE_USER: postgres
+      AMY_DATABASE_PASSWORD: postgres  
 
     services:
       postgres:
@@ -66,12 +72,6 @@ jobs:
           if [[ $? != "0" ]]; then
             exit 1;
           fi;
-        env:
-          AMY_DATABASE_HOST: localhost
-          AMY_DATABASE_PORT: 5432
-          AMY_DATABASE_NAME: test_amy
-          AMY_DATABASE_USER: postgres
-          AMY_DATABASE_PASSWORD: postgres
 
       - name: Collect static files
         run: |
@@ -83,12 +83,6 @@ jobs:
       - name: Set up dev database
         run: |
           echo "yes" | pipenv run make dev_database
-        env:
-          AMY_DATABASE_HOST: localhost
-          AMY_DATABASE_PORT: 5432
-          AMY_DATABASE_NAME: test_amy
-          AMY_DATABASE_USER: postgres
-          AMY_DATABASE_PASSWORD: postgres
 
       - name: Set up Chromium
         id: setup-chrome
@@ -102,11 +96,6 @@ jobs:
           npm install -g puppeteer
           lhci autorun
         env:
-          AMY_DATABASE_HOST: localhost
-          AMY_DATABASE_PORT: 5432
-          AMY_DATABASE_NAME: test_amy
-          AMY_DATABASE_USER: postgres
-          AMY_DATABASE_PASSWORD: postgres
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         if: matrix.package == 'lighthouse'
 
@@ -128,7 +117,7 @@ jobs:
         run: |
           chrome --version
           npm install -g pa11y
-          pa11y --config pa11y-single-test.json -d http://127.0.0.1:8000/account/login
+          pa11y --config pa11y-single-test.json -d http://127.0.0.1:8000/dashboard/admin
         if: matrix.package == 'pa11y'
 
       - name: Run pa11y
