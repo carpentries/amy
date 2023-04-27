@@ -1,18 +1,18 @@
 {
     "urls": [
         "http://127.0.0.1:8000/account/login/",
+        "http://127.0.0.1:8000/account/password_reset",
         {
-            "url": "http://127.0.0.1:8000/account/login/",
+            "url": "http://127.0.0.1:8000/dashboard/admin/",
             "actions": [
-                "wait for element #id_username to be visible",
+                "wait for path to be /account/login/",
                 "set field #id_username to admin",
                 "set field #id_password to admin",
                 "click element input[type='submit']",
-                "wait for path to not be /account/login/"
-            ],
-            "timeout": 30000
+                "wait for path to not be /account/login/",
+                "wait for element table to be visible"
+            ]
         },
-        "http://127.0.0.1:8000/dashboard/admin",
         {
             "url": "http://127.0.0.1:8000/workshops/events/",
             "actions": [
