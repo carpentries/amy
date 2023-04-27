@@ -178,7 +178,42 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
     $ pipenv run python manage.py rqworker
     $ pipenv run python manage.py rqscheduler
     ```
+## Run accessibility tests locally
 
+Accessibility tests are run with [Google Lighthouse](https://github.com/GoogleChrome/lighthouse) and [Pa11y](https://pa11y.org) as part of the CI process. It's sometimes helpful to run these programs locally to debug or test changes.
+
+For both Lighthouse and pa11y tests, Google Chrome or Chromium must be installed. On Ubuntu:
+
+```shell
+sudo apt install google-chrome-stable
+```
+
+### Lighthouse
+
+Uses [lighthouse-ci](https://github.com/GoogleChrome/lighthouse-ci) with configuration defined in [lighthouserc.js](./lighthouserc.js).
+
+Ensure Chrome is on the path by setting the `CHROME_PATH` environment variable.
+
+```shell
+npm install -g @lhci/cli@0.12.x puppeteer
+export CHROME_PATH=/path/to/chrome
+lhci autorun
+```
+
+Lighthouse will exit with a success code even if there are accessibility failures. Reports are uploaded to temporary storage on the Lighthouse website, the URLs will appear in the output of `lhci autorun`.
+
+### Pa11y
+
+Uses [pa11y-ci](https://github.com/pa11y/pa11y-ci) with configuration defined in [.pa11yci](./.pa11yci).
+
+Change `executablePath` in .pa11yci to point to your Chrome installation.
+
+```shell
+npm install -g pa11y-ci pa11y-ci-reporter-html
+pa11y-ci
+```
+
+Pa11y will exit with a failure code if accessibility failures are found. Reports are stored in the `pa11y-ci-report/` folder.
 
 [bootstrap]: https://getbootstrap.com/
 [contact-address]: mailto:team@carpentries.org
