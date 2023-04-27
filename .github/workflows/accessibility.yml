@@ -112,7 +112,14 @@ jobs:
 
       - name: Start server in background
         run: |
-          pipenv run make serve &
+          pipenv run gunicorn \
+            --workers=4 \
+            --bind=127.0.0.1:8000 \
+            --access-logfile access.log \
+            --error-logfile error.log \
+            --reload \
+            --env DJANGO_SETTINGS_MODULE=config.settings \
+            config.wsgi
         if: matrix.package == 'pa11y'
 
       - name: Run single pa11y test
@@ -134,4 +141,13 @@ jobs:
         with:
           name: pa11y-ci-report
           path: pa11y-ci-report/
+        if: failure() && matrix.package == 'pa11y'
+
+      - name: Upload server logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: amy-logs
+          path: |
+            access.log
+            error.log
         if: failure() && matrix.package == 'pa11y'
