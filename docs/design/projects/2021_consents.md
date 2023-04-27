@@ -7,7 +7,7 @@ consents for the users.
 
 ## Previous design
 
-Consents were stored in the Person model.
+Consents were stored in the Person model as (in most cases) boolean flags with `true` values meaning that a person has consented to a given term.
 
 ## New design
 
