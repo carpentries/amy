@@ -128,7 +128,7 @@ jobs:
         run: |
           chrome --version
           npm install -g pa11y
-          pa11y --config pa11y-single-test.json -d http://127.0.0.1:8000/dashboard/admin/
+          pa11y --config pa11y-single-test.json -d http://127.0.0.1:8000/account/login
         if: matrix.package == 'pa11y'
 
       - name: Run pa11y
