@@ -28,7 +28,20 @@
         },
         "http://127.0.0.1:8000/requests/selforganised_submission/1",
         "http://127.0.0.1:8000/requests/training_request/1",
-        "http://127.0.0.1:8000/requests/workshop_request/1/",
+        {
+            "url": "http://127.0.0.1:8000/requests/workshop_request/1/",
+            "actions": [
+                "navigate to http://127.0.0.1:8000/requests/workshop_request/1/set_state/pending/",
+                "wait for path to be /requests/workshop_request/1/"
+            ]
+        },
+        {
+            "url": "http://127.0.0.1:8000/requests/workshop_request/2/",
+            "actions": [
+                "navigate to http://127.0.0.1:8000/requests/workshop_request/2/set_state/discarded/",
+                "wait for path to be /requests/workshop_request/2/"
+            ]
+        },
         "http://127.0.0.1:8000/requests/workshop_request/1/edit/",
         "http://127.0.0.1:8000/requests/workshop_request/1/accept_event/",
         "http://127.0.0.1:8000/fiscal/membership/1/members/",
@@ -55,7 +68,6 @@
         "http://127.0.0.1:8000/workshops/log/",
         "http://127.0.0.1:8000/workshops/events/metadata_changed/",
         "http://127.0.0.1:8000/workshops/person/1/",
-        "http://127.0.0.1:8000/workshops/person/1/archive/",
         "http://127.0.0.1:8000/workshops/persons/add/",
         "http://127.0.0.1:8000/workshops/persons/merge/?person_a=2&person_b=3",
         "http://127.0.0.1:8000/workshops/task/1/"

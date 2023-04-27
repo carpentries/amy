@@ -46,6 +46,9 @@ jobs:
           - 6379:6379
 
     steps:
+
+      # Database setup
+
       - name: Check out code
         uses: actions/checkout@v3
 
@@ -91,6 +94,8 @@ jobs:
         with:
           chrome-version: latest
 
+      # Lighthouse
+
       - name: run Lighthouse CI
         run: |
           npm install -g @lhci/cli@0.12.x 
@@ -100,6 +105,15 @@ jobs:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         if: matrix.package == 'lighthouse'
 
+      - name: Upload Lighthouse test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-ci-report
+          path: lighthouse-ci-report/
+        if: failure() && matrix.package == 'lighthouse'
+
+      # Pa11y
+      
       - name: Start server in background
         run: |
           pipenv run make serve &

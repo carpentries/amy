@@ -200,7 +200,7 @@ export CHROME_PATH=/path/to/chrome
 lhci autorun
 ```
 
-Lighthouse will exit with a success code even if there are accessibility failures. Reports are uploaded to temporary storage on the Lighthouse website, the URLs will appear in the output of `lhci autorun`.
+Lighthouse will exit with a failure code if accessibility failures are found. Reports are stored in the `lighthouse-ci-report/` folder.
 
 ### Pa11y
 
