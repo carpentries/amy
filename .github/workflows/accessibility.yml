@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        package: ["pa11y"]
+        package: ["lighthouse", "pa11y"]
       fail-fast: false # don't cancel lighthouse job if pa11y fails, and vice versa
     env:
       AMY_DATABASE_HOST: localhost
@@ -88,7 +88,7 @@ jobs:
         id: setup-chrome
         uses: browser-actions/setup-chrome@v1
         with:
-          version: latest
+          chrome-version: latest
 
       - name: run Lighthouse CI
         run: |
@@ -101,21 +101,11 @@ jobs:
 
       - name: Start server in background
         run: |
-          pipenv run gunicorn \
-            --workers=4 \
-            --bind=127.0.0.1:8000 \
-            --access-logfile access.log \
-            --error-logfile error.log \
-            --capture-output \
-            --log-level debug \
-            --reload \
-            --env DJANGO_SETTINGS_MODULE=config.settings \
-            config.wsgi &
+          pipenv run make serve &
         if: matrix.package == 'pa11y'
 
       - name: Run pa11y
         run: |
-          chrome --version
           npm install -g pa11y-ci pa11y-ci-reporter-html
           pa11y-ci
         if: matrix.package == 'pa11y'
@@ -125,13 +115,4 @@ jobs:
         with:
           name: pa11y-ci-report
           path: pa11y-ci-report/
-        if: failure() && matrix.package == 'pa11y'
-
-      - name: Upload server logs
-        uses: actions/upload-artifact@v3
-        with:
-          name: amy-logs
-          path: |
-            access.log
-            error.log
         if: failure() && matrix.package == 'pa11y'

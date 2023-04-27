@@ -7,6 +7,7 @@ module.exports = {
             ],
             startServerCommand: 'pipenv run make serve',
             puppeteerScript: 'puppeteer-script.js',
+            numberOfRuns: 1
         },
         upload: {
             target: 'temporary-public-storage'
