@@ -19,7 +19,7 @@ module.exports = {
                 'http://127.0.0.1:8000/requests/workshop_request/1/edit/',
                 'http://127.0.0.1:8000/requests/workshop_request/1/accept_event/',
                 'http://127.0.0.1:8000/fiscal/membership/1/members/',
-                'http://127.0.0.1:8000/recruitment/process/1/add-signup/',
+                'http://127.0.0.1:8000/recruitment/process/1/add-signup',
                 'http://127.0.0.1:8000/recruitment/processes/',
                 'http://127.0.0.1:8000/trainings/trainees/',
                 'http://127.0.0.1:8000/workshops/events/',

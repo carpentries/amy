@@ -50,5 +50,5 @@ site/
 
 # accessibility packages
 .lighthouseci
-lighthouse-ci-results
+lighthouse-ci-report
 pa11y-ci-report
