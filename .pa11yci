@@ -2,6 +2,8 @@
     "urls": [
         "http://127.0.0.1:8000/account/login/",
         "http://127.0.0.1:8000/account/password_reset",
+        "http://127.0.0.1:8000/account/reset/done/",
+        "http://127.0.0.1:8000/account/password_reset/done/",
         {
             "url": "http://127.0.0.1:8000/dashboard/admin/",
             "actions": [
@@ -13,21 +15,51 @@
                 "wait for element table to be visible"
             ]
         },
+        "http://127.0.0.1:8000/communityroles/role/1/",
         "http://127.0.0.1:8000/communityroles/role/1/edit",
         "http://127.0.0.1:8000/dashboard/instructor/autoupdate_profile/",
         "http://127.0.0.1:8000/dashboard/instructor/",
         "http://127.0.0.1:8000/dashboard/admin/search",
         "http://127.0.0.1:8000/dashboard/instructor/training_progress/",
         "http://127.0.0.1:8000/dashboard/instructor/teaching_opportunities/",
+        "http://127.0.0.1:8000/forms/self-organized/",
+        "http://127.0.0.1:8000/forms/self-organized/confirm/",
+        "http://127.0.0.1:8000/workshops/memberships/",
+        "http://127.0.0.1:8000/workshops/organizations/",
+        "http://127.0.0.1:8000/forms/request_training/confirm/",
+        "http://127.0.0.1:8000/forms/request_training/",
+        "http://127.0.0.1:8000/forms/inquiry/confirm/",
+        "http://127.0.0.1:8000/forms/inquiry/",
         "http://127.0.0.1:8000/forms/workshop",
+        "http://127.0.0.1:8000/forms/request_workshop/confirm/",
+        "http://127.0.0.1:8000/forms/request_workshop/",
+        "http://127.0.0.1:8000/requests/selforganised_submissions/",
+        "http://127.0.0.1:8000/requests/workshop_inquiries/",
         {
             "url": "http://127.0.0.1:8000/requests/workshop_requests",
             "actions": [
                 "wait for element table to be visible"
             ]
         },
-        "http://127.0.0.1:8000/requests/selforganised_submission/1",
+        "http://127.0.0.1:8000/requests/bulk_upload_training_request_scores/",
+        {
+            "url": "http://127.0.0.1:8000/requests/selforganised_submission/1/",
+            "actions": [
+                "navigate to http://127.0.0.1:8000/requests/selforganised_submission/1/set_state/pending/",
+                "wait for path to be /requests/selforganised_submission/1/"
+            ]
+        },
+        "http://127.0.0.1:8000/requests/selforganised_submission/1/accept_event/",
         "http://127.0.0.1:8000/requests/training_request/1",
+        "http://127.0.0.1:8000/requests/training_requests/merge?trainingrequest_a=1&trainingrequest_b=2",
+        {
+            "url": "http://127.0.0.1:8000/requests/workshop_inquiry/1/",
+            "actions": [
+                "navigate to http://127.0.0.1:8000/requests/workshop_inquiry/1/set_state/pending/",
+                "wait for path to be /requests/workshop_inquiry/1/"
+            ]
+        },
+        "http://127.0.0.1:8000/requests/workshop_inquiry/1/accept_event/",
         {
             "url": "http://127.0.0.1:8000/requests/workshop_request/1/",
             "actions": [
@@ -44,11 +76,33 @@
         },
         "http://127.0.0.1:8000/requests/workshop_request/1/edit/",
         "http://127.0.0.1:8000/requests/workshop_request/1/accept_event/",
+        "http://127.0.0.1:8000/fiscal/membership/1/",
         "http://127.0.0.1:8000/fiscal/membership/1/members/",
+        "http://127.0.0.1:8000/recruitment/process/add/1/",
         "http://127.0.0.1:8000/recruitment/process/1/add-signup",
+        "http://127.0.0.1:8000/recruitment/process/1/",
         "http://127.0.0.1:8000/recruitment/processes/",
+        "http://127.0.0.1:8000/reports/duplicate_persons/",
+        "http://127.0.0.1:8000/reports/duplicate_training_requests/",
+        "http://127.0.0.1:8000/reports/instructor_issues/",
+        "http://127.0.0.1:8000/reports/membership_trainings_stats/",
+        "http://127.0.0.1:8000/reports/workshop_issues/",
         {
             "url": "http://127.0.0.1:8000/trainings/trainees/",
+            "actions": [
+                "wait for element table to be visible"
+            ]
+        },
+        {
+            "url": "http://127.0.0.1:8000/trainings/trainings/",
+            "actions": [
+                "wait for element table to be visible"
+            ]
+        },
+        "http://127.0.0.1:8000/trainings/training_progress/1/edit/",
+        "http://127.0.0.1:8000/workshops/airport/ALC/",
+        {
+            "url": "http://127.0.0.1:8000/workshops/badges/",
             "actions": [
                 "wait for element table to be visible"
             ]
@@ -65,12 +119,26 @@
                 "wait for element table to be visible"
             ]
         },
+        {
+            "url": "http://127.0.0.1:8000/workshops/tasks/",
+            "actions": [
+                "wait for element table to be visible"
+            ]
+        },
+        "http://127.0.0.1:8000/workshops/badge/instructor/",
         "http://127.0.0.1:8000/workshops/log/",
+        "http://127.0.0.1:8000/workshops/events/add",
+        "http://127.0.0.1:8000/workshops/events/merge/?event_a=1&event_b=2",
         "http://127.0.0.1:8000/workshops/events/metadata_changed/",
-        "http://127.0.0.1:8000/workshops/person/1/",
+        "http://127.0.0.1:8000/workshops/version/1/",
+        "http://127.0.0.1:8000/workshops/persons/bulk_upload/",
         "http://127.0.0.1:8000/workshops/persons/add/",
         "http://127.0.0.1:8000/workshops/persons/merge/?person_a=2&person_b=3",
-        "http://127.0.0.1:8000/workshops/task/1/"
+        "http://127.0.0.1:8000/workshops/person/1/",
+        "http://127.0.0.1:8000/workshops/person/1/edit/",
+        "http://127.0.0.1:8000/workshops/task/1/",
+        "http://127.0.0.1:8000/workshops/workshop_staff/",
+        "http://127.0.0.1:8000/account/logout/"
     ],
     "defaults": {
         "runners": [

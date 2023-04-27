@@ -180,7 +180,7 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
     ```
 ## Run accessibility tests locally
 
-Accessibility tests are run with [Google Lighthouse](https://github.com/GoogleChrome/lighthouse) and [Pa11y](https://pa11y.org) as part of the CI process. It's sometimes helpful to run these programs locally to debug or test changes.
+Accessibility tests are run with [Google Lighthouse](https://github.com/GoogleChrome/lighthouse) and [Pa11y](https://pa11y.org) as part of the CI process. It's sometimes helpful to run these programs locally to debug or test changes. For more information on the tests, see the [accessibility tests documentation](docs/accessibility_testing.md)
 
 For both Lighthouse and pa11y tests, Google Chrome or Chromium must be installed. On Ubuntu:
 
