@@ -117,6 +117,8 @@ jobs:
             --bind=127.0.0.1:8000 \
             --access-logfile access.log \
             --error-logfile error.log \
+            --capture-output \
+            --log-level debug \
             --reload \
             --env DJANGO_SETTINGS_MODULE=config.settings \
             config.wsgi &
