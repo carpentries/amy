@@ -119,7 +119,7 @@ jobs:
             --error-logfile error.log \
             --reload \
             --env DJANGO_SETTINGS_MODULE=config.settings \
-            config.wsgi
+            config.wsgi &
         if: matrix.package == 'pa11y'
 
       - name: Run single pa11y test
