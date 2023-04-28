@@ -54,8 +54,8 @@ def archive_least_recent_active_training_request_consents(
     object_a: TrainingRequest, object_b: TrainingRequest, base_obj: TrainingRequest
 ):
     """
-    There is a unique database constraint on consents that only allows
-    (person, term) when archived_at is null.
+    There is a unique database constraint on training request consents that only allows
+    (training_request, term) when archived_at is null.
     This method archives one of the two active terms so
     that the combine merge method will be successful.
     """
