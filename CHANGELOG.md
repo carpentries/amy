@@ -1,6 +1,6 @@
 # Changelog
 
-All release notes prior to version v4.1 are kept in `docs/releases/` directory.
+All release notes prior to version v4.0.5 are kept in `docs/releases/` directory.
 
 To add changelog for a given release version use `docs/generate_changelog.py` script,
 e.g.:

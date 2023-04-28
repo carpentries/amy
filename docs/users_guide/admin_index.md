@@ -135,7 +135,9 @@ AMY asks all users to consent or agree to the following:
 * **Do you consent to publish your profile on The Carpentries website?**
 * **Do you consent to have your name or identity associated with lesson publications?**
 
-By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in a separate tab in the Person view. 
+By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.
+
+Some of the questions above are also asked during the instructor training application. If a Person record is created from a training request, the consents from that training request will be carried across to the Person.
 
 ### Adding a New Airport
 
@@ -490,7 +492,7 @@ Once you select "Merge Persons" or "Merge Events" you will be taken to a screen 
 
 ![AMY select Persons to merge](images/select_merge_persons.png)
 
-This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values).  Click "Submit" on the bottom of this screen to complete the merge process.
+This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values). For consents, no choice is provided, as the most recently provided consents will always be kept and older consents will be archived. Click "Submit" on the bottom of this screen to complete the merge process.
 
 ![AMY merge Persons](images/merge_persons.png)
 
