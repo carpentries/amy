@@ -399,7 +399,6 @@ class TestEventViews(TestBase):
             )
 
     def test_events_view_paginated(self):
-
         events_url = reverse("all_events")
         events_url += "?items_per_page=10"
         response = self.client.get(events_url)
@@ -410,7 +409,6 @@ class TestEventViews(TestBase):
         assert len(view_events) == 10
 
     def test_can_request_all_events(self):
-
         events_url = reverse("all_events")
         events_url += "?items_per_page=all"
         response = self.client.get(events_url)
@@ -422,7 +420,6 @@ class TestEventViews(TestBase):
         self.assertCountEqual(view_events, all_events)
 
     def test_invalid_items_per_page_gives_default_pagination(self):
-
         events_url = reverse("all_events")
         events_url += "?items_per_page=not_an_integer"
         response = self.client.get(events_url)
@@ -433,7 +430,6 @@ class TestEventViews(TestBase):
         assert len(view_events) < 50
 
     def test_non_integer_page_no_returns_first_page(self):
-
         events_url = reverse("all_events")
         events_url += "?items_per_page=10&page=not_an_integer"
         response = self.client.get(events_url)
@@ -448,7 +444,6 @@ class TestEventViews(TestBase):
         assert view_events.number == 1
 
     def test_page_no_too_large_returns_last_page(self):
-
         events_url = reverse("all_events")
         events_url += "?items_per_page=10&page=999"
         response = self.client.get(events_url)

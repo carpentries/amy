@@ -2133,7 +2133,10 @@ class TrainingRequest(
         ("courses", "Primary instructor for a full course"),
         ("other", "Other:"),
     )
-    (previous_experience, previous_experience_other,) = choice_field_with_other(
+    (
+        previous_experience,
+        previous_experience_other,
+    ) = choice_field_with_other(
         choices=PREVIOUS_EXPERIENCE_CHOICES,
         default="none",
         verbose_name="Previous experience in teaching",
