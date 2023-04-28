@@ -133,7 +133,6 @@ class TestTask(TestBase):
         self._setUpUsersAndLogin()
 
     def test_task_detail_view_reachable_from_event_person_and_role_of_task(self):
-
         correct_task = self.fixtures["test_task_1"]
         response = self.client.get(reverse("task_details", args=[str(correct_task.id)]))
         assert response.context["task"].pk == correct_task.pk

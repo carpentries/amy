@@ -19,7 +19,6 @@ def human_daterange(
     nothing_common_left: str = "%b %d, %Y",
     nothing_common_right: str = "%b %d, %Y",
 ) -> str:
-
     if not date_left and not date_right:
         return f"{no_date_left}{separator}{no_date_right}"
 
