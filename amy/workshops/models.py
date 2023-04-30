@@ -16,13 +16,14 @@ from django.db.models import (
     Count,
     F,
     IntegerField,
+    Manager,
     PositiveIntegerField,
     Q,
     QuerySet,
     Sum,
     When,
 )
-from django.db.models.functions import Greatest
+from django.db.models.functions import Coalesce, Greatest
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -131,6 +132,46 @@ class Member(models.Model):
         ]
 
 
+class MembershipManager(models.Manager):
+    def annotate_with_seat_usage(self):
+        return self.get_queryset().annotate(
+            instructor_training_seats_total=(
+                # Public
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+                # Inhouse
+                + F("inhouse_instructor_training_seats")
+                + F("additional_inhouse_instructor_training_seats")
+                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+            ),
+            instructor_training_seats_utilized=(
+                Count("task", filter=Q(task__role__name="learner"))
+            ),
+            instructor_training_seats_remaining=(
+                # Public
+                F("public_instructor_training_seats")
+                + F("additional_public_instructor_training_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
+                - Count(
+                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
+                )
+                - Coalesce("public_instructor_training_seats_rolled_over", 0)
+                # Inhouse
+                + F("inhouse_instructor_training_seats")
+                + F("additional_inhouse_instructor_training_seats")
+                + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
+                - Count(
+                    "task",
+                    filter=Q(task__role__name="learner", task__seat_public=False),
+                )
+                - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
+            ),
+        )
+
+
 @reversion.register
 class Membership(models.Model):
     """Represent a details of Organization's membership."""
@@ -144,6 +185,7 @@ class Membership(models.Model):
         ("silver", "Silver"),
         ("gold", "Gold"),
         ("platinum", "Platinum"),
+        ("titanium", "Titanium"),
         ("alacarte", "A la carte"),
     )
     variant = models.CharField(
@@ -301,6 +343,8 @@ class Membership(models.Model):
         related_name="rolled_from_membership",
         null=True,
     )
+
+    objects = MembershipManager()
 
     def __str__(self):
         dates = human_daterange(self.agreement_start, self.agreement_end)
@@ -688,7 +732,6 @@ class PersonManager(BaseUserManager):
 class Person(
     AbstractBaseUser,
     PermissionsMixin,
-    DataPrivacyAgreementMixin,
     CreatedUpdatedArchivedMixin,
     GenderMixin,
     RQJobsMixin,
@@ -731,19 +774,6 @@ class Person(
         blank=True,
         verbose_name="Email address",
         help_text="Primary email address, used for communication and as a login.",
-    )
-    may_contact = models.BooleanField(
-        default=True,
-        help_text="Allow to contact from The Carpentries according to the "
-        '<a href="https://docs.carpentries.org/topic_folders/policies/privacy.html" '
-        'target="_blank" rel="noreferrer">Privacy Policy</a>.',
-    )
-    publish_profile = models.BooleanField(
-        default=False,
-        verbose_name="Consent to making profile public",
-        help_text="Allow to post your name and any public profile you list "
-        "(website, Twitter) on our instructors website. Emails will"
-        " not be posted.",
     )
     country = CountryField(
         null=False,
@@ -831,27 +861,6 @@ class Person(
         verbose_name="ORCID ID",
         blank=True,
         default="",
-    )
-
-    LESSON_PUBLICATION_CHOICES = (
-        ("yes-profile", "Yes, and use the name associated with my profile"),
-        ("yes-orcid", "Yes, and use the name associated with my ORCID profile"),
-        ("yes-github", "Yes, and only use my GitHub handle"),
-        ("no", "No"),
-        ("unset", "Unset"),
-    )
-    lesson_publication_consent = models.CharField(
-        max_length=STR_MED,
-        choices=LESSON_PUBLICATION_CHOICES,
-        blank=True,
-        default="unset",
-        null=False,
-        verbose_name="Do you consent to have your name or identity associated "
-        "with lesson publications?",
-        help_text="When we publish our lessons, we like to include everyone "
-        "who has contributed via pull request as an author. If you "
-        "do make any contributions, would you like to be included "
-        "as an author when we publish the lesson?",
     )
 
     duplication_reviewed_on = models.DateTimeField(
@@ -1034,10 +1043,6 @@ class Person(
         self.secondary_email = ""
         self.gender = GenderMixin.UNDISCLOSED
         self.gender_other = ""
-        # TODO(lb): Remove references to agreements when Consents project is launched
-        self.data_privacy_agreement = False
-        self.may_contact = False
-        self.publish_profile = False
         # Remove permissions
         self.is_superuser = False
         self.groups.clear()
@@ -1051,7 +1056,8 @@ class Person(
         versions = Version.objects.get_for_object(self)
         versions.delete()
 
-        # Send a signal that the profile has been archived
+        # Send a signal that the profile has been archived. It archives all consents
+        # for a person.
         person_archived_signal.send(
             sender=self.__class__,
             person=self,
@@ -1061,7 +1067,7 @@ class Person(
 # ------------------------------------------------------------
 
 
-class TagQuerySet(models.query.QuerySet):
+class TagQuerySet(QuerySet):
     def main_tags(self):
         names = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
         return self.filter(name__in=names)
@@ -1090,7 +1096,7 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
-    objects = TagQuerySet.as_manager()
+    objects = Manager.from_queryset(TagQuerySet)()
 
     class Meta:
         ordering = ["priority", "name"]
@@ -1124,7 +1130,7 @@ class Language(models.Model):
 # ------------------------------------------------------------
 
 
-class EventQuerySet(models.query.QuerySet):
+class EventQuerySet(QuerySet):
     """Handles finding past, ongoing and upcoming events"""
 
     def not_cancelled(self):
@@ -1497,7 +1503,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         help_text="Public workshops will show up in public Carpentries feeds.",
     )
 
-    objects = EventQuerySet.as_manager()
+    objects = Manager.from_queryset(EventQuerySet)()
 
     class Meta:
         ordering = ("-start",)
@@ -1545,20 +1551,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             # TypeError: self.url is None
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
-
-    @cached_property
-    def contacts(self):
-        return (
-            self.task_set.filter(
-                # we only want hosts, organizers and instructors
-                Q(role__name="host")
-                | Q(role__name="organizer")
-                | Q(role__name="instructor")
-            )
-            .filter(person__may_contact=True)
-            .exclude(Q(person__email="") | Q(person__email=None))
-            .values_list("person__email", flat=True)
-        )
 
     @cached_property
     def mailto(self):
@@ -1712,7 +1704,7 @@ class Task(RQJobsMixin, models.Model):
         return "{0}/{1}={2}".format(self.event, self.person, self.role)
 
     def get_absolute_url(self):
-        return reverse("task_details", kwargs={"task_id": self.id})
+        return reverse("task_details", kwargs={"task_id": self.pk})
 
     def clean(self):
         """Additional model validation."""
@@ -1798,7 +1790,7 @@ class Qualification(models.Model):
 # ------------------------------------------------------------
 
 
-class BadgeQuerySet(models.query.QuerySet):
+class BadgeQuerySet(QuerySet):
     """Custom QuerySet that provides easy way to get instructor badges
     (we use that a lot)."""
 
@@ -1832,7 +1824,7 @@ class Badge(models.Model):
     title = models.CharField(max_length=STR_MED)
     criteria = models.CharField(max_length=STR_LONG)
 
-    objects = BadgeQuerySet.as_manager()
+    objects = Manager.from_queryset(BadgeQuerySet)()
 
     def __str__(self):
         return self.title
@@ -1988,7 +1980,7 @@ class TrainingRequest(
     family = models.CharField(
         max_length=STR_LONG,
         verbose_name="Family name (surname)",
-        blank=False,
+        blank=True,
     )
 
     email = models.EmailField(
@@ -2089,9 +2081,7 @@ class TrainingRequest(
         max_length=STR_LONGEST,
         blank=True,
         default="",
-        verbose_name="If you are comfortable doing so, please share more "
-        "details. Your response is optional, and these details "
-        "will not impact your application's ranking.",
+        verbose_name="If you are comfortable doing so, please share more details.",
         help_text="This response is optional and doesn't impact your "
         "application's ranking.",
     )

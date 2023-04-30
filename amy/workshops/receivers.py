@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from django.http.request import HttpRequest
 
 # AMY server logger
-logger = logging.getLogger("amy.server_logs")
+logger = logging.getLogger("amy")
 
 
 # a receiver for "failed login attempt" signal

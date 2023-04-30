@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, ProtectedError, Q
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 import django_rq
@@ -19,6 +20,8 @@ from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import EmailTemplate, Trigger
+from consents.models import Term, TermOption, TrainingRequestConsent
+from consents.util import reconsent_for_term_option_type
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
     SelfOrganisedSubmissionFilter,
@@ -75,7 +78,7 @@ from workshops.utils.trainingrequest_upload import (
 from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete, redirect_with_next_support
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 
@@ -658,8 +661,11 @@ def all_trainingrequests(request):
 
 @transaction.atomic
 def _match_training_request_to_person(
-    request, training_request, create=False, person=None
-):
+    request: HttpRequest,
+    training_request: TrainingRequest,
+    person: Person,
+    create: bool = False,
+) -> bool:
     if create:
         try:
             training_request.person = Person.objects.create_user(
@@ -697,15 +703,10 @@ def _match_training_request_to_person(
         training_request.person.affiliation = training_request.affiliation
         training_request.person.domains.set(training_request.domains.all())
         training_request.person.occupation = (
-            training_request.get_occupation_display()
+            training_request.get_occupation_display()  # type: ignore
             if training_request.occupation
             else training_request.occupation_other
         )
-        training_request.person.data_privacy_agreement = (
-            training_request.data_privacy_agreement
-        )
-
-        training_request.person.may_contact = True
         training_request.person.is_active = True
 
         training_request.person.save()
@@ -714,7 +715,6 @@ def _match_training_request_to_person(
 
         messages.success(request, "Request matched with the person.")
 
-        return True
     except IntegrityError:
         # email or github not unique
         messages.warning(
@@ -725,6 +725,33 @@ def _match_training_request_to_person(
             "are not unique amongst person entries.",
         )
         return False
+
+    # Create new style consents based on the training request consents used in the
+    # training request form.
+    training_request_consents = TrainingRequestConsent.objects.filter(
+        training_request=training_request
+    ).select_related("term_option", "term")
+    for consent in training_request_consents:
+        try:
+            option_type = consent.term_option.option_type
+            reconsent_for_term_option_type(
+                term_key=consent.term.key,
+                term_option_type=option_type,
+                person=training_request.person,
+            )
+        except (Term.DoesNotExist, TermOption.DoesNotExist):
+            logger.warning(
+                f"Either Term {consent.term.key} or its term option was not found, "
+                "can't proceed."
+            )
+            messages.error(
+                request,
+                f"Error when setting person's consents. Term {consent.term.key} or "
+                "related term option may not exist.",
+            )
+            return False
+
+    return True
 
 
 @admin_required
@@ -738,7 +765,7 @@ def trainingrequest_details(request, pk):
             create = form.action == "create"
             person = form.cleaned_data["person"]
             ok = _match_training_request_to_person(
-                request, training_request=req, create=create, person=person
+                request, training_request=req, person=person, create=create
             )
             if ok:
                 return redirect_with_next_support(
@@ -775,10 +802,20 @@ def trainingrequest_details(request, pk):
             ).first()  # may return None
         form = MatchTrainingRequestForm(initial={"person": person})
 
+    TERM_SLUGS = ["may-contact", "privacy-policy", "public-profile"]
     context = {
         "title": "Training request #{}".format(req.pk),
         "req": req,
         "form": form,
+        "consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=req)
+        },
+        "consents_content": {
+            term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
+        },
     }
     return render(request, "requests/trainingrequest.html", context)
 
@@ -883,6 +920,8 @@ def trainingrequests_merge(request):
             difficult = (
                 "domains",
                 "previous_involvement",
+                "comments",
+                "trainingrequestconsent_set",
             )
 
             try:
@@ -913,6 +952,18 @@ def trainingrequests_merge(request):
         "obj_a": obj_a,
         "obj_b": obj_b,
         "form": form,
+        "obj_a_consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=obj_a)
+        },
+        "obj_b_consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=obj_b)
+        },
     }
     return render(request, "requests/trainingrequests_merge.html", context)
 
@@ -970,7 +1021,6 @@ def bulk_upload_training_request_scores_confirmation(request):
 
     if request.method == "POST":
         if request.POST.get("confirm", None) and not request.POST.get("cancel", None):
-
             errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
 
             if not errors:

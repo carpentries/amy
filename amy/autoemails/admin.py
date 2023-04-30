@@ -20,7 +20,7 @@ from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 from workshops.utils.access import admin_required
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 
 
@@ -94,7 +94,7 @@ class RQJobAdmin(admin.ModelAdmin):
     def action_refresh_state(self, request, queryset):
         counter = 0
         for rqjob in queryset:
-            status = check_status(rqjob.job_id)
+            status = check_status(rqjob.job_id, scheduler)
             if status is not None:
                 rqjob.status = status
                 rqjob.save()
@@ -156,7 +156,7 @@ class RQJobAdmin(admin.ModelAdmin):
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
             job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
             instance = job.instance
-            status = check_status(job)
+            status = check_status(job, scheduler)
             logger.debug(f"Job {rqjob.job_id} fetched")
 
         # the job may not exist anymore, then we can't retrieve any data

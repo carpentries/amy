@@ -1,6 +1,6 @@
 {% load navigation %}
 {% block navbar %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow {% if SITE_BANNER_STYLE != 'production' %}navbar-banner-displacement{% endif %}">
       <a class="navbar-brand" href="{% url 'admin-dashboard' %}">AMY</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -80,7 +80,7 @@
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
 
               <a class="dropdown-item" href="{% url 'person_details' user.id %}">Your profile</a>
-              <a class="dropdown-item" href="https://carpentries.github.io/amy/users_guide/" target="_blank" rel="noreferrer nofollow">Users Guide</a>
+              <a class="dropdown-item" href="https://carpentries.github.io/amy/users_guide/admin_index/" target="_blank" rel="noreferrer nofollow">Users Guide</a>
 
               <a class="dropdown-item" href="{% url 'api:export-person-data' %}?format=json">Download your data</a>
               <a class="dropdown-item" href="{% url 'person_password' user.id %}">Change password</a>

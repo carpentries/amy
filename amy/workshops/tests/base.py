@@ -1,5 +1,5 @@
 import datetime
-from typing import Iterable, Optional
+from typing import Iterable
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
@@ -210,7 +210,6 @@ class TestBase(
             family="Granger",
             email="hermione@granger.co.uk",
             gender="F",
-            may_contact=True,
             airport=self.airport_0_0,
             github="herself",
             twitter="herself",
@@ -243,7 +242,6 @@ class TestBase(
             family="Potter",
             email="harry@hogwarts.edu",
             gender="M",
-            may_contact=True,
             airport=self.airport_0_50,
             github="hpotter",
             twitter=None,
@@ -269,7 +267,6 @@ class TestBase(
             family="Weasley",
             email="rweasley@ministry.gov.uk",
             gender="M",
-            may_contact=False,
             airport=self.airport_50_100,
             github=None,
             twitter=None,
@@ -295,7 +292,6 @@ class TestBase(
             email="peter@webslinger.net",
             gender="O",
             gender_other="Spider",
-            may_contact=True,
             username="spiderman",
             airport=self.airport_55_105,
             country="US",
@@ -306,7 +302,6 @@ class TestBase(
             family="Stark",
             email="me@stark.com",
             gender="M",
-            may_contact=True,
             username="ironman",
             airport=self.airport_50_100,
             country="US",
@@ -317,7 +312,6 @@ class TestBase(
             family="Romanova",
             email=None,
             gender="F",
-            may_contact=False,
             username="blackwidow",
             airport=self.airport_0_50,
             country="RU",
@@ -534,9 +528,7 @@ class TestBase(
         )
 
     @staticmethod
-    def reconsent(
-        person: Person, term: Term, term_option: Optional[TermOption]
-    ) -> Consent:
+    def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
         consent = Consent.objects.get(
             person=person, term=term, archived_at__isnull=True
         )

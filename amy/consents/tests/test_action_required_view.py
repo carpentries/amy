@@ -208,38 +208,3 @@ class TestTermsMiddleware(ConsentTestBase):
                 data[term.slug] = term.options[0].pk
             rv = self.client.post(form_url, data=data)
             self.assertRedirects(rv, url)
-
-    def test_old_terms_do_not_affect_terms_middleware(self):
-        """
-        User is redirected even if old terms are false.
-        """
-        urls = [
-            reverse("admin-dashboard"),
-            reverse("instructor-dashboard"),
-        ]
-        harry = Person.objects.create(
-            personal="Harry",
-            family="Potter",
-            email="harry@howarts.com",
-            gender="M",
-            username="harry_potter",
-            airport=self.airport_0_0,
-            is_active=True,
-            # Setting old terms to False.
-            may_contact=False,
-            publish_profile=False,
-            data_privacy_agreement=False,
-        )
-
-        # ensure we're logged in
-        self.client.force_login(harry)
-        # ensure we have not yet agreed to the required consents
-        self.assertEqual(person_has_consented_to_required_terms(harry), False)
-        with self.terms_middleware():
-            for url in urls:
-                rv = self.client.get(url)
-                # redirects to the form
-                action_required_url = "{}?next={}".format(
-                    reverse("action_required_terms"), url
-                )
-                self.assertRedirects(rv, action_required_url)

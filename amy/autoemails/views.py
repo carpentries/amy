@@ -15,7 +15,7 @@ from .forms import GenericEmailScheduleForm
 from .models import EmailTemplate, Trigger
 from .utils import check_status, safe_next_or_default_url, scheduled_execution_time
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 
@@ -81,7 +81,7 @@ def generic_schedule_email(request, pk):
             job_id=job.get_id(),
             trigger=trigger,
             scheduled_execution=scheduled_at,
-            status=check_status(job),
+            status=check_status(job, scheduler),
             mail_status="",
             event_slug=action.event_slug(),
             recipients=action.all_recipients(),

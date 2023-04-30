@@ -6,6 +6,7 @@
 {% load tags %}
 {% load dates %}
 {% load instructorrecruitment %}
+{% load consents %}
 
 {% block title %}
 <div class="jumbotron container-fluid">
@@ -153,7 +154,11 @@
       {% for role in t.person.instructor_community_roles %}{% include "includes/instructor_role_badge.html" with role=role %}{% endfor %}
       {% if not t.person.important_badges and not person.instructor_community_roles %}&mdash;{% endif %}
     </td>
-    <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
+    <td>
+      <a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>
+      {% consent_agreed t.person.active_consents TermEnum.MAY_CONTACT as may_contact %}
+      {% if t.person.email and may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}
+    </td>
     <td>{{ t.url|default:"&mdash;"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
     <td>

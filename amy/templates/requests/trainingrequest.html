@@ -27,7 +27,7 @@
   <a href="{% url 'trainingrequest_edit' req.id %}" class="btn btn-primary">Edit</a>
 </div>
 
-{% include "includes/trainingrequest_details.html" with admin=True object=req %}
+{% include "includes/trainingrequest_details.html" with admin=True object=req consents=consents %}
 
 {% include "includes/comments.html" with object=req %}
 

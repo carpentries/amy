@@ -8,6 +8,8 @@
       <th>Notes from Instructor</th>
       <th>Notes from admin</th>
       <th>Date conflicts</th>
+      <th>Submission date</th>
+      <th>Last change</th>
       <th>
         State
         <i
@@ -26,16 +28,14 @@
     <tr>
       <td><a href="{{ signup.person.get_absolute_url }}">{{ signup.person }}</a></td>
       <td>
-        <span title="Helper: {{ signup.num_helper }}; Supporting Instructor: {{ signup.num_supporting }}; Instructor: {{ signup.num_instructor }}">
-          <span title="{{ signup.num_helper }} Helper Roles">
-            {{ signup.num_helper }} H;
-          </span>
-          <span title="{{ signup.num_supporting }} Supporting Instructor Roles">
-            {{ signup.num_supporting }} SI;
-          </span>
-          <span title="{{ signup.num_instructor }} Instructor Roles">
-            {{ signup.num_instructor }} I
-          </span>
+        <span title="{{ signup.num_helper }} Helper Roles">
+          {{ signup.num_helper }} H;
+        </span>
+        <span title="{{ signup.num_supporting }} Supporting Instructor Roles">
+          {{ signup.num_supporting }} SI;
+        </span>
+        <span title="{{ signup.num_instructor }} Instructor Roles">
+          {{ signup.num_instructor }} I
         </span>
       </td>
       <td>{% include "includes/country_flag.html" with country=signup.person.country %}</td>
@@ -58,6 +58,8 @@
           {% endif %}
         {% endfor %}
       </td>
+      <td>{{ signup.created_at|date:'Y-m-d' }}</td>
+      <td>{{ signup.last_updated_at|date:'Y-m-d'|default:"&mdash;" }}</td>
       <td>
         <span class="{% state_label signup %}">
           {{ signup.get_state_display }}

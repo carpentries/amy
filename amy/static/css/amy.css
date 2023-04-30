@@ -22,6 +22,32 @@ footer {
     font-size: 0.75rem;
 }
 
+.banner {
+    display: block;
+    text-align: center;
+    font-size: 1rem;
+    padding: 0.5em;
+    position: sticky;
+    top: 0;
+    left: 0;
+    height: 40px;
+    z-index: 1020; /* the same as Bootstrap's navbar */
+}
+
+.banner-local {
+    color: #000000;
+    background: linear-gradient(180deg, hsl(56, 100%, 50%), hsl(56, 80%, 50%));
+}
+
+.banner-testing {
+    color: #FFFFFF;
+    background: linear-gradient(180deg, hsl(0, 100%, 50%), hsl(0, 80%, 50%));
+}
+
+.navbar-banner-displacement {
+    top: 40px; /* height of .banner */
+}
+
 .sidebar select {
     resize: vertical;
 }
@@ -48,6 +74,11 @@ table .additional-links-wider {
 }
 table .table-row-distinctive {
     border-top: 4px solid #dee2e6 !important;
+}
+
+caption {
+    caption-side: top;
+    color: #000000;
 }
 
 .form-group small {
@@ -80,7 +111,6 @@ table .table-row-distinctive {
     line-height: inherit;
     overflow: visible;
     text-transform: none;
-    -webkit-appearance: button;
     color: #dc3545;
     background-color: transparent;
     display: inline-block;

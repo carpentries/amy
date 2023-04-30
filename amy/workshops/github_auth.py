@@ -1,8 +1,4 @@
 from django.conf import settings
-from django.contrib import messages
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.utils.deprecation import MiddlewareMixin
 from github import Github
 from github.GithubException import UnknownObjectException
 from social_core.exceptions import SocialAuthBaseException
@@ -19,15 +15,6 @@ def abort_if_no_user_found(user=None, **kwargs):
     can be associated with the specified GitHub username."""
     if user is None:
         raise NoPersonAssociatedWithGithubAccount
-
-
-class GithubAuthMiddleware(MiddlewareMixin):
-    def process_exception(self, request, exception):
-        if isinstance(exception, NoPersonAssociatedWithGithubAccount):
-            messages.error(
-                request, "No account is associated with your GitHub account."
-            )
-            return redirect(reverse("login"))
 
 
 def github_username_to_uid(username):

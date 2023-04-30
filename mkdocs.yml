@@ -2,21 +2,31 @@ site_name: AMY documentation
 repo_url: https://github.com/carpentries/amy/
 edit_uri: 'edit/develop/docs/'
 
-theme: readthedocs
+extra_javascript:
+    - 'js/navigation.js'
+
+theme:
+    name: material
+    collapse_navigation: true
+
 nav:
     - 'Home': 'index.md'
+    - 'For Carpentries Community members':
+        - 'Community Users Guide': 'users_guide/community_index.md'
     - 'For AMY Administrators':
-        - 'Users Guide': 'users_guide/index.md'
+        - 'Users Guide': 'users_guide/admin_index.md'
         - 'Database Structure': 'amy_database_structure.md'
     - 'For AMY Developers':
         - 'Design': 'design/index.md'
         - 'Application design': 'design/application_design.md'
         - 'Database models': 'design/database_models.md'
         - 'Model versioning': 'design/model_versioning.md'
-        - 'Template Hierarchy': 'design/template_hierarchy.md'
+        - 'Templates': 'design/template_hierarchy.md'
+        - 'Views': 'design/views_hierarchy.md'
         - 'Server Infrastructure': 'design/server_infrastructure.md'
+        - 'Database backups': 'design/database_backups.md'
+        - 'CI/CD': 'design/cicd.md'
         - 'Procedures': 'procedures.md'
-        - 'Sending Mails': 'sending_mails.md'
         - 'Releases': './releases/README.md'
         - 'Projects':
           - 'Projects': './design/projects/README.md'
@@ -36,7 +46,7 @@ nav:
 
 
 markdown_extensions:
-    - toc:
-        permalink: 
+  - toc:
+      permalink: True
 
 extra_css: [extra.css]

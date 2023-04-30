@@ -12,7 +12,7 @@ from autoemails.actions import NewConsentRequiredAction
 from consents.models import Consent, Term, TermOption
 from consents.util import send_consent_email
 
-logger = logging.getLogger("amy.signals")
+logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
 redis_connection = django_rq.get_connection("default")
 
@@ -110,7 +110,14 @@ class TermOptionInline(admin.TabularInline):
 
 
 class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
-    list_display = ("slug", "content", "required_type", "archived_at")
+    list_display = (
+        "slug",
+        "content",
+        "training_request_content",
+        "short_description",
+        "required_type",
+        "archived_at",
+    )
     inlines = [
         TermOptionInline,
     ]

@@ -1,6 +1,4 @@
-# coding: utf-8
-import datetime
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.test import RequestFactory
 from django.utils import timezone
@@ -15,10 +13,14 @@ from workshops.utils.consents import archive_least_recent_active_consents
 from workshops.utils.dates import human_daterange
 from workshops.utils.emails import match_notification_email
 from workshops.utils.metadata import (
+    datetime_decode,
+    datetime_match,
     fetch_workshop_metadata,
     find_workshop_HTML_metadata,
     find_workshop_YAML_metadata,
     generate_url_to_event_index,
+    metadata_deserialize,
+    metadata_serialize,
     parse_workshop_metadata,
     validate_workshop_metadata,
 )
@@ -72,6 +74,37 @@ eventbrite: 10000000
 ----
 Other content.
 """
+    date_serialization_tests = [
+        # simple tests
+        ("", ""),
+        ("empty string", "empty string"),
+        # format-matching
+        ("2016-04-18", date(2016, 4, 18)),
+        ("2016-04-18T16:41:30", datetime(2016, 4, 18, 16, 41, 30)),
+        ("2016-04-18T16:41:30.123", datetime(2016, 4, 18, 16, 41, 30, 123000)),
+        ("16:41:30", time(16, 41, 30)),
+        ("16:41:30.123", time(16, 41, 30, 123000)),
+        # format not matching (ie. timezone-aware)
+        ("2016-04-18T16:41:30+02:00", "2016-04-18T16:41:30+02:00"),
+        ("2016-04-18T14:41:30Z", "2016-04-18T14:41:30Z"),
+        ("16:41:30+02:00", "16:41:30+02:00"),
+        ("14:41:30Z", "14:41:30Z"),
+    ]
+    expected_metadata_parsed = {
+        "slug": "2015-07-13-test",
+        "language": "US",
+        "start": date(2015, 7, 13),
+        "end": date(2015, 7, 14),
+        "country": "US",
+        "venue": "Euphoric State University",
+        "address": "Highway to Heaven 42, Academipolis",
+        "latitude": 36.998977,
+        "longitude": -109.045173,
+        "reg_key": 10000000,
+        "instructors": ["Hermione Granger", "Ron Weasley"],
+        "helpers": ["Peter Parker", "Tony Stark", "Natasha Romanova"],
+        "contact": ["hermione@granger.co.uk", "rweasley@ministry.gov"],
+    }
 
     @requests_mock.Mocker()
     def test_fetching_event_metadata_html(self, mock):
@@ -278,8 +311,8 @@ Other content.
         expected = {
             "slug": "2015-07-13-test",
             "language": "US",
-            "start": datetime.date(2015, 7, 13),
-            "end": datetime.date(2015, 7, 14),
+            "start": date(2015, 7, 13),
+            "end": date(2015, 7, 14),
             "country": "US",
             "venue": "Euphoric State University",
             "address": "Highway to Heaven 42, Academipolis",
@@ -571,6 +604,77 @@ Other content.
                 expected["helpers"] = helpers
                 self.assertEqual(expected, parse_workshop_metadata(metadata))
 
+    def test_metadata_serialization(self) -> None:
+        # Act
+        serialized_json = metadata_serialize(self.expected_metadata_parsed)
+        # Assert
+        self.assertIn("2015-07-13", serialized_json)
+        self.assertIn("2015-07-14", serialized_json)
+        self.assertIn("2015-07-13-test", serialized_json)
+        self.assertIn("-109.045173", serialized_json)
+        self.assertIn("36.998977", serialized_json)
+        self.assertIn(
+            '["hermione@granger.co.uk", "rweasley@ministry.gov"]', serialized_json
+        )
+
+    def test_metadata_serialization_deserialization(self) -> None:
+        # Act
+        serialized_json = metadata_serialize(self.expected_metadata_parsed)
+        deserialized_data = metadata_deserialize(serialized_json)
+        # Assert
+        self.assertNotEqual(serialized_json, deserialized_data)
+        self.assertEqual(deserialized_data, self.expected_metadata_parsed)
+
+    def test_metadata_deserialization_of_string(self) -> None:
+        "Ensure datetime matching function works correctly for strings."
+        for test, expected in self.date_serialization_tests:
+            # Act
+            result = datetime_match(test)
+            # Assert
+            self.assertEqual(result, expected)
+
+    def test_metadata_deserialization_of_list(self) -> None:
+        """Ensure our datetime matching function works correctly for lists."""
+        # Arrange
+
+        # Decompose self.date_serialization_tests into lists of values from first
+        # and second column.
+        tests = [v[0] for v in self.date_serialization_tests]
+        expected = [v[1] for v in self.date_serialization_tests]
+        # Act
+        result = datetime_decode(tests)
+        # Assert
+        self.assertEqual(result, expected)
+
+    def test_metadata_deserialization_of_dict(self) -> None:
+        """Ensure our datetime matching function works correctly for dicts."""
+        # Arrange
+        tests = {k: k for k, _ in self.date_serialization_tests}
+        expected = {k: v for k, v in self.date_serialization_tests}
+        # Act
+        result = datetime_decode(tests)
+        # Assert
+        self.assertEqual(result, expected)
+
+    def test_metadata_deserialization_of_nested(self) -> None:
+        """Ensure our datetime matching function works correctly for nested
+        objects/lists."""
+        # Arrange
+        dict_test = {"2016-04-18": "2016-04-18"}
+        dict_expected = {"2016-04-18": date(2016, 4, 18)}
+        test1 = [dict_test.copy(), dict_test.copy(), dict_test.copy()]
+        expected1 = [dict_expected.copy(), dict_expected.copy(), dict_expected.copy()]
+        test2 = {"1": test1[:]}
+        expected2 = {"1": expected1[:]}
+
+        # Act
+        result1 = datetime_decode(test1)
+        result2 = datetime_decode(test2)
+
+        # Assert
+        self.assertEqual(result1, expected1)
+        self.assertEqual(result2, expected2)
+
 
 class TestAlternativeLatitudeLongitude(TestBase):
     maxDiff = None
@@ -654,8 +758,8 @@ Other content.
         expected = {
             "slug": "2015-07-13-test",
             "language": "US",
-            "start": datetime.date(2015, 7, 13),
-            "end": datetime.date(2015, 7, 14),
+            "start": date(2015, 7, 13),
+            "end": date(2015, 7, 14),
             "country": "US",
             "venue": "Euphoric State University",
             "address": "Highway to Heaven 42, Academipolis",
@@ -687,8 +791,8 @@ Other content.
         expected = {
             "slug": "2015-07-13-test",
             "language": "US",
-            "start": datetime.date(2015, 7, 13),
-            "end": datetime.date(2015, 7, 14),
+            "start": date(2015, 7, 13),
+            "end": date(2015, 7, 14),
             "country": "US",
             "venue": "Euphoric State University",
             "address": "Highway to Heaven 42, Academipolis",
@@ -889,12 +993,12 @@ class TestHumanDaterange(TestBase):
             "separator": " - ",
         }
         self.inputs = (
-            (datetime.datetime(2018, 9, 1), datetime.datetime(2018, 9, 30)),
-            (datetime.datetime(2018, 9, 30), datetime.datetime(2018, 9, 1)),
-            (datetime.datetime(2018, 9, 1), datetime.datetime(2018, 12, 1)),
-            (datetime.datetime(2018, 9, 1), datetime.datetime(2019, 12, 1)),
-            (datetime.datetime(2018, 9, 1), None),
-            (None, datetime.datetime(2018, 9, 1)),
+            (datetime(2018, 9, 1), datetime(2018, 9, 30)),
+            (datetime(2018, 9, 30), datetime(2018, 9, 1)),
+            (datetime(2018, 9, 1), datetime(2018, 12, 1)),
+            (datetime(2018, 9, 1), datetime(2019, 12, 1)),
+            (datetime(2018, 9, 1), None),
+            (None, datetime(2018, 9, 1)),
             (None, None),
         )
         self.expected_outputs = (

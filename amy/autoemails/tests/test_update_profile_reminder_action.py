@@ -3,21 +3,32 @@ from datetime import timedelta
 from django.test import TestCase
 from django.utils import timezone
 
+import autoemails.actions
 from autoemails.actions import (
     ProfileUpdateReminderAction,
     UpdateProfileReminderRepeatedAction,
 )
 from autoemails.models import EmailTemplate, RQJob, Trigger
+from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.models import Person
 
 
-class TestUpdateProfileRepeatedAction(TestCase):
+class TestUpdateProfileRepeatedAction(FakeRedisTestCaseMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
         trigger = Trigger.objects.create(
             action="profile-update", template=EmailTemplate.objects.create()
         )
         self.action = UpdateProfileReminderRepeatedAction(trigger=trigger)
+
+        # save scheduler and connection data
+        self._saved_scheduler = autoemails.actions.scheduler
+        # overwrite them
+        autoemails.actions.scheduler = self.scheduler
+
+    def tearDown(self):
+        super().tearDown()
+        autoemails.actions.scheduler = self._saved_scheduler
 
     def test_action(self) -> None:
         p1 = Person.objects.create(

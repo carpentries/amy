@@ -62,7 +62,7 @@
         <td>{{ object.domains_other|default:"&mdash;" }}</td></tr>
     <tr><th>I self-identify as a member of a group that is under-represented in research and/or computing:</th>
         <td>{{ object.get_underrepresented_display }}</td></tr>
-    <tr><th>If you are comfortable doing so, please share more details. Your response is optional, and these details will not impact your application's ranking.</th>
+    <tr><th>If you are comfortable doing so, please share more details.</th>
         <td>
             {% if object.underrepresented_details %}
             {{ object.underrepresented_details }}
@@ -141,7 +141,7 @@
             &mdash;
             {% endif %}
         </td></tr>
-    <tr><th>Data privacy agreement:</th>
+    <tr><th><span class="badge badge-secondary">(Deprecated)</span> Data privacy agreement:</th>
         <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
     <tr><th>Code of Conduct agreement:</th>
         <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
@@ -149,5 +149,17 @@
         <td>{{ object.training_completion_agreement|yesno }}</td></tr>
     <tr><th>Teach a workshop within 12 months agreement:</th>
         <td>{{ object.workshop_teaching_agreement|yesno }}</td></tr>
+    <tr>
+      <th>{{ consents_content.may_contact }}</th>
+      <td>{% if consents.may_contact %}{{ consents.may_contact.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
+    <tr>
+      <th>{{ consents_content.privacy_policy }}</th>
+      <td>{% if consents.privacy_policy %}{{ consents.privacy_policy.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
+    <tr>
+      <th>{{ consents_content.public_profile }}</th>
+      <td>{% if consents.public_profile %}{{ consents.public_profile.term_option }}{% else %}Unset{% endif %}</td>
+    </tr>
   </tbody>
 </table>

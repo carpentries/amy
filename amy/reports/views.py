@@ -2,11 +2,11 @@ from typing import Optional
 
 from django.contrib import messages
 from django.db.models import Case, Count, F, IntegerField, Prefetch, Q, Value, When
-from django.db.models.functions import Coalesce
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
+from consents.models import TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
 from fiscal.filters import MembershipTrainingsFilter
 from workshops.models import (
@@ -26,47 +26,8 @@ from workshops.utils.pagination import get_pagination_items
 @admin_required
 def membership_trainings_stats(request):
     """Display basic statistics for memberships and instructor trainings."""
-    data = Membership.objects.prefetch_related("organizations", "task_set").annotate(
-        instructor_training_seats_public_total=(
-            F("public_instructor_training_seats")
-            + F("additional_public_instructor_training_seats")
-            # Coalesce returns first non-NULL value
-            + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-        ),
-        instructor_training_seats_public_utilized=(
-            Count("task", filter=Q(task__role__name="learner", task__seat_public=True))
-        ),
-        instructor_training_seats_public_remaining=(
-            F("public_instructor_training_seats")
-            + F("additional_public_instructor_training_seats")
-            + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-            - Count(
-                "task", filter=Q(task__role__name="learner", task__seat_public=True)
-            )
-            - Coalesce("public_instructor_training_seats_rolled_over", 0)
-        ),
-        instructor_training_seats_inhouse_total=(
-            F("inhouse_instructor_training_seats")
-            + F("additional_inhouse_instructor_training_seats")
-            # Coalesce returns first non-NULL value
-            + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
-        ),
-        instructor_training_seats_inhouse_utilized=(
-            Count(
-                "task",
-                filter=Q(task__role__name="learner", task__seat_public=False),
-            )
-        ),
-        instructor_training_seats_inhouse_remaining=(
-            F("inhouse_instructor_training_seats")
-            + F("additional_inhouse_instructor_training_seats")
-            + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
-            - Count(
-                "task",
-                filter=Q(task__role__name="learner", task__seat_public=False),
-            )
-            - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
-        ),
+    data = Membership.objects.annotate_with_seat_usage().prefetch_related(
+        "organizations", "task_set"
     )
 
     filter_ = MembershipTrainingsFilter(request.GET, data)
@@ -133,7 +94,11 @@ def workshop_issues(request):
                 | Q(role__name="organizer")
                 | Q(role__name="instructor")
             )
-            .filter(person__may_contact=True)
+            .filter(
+                person__consent__archived_at__isnull=True,
+                person__consent__term_option__option_type=TermOptionChoices.AGREE,
+                person__consent__term__slug=TermEnum.MAY_CONTACT,
+            )
             .exclude(Q(person__email="") | Q(person__email=None)),
         )
     )

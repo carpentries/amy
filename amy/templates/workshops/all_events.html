@@ -40,8 +40,8 @@
           {% endif %}
         </td>
         <td>{% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}</td>
-        <td {% if not event.repository_url %}class="table-warning"{% endif %}>
-          {{ event.repository_url|default:"—"|urlize_newtab }}
+        <td {% if not event.website_url %}class="table-warning"{% endif %}>
+          {{ event.website_url|default:"—"|urlize_newtab }}
         </td>
         <td {% if event.num_instructors == 0 %}class="table-warning"{% endif %}> {{ event.num_instructors }}</td>
         <td><a href="{% url 'organization_details' event.host.domain_quoted %}">{{ event.host }}</a></td>

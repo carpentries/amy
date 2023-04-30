@@ -27,14 +27,14 @@ fast_test_fail:
 dev_database :
 	${MANAGE} reset_db
 	${MANAGE} migrate
-	${MANAGE} loaddata amy/workshops/fixtures/badges.json
-	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
-	${MANAGE} loaddata amy/communityroles/fixtures/inactivations.json
-	${MANAGE} loaddata amy/communityroles/fixtures/configs.json
-	${MANAGE} loaddata amy/trainings/fixtures/training_requirements.json
+	${MANAGE} runscript seed_badges
+	${MANAGE} runscript seed_autoemails
+	${MANAGE} runscript seed_communityroles
+	${MANAGE} runscript seed_training_requirements
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
+	${MANAGE} createcachetable
 
 ## node_modules : install front-end dependencies
 node_modules : package.json
@@ -43,7 +43,14 @@ node_modules : package.json
 
 ## serve        : run a server
 serve :
-	gunicorn --workers=4 --bind=127.0.0.1:8000 --reload --env DJANGO_SETTINGS_MODULE=config.settings config.wsgi
+	gunicorn \
+		--workers=4 \
+		--bind=127.0.0.1:8000 \
+		--access-logfile - \
+		--capture-output \
+		--reload \
+		--env DJANGO_SETTINGS_MODULE=config.settings \
+		config.wsgi
 
 ## outdated     : show outdated dependencies
 outdated :

@@ -1,6 +1,5 @@
 from datetime import date, timedelta
 import re
-from typing import Dict, Optional
 from urllib.parse import unquote
 
 from django.contrib import messages
@@ -18,7 +17,7 @@ from django_comments.models import Comment
 from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
-from consents.models import Consent, TermOption
+from consents.models import Consent, Term, TermEnum
 from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
@@ -49,7 +48,7 @@ from workshops.models import (
 from workshops.utils.access import admin_required, login_required
 
 # Terms shown on the instructor dashboard and can be updated by the user.
-TERM_SLUGS = ["may-contact", "public-profile", "may-publish-name"]
+TERM_SLUGS = [TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE, TermEnum.MAY_PUBLISH_NAME]
 
 
 @login_required
@@ -69,7 +68,7 @@ def admin_dashboard(request):
     if "assigned_to" not in data:
         data["assigned_to"] = request.user.id
     assignment_form = AssignmentForm(data)
-    assigned_to: Optional[Person] = None
+    assigned_to: Person | None = None
     if assignment_form.is_valid():
         assigned_to = assignment_form.cleaned_data["assigned_to"]
 
@@ -144,12 +143,18 @@ def instructor_dashboard(request):
         )
         .select_related("term", "term_option")
     )
-    consent_by_term_slug_label: Dict[str, TermOption] = {}
-    for consent in consents:
-        label = consent.term.slug.replace("-", "_")
-        consent_by_term_slug_label[label] = consent.term_option
+    consents_by_key = {consent.term.key: consent for consent in consents}
+    # get display content for all visible terms
+    consents_content = {
+        term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
+    }
 
-    context = {"title": "Your profile", "user": user, **consent_by_term_slug_label}
+    context = {
+        "title": "Your profile",
+        "user": user,
+        "consents": consents_by_key,
+        "consents_content": consents_content,
+    }
     return render(request, "dashboard/instructor_dashboard.html", context)
 
 

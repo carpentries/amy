@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from enum import StrEnum
+from typing import Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
+from django.db.models import Manager, Prefetch, QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 
 from autoemails.mixins import RQJobsMixin
+from consents.exceptions import TermOptionDoesNotBelongToTermException
 from workshops.mixins import CreatedUpdatedArchivedMixin
-from workshops.models import STR_MED, Person
+from workshops.models import STR_LONG, STR_MED, Person, TrainingRequest
 
 
-class TermQuerySet(models.query.QuerySet):
+class TermQuerySet(QuerySet):
     def active(self):
         return self.filter(archived_at=None)
 
@@ -33,14 +35,26 @@ class TermQuerySet(models.query.QuerySet):
         )
 
 
-class TermOptionQuerySet(models.query.QuerySet):
-    def active(self):
-        return self.filter(archived_at=None)
+class TermManager(Manager):
+    def filter_by_key(self, key: str) -> QuerySet["Term"]:
+        slug = Term.key_to_slug(key)
+        return self.get_queryset().filter(slug=slug)
+
+    def get_by_key(self, key: str) -> QuerySet["Term"]:
+        slug = Term.key_to_slug(key)
+        return self.get_queryset().get(slug=slug)
 
 
-class ConsentQuerySet(models.query.QuerySet):
-    def active(self):
-        return self.filter(archived_at=None)
+class TermEnum(StrEnum):
+    """Base terms that were introduced via migration
+    `amy/consents/migrations/0005_auto_20210411_2325.py`.
+
+    They (used to) have corresponding flags in Person model."""
+
+    MAY_PUBLISH_NAME = "may-publish-name"
+    PUBLIC_PROFILE = "public-profile"
+    MAY_CONTACT = "may-contact"
+    PRIVACY_POLICY = "privacy-policy"
 
 
 class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
@@ -53,19 +67,39 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
 
     slug = models.SlugField(unique=True)
     content = models.TextField(verbose_name="Content")
+    training_request_content = models.TextField(
+        verbose_name="Content for Training Request Form",
+        blank=True,
+        help_text=(
+            "If set, the regular content will be replaced with this"
+            " text on the instructor training request form."
+        ),
+    )
     required_type = models.CharField(
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
     help_text = models.TextField(verbose_name="Help Text", blank=True)
-    objects = TermQuerySet.as_manager()
+    short_description = models.CharField(max_length=STR_LONG)
+    objects = TermManager.from_queryset(TermQuerySet)()
+
+    @staticmethod
+    def key_to_slug(key: str) -> str:
+        return key.replace("_", "-")
+
+    @staticmethod
+    def slug_to_key(slug: str) -> str:
+        return slug.replace("-", "_")
+
+    @cached_property
+    def key(self) -> str:
+        return self.slug_to_key(self.slug)
 
     @cached_property
     def options(self) -> Iterable[TermOption]:
-        # If you've already prefetched_active_options
+        # If you've already prefetched active_options with
+        # `.objects.prefetch_active_options()`.
         # Use that instead. Otherwise query for the options
-        if hasattr(self, "active_options"):
-            return self.active_options
-        return self._fetch_options()
+        return getattr(self, "active_options", self._fetch_options())
 
     def _fetch_options(self) -> Iterable[TermOption]:
         return TermOption.objects.active().filter(term=self)
@@ -88,7 +122,7 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
         is_required = self.required_type != self.OPTIONAL_REQUIRE_TYPE
         has_yes_option = False
         for option in self._fetch_options():
-            if option.option_type == option.AGREE:
+            if option.option_type == TermOptionChoices.AGREE:
                 has_yes_option = True
         if is_required and self.archived_at is None and not has_yes_option:
             raise ValidationError(
@@ -98,15 +132,29 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
             )
 
 
-class TermOption(CreatedUpdatedArchivedMixin, models.Model):
-    AGREE = "agree"
-    DECLINE = "decline"
-    OPTION_TYPE = ((AGREE, "Agree"), (DECLINE, "Decline"))
+class TermOptionQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
 
+    def get_agree_term_option(self) -> "TermOption":
+        return self.active().get(option_type=TermOptionChoices.AGREE)
+
+    def get_decline_term_option(self) -> "TermOption":
+        return self.active().get(option_type=TermOptionChoices.DECLINE)
+
+
+class TermOptionChoices(models.TextChoices):
+    AGREE = "agree", "Agree"
+    DECLINE = "decline", "Decline"
+
+
+class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    option_type = models.CharField(max_length=STR_MED, choices=OPTION_TYPE)
+    option_type = models.CharField(
+        max_length=STR_MED, choices=TermOptionChoices.choices
+    )
     content = models.TextField(verbose_name="Content", blank=True)
-    objects = TermOptionQuerySet.as_manager()
+    objects = Manager.from_queryset(TermOptionQuerySet)()
 
     def __str__(self):
         return f"{self.content} ({self.option_type})"
@@ -137,7 +185,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
         do not allow the user to archive the term option.
         """
         if (
-            self.option_type == self.AGREE
+            self.option_type == TermOptionChoices.AGREE
             and self.archived_at is None
             and self.term.required_type != self.term.OPTIONAL_REQUIRE_TYPE
             and self.term.archived_at is None
@@ -146,22 +194,50 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
                 [
                     option
                     for option in self.term._fetch_options()
-                    if option.option_type == self.AGREE
+                    if option.option_type == TermOptionChoices.AGREE
                 ]
             )
             if num_agree_options == 1:
                 raise ValidationError(
-                    f"Term option {self} is the only {self.AGREE} term option for"
-                    f" required term {self.term}. Please add an additional"
-                    f" {self.AGREE} option or archive the term instead."
+                    f"Term option {self} is the only {TermOptionChoices.AGREE} term"
+                    f" option for required term {self.term}. Please add an additional"
+                    f" {TermOptionChoices.AGREE} option or archive the term instead."
                 )
 
 
-class Consent(CreatedUpdatedArchivedMixin, models.Model):
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
     term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT, null=True)
-    objects = ConsentQuerySet.as_manager()
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.term_option and self.term.pk != self.term_option.term.pk:
+            raise TermOptionDoesNotBelongToTermException(
+                f"Consent {self.term.pk=} must match {self.term_option.term.pk=}"
+            )
+        return super().save(*args, **kwargs)
+
+    def is_archived(self) -> bool:
+        return self.archived_at is not None
+
+    def is_active(self) -> bool:
+        return self.archived_at is None
+
+    def archive(self) -> None:
+        self.archived_at = timezone.now()
+        self.save()
+
+
+class ConsentQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
+
+
+class Consent(BaseConsent):
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    objects = Manager.from_queryset(ConsentQuerySet)()
 
     class Meta:
         constraints = [
@@ -171,11 +247,6 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
                 condition=models.Q(archived_at__isnull=True),
             ),
         ]
-
-    def save(self, *args, **kwargs):
-        if self.term_option and self.term_id != self.term_option.term_id:
-            raise ValidationError("Consent term.id must match term_option.term_id")
-        return super().save(*args, **kwargs)
 
     @classmethod
     def create_unset_consents_for_term(cls, term: Term) -> None:
@@ -194,10 +265,6 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
             for person in Person.objects.all()
         )
 
-    def archive(self) -> None:
-        self.archived_at = timezone.now()
-        self.save()
-
     @classmethod
     def archive_all_for_term(cls, terms: Iterable[Term]) -> None:
         consents = cls.objects.filter(term__in=terms).active()
@@ -209,11 +276,11 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         cls.archive_all(consents)
 
     @classmethod
-    def archive_all(cls, consents: Iterable[Consent]) -> None:
+    def archive_all(cls, consents: models.query.QuerySet[Consent]) -> None:
         new_consents = [
             cls(
-                person_id=consent.person_id,
-                term_id=consent.term_id,
+                person_id=consent.person.pk,
+                term_id=consent.term.pk,
                 term_option=None,
             )
             for consent in consents
@@ -221,11 +288,35 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
         consents.update(archived_at=timezone.now())
         cls.objects.bulk_create(new_consents)
 
-    @classmethod
-    def reconsent(cls, consent: Consent, term_option: Optional[TermOption]) -> Consent:
+    @staticmethod
+    def reconsent(consent: Consent, term_option: TermOption) -> "Consent":
         consent.archive()
         return Consent.objects.create(
-            term_id=term_option.term_id,
+            term_id=term_option.term.pk,
             term_option=term_option,
-            person_id=consent.person_id,
+            person_id=consent.person.pk,
         )
+
+
+class TrainingRequestConsentQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
+
+
+class TrainingRequestConsent(BaseConsent):
+    """
+    A consent for a training request. People filling out the training request form
+    should accept all required consents. This model is used to store the consents.
+    """
+
+    training_request = models.ForeignKey(TrainingRequest, on_delete=models.CASCADE)
+    objects = Manager.from_queryset(TrainingRequestConsentQuerySet)()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["training_request", "term"],
+                name="training_request__term__unique__when__archived_at__null",
+                condition=models.Q(archived_at__isnull=True),
+            ),
+        ]

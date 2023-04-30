@@ -70,10 +70,11 @@ If *Consortium* is checked, additional affiliated sites can be added to that mem
 
 #### Membership Contacts
 
-Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of two roles:
+Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of three roles:
 
 * **Billing Contact** Person responsible for contracts and invoicing.
 * **Programmatic Contact** Person responsible for coordination of workshops and instructor training
+* **Trainer** Person responsible for delivering instructor training
 
 When a new membership is created, a new field called `Persons` will display. Click `Edit` in this row to add or edit any contacts. Multiple contacts can have the same role; one contact can have both roles. Existing contacts will be listed here. These Persons must first be [listed as a Person in AMY](#adding-a-new-person).
 
@@ -130,11 +131,13 @@ This will take you to a screen where you can verify each record, correct any err
 AMY asks all users to consent or agree to the following:
 
 * **I have read and agree to the data privacy policy of The Carpentries.**
-* **May contact**
-* **Consent to making profile public**
+* **Can we contact you for volunteering opportunities, surveys, feedback, etc.?**
+* **Do you consent to publish your profile on The Carpentries website?**
 * **Do you consent to have your name or identity associated with lesson publications?**
 
-By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in a separate tab in the Person view. 
+By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.
+
+Some of the questions above are also asked during the instructor training application. If a Person record is created from a training request, the consents from that training request will be carried across to the Person.
 
 ### Adding a New Airport
 
@@ -204,7 +207,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Lessons covered** *Placeholder section for lessons covered*
 
-* **URL** Enter in the workshop's url (to the GitHub page, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
+* **URL** Enter in the workshop's url (to the website, not the repo). This is generally in the format `https://username.github.io/YYYY-MM-DD-sitename`.  It is created using the [template in this GitHub repo](https://github.com/carpentries/workshop-template).
 
 
 * **Language**  Enter in the human language the workshop is taught in. This is especially important for The Carpentries to track workshops in languages other than English.
@@ -256,6 +259,40 @@ At the bottom of the request information page, the user has the option to accept
 This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above.
 
 ![AMY workshop accept request](images/event_from_request.png)
+
+
+
+### Recruiting Instructors for Workshops
+
+AMY admins can create a sign up process for badged and active Instructors to express interest in teaching opportunities. The following criteria must be met to begin the instructor signup process:
+
+* Centrally-Organised workshop
+* Start date in future
+* Complete location information
+
+Once these criteria are met, the admin will see an option to begin the Instructor signup (selection) process:
+
+![AMY workshop begin signup process](images/begin_instructor_signup.png)
+
+You will then be taken to a screen to add in more information about this workshop.  A priority can be automatically assigned based on how far out the workshop is.  This priority can be changed here. You can also share additional notes such as a description of the workshop audience, COVID policy, or other information.  Click "Add sign up page" to add this to the sign up page visible to badged and active Instructors.
+
+Automatic priority is defined as follows:
+
+* For online events: **LOW** if start >= 60 days; **MEDIUM** if start > 30 days; **HIGH** otherwise.
+* For in-person events: **LOW** if start >= 90 days; **MEDIUM** if start > 60 days; **HIGH** otherwise.
+
+![AMY workshop signup info](images/instructor_signup_details.png)
+
+At this point, the workshop will be available for badged and active Instructors to [view and consider](../community_index/#viewing-teaching-opportunities).
+
+As Instructors register their interest, an admin can track their status from the event page itself to view details of just that workshop, or by selecting the "More >> Instructor selection/recruitment" menu option.  The next screen will show who has signed up so far, a summary of their activity as a Helper and Instructor; the Instructor's country; and notes left by the Instructor.
+
+The admin can edit their own notes for each person using the blue edit button, and confirm or decline the Instructor to teach using the confirm or decline buttons.  Once an Instructor has been confirmed in this way, an Instructor task is automatically created for this individual.
+
+Once at least two Instructors have been confirmed, the admin may close signups for this workshop.  This workshop will then no longer appear on the list of Instructor opportunities.
+
+![AMY workshop signup summary](images/instructor_signup_status_view.png)
+
 
 ### Assigning People to Events
 
@@ -341,7 +378,7 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 
 * **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
 * **Evaluated by** This will default to the current admin user.
-* **Type** This will be the training event (Training), the discussion session (Discussion), the teaching demo (DC Demo, LC Demo, or SWC Demo), or the lesson contribution (DC Homework, LC Homework, SWC Homework).  The lesson contribution type requires a link to the GitHub issue or PR.
+* **Type** This will be the training event (Training), the discussion session (Discussion), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
 * **Discarded** This field is not currently used.
 * **Notes** Any free notes from the admin.
@@ -455,7 +492,7 @@ Once you select "Merge Persons" or "Merge Events" you will be taken to a screen 
 
 ![AMY select Persons to merge](images/select_merge_persons.png)
 
-This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values).  Click "Submit" on the bottom of this screen to complete the merge process.
+This will take you to a screen listing all the information in that Person's record, and allowing you to choose whether to keep the values in record A or record B.  For fields allowing multiple values (such as event tasks), you will also have the option to combine (include all values). For consents, no choice is provided, as the most recently provided consents will always be kept and older consents will be archived. Click "Submit" on the bottom of this screen to complete the merge process.
 
 ![AMY merge Persons](images/merge_persons.png)
 
@@ -495,9 +532,8 @@ Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the
 * **Airport**: This returns a list of all Instructors beginning with those who list that airport as their closest airport, and then continues reaching farther out.
 * **Country**: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.
 * **Latitude** and **Longitude**: Like the *Airport* search, this begins with people whose listed airport is closest to that latitude and longitude, and then continues reaching farther out.
-* **Badges**: Selecting more than one Instructor badge will return a list of Instructors who have *any* of those badges. If no badge is selected, the search will return unbadged Persons.
-* **Was helper at least once before**, **Was organiser at least once before**, **Is an in-progress instructor trainee** are based on AMY's current records
-* **Languages**, **Knowledge Domains**, **Gender**, and **Lessons** come from the Person record for that individual.
+* **Has active Instructor Community Role**, **Has Trainer badge**, **Was helper at least once before**, **Was organiser at least once before**, **Is an in-progress instructor trainee** are based on AMY's current records
+* **Languages**, **Knowledge Domains**, **Gender**, and **Lessons** come from the Person record for that individual. If multiple options are selected, only Instructors who have *all* of those options on their record will be shown.
 
 #### Searching for Events
 

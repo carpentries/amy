@@ -27,14 +27,14 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `open_TTT_applications` Used only for instructor training events
 * `adminstrator_id` An integer representing the event organizer.  This is linked to the `workshops_organization` table. Historically any organization could be listed as an administrator. Recent updates to AMY limit this to Data Carpentry, Library Carpentry, Software Carpentry, The Carpentries, or self-organized. This enforcement is at the AMY app level, not at the database level.
 * `reg_key` Eventbrite registration key
-
+* `instructors_pre` Link to both pre- and post-workshop survey results.
 
 #### Unused fields
 
 * `manual_attendance` We are no longer collecting or recording attendance
 * `admin_fee`, `invoice_status` We are not recording financial data in AMY
 * `repository_last_commit_hash`, `repository_metadata`, `metadata_all_changes`, `metadata_changed` Previously used to store metadata changes
-* `instructors_post` `instructors_pre` `learners_longterm` `learners_post` `learners_pre` Previously used to store links to surveys.
+* `instructors_post` `learners_longterm` `learners_post` `learners_pre` Previously used to store links to surveys.
 
 ### Persons
 
@@ -48,7 +48,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `secondary_email` Alternate email address. Optional.
 * `gender` Options are `Prefer not to say (undisclosed)` `Female` `Gender variant / non-conforming` `Male` `Other`.
     * `gender_other` Text if individual selected `Other`
-* `may_contact` A boolean field. We may not contact people if this field is false
+* `may_contact` A boolean field. We may not contact people if this field is false. This field has been replaced by [new-style consents](#consent) (see also [2021 Consents Project](./design/projects/2021_consents.md)).
 * `github` Individual's GitHub user id
 * `twitter` Individual's Twitter user id
 * `orcid` Individual's ORCID iD
@@ -57,9 +57,9 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `affiliation` A free text field representing the person's self identified institutional affliation. This is **not** linked to the `workshops_organization` table.
 * `occupation` A free text field representing the person's self identified occupation
 * `user_notes` Free text field with notes from the individual
-* `publish_profile` A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the [Instructors](https://carpentries.org/instructors/), [Trainers](https://carpentries.org/trainers/), or [Maintainers](https://carpentries.org/maintainers/) pages
+* `publish_profile` A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the [Instructors](https://carpentries.org/instructors/), [Trainers](https://carpentries.org/trainers/), or [Maintainers](https://carpentries.org/maintainers/) pages. This field has been replaced by new-style consents.
 * `country` Self identified country of residence. Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
-* `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity.
+* `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity. This field has been replaced by new-style consents.
 
 #### Less commonly used fields
 
@@ -152,11 +152,11 @@ The primary tables used in AMY (that will appear in most queries) are those that
 
 ### Badges
 
-* `workshops_badge` Lists all available badges (SWC/DC/LC Instructor, Trainer, etc.)
+* `workshops_badge` Lists all available badges (Instructor, Trainer, etc.)
     * `id` Sequential, automatically assigned integer. This is used by `badge_id` in the `workshops_award` table.
     * `criteria` Description of what this badge is
-    * `title` Verbose, human friendly name of badge (e.g., *Software Carpentry Instructor* or *Trainer*)
-    * `name` "back-end" badge name (e.g., *swc-instructor*, *trainer*)
+    * `title` Verbose, human friendly name of badge (e.g., *Lesson Developer* or *Trainer*)
+    * `name` "back-end" badge name (e.g., *lesson-developer*, *trainer*)
 
 * `workshops_award` Connects `workshops_badge` and `workshops_person` tables to show what Badges have been awarded to what Persons
     * `id` Sequential, automatically assigned integer.
@@ -232,8 +232,10 @@ When `Terms` are archived (`archived_at` timestamp is set), that `Term`'s `TermO
 
 * `slug` slug of the term. Used to uniquely identify the term.
 * `content` content of the term. This text shown to users when they consent.
+* `training_request_content` if set, the regular `content` will be replaced with this text when displaying this term on the instructor training request form.
 * `required_type` determines whether or not a term is considered required for the user or not. If required it will be shown to the user when they log in to consent to.
 * `help_text` additional text shown to the user in order to give more context on the term.
+* `short_description` a short description of the consent, shown in the admin view of a profile
 
 ### TermOption
 
@@ -262,6 +264,21 @@ When `Consents` are archived (`archived_at` timestamp is set), a new unset conse
 #### Commonly used fields
 
 * `person` - required foreign key to `Person`.
+* `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option` - a nullable foreign key to TermOption. When this field is null, the Consent is unset.
+* `archived_at` - a nullable timestamp
+
+### TrainingRequestConsent
+
+`consents_trainingrequestconsent` - Stores all consents for all instructor training requests in AMY.
+
+#### Archive Behavior
+
+When `TrainingRequestConsents` are archived (`archived_at` timestamp is set), a new unset consent is created by AMY.
+
+#### Commonly used fields
+
+* `training_request` - required foreign key to `TrainingRequest`.
 * `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
 * `term_option` - a nullable foreign key to TermOption. When this field is null, the Consent is unset.
 * `archived_at` - a nullable timestamp

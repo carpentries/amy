@@ -390,8 +390,6 @@ class Command(BaseCommand):
             email=email,
             gender=gender,
             gender_other=gender_other,
-            may_contact=randbool(0.5),
-            publish_profile=randbool(0.5),
             airport=airport,
             twitter=twitter,
             github=github,
@@ -868,9 +866,11 @@ class Command(BaseCommand):
         people = Person.objects.all()
         for person in people:
             for term in terms:
-                consents.append(
-                    Consent(person=person, term_option=choice(term.options), term=term)
+                consent = Consent(
+                    person=person, term_option=choice(term.options), term=term
                 )
+                consents.append(consent)
+
         # Archive unset old consents before adding new ones
         Consent.objects.filter(
             person__in=people,

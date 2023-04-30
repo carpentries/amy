@@ -1,100 +1,228 @@
 # Server infrastructure
 
-AMY is hosted by the
-[Software Carpentry Foundation](https://software-carpentry.org/scf/)
-on [Rackspace](http://rackspace.com/) server.
+AMY is hosted in [AWS](https://aws.amazon.com/) cloud. There are two AMY environments,
+one for testing and one for production. They use separate setups.
 
-## WWW server
+---
+
+## Production
+
+### AWS services used
+
+Server is hosted on [Elastic Compute Cloud (EC2)](https://aws.amazon.com/ec2/) instance.
+Database uses separate EC2 instance through
+[Relational Database Service (RDS)](https://aws.amazon.com/rds/). Additionally
+[CloudFront](https://aws.amazon.com/cloudfront/) is used as CDN for assets (images,
+CSS, JavaScript, including NPM dependencies).
+
+### WWW server
 
 AMY is hosted by [Nginx](https://www.nginx.com/) and has 4 roles:
 
-1. handles TLS
-2. handles static files at `/static`
-3. serves a [Django](https://djangoproject.com/) application through
-   [uWSGI](http://uwsgi-docs.readthedocs.org/) (working as a proxy)
-4. serves a maintenance page when upstream proxy is not available, for
+1. handles TLS,
+2. serves a [Django](https://djangoproject.com/) application through
+   [gunicorn](https://gunicorn.org/) (working as a proxy),
+3. serves a maintenance page when upstream proxy is not available, for
    example during upgrade.
 
 Nginx configuration is similar to vhost-like Apache configuration.
 The web server was installed through Ubuntu repositories and should
 start automatically with system's boot.
 
-With `service nginx` it's possible to control the server's behavior.
-All configuration is stored in `/etc/nginx`, but AMY-related config files
-(for example a site/vhost configuration file) are symlinked.
+Nginx is configured to check for existence of `maintenance_on.html` file in
+`/webapps/{domain}`. If it's there, then `503 Service Unavailable` is served with that
+HTML file on all requests.
 
-All Nginx AMY-related configuration is stored in AMY catalog.
+### gunicorn
 
-Both Nginx and uWSGI run as separate users and separate groups.
+AMY, as a WSGI application, is run by [gunicorn](https://gunicorn.org/) on a separate
+user/group. Gunicorn creates 3 (configurable value) workers for handling the incoming
+requests. Logs are located in `/webapps/{domain}/logs/gunicorn_supervisor.log` and
+rotated.
 
-Nginx logs are located in `/var/log/nginx/`.
+### TLS certificate
 
-### uWSGI
+[Certbot](https://certbot.eff.org/) is used to acquire the TLS domain certificate.
 
-AMY, as a WSGI application, is run by uWSGI in an
-[emperor-mode](http://uwsgi-docs.readthedocs.io/en/latest/Emperor.html).
+### Application directory
 
-In this mode, uWSGI creates a fixed number of AMY processes based on
-a configuration file `amy_uwsgi.ini`. Additionally it watches this file,
-and upon detecting any changes, it automatically reloads the whole
-application, which makes it easy to bring changes to the production.
+AMY directory is located on the server under `/webapps/{domain}`. It contains:
 
-There's a special script, `/etc/init/uwsgi-emperor.conf`, that helps
-manage uWSGI with `initctl` manager. It provides for example these commands:
+* `DB_backups` - directory with old regular DB backups and backups created before every
+  deployment,
+* `logs` - directory with logs from various components,
+* `repo` - directory with application source code and virtual environment,
+* `maintenance_off.html` - file used for entering maintenance mode (when renamed to
+  `maintenance_on.html`).
 
-* `start uwsgi-emperor`
-* `stop uwsgi-emperor`
+#### Virtual environment
 
-All the uWSGI configuration is stored in AMY catalog.
+To get into AMY's virtual environment, issue:
 
-uWSGI logs are located in `/etc/uwsgi/emperor.log` and in AMY catalog.
+```shell
+$ source /webapps/{domain}/repo/.venv/bin/activate
+```
 
-### AMY catalog
+You may need to do this from root's (superuser) privilege level.
 
-In `amy_site` (AMY catalog) there are stored:
+It's also important to activate environment variables used by the project. You can do
+that with:
 
-* `amy` - application source from Git
-* `amy.log.gz` - compressed log file
-* `amy_nginx.conf` - Nginx site configuration for AMY
-* `amy.pid`, `amy.sock` - uWSGI-generated files
-* `amy_uwsgi.ini` - uWSGI configuration file
-* `static_html` - a maintenace page catalog
-* `uwsgi_env` - file with all environment variables required to run
-  AMY (one variable per line); this file is read in by uWSGI
-* `venv` - a Python
-[virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
-catalog.
+```shell
+$ source /webapps/{domain}/repo/.venv/bin/postactivate
+```
 
-### Virtual environment
+### Redis
 
-To get into AMY's virtual environment, issue
-`source ~/amy_site/venv/bin/activate`. You should now be able to control
-installed Python packages.
+Redis is installed and served from the application server itself. There is no special
+configuration used for it, and it's not exposed.
 
-The standard deployment procedure is documented in a separate file.
+### Backup
 
-## Database server
+The database servers are regularly backed-up by AWS. For more details see
+[database backups](./database_backups.md).
 
-There is none. AMY uses SQLite database, so the only database file that's
-important lives in AMY's installation directory.
+Additional backups are created before starting any deployment with `pg_dump`.
 
-Plans to migrate to PostgreSQL database server were ceased due to bigger
-development efforts for beginners, but should they be reconsidered, the
-database server may need to be on a separate machine. Backup will require
-adjusting to the new database server.
+### Deployment
 
-## Backup
+AMY is deployed with [Ansible](https://docs.ansible.com/) scripts. The standard
+deployment procedure is documented in a file in separate repository containing these
+scripts.
 
-For now, only the database is being backed-up. There aren't any other assets
-like user-uploaded graphics that would require a regular copy.
+---
 
-Since currently the whole AMY database is contained in a single file, the
-backup process is done with a simple
-`scp amy_server:path_to_db_file ./current_time` command. It copies the
-remote database file into local directory while adjusting file's name to
-contain current timestamp.
+## Testing
 
-There are two backup servers running, both in different locations than AMY
-server. Backup is being made every 1 hour on both, but the offset is
-different: one server backs-up on 1:00, 2:00, 3:00, etc., the other backs-up
-on 1:30, 2:30, 3:30, etc.
+Testing stage has recently been updated to fix many of the shortcomings listed below in
+[Infrastructure shortcomings and future plans](#infrastructure-shortcomings-and-future-plans).
+
+### AWS services used
+
+* [Elastic Container Service (ECS)](https://aws.amazon.com/ecs/) - for running
+  a container with AMY with a load balancer
+* [Relational Database Service (RDS)](https://aws.amazon.com/rds/) - for database
+  (serverless PostgreSQL-flavored Aurora)
+* [CloudFront](https://aws.amazon.com/cloudfront/) is used as CDN for assets
+* [Route 53](https://aws.amazon.com/route53/) for keeping domain records and managing
+  TLS certificates
+* [Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/) - for storing Docker images
+* [CloudWatch](https://aws.amazon.com/cloudwatch/) - for log keeping
+* [CloudFormation](https://aws.amazon.com/cloudformation/) - for infrastructure as code
+  and deployment of the infrastructure.
+
+There is no Redis instance as it's not needed right now on the testing stage.
+
+### Infrastructure as code
+
+Infrastructure is defined in a separate repository as
+a [Cloud Development Kit (CDK)](https://aws.amazon.com/cdk/) project. It gets compiled
+into CloudFormation template.
+
+### Deployment
+
+AMY is deployed to the testing stage with CI/CD pipeline on GitHub Actions.
+
+---
+
+## Infrastructure shortcomings and future plans
+
+> **Note March 2023:** this section mostly applies to the production environment. Testing
+stage has been revamped and most of the issues listed below have been resolved.
+>
+> A note has been added to every item that has been resolved in testing.
+
+There are couple of issues with current approach to deployment:
+
+1. Redis is on the same server as the application
+2. Application server runs `certbot` to refresh TLS certificate
+3. RQ worker and scheduler are on the same server as the application
+4. Application requires a SSH-enabled server and is not immutable
+5. There's no CI/CD pipeline set up - deployment is manual
+6. There's downtime during deployment
+7. It's not scalable
+8. It requires custom deployment scripts (Ansible).
+9. There's multiple log outputs from various services in one server (two or three from
+   AMY, one  from `rqworker`, one from `rqscheduler`, one from `gunicorn`, one from
+   a cronjob, two from nginx)
+
+Below are propositions how to resolve each problem individually.
+
+### Migrate Redis
+
+Redis should be on a separate machine. [AWS offers](https://aws.amazon.com/redis/)
+multiple services for hosted Redis solutions, but they may not be needed. Perhaps
+a small EC2 sever dedicated to Redis could work, too?
+
+> **Note March 2023 [testing stage]:** does not apply; there is no Redis required.
+
+### Replace `certbot` with AWS services
+
+There is better and also free alternative to `certbot`. It's
+[Route 53](https://aws.amazon.com/route53/) for keeping domain records, and
+[Certificate Manager](https://aws.amazon.com/certificate-manager/) for generating free
+TLS certificates.
+
+Finally, Route 53 also works with Elastic Load Balancing, which should be used to
+resolve issues like lack of scalability or CI/CD.
+
+> **Note March 2023 [testing stage]:** TLS and domain is managed by AWS (Route 53
+> service).
+
+### Decouple RQ worker and scheduler from application
+
+Unfortunately this is not easy.
+[RQ worker and scheduler](https://python-rq.org/docs/scheduling/) are tightly coupled
+with the application because they use objects from application's memory pickled and
+stored in Redis database. This means that RQ worker and scheduler require access to the
+same source code.
+
+It would be the best to completely decouple RQ jobs from AMY source code. Even better if
+the jobs themselves became JSON configuration files, and code to run them could be run
+on a [Lambda](https://aws.amazon.com/lambda/).
+
+These are all pretty big changes to the application, because Redis and RQ are used in
+automated emails feature.
+
+> **Note March 2023:** this was not achieved, and is required for migrating production
+> to containerized (cloud native) solution.
+
+### Containerize the application to make it immutable
+
+AMY should be containerized. It's already possible to build a Docker image with AMY,
+but it probably should run migrations automatically (it doesn't yet).
+
+Containerization is also required to run AMY in a scalable manner on ECS / EKS.
+
+> **Note March 2023 [testing stage]:** AMY is containerized and runs on ECS.
+
+### Build CI/CD pipeline
+
+Probably using GitHub Actions (see [docs](https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-amazon-elastic-container-service)).
+
+> **Note March 2023 [testing stage]:** CI/CD pipeline is set up using GitHub Actions.
+
+### Use ECS for blue/green deployments and load balancing
+
+[ECS](https://aws.amazon.com/ecs/) should be used to deploy AMY. Blue/green deployment
+strategy should be used, and a load balancer (which helps resolve multiple issues
+mentioned above).
+
+> **Note March 2023 [testing stage]:** ECS is used for deployment and load balancing.
+
+### Deployment
+
+AMY should be deployed using IaC (Infrastructure as Code) solution, for example.
+[Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/infrastructure-as-code)
+or [Cloud Formation](https://aws.amazon.com/cloudformation/).
+
+> **Note March 2023 [testing stage]:** AMY infrastructure is deployed using CDK and
+> CloudFormation.
+
+### Simplified logs
+
+Once AMY resides on a single VM (for example ECS task instance), it should produce one
+stream of logs; these logs should be stored in
+[CloudWatch](https://aws.amazon.com/cloudwatch/features/).
+
+> **Note March 2023 [testing stage]:** logs are stored in CloudWatch.

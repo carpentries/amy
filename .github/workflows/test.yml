@@ -1,19 +1,11 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
-name: Tests
+# reusable workflow
 
 on:
-  push:
-    branches:
-    - main
-    - develop
-  pull_request:
-    branches: [ main, develop ]
+  workflow_call
 
 jobs:
   test:
-    name: Python ${{ matrix.python-version }} test
+    name: Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -44,9 +36,11 @@ jobs:
           - 6379:6379
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Check out code
+      uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -65,7 +59,21 @@ jobs:
           exit 1;
         fi;
       env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_amy
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
+
+    - name: Create cache tables
+      run: |
+        pipenv run python manage.py createcachetable
+      env:
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
 
     - name: Collect static files
       run: |
@@ -77,5 +85,9 @@ jobs:
     - name: Test
       run: pipenv run python manage.py test
       env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_amy
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
 

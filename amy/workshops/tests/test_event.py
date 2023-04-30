@@ -18,9 +18,6 @@ from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.forms import EventCreateForm, EventForm, EventsMergeForm
-from workshops.management.commands.check_for_workshop_websites_updates import (
-    Command as WebsiteUpdatesCommand,
-)
 from workshops.models import (
     Award,
     Badge,
@@ -33,6 +30,7 @@ from workshops.models import (
     Task,
 )
 from workshops.tests.base import SuperuserMixin, TestBase
+from workshops.utils.metadata import metadata_serialize
 import workshops.views
 
 
@@ -796,22 +794,22 @@ class TestEventViews(TestBase):
             ],
         }
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding SWC tag
         data["tags"].append(Tag.objects.get(name="SWC").pk)
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding DC tag
         data["tags"].append(Tag.objects.get(name="DC").pk)
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding LC tag
         data["tags"].append(Tag.objects.get(name="LC").pk)
         form = EventForm(data)
-        self.assertNotIn("curricula", form.errors)
+        self.assertNotIn("tags", form.errors)
 
     def test_curricula_circuits_tag(self):
         """Ensure validation of `curricula` and `tags` fields."""
@@ -829,18 +827,18 @@ class TestEventViews(TestBase):
         }
         form = EventForm(data)
         # we're missing SWC and Circuits
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
 
         # try adding SWC tag
         data["tags"].append(Tag.objects.get(name="SWC").pk)
         form = EventForm(data)
-        self.assertIn("curricula", form.errors)
+        self.assertIn("tags", form.errors)
         # now we're missing only circuits
 
         # try adding Circuits tag
         data["tags"].append(Tag.objects.get(name="Circuits").pk)
         form = EventForm(data)
-        self.assertNotIn("curricula", form.errors)
+        self.assertNotIn("tags", form.errors)
 
     def test_event_recruitment_statistics(self):
         # Arrange
@@ -1240,8 +1238,6 @@ class TestEventReviewingRepoChanges(TestBase):
         self._setUpUsersAndLogin()
         self._setUpOrganizations()
 
-        self.cmd = WebsiteUpdatesCommand()
-
         self.metadata = {
             "slug": "2015-07-13-test",
             "language": "US",
@@ -1257,7 +1253,7 @@ class TestEventReviewingRepoChanges(TestBase):
             "helpers": ["Peter Parker", "Tony Stark", "Natasha Romanova"],
             "contact": "hermione@granger.co.uk, rweasley@ministry.gov",
         }
-        self.metadata_serialized = self.cmd.serialize(self.metadata)
+        self.metadata_serialized = metadata_serialize(self.metadata)
 
         # create event with some changes detected
         self.event = Event.objects.create(

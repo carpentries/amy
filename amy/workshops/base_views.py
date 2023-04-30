@@ -86,13 +86,15 @@ class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-class AMYUpdateView(SuccessMessageMixin, UpdateView):
+class AMYUpdateView(SuccessMessageMixin, FormInvalidMessageMixin, UpdateView):
     """
     Class-based view for updating objects that extends default template context
     by adding proper page title.
     """
 
     success_message = "{name} was updated successfully."
+
+    form_invalid_message = "Please fix errors in the form below."
 
     template_name = "generic_form.html"
 
