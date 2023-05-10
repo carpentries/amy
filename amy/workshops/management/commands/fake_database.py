@@ -241,7 +241,6 @@ class Command(BaseCommand):
                 print(f"Error generating fake trainees: {e}")
 
     def fake_training_progresses(self, p, training):
-        trainers = Person.objects.filter(award__badge__name="trainer")
         for r in TrainingRequirement.objects.all():
             if randbool(0.4):
                 notes = ""
@@ -258,7 +257,6 @@ class Command(BaseCommand):
                         state = "f"
                         notes = "Failed"
 
-                evaluated_by = None if state == "n" else choice(trainers)
                 event = training if r.name == "Training" else None
                 url = (
                     self.faker.url()
@@ -268,7 +266,6 @@ class Command(BaseCommand):
                 TrainingProgress.objects.create(
                     trainee=p,
                     requirement=r,
-                    evaluated_by=evaluated_by,
                     state=state,
                     discarded=randbool(0.05),
                     event=event,

@@ -377,7 +377,6 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 ![AMY training progress steps](images/new_training_progress.png)
 
 * **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
-* **Evaluated by** This will default to the current admin user.
 * **Type** This will be the training event (Training), the discussion session (Discussion), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
 * **Discarded** This field is not currently used.

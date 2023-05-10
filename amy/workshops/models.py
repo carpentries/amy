@@ -2419,11 +2419,6 @@ class TrainingRequirement(models.Model):
 class TrainingProgress(CreatedUpdatedMixin, models.Model):
     trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
 
-    # Mentor/examiner who evaluates lesson contribution / session. May be null when a
-    # trainee submits their lesson contribution.
-    evaluated_by = models.ForeignKey(
-        Person, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
-    )
     requirement = models.ForeignKey(
         TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type"
     )

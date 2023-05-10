@@ -31,15 +31,10 @@ def progress_label(progress):
 def progress_description(progress):
     assert isinstance(progress, TrainingProgress)
 
-    text = "{discarded}{state} {type}<br />{evaluated_by}<br />on {day}.{notes}".format(
+    text = "{discarded}{state} {type}<br />on {day}.{notes}".format(
         discarded="discarded " if progress.discarded else "",
         state=progress.get_state_display(),
         type=progress.requirement,
-        evaluated_by=(
-            "evaluated by {}".format(progress.evaluated_by.full_name)
-            if progress.evaluated_by is not None
-            else "submitted"
-        ),
         day=progress.created_at.strftime("%A %d %B %Y at %H:%M"),
         notes="<br />Notes: {}".format(escape(progress.notes))
         if progress.notes

@@ -36,10 +36,10 @@ class TestTrainingProgressValidation(TestBase):
 
     def test_url_is_required(self):
         p1 = TrainingProgress.objects.create(
-            requirement=self.requirement, trainee=self.admin, evaluated_by=self.admin
+            requirement=self.requirement, trainee=self.admin
         )
         p2 = TrainingProgress.objects.create(
-            requirement=self.url_required, trainee=self.admin, evaluated_by=self.admin
+            requirement=self.url_required, trainee=self.admin
         )
         p1.full_clean()
         with self.assertRaises(ValidationError):
@@ -49,13 +49,11 @@ class TestTrainingProgressValidation(TestBase):
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
-            evaluated_by=self.admin,
             url="http://example.com",
         )
         p2 = TrainingProgress.objects.create(
             requirement=self.url_required,
             trainee=self.admin,
-            evaluated_by=self.admin,
             url="http://example.com",
         )
         with self.assertRaises(ValidationError):
@@ -64,10 +62,10 @@ class TestTrainingProgressValidation(TestBase):
 
     def test_event_is_required(self):
         p1 = TrainingProgress.objects.create(
-            requirement=self.requirement, trainee=self.admin, evaluated_by=self.admin
+            requirement=self.requirement, trainee=self.admin
         )
         p2 = TrainingProgress.objects.create(
-            requirement=self.event_required, trainee=self.admin, evaluated_by=self.admin
+            requirement=self.event_required, trainee=self.admin
         )
         p1.full_clean()
         with self.assertRaises(ValidationError):
@@ -83,13 +81,11 @@ class TestTrainingProgressValidation(TestBase):
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
-            evaluated_by=self.admin,
             event=event,
         )
         p2 = TrainingProgress.objects.create(
             requirement=self.event_required,
             trainee=self.admin,
-            evaluated_by=self.admin,
             event=event,
         )
         with self.assertRaises(ValidationError):
@@ -101,20 +97,17 @@ class TestTrainingProgressValidation(TestBase):
         failed_progress_no_notes = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
-            evaluated_by=self.admin,
             state="f",
         )
         failed_progess_with_notes = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
-            evaluated_by=self.admin,
             state="f",
             notes="Notes about why trainee failed",
         )
         other_status_progress_no_notes = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
-            evaluated_by=self.admin,
             state="a",
         )
         failed_progess_with_notes.full_clean()
@@ -127,13 +120,11 @@ class TestTrainingProgressValidation(TestBase):
             requirement=self.requirement,
             trainee=self.admin,
             state="p",
-            evaluated_by=self.admin,
         )
         p2 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
             state="p",
-            evaluated_by=None,
         )
         p1.full_clean()
         p2.full_clean()
@@ -143,13 +134,11 @@ class TestTrainingProgressValidation(TestBase):
             requirement=self.requirement,
             trainee=self.admin,
             state="n",
-            evaluated_by=self.admin,
         )
         p2 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
             state="n",
-            evaluated_by=None,
         )
         p1.full_clean()
         p2.full_clean()
@@ -158,7 +147,6 @@ class TestTrainingProgressValidation(TestBase):
         data = {
             "requirement": self.requirement.pk,
             "state": "p",
-            "evaluated_by": self.admin.pk,
             "trainee": self.ironman.pk,
         }
         form = TrainingProgressForm(data)
@@ -171,7 +159,6 @@ class TestTrainingProgressValidation(TestBase):
         data = {
             "requirement": self.requirement.pk,
             "state": "p",
-            "evaluated_by": self.admin.pk,
             "trainee": self.ironman.pk,
         }
         form = TrainingProgressForm(data)
@@ -213,28 +200,23 @@ class TestProgressDescriptionTemplateTag(TestBase):
         self._test(
             progress=TrainingProgress(
                 state="p",
-                evaluated_by=self.spiderman,
                 trainee=self.ironman,
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Discussion"),
             ),
-            expected="Passed Discussion<br />"
-            "evaluated by Peter Q. Parker<br />"
-            "on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Discussion<br />" "on Sunday 01 May 2016 at 16:00.",
         )
 
     def test_notes(self):
         self._test(
             progress=TrainingProgress(
                 state="p",
-                evaluated_by=self.spiderman,
                 trainee=self.ironman,
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Discussion"),
                 notes="Additional notes",
             ),
             expected="Passed Discussion<br />"
-            "evaluated by Peter Q. Parker<br />"
             "on Sunday 01 May 2016 at 16:00.<br />"
             "Notes: Additional notes",
         )
@@ -244,13 +226,11 @@ class TestProgressDescriptionTemplateTag(TestBase):
             progress=TrainingProgress(
                 state="p",
                 discarded=True,
-                evaluated_by=self.spiderman,
                 trainee=self.ironman,
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Discussion"),
             ),
             expected="Discarded Passed Discussion<br />"
-            "evaluated by Peter Q. Parker<br />"
             "on Sunday 01 May 2016 at 16:00.",
         )
 
@@ -258,14 +238,11 @@ class TestProgressDescriptionTemplateTag(TestBase):
         self._test(
             progress=TrainingProgress(
                 state="p",
-                evaluated_by=None,
                 trainee=self.ironman,
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Discussion"),
             ),
-            expected="Passed Discussion<br />"
-            "submitted<br />"
-            "on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Discussion<br />" "on Sunday 01 May 2016 at 16:00.",
         )
 
     def _test(self, progress, expected):
@@ -289,7 +266,6 @@ class TestCRUDViews(TestBase):
         self.progress = TrainingProgress.objects.create(
             requirement=self.requirement,
             state="p",
-            evaluated_by=self.admin,
             trainee=self.ironman,
         )
         self.ttt_event = Event.objects.create(
@@ -302,21 +278,18 @@ class TestCRUDViews(TestBase):
     def test_create_view_loads(self):
         rv = self.client.get(reverse("trainingprogress_add"))
         self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.context["form"].initial["evaluated_by"], self.admin)
 
     def test_create_view_works_with_initial_trainee(self):
         rv = self.client.get(
             reverse("trainingprogress_add"), {"trainee": self.ironman.pk}
         )
         self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.context["form"].initial["evaluated_by"], self.admin)
         self.assertEqual(int(rv.context["form"].initial["trainee"]), self.ironman.pk)
 
     def test_create_view_works(self):
         data = {
             "requirement": self.requirement.pk,
             "state": "p",
-            "evaluated_by": self.admin.pk,
             "trainee": self.ironman.pk,
         }
 

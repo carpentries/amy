@@ -71,11 +71,6 @@ class TrainingProgressCreate(
     form_class = TrainingProgressForm
     populate_fields = ["trainee"]
 
-    def get_initial(self):
-        initial = super().get_initial()
-        initial["evaluated_by"] = self.request.user
-        return initial
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"].helper = context["form"].create_helper
@@ -108,7 +103,6 @@ def all_trainees_queryset():
             "trainingrequest_set",
             "trainingprogress_set",
             "trainingprogress_set__requirement",
-            "trainingprogress_set__evaluated_by",
         )
         .annotate(
             is_instructor=Sum(
@@ -148,14 +142,12 @@ def all_trainees(request):
 
     elif request.method == "POST" and "submit" in request.POST:
         # Bulk add progress to selected trainees
-        instance = TrainingProgress(evaluated_by=request.user)
-        form = BulkAddTrainingProgressForm(request.POST, instance=instance)
+        form = BulkAddTrainingProgressForm(request.POST)
         discard_form = BulkDiscardProgressesForm()
         if form.is_valid():
             for trainee in form.cleaned_data["trainees"]:
                 TrainingProgress.objects.create(
                     trainee=trainee,
-                    evaluated_by=request.user,
                     requirement=form.cleaned_data["requirement"],
                     state=form.cleaned_data["state"],
                     discarded=False,

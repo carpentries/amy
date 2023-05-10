@@ -18,12 +18,6 @@ class TrainingProgressForm(forms.ModelForm):
         queryset=Person.objects.all(),
         widget=ModelSelect2Widget(data_view="person-lookup"),
     )
-    evaluated_by = forms.ModelChoiceField(
-        label="Evaluated by",
-        required=False,
-        queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="admin-lookup"),
-    )
     requirement = forms.ModelChoiceField(
         queryset=TrainingRequirement.objects.exclude(
             Q(name__startswith="SWC")
@@ -62,7 +56,6 @@ class TrainingProgressForm(forms.ModelForm):
         model = TrainingProgress
         fields = [
             "trainee",
-            "evaluated_by",
             "requirement",
             "state",
             "discarded",

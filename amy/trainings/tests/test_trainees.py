@@ -71,14 +71,12 @@ class TestTraineesView(TestBase):
         msg = "Successfully changed progress of all selected trainees."
         self.assertContains(rv, msg)
         got = set(
-            TrainingProgress.objects.values_list(
-                "trainee", "requirement", "state", "evaluated_by"
-            )
+            TrainingProgress.objects.values_list("trainee", "requirement", "state")
         )
         expected = {
-            (self.spiderman.pk, self.discussion.pk, "n", None),
-            (self.spiderman.pk, self.discussion.pk, "a", self.admin.pk),
-            (self.ironman.pk, self.discussion.pk, "a", self.admin.pk),
+            (self.spiderman.pk, self.discussion.pk, "n"),
+            (self.spiderman.pk, self.discussion.pk, "a"),
+            (self.ironman.pk, self.discussion.pk, "a"),
         }
         self.assertEqual(got, expected)
 
@@ -179,25 +177,21 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.discussion,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
@@ -214,25 +208,21 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.discussion,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
@@ -252,26 +242,22 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.discussion,
                     state="f",  # failed
                     notes="Failed",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
