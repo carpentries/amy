@@ -4,14 +4,17 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('workshops', '0257_alter_membership_variant'),
+        ("workshops", "0257_alter_membership_variant"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='trainingprogress',
-            name='evaluated_by',
+            model_name="trainingprogress",
+            name="evaluated_by",
+        ),
+        migrations.RemoveField(
+            model_name="trainingprogress",
+            name="discarded",
         ),
     ]
