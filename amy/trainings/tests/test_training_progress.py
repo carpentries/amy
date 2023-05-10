@@ -170,22 +170,17 @@ class TestTrainingProgressValidation(TestBase):
 
 class TestProgressLabelTemplateTag(TestBase):
     def test_passed(self):
-        self._test(state="p", discarded=False, expected="badge badge-success")
+        self._test(state="p", expected="badge badge-success")
 
     def test_not_evaluated_yet(self):
-        self._test(state="n", discarded=False, expected="badge badge-warning")
+        self._test(state="n", expected="badge badge-warning")
 
     def test_failed(self):
-        self._test(state="f", discarded=False, expected="badge badge-danger")
+        self._test(state="f", expected="badge badge-danger")
 
-    def test_discarded(self):
-        self._test(state="p", discarded=True, expected="badge badge-dark")
-        self._test(state="n", discarded=True, expected="badge badge-dark")
-        self._test(state="f", discarded=True, expected="badge badge-dark")
-
-    def _test(self, state, discarded, expected):
+    def _test(self, state, expected):
         template = Template(r"{% load training_progress %}" r"{% progress_label p %}")
-        training_progress = TrainingProgress(state=state, discarded=discarded)
+        training_progress = TrainingProgress(state=state)
         context = Context({"p": training_progress})
         got = template.render(context)
         self.assertEqual(got, expected)
@@ -219,19 +214,6 @@ class TestProgressDescriptionTemplateTag(TestBase):
             expected="Passed Discussion<br />"
             "on Sunday 01 May 2016 at 16:00.<br />"
             "Notes: Additional notes",
-        )
-
-    def test_discarded(self):
-        self._test(
-            progress=TrainingProgress(
-                state="p",
-                discarded=True,
-                trainee=self.ironman,
-                created_at=datetime(2016, 5, 1, 16, 00),
-                requirement=TrainingRequirement(name="Discussion"),
-            ),
-            expected="Discarded Passed Discussion<br />"
-            "on Sunday 01 May 2016 at 16:00.",
         )
 
     def test_no_mentor_or_examiner_assigned(self):

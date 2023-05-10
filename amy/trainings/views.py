@@ -4,11 +4,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
 from trainings.filters import TraineeFilter
-from trainings.forms import (
-    BulkAddTrainingProgressForm,
-    BulkDiscardProgressesForm,
-    TrainingProgressForm,
-)
+from trainings.forms import BulkAddTrainingProgressForm, TrainingProgressForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -128,29 +124,16 @@ def all_trainees(request):
     if request.method == "POST" and "discard" in request.POST:
         # Bulk discard progress of selected trainees
         form = BulkAddTrainingProgressForm()
-        discard_form = BulkDiscardProgressesForm(request.POST)
-        if discard_form.is_valid():
-            for trainee in discard_form.cleaned_data["trainees"]:
-                TrainingProgress.objects.filter(trainee=trainee).update(discarded=True)
-            messages.success(
-                request, "Successfully discarded progress of all selected trainees."
-            )
-
-            # Raw uri contains GET parameters from django filters. We use it
-            # to preserve filter settings.
-            return redirect(request.get_raw_uri())
 
     elif request.method == "POST" and "submit" in request.POST:
         # Bulk add progress to selected trainees
         form = BulkAddTrainingProgressForm(request.POST)
-        discard_form = BulkDiscardProgressesForm()
         if form.is_valid():
             for trainee in form.cleaned_data["trainees"]:
                 TrainingProgress.objects.create(
                     trainee=trainee,
                     requirement=form.cleaned_data["requirement"],
                     state=form.cleaned_data["state"],
-                    discarded=False,
                     event=form.cleaned_data["event"],
                     url=form.cleaned_data["url"],
                     notes=form.cleaned_data["notes"],
@@ -174,13 +157,11 @@ def all_trainees(request):
             initial = None
 
         form = BulkAddTrainingProgressForm(initial=initial)
-        discard_form = BulkDiscardProgressesForm()
 
     context = {
         "title": "Trainees",
         "all_trainees": trainees,
         "filter": filter,
         "form": form,
-        "discard_form": discard_form,
     }
     return render(request, "trainings/all_trainees.html", context)

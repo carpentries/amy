@@ -223,7 +223,7 @@ def training_progress(request):
         .get(pk=request.user.pk)
     )
 
-    progresses = request.user.trainingprogress_set.filter(discarded=False)
+    progresses = request.user.trainingprogress_set
     last_lesson_contribution = (
         progresses.filter(requirement__name="Lesson Contribution")
         .order_by("-created_at")

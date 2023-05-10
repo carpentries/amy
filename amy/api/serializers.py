@@ -425,7 +425,6 @@ class TrainingProgressSerializer(serializers.ModelSerializer):
             "last_updated_at",
             "requirement",
             "state",
-            "discarded",
             "event",
             "url",
         )

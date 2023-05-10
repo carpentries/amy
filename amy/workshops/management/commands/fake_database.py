@@ -267,7 +267,6 @@ class Command(BaseCommand):
                     trainee=p,
                     requirement=r,
                     state=state,
-                    discarded=randbool(0.05),
                     event=event,
                     url=url,
                     notes=notes,
