@@ -25,7 +25,7 @@ class TestTrainingProgressValidation(TestBase):
         self._setUpNonInstructors()
 
         self.requirement = TrainingRequirement.objects.create(
-            name="Discussion", url_required=False, event_required=False
+            name="Welcome Session", url_required=False, event_required=False
         )
         self.url_required = TrainingRequirement.objects.create(
             name="Lesson Contribution", url_required=True, event_required=False
@@ -197,9 +197,9 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 state="p",
                 trainee=self.ironman,
                 created_at=datetime(2016, 5, 1, 16, 00),
-                requirement=TrainingRequirement(name="Discussion"),
+                requirement=TrainingRequirement(name="Welcome Session"),
             ),
-            expected="Passed Discussion<br />" "on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Welcome Session<br />on Sunday 01 May 2016 at 16:00.",
         )
 
     def test_notes(self):
@@ -208,10 +208,10 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 state="p",
                 trainee=self.ironman,
                 created_at=datetime(2016, 5, 1, 16, 00),
-                requirement=TrainingRequirement(name="Discussion"),
+                requirement=TrainingRequirement(name="Welcome Session"),
                 notes="Additional notes",
             ),
-            expected="Passed Discussion<br />"
+            expected="Passed Welcome Session<br />"
             "on Sunday 01 May 2016 at 16:00.<br />"
             "Notes: Additional notes",
         )
@@ -222,9 +222,9 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 state="p",
                 trainee=self.ironman,
                 created_at=datetime(2016, 5, 1, 16, 00),
-                requirement=TrainingRequirement(name="Discussion"),
+                requirement=TrainingRequirement(name="Welcome Session"),
             ),
-            expected="Passed Discussion<br />" "on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Welcome Session<br />on Sunday 01 May 2016 at 16:00.",
         )
 
     def _test(self, progress, expected):
@@ -244,7 +244,7 @@ class TestCRUDViews(TestBase):
         self._setUpTags()
         self._setUpRoles()
 
-        self.requirement = TrainingRequirement.objects.create(name="Discussion")
+        self.requirement = TrainingRequirement.objects.create(name="Welcome Session")
         self.progress = TrainingProgress.objects.create(
             requirement=self.requirement,
             state="p",

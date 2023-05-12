@@ -24,7 +24,7 @@ TRAINING_REQUIREMENTS: list[TrainingRequirementDef] = [
     {"name": "Training", "url_required": False, "event_required": True},
     {"name": "DC Homework", "url_required": True, "event_required": False},
     {"name": "SWC Homework", "url_required": True, "event_required": False},
-    {"name": "Discussion", "url_required": False, "event_required": False},
+    {"name": "Welcome Session", "url_required": False, "event_required": False},
     {"name": "DC Demo", "url_required": False, "event_required": False},
     {"name": "SWC Demo", "url_required": False, "event_required": False},
     {"name": "LC Demo", "url_required": False, "event_required": False},

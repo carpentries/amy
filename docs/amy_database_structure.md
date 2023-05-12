@@ -199,7 +199,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 
 ### Training progress
 
-* `workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Discussion, etc.)
+* `workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Welcome Session, etc.)
     * `id`  Sequential, automatically assigned integer.
     * `name` Name of requirement (*DC Homework*, *LC Demo*, etc.)
     * `url_required` Notes whether a URL is required for this type of training requirement.  This only applies to the *Lesson Contribution* requirements.

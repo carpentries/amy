@@ -67,7 +67,7 @@ class TestInstructorStatus(TestBase):
         requirements = [
             "Training",
             "Lesson Contribution",
-            "Discussion",
+            "Welcome Session",
             "Demo",
         ]
         for requirement in requirements:
@@ -175,31 +175,31 @@ class TestLessonContributionStatus(TestBase):
         self.assertEqual(got, expected)
 
 
-class TestDiscussionSessionStatus(TestBase):
-    """Test that trainee dashboard displays status of passing Discussion
+class TestWelcomeSessionStatus(TestBase):
+    """Test that trainee dashboard displays status of passing Welcome
     Session. Test whether we display instructions for registering for a
     session."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.progress_url = reverse("training-progress")
 
     def test_session_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.discussion)
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.welcome)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session passed")
+        self.assertContains(rv, "Welcome Session passed")
 
     def test_session_failed(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.discussion, state="f"
+            trainee=self.admin, requirement=self.welcome, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session not passed yet")
+        self.assertContains(rv, "Welcome Session not passed yet")
 
     def test_no_participation_in_a_session_yet(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session not passed yet")
+        self.assertContains(rv, "Welcome Session not passed yet")
 
 
 class TestDemoSessionStatus(TestBase):

@@ -1295,7 +1295,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
             name="Lesson Contribution", defaults={"url_required": True}
         )
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.demo, _ = TrainingRequirement.objects.get_or_create(
             name="Demo", defaults={}
         )
@@ -1308,7 +1308,7 @@ class TestGetMissingInstructorRequirements(TestBase):
             trainee=self.person, state="p", requirement=self.lesson_contribution
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.discussion
+            trainee=self.person, state="p", requirement=self.welcome
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.demo
@@ -1332,7 +1332,7 @@ class TestGetMissingInstructorRequirements(TestBase):
             trainee=self.person, state="f", requirement=self.demo
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="n", requirement=self.discussion
+            trainee=self.person, state="n", requirement=self.welcome
         )
 
         person = Person.objects.annotate_with_instructor_eligibility().get(
@@ -1340,7 +1340,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Discussion", "Demo"],
+            ["Training", "Welcome Session", "Demo"],
         )
 
     def test_none_requirement_is_fulfilled(self):
@@ -1349,7 +1349,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Lesson Contribution", "Discussion", "Demo"],
+            ["Training", "Lesson Contribution", "Welcome Session", "Demo"],
         )
 
 
