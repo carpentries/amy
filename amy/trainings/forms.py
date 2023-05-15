@@ -1,7 +1,6 @@
 from crispy_forms.layout import Layout
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.forms import RadioSelect, TextInput
 
 # this is used instead of Django Autocomplete Light widgets
@@ -19,11 +18,7 @@ class TrainingProgressForm(forms.ModelForm):
         widget=ModelSelect2Widget(data_view="person-lookup"),
     )
     requirement = forms.ModelChoiceField(
-        queryset=TrainingRequirement.objects.exclude(
-            Q(name__startswith="SWC")
-            | Q(name__startswith="DC")
-            | Q(name__startswith="LC")
-        ),
+        queryset=TrainingRequirement.objects.all(),
         label="Type",
         required=True,
     )
@@ -92,11 +87,7 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
 
     requirement = forms.ModelChoiceField(
-        queryset=TrainingRequirement.objects.exclude(
-            Q(name__startswith="SWC")
-            | Q(name__startswith="DC")
-            | Q(name__startswith="LC")
-        ),
+        queryset=TrainingRequirement.objects.all(),
         label="Type",
         required=True,
     )
