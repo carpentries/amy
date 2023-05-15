@@ -28,9 +28,22 @@ def rename_welcome_session_to_discussion(apps, schema_editor) -> None:
 
 def delete_outdated_requirements(apps, schema_editor) -> None:
     TrainingRequirement = apps.get_model("workshops", "TrainingRequirement")
+    TrainingProgress = apps.get_model("workshops", "TrainingProgress")
 
-    # TODO: find and update training progresses with SWC/DC/LC and migrate them to just Contribution/Demo
+    # migrate SWC/DC/LC specific progress to generic demo/lesson contribution
+    progresses = TrainingProgress.objects.filter(
+        Q(requirement__name__startswith="SWC")
+        | Q(requirement__name__startswith="DC")
+        | Q(requirement__name__startswith="LC")
+    )
+    demo = TrainingRequirement.objects.get(name="Demo")
+    contribution = TrainingRequirement.objects.get(name="Lesson Contribution")
+    progresses.filter(requirement__name__endswith="Demo").update(requirement=demo)
+    progresses.filter(requirement__name__endswith="Homework").update(
+        requirement=contribution
+    )
 
+    # remove SWC/DC/LC specific requirements
     TrainingRequirement.objects.filter(
         Q(name__startswith="SWC") | Q(name__startswith="DC") | Q(name__startswith="LC")
     ).delete()
