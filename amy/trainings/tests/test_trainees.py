@@ -71,43 +71,14 @@ class TestTraineesView(TestBase):
         msg = "Successfully changed progress of all selected trainees."
         self.assertContains(rv, msg)
         got = set(
-            TrainingProgress.objects.values_list(
-                "trainee", "requirement", "state", "evaluated_by"
-            )
+            TrainingProgress.objects.values_list("trainee", "requirement", "state")
         )
         expected = {
-            (self.spiderman.pk, self.discussion.pk, "n", None),
-            (self.spiderman.pk, self.discussion.pk, "a", self.admin.pk),
-            (self.ironman.pk, self.discussion.pk, "a", self.admin.pk),
+            (self.spiderman.pk, self.discussion.pk, "n"),
+            (self.spiderman.pk, self.discussion.pk, "a"),
+            (self.ironman.pk, self.discussion.pk, "a"),
         }
         self.assertEqual(got, expected)
-
-    def test_bulk_discard_progress(self):
-        spiderman_progress = TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=self.discussion, state="n"
-        )
-        ironman_progress = TrainingProgress.objects.create(
-            trainee=self.ironman, requirement=self.discussion, state="n"
-        )
-        blackwidow_progress = TrainingProgress.objects.create(
-            trainee=self.blackwidow, requirement=self.discussion, state="n"
-        )
-        data = {
-            "trainees": [self.spiderman.pk, self.ironman.pk],
-            "discard": "",
-        }
-        rv = self.client.post(reverse("all_trainees"), data, follow=True)
-
-        self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.resolver_match.view_name, "all_trainees")
-        msg = "Successfully discarded progress of all selected trainees."
-        self.assertContains(rv, msg)
-        spiderman_progress.refresh_from_db()
-        self.assertTrue(spiderman_progress.discarded)
-        ironman_progress.refresh_from_db()
-        self.assertTrue(ironman_progress.discarded)
-        blackwidow_progress.refresh_from_db()
-        self.assertFalse(blackwidow_progress.discarded)
 
 
 class TestFilterTraineesByInstructorStatus(TestBase):
@@ -179,25 +150,21 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.discussion,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
@@ -214,25 +181,21 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.discussion,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
@@ -252,26 +215,22 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.discussion,
                     state="f",  # failed
                     notes="Failed",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.lesson_contribution,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),

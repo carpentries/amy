@@ -417,7 +417,6 @@ class TrainingProgressSerializer(serializers.ModelSerializer):
     requirement = TrainingRequirementSerializer(many=False, read_only=True)
     state = serializers.CharField(source="get_state_display")
     event = EventSerializerSimplified(many=False, read_only=True)
-    evaluated_by = PersonNameSerializer(many=False, read_only=True)
 
     class Meta:
         model = TrainingProgress
@@ -426,8 +425,6 @@ class TrainingProgressSerializer(serializers.ModelSerializer):
             "last_updated_at",
             "requirement",
             "state",
-            "discarded",
-            "evaluated_by",
             "event",
             "url",
         )

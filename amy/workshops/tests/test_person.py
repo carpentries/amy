@@ -1334,10 +1334,6 @@ class TestGetMissingInstructorRequirements(TestBase):
         TrainingProgress.objects.create(
             trainee=self.person, state="n", requirement=self.discussion
         )
-        # Passed discarded progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training, discarded=True
-        )
 
         person = Person.objects.annotate_with_instructor_eligibility().get(
             username="person"

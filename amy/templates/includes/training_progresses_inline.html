@@ -7,9 +7,7 @@
      data-content="{% progress_description progress %}<br />Click to edit or delete."
      data-html="true"
      data-trigger="hover">
-    {% if progress.discarded %}<strike>{% endif %}
       {{ progress.requirement }}
-    {% if progress.discarded %}</strike>{% endif %}
   </a>
   &nbsp;
 {% endfor %}

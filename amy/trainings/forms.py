@@ -1,4 +1,4 @@
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -17,12 +17,6 @@ class TrainingProgressForm(forms.ModelForm):
         required=True,
         queryset=Person.objects.all(),
         widget=ModelSelect2Widget(data_view="person-lookup"),
-    )
-    evaluated_by = forms.ModelChoiceField(
-        label="Evaluated by",
-        required=False,
-        queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="admin-lookup"),
     )
     requirement = forms.ModelChoiceField(
         queryset=TrainingRequirement.objects.exclude(
@@ -62,10 +56,8 @@ class TrainingProgressForm(forms.ModelForm):
         model = TrainingProgress
         fields = [
             "trainee",
-            "evaluated_by",
             "requirement",
             "state",
-            "discarded",
             "event",
             "url",
             "notes",
@@ -155,46 +147,3 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
                     "progress to a trainee without any "
                     "training task."
                 )
-
-
-class BulkDiscardProgressesForm(forms.Form):
-    """Form used to bulk discard all TrainingProgresses associated with
-    selected trainees."""
-
-    trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
-
-    helper = BootstrapHelper(
-        add_submit_button=False,
-        form_tag=False,
-        display_labels=False,
-        add_cancel_button=False,
-    )
-
-    SUBMIT_POPOVER = """<p>Discarded progress will be displayed in the following
-    way: <span class='badge badge-dark'><strike>Discarded</strike></span>.</p>
-
-    <p>If you want to permanently remove records from system,
-    click one of the progress labels and, then, click "delete" button.</p>"""
-
-    helper.layout = Layout(
-        # no 'trainees' -- you should take care of generating it manually in
-        # the template where this form is used
-        # We use formnovalidate on submit button to disable browser
-        # validation. This is necessary because this form is used along with
-        # BulkAddTrainingProgressForm, which have required fields. Both forms
-        # live inside the same <form> tag. Without this attribute, when you
-        # click the following submit button, the browser reports missing
-        # values in required fields in BulkAddTrainingProgressForm.
-        Submit(
-            "discard",
-            "Discard all progress of selected trainees",
-            formnovalidate="formnovalidate",
-            **{
-                "data-toggle": "popover",
-                "data-trigger": "hover",
-                "data-html": "true",
-                "data-content": SUBMIT_POPOVER,
-                "css_class": "btn btn-warning",
-            },
-        ),
-    )

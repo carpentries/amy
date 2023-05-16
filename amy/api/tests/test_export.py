@@ -183,8 +183,6 @@ class TestExportingPersonData(BaseExportingTest):
             requirement=TrainingRequirement.objects.get(name="Discussion"),
             state="p",  # passed
             event=event,
-            evaluated_by=None,
-            discarded=False,
             url=None,
         )
         lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
@@ -195,8 +193,6 @@ class TestExportingPersonData(BaseExportingTest):
             requirement=lesson_contribution,
             state="a",  # asked to repeat
             event=None,
-            evaluated_by=self.admin,
-            discarded=False,
             url="http://example.org/lesson",
         )
         terms = (
@@ -513,8 +509,6 @@ class TestExportingPersonData(BaseExportingTest):
                     "event_required": False,
                 },
                 "state": "Passed",
-                "discarded": False,
-                "evaluated_by": None,
                 "event": {
                     "slug": "2018-06-16-AMY-event",
                     "start": "2018-06-16",
@@ -540,10 +534,6 @@ class TestExportingPersonData(BaseExportingTest):
                     "event_required": False,
                 },
                 "state": "Asked to repeat",
-                "discarded": False,
-                "evaluated_by": {
-                    "name": "Super User",
-                },
                 "event": None,
                 "url": "http://example.org/lesson",
             },

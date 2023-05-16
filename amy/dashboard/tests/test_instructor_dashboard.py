@@ -100,21 +100,6 @@ class TestInstructorTrainingStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Training passed")
 
-    def test_training_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.training, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Training not passed yet")
-
-    def test_last_training_discarded_but_another_is_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.training)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.training, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Training passed")
-
     def test_training_failed(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.training, state="f"
@@ -163,27 +148,6 @@ class TestLessonContributionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Lesson Contribution accepted")
 
-    def test_lesson_contribution_not_accepted_when_lesson_contribution_passed_but_discarded(  # noqa: line too long
-        self,
-    ):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution not submitted")
-
-    def test_lesson_contribution_is_accepted_when_last_lesson_contribution_is_discarded_but_other_one_is_passed(  # noqa: line too long
-        self,
-    ):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution
-        )
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution accepted")
-
     def test_submission_form(self):
         data = {
             "url": "http://example.com",
@@ -226,21 +190,6 @@ class TestDiscussionSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Discussion Session passed")
 
-    def test_session_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.discussion, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session not passed yet")
-
-    def test_last_session_discarded_but_another_is_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.discussion)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.discussion, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session passed")
-
     def test_session_failed(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.discussion, state="f"
@@ -270,14 +219,6 @@ class TestDemoSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Demo Session passed")
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
-
-    def test_session_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.demo, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Demo Session not completed")
-        self.assertContains(rv, self.SESSION_LINK_TEXT)
 
     def test_session_failed(self):
         TrainingProgress.objects.create(

@@ -633,7 +633,6 @@ class PersonManager(BaseUserManager):
                     When(
                         trainingprogress__requirement__name=requirement,
                         trainingprogress__state="p",
-                        trainingprogress__discarded=False,
                         then=1,
                     ),
                     default=0,
@@ -648,7 +647,6 @@ class PersonManager(BaseUserManager):
                         When(
                             trainingprogress__requirement__name=req,
                             trainingprogress__state="p",
-                            trainingprogress__discarded=False,
                             then=1,
                         )
                         for req in reqs
@@ -2419,11 +2417,6 @@ class TrainingRequirement(models.Model):
 class TrainingProgress(CreatedUpdatedMixin, models.Model):
     trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
 
-    # Mentor/examiner who evaluates lesson contribution / session. May be null when a
-    # trainee submits their lesson contribution.
-    evaluated_by = models.ForeignKey(
-        Person, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
-    )
     requirement = models.ForeignKey(
         TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type"
     )
@@ -2435,17 +2428,6 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         ("a", "Asked to repeat"),
     )
     state = models.CharField(choices=STATES, default="p", max_length=1)
-
-    # When we end training and trainee has gone silent, or passed their
-    # deadline, we set this field to True.
-    discarded = models.BooleanField(
-        default=False,
-        verbose_name="Discarded",
-        help_text="Check when the trainee has gone silent or passed their "
-        "training deadline. Discarded items are not "
-        "deleted permanently. If you want to remove this "
-        'record, click red "delete" button.',
-    )
 
     event = models.ForeignKey(
         Event,
