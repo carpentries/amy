@@ -121,11 +121,7 @@ def all_trainees(request):
     )
     trainees = get_pagination_items(request, filter.qs)
 
-    if request.method == "POST" and "discard" in request.POST:
-        # Bulk discard progress of selected trainees
-        form = BulkAddTrainingProgressForm()
-
-    elif request.method == "POST" and "submit" in request.POST:
+    if request.method == "POST":
         # Bulk add progress to selected trainees
         form = BulkAddTrainingProgressForm(request.POST)
         if form.is_valid():
