@@ -36,10 +36,6 @@ class TestInstructorStatus(TestBase):
         self._setUpUsersAndLogin()
         self._setUpBadges()
         self.progress_url = reverse("training-progress")
-        TrainingRequirement.objects.create(
-            name="Lesson Contribution", url_required=True
-        )
-        TrainingRequirement.objects.create(name="Demo")
 
     def test_instructor_badge(self):
         """When the trainee is awarded both Carpentry Instructor badge,

@@ -74,9 +74,9 @@ class TestTraineesView(TestBase):
             TrainingProgress.objects.values_list("trainee", "requirement", "state")
         )
         expected = {
-            (self.spiderman.pk, self.discussion.pk, "n"),
-            (self.spiderman.pk, self.discussion.pk, "a"),
-            (self.ironman.pk, self.discussion.pk, "a"),
+            (self.spiderman.pk, self.welcome.pk, "n"),
+            (self.spiderman.pk, self.welcome.pk, "a"),
+            (self.ironman.pk, self.welcome.pk, "a"),
         }
         self.assertEqual(got, expected)
 

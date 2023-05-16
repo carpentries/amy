@@ -32,8 +32,12 @@ def delete_outdated_requirements(apps, schema_editor) -> None:
 
     # migrate SWC/DC/LC specific progress to generic demo/lesson contribution
     # this was already done in production AMY but not in local databases
-    demo = TrainingRequirement.objects.get(name="Demo")
-    contribution = TrainingRequirement.objects.get(name="Lesson Contribution")
+    demo, _ = TrainingRequirement.objects.get_or_create(
+        name="Demo", defaults={"url_required": False}
+    )
+    contribution, _ = TrainingRequirement.objects.get_or_create(
+        name="Lesson Contribution", defaults={"url_required": True}
+    )
     progresses = TrainingProgress.objects.filter(
         Q(requirement__name__startswith="SWC")
         | Q(requirement__name__startswith="DC")
@@ -67,8 +71,8 @@ def add_outdated_requirements(apps, schema_editor) -> None:
 
 
 class Migration(migrations.Migration):
-    dependencies = [  # TODO: depend on 0258 evaluated by etc
-        ("workshops", "0257_alter_membership_variant"),
+    dependencies = [
+        ("workshops", "0258_remove_trainingprogress_evaluated_by"),
     ]
 
     operations = [
