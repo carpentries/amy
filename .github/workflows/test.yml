@@ -84,7 +84,7 @@ jobs:
         fi;
 
     - name: Unit tests
-      run: pipenv run python manage.py test --exclude-tags=migration_test
+      run: pipenv run python manage.py test --exclude-tag=migration_test
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432
