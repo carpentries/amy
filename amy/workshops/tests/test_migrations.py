@@ -106,19 +106,21 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
         )
 
         for prefix in ["SWC", "DC", "LC"]:
-            assert (
+            self.assertEqual(
                 TrainingProgress.objects.filter(
                     requirement__name__startswith=prefix
-                ).count()
-                == 0
+                ).count(),
+                0,
             )
 
-        assert TrainingProgress.objects.filter(requirement__name="Demo").count() == 3
-        assert (
+        self.assertEqual(
+            TrainingProgress.objects.filter(requirement__name="Demo").count(), 3
+        )
+        self.assertEqual(
             TrainingProgress.objects.filter(
                 requirement__name="Lesson Contribution"
-            ).count()
-            == 2
+            ).count(),
+            2,
         )
 
 
@@ -179,19 +181,21 @@ class TestWorkshops0259NewRequirements(BaseMigrationTestCase):
         )
 
         for prefix in ["SWC", "DC", "LC"]:
-            assert (
+            self.assertEqual(
                 TrainingProgress.objects.filter(
                     requirement__name__startswith=prefix
-                ).count()
-                == 0
+                ).count(),
+                0,
             )
 
-        assert TrainingProgress.objects.filter(requirement__name="Demo").count() == 2
-        assert (
+        self.assertEqual(
+            TrainingProgress.objects.filter(requirement__name="Demo").count(), 2
+        )
+        self.assertEqual(
             TrainingProgress.objects.filter(
                 requirement__name="Lesson Contribution"
-            ).count()
-            == 1
+            ).count(),
+            1,
         )
 
 
