@@ -128,6 +128,8 @@ The role must exactly match the [instructions here](https://amy.carpentries.org/
 
 This will take you to a screen where you can verify each record, correct any errors, and submit them for bulk upload.  If a person with the same name and email already exists in the database, you will be able to match the new entry to the existing record.  Otherwise a new person record will be created.
 
+Because `Learner` roles at Instructor Training events must be identified with a membership or as an open seat, these can not be entered via this bulk upload process.  These must be entered individually.
+
 #### Consents
 
 AMY asks all users to consent or agree to the following:
