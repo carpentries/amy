@@ -238,7 +238,7 @@ These fields were deprecated in introducing the new consents model.
 
 ### Term
 
-`consents_term` - Stores all Terms in AMY (i.e. the privacy policy).
+`consents_term` - Stores all Terms in AMY (i.e. the privacy policy, consent to publish, consent to contact, etc.).
 
 #### Archive Behavior
 
