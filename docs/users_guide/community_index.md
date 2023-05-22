@@ -46,8 +46,7 @@ In addition to the following information, The Carpentries also maintains data on
 * tasks at an event (learner, helper, Instructor, Host, etc.)
 * progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc. See the [Instructor Training section](#instructor-training) for more inforamtion.
 * awards received such as *Trainer*, *Instructor*, *Maintainer*, etc.
-* other roles the individual may have or have had, such as Core Team member, Executive Team member, etc.
-* whether the individual is actively serving in a role
+* roles currently or previously held such as Instructor, Trainer, Executive Council member, Core Team member, etc. 
 
 Individuals can view this information but can not edit it directly.  Please contact <team@carpentries.org> with questions about this information.
 
