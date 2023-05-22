@@ -54,7 +54,7 @@ Individuals can view this information but can not edit it directly.  Please cont
 
 Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge.  Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge is correctly displayed, you are in good standing. 
 
-Carpentries Instructor trainees can also submit their lesson contribution for checkout directly in AMY.  Read more in the [Instructor Training curriculum](https://carpentries.github.io/instructor-training/checkout/index.html).
+Carpentries Instructor trainees can also submit their lesson contribution for checkout directly in AMY.  Read more in the [Instructor Training curriculum](https://carpentries.github.io/instructor-training/checkout).
 
 ### Viewing teaching opportunities
 
