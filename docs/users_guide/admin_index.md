@@ -293,6 +293,8 @@ At this point, the workshop will be available for badged and active Instructors 
 
 As Instructors register their interest, an admin can track their status from the event page itself to view details of just that workshop, or by selecting the "More >> Instructor selection/recruitment" menu option.  The next screen will show who has signed up so far, a summary of their activity as a Helper and Instructor; the Instructor's country; when the sign up was created and edited; and notes left by the Instructor.
 
+Instructors will get warnings and be allowed to continue if they are signing up for concurrent workshops.  Instructors will get errors and will not be able to continue if they are signing up for a workshop concurrent with a workshop they are already confirmed for.  
+
 The admin can edit their own notes for each person using the blue edit button, and confirm or decline the Instructor to teach using the confirm or decline buttons.  Once an Instructor has been confirmed in this way, an Instructor task is automatically created for this individual.
 
 Once at least two Instructors have been confirmed, the admin may close signups for this workshop.  This workshop will then no longer appear on the list of Instructor opportunities.
