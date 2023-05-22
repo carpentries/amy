@@ -132,7 +132,7 @@ Because `Learner` roles at Instructor Training events must be identified with a 
 
 #### Consents
 
-AMY asks all users to consent or agree to the following:
+AMY asks all users to consent or agree to the following.  These consents are defined in the Django admin panel.
 
 * **Can we contact you for volunteering opportunities, surveys, feedback, etc.?**
 * **Do you consent to publish your profile on The Carpentries website?**
