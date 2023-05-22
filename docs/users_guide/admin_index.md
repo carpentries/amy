@@ -266,6 +266,10 @@ This will open a page with a side by side view of the request details and view t
 
 ![AMY workshop accept request](images/event_from_request.png)
 
+When submitting the above forms, the user may be asked for information such as the curricula requested or being taught, the background of the workshop audience, and how the user learned about The Carpentries.  These options are defined in the Django admin panel.
+
+
+
 ### Community Roles
 
 Any Person in AMY can also be assigned a Community Role.  Examples of Community Roles include Instructor, Trainer, Maintainer, Executive Council member, and Core Team member.  Roles are created and modified in the Django admin panel.
