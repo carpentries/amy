@@ -9,7 +9,7 @@
 
 ### User profiles
 
-The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login.  *Personal (first) name* is the only required field.
+The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login. Please contact <team@carpentries.org> if you would like to update this information. *Personal (first) name* is the only required field.
 
 * Personal (first) name
 * Middle name
