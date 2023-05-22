@@ -53,7 +53,7 @@ The following fields are included in the Member view:
 * **Can this membership be publicized on The Carpentries websites** If Public is selected, the membership will be listed on [The Carpentries Members page](https://carpentries.org/members/) and [data feeds](https://feeds.carpentries.org/all_public_memberships.json).  If Private is selected, it will not be listed.
 * **Variant** This lists all the membership levels (Gold, Silver, Bronze, etc.)
 * **Agreement start** and **Agreement end** Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.
-* **Extensions** Extensions are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.
+* **Extensions** Extensions to the membership end date are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.
 * **Contribution type** What the member contribution was (Financial, Person-days, or other)
 * **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar/index.html) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Instructor training applications using the member code are [manually matched to this member and a training event](#accepting-trainee-applications).
 * **Link to member agreement** Link to the Google Drive folder with the member agreement.
