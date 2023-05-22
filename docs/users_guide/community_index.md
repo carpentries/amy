@@ -30,7 +30,7 @@ The Carpentries can maintain the following information about individuals in our 
 * Areas of expertise 
 * Languages (human languages)
 * Comments (additional notes or comments from individual)
-* Consents *Note consents with an asterisk (*) are required. Other consents can be changed at any time.**
+* Consents *Note consents with an asterisk (\*) are required. Other consents can be changed at any time.**
     * Can we contact you for volunteering opportunities, surveys, feedback, etc.?
     * Do you consent to publish your profile on The Carpentries website?
     * Do you consent to have your name or identity associated with lesson publications?
