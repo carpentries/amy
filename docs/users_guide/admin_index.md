@@ -100,7 +100,7 @@ When a member site renews a membership, do not create a new member record. Inste
 * **Variant**: Same as previous
 * **Agreement start** and **Agreement end** Starts on end date of previous membership; ends one year from start
 * **Contribution type**: Same as previous
-* **Instructor training seats and workshops allowed**: Same as previous or standard amounts allowed for that membership
+* **Instructor training seats and workshops allowed**: Same as allowed in previous membership
 
 This also includes the options to automatically copy over member organisations (for consortiums only) and copy over associated persons and their roles.
 
