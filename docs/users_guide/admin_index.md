@@ -268,7 +268,7 @@ This will open a page with a side by side view of the request details and view t
 
 ### Community Roles
 
-Any Person in AMY can also be assigned a Community Role.  
+Any Person in AMY can also be assigned a Community Role.  Examples of Community Roles include Instructor, Trainer, Maintainer, Executive Council member, and Core Team member.  Roles are created and modified in the Django admin panel.
 
 ![AMY Assign community role](images/community_roles.png)
 
@@ -281,9 +281,6 @@ The Community Role model includes the following fields:
 * Associated Membership: not required for all roles
 * URL: Used for lesson maintainers to identify the url to the corresponding GitHub repo
 * Generic relation object: Used to set custom key value pairs for roles
-
-Roles are created and modified in the Django admin panel.
-
 
 ### Recruiting Instructors for Workshops
 
