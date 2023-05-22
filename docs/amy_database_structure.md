@@ -264,7 +264,7 @@ When TermOptions are archived (`archived_at` timestamp is set), any `Consents` t
 
 #### Commonly used fields
 
-* `term` a required foreign key to term. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
+* `term_id` a required foreign key to term. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
 * `option_type` determines whether or not a term option is considered an affirmative aggrement to the term or the user has declined the term.
 * `content` the text displayed to the user when the term is rendered.
 * `archived_at` - a nullable timestamp
