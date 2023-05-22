@@ -525,7 +525,7 @@ The quickest and easiest way to search is using the search box in the top menu b
 
 *  `12-12-` will match any workshop slug containing that string (essentially any workshop on December 12 of any year.)
 * `ola tes` will match `Nikola Tesla` and `Nolan Bates`
-* `stanford` will match any one with a `stanford` email address, with `stanford` in their name, any workshops with `stanford` in the slug, or the site `Stanford University`.
+* `stanford` will match any person record with `stanford` in their email address or their name, any workshops with `stanford` in the slug, or any organization with `stanford` in its name.
 
 If only one result is found across all fields, AMY will automatically redirect to that result.  Otherwise, AMY will redirect to a search results view.  The search results view will include a new search box, with results appearing in a tabbed view, separated by Organisations, Memberships, Events, Persons, Airports, Training Requests, and Comments.
 
