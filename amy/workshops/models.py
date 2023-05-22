@@ -34,6 +34,7 @@ from reversion.models import Version
 from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
+from trainings.models import Involvement
 from workshops import github_auth
 from workshops.consts import (
     FEE_DETAILS_URL,
@@ -1875,6 +1876,159 @@ class KnowledgeDomain(models.Model):
 # ------------------------------------------------------------
 
 
+class CurriculumManager(models.Manager):
+    def default_order(
+        self,
+        allow_unknown=True,
+        allow_other=True,
+        allow_mix_match=False,
+        dont_know_yet_first=False,
+    ):
+        """A specific order_by() clause with semi-ninja code."""
+
+        # This crazy django-ninja-code gives different weights to entries
+        # matching different criterias, and then sorts them by 'name'.
+        # For example when two entries (e.g. swc-r and swc-python) have the
+        # same weight (here: 10), then sorting by name comes in.
+        # Entries dc-other, swc-other, lc-other, or `I don't know` are made
+        # last of their "group".
+        qs = self.order_by(
+            Case(
+                When(carpentry="SWC", other=False, then=10),
+                When(carpentry="SWC", other=True, then=15),
+                When(carpentry="DC", other=False, then=20),
+                When(carpentry="DC", other=True, then=25),
+                When(carpentry="LC", other=False, then=30),
+                When(carpentry="LC", other=True, then=35),
+                When(unknown=True, then=1 if dont_know_yet_first else 200),
+                When(carpentry="", then=100),
+                default=1,
+            ),
+            "name",
+        )
+
+        # conditionally disable unknown ("I don't know") entry from appearing
+        # in the list
+        if not allow_unknown:
+            qs = qs.filter(unknown=False)
+
+        # conditionally disable other entries (swc-other, etc.) from appearing
+        # in the list
+        if not allow_other:
+            qs = qs.filter(other=False)
+
+        # conditionally disable Mix&Match entry from appearing in the list
+        if not allow_mix_match:
+            qs = qs.filter(mix_match=False)
+
+        return qs
+
+
+class Curriculum(ActiveMixin, models.Model):
+    CARPENTRIES_CHOICES = (
+        ("SWC", "Software Carpentry"),
+        ("DC", "Data Carpentry"),
+        ("LC", "Library Carpentry"),
+        ("", "unspecified / irrelevant"),
+    )
+    carpentry = models.CharField(
+        max_length=5,
+        choices=CARPENTRIES_CHOICES,
+        null=False,
+        blank=True,
+        default="",
+        verbose_name="Which Carpentry does this curriculum belong to?",
+    )
+    slug = models.CharField(
+        max_length=STR_MED,
+        null=False,
+        blank=False,
+        default="",
+        unique=True,
+        verbose_name="Curriculum ID",
+        help_text="Use computer-friendly text here, e.g. 'dc-ecology-r'.",
+    )
+    name = models.CharField(
+        max_length=200,
+        null=False,
+        blank=False,
+        default="",
+        unique=True,
+        verbose_name="Curriculum name",
+        help_text="Use user-friendly language, e.g. "
+        "'Data Carpentry (Ecology with R)'.",
+    )
+    description = models.TextField(
+        max_length=400,
+        null=False,
+        blank=True,
+        default="",
+        verbose_name="Curriculum longer description",
+        help_text="You can enter Markdown. It will be shown as a hover or "
+        "popup over the curriculum entry on forms.",
+    )
+    other = models.BooleanField(
+        null=False,
+        blank=True,
+        default=False,
+        verbose_name="Field marked as 'Other'",
+        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', "
+        "'DC Other', or simply 'Other')",
+    )
+    unknown = models.BooleanField(
+        null=False,
+        blank=True,
+        default=False,
+        verbose_name="Unknown entry",
+        help_text="Mark this curriculum record as 'I don't know yet', or "
+        "'Unknown', or 'Not sure yet'. There can be only one such "
+        "record in the database.",
+    )
+    mix_match = models.BooleanField(
+        null=False,
+        blank=True,
+        default=False,
+        verbose_name="Mix & Match",
+        help_text="Mark this curriculum record as 'Mix & Match'."
+        "There can be only one such record in the database.",
+    )
+    website = models.URLField(
+        blank=True,
+        default="",
+        verbose_name="Curriculum page",
+    )
+
+    objects = CurriculumManager()
+
+    class Meta:
+        verbose_name = "Curriculum"
+        verbose_name_plural = "Curricula"
+        ordering = [
+            "slug",
+        ]
+
+    def __str__(self):
+        return self.name
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        """When saving with `unknown=True`, update all other records with this
+        parameter to `unknown=False`. This helps keeping only one record with
+        `unknown=True` in the database - a specific case of uniqueness."""
+
+        # wrapped in transaction in order to prevent from updating records to
+        # `unknown=False` when saving fails
+        if self.unknown:
+            Curriculum.objects.filter(unknown=True).update(unknown=False)
+        # same for mix_match
+        if self.mix_match:
+            Curriculum.objects.filter(mix_match=True).update(mix_match=False)
+        return super().save(*args, **kwargs)
+
+
+# ------------------------------------------------------------
+
+
 class TrainingRequestManager(models.Manager):
     def get_queryset(self):
         """Enhance default TrainingRequest queryset with auto-computed
@@ -2400,6 +2554,10 @@ class TrainingRequirement(models.Model):
     # null (False).
     event_required = models.BooleanField(default=False)
 
+    # Determines whether TrainingProgress.involvement_type is required (True) or must be
+    # null (False).
+    involvement_required = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
 
@@ -2411,6 +2569,7 @@ class TrainingRequirement(models.Model):
 class TrainingProgress(CreatedUpdatedMixin, models.Model):
     trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
 
+    date = models.DateField(verbose_name="Date of activity")
     requirement = models.ForeignKey(
         TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type"
     )
@@ -2423,12 +2582,26 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     )
     state = models.CharField(choices=STATES, default="p", max_length=1)
 
+    involvement_type = models.ForeignKey(
+        Involvement,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        verbose_name="Type of involvement (Get Involved only)",
+    )
     event = models.ForeignKey(
         Event,
         null=True,
         blank=True,
         verbose_name="Training",
         limit_choices_to=Q(tags__name="TTT"),
+        on_delete=models.SET_NULL,
+    )
+    curriculum = models.ForeignKey(
+        Curriculum,
+        null=True,
+        blank=True,
+        limit_choices_to=~Q(carpentry=""),  # ignore curricula like 'Mix & Match'
         on_delete=models.SET_NULL,
     )
     url = models.URLField(null=True, blank=True, verbose_name="URL")
@@ -2464,159 +2637,6 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     class Meta:
         ordering = ["created_at"]
-
-
-# ------------------------------------------------------------
-
-
-class CurriculumManager(models.Manager):
-    def default_order(
-        self,
-        allow_unknown=True,
-        allow_other=True,
-        allow_mix_match=False,
-        dont_know_yet_first=False,
-    ):
-        """A specific order_by() clause with semi-ninja code."""
-
-        # This crazy django-ninja-code gives different weights to entries
-        # matching different criterias, and then sorts them by 'name'.
-        # For example when two entries (e.g. swc-r and swc-python) have the
-        # same weight (here: 10), then sorting by name comes in.
-        # Entries dc-other, swc-other, lc-other, or `I don't know` are made
-        # last of their "group".
-        qs = self.order_by(
-            Case(
-                When(carpentry="SWC", other=False, then=10),
-                When(carpentry="SWC", other=True, then=15),
-                When(carpentry="DC", other=False, then=20),
-                When(carpentry="DC", other=True, then=25),
-                When(carpentry="LC", other=False, then=30),
-                When(carpentry="LC", other=True, then=35),
-                When(unknown=True, then=1 if dont_know_yet_first else 200),
-                When(carpentry="", then=100),
-                default=1,
-            ),
-            "name",
-        )
-
-        # conditionally disable unknown ("I don't know") entry from appearing
-        # in the list
-        if not allow_unknown:
-            qs = qs.filter(unknown=False)
-
-        # conditionally disable other entries (swc-other, etc.) from appearing
-        # in the list
-        if not allow_other:
-            qs = qs.filter(other=False)
-
-        # conditionally disable Mix&Match entry from appearing in the list
-        if not allow_mix_match:
-            qs = qs.filter(mix_match=False)
-
-        return qs
-
-
-class Curriculum(ActiveMixin, models.Model):
-    CARPENTRIES_CHOICES = (
-        ("SWC", "Software Carpentry"),
-        ("DC", "Data Carpentry"),
-        ("LC", "Library Carpentry"),
-        ("", "unspecified / irrelevant"),
-    )
-    carpentry = models.CharField(
-        max_length=5,
-        choices=CARPENTRIES_CHOICES,
-        null=False,
-        blank=True,
-        default="",
-        verbose_name="Which Carpentry does this curriculum belong to?",
-    )
-    slug = models.CharField(
-        max_length=STR_MED,
-        null=False,
-        blank=False,
-        default="",
-        unique=True,
-        verbose_name="Curriculum ID",
-        help_text="Use computer-friendly text here, e.g. 'dc-ecology-r'.",
-    )
-    name = models.CharField(
-        max_length=200,
-        null=False,
-        blank=False,
-        default="",
-        unique=True,
-        verbose_name="Curriculum name",
-        help_text="Use user-friendly language, e.g. "
-        "'Data Carpentry (Ecology with R)'.",
-    )
-    description = models.TextField(
-        max_length=400,
-        null=False,
-        blank=True,
-        default="",
-        verbose_name="Curriculum longer description",
-        help_text="You can enter Markdown. It will be shown as a hover or "
-        "popup over the curriculum entry on forms.",
-    )
-    other = models.BooleanField(
-        null=False,
-        blank=True,
-        default=False,
-        verbose_name="Field marked as 'Other'",
-        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', "
-        "'DC Other', or simply 'Other')",
-    )
-    unknown = models.BooleanField(
-        null=False,
-        blank=True,
-        default=False,
-        verbose_name="Unknown entry",
-        help_text="Mark this curriculum record as 'I don't know yet', or "
-        "'Unknown', or 'Not sure yet'. There can be only one such "
-        "record in the database.",
-    )
-    mix_match = models.BooleanField(
-        null=False,
-        blank=True,
-        default=False,
-        verbose_name="Mix & Match",
-        help_text="Mark this curriculum record as 'Mix & Match'."
-        "There can be only one such record in the database.",
-    )
-    website = models.URLField(
-        blank=True,
-        default="",
-        verbose_name="Curriculum page",
-    )
-
-    objects = CurriculumManager()
-
-    class Meta:
-        verbose_name = "Curriculum"
-        verbose_name_plural = "Curricula"
-        ordering = [
-            "slug",
-        ]
-
-    def __str__(self):
-        return self.name
-
-    @transaction.atomic
-    def save(self, *args, **kwargs):
-        """When saving with `unknown=True`, update all other records with this
-        parameter to `unknown=False`. This helps keeping only one record with
-        `unknown=True` in the database - a specific case of uniqueness."""
-
-        # wrapped in transaction in order to prevent from updating records to
-        # `unknown=False` when saving fails
-        if self.unknown:
-            Curriculum.objects.filter(unknown=True).update(unknown=False)
-        # same for mix_match
-        if self.mix_match:
-            Curriculum.objects.filter(mix_match=True).update(mix_match=False)
-        return super().save(*args, **kwargs)
 
 
 # ------------------------------------------------------------
