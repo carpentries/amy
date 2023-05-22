@@ -266,6 +266,23 @@ This will open a page with a side by side view of the request details and view t
 
 ![AMY workshop accept request](images/event_from_request.png)
 
+### Community Roles
+
+Any Person in AMY can also be assigned a Community Role.  
+
+![AMY Assign community role](images/community_roles.png)
+
+The Community Role model includes the following fields:
+
+* Role name: Select from dropdown
+* Associated Award: not required for all roles
+* Role Start Date and Role End Date: Start date is required; end date is not
+* Reason for inactivation: Select from dropdown
+* Associated Membership: not required for all roles
+* URL: Used for lesson maintainers to identify the url to the corresponding GitHub repo
+* Generic relation object: Used to set custom key value pairs for roles
+
+Roles are created and modified in the Django admin panel.
 
 
 ### Recruiting Instructors for Workshops
