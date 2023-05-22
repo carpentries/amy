@@ -83,6 +83,8 @@ These fields were deprecated in introducing the new consents model.
 
 `workshops_membership` - Stores information about each membership agreement.
 
+#### Commonly used fields
+
 * `id` Sequential, automatically assigned integer.
 * `variant` Membership type (Gold, Silver, etc.)
 * `agreement_start` and `agreement_end` Membership term start and end dates
@@ -109,6 +111,8 @@ These fields were deprecated in introducing the new consents model.
 
 `workshops_member` - Stores information about organisations and their roles in memberships.
 
+#### Commonly used fields
+
 * `id` Sequential, automatically assigned integer.
 * `membership_id` - Integer linking membership instance
 * `organization_id` - Integer linking organisation instance
@@ -118,6 +122,8 @@ These fields were deprecated in introducing the new consents model.
 
 `workshops_memberrole` - Stores roles for organisations in memberships.
 
+#### Commonly used fields
+
 * `id` Sequential, automatically assigned integer.
 * `name` string with role's name, e.g. `contact_signatory` - preferably a computer-friendly format
 * `verbose_name` string with role's name suitable for humans, e.g. `Contact Signatory`
@@ -125,6 +131,8 @@ These fields were deprecated in introducing the new consents model.
 ### MembershipTask
 
 `fiscal_membershiptask` - Stores information about persons and their roles in memberships.
+
+#### Commonly used fields
 
 * `id` Sequential, automatically assigned integer.
 * `membership_id` - Integer linking membership instance
@@ -135,6 +143,8 @@ These fields were deprecated in introducing the new consents model.
 
 `fiscal_membershippersonrole` - Stores roles for persons in memberships.
 
+#### Commonly used fields
+
 * `id` Sequential, automatically assigned integer.
 * `name` string with role's name - preferably a computer-friendly format
 * `verbose_name` string with role's name suitable for humans
@@ -143,6 +153,8 @@ These fields were deprecated in introducing the new consents model.
 ### Organizations
 
 `workshops_organization` - Stores all organizations in AMY.
+
+#### Commonly used fields
 
 * `id` Sequential, automatically assigned integer.  This is used by the `host_id` and `administrator_id` fields in the `workshops_event` table, and the `organization_id` field in the `workshops_membership` table.
 * `domain` Website of the organization
