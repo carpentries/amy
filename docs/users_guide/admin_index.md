@@ -335,7 +335,7 @@ Go to the event page and click the "Edit" button at the top of the page.  Select
 Fill in the following fields:
 
 * **Person** Start typing in the person's name.  Auto-completed suggested names will appear.
-* **Role** Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.). 
+* **Role** Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.). These roles are defined in the Django admin panel.
 * **Title** and **URL** are not used in this context.
 
 If a person's name does not appear in the dropdown, they will need to be [added to the database](#adding-a-new-person).
