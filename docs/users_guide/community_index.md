@@ -18,7 +18,7 @@ The Carpentries can maintain the following information about individuals in our 
 * Secondary email address (This is an optional, secondary email address we can use to contact you.)
 * Gender (options include *Prefer not to say*, *Female*, *Gender variant*, *Male*, *Other*)
 * Country
-* Airport *If your aiport is not in the drop down, please contact team@carpentries.org so we can add it in.*
+* Airport *If your aiport is not in the drop down, please contact <team@carpentries.org> so we can add it in.*
 * Affiliation
 * GitHub username 
 * Twitter username
@@ -49,7 +49,7 @@ In addition to the following information, The Carpentries also maintains data on
 * other roles the individual may have or have had, such as Core Team member, Executive Team member, etc.
 * whether the individual is actively serving in a role
 
-Individuals can view this information but can not edit it directly.  Please contact team@carpentries.org with questions about this information.
+Individuals can view this information but can not edit it directly.  Please contact <team@carpentries.org> with questions about this information.
 
 ### Instructor Training
 
