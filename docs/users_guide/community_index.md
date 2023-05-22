@@ -70,3 +70,7 @@ Instructors can then register their interest in teaching specific workshop.  A w
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
 * Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact workshops@carpentries.org if they are interested in teaching concurrent workshops to discuss scheduling options.
+
+### Requesting a workshop
+
+We have three public facing workshop submission forms. These can all be accessed from the [workshop forms landing page](https://amy.carpentries.org/forms/workshop/). The workshop inquiry form is used to request more information before being ready to request a workshop.  The workshop request form is used to provide details so we can start planning a workshop with you.  The self organized submission form is used for Instructors notifying us they are running their own workshop. After submitting a form, you will receive a copy of the form via email. A member of The Carpentries Workshop Admin Team will follow up with you after receving your submitted for.  
