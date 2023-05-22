@@ -236,7 +236,7 @@ These fields were deprecated in introducing the new consents model.
     * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table
     * `trainee_id` id of the trainee being evaluated.  This is linked to the `workshops_person` table
 
-### Term
+### Terms (Consents)
 
 `consents_term` - Stores all Terms in AMY (i.e. the privacy policy, consent to publish, consent to contact, etc.).
 
