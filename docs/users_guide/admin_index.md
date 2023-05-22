@@ -104,7 +104,7 @@ When a member site renews a membership, do not create a new member record. Inste
 
 This also includes the options to automatically copy over member organisations (for consortiums only) and copy over associated persons and their roles.
 
-The number of workshops or instructor training seats rolled over from the previous membership should be manually entered.  These workshop/instructor training seats counts will be reflected in the available counts for both the new and previous memberships.
+The number of workshops or instructor training seats rolled over from the previous membership should be manually entered, and can not be greater than the number of remaining benefits from the previous membership.  These workshop/instructor training seats counts will be reflected in the available counts for both the new and previous memberships.
 
 
 ### Adding a New Person
