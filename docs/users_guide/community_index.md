@@ -44,17 +44,21 @@ The Carpentries can maintain the following information about individuals in our 
 In addition to the following information, The Carpentries also maintains data on user activity.  This may include:
 
 * tasks at an event (learner, helper, Instructor, Host, etc.)
-* progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc. See the [Instructor Training section](#instructor-training) for more inforamtion.
+* progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc. See the [badges section below](#badges) for more inforamtion.
 * awards received such as *Trainer*, *Instructor*, *Maintainer*, etc.
 * roles currently or previously held such as Instructor, Trainer, Executive Council member, Core Team member, etc. 
 
 Individuals can view this information but can not edit it directly.  Please contact <team@carpentries.org> with questions about this information.
 
-### Instructor Training
+### Badges
 
-Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge.  Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge is correctly displayed, you are in good standing. 
+#### Instructor Badge
 
-Carpentries Instructor trainees can also submit their lesson contribution for checkout directly in AMY.  Read more in the [Instructor Training curriculum](https://carpentries.github.io/instructor-training/checkout).
+Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge. Carpentries Instructor trainees can also submit their lesson contribution for checkout directly in AMY.  Read more in the [Instructor Training curriculum](https://carpentries.github.io/instructor-training/checkout).
+
+#### Other Badges
+
+ Due to the structure of our badge tracking progress, all steps towards other badges (Maintainer, Trainer, etc.) may not be included here. If your badge is correctly displayed, you are in good standing. 
 
 ### Viewing teaching opportunities
 
