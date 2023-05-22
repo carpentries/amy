@@ -72,7 +72,7 @@ Each institution within the consortium membership must have an organization role
 
 #### Membership Contacts
 
-Once a new membership has been created, contact people can be assigned to the membership.  Contact people can have one of three roles:
+Once a new membership has been created, contact people can be assigned to the membership.  Contact people roles are defined in the Django admin panel as follows: 
 
 * **Billing Contact** Person responsible for contracts and invoicing.
 * **Programmatic Contact** Person responsible for coordination of workshops and instructor training
