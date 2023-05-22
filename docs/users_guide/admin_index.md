@@ -291,7 +291,7 @@ Automatic priority is defined as follows:
 
 At this point, the workshop will be available for badged and active Instructors to [view and consider](../community_index/#viewing-teaching-opportunities).
 
-As Instructors register their interest, an admin can track their status from the event page itself to view details of just that workshop, or by selecting the "More >> Instructor selection/recruitment" menu option.  The next screen will show who has signed up so far, a summary of their activity as a Helper and Instructor; the Instructor's country; and notes left by the Instructor.
+As Instructors register their interest, an admin can track their status from the event page itself to view details of just that workshop, or by selecting the "More >> Instructor selection/recruitment" menu option.  The next screen will show who has signed up so far, a summary of their activity as a Helper and Instructor; the Instructor's country; when the sign up was created and edited; and notes left by the Instructor.
 
 The admin can edit their own notes for each person using the blue edit button, and confirm or decline the Instructor to teach using the confirm or decline buttons.  Once an Instructor has been confirmed in this way, an Instructor task is automatically created for this individual.
 
