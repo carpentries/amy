@@ -66,7 +66,9 @@ The following fields are included in the Member view:
 
 #### Consortium Memberships
 
-If *Consortium* is checked, additional affiliated sites can be added to that membership.  These will display in the `Organisations (members)` line of the Member view. For single-site memberships, only the main site can be listed here.  For consortium memberships, additional member sites can be added in.  These sites must first be [listed as an organisation in AMY](#adding-a-new-organisation).
+Consoortium memberships are those where several institutions come together under one membership.  If *Consortium* is checked, additional affiliated sites can be added to that membership.  These will display in the `Organisations (members)` line of the Member view. For single-site memberships, only the main site can be listed here.  For consortium memberships, additional member sites can be added in.  These sites must first be [listed as an organisation in AMY](#adding-a-new-organisation).
+
+Each institution within the consortium membership must have an organization role.
 
 #### Membership Contacts
 
