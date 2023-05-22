@@ -31,9 +31,12 @@ The Carpentries can maintain the following information about individuals in our 
 * Languages (human languages)
 * Comments (additional notes or comments from individual)
 * Consents (*Note consents can be changed by the individual at any time*)
-    * Do you consent to have your name or identity associated with lesson publications?
     * Can we contact you for volunteering opportunities, surveys, feedback, etc.?
     * Do you consent to publish your profile on The Carpentries website?
+    * Do you consent to have your name or identity associated with lesson publications?
+    * I acknowledge that I am at least 16 years old.
+    * I have read and agree to the privacy policy of The Carpentries.
+    * Do you agree to the transfer of your data outside of the European Economic Area/United Kingdom?
 
 
 ### Additional user information
