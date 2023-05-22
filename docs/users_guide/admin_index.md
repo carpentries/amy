@@ -306,7 +306,7 @@ Automatic priority is defined as follows:
 
 ![AMY workshop signup info](images/instructor_signup_details.png)
 
-At this point, the workshop will be available for badged and active Instructors to [view and consider](../community_index/#viewing-teaching-opportunities).
+At this point, the workshop will be available for badged and active Instructors to [view and consider](../community_index/#viewing-teaching-opportunities).  This view is only available to Persons with an Instructor badge and an active Instructor [Community Role](#community-roles). 
 
 As Instructors register their interest, an admin can track their status from the event page itself to view details of just that workshop, or by selecting the "More >> Instructor selection/recruitment" menu option.  The next screen will show who has signed up so far, a summary of their activity as a Helper and Instructor; the Instructor's country; when the sign up was created and edited; and notes left by the Instructor.
 
