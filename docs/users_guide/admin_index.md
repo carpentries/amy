@@ -571,7 +571,7 @@ Clicking "Events" on the top menu bar will take you to a list of *all* recorded 
 * **Administrator** The event administrator (A lesson program for centrally organised workshops, self organised, or Instructor Training)
 * **Completed** Whether the "completed" box has been checked, indicating all necessary work for that event is complete
 * **Country** Country from the event's location
-* **Continent** Continent based on the country
+* **Continent** Continent based on the country. These are defined in the Django admin panel.
 * **Status** Whether the event is active, past, ongoing, upcoming, unpublished, published, detected changes in metadata
 * **Ordering** Select sort order for returned list
 
