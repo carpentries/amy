@@ -46,7 +46,7 @@ In addition to the following information, The Carpentries also maintains data on
 * tasks at an event (learner, helper, Instructor, Host, etc.)
 * progress toward badges such as *Trainer*, *Instructor*, *Maintainer*, etc. See the [badges section below](#badges) for more inforamtion.
 * awards received such as *Trainer*, *Instructor*, *Maintainer*, etc.
-* roles currently or previously held such as Instructor, Trainer, Executive Council member, Core Team member, etc. 
+* roles currently or previously held such as Instructor, Trainer, Executive Council member, Core Team member, etc. See the [Community Roles section below](#community-roles) for more information.
 
 Individuals can view this information but can not edit it directly.  Please contact <team@carpentries.org> with questions about this information.
 
@@ -59,6 +59,10 @@ Carpentries Instructor trainees can log in to AMY to view their checkout progres
 #### Other Badges
 
  Due to the structure of our badge tracking progress, all steps towards other badges (Maintainer, Trainer, etc.) may not be included here. If your badge is correctly displayed, you are in good standing. 
+
+### Community Roles
+
+In addition to badges, The Carpentries also assigns community roles.  These may or may not be connected to badges, and notes whether an indivdiual is currently serving or has previously served in roles such as Instructor, Trainer, Executive Council Member, etc. While badges do not expire, Community Roles will have start and end dates.  
 
 ### Viewing teaching opportunities
 
