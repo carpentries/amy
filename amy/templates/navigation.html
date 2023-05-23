@@ -20,7 +20,6 @@
               {% navbar_element "Tasks" "all_tasks" True %}
               {% navbar_element "Badges" "all_badges" True %}
               {% navbar_element "Trainings" "all_trainings" True %}
-              {% navbar_element "Airports" "all_airports" True %}
               {% navbar_element "Events with changed metadata" "events_metadata_changed" True %}
               <div class="dropdown-divider"></div>
               {% navbar_element "Instructor Selection / Recruitment" "all_instructorrecruitment" True %}
@@ -69,7 +68,6 @@
               {% navbar_element_permed "New event" "event_add" "workshops.add_event" True %}
               {% navbar_element_permed "New organization" "organization_add" "workshops.add_organization" True %}
               {% navbar_element_permed "New person" "person_add" "workshops.add_person" True %}
-              {% navbar_element_permed "New airport" "airport_add" "workshops.add_airport" True %}
               <div class="dropdown-divider"></div>
               {% navbar_element_permed "Bulk add people" "person_bulk_add" "workshops.add_person" True %}
             {% endblock right-dropdown %}
