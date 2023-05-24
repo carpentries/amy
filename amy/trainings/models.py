@@ -20,6 +20,10 @@ class Involvement(CreatedUpdatedArchivedMixin, models.Model):
     # null (False).
     curriculum_required = models.BooleanField(default=False)
 
+    # Determines whether TrainingProgress.date is required (True) or must be
+    # null (False).
+    date_required = models.BooleanField(default=True)
+
     class Meta:
         ordering = ["name"]
 

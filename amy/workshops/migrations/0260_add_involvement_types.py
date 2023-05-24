@@ -27,9 +27,11 @@ class Migration(migrations.Migration):
             model_name="trainingprogress",
             name="date",
             field=models.DateField(
-                default=django.utils.timezone.now, verbose_name="Date of activity"
-            ),  # TODO: set sensible defaults
-            preserve_default=False,
+                help_text="Only required when 'Type' is 'Get Involved'",
+                blank=True,
+                null=True,
+                verbose_name="Date of occurrence",
+            ),
         ),
         migrations.AddField(
             model_name="trainingprogress",

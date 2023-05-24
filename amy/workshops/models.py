@@ -2569,7 +2569,12 @@ class TrainingRequirement(models.Model):
 class TrainingProgress(CreatedUpdatedMixin, models.Model):
     trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
 
-    date = models.DateField(verbose_name="Date of activity")
+    date = models.DateField(
+        verbose_name="Date of occurrence",
+        null=True,
+        blank=True,
+        help_text="Only required when 'Type' is 'Get Involved'",
+    )
     requirement = models.ForeignKey(
         TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type"
     )
