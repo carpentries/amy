@@ -290,7 +290,32 @@ class TestTrainingRequestsListView(TestBase):
         self.second_training.tags.add(self.ttt)
 
     def test_view_loads(self):
+        """
+        View should default to settings:
+            state=no_d (Pending or accepted)
+            matched=u (Unmatched)
+        """
+        # Act
         rv = self.client.get(reverse("all_trainingrequests"))
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(
+            set(rv.context["requests"]),
+            {self.second_req},
+        )
+
+    def test_view_loads_all_on_request(self):
+        """
+        Explicitly setting state and matched to null should return all requests.
+        """
+        # Arrange
+        query_string = "state=&matched="
+
+        # Act
+        rv = self.client.get(reverse("all_trainingrequests"), QUERY_STRING=query_string)
+
+        # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(
             set(rv.context["requests"]),
@@ -899,34 +924,114 @@ class TestTrainingRequestMerging(TestBase):
         may_contact_term = Term.objects.get_by_key(TermEnum.MAY_CONTACT)
         privacy_policy_term = Term.objects.get_by_key(TermEnum.PRIVACY_POLICY)
         public_profile_term = Term.objects.get_by_key(TermEnum.PUBLIC_PROFILE)
-        self.may_contact_consent = TrainingRequestConsent.objects.create(
+
+        self.first_req_may_contact_consent = TrainingRequestConsent.objects.create(
             training_request=self.first_req,
             term=may_contact_term,
             term_option=TermOption.objects.filter(
                 term=may_contact_term
             ).get_decline_term_option(),
         )
-        TrainingRequestConsent.objects.create(
+        self.first_req_may_contact_consent.created_at = datetime(
+            2023, 4, 10, tzinfo=timezone.utc
+        )
+        self.first_req_may_contact_consent.save()
+
+        self.second_req_may_contact_consent = TrainingRequestConsent.objects.create(
+            training_request=self.second_req,
+            term=may_contact_term,
+            term_option=TermOption.objects.filter(
+                term=may_contact_term
+            ).get_decline_term_option(),
+        )
+        self.second_req_may_contact_consent.created_at = datetime(
+            2023, 4, 11, tzinfo=timezone.utc
+        )
+        self.second_req_may_contact_consent.save()
+
+        self.third_req_may_contact_consent = TrainingRequestConsent.objects.create(
             training_request=self.third_req,
             term=may_contact_term,
             term_option=TermOption.objects.filter(
                 term=may_contact_term
             ).get_agree_term_option(),
         )
-        TrainingRequestConsent.objects.create(
+        self.third_req_may_contact_consent.created_at = datetime(
+            2023, 4, 12, tzinfo=timezone.utc
+        )
+        self.third_req_may_contact_consent.save()
+
+        self.first_req_privacy_policy_consent = TrainingRequestConsent.objects.create(
+            training_request=self.first_req,
+            term=privacy_policy_term,
+            term_option=TermOption.objects.filter(
+                term=privacy_policy_term
+            ).get_agree_term_option(),
+        )
+        self.first_req_privacy_policy_consent.created_at = datetime(
+            2023, 4, 12, tzinfo=timezone.utc
+        )
+        self.first_req_privacy_policy_consent.save()
+
+        self.second_req_privacy_policy_consent = TrainingRequestConsent.objects.create(
+            training_request=self.second_req,
+            term=privacy_policy_term,
+            term_option=TermOption.objects.filter(
+                term=privacy_policy_term
+            ).get_agree_term_option(),
+        )
+        self.second_req_privacy_policy_consent.created_at = datetime(
+            2023, 4, 11, tzinfo=timezone.utc
+        )
+        self.second_req_privacy_policy_consent.save()
+
+        self.third_req_privacy_policy_consent = TrainingRequestConsent.objects.create(
             training_request=self.third_req,
             term=privacy_policy_term,
             term_option=TermOption.objects.filter(
                 term=privacy_policy_term
             ).get_agree_term_option(),
         )
-        TrainingRequestConsent.objects.create(
-            training_request=self.third_req,
+        self.third_req_privacy_policy_consent.created_at = datetime(
+            2023, 4, 10, tzinfo=timezone.utc
+        )
+        self.third_req_privacy_policy_consent.save()
+
+        self.first_req_public_profile_consent = TrainingRequestConsent.objects.create(
+            training_request=self.first_req,
+            term=public_profile_term,
+            term_option=TermOption.objects.filter(
+                term=public_profile_term
+            ).get_decline_term_option(),
+        )
+        self.first_req_public_profile_consent.created_at = datetime(
+            2023, 4, 11, tzinfo=timezone.utc
+        )
+        self.first_req_public_profile_consent.save()
+
+        self.second_req_public_profile_consent = TrainingRequestConsent.objects.create(
+            training_request=self.second_req,
             term=public_profile_term,
             term_option=TermOption.objects.filter(
                 term=public_profile_term
             ).get_agree_term_option(),
         )
+        self.second_req_public_profile_consent.created_at = datetime(
+            2023, 4, 10, tzinfo=timezone.utc
+        )
+        self.second_req_public_profile_consent.save()
+
+        self.third_req_public_profile_consent = TrainingRequestConsent.objects.create(
+            training_request=self.third_req,
+            term=public_profile_term,
+            term_option=TermOption.objects.filter(
+                term=public_profile_term
+            ).get_decline_term_option(),
+        )
+        self.third_req_public_profile_consent.created_at = datetime(
+            2023, 4, 12, tzinfo=timezone.utc
+        )
+        self.third_req_public_profile_consent.save()
 
         # prepare merge strategies (POST data to be sent to the merging view)
         self.strategy_1 = {
@@ -973,7 +1078,7 @@ class TestTrainingRequestMerging(TestBase):
             "code_of_conduct_agreement": "obj_a",
             "created_at": "obj_a",
             "comments": "combine",
-            "trainingrequestconsent_set": "obj_a",
+            "trainingrequestconsent_set": "most_recent",
         }
         self.strategy_2 = {
             "trainingrequest_a": self.first_req.pk,
@@ -1019,7 +1124,7 @@ class TestTrainingRequestMerging(TestBase):
             "code_of_conduct_agreement": "obj_a",
             "created_at": "obj_a",
             "comments": "combine",
-            "trainingrequestconsent_set": "obj_b",
+            "trainingrequestconsent_set": "most_recent",
         }
 
         base_url = reverse("trainingrequests_merge")
@@ -1082,6 +1187,7 @@ class TestTrainingRequestMerging(TestBase):
             "data_privacy_agreement": "combine",
             "code_of_conduct_agreement": "combine",
             "created_at": "combine",
+            # it actually accepts only "most_recent"
             "trainingrequestconsent_set": "combine",
         }
         # fields additionally accepting "combine"
@@ -1172,7 +1278,6 @@ class TestTrainingRequestMerging(TestBase):
         assertions = {
             "domains": set([self.chemistry, self.physics]),
             "previous_involvement": set([self.helper]),
-            "trainingrequestconsent_set": set([self.may_contact_consent]),
             # comments are not relational, they're related via generic FKs,
             # so they won't appear here
         }
@@ -1218,13 +1323,7 @@ class TestTrainingRequestMerging(TestBase):
         roles_set = set([self.helper, self.instructor, self.contributor])
         self.assertEqual(domains_set, set(self.third_req.domains.all()))
         self.assertEqual(roles_set, set(self.third_req.previous_involvement.all()))
-        self.assertEqual(self.third_req.trainingrequestconsent_set.count(), 3)
-        self.assertTrue(
-            all(
-                consent.term_option.option_type == TermOptionChoices.AGREE
-                for consent in self.third_req.trainingrequestconsent_set.all()
-            )
-        )
+        self.assertEqual(self.third_req.trainingrequestconsent_set.active().count(), 3)
 
         # make sure no M2M related objects were removed from DB
         self.chemistry.refresh_from_db()
@@ -1241,10 +1340,6 @@ class TestTrainingRequestMerging(TestBase):
         # make sure no related persons were removed from DB
         self.ironman.refresh_from_db()
         self.spiderman.refresh_from_db()
-
-        # make sure the remaining consent from the first request was removed
-        with self.assertRaises(TrainingRequestConsent.DoesNotExist):
-            self.may_contact_consent.refresh_from_db()
 
     def test_merging_comments_strategy1(self):
         """Ensure comments regarding persons are correctly merged using
@@ -1286,4 +1381,58 @@ class TestTrainingRequestMerging(TestBase):
         self.assertEqual(
             set(Comment.objects.for_model(self.first_req).filter(is_removed=False)),
             set(comments),
+        )
+
+    def test_merging_consents_most_recent(self):
+        """Ensure consents regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses "most_recent" strategy."""
+        # Arrange
+        self.strategy_1["trainingrequestconsent_set"] = "most_recent"
+        self.strategy_2["trainingrequestconsent_set"] = "most_recent"
+
+        # Act
+        rv_1 = self.client.post(self.url_1, data=self.strategy_1)
+        rv_2 = self.client.post(self.url_2, data=self.strategy_2)
+
+        # Assert
+        self.assertEqual(rv_1.status_code, 302)
+        self.assertEqual(rv_2.status_code, 302)
+
+        # There are exactly 3 active (non-archived) consents
+        self.assertEqual(
+            len(
+                TrainingRequestConsent.objects.active().filter(
+                    training_request=self.third_req
+                )
+            ),
+            3,
+        )
+        with self.assertRaises(TrainingRequestConsent.DoesNotExist):
+            self.first_req_may_contact_consent.refresh_from_db()
+        with self.assertRaises(TrainingRequestConsent.DoesNotExist):
+            self.second_req_may_contact_consent.refresh_from_db()
+        with self.assertRaises(TrainingRequestConsent.DoesNotExist):
+            self.second_req_privacy_policy_consent.refresh_from_db()
+        with self.assertRaises(TrainingRequestConsent.DoesNotExist):
+            self.first_req_public_profile_consent.refresh_from_db()
+        with self.assertRaises(TrainingRequestConsent.DoesNotExist):
+            self.second_req_public_profile_consent.refresh_from_db()
+
+        # There are 4 remaining consents, and one is archived
+        self.third_req_may_contact_consent.refresh_from_db()
+        self.first_req_privacy_policy_consent.refresh_from_db()
+        self.third_req_privacy_policy_consent.refresh_from_db()
+        self.third_req_public_profile_consent.refresh_from_db()
+        self.assertNotEqual(self.third_req_privacy_policy_consent.archived_at, None)
+
+        # No consents linked to old requests
+        self.third_req.refresh_from_db()
+        self.assertEqual(
+            len(
+                TrainingRequestConsent.objects.filter(
+                    training_request__in=[self.first_req, self.second_req]
+                )
+            ),
+            0,
         )

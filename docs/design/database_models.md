@@ -312,6 +312,11 @@ type.
 Represents a consent person gives (or not) to a given term. Intermediate table for M2M
 between `Person` and `Term`, and `TermOption`.
 
+### `TrainingRequestConsent`
+Represents a consent an instructor applicant gives (or not) to a given term. Intermediate table for M2M
+between `TrainingRequest` and `Term`, and `TermOption`.
+
+
 ----------------------------------------------------------------------------------------
 
 ## Community Roles application - `communityroles/models.py`

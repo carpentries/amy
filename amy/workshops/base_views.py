@@ -363,7 +363,6 @@ class StateFilterMixin:
 
 
 class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
-
     # State URL argument to state model value mapping.
     # Here 'a' and 'accepted' both match to 'a' (recognizable by model's state
     # field), similarly for 'd' (discarded) and 'p' (pending).

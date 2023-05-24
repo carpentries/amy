@@ -32,7 +32,7 @@ def create_username(personal: str, family: str, tries: int = NUM_TRIES) -> str:
 def normalize_name(name):
     """Get rid of spaces, funky characters, etc."""
     name = name.strip()
-    for (accented, flat) in [(" ", "-")]:
+    for accented, flat in [(" ", "-")]:
         name = name.replace(accented, flat)
 
     # remove all non-alphanumeric, non-hyphen chars

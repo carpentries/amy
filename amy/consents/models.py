@@ -67,6 +67,14 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
 
     slug = models.SlugField(unique=True)
     content = models.TextField(verbose_name="Content")
+    training_request_content = models.TextField(
+        verbose_name="Content for Training Request Form",
+        blank=True,
+        help_text=(
+            "If set, the regular content will be replaced with this"
+            " text on the instructor training request form."
+        ),
+    )
     required_type = models.CharField(
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
@@ -197,15 +205,9 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
                 )
 
 
-class ConsentQuerySet(QuerySet):
-    def active(self):
-        return self.filter(archived_at=None)
-
-
 class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
     term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT, null=True)
-    objects = Manager.from_queryset(ConsentQuerySet)()
 
     class Meta:
         abstract = True
@@ -228,8 +230,14 @@ class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
         self.save()
 
 
+class ConsentQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
+
+
 class Consent(BaseConsent):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    objects = Manager.from_queryset(ConsentQuerySet)()
 
     class Meta:
         constraints = [
@@ -290,6 +298,11 @@ class Consent(BaseConsent):
         )
 
 
+class TrainingRequestConsentQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
+
+
 class TrainingRequestConsent(BaseConsent):
     """
     A consent for a training request. People filling out the training request form
@@ -297,6 +310,7 @@ class TrainingRequestConsent(BaseConsent):
     """
 
     training_request = models.ForeignKey(TrainingRequest, on_delete=models.CASCADE)
+    objects = Manager.from_queryset(TrainingRequestConsentQuerySet)()
 
     class Meta:
         constraints = [

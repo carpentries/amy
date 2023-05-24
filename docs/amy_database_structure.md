@@ -232,6 +232,7 @@ When `Terms` are archived (`archived_at` timestamp is set), that `Term`'s `TermO
 
 * `slug` slug of the term. Used to uniquely identify the term.
 * `content` content of the term. This text shown to users when they consent.
+* `training_request_content` if set, the regular `content` will be replaced with this text when displaying this term on the instructor training request form.
 * `required_type` determines whether or not a term is considered required for the user or not. If required it will be shown to the user when they log in to consent to.
 * `help_text` additional text shown to the user in order to give more context on the term.
 * `short_description` a short description of the consent, shown in the admin view of a profile
@@ -263,6 +264,21 @@ When `Consents` are archived (`archived_at` timestamp is set), a new unset conse
 #### Commonly used fields
 
 * `person` - required foreign key to `Person`.
+* `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option` - a nullable foreign key to TermOption. When this field is null, the Consent is unset.
+* `archived_at` - a nullable timestamp
+
+### TrainingRequestConsent
+
+`consents_trainingrequestconsent` - Stores all consents for all instructor training requests in AMY.
+
+#### Archive Behavior
+
+When `TrainingRequestConsents` are archived (`archived_at` timestamp is set), a new unset consent is created by AMY.
+
+#### Commonly used fields
+
+* `training_request` - required foreign key to `TrainingRequest`.
 * `term` - required foreign key to `Term`. Provided for ease of use and reduction of queries. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
 * `term_option` - a nullable foreign key to TermOption. When this field is null, the Consent is unset.
 * `archived_at` - a nullable timestamp

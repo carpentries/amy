@@ -23,7 +23,8 @@ from workshops.utils.access import (
 
 def get_resolved_urls(url_patterns):
     """Copy-pasted from
-    http://stackoverflow.com/questions/1275486/django-how-can-i-see-a-list-of-urlpatterns"""  # noqa: line too long
+    http://stackoverflow.com/questions/1275486/django-how-can-i-see-a-list-of-urlpatterns
+    """  # noqa: line too long
     url_patterns_resolved = []
     for entry in url_patterns:
         if hasattr(entry, "url_patterns"):

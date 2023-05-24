@@ -1591,7 +1591,7 @@ class TrainingRequestsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     trainingrequestconsent_set = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
+        choices=(("most_recent", "Use the most recent consents"),),
+        initial="most_recent",
         widget=forms.RadioSelect,
     )

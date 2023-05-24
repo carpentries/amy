@@ -1,6 +1,6 @@
 # Changelog
 
-All release notes prior to version v4.1 are kept in `docs/releases/` directory.
+All release notes prior to version v4.0.5 are kept in `docs/releases/` directory.
 
 To add changelog for a given release version use `docs/generate_changelog.py` script,
 e.g.:
@@ -12,6 +12,57 @@ $ python docs/generate_changelog.py v4.1
 Then paste output from that script here.
 
 -----------------------------------------------------------------
+
+## v4.1 - 2023-04-30
+
+### Bugfixes
+* Set default filtering for training requests - [#2381](https://github.com/carpentries/amy/pull/2381) by @elichad
+
+### Features
+* Combine strategy for training request consents - [#2402](https://github.com/carpentries/amy/pull/2402) by @pbanaszkiewicz
+* Bump sqlparse from 0.4.3 to 0.4.4 - [#2386](https://github.com/carpentries/amy/pull/2386) by @dependabot[bot]
+* Add Titanium membership variant, remove prepopulation of membership benefits - [#2382](https://github.com/carpentries/amy/pull/2382) by @elichad
+* Display person consents when merging - [#2376](https://github.com/carpentries/amy/pull/2376) by @pbanaszkiewicz
+* Allow different term content on instructor training application - [#2375](https://github.com/carpentries/amy/pull/2375) by @elichad
+* Update docs for consents - [#2374](https://github.com/carpentries/amy/pull/2374) by @elichad
+* Display consents history in person edit view - [#2373](https://github.com/carpentries/amy/pull/2373) by @elichad
+* update redis to >=4.5.4 - [#2369](https://github.com/carpentries/amy/pull/2369) by @elichad
+* Updated docs for server infrastructure and backups - [#2366](https://github.com/carpentries/amy/pull/2366) by @pbanaszkiewicz
+* Consents for training requests - [#2363](https://github.com/carpentries/amy/pull/2363) by @pbanaszkiewicz
+* Reduce hardcoding of consent labels in UI - [#2361](https://github.com/carpentries/amy/pull/2361) by @elichad
+* Colors for different builds - [#2357](https://github.com/carpentries/amy/pull/2357) by @pbanaszkiewicz
+* Custom test runner - [#2356](https://github.com/carpentries/amy/pull/2356) by @pbanaszkiewicz
+* Cache settings are now configurable via envvars - [#2354](https://github.com/carpentries/amy/pull/2354) by @pbanaszkiewicz
+* bump isort to 5.12.0 and black to 22.3.0 - [#2348](https://github.com/carpentries/amy/pull/2348) by @elichad
+* Fix internal errors from filters - [#2346](https://github.com/carpentries/amy/pull/2346) by @elichad
+* Bump django from 3.2.17 to 3.2.18 - [#2341](https://github.com/carpentries/amy/pull/2341) by @dependabot[bot]
+* Minor changes to run without Redis - [#2340](https://github.com/carpentries/amy/pull/2340) by @pbanaszkiewicz
+* Improvements to AMY docs and UI - [#2337](https://github.com/carpentries/amy/pull/2337) by @elichad
+* Consents: Remove old terms from code - [#2335](https://github.com/carpentries/amy/pull/2335) by @pbanaszkiewicz
+* Bump cryptography from 39.0.0 to 39.0.1 - [#2334](https://github.com/carpentries/amy/pull/2334) by @dependabot[bot]
+* Run `create_superuser` to create super user on application's start - [#2333](https://github.com/carpentries/amy/pull/2333) by @pbanaszkiewicz
+* Seeding scripts - [#2330](https://github.com/carpentries/amy/pull/2330) by @pbanaszkiewicz
+* Bump django from 3.2.16 to 3.2.17 - [#2329](https://github.com/carpentries/amy/pull/2329) by @dependabot[bot]
+* update guidance about signing up for concurrent workshops - [#2326](https://github.com/carpentries/amy/pull/2326) by @maneesha
+* Display timestamps of instructor signups on instructor recruitment page - [#2325](https://github.com/carpentries/amy/pull/2325) by @elichad
+* Update text for conflicting workshops at instructor sign-up - [#2323](https://github.com/carpentries/amy/pull/2323) by @elichad
+* [#2284] Add environment for building Docker - [#2319](https://github.com/carpentries/amy/pull/2319) by @pbanaszkiewicz* [#2284] Remove condition from develop branch - [#2318](https://github.com/carpentries/amy/pull/2318) by @pbanaszkiewicz
+* [#2284] Correct `build` step condition event - [#2317](https://github.com/carpentries/amy/pull/2317) by @pbanaszkiewicz
+* [partial #2284] Change python-test to cicd workflow - [#2316](https://github.com/carpentries/amy/pull/2316) by @pbanaszkiewicz
+* Deploy to test-amy2 - [#2311](https://github.com/carpentries/amy/pull/2311) by @pbanaszkiewicz
+* AWS CDK preparation - [#2309](https://github.com/carpentries/amy/pull/2309) by @pbanaszkiewicz
+* Bump certifi from 2022.9.24 to 2022.12.7 - [#2306](https://github.com/carpentries/amy/pull/2306) by @dependabot[bot]
+* [#2299] Update mkdocs theme to mkdocs-material - [#2301](https://github.com/carpentries/amy/pull/2301) by @pbanaszkiewicz
+* Docker one-off commands - [#2300](https://github.com/carpentries/amy/pull/2300) by @pbanaszkiewicz
+* Users guide navigation - [#2298](https://github.com/carpentries/amy/pull/2298) by @pbanaszkiewicz
+* Instructor Selection user guide - [#2297](https://github.com/carpentries/amy/pull/2297) by @maneesha
+* Remove unused management commands - [#2296](https://github.com/carpentries/amy/pull/2296) by @pbanaszkiewicz
+* Documentation: add documentation on base views - [#2292](https://github.com/carpentries/amy/pull/2292) by @pbanaszkiewicz
+* Documentation: sending emails - [#2286](https://github.com/carpentries/amy/pull/2286) by @pbanaszkiewicz
+* Documentation: update procedures - [#2281](https://github.com/carpentries/amy/pull/2281) by @pbanaszkiewicz
+* Documentation: update infrastructure - [#2280](https://github.com/carpentries/amy/pull/2280) by @pbanaszkiewicz
+* Documentation: update templates documentation - [#2279](https://github.com/carpentries/amy/pull/2279) by @pbanaszkiewicz
+* User doc updates - [#2263](https://github.com/carpentries/amy/pull/2263) by @maneesha
 
 ## v4.0.9 - 2023-03-13
 
