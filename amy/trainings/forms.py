@@ -3,9 +3,11 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import RadioSelect, TextInput
 
+from trainings.models import Involvement
+
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
-from workshops.fields import ModelSelect2Widget
+from workshops.fields import ModelSelect2Widget, RadioSelectWithOther
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper
 from workshops.models import Event, Person, TrainingProgress, TrainingRequirement
 
@@ -22,7 +24,12 @@ class TrainingProgressForm(forms.ModelForm):
         label="Type",
         required=True,
     )
-
+    involvement_type = forms.ModelChoiceField(
+        label="Type of involvement",
+        required=False,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=RadioSelectWithOther("involvement_other"),
+    )
     event = forms.ModelChoiceField(
         label="Event",
         required=False,
@@ -53,13 +60,31 @@ class TrainingProgressForm(forms.ModelForm):
             "trainee",
             "requirement",
             "state",
+            "involvement_type",
+            "involvement_other",
             "event",
             "url",
+            "date",
             "notes",
         ]
         widgets = {
             "state": RadioSelect,
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up layout objects for the helpers
+        self.helper.layout = self.helper.build_default_layout(self)
+        self.create_helper.layout = self.create_helper.build_default_layout(self)
+
+        # set up `*WithOther` widgets so that they can display additional
+        # fields inline
+        self["involvement_type"].field.widget.other_field = self["involvement_other"]
+
+        # remove additional fields
+        self.helper.layout.fields.remove("involvement_other")
+        self.create_helper.layout.fields.remove("involvement_other")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -74,6 +99,25 @@ class TrainingProgressForm(forms.ModelForm):
                 "It's not possible to add training progress "
                 "to a trainee without any training task."
             )
+
+        errors = dict()
+
+        # TODO: validation based on url_required in Involvement, etc
+
+        # 1: require "other involvement" field if "other" was selected in
+        # "involvement type" field
+        involvement = self.cleaned_data.get("involvement_type", "")
+        involvement_other = self.cleaned_data.get("involvement_other", "")
+        if involvement.name == "Other" and not involvement_other:
+            errors["involvement"] = ValidationError("This field is required.")
+        elif involvement.name != "Other" and involvement_other:
+            errors["involvement"] = ValidationError(
+                'If you entered data in "Other" field, please select that option.'
+            )
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
 
 
 class BulkAddTrainingProgressForm(forms.ModelForm):

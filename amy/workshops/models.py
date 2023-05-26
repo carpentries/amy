@@ -2594,19 +2594,18 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         on_delete=models.PROTECT,
         verbose_name="Type of involvement (Get Involved only)",
     )
+    involvement_other = models.CharField(
+        max_length=100,
+        verbose_name="Other type of involvement",
+        blank=True,
+        null=False,
+    )
     event = models.ForeignKey(
         Event,
         null=True,
         blank=True,
         verbose_name="Training",
         limit_choices_to=Q(tags__name="TTT"),
-        on_delete=models.SET_NULL,
-    )
-    curriculum = models.ForeignKey(
-        Curriculum,
-        null=True,
-        blank=True,
-        limit_choices_to=~Q(carpentry=""),  # ignore curricula like 'Mix & Match'
         on_delete=models.SET_NULL,
     )
     url = models.URLField(null=True, blank=True, verbose_name="URL")
@@ -2618,6 +2617,16 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     def clean(self):
         if self.requirement.url_required and not self.url:
             msg = "In the case of {}, this field is required.".format(self.requirement)
+            raise ValidationError({"url": msg})
+        elif (
+            self.requirement.name == "Get Involved"
+            and self.involvement_type
+            and self.involvement_type.url_required
+            and not self.url
+        ):
+            msg = "In the case of {} - {}, this field is required.".format(
+                self.requirement, self.involvement_type
+            )
             raise ValidationError({"url": msg})
         elif not self.requirement.url_required and self.url:
             msg = "In the case of {}, this field must be left empty.".format(

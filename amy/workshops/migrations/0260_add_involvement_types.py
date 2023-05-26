@@ -14,17 +14,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="trainingprogress",
-            name="curriculum",
-            field=models.ForeignKey(
-                blank=True,
-                limit_choices_to=models.Q(("carpentry", ""), _negated=True),
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="workshops.curriculum",
-            ),
-        ),
-        migrations.AddField(
-            model_name="trainingprogress",
             name="date",
             field=models.DateField(
                 help_text="Only required when 'Type' is 'Get Involved'",
@@ -42,6 +31,13 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.PROTECT,
                 to="trainings.involvement",
                 verbose_name="Type of involvement (Get Involved only)",
+            ),
+        ),
+        migrations.AddField(
+            model_name="trainingprogress",
+            name="involvement_other",
+            field=models.CharField(
+                blank=True, max_length=100, verbose_name="Other type of involvement"
             ),
         ),
         migrations.AddField(

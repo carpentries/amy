@@ -27,7 +27,6 @@ class Migration(migrations.Migration):
                 ("display_name", models.CharField(max_length=100)),
                 ("name", models.CharField(max_length=40)),
                 ("url_required", models.BooleanField(default=False)),
-                ("curriculum_required", models.BooleanField(default=False)),
                 ("date_required", models.BooleanField(default=True)),
             ],
             options={

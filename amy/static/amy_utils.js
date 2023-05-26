@@ -1,32 +1,32 @@
 /* A file with functionality that is enabled on each page. */
 
 function bulk_email() {
-    /*
-    Look at all selected <input type="checkbox" email="example@example.org">
-    tags on the webpage and join email addresses using comma as a separator
-    (i.e. "first@example.org,second@example.org").
+  /*
+  Look at all selected <input type="checkbox" email="example@example.org">
+  tags on the webpage and join email addresses using comma as a separator
+  (i.e. "first@example.org,second@example.org").
 
-    If there is no selected checkbox with email address, display alert. If
-    any of the selected email addresses is blank, display alert. Otherwise,
-    open email client and pass those addresses.
-    */
-    var emails, href, blank_email_selected;
-    emails = $('input[type=checkbox][email]:checked')
-             .map(function () { return $(this).attr("email"); });
-    blank_email_selected = emails.is(function() { return this == ""; });
-    if (blank_email_selected) {
-        alert("We don't know email address of some of the selected persons. First, unselect them.");
-    } else if (emails.length == 0) {
-        alert("Select at least one person.");
-    } else {
-        href = "mailto:?bcc=" + emails.toArray().join(",");
-        window.location.href = href;
-    }
+  If there is no selected checkbox with email address, display alert. If
+  any of the selected email addresses is blank, display alert. Otherwise,
+  open email client and pass those addresses.
+  */
+  var emails, href, blank_email_selected;
+  emails = $('input[type=checkbox][email]:checked')
+    .map(function () { return $(this).attr("email"); });
+  blank_email_selected = emails.is(function () { return this == ""; });
+  if (blank_email_selected) {
+    alert("We don't know email address of some of the selected persons. First, unselect them.");
+  } else if (emails.length == 0) {
+    alert("Select at least one person.");
+  } else {
+    href = "mailto:?bcc=" + emails.toArray().join(",");
+    window.location.href = href;
+  }
 }
 
 /* See http://learn.jquery.com/plugins/basic-plugin-creation/ */
 $.fn.updateSelectAllCheckbox = function () {
-  return this.each(function() {
+  return this.each(function () {
     /* At this moment, `this` is "select all" checkbox. */
 
     var checkboxes = $(this).closest('form').find(':checkbox[respond-to-select-all-checkbox]');
@@ -55,9 +55,9 @@ $.fn.updateIdsInHref = function () {
   var uri = URI(href);
 
   // extend query params
-  uri = uri.query(function(data) {
+  uri = uri.query(function (data) {
     var ids = [];
-    checked.map(function() {
+    checked.map(function () {
       ids.push($(this).val());
     });
     data.ids = ids.join(",");
@@ -70,10 +70,13 @@ $.fn.updateIdsInHref = function () {
 }
 
 function updateTrainingProgressForm() {
+  // TODO: move this to a dedicated file
   /* At this moment, `this` should be <select> tag of "Type" field. */
   var type = $(this).find(":selected").text();
   var training_div = $(this).closest('form').find('#div_id_event');
   var url_div = $(this).closest('form').find('#div_id_url');
+  var involvement_type_div = $(this).closest('form').find('#div_id_involvement_type');
+  var date_div = $(this).closest('form').find('#div_id_date');
 
   if (type == 'Training') {
     training_div.show();
@@ -85,15 +88,20 @@ function updateTrainingProgressForm() {
     }
   }
 
-  if (type == 'Lesson Contribution') {
+  if (type == 'Get Involved') {
     url_div.show();
+    involvement_type_div.show();
+    date_div.show();
   } else {
+    // TODO: remove values from involvement_type and date
     url_div.hide();
+    involvement_type_div.hide();
+    date_div.hide();
     url_div.find('#id_url').val("");
   }
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
   /* Enable Bootstrap Tooltips by default. */
   $('[data-toggle="tooltip"]').tooltip();
 
@@ -106,12 +114,12 @@ $(document).ready(function() {
         data-toggle="popover"
         data-content="Content of a popup">Hover, focus or click me!</span>
   */
-  $('[data-toggle="popover"]').popover({placement: "auto"});
+  $('[data-toggle="popover"]').popover({ placement: "auto" });
 
   /* Some pages may have checkboxes in tables selected by default; in those
   cases, we should update URL in a[amy-download-selected] when the page
   loads. */
-  $('a[amy-download-selected]').each(function(i, obj) {
+  $('a[amy-download-selected]').each(function (i, obj) {
     $(this).updateIdsInHref();
   });
 
@@ -123,15 +131,15 @@ $(document).ready(function() {
   Based on http://stackoverflow.com/a/2228401.
   */
   /* Select/unselect all checkboxes when users clicks on "select all" checkbox. */
-  $('[select-all-checkbox]').change(function() {
+  $('[select-all-checkbox]').change(function () {
     var checkboxes = $(this).closest('form').find(':checkbox[respond-to-select-all-checkbox]');
-    if($(this).is(':checked')) {
-        checkboxes.prop('checked', true);
+    if ($(this).is(':checked')) {
+      checkboxes.prop('checked', true);
     } else {
-        checkboxes.prop('checked', false);
+      checkboxes.prop('checked', false);
     }
     // below runs `updateIdsInHref` for all matching <a> (`.each` is required)
-    $(this).closest('form').find('a[amy-download-selected]').each(function(i, obj) {
+    $(this).closest('form').find('a[amy-download-selected]').each(function (i, obj) {
       $(this).updateIdsInHref();
     });
   });
@@ -142,7 +150,7 @@ $(document).ready(function() {
   $('[respond-to-select-all-checkbox]').change(function () {
     $(this).closest('form').find(':checkbox[select-all-checkbox]').updateSelectAllCheckbox();
     // below runs `updateIdsInHref` for all matching <a> (`.each` is required)
-    $(this).closest('form').find('a[amy-download-selected]').each(function(i, obj) {
+    $(this).closest('form').find('a[amy-download-selected]').each(function (i, obj) {
       $(this).updateIdsInHref();
     });
   });
@@ -211,9 +219,9 @@ $(document).ready(function() {
     $("#computing_levels_warning").addClass("d-none");
   }
 
-  $("#id_computing_levels_3").change(function() {
+  $("#id_computing_levels_3").change(function () {
     // show warning if someone selects "Proficient"
-    if($(this).is(':checked')) {
+    if ($(this).is(':checked')) {
       $("#computing_levels_warning").removeClass("d-none");
     } else {
       $("#computing_levels_warning").addClass("d-none");
@@ -240,7 +248,7 @@ $(document).ready(function() {
     }
   }
 
-  $("#id_preferred_dates").on("changeDate input", function(e){
+  $("#id_preferred_dates").on("changeDate input", function (e) {
     // update datepicker with current input value
     $(this).datepicker('update');
 
@@ -259,12 +267,12 @@ $(document).ready(function() {
 
   // load template by the slug when someone opens up the modal for editing template
   // before its sent
-  $("#email_edit").on("show.bs.modal", function(e) {
+  $("#email_edit").on("show.bs.modal", function (e) {
     let btn = $(e.relatedTarget);
     let template_slug = btn.data("templateSlug");
     let modal = $(this);
 
-    $.get("/api/v1/emailtemplates/" + template_slug, {}, function(data) {
+    $.get("/api/v1/emailtemplates/" + template_slug, {}, function (data) {
       modal.find(".modal-body #email_slug").text(data.slug);
       modal.find(".modal-body #email_subject").text(data.subject);
 
@@ -283,7 +291,7 @@ $(document).ready(function() {
     });
   })
 
-  $("#email_edit").on("hide.bs.modal", function(e) {
+  $("#email_edit").on("hide.bs.modal", function (e) {
     let modal = $(this);
 
     modal.find(".modal-body #id_subject").val("");
@@ -292,16 +300,16 @@ $(document).ready(function() {
 
   // when "TTT" tag is selected on new event form, automatically select
   // "TTT Open applications" checkbox
-  $("#id_tags").on("change", function(event) {
+  $("#id_tags").on("change", function (event) {
     const checkbox = $("#id_open_TTT_applications");
-    $.each(event.target.selectedOptions, function(idx, val) {
+    $.each(event.target.selectedOptions, function (idx, val) {
       if (val.text == "TTT") {
         checkbox.prop("checked", true);
       }
     })
   })
   // on page load, select the checkbox if "TTT" option was preselected
-  $("#id_tags").find(":selected").each(function(idx, val) {
+  $("#id_tags").find(":selected").each(function (idx, val) {
     const checkbox = $("#id_open_TTT_applications");
     if (val.text == "TTT") {
       checkbox.prop("checked", true);
@@ -312,7 +320,7 @@ $(document).ready(function() {
   const agreement_duration_warning = $("#agreement_duration_warning");
   const agreement_start = $("#id_agreement_start");
   const agreement_end = $("#id_agreement_end");
-  const duration_warning = function(start_element, end_element, warning_element) {
+  const duration_warning = function (start_element, end_element, warning_element) {
     const next_year = start_element.datepicker("getDate");
     const end_date = end_element.datepicker("getDate");
 
@@ -332,19 +340,19 @@ $(document).ready(function() {
   if (!!agreement_start.val() && !!agreement_end.val()) {
     duration_warning(agreement_start, agreement_end, agreement_duration_warning);
   }
-  agreement_start.on("changeDate input", function(e) {
+  agreement_start.on("changeDate input", function (e) {
     // update datepicker with current input value
     $(this).datepicker("update");
     duration_warning(agreement_start, agreement_end, agreement_duration_warning);
   });
-  agreement_end.on("changeDate input", function(e) {
+  agreement_end.on("changeDate input", function (e) {
     // update datepicker with current input value
     $(this).datepicker("update");
     duration_warning(agreement_start, agreement_end, agreement_duration_warning);
   });
 
   // assignment form autosubmit
-  $("#id_assigned_to").on("change", function(e) {
+  $("#id_assigned_to").on("change", function (e) {
     e.preventDefault();
     $("#assignment-form").trigger("submit");
   })
