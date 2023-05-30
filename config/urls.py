@@ -18,7 +18,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.contenttypes.views import shortcut
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
