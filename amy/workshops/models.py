@@ -29,6 +29,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
+import pytz
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
@@ -2573,7 +2574,6 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         verbose_name="Date of occurrence",
         null=True,
         blank=True,
-        help_text="Only required when 'Type' is 'Get Involved'",
     )
     requirement = models.ForeignKey(
         TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type"
@@ -2592,13 +2592,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         null=True,
         blank=True,
         on_delete=models.PROTECT,
-        verbose_name="Type of involvement (Get Involved only)",
-    )
-    involvement_other = models.CharField(
-        max_length=100,
-        verbose_name="Other type of involvement",
-        blank=True,
-        null=False,
+        verbose_name="Type of involvement",
     )
     event = models.ForeignKey(
         Event,
@@ -2618,39 +2612,73 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         return reverse("trainingprogress_edit", args=[str(self.id)])
 
     def clean(self):
+        super().clean()
+        errors = dict()
+
+        # URL check
         if self.requirement.url_required and not self.url:
-            msg = "In the case of {}, this field is required.".format(self.requirement)
-            raise ValidationError({"url": msg})
+            msg = f"In the case of {self.requirement}, this field is required."
+            errors["url"] = msg
         elif (
-            self.requirement.name == "Get Involved"
-            and self.involvement_type
-            and self.involvement_type.url_required
-            and not self.url
+            not self.requirement.url_required
+            and self.url
+            and not self.requirement.involvement_required  # involvements checked below
         ):
-            msg = "In the case of {} - {}, this field is required.".format(
-                self.requirement, self.involvement_type
-            )
-            raise ValidationError({"url": msg})
-        elif not self.requirement.url_required and self.url:
-            msg = "In the case of {}, this field must be left empty.".format(
-                self.requirement
-            )
-            raise ValidationError({"url": msg})
+            msg = f"In the case of {self.requirement}, this field must be left empty."
+            errors["url"] = msg
 
+        # event check
         if self.requirement.event_required and not self.event:
-            msg = "In the case of {}, this field is required.".format(self.requirement)
-            raise ValidationError({"event": msg})
+            msg = f"In the case of {self.requirement}, this field is required."
+            errors["event"] = msg
         elif not self.requirement.event_required and self.event:
-            msg = "In the case of {}, this field must be left empty.".format(
-                self.requirement
-            )
-            raise ValidationError({"event": msg})
+            msg = f"In the case of {self.requirement}, this field must be left empty."
+            errors["event"] = msg
 
+        # involvement check
+        if self.requirement.involvement_required and not self.involvement_type:
+            msg = f"In the case of {self.requirement}, this field is required."
+            errors["involvement_type"] = msg
+
+        # checks on different involvements under the "Get Involved" requirement
+        if self.requirement.involvement_required:
+            if self.involvement_type.url_required and not self.url:
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field is required."
+                )
+                errors["url"] = msg
+
+            if self.involvement_type.date_required and not self.date:
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field is required."
+                )
+                errors["date"] = msg
+            # verify that date is no later than today
+            # (considering timezones ahead of UTC)
+            elif self.date > datetime.datetime.now(tzinfo=pytz.timezone("Etc/GMT-14")):
+                msg = "Date must be in the past."
+                errors["date"] = msg
+
+            if (
+                self.involvement_type.notes_required
+                and not self.trainee_notes
+                and not self.notes
+            ):
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field is required if there are no notes from the trainee."
+                )
+                errors["notes"] = [msg]
+
+        # state check
         if self.state == "f" and not self.notes:
             msg = "In the case of a Failed state, this field is required."
-            raise ValidationError({"notes": msg})
+            errors["notes"] = errors.get("notes", []) + [msg]
 
-        super().clean()
+        if errors:
+            raise ValidationError(errors)
 
     class Meta:
         ordering = ["created_at"]

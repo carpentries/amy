@@ -27,24 +27,28 @@ INVOLVEMENTS: list[InvolvementDef] = [
         "short_name": "Workshop Instructor/Helper",
         "url_required": True,
         "date_required": True,
+        "notes_required": False,
     },
     {
         "display_name": "Attended an Instructor Meeting, regional meetup, or other community meeting",  # noqa
         "short_name": "Community Meeting",
         "url_required": False,
         "date_required": True,
+        "notes_required": True,
     },
     {
         "display_name": "Submitted a contribution to a Carpentries repository",
         "short_name": "GitHub Contribution",
         "url_required": True,
         "date_required": True,
+        "notes_required": False,
     },
     {
-        "display_name": "Other:",
+        "display_name": "Other",
         "short_name": "Other",
         "url_required": False,
         "date_required": True,
+        "notes_required": True,
     },
 ]
 

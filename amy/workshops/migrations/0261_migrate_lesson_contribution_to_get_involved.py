@@ -68,6 +68,7 @@ def rename_lesson_contribution_to_get_involved(apps, schema_editor) -> None:
         requirement = TrainingRequirement.objects.get(name="Lesson Contribution")
         requirement.name = "Get Involved"
         requirement.url_required = False
+        requirement.involvement_required = True
         requirement.save()
     except TrainingRequirement.DoesNotExist:
         pass
@@ -83,6 +84,7 @@ def rename_get_involved_to_lesson_contribution(apps, schema_editor) -> None:
         requirement = TrainingRequirement.objects.get(name="Get Involved")
         requirement.name = "Lesson Contribution"
         requirement.url_required = True
+        requirement.involvement_required = False
         requirement.save()
     except TrainingRequirement.DoesNotExist:
         pass

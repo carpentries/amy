@@ -343,6 +343,7 @@ class TestWorkshops0261(BaseMigrationTestCase):
         # test that Lesson Contribution was renamed to Get Involved
         get_involved = TrainingRequirement.objects.get(name="Get Involved")
         self.assertFalse(get_involved.url_required)
+        self.assertTrue(get_involved.involvement_required)
 
         # test that progresses were properly migrated
         self.assertEqual(
@@ -418,6 +419,7 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
         # test that Get Involved was renamed to Lesson Contribution
         get_involved = TrainingRequirement.objects.get(name="Lesson Contribution")
         self.assertTrue(get_involved.url_required)
+        self.assertFalse(get_involved.involvement_required)
 
         # test that progresses were properly migrated
         self.assertEqual(
