@@ -24,19 +24,19 @@ InvolvementDef = TypedDict(
 INVOLVEMENTS: list[InvolvementDef] = [
     {
         "display_name": "Served as an Instructor or a helper at a Carpentries workshop",
-        "short_name": "Workshop Instructor/helper",
+        "short_name": "Workshop Instructor/Helper",
         "url_required": True,
         "date_required": True,
     },
     {
         "display_name": "Attended an Instructor Meeting, regional meetup, or other community meeting",  # noqa
-        "short_name": "Community meeting",
+        "short_name": "Community Meeting",
         "url_required": False,
         "date_required": True,
     },
     {
         "display_name": "Submitted a contribution to a Carpentries repository",
-        "short_name": "GitHub contribution",
+        "short_name": "GitHub Contribution",
         "url_required": True,
         "date_required": True,
     },

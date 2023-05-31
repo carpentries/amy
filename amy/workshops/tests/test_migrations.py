@@ -1,3 +1,5 @@
+from datetime import date
+
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
 
@@ -291,3 +293,154 @@ class TestWorkshops0259Rollback(BaseMigrationTestCase):
             TrainingProgress.objects.filter(requirement__name="Discussion").count(),
             1,
         )
+
+
+class TestWorkshops0261(BaseMigrationTestCase):
+    """
+    Test the migration of lesson contributions.
+    """
+
+    migrate_from = ("workshops", "0260_add_involvement_types")
+    migrate_to = ("workshops", "0261_migrate_lesson_contribution_to_get_involved")
+
+    def prepare(self):
+        """Prepare some data before the migration."""
+        super().prepare()
+
+        TrainingProgress = self.old_state.apps.get_model(
+            "workshops", "TrainingProgress"
+        )
+        TrainingRequirement = self.old_state.apps.get_model(
+            "workshops", "TrainingRequirement"
+        )
+
+        demo = TrainingRequirement.objects.get(name="Demo")
+        contribution, _ = TrainingRequirement.objects.get_or_create(
+            name="Lesson Contribution", defaults={"url_required": True}
+        )
+
+        TrainingProgress.objects.create(trainee=self.spiderman, requirement=demo)
+        TrainingProgress.objects.create(
+            trainee=self.ironman,
+            requirement=contribution,
+            url="example.org",
+            notes="Some test notes",
+        )
+
+    def test_workshops_0261(self):
+        TrainingRequirement = self.new_state.apps.get_model(
+            "workshops", "TrainingRequirement"
+        )
+        TrainingProgress = self.new_state.apps.get_model(
+            "workshops", "TrainingProgress"
+        )
+        Involvement = self.new_state.apps.get_model("trainings", "Involvement")
+
+        # test that GitHub Contribution involvement was created
+        contribution = Involvement.objects.get(short_name="GitHub Contribution")
+        self.assertTrue(contribution.url_required)
+
+        # test that Lesson Contribution was renamed to Get Involved
+        get_involved = TrainingRequirement.objects.get(name="Get Involved")
+        self.assertFalse(get_involved.url_required)
+
+        # test that progresses were properly migrated
+        self.assertEqual(
+            TrainingProgress.objects.filter(requirement__name="Get Involved").count(), 1
+        )
+        self.assertQuerysetEqual(
+            TrainingProgress.objects.filter(requirement__name="Get Involved"),
+            TrainingProgress.objects.filter(
+                involvement_type__short_name="GitHub Contribution"
+            ),
+        )
+
+        progress = TrainingProgress.objects.get(
+            trainee__pk=self.ironman.pk, requirement__name="Get Involved"
+        )
+        self.assertEqual(progress.date, progress.created_at.date())
+        self.assertIn(
+            "Some test notes\nMigrated from Lesson Contribution on",
+            progress.notes,
+        )
+
+        # test that other progress is unaffected
+        demo_progress = TrainingProgress.objects.get(
+            trainee__pk=self.spiderman.pk, requirement__name="Demo"
+        )
+        self.assertIsNone(demo_progress.involvement_type)
+        self.assertIsNone(demo_progress.date)
+        self.assertEqual(demo_progress.notes, "")
+
+
+class TestWorkshops0261Rollback(BaseMigrationTestCase):
+    """
+    Test the reverse migration of lesson contributions.
+    """
+
+    migrate_from = ("workshops", "0261_migrate_lesson_contribution_to_get_involved")
+    migrate_to = ("workshops", "0260_add_involvement_types")
+
+    def prepare(self):
+        """Prepare some data before the migration."""
+        super().prepare()
+
+        TrainingProgress = self.old_state.apps.get_model(
+            "workshops", "TrainingProgress"
+        )
+        TrainingRequirement = self.old_state.apps.get_model(
+            "workshops", "TrainingRequirement"
+        )
+        Involvement = self.old_state.apps.get_model("trainings", "Involvement")
+
+        demo = TrainingRequirement.objects.get(name="Demo")
+        get_involved = TrainingRequirement.objects.get(name="Get Involved")
+        contribution = Involvement.objects.get(short_name="GitHub Contribution")
+
+        TrainingProgress.objects.create(trainee=self.spiderman, requirement=demo)
+        TrainingProgress.objects.create(
+            trainee=self.ironman,
+            requirement=get_involved,
+            involvement_type=contribution,
+            date=date(2023, 5, 25),
+            url="example.org",
+            notes="Some test notes",
+        )
+
+    def test_workshops_0261_rollback(self):
+        TrainingRequirement = self.new_state.apps.get_model(
+            "workshops", "TrainingRequirement"
+        )
+        TrainingProgress = self.new_state.apps.get_model(
+            "workshops", "TrainingProgress"
+        )
+
+        # test that Get Involved was renamed to Lesson Contribution
+        get_involved = TrainingRequirement.objects.get(name="Lesson Contribution")
+        self.assertTrue(get_involved.url_required)
+
+        # test that progresses were properly migrated
+        self.assertEqual(
+            TrainingProgress.objects.filter(
+                requirement__name="Lesson Contribution"
+            ).count(),
+            1,
+        )
+
+        progress = TrainingProgress.objects.get(
+            trainee__pk=self.ironman.pk, requirement__name="Lesson Contribution"
+        )
+        self.assertIsNone(progress.involvement_type)
+        self.assertEqual(progress.date, date(2023, 5, 25))  # date unchanged
+        self.assertIn(
+            "Some test notes\nMigrated from GitHub Contribution involvement on",
+            progress.notes,
+        )
+
+        # test that other progress is unaffected
+        demo_progress = TrainingProgress.objects.get(
+            trainee__pk=self.spiderman.pk, requirement__name="Demo"
+        )
+        self.assertIsNone(demo_progress.involvement_type)
+        self.assertIsNone(demo_progress.date)
+        self.assertEqual(demo_progress.notes, "")

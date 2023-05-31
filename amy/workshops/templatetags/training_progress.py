@@ -30,8 +30,8 @@ def progress_description(progress):
     # build involvement details as needed
     if progress.requirement.name == "Get Involved" and progress.involvement_type:
         involvement = "<br />"
-        involvement += progress.involvement_type.name
-        if progress.involvement_type.name == "Other":
+        involvement += progress.involvement_type.short_name
+        if progress.involvement_type.short_name == "Other":
             involvement += f": {progress.involvement_other}"
     else:
         involvement = ""
