@@ -30,7 +30,7 @@ TrainingRequirementDef = TypedDict(
 TRAINING_REQUIREMENTS: list[TrainingRequirementDef] = [
     {"name": "Training", "url_required": False, "event_required": True},
     {"name": "Welcome Session", "url_required": False, "event_required": False},
-    {"name": "Lesson Contribution", "url_required": True, "event_required": False},
+    {"name": "Get Involved", "url_required": False, "event_required": False},
     {"name": "Demo", "url_required": False, "event_required": False},
 ]
 
