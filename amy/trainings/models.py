@@ -15,10 +15,10 @@ class InvolvementManager(models.Manager):
         # Always have 'Other' option at the end of the list, don't worry about the rest
         qs = self.order_by(
             Case(
-                When(name="Other", then=10),
+                When(short_name="Other", then=10),
                 default=1,
             ),
-            "name",
+            "short_name",
         )
 
         return qs
@@ -26,8 +26,12 @@ class InvolvementManager(models.Manager):
 
 @reversion.register
 class Involvement(CreatedUpdatedArchivedMixin, models.Model):
-    display_name = models.CharField(max_length=STR_LONG)
-    name = models.CharField(max_length=STR_MED)
+    display_name = models.CharField(
+        max_length=STR_LONG, help_text="This name will appear on community facing pages"
+    )
+    short_name = models.CharField(
+        max_length=STR_MED, help_text="A short descriptive name for internal use"
+    )
 
     # Determines whether TrainingProgress.url is required (True) or must be
     # null (False).
@@ -37,10 +41,14 @@ class Involvement(CreatedUpdatedArchivedMixin, models.Model):
     # null (False).
     date_required = models.BooleanField(default=True)
 
+    # Determines whether TrainingProgress.trainee_notes is required (True) or must be
+    # null (False).
+    notes_required = models.BooleanField(default=False)
+
     objects = InvolvementManager()
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["short_name"]
 
     def __str__(self) -> str:
         return self.display_name

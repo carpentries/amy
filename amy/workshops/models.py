@@ -2609,6 +2609,9 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         on_delete=models.SET_NULL,
     )
     url = models.URLField(null=True, blank=True, verbose_name="URL")
+    trainee_notes = models.CharField(
+        blank=True, max_length=STR_LONGEST, verbose_name="Notes from trainee"
+    )
     notes = models.TextField(blank=True)
 
     def get_absolute_url(self):

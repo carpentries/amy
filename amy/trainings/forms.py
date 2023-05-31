@@ -1,7 +1,7 @@
 from crispy_forms.layout import Layout
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import RadioSelect, TextInput
+from django.forms import CharField, RadioSelect, TextInput
 
 from trainings.models import Involvement
 
@@ -36,6 +36,11 @@ class TrainingProgressForm(forms.ModelForm):
         queryset=Event.objects.all(),
         widget=ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),
     )
+    trainee_notes = CharField(
+        label="Notes from trainee",
+        required=False,
+        disabled=True,
+    )
 
     # helper used in edit view
     helper = BootstrapHelper(
@@ -65,11 +70,15 @@ class TrainingProgressForm(forms.ModelForm):
             "event",
             "url",
             "date",
+            "trainee_notes",
             "notes",
         ]
         widgets = {
             "state": RadioSelect,
         }
+
+    class Media:
+        js = ("trainingprogress_form.js",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,9 +117,9 @@ class TrainingProgressForm(forms.ModelForm):
         # "involvement type" field
         involvement = self.cleaned_data.get("involvement_type", "")
         involvement_other = self.cleaned_data.get("involvement_other", "")
-        if involvement.name == "Other" and not involvement_other:
+        if involvement.short_name == "Other" and not involvement_other:
             errors["involvement"] = ValidationError("This field is required.")
-        elif involvement.name != "Other" and involvement_other:
+        elif involvement.short_name != "Other" and involvement_other:
             errors["involvement"] = ValidationError(
                 'If you entered data in "Other" field, please select that option.'
             )

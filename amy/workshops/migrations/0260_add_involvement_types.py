@@ -7,7 +7,7 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("trainings", "0001_initial"),
+        ("trainings", "0001_initial_create_involvement"),
         ("workshops", "0259_remove_deprecated_training_requirements"),
     ]
 
@@ -44,5 +44,12 @@ class Migration(migrations.Migration):
             model_name="trainingrequirement",
             name="involvement_required",
             field=models.BooleanField(default=False),
+        ),
+        migrations.AddField(
+            model_name="trainingprogress",
+            name="trainee_notes",
+            field=models.CharField(
+                blank=True, max_length=255, verbose_name="Notes from trainee"
+            ),
         ),
     ]

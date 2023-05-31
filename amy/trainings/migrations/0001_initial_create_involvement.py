@@ -24,13 +24,26 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("last_updated_at", models.DateTimeField(auto_now=True, null=True)),
                 ("archived_at", models.DateTimeField(blank=True, null=True)),
-                ("display_name", models.CharField(max_length=100)),
-                ("name", models.CharField(max_length=40)),
+                (
+                    "display_name",
+                    models.CharField(
+                        max_length=100,
+                        help_text="This name will appear on community facing pages",
+                    ),
+                ),
+                (
+                    "short_name",
+                    models.CharField(
+                        max_length=40,
+                        help_text="A short descriptive name for internal use",
+                    ),
+                ),
                 ("url_required", models.BooleanField(default=False)),
                 ("date_required", models.BooleanField(default=True)),
+                ("notes_required", models.BooleanField(default=False)),
             ],
             options={
-                "ordering": ["name"],
+                "ordering": ["short_name"],
             },
         ),
     ]
