@@ -1,6 +1,5 @@
 
 function updateTrainingProgressForm() {
-    // TODO: move this to a dedicated file
     /* At this moment, `this` should be <select> tag of "Type" field. */
     var type = $(this).find(":selected").text();
     var training_div = $(this).closest('form').find('#div_id_event');
@@ -25,12 +24,13 @@ function updateTrainingProgressForm() {
         date_div.show();
         trainee_notes_div.show();
     } else {
-        // TODO: remove values from involvement_type and date
         url_div.hide();
-        involvement_type_div.hide();
-        date_div.hide();
-        trainee_notes_div.hide();
         url_div.find('#id_url').val("");
+        involvement_type_div.hide();
+        involvement_type_div.find('input[name=involvement_type]').prop('checked', false);
+        date_div.hide();
+        date_div.find('#id_date').val(null);
+        trainee_notes_div.hide();
     }
 }
 
