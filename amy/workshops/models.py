@@ -2639,6 +2639,12 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         if self.requirement.involvement_required and not self.involvement_type:
             msg = f"In the case of {self.requirement}, this field is required."
             errors["involvement_type"] = msg
+        elif not self.requirement.involvement_required:
+            msg = f"In the case of {self.requirement}, this field must be left empty."
+            if self.involvement_type:
+                errors["involvement_type"] = msg
+            if self.date:
+                errors["date"] = msg
 
         # checks on different involvements under the "Get Involved" requirement
         if self.requirement.involvement_required and self.involvement_type:
@@ -2655,9 +2661,17 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                     " this field is required."
                 )
                 errors["date"] = msg
+            elif not self.involvement_type.date_required and self.date:
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field must be left empty."
+                )
+                errors["date"] = msg
             # verify that date is no later than today
             # (considering timezones ahead of UTC)
-            elif self.date > timezone.localdate(timezone=pytz.timezone("Etc/GMT-14")):
+            elif self.date and self.date > timezone.localdate(
+                timezone=pytz.timezone("Etc/GMT-14")
+            ):
                 msg = "Date must be in the past."
                 errors["date"] = msg
 

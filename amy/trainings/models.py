@@ -30,7 +30,9 @@ class Involvement(CreatedUpdatedArchivedMixin, models.Model):
         max_length=STR_LONG, help_text="This name will appear on community facing pages"
     )
     short_name = models.CharField(
-        max_length=STR_MED, help_text="A short descriptive name for internal use"
+        max_length=STR_MED,
+        help_text="A short descriptive name for internal use",
+        unique=True,
     )
 
     # Determines whether TrainingProgress.url is required (True) or must be

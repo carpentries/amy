@@ -36,6 +36,7 @@ class Migration(migrations.Migration):
                     models.CharField(
                         max_length=40,
                         help_text="A short descriptive name for internal use",
+                        unique=True,
                     ),
                 ),
                 ("url_required", models.BooleanField(default=False)),
