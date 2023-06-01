@@ -2641,7 +2641,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
             errors["involvement_type"] = msg
 
         # checks on different involvements under the "Get Involved" requirement
-        if self.requirement.involvement_required:
+        if self.requirement.involvement_required and self.involvement_type:
             if self.involvement_type.url_required and not self.url:
                 msg = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
@@ -2657,7 +2657,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                 errors["date"] = msg
             # verify that date is no later than today
             # (considering timezones ahead of UTC)
-            elif self.date > datetime.datetime.now(tzinfo=pytz.timezone("Etc/GMT-14")):
+            elif self.date > timezone.localdate(timezone=pytz.timezone("Etc/GMT-14")):
                 msg = "Date must be in the past."
                 errors["date"] = msg
 
