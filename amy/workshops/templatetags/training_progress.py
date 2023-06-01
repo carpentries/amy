@@ -32,7 +32,7 @@ def progress_description(progress):
         involvement = "<br />"
         involvement += progress.involvement_type.name
         if progress.involvement_type.name == "Other":
-            involvement += f": {progress.involvement_other}"
+            involvement += f": {progress.trainee_notes or 'No details provided'}"
     else:
         involvement = ""
 
