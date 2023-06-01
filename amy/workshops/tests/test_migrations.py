@@ -337,7 +337,7 @@ class TestWorkshops0261(BaseMigrationTestCase):
         Involvement = self.new_state.apps.get_model("trainings", "Involvement")
 
         # test that GitHub Contribution involvement was created
-        contribution = Involvement.objects.get(short_name="GitHub Contribution")
+        contribution = Involvement.objects.get(name="GitHub Contribution")
         self.assertTrue(contribution.url_required)
 
         # test that Lesson Contribution was renamed to Get Involved
@@ -352,7 +352,7 @@ class TestWorkshops0261(BaseMigrationTestCase):
         self.assertQuerysetEqual(
             TrainingProgress.objects.filter(requirement__name="Get Involved"),
             TrainingProgress.objects.filter(
-                involvement_type__short_name="GitHub Contribution"
+                involvement_type__name="GitHub Contribution"
             ),
         )
 
@@ -396,7 +396,7 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
 
         demo = TrainingRequirement.objects.get(name="Demo")
         get_involved = TrainingRequirement.objects.get(name="Get Involved")
-        contribution = Involvement.objects.get(short_name="GitHub Contribution")
+        contribution = Involvement.objects.get(name="GitHub Contribution")
 
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=demo)
         TrainingProgress.objects.create(

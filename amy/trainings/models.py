@@ -15,10 +15,10 @@ class InvolvementManager(models.Manager):
         # Always have 'Other' option at the end of the list, don't worry about the rest
         qs = self.order_by(
             Case(
-                When(short_name="Other", then=10),
+                When(name="Other", then=10),
                 default=1,
             ),
-            "short_name",
+            "name",
         )
 
         return qs
@@ -29,7 +29,7 @@ class Involvement(CreatedUpdatedArchivedMixin, models.Model):
     display_name = models.CharField(
         max_length=STR_LONG, help_text="This name will appear on community facing pages"
     )
-    short_name = models.CharField(
+    name = models.CharField(
         max_length=STR_MED,
         help_text="A short descriptive name for internal use",
         unique=True,
@@ -50,7 +50,7 @@ class Involvement(CreatedUpdatedArchivedMixin, models.Model):
     objects = InvolvementManager()
 
     class Meta:
-        ordering = ["short_name"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         return self.display_name

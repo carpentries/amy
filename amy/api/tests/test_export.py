@@ -195,7 +195,7 @@ class TestExportingPersonData(BaseExportingTest):
             },
         )
         github_contribution, _ = Involvement.objects.get_or_create(
-            short_name="GitHub Contribution",
+            name="GitHub Contribution",
             defaults={
                 "display_name": "Submitted a contribution to a Carpentries repository",
                 "url_required": True,
@@ -556,7 +556,7 @@ class TestExportingPersonData(BaseExportingTest):
                     "involvement_required": True,
                 },
                 "involvement_type": {
-                    "short_name": "GitHub Contribution",
+                    "name": "GitHub Contribution",
                     "display_name": "Submitted a contribution to a Carpentries repository",  # noqa
                     "url_required": True,
                     "date_required": True,

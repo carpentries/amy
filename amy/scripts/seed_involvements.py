@@ -15,7 +15,7 @@ InvolvementDef = TypedDict(
     "InvolvementDef",
     {
         "display_name": str,
-        "short_name": str,
+        "name": str,
         "url_required": bool,
         "date_required": bool,
     },
@@ -24,28 +24,28 @@ InvolvementDef = TypedDict(
 INVOLVEMENTS: list[InvolvementDef] = [
     {
         "display_name": "Served as an Instructor or a helper at a Carpentries workshop",
-        "short_name": "Workshop Instructor/Helper",
+        "name": "Workshop Instructor/Helper",
         "url_required": True,
         "date_required": True,
         "notes_required": False,
     },
     {
         "display_name": "Attended an Instructor Meeting, regional meetup, or other community meeting",  # noqa
-        "short_name": "Community Meeting",
+        "name": "Community Meeting",
         "url_required": False,
         "date_required": True,
         "notes_required": True,
     },
     {
         "display_name": "Submitted a contribution to a Carpentries repository",
-        "short_name": "GitHub Contribution",
+        "name": "GitHub Contribution",
         "url_required": True,
         "date_required": True,
         "notes_required": False,
     },
     {
         "display_name": "Other",
-        "short_name": "Other",
+        "name": "Other",
         "url_required": False,
         "date_required": True,
         "notes_required": True,
@@ -65,9 +65,9 @@ def run() -> None:
     seed_models(
         Involvement,
         INVOLVEMENTS,
-        "short_name",
+        "name",
         involvement_transform,
         logger,
     )
 
-    deprecate_models(Involvement, DEPRECATED_INVOLVEMENTS, "short_name", logger)
+    deprecate_models(Involvement, DEPRECATED_INVOLVEMENTS, "name", logger)

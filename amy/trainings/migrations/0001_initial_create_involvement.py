@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "short_name",
+                    "name",
                     models.CharField(
                         max_length=40,
                         help_text="A short descriptive name for internal use",
@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 ("notes_required", models.BooleanField(default=False)),
             ],
             options={
-                "ordering": ["short_name"],
+                "ordering": ["name"],
             },
         ),
     ]

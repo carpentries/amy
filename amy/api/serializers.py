@@ -419,7 +419,7 @@ class InvolvementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Involvement
         fields = (
-            "short_name",
+            "name",
             "display_name",
             "url_required",
             "date_required",

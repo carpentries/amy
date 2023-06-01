@@ -6,7 +6,7 @@ from trainings.models import Involvement
 
 class InvolvementAdmin(ArchiveActionMixin, admin.ModelAdmin):
     list_display = (
-        "short_name",
+        "name",
         "display_name",
         "url_required",
         "date_required",

@@ -37,7 +37,7 @@ class TestTrainingProgressValidation(TestBase):
             involvement_required=True,
         )
         self.url_and_date_required, _ = Involvement.objects.get_or_create(
-            short_name="GitHub Contribution",
+            name="GitHub Contribution",
             defaults={
                 "display_name": "GitHub Contribution",
                 "url_required": True,
@@ -45,7 +45,7 @@ class TestTrainingProgressValidation(TestBase):
             },
         )
         self.notes_required, _ = Involvement.objects.get_or_create(
-            short_name="Other without date",
+            name="Other without date",
             defaults={
                 "display_name": "Other without date",
                 "notes_required": True,
@@ -372,7 +372,7 @@ class TestCRUDViews(TestBase):
             involvement_required=True,
         )
         self.involvement, _ = Involvement.objects.get_or_create(
-            short_name="GitHub Contribution",
+            name="GitHub Contribution",
             defaults={
                 "display_name": "GitHub Contribution",
                 "url_required": True,
@@ -380,7 +380,7 @@ class TestCRUDViews(TestBase):
             },
         )
         self.involvement2, _ = Involvement.objects.get_or_create(
-            short_name="To be archived",
+            name="To be archived",
             defaults={
                 "display_name": "To be archived",
                 "url_required": True,

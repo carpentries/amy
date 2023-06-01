@@ -17,7 +17,7 @@ def migrate_lesson_contributions_to_involvements(apps, schema_editor) -> None:
     Involvement = apps.get_model("trainings", "Involvement")
 
     involvement, _ = Involvement.objects.get_or_create(
-        short_name="GitHub Contribution",
+        name="GitHub Contribution",
         defaults={
             "display_name": "Submitted a contribution to a Carpentries repository",
             "url_required": True,
@@ -45,7 +45,7 @@ def migrate_involvements_to_lesson_contributions(apps, schema_editor) -> None:
     TrainingProgress = apps.get_model("workshops", "TrainingProgress")
 
     updated_rows = TrainingProgress.objects.filter(
-        involvement_type__short_name="GitHub Contribution"
+        involvement_type__name="GitHub Contribution"
     ).update(
         involvement_type=None,
         notes=Concat(
