@@ -16,7 +16,6 @@ class Migration(migrations.Migration):
             model_name="trainingprogress",
             name="date",
             field=models.DateField(
-                help_text="Only required when 'Type' is 'Get Involved'",
                 blank=True,
                 null=True,
                 verbose_name="Date of occurrence",
@@ -30,14 +29,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 to="trainings.involvement",
-                verbose_name="Type of involvement (Get Involved only)",
-            ),
-        ),
-        migrations.AddField(
-            model_name="trainingprogress",
-            name="involvement_other",
-            field=models.CharField(
-                blank=True, max_length=100, verbose_name="Other type of involvement"
+                verbose_name="Type of involvement",
             ),
         ),
         migrations.AddField(
