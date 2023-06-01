@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.functional import cached_property
 
 
@@ -43,6 +44,13 @@ class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
 
     class Meta:
         abstract = True
+
+    def archive(self) -> None:
+        """
+        Archive self.
+        """
+        self.archived_at = timezone.now()
+        self.save()
 
 
 class DataPrivacyAgreementMixin(models.Model):

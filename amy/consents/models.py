@@ -225,10 +225,6 @@ class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
     def is_active(self) -> bool:
         return self.archived_at is None
 
-    def archive(self) -> None:
-        self.archived_at = timezone.now()
-        self.save()
-
 
 class ConsentQuerySet(QuerySet):
     def active(self):
