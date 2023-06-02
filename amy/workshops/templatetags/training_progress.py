@@ -36,11 +36,17 @@ def progress_description(progress):
     else:
         involvement = ""
 
+    day = (
+        progress.date.strftime("%A %d %B %Y")
+        if progress.date
+        else progress.created_at.strftime("%A %d %B %Y at %H:%M")
+    )
+
     text = "{state} {type}{involvement}<br />on {day}.{notes}".format(
         state=progress.get_state_display(),
         type=progress.requirement,
         involvement=involvement,
-        day=progress.created_at.strftime("%A %d %B %Y at %H:%M"),
+        day=day,
         notes="<br />Notes: {}".format(escape(progress.notes))
         if progress.notes
         else "",
