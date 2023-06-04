@@ -13,6 +13,14 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.1.2 - 2023-06-04
+
+### Bugfixes
+* Allow longer auth tokens for password reset - [#2430](https://github.com/carpentries/amy/pull/2430) by @elichad
+
+### Features
+* Bump cryptography from 40.0.2 to 41.0.0 - [#2432](https://github.com/carpentries/amy/pull/2432) by @dependabot[bot]
+
 ## v4.1.1 - 2023-05-28
 
 ### Features
