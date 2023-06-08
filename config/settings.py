@@ -171,6 +171,7 @@ LOCAL_APPS = [
     "amy.consents.apps.ConsentsConfig",
     "amy.communityroles.apps.CommunityRolesConfig",
     "amy.recruitment.apps.RecruitmentConfig",
+    "amy.emails.apps.EmailsConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -594,6 +595,11 @@ TEST_RUNNER = "workshops.tests.runner.SilenceLogsRunner"
 # These settings describe internal `autoemails` application behavior.
 # On test server: 'amy-tests@carpentries.org'
 AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS")
+
+# Email module
+# -----------------------------------------------------------------------------
+# This module is the next version of Autoemails.
+EMAIL_TEMPLATE_ENGINE_BACKEND = "db_backend"
 
 # Reports
 # -----------------------------------------------------------------------------
