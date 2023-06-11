@@ -3,7 +3,6 @@ from typing import TypedDict
 from uuid import UUID
 
 from emails.models import EmailTemplate
-
 from workshops.utils.seeding import deprecate_models, seed_models
 
 logger = logging.getLogger("amy")
