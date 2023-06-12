@@ -14,6 +14,22 @@ class TestEmailTemplate(TestCase):
         # Assert
         self.assertEqual(EmailTemplate.get_engine(expected_engine_name), result)
 
+    def test_render_template(self) -> None:
+        # Arrange
+        template = "Hello, {{ name }}{% if lastname %} {{ lastname }}{% endif %}."
+        context = {
+            "name": "James",
+            "lastname": "Bond",
+        }
+        expected = "Hello, James Bond."
+        engine = EmailTemplate.get_engine()
+
+        # Act
+        result = EmailTemplate.render_template(engine, template, context)
+
+        # Assert
+        self.assertEqual(result, expected)
+
     def test_validate_template__correct(self) -> None:
         # Arrange
         template = "Hello, {{ name }}{% if lastname %} {{ lastname }}{% endif %}."
@@ -24,7 +40,7 @@ class TestEmailTemplate(TestCase):
         engine = EmailTemplate.get_engine()
 
         # Act
-        result = EmailTemplate.validate_template(engine, template, context)
+        result = EmailTemplate().validate_template(engine, template, context)
 
         # Assert
         self.assertTrue(result)
@@ -40,7 +56,7 @@ class TestEmailTemplate(TestCase):
 
         # Act & Assert
         with self.assertRaises(ValidationError):
-            EmailTemplate.validate_template(engine, template, context)
+            EmailTemplate().validate_template(engine, template, context)
 
     def test_clean__subject_invalid(self) -> None:
         # Arrange

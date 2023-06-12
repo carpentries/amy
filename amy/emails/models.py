@@ -67,12 +67,15 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return engines[name or settings.EMAIL_TEMPLATE_ENGINE_BACKEND]
 
     @staticmethod
+    def render_template(engine: BaseEngine, template: str, context: dict) -> str:
+        tpl = engine.from_string(template)
+        return tpl.render(context)
+
     def validate_template(
-        engine: BaseEngine, template: str, context: dict | None = None
+        self, engine: BaseEngine, template: str, context: dict | None = None
     ) -> bool:
         try:
-            tpl = engine.from_string(template)
-            tpl.render(context or dict())
+            self.render_template(engine, template, context or dict())
         except TemplateSyntaxError as exp:
             raise ValidationError(f"Invalid syntax: {exp}") from exp
         return True
