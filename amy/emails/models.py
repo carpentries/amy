@@ -36,6 +36,14 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         help_text="Trigger that will queue this email template",
     )
 
+    from_header = models.EmailField(blank=False)
+    reply_to_header = models.EmailField(
+        blank=True,
+        default="",
+        help_text="If empty, the default reply-to address will be 'from_header'.",
+    )
+    cc_header = ArrayField(models.EmailField(blank=False))
+    bcc_header = ArrayField(models.EmailField(max_length=MAX_LENGTH, blank=False))
     subject = models.CharField(
         max_length=MAX_LENGTH,
         blank=False,
@@ -45,14 +53,6 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         "conditions, etc., use "
         f"<a href='{DJANGO_TEMPLATE_DOCS}'>Django templates language</a>.",
     )
-    from_header = models.EmailField(blank=False)
-    reply_to_header = models.EmailField(
-        blank=True,
-        default="",
-        help_text="If empty, the default reply-to address will be 'from_header'.",
-    )
-    cc_header = ArrayField(models.EmailField(blank=False))
-    bcc_header = ArrayField(models.EmailField(max_length=MAX_LENGTH, blank=False))
     body = models.TextField(
         blank=False,
         null=False,
@@ -91,6 +91,9 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
         if errors:
             raise ValidationError(errors)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class ScheduledEmailStatus(models.TextChoices):
@@ -152,6 +155,9 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
     class Meta:
         indexes = [models.Index(fields=["state", "scheduled_at"])]
 
+    def __str__(self) -> str:
+        return f"{self.to_header}: {self.subject}"
+
 
 class ScheduledEmailLog(CreatedMixin, models.Model):
     """Log entry for scheduled email. Contains details of a particular situation, for
@@ -182,3 +188,6 @@ class ScheduledEmailLog(CreatedMixin, models.Model):
     )
 
     scheduled_email = models.ForeignKey(ScheduledEmail, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"[{self.state_before}->{self.state_after}]: {self.details}"

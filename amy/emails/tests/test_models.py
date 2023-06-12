@@ -1,8 +1,16 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
-from emails.models import EmailTemplate
+from emails.models import (
+    EmailTemplate,
+    ScheduledEmail,
+    ScheduledEmailLog,
+    ScheduledEmailStatus,
+)
 
 
 class TestEmailTemplate(TestCase):
@@ -98,3 +106,99 @@ class TestEmailTemplate(TestCase):
         result = template.clean()
         # Assert
         self.assertIsNone(result)
+
+    def test_object_create(self) -> None:
+        # Act
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal="test_email_template",
+            from_header="workshops@carpentries.org",
+            # Intentionally omitted.
+            # reply_to_header="",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        # Assert
+        self.assertIsNotNone(template.id)  # `id` should be UUID
+        self.assertEqual(str(template), "Test Email Template")
+
+
+class TestScheduledEmail(TestCase):
+    def test_object_create(self) -> None:
+        # Arrange
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal="test_email_template",
+            subject="Greetings {{ name }}",
+            from_header="workshops@carpentries.org",
+            # Intentionally omitted.
+            # reply_to_header="",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = template.get_engine()
+        context = {"name": "Tony Stark"}
+        # Act
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net", "harry@potter.co.uk"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        # Assert
+        self.assertIsNotNone(scheduled_email.id)  # `id` should be UUID
+        self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
+        self.assertEqual(
+            scheduled_email.body, "Hello, Tony Stark! Nice to meet **you**."
+        )
+        self.assertEqual(
+            str(scheduled_email),
+            "['peter@spiderman.net', 'harry@potter.co.uk']: Greetings Tony Stark",
+        )
+
+
+class TestScheduledEmailLog(TestCase):
+    def test_object_create(self) -> None:
+        # Arrange
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal="test_email_template",
+            subject="Greetings {{ name }}",
+            from_header="workshops@carpentries.org",
+            # Intentionally omitted.
+            # reply_to_header="",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = template.get_engine()
+        context = {"name": "Tony Stark"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net", "harry@potter.co.uk"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        # Act
+        log = ScheduledEmailLog.objects.create(
+            details="Preparing scheduled email",
+            state_after=ScheduledEmailStatus.SCHEDULED,
+            scheduled_email=scheduled_email,
+        )
+        # Assert
+        self.assertIsNotNone(log.id)  # `id` should be UUID
+        self.assertIsNone(log.state_before)
+        self.assertEqual(str(log), "[None->scheduled]: Preparing scheduled email")
