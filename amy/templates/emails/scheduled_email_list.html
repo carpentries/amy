@@ -1,0 +1,72 @@
+{% extends "base_nav.html" %}
+
+{% load pagination %}
+{% load tags %}
+
+{% block content %}
+{% if scheduled_emails %}
+    <table class="table table-striped">
+      <tr>
+        <th>ID</th>
+        <th>State</th>
+        <th>Scheduled at</th>
+        <th>To</th>
+        <th>From</th>
+        <th>Reply-To</th>
+        <th>CC</th>
+        <th>BCC</th>
+        <th>Subject</th>
+        <th>Body</th>
+        <th>Template</th>
+      </tr>
+    {% for email in scheduled_emails %}
+      <tr>
+        <td>{{ email.id }}</td>
+        <td>{{ email.state }}</td>
+        <td>{{ email.scheduled_at }}</td>
+        <td>
+            {% if email.to_header %}
+            <ul>
+                {% for item in email.to_header %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+        <td>{{ email.from_header }}</td>
+        <td>{{ email.reply_to_header }}</td>
+        <td>
+            {% if email.cc_header %}
+            <ul>
+                {% for item in email.cc_header %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+        <td>
+            {% if email.bcc_header %}
+            <ul>
+                {% for item in email.bcc_header %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+        <td>{{ email.subject }}</td>
+        <td>{{ email.body }}</td>
+        <td><a href="{{ email.template.get_absolute_url }}">{{ email.template.name }}</a></td>
+      </tr>
+    {% endfor %}
+    </table>
+    {% pagination scheduled_emails %}
+{% else %}
+    <p>No scheduled emails.</p>
+{% endif %}
+{% endblock %}

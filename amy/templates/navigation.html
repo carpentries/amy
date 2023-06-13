@@ -57,6 +57,13 @@
               {% navbar_element "Self-Organised submissions" "all_selforganisedsubmissions" True False %}
             </div>
           </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="emailsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Emails</a>
+            <div class="dropdown-menu" aria-labelledby="emailsDropdown">
+              {% navbar_element "Scheduled emails" "scheduled-emails-list" True %}
+              {% navbar_element "Templates" "email-templates-list" True %}
+            </div>
+          </li>
         </ul>
         <form class="form-inline my-2 my-lg-0 ml-auto" id="search-form" role="search" method="GET" action="{% url 'search' %}">
           <input class="form-control mx-2" type="search" placeholder="Search" aria-label="Search" name="term" />

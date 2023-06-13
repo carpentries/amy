@@ -1,0 +1,68 @@
+{% extends "base_nav.html" %}
+
+{% load pagination %}
+{% load tags %}
+
+{% block content %}
+    {% if perms.emails.add_email_template %}
+    <p><a href="#TODO" class="btn btn-success">New email template</a></p>
+    {% else %}
+    <p><a href="#TODO" class="btn btn-success disabled">New email template</a></p>
+    {% endif %}
+{% if email_templates %}
+    <table class="table table-striped">
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Signal</th>
+        <th>From</th>
+        <th>Reply-To</th>
+        <th>CC</th>
+        <th>BCC</th>
+        <th>Subject</th>
+        <th>Body</th>
+      </tr>
+    {% for template in email_templates %}
+      <tr>
+        <td>{{ template.id }}</td>
+        <td>{{ template.name }}</td>
+        <td><code>{{ template.signal }}</code></td>
+        <td>{{ template.from_header }}</td>
+        <td>{{ template.reply_to_header }}</td>
+        <td>
+            {% if template.cc_header %}
+            <ul>
+                {% for item in template.cc_header %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+        <td>
+            {% if template.bcc_header %}
+            <ul>
+                {% for item in template.bcc_header %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+        <td>{{ template.subject }}</td>
+        <td>{{ template.body }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+    {% pagination email_templates %}
+    {% if perms.emails.add_email_template %}
+    <p><a href="#TODO" class="btn btn-success">New email template</a></p>
+    {% else %}
+    <p><a href="#TODO" class="btn btn-success disabled">New email template</a></p>
+    {% endif %}
+{% else %}
+    <p>No email templates.</p>
+{% endif %}
+{% endblock %}
