@@ -36,8 +36,8 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal="persons_merged",
         from_header="workshops@carpentries.org",
         reply_to_header="",
-        cc_header=[""],
-        bcc_header=[""],
+        cc_header=[],
+        bcc_header=[],
         subject="The Carpentries: merged duplicate profiles",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
