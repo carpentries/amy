@@ -7,6 +7,4 @@ class EmailsConfig(AppConfig):
 
     def ready(self):
         # Autoconnect signal receivers using `@receiver` decorator
-        from . import actions, signals
-
-        signals.persons_merged.connect(actions.persons_merged_receiver)
+        from emails import actions  # noqa
