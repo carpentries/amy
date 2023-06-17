@@ -1,6 +1,6 @@
 import django_rq
 from fakeredis import FakeStrictRedis
-from rq import Queue
+from rq.queue import Queue
 
 from autoemails.job import Job
 
