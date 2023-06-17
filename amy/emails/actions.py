@@ -37,10 +37,6 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
             context=context,
             scheduled_at=scheduled_at,
             to_header=[person.email],
-            from_header="team@carpentries.org",
-            reply_to_header="",
-            cc_header=[],
-            bcc_header=[],
         )
     except EmailTemplate.DoesNotExist:
         messages.warning(

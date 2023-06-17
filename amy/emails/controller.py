@@ -15,10 +15,6 @@ class EmailController:
         context: dict,
         scheduled_at: datetime,
         to_header: list[str],
-        from_header: str,
-        reply_to_header: str,
-        cc_header: list[str],
-        bcc_header: list[str],
     ) -> ScheduledEmail:
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
         engine = EmailTemplate.get_engine()
@@ -30,16 +26,16 @@ class EmailController:
             state="scheduled",
             scheduled_at=scheduled_at,
             to_header=to_header,
-            from_header=from_header,
-            reply_to_header=reply_to_header,
-            cc_header=cc_header,
-            bcc_header=bcc_header,
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
             subject=subject,
             body=body,
             template=template,
         )
         ScheduledEmailLog.objects.create(
-            details=f"Scheduled {signal} to run at {scheduled_at}",
+            details=f"Scheduled {signal} to run at {scheduled_at.isoformat()}",
             state_before=None,
             state_after=ScheduledEmailStatus.SCHEDULED,
             scheduled_email=scheduled_email,
