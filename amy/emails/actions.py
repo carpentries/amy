@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.dispatch import receiver
 from django.http import HttpRequest
 from django.utils import timezone
+from typing_extensions import Unpack
 
 from emails.controller import EmailController
 from emails.models import EmailTemplate
@@ -20,10 +21,12 @@ class PersonsMergedKwargs(TypedDict):
 
 
 @receiver(persons_merged_signal)
-def persons_merged_receiver(sender: Any, **kwargs: PersonsMergedKwargs) -> None:
-    request: HttpRequest = kwargs["request"]
+def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) -> None:
+    request = kwargs["request"]
+    selected_person_id = kwargs["selected_person_id"]
+
     scheduled_at = timezone.now() + timedelta(hours=1)
-    person = Person.objects.get(pk=kwargs["selected_person_id"])
+    person = Person.objects.get(pk=selected_person_id)
     context = {
         "person": person,
     }
@@ -43,5 +46,10 @@ def persons_merged_receiver(sender: Any, **kwargs: PersonsMergedKwargs) -> None:
         messages.warning(
             request,
             f"Action was not scheduled due to missing template for signal {signal}.",
+        )
+    else:
+        messages.info(
+            request,
+            f"Action was scheduled: {scheduled_email.get_absolute_url()}.",
         )
     # TODO: associate scheduled_email with person

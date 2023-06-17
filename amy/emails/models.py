@@ -158,6 +158,9 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
     def __str__(self) -> str:
         return f"{self.to_header}: {self.subject}"
 
+    def get_absolute_url(self) -> str:
+        return "#TODO"  # reverse("model_detail", kwargs={"pk": self.pk})
+
 
 class ScheduledEmailLog(CreatedMixin, models.Model):
     """Log entry for scheduled email. Contains details of a particular situation, for

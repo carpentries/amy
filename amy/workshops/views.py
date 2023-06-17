@@ -869,8 +869,8 @@ def persons_merge(request):
                     "person.",
                 )
                 persons_merged_signal.send(
-                    request=request,
                     sender=base_obj,
+                    request=request,
                     person_a_id=obj_a.id,
                     person_b_id=obj_b.id,
                     selected_person_id=base_obj.id,

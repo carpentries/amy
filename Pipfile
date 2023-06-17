@@ -38,6 +38,7 @@ gunicorn = "~=20.1.0"
 whitenoise = "~=6.1"
 django-better-admin-arrayfield = "==1.4.2"
 django-test-migrations = "~=1.3.0"
+typing-extensions = "*"
 
 [dev-packages]
 django-webtest = "~=1.9.8"
@@ -53,6 +54,7 @@ black = "*"
 pre-commit = "*"
 django-stubs = "*"
 djangorestframework-stubs = "*"
+typing-extensions = "*"
 
 [requires]
 python_version = "3.11"
