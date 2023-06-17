@@ -122,6 +122,12 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
         queue = Queue("separate_queue", connection=self.connection)
         worker = SimpleWorker([queue], connection=queue.connection)
 
+        # !!! This is a hack required for this test to pass. Subscribing runs a thread
+        # that somehow disrupts how the data access to the queues works. There's no
+        # configuration available to disable the subscription, so a monkey-patching
+        # approach was used.
+        worker.subscribe = lambda: None
+
         # this job will fail
         job = queue.enqueue(dummy_fail_job)
         self.assertEqual(job.get_status(), "queued")
