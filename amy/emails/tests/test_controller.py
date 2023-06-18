@@ -1,3 +1,4 @@
+from django.template.exceptions import TemplateSyntaxError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -36,3 +37,41 @@ class TestEmailController(TestCase):
         self.assertEqual(scheduled_email.scheduled_at, now)
         self.assertEqual(log.scheduled_email, scheduled_email)
         self.assertEqual(log.details, f"Scheduled {signal} to run at {now.isoformat()}")
+
+    def test_schedule_email__no_template(self) -> None:
+        # Arrange
+        now = timezone.now()
+        signal = "test_email_template"
+
+        # Act & Assert
+        with self.assertRaises(EmailTemplate.DoesNotExist):
+            EmailController.schedule_email(
+                signal,
+                context={"name": "James"},
+                scheduled_at=now,
+                to_header=["harry@potter.com"],
+            )
+
+    def test_schedule_email__invalid_template(self) -> None:
+        # Arrange
+        now = timezone.now()
+        signal = "test_email_template"
+        EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=signal,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            # invalid Django template syntax
+            subject="Greetings {% if name %}{{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+
+        # Act & Assert
+        with self.assertRaises(TemplateSyntaxError):
+            EmailController.schedule_email(
+                signal,
+                context={"name": "James"},
+                scheduled_at=now,
+                to_header=["harry@potter.com"],
+            )
