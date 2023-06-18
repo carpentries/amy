@@ -139,7 +139,7 @@ class TestScheduledEmail(TestCase):
             bcc_header=[],
             body="Hello, {{ name }}! Nice to meet **you**.",
         )
-        engine = template.get_engine()
+        engine = EmailTemplate.get_engine()
         context = {"name": "Tony Stark"}
         # Act
         scheduled_email = ScheduledEmail.objects.create(
@@ -179,7 +179,7 @@ class TestScheduledEmailLog(TestCase):
             bcc_header=[],
             body="Hello, {{ name }}! Nice to meet **you**.",
         )
-        engine = template.get_engine()
+        engine = EmailTemplate.get_engine()
         context = {"name": "Tony Stark"}
         scheduled_email = ScheduledEmail.objects.create(
             scheduled_at=timezone.now() + timedelta(hours=1),
