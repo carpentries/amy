@@ -1,0 +1,15 @@
+# CI for feature branches - contains only test runs
+
+name: CI (feature)
+
+# don't run CI for every push of any feature branch
+# but do run CI if a PR is made with any feature branch as a base
+on:
+  push:
+    branches: [ 'feature/instructor-checkout-changes' ]
+  pull_request:
+    branches: [ 'feature/**' ]
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
