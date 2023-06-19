@@ -109,18 +109,6 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
         )
 
         # second migration step:
-        # test that deprecated training requirements were removed
-        for item in [
-            "SWC Demo",
-            "SWC Homework",
-            "DC Demo",
-            "DC Homework",
-            "LC Demo",
-            "LC Homework",
-        ]:
-            with self.assertRaises(TrainingRequirement.DoesNotExist):
-                TrainingRequirement.objects.get(name=item)
-
         # test that progresses have been moved to the correct requirements
         for prefix in ["SWC", "DC", "LC"]:
             self.assertEqual(
@@ -183,19 +171,6 @@ class TestWorkshops0259NewRequirements(BaseMigrationTestCase):
         self.assertFalse(demo.url_required)
         self.assertTrue(contribution.url_required)
 
-        # test that deprecated training requirements were removed
-        for item in [
-            "SWC Demo",
-            "SWC Homework",
-            "DC Demo",
-            "DC Homework",
-            "LC Demo",
-            "LC Homework",
-            "Discussion",
-        ]:
-            with self.assertRaises(TrainingRequirement.DoesNotExist):
-                TrainingRequirement.objects.get(name=item)
-
         # test that progresses have been moved to the correct generic requirements
         for prefix in ["SWC", "DC", "LC"]:
             self.assertEqual(
@@ -233,12 +208,7 @@ class TestWorkshops0259Rollback(BaseMigrationTestCase):
         )
 
         welcome = TrainingRequirement.objects.get(name="Welcome Session")
-        demo = TrainingRequirement.objects.get(name="Demo")
-        contribution = TrainingRequirement.objects.get(name="Lesson Contribution")
-
         TrainingProgress.objects.create(trainee=self.ironman, requirement=welcome)
-        TrainingProgress.objects.create(trainee=self.ironman, requirement=demo)
-        TrainingProgress.objects.create(trainee=self.ironman, requirement=contribution)
 
     def test_workshops_0259_rollback(self):
         TrainingRequirement = self.new_state.apps.get_model(
@@ -248,39 +218,7 @@ class TestWorkshops0259Rollback(BaseMigrationTestCase):
             "workshops", "TrainingProgress"
         )
 
-        # second migration step rollback:
-        # test that deprecated requirements were added back in,
-        # and Demo and Lesson Contribution were not removed
-        for item in [
-            "Demo",
-            "Lesson Contribution",
-            "SWC Demo",
-            "SWC Homework",
-            "DC Demo",
-            "DC Homework",
-            "LC Demo",
-            "LC Homework",
-        ]:
-            TrainingRequirement.objects.get(name=item)
-
-        # test that Demo/Lesson Contribution progresses were not changed
-        for prefix in ["SWC", "DC", "LC"]:
-            self.assertEqual(
-                TrainingProgress.objects.filter(
-                    requirement__name__startswith=prefix
-                ).count(),
-                0,
-            )
-
-        self.assertEqual(
-            TrainingProgress.objects.filter(requirement__name="Demo").count(), 1
-        )
-        self.assertEqual(
-            TrainingProgress.objects.filter(
-                requirement__name="Lesson Contribution"
-            ).count(),
-            1,
-        )
+        # second migration step rollback: nothing happens
 
         # first migration step rollback:
         # test that Discussion was renamed to Welcome Session
