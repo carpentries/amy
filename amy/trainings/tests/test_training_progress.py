@@ -263,29 +263,15 @@ class TestTrainingProgressValidation(TestBase):
         with self.assertValidationErrors(["notes"]):
             failed_progress_no_notes.full_clean()
 
-    def test_form_invalid_if_trainee_has_no_training_task(self):
+    def test_form_valid_if_trainee_has_no_training_task(self):
+        """Regression test for https://github.com/carpentries/amy/issues/2440"""
         data = {
             "requirement": self.requirement.pk,
             "state": "p",
             "trainee": self.ironman.pk,
         }
         form = TrainingProgressForm(data)
-        self.assertEqual(form.is_valid(), False)
-        self.assertIn(
-            "not possible to add training progress", form.non_field_errors()[0]
-        )
-
-    def test_form_with_failed_status_requires_notes(self):
-        data = {
-            "requirement": self.requirement.pk,
-            "state": "p",
-            "trainee": self.ironman.pk,
-        }
-        form = TrainingProgressForm(data)
-        self.assertEqual(form.is_valid(), False)
-        self.assertIn(
-            "not possible to add training progress", form.non_field_errors()[0]
-        )
+        self.assertEqual(form.is_valid(), True)
 
 
 class TestProgressLabelTemplateTag(TestBase):
