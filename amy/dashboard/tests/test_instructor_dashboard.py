@@ -141,11 +141,11 @@ class TestGetInvolvedStatus(TestBase):
         )
         self.progress_url = reverse("training-progress")
 
-    def test_lesson_contribution_not_submitted(self):
+    def test_get_involved_not_submitted(self):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Get Involved step not submitted")
 
-    def test_lesson_contribution_waiting_to_be_evaluated(self):
+    def test_get_involved_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
             trainee=self.admin,
             requirement=self.get_involved,
@@ -157,7 +157,7 @@ class TestGetInvolvedStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Get Involved step evaluation pending")
 
-    def test_lesson_contribution_passed(self):
+    def test_get_involved_passed(self):
         TrainingProgress.objects.create(
             trainee=self.admin,
             requirement=self.get_involved,
