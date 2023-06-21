@@ -1,5 +1,6 @@
 from crispy_forms.layout import Layout
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import CharField, RadioSelect, TextInput
 
 from trainings.models import Involvement

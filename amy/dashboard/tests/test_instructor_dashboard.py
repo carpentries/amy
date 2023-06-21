@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from django.urls import reverse
 
@@ -143,7 +143,7 @@ class TestGetInvolvedStatus(TestBase):
 
     def test_lesson_contribution_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Get Involved not submitted")
+        self.assertContains(rv, "Get Involved step not submitted")
 
     def test_lesson_contribution_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
@@ -173,7 +173,7 @@ class TestGetInvolvedStatus(TestBase):
             "url": "http://example.com",
             "requirement": self.get_involved.pk,
             "involvement_type": self.github_contribution.pk,
-            "date": datetime.today(),
+            "date": "2023-06-21",
         }
         rv = self.client.post(self.progress_url, data, follow=True)
         self.assertEqual(rv.status_code, 200)
@@ -191,7 +191,7 @@ class TestGetInvolvedStatus(TestBase):
                 "http://example.com",
                 self.get_involved.pk,
                 self.github_contribution.pk,
-                datetime.today(),
+                date(2023, 6, 21),
             )
         ]
         self.assertEqual(got, expected)
