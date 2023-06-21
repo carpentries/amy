@@ -9,7 +9,14 @@ logger = logging.getLogger("amy")
 # If an entry needs to be removed from the database, remove it from e.g.
 # `EMAIL_TEMPLATES`, and put its' ID in `DEPRECATED_EMAIL_TEMPLATES`.
 
-DEPRECATED_TRAINING_REQUIREMENTS: list[str] = []
+DEPRECATED_TRAINING_REQUIREMENTS: list[str] = [
+    "DC Homework",
+    "SWC Homework",
+    "LC Homework",
+    "DC Demo",
+    "SWC Demo",
+    "LC Demo",
+]
 
 TrainingRequirementDef = TypedDict(
     "TrainingRequirementDef",
@@ -22,13 +29,7 @@ TrainingRequirementDef = TypedDict(
 
 TRAINING_REQUIREMENTS: list[TrainingRequirementDef] = [
     {"name": "Training", "url_required": False, "event_required": True},
-    {"name": "DC Homework", "url_required": True, "event_required": False},
-    {"name": "SWC Homework", "url_required": True, "event_required": False},
-    {"name": "Discussion", "url_required": False, "event_required": False},
-    {"name": "DC Demo", "url_required": False, "event_required": False},
-    {"name": "SWC Demo", "url_required": False, "event_required": False},
-    {"name": "LC Demo", "url_required": False, "event_required": False},
-    {"name": "LC Homework", "url_required": True, "event_required": False},
+    {"name": "Welcome Session", "url_required": False, "event_required": False},
     {"name": "Lesson Contribution", "url_required": True, "event_required": False},
     {"name": "Demo", "url_required": False, "event_required": False},
 ]

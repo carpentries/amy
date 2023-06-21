@@ -5,11 +5,12 @@ on:
 
 jobs:
   test:
-    name: Test on Python ${{ matrix.python-version }}
+    name: ${{ matrix.test-type }} tests on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [ '3.11' ]
+        test-type: ["Unit", "Migration"]
 
     services:
       postgres:
@@ -82,12 +83,22 @@ jobs:
           exit 1;
         fi;
 
-    - name: Test
-      run: pipenv run python manage.py test
+    - name: Unit tests
+      run: pipenv run python manage.py test --exclude-tag=migration_test
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432
         AMY_DATABASE_NAME: test_amy
         AMY_DATABASE_USER: postgres
         AMY_DATABASE_PASSWORD: postgres
+      if: matrix.test-type == 'Unit'
 
+    - name: Migration tests
+      run: pipenv run python manage.py test --tag=migration_test
+      env:
+        AMY_DATABASE_HOST: localhost
+        AMY_DATABASE_PORT: 5432
+        AMY_DATABASE_NAME: test_amy
+        AMY_DATABASE_USER: postgres
+        AMY_DATABASE_PASSWORD: postgres
+      if: matrix.test-type == 'Migration'

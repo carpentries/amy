@@ -30,7 +30,7 @@ class TestTraineesView(TestBase):
         self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
             name="Lesson Contribution", defaults={"url_required": True}
         )
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
 
         self.ttt_event = Event.objects.create(
             start=datetime(2018, 7, 14),
@@ -45,11 +45,11 @@ class TestTraineesView(TestBase):
 
     def test_bulk_add_progress(self):
         TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=self.discussion, state="n"
+            trainee=self.spiderman, requirement=self.welcome, state="n"
         )
         data = {
             "trainees": [self.spiderman.pk, self.ironman.pk],
-            "requirement": self.discussion.pk,
+            "requirement": self.welcome.pk,
             "state": "a",
             "submit": "",
         }
@@ -74,9 +74,9 @@ class TestTraineesView(TestBase):
             TrainingProgress.objects.values_list("trainee", "requirement", "state")
         )
         expected = {
-            (self.spiderman.pk, self.discussion.pk, "n"),
-            (self.spiderman.pk, self.discussion.pk, "a"),
-            (self.ironman.pk, self.discussion.pk, "a"),
+            (self.spiderman.pk, self.welcome.pk, "n"),
+            (self.spiderman.pk, self.welcome.pk, "a"),
+            (self.ironman.pk, self.welcome.pk, "a"),
         }
         self.assertEqual(got, expected)
 
@@ -98,7 +98,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             name="Lesson Contribution", defaults={}
         )
 
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.training = TrainingRequirement.objects.get(name="Training")
 
     def _setUpInstructors(self):
@@ -155,7 +155,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    requirement=self.discussion,
+                    requirement=self.welcome,
                     state="p",
                 ),
                 TrainingProgress(
@@ -186,7 +186,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    requirement=self.discussion,
+                    requirement=self.welcome,
                     state="p",
                 ),
                 TrainingProgress(
@@ -220,7 +220,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    requirement=self.discussion,
+                    requirement=self.welcome,
                     state="f",  # failed
                     notes="Failed",
                 ),
@@ -294,7 +294,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 username="trainee1_trainee1",
                 is_instructor=0,
                 passed_training=1,
-                passed_discussion=1,
+                passed_welcome=1,
                 passed_lesson_contribution=1,
                 passed_demo=1,
                 instructor_eligible=1,
@@ -304,7 +304,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 username="trainee2_trainee2",
                 is_instructor=4,
                 passed_training=1,
-                passed_discussion=1,
+                passed_welcome=1,
                 passed_lesson_contribution=1,
                 passed_demo=1,
                 instructor_eligible=1,
@@ -314,7 +314,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 username="trainee3_trainee3",
                 is_instructor=0,
                 passed_training=1,
-                passed_discussion=0,
+                passed_welcome=0,
                 passed_lesson_contribution=1,
                 passed_demo=1,
                 instructor_eligible=0,

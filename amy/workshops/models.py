@@ -656,19 +656,13 @@ class PersonManager(BaseUserManager):
                 )
             )
 
-        LESSON_CONTRIBUTION_NAMES = [
-            "Lesson Contribution",
-            "SWC Homework",
-            "DC Homework",
-            "LC Homework",
-        ]
-        DEMO_TRAININGPROGRESS_NAMES = ["Demo", "SWC Demo", "DC Demo", "LC Demo"]
+        LESSON_CONTRIBUTION_NAMES = ["Lesson Contribution"]
 
         return self.annotate(
             passed_training=passed("Training"),
             passed_lesson_contribution=passed_either(*LESSON_CONTRIBUTION_NAMES),
-            passed_discussion=passed("Discussion"),
-            passed_demo=passed_either(*DEMO_TRAININGPROGRESS_NAMES),
+            passed_welcome=passed("Welcome Session"),
+            passed_demo=passed("Demo"),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
             # be instructor badge eligible. Legend:
@@ -676,7 +670,7 @@ class PersonManager(BaseUserManager):
             # + means "OR"
             instructor_eligible=(
                 F("passed_training")
-                * F("passed_discussion")
+                * F("passed_welcome")
                 * F("passed_lesson_contribution")
                 * F("passed_demo")
             )
@@ -975,7 +969,7 @@ class Person(
         fields = [
             ("passed_training", "Training"),
             ("passed_lesson_contribution", "Lesson Contribution"),
-            ("passed_discussion", "Discussion"),
+            ("passed_welcome", "Welcome Session"),
             ("passed_demo", "Demo"),
         ]
         try:

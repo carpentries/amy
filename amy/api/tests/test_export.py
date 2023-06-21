@@ -180,7 +180,7 @@ class TestExportingPersonData(BaseExportingTest):
         # add some training progress
         TrainingProgress.objects.create(
             trainee=self.user,
-            requirement=TrainingRequirement.objects.get(name="Discussion"),
+            requirement=TrainingRequirement.objects.get(name="Welcome Session"),
             state="p",  # passed
             event=event,
             url=None,
@@ -504,7 +504,7 @@ class TestExportingPersonData(BaseExportingTest):
                 "created_at": data["training_progresses"][0]["created_at"],
                 "last_updated_at": data["training_progresses"][0]["last_updated_at"],
                 "requirement": {
-                    "name": "Discussion",
+                    "name": "Welcome Session",
                     "url_required": False,
                     "event_required": False,
                 },
