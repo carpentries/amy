@@ -26,12 +26,12 @@ def rename_welcome_session_to_discussion(apps, schema_editor) -> None:
         pass
 
 
-def delete_outdated_requirements(apps, schema_editor) -> None:
+def migrate_outdated_requirements(apps, schema_editor) -> None:
     TrainingRequirement = apps.get_model("workshops", "TrainingRequirement")
     TrainingProgress = apps.get_model("workshops", "TrainingProgress")
 
     # migrate SWC/DC/LC specific progress to generic demo/lesson contribution
-    # this was already done in production AMY but not in local databases
+    # this was already done in production AMY but not in development databases
     demo, _ = TrainingRequirement.objects.get_or_create(
         name="Demo", defaults={"url_required": False}
     )
@@ -48,27 +48,6 @@ def delete_outdated_requirements(apps, schema_editor) -> None:
         requirement=contribution
     )
 
-    # remove SWC/DC/LC specific requirements
-    TrainingRequirement.objects.filter(
-        Q(name__startswith="SWC") | Q(name__startswith="DC") | Q(name__startswith="LC")
-    ).delete()
-
-
-def add_outdated_requirements(apps, schema_editor) -> None:
-    TrainingRequirement = apps.get_model("workshops", "TrainingRequirement")
-
-    outdated_requirements = [
-        {"name": "DC Homework", "url_required": True, "event_required": False},
-        {"name": "SWC Homework", "url_required": True, "event_required": False},
-        {"name": "LC Homework", "url_required": True, "event_required": False},
-        {"name": "DC Demo", "url_required": False, "event_required": False},
-        {"name": "SWC Demo", "url_required": False, "event_required": False},
-        {"name": "LC Demo", "url_required": False, "event_required": False},
-    ]
-    requirements_to_add = [TrainingRequirement(**r) for r in outdated_requirements]
-
-    TrainingRequirement.objects.bulk_create(requirements_to_add)
-
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -81,7 +60,7 @@ class Migration(migrations.Migration):
             rename_welcome_session_to_discussion,
         ),
         migrations.RunPython(
-            delete_outdated_requirements,
-            add_outdated_requirements,
+            migrate_outdated_requirements,
+            migrations.RunPython.noop,
         ),
     ]
