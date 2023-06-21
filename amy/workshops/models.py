@@ -2684,11 +2684,16 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                 and not self.trainee_notes
                 and not self.notes
             ):
-                msg = (
+                msg_trainee = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field is required."
+                )
+                msg_admin = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required if there are no notes from the trainee."
                 )
-                errors["notes"].append(ValidationError(msg))
+                errors["trainee_notes"].append(ValidationError(msg_trainee))
+                errors["notes"].append(ValidationError(msg_admin))
 
         # state check
         if self.state == "f" and not self.notes:

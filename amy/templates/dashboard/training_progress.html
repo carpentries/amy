@@ -42,26 +42,26 @@
       <th rowspan="2">2. Get Involved</th>
       <td>
         {% if user.passed_get_involved %}
-        <p class="text-success">Get Involved accepted.</p>
+        <p class="text-success">Get Involved submission accepted.</p>
         {% elif get_involved_in_evaluation %}
-        <p>Get Involved evaluation pending.<br>Please wait while we evaluate your contribution.</p>
+        <p>Get Involved step evaluation pending.<br>Please wait while we evaluate your contribution.</p>
         {% else %}
-        <p>Get Involved not submitted.</p>
+        <p>Get Involved step not submitted.</p>
         {% endif %}
       </td>
     </tr>
     <tr>
       <td>
         <p>
-          Submit link to your contribution on Github. Your contribution will be reviewed within 7-10 days.<br>
-          If you do not use GitHub, you may submit your Get Involved via
+          Provide details of your involvement. Your contribution will be reviewed within 7-10 days.<br>
+          If you do not use GitHub, you may submit your Get Involved step via
           <a href="https://docs.google.com/forms/d/e/1FAIpQLSeMBOj5Rdh8Mgk0ebRbeRyHhGHKbItdft6avWuEzmeg8CgWbA/viewform">this form</a>.
           A Carpentries Core Team member will create an issue based on the relevant repository, and will
           send you a link so that you may view any responses. In either case, you can track your progress
           by returning to this page.
         </p>
         <p>
-          Please be sure your contribution is to a repo in one of these organisations:
+          If submitting a GitHub contribution, please be sure your contribution is to a repo in one of these organisations:
         </p>
         <ul>
           <li><a href="https://github.com/carpentries">The Carpentries</a></li>

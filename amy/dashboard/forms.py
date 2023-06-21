@@ -4,13 +4,21 @@ from django.db.models import Q
 from django_countries.fields import CountryField
 
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from trainings.models import Involvement
 from workshops.fields import (
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
-from workshops.models import Event, GenderMixin, Language, Person, Task
+from workshops.models import (
+    Event,
+    GenderMixin,
+    Language,
+    Person,
+    Task,
+    TrainingProgress,
+)
 
 
 class AssignmentForm(forms.Form):
@@ -134,9 +142,54 @@ class AutoUpdateProfileForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class GetInvolvedForm(forms.Form):  # TODO: make this good
-    url = forms.URLField(label="URL")
+class GetInvolvedForm(forms.ModelForm):
+    involvement_type = forms.ModelChoiceField(
+        label="Type of involvement",
+        help_text="If your involvement is not included in this list, please select "
+        '"Other" and provide details under "Additional information" below.',
+        required=True,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=forms.RadioSelect(),
+    )
+    date = forms.DateField(
+        label="Date of involvement",
+        help_text="If the involvement took place over multiple days, please enter the "
+        "final day.",
+        required=True,
+    )
+    url = forms.URLField(
+        label="URL",
+        help_text="A link to the involvement, if there is one. For example, a "
+        "workshop website or GitHub contribution.",
+        required=False,
+    )
+    trainee_notes = forms.CharField(
+        label="Additional information",
+        help_text="If you attended a community meeting, please tell us which meeting "
+        'you attended. If you selected "Other" for the type of involvement, please '
+        "provide details here.",
+        required=False,
+    )
     helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            "involvement_type",
+            "url",
+            "date",
+            "trainee_notes",
+        ]
+
+    def add_error(self, field: str, error: ValidationError | str):
+        """Overrides add_error to ignore any errors that are intended to appear
+        on the admin-only "notes" field."""
+        if field == "notes":
+            return
+        elif hasattr(error, "error_dict") and "notes" in error.error_dict:
+            error.error_dict.pop("notes")
+
+        return super().add_error(field, error)
 
 
 class SearchForm(forms.Form):

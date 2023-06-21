@@ -78,6 +78,17 @@ class TrainingProgressForm(forms.ModelForm):
     class Media:
         js = ("trainingprogress_form.js",)
 
+    def add_error(self, field: str, error: ValidationError | str):
+        """Overrides add_error to ignore any errors that are intended to appear
+        on the trainee-only "trainee_notes" field."""
+        if field == "trainee_notes":
+            return
+        else:
+            if hasattr(error, "error_dict") and "trainee_notes" in error.error_dict:
+                error.error_dict.pop("trainee_notes")
+
+        return super().add_error(field, error)
+
 
 class BulkAddTrainingProgressForm(forms.ModelForm):
     event = forms.ModelChoiceField(

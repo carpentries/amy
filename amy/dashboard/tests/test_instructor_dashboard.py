@@ -127,49 +127,61 @@ class TestInstructorTrainingStatus(TestBase):
         self.assertContains(rv, "Training not passed yet")
 
 
-class TestLessonContributionStatus(TestBase):
-    """Test that trainee dashboard displays status of passing Lesson Contribution.
-    Test that Lesson Contribution submission form works."""
+class TestGetInvolvedStatus(TestBase):
+    """Test that trainee dashboard displays status of passing Get Involved.
+    Test that Get Involved submission form works."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={"url_required": True}
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved", defaults={"involvement_required": True}
+        )
+        self.github_contribution, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution", defaults={"url_required": True}
         )
         self.progress_url = reverse("training-progress")
 
     def test_lesson_contribution_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution not submitted")
+        self.assertContains(rv, "Get Involved not submitted")
 
     def test_lesson_contribution_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution, state="n"
+            trainee=self.admin,
+            requirement=self.get_involved,
+            state="n",
+            involvement_type=self.github_contribution,
+            date=datetime.today(),
+            url="https://example.org",
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution evaluation pending")
+        self.assertContains(rv, "Get Involved step evaluation pending")
 
     def test_lesson_contribution_passed(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=datetime.today(),
+            url="https://example.org",
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution accepted")
+        self.assertContains(rv, "Get Involved submission accepted")
 
     def test_submission_form(self):
         data = {
             "url": "http://example.com",
-            "requirement": self.lesson_contribution.pk,
+            "requirement": self.get_involved.pk,
+            "involvement_type": self.github_contribution.pk,
+            "date": datetime.today(),
         }
         rv = self.client.post(self.progress_url, data, follow=True)
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(
-            rv, "Your Lesson Contribution submission will be evaluated soon."
-        )
+        self.assertContains(rv, "Your Get Involved submission will be evaluated soon.")
         got = list(
             TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement"
+                "state", "trainee", "url", "requirement", "involvement_type", "date"
             )
         )
         expected = [
@@ -177,7 +189,9 @@ class TestLessonContributionStatus(TestBase):
                 "n",
                 self.admin.pk,
                 "http://example.com",
-                self.lesson_contribution.pk,
+                self.get_involved.pk,
+                self.github_contribution.pk,
+                datetime.today(),
             )
         ]
         self.assertEqual(got, expected)

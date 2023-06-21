@@ -231,17 +231,17 @@ def training_progress(request):
     )
 
     if request.method == "POST":
-        get_involved_form = GetInvolvedForm(data=request.POST)
+        base_training_progress = TrainingProgress(
+            trainee=request.user,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+        get_involved_form = GetInvolvedForm(
+            data=request.POST, instance=base_training_progress
+        )
         if get_involved_form.is_valid():
-            TrainingProgress.objects.create(
-                trainee=request.user,
-                state="n",  # not evaluated yet
-                requirement=TrainingRequirement.objects.get(name="Get Involved"),
-                involvement_type=get_involved_form.cleaned_data["involvement_type"],
-                url=get_involved_form.cleaned_data["url"],
-                date=get_involved_form.cleaned_data["date"],
-                trainee_notes=get_involved_form.cleaned_data["trainee_notes"],
-            )
+            get_involved_form.save()
+
             messages.success(
                 request, "Your Get Involved submission will be evaluated soon."
             )
