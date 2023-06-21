@@ -134,7 +134,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class LessonContributionForm(forms.Form):
+class GetInvolvedForm(forms.Form):  # TODO: make this good
     url = forms.URLField(label="URL")
     helper = BootstrapHelper(add_cancel_button=False)
 

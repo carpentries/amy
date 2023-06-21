@@ -8,7 +8,7 @@
 {% block content %}
 
 {% if swc_form.errors or dc_form.errors %}
-  <div class="alert alert-danger" role="alert">Fix errors in your Lesson Contribution submission.</div>
+  <div class="alert alert-danger" role="alert">Fix errors in your Get Involved submission.</div>
 {% endif %}
 
 <div>
@@ -39,14 +39,14 @@
       </td>
     </tr>
     <tr>
-      <th rowspan="2">2. Lesson Contribution</th>
+      <th rowspan="2">2. Get Involved</th>
       <td>
-        {% if user.passed_lesson_contribution %}
-        <p class="text-success">Lesson Contribution accepted.</p>
-        {% elif lesson_contribution_in_evaluation %}
-        <p>Lesson Contribution evaluation pending.<br>Please wait while we evaluate your contribution.</p>
+        {% if user.passed_get_involved %}
+        <p class="text-success">Get Involved accepted.</p>
+        {% elif get_involved_in_evaluation %}
+        <p>Get Involved evaluation pending.<br>Please wait while we evaluate your contribution.</p>
         {% else %}
-        <p>Lesson Contribution not submitted.</p>
+        <p>Get Involved not submitted.</p>
         {% endif %}
       </td>
     </tr>
@@ -54,7 +54,7 @@
       <td>
         <p>
           Submit link to your contribution on Github. Your contribution will be reviewed within 7-10 days.<br>
-          If you do not use GitHub, you may submit your lesson contribution via
+          If you do not use GitHub, you may submit your Get Involved via
           <a href="https://docs.google.com/forms/d/e/1FAIpQLSeMBOj5Rdh8Mgk0ebRbeRyHhGHKbItdft6avWuEzmeg8CgWbA/viewform">this form</a>.
           A Carpentries Core Team member will create an issue based on the relevant repository, and will
           send you a link so that you may view any responses. In either case, you can track your progress
@@ -77,7 +77,7 @@
           <li><a href="https://github.com/carpentrieslab">The Carpentries Lab</a></li>
           <li><a href="https://github.com/carpentries-incubator">carpentries-incubator</a></li>
          </ul>
-        {% crispy lesson_contribution_form %}
+        {% crispy get_involved_form %}
       </td>
     </tr>
     <tr>

@@ -22,7 +22,7 @@ from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
-    LessonContributionForm,
+    GetInvolvedForm,
     SearchForm,
     SignupForRecruitmentForm,
 )
@@ -208,7 +208,7 @@ def autoupdate_profile(request):
 
 @login_required
 def training_progress(request):
-    lesson_contribution_form = LessonContributionForm()
+    get_involved_form = GetInvolvedForm()
 
     # Add information about instructor training progress to request.user.
     request.user = (
@@ -224,32 +224,34 @@ def training_progress(request):
     )
 
     progresses = request.user.trainingprogress_set
-    last_lesson_contribution = (
-        progresses.filter(requirement__name="Lesson Contribution")
+    last_get_involved = (
+        progresses.filter(requirement__name="Get Involved")
         .order_by("-created_at")
         .first()
     )
 
     if request.method == "POST":
-        lesson_contribution_form = LessonContributionForm(data=request.POST)
-        if lesson_contribution_form.is_valid():
+        get_involved_form = GetInvolvedForm(data=request.POST)
+        if get_involved_form.is_valid():
             TrainingProgress.objects.create(
                 trainee=request.user,
                 state="n",  # not evaluated yet
-                requirement=TrainingRequirement.objects.get(name="Lesson Contribution"),
-                url=lesson_contribution_form.cleaned_data["url"],
+                requirement=TrainingRequirement.objects.get(name="Get Involved"),
+                involvement_type=get_involved_form.cleaned_data["involvement_type"],
+                url=get_involved_form.cleaned_data["url"],
+                date=get_involved_form.cleaned_data["date"],
+                trainee_notes=get_involved_form.cleaned_data["trainee_notes"],
             )
             messages.success(
-                request, "Your Lesson Contribution submission will be evaluated soon."
+                request, "Your Get Involved submission will be evaluated soon."
             )
             return redirect(reverse("training-progress"))
 
     context = {
         "title": "Your training progress",
-        "lesson_contribution_form": lesson_contribution_form,
-        "lesson_contribution_in_evaluation": (
-            last_lesson_contribution is not None
-            and last_lesson_contribution.state == "n"
+        "get_involved_form": get_involved_form,
+        "get_involved_in_evaluation": (
+            last_get_involved is not None and last_get_involved.state == "n"
         ),
     }
     return render(request, "dashboard/training_progress.html", context)
