@@ -144,22 +144,22 @@ class AutoUpdateProfileForm(forms.ModelForm):
 
 class GetInvolvedForm(forms.ModelForm):
     involvement_type = forms.ModelChoiceField(
-        label="Type of involvement",
-        help_text="If your involvement is not included in this list, please select "
+        label="Activity",
+        help_text="If your activity is not included in this list, please select "
         '"Other" and provide details under "Additional information" below.',
         required=True,
         queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
         widget=forms.RadioSelect(),
     )
     date = forms.DateField(
-        label="Date of involvement",
-        help_text="If the involvement took place over multiple days, please enter the "
+        label="Date of activity",
+        help_text="If the activity took place over multiple days, please enter the "
         "final day.",
         required=True,
     )
     url = forms.URLField(
         label="URL",
-        help_text="A link to the involvement, if there is one. For example, a "
+        help_text="A link to the activity, if there is one. For example, a "
         "workshop website or GitHub contribution.",
         required=False,
     )
@@ -176,8 +176,8 @@ class GetInvolvedForm(forms.ModelForm):
         model = TrainingProgress
         fields = [
             "involvement_type",
-            "url",
             "date",
+            "url",
             "trainee_notes",
         ]
 

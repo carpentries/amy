@@ -44,7 +44,7 @@
         {% if user.passed_get_involved %}
         <p class="text-success">Get Involved submission accepted.</p>
         {% elif get_involved_in_evaluation %}
-        <p>Get Involved step evaluation pending.<br>Please wait while we evaluate your contribution.</p>
+        <p>Get Involved step evaluation pending.<br>Please wait while we evaluate your submission.</p>
         {% else %}
         <p>Get Involved step not submitted.</p>
         {% endif %}
@@ -53,30 +53,15 @@
     <tr>
       <td>
         <p>
-          Provide details of your involvement. Your contribution will be reviewed within 7-10 days.<br>
-          If you do not use GitHub, you may submit your Get Involved step via
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSeMBOj5Rdh8Mgk0ebRbeRyHhGHKbItdft6avWuEzmeg8CgWbA/viewform">this form</a>.
-          A Carpentries Core Team member will create an issue based on the relevant repository, and will
-          send you a link so that you may view any responses. In either case, you can track your progress
-          by returning to this page.
+          Provide details of your Get Involved activity. Your submission will be reviewed within 7-10 days. 
+          You can track your progress by returning to this page.
         </p>
         <p>
-          If submitting a GitHub contribution, please be sure your contribution is to a repo in one of these organisations:
+          Only submit an activity that you have already completed.
         </p>
-        <ul>
-          <li><a href="https://github.com/carpentries">The Carpentries</a></li>
-          <li><a href="https://github.com/datacarpentry">Data Carpentry</a></li>
-          <li><a href="https://github.com/librarycarpentry">Library Carpentry</a></li>
-          <li><a href="https://github.com/swcarpentry">Software Carpentry</a></li>
-          <li><a href="https://github.com/carpentries-es">The Carpentries - Spanish Translations</a></li>
-          <li><a href="https://github.com/Reproducible-Science-Curriculum">Reproducible Science Curriculum</a></li>
-          <li><a href="https://github.com/carpentrycon">CarpentryCon</a></li>
-          <li><a href="https://github.com/carpentryconnect">CarpentryConnect</a></li>
-          <li><a href="https://github.com/carpentries-workshops">carpentries-workshops</a></li>
-          <li><a href="https://github.com/data-lessons">data-lessons</a></li>
-          <li><a href="https://github.com/carpentries-lab">The Carpentries Lab</a></li>
-          <li><a href="https://github.com/carpentries-incubator">carpentries-incubator</a></li>
-         </ul>
+        <p>
+          If submitting a GitHub contribution, please be sure your contribution is to a repository in one of the <a href="">GitHub organisations owned by The Carpentries</a>.
+        </p>
         {% crispy get_involved_form %}
       </td>
     </tr>
