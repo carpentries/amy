@@ -139,6 +139,9 @@ class TestGetInvolvedStatus(TestBase):
         self.github_contribution, _ = Involvement.objects.get_or_create(
             name="GitHub Contribution", defaults={"url_required": True}
         )
+        self.other_involvement, _ = Involvement.objects.get_or_create(
+            name="Other", defaults={"display_name": "Other", "notes_required": True}
+        )
         self.progress_url = reverse("training-progress")
 
     def test_get_involved_not_submitted(self):
@@ -195,6 +198,30 @@ class TestGetInvolvedStatus(TestBase):
             )
         ]
         self.assertEqual(got, expected)
+
+    def test_submission_form_invalid_notes(self):
+        """Test that errors relating to notes/trainee_notes fields are
+        handled correctly."""
+        data = {
+            "requirement": self.get_involved.pk,
+            "involvement_type": self.other_involvement.pk,
+            "date": "2023-06-21",
+        }
+        rv = self.client.post(self.progress_url, data, follow=True)
+        # if "notes" field error is not filtered out, a server error will occur
+        # as there is no "notes" field on the form
+        # so a status code 200 means it has been removed correctly
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "training-progress")
+        # check that "trainee_notes" field error is displayed
+        # special treatment needed due to quotation marks
+        self.assertContains(
+            rv,
+            'In the case of Get Involved - "Other", this field is required.',
+            html=True,
+        )
+        # no TrainingProgress should have been created
+        self.assertEqual(len(TrainingProgress.objects.all()), 0)
 
 
 class TestWelcomeSessionStatus(TestBase):
