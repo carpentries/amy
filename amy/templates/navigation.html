@@ -14,28 +14,6 @@
           {% navbar_element "Memberships" "all_memberships" %}
           {% navbar_element "Persons" "all_persons" %}
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="moreDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</a>
-            <div class="dropdown-menu" aria-labelledby="moreDropdown">
-              {% navbar_element "Trainees" "all_trainees" True %}
-              {% navbar_element "Tasks" "all_tasks" True %}
-              {% navbar_element "Badges" "all_badges" True %}
-              {% navbar_element "Trainings" "all_trainings" True %}
-              {% navbar_element "Airports" "all_airports" True %}
-              {% navbar_element "Events with changed metadata" "events_metadata_changed" True %}
-              <div class="dropdown-divider"></div>
-              {% navbar_element "Instructor Selection / Recruitment" "all_instructorrecruitment" True %}
-              <div class="dropdown-divider"></div>
-              {% navbar_element_permed "Bulk add people" "person_bulk_add" "workshops.add_person" True %}
-              {% navbar_element_permed "Merge persons" "persons_merge" "workshops.delete_person" True %}
-              {% navbar_element_permed "Merge events" "events_merge" "workshops.change_event,workshops.delete_event" True %}
-              {% navbar_element_permed "Merge training requests" "trainingrequests_merge" "workshops.change_trainingrequest,workshops.delete_trainingrequest" True %}
-              {% navbar_element "Find Workshop Staff" "workshop_staff" True %}
-              <div class="dropdown-divider"></div>
-              {% navbar_element "Search" "search" True %}
-              {% navbar_element "Recently changed" "changes_log" True %}
-            </div>
-          </li>
-          <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Reports</a>
             <div class="dropdown-menu" aria-labelledby="reportsDropdown">
               {% navbar_element "Membership trainings statistics" "membership_trainings_stats" True %}
@@ -58,10 +36,28 @@
             </div>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="emailsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Emails</a>
-            <div class="dropdown-menu" aria-labelledby="emailsDropdown">
-              {% navbar_element "Scheduled emails" "scheduled-emails-list" True %}
-              {% navbar_element "Templates" "email-templates-list" True %}
+            <a class="nav-link dropdown-toggle" href="#" id="moreDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</a>
+            <div class="dropdown-menu" aria-labelledby="moreDropdown">
+              {% navbar_element "Trainees" "all_trainees" True %}
+              {% navbar_element "Tasks" "all_tasks" True %}
+              {% navbar_element "Badges" "all_badges" True %}
+              {% navbar_element "Trainings" "all_trainings" True %}
+              {% navbar_element "Airports" "all_airports" True %}
+              {% navbar_element "Events with changed metadata" "events_metadata_changed" True %}
+              <div class="dropdown-divider"></div>
+              {% navbar_element "Instructor Selection / Recruitment" "all_instructorrecruitment" True %}
+              <div class="dropdown-divider"></div>
+              {% navbar_element_permed "Bulk add people" "person_bulk_add" "workshops.add_person" True %}
+              {% navbar_element_permed "Merge persons" "persons_merge" "workshops.delete_person" True %}
+              {% navbar_element_permed "Merge events" "events_merge" "workshops.change_event,workshops.delete_event" True %}
+              {% navbar_element_permed "Merge training requests" "trainingrequests_merge" "workshops.change_trainingrequest,workshops.delete_trainingrequest" True %}
+              {% navbar_element "Find Workshop Staff" "workshop_staff" True %}
+              <div class="dropdown-divider"></div>
+              {% navbar_element "Search" "search" True %}
+              {% navbar_element "Recently changed" "changes_log" True %}
+              <div class="dropdown-divider"></div>
+              {% navbar_element "Scheduled emails" "scheduled_emails_list" True %}
+              {% navbar_element "Email Templates" "email_templates_list" True %}
             </div>
           </li>
         </ul>

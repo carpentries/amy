@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.template import TemplateSyntaxError, engines
 from django.template.backends.base import BaseEngine
+from reversion import revisions as reversion
 
 from workshops.mixins import ActiveMixin, CreatedMixin, CreatedUpdatedMixin
 
@@ -17,6 +18,7 @@ DJANGO_TEMPLATE_DOCS = (
 MAX_LENGTH = 255
 
 
+@reversion.register
 class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Markdown template used for generating HTML email contents."""
 

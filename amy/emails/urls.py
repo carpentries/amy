@@ -6,11 +6,11 @@ urlpatterns = [
     path(
         "templates/",
         views.EmailTemplateListView.as_view(),
-        name="email-templates-list",
+        name="email_templates_list",
     ),
     path(
-        "scheduled-emails/",
+        "scheduled_emails/",
         views.ScheduledEmailListView.as_view(),
-        name="scheduled-emails-list",
+        name="scheduled_emails_list",
     ),
 ]

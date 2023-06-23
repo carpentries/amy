@@ -28,7 +28,7 @@
         <td>{{ template.name }}</td>
         <td><code>{{ template.signal }}</code></td>
         <td>{{ template.from_header }}</td>
-        <td>{{ template.reply_to_header }}</td>
+        <td>{{ template.reply_to_header|default:"&mdash;" }}</td>
         <td>
             {% if template.cc_header %}
             <ul>

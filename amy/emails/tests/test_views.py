@@ -29,7 +29,7 @@ class TestEmailTemplateListView(TestBase):
             subject="Greetings {{ name }}",
             body="Hello, {{ name }}! Nice to meet **you**.",
         )
-        url = reverse("email-templates-list")
+        url = reverse("email_templates_list")
 
         # Act
         rv = self.client.get(url)
@@ -85,7 +85,7 @@ class TestScheduledEmailListView(TestBase):
             body=template2.render_template(engine, template2.body, context),
             template=template2,
         )
-        url = reverse("scheduled-emails-list")
+        url = reverse("scheduled_emails_list")
 
         # Act
         rv = self.client.get(url)
