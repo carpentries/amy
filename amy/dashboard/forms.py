@@ -147,15 +147,15 @@ class GetInvolvedForm(forms.ModelForm):
         label="Activity",
         help_text="If your activity is not included in this list, please select "
         '"Other" and provide details under "Additional information" below.',
-        required=True,
+        required=False,
         queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
         widget=forms.RadioSelect(),
     )
     date = forms.DateField(
         label="Date of activity",
         help_text="If the activity took place over multiple days, please enter the "
-        "final day.",
-        required=True,
+        "first day.",
+        required=False,
     )
     url = forms.URLField(
         label="URL",
@@ -188,6 +188,13 @@ class GetInvolvedForm(forms.ModelForm):
             return
         elif hasattr(error, "error_dict") and "notes" in error.error_dict:
             error.error_dict.pop("notes")
+
+        # Intercept and simplify the involvement_type error
+        msg = "This field is required."
+        if field == "involvement_type":
+            error.error_list = [msg]
+        elif hasattr(error, "error_dict") and "involvement_type" in error.error_dict:
+            error.error_dict["involvement_type"] = [msg]
 
         return super().add_error(field, error)
 
