@@ -102,7 +102,7 @@ class ScheduledEmailStatus(models.TextChoices):
     SCHEDULED = "scheduled"
     LOCKED = "locked"
     RUNNING = "running"
-    SUCCEEDED = "succeded"
+    SUCCEEDED = "succeeded"
     FAILED = "failed"
 
 
