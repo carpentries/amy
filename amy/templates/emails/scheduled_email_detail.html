@@ -1,0 +1,133 @@
+{% extends "base_nav.html" %}
+
+{% block title %}
+<h1>
+  Scheduled email <code>{{ object.subject }}</code>
+  (<relative-time datetime="{{ object.scheduled_at.isoformat }}"></relative-time>)
+</h1>
+{% endblock title %}
+
+{% block content %}
+
+<div class="alert alert-{% if object.state == 'failed' %}danger{% elif object.state == 'succeeded'%}success{% else %}info{% endif %}">
+  <p>
+    Email was scheduled to run
+    <relative-time datetime="{{ object.scheduled_at.isoformat }}"></relative-time>.
+  </p>
+  <p>
+    Current status: <strong>{{ object.state }}</strong>.
+  </p>
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th width="20%">ID:</th>
+    <td>{{ object.id }}</td>
+  </tr>
+  <tr>
+    <th>State:</th>
+    <td><strong>{{ object.get_state_display }}</strong></td>
+  </tr>
+  <tr>
+    <th>Created at:</th>
+    <td>{{ object.created_at }}</td>
+  </tr>
+  <tr>
+    <th>Last updated at:</th>
+    <td>{{ object.last_updated_at }}</td>
+  </tr>
+  <tr>
+    <th>Scheduled to run:</th>
+    <td>{{ object.scheduled_at }}</td>
+  </tr>
+  <tr>
+    <th>From:</th>
+    <td>{{ object.from_header }}</td>
+  </tr>
+  <tr>
+    <th>To:</th>
+    <td>
+      <ul>
+        {% for email in object.to_header %}
+          <li>{{ email }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Reply-To:</th>
+    <td>{{ object.reply_to_header|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>CC:</th>
+    <td>
+    {% if object.cc_header %}
+      <ul>
+      {% for email in object.cc_header %}
+        <li>{{ email }}</li>
+      {% endfor %}
+      </ul>
+    {% else %}
+    &mdash;
+    {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>BCC:</th>
+    <td>
+    {% if object.bcc_header %}
+      <ul>
+      {% for email in object.bcc_header %}
+        <li>{{ email }}</li>
+      {% endfor %}
+      </ul>
+    {% else %}
+    &mdash;
+    {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Subject:</th>
+    <td><code>{{ object.subject }}</code></td>
+  </tr>
+  <tr>
+    <th>Body: <br><small>(Markdown; converts to HTML when sent)</small></th>
+    <td>
+      <pre>{{ object.body }}</pre>
+    </td>
+  </tr>
+  <tr>
+    <th>Template:</th>
+    <td><a href="{{ object.template.get_absolute_url }}">{{ object.template }}</a></td>
+  </tr>
+  <tr>
+    <th>Related objects:</th>
+    <td>TODO</td>
+  </tr>
+  <tr>
+    <th>History:<br><small>(newest to oldest)</small></th>
+    <td>
+      <table class="table">
+        <tr>
+          <th>Timestamp</th>
+          <th>State before</th>
+          <th>State after</th>
+          <th>Details</th>
+          <th>ID</th>
+        </tr>
+
+        {% for log in log_entries %}
+        <tr>
+          <td>{{ log.created_at }}</td>
+          <td>{{ log.state_before }}</td>
+          <td>{{ log.state_after }}</td>
+          <td><code>{{ log.details }}</code></td>
+          <td>{{ log.id }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </td>
+  </tr>
+</table>
+
+{% endblock %}
