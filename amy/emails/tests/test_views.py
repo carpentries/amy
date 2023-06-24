@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -8,6 +9,7 @@ from workshops.tests.base import TestBase
 
 
 class TestEmailTemplateListView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -40,6 +42,7 @@ class TestEmailTemplateListView(TestBase):
 
 
 class TestScheduledEmailListView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
