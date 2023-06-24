@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.template import TemplateSyntaxError, engines
 from django.template.backends.base import BaseEngine
+from django.urls import reverse
 from reversion import revisions as reversion
 
 from workshops.mixins import ActiveMixin, CreatedMixin, CreatedUpdatedMixin
@@ -97,6 +98,9 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def __str__(self) -> str:
         return self.name
 
+    def get_absolute_url(self) -> str:
+        return reverse("email_template_detail", kwargs={"pk": self.pk})
+
 
 class ScheduledEmailStatus(models.TextChoices):
     SCHEDULED = "scheduled"
@@ -166,7 +170,7 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         return f"{self.to_header}: {self.subject}"
 
     def get_absolute_url(self) -> str:
-        return "#TODO"  # reverse("model_detail", kwargs={"pk": self.pk})
+        return reverse("scheduled_email_detail", kwargs={"pk": self.pk})
 
 
 class ScheduledEmailLog(CreatedMixin, models.Model):

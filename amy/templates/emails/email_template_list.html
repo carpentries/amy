@@ -24,7 +24,7 @@
       </tr>
     {% for template in email_templates %}
       <tr>
-        <td>{{ template.id }}</td>
+        <td><a href="{{ template.get_absolute_url }}">{{ template.id }}</a></td>
         <td>{{ template.name }}</td>
         <td><code>{{ template.signal }}</code></td>
         <td>{{ template.from_header }}</td>

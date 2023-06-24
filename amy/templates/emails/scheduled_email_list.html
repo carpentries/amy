@@ -17,7 +17,7 @@
       </tr>
     {% for email in scheduled_emails %}
       <tr>
-        <td>{{ email.id }}</td>
+        <td><a href="{{ email.get_absolute_url }}">{{ email.id }}</a></td>
         <td>{{ email.state }}</td>
         <td>{{ email.scheduled_at }}</td>
         <td>
