@@ -38,7 +38,7 @@ class TestEmailTemplateListView(TestBase):
 
         # Assert
         self.assertEqual(list(rv.context["email_templates"]), [template1, template2])
-        self.assertEqual(rv.context["title"], "Email Templates")
+        self.assertEqual(rv.context["title"], "Email templates")
 
 
 class TestScheduledEmailListView(TestBase):
@@ -98,4 +98,4 @@ class TestScheduledEmailListView(TestBase):
             list(rv.context["scheduled_emails"]),
             [scheduled_email2, scheduled_email1],  # Due to ordering
         )
-        self.assertEqual(rv.context["title"], "Scheduled Emails")
+        self.assertEqual(rv.context["title"], "Scheduled emails")
