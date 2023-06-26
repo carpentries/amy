@@ -1,7 +1,12 @@
 from django.conf import settings
 
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
-from workshops.base_views import AMYDetailView, AMYListView, ConditionallyEnabledMixin
+from workshops.base_views import (
+    AMYDetailView,
+    AMYListView,
+    AMYUpdateView,
+    ConditionallyEnabledMixin,
+)
 from workshops.utils.access import OnlyForAdminsMixin
 
 
@@ -41,6 +46,60 @@ class ScheduledEmailDetailView(
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_detail.html"
+    model = ScheduledEmail
+    object: ScheduledEmail
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f'Scheduled email "{self.object.subject}"'
+        context["log_entries"] = ScheduledEmailLog.objects.filter(
+            scheduled_email=self.object
+        ).order_by("-created_at")
+        return context
+
+
+class ScheduledEmailEditView(
+    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
+):
+    permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
+    context_object_name = "scheduled_email"
+    template_name = "emails/scheduled_email_edit.html"
+    model = ScheduledEmail
+    object: ScheduledEmail
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f'Scheduled email "{self.object.subject}"'
+        context["log_entries"] = ScheduledEmailLog.objects.filter(
+            scheduled_email=self.object
+        ).order_by("-created_at")
+        return context
+
+
+class ScheduledEmailRescheduleView(
+    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
+):
+    permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
+    context_object_name = "scheduled_email"
+    template_name = "emails/scheduled_email_reschedule.html"
+    model = ScheduledEmail
+    object: ScheduledEmail
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f'Scheduled email "{self.object.subject}"'
+        context["log_entries"] = ScheduledEmailLog.objects.filter(
+            scheduled_email=self.object
+        ).order_by("-created_at")
+        return context
+
+
+class ScheduledEmailCancelView(
+    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
+):
+    permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
+    context_object_name = "scheduled_email"
+    template_name = "emails/scheduled_email_cancel.html"
     model = ScheduledEmail
     object: ScheduledEmail
 
