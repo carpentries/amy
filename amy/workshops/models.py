@@ -2604,7 +2604,11 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     )
     url = models.URLField(null=True, blank=True, verbose_name="URL")
     trainee_notes = models.CharField(
-        blank=True, max_length=STR_LONGEST, verbose_name="Notes from trainee"
+        blank=True,
+        null=False,
+        default="",
+        max_length=STR_LONGEST,
+        verbose_name="Notes from trainee",
     )
     notes = models.TextField(blank=True)
 

@@ -10,8 +10,6 @@ class InvolvementManager(models.Manager):
     def default_order(
         self,
     ):
-        """A specific order_by() clause with semi-ninja code."""
-
         # Always have 'Other' option at the end of the list, don't worry about the rest
         qs = self.order_by(
             Case(
