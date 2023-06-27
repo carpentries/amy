@@ -19,24 +19,27 @@
   </p>
 </div>
 
+{% if perms.emails.change_scheduledemail %}
 <div class="edit-object">
   <div class="btn-group">
-    {% if perms.emails.change_scheduledemail %}
     <a class="btn btn-primary" href="{% url 'scheduled_email_edit' object.id %}">Edit</a>
     <a class="btn btn-warning" href="{% url 'scheduled_email_reschedule' object.id %}">Reschedule</a>
-    {% else %}
-    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
-    <a class="btn btn-warning disabled" disabled href="#">Reschedule</a>
-    {% endif %}
   </div>
   <div class="float-right">
-    {% if perms.emails.change_scheduledemail %}
     <a class="btn btn-danger" href="{% url 'scheduled_email_cancel' object.id %}">Cancel</a>
-    {% else %}
-    <a class="btn btn-warning disabled" disabled href="#">Cancel</a>
-    {% endif %}
   </div>
 </div>
+{% else %}
+<div class="edit-object">
+  <div class="btn-group">
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+    <a class="btn btn-warning disabled" disabled href="#">Reschedule</a>
+  </div>
+  <div class="float-right">
+    <a class="btn btn-warning disabled" disabled href="#">Cancel</a>
+  </div>
+</div>
+{% endif %}
 
 <table class="table table-striped">
   <tr>

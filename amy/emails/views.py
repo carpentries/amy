@@ -1,5 +1,6 @@
 from django.conf import settings
 
+from emails.forms import ScheduledEmailEditForm
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
 from workshops.base_views import (
     AMYDetailView,
@@ -64,6 +65,7 @@ class ScheduledEmailEditView(
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_edit.html"
+    form_class = ScheduledEmailEditForm
     model = ScheduledEmail
     object: ScheduledEmail
 

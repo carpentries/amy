@@ -1,0 +1,29 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+<h1>
+  Scheduled email <code>{{ object.subject }}</code>
+  (<relative-time datetime="{{ object.scheduled_at.isoformat }}"></relative-time>)
+</h1>
+{% endblock title %}
+
+{% block content %}
+
+<div class="alert alert-{% if object.state == 'failed' %}danger{% elif object.state == 'succeeded'%}success{% else %}info{% endif %}">
+  <p>
+    Email was scheduled to run
+    <relative-time datetime="{{ object.scheduled_at.isoformat }}"></relative-time>.
+  </p>
+  <p>
+    Current status: <strong>{{ object.state }}</strong>.
+  </p>
+  <p>
+    Template: <a href="{{ object.template.get_absolute_url }}">{{ object.template }}</a>.
+  </p>
+</div>
+
+{% crispy form %}
+
+{% endblock %}
