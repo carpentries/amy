@@ -1,9 +1,14 @@
-from django.conf import settings
+from typing import Any
 
-from emails.forms import ScheduledEmailEditForm
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+
+from emails.controller import EmailController
+from emails.forms import ScheduledEmailEditForm, ScheduledEmailRescheduleForm
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
 from workshops.base_views import (
     AMYDetailView,
+    AMYFormView,
     AMYListView,
     AMYUpdateView,
     ConditionallyEnabledMixin,
@@ -72,28 +77,38 @@ class ScheduledEmailEditView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
-        context["log_entries"] = ScheduledEmailLog.objects.filter(
-            scheduled_email=self.object
-        ).order_by("-created_at")
         return context
 
 
 class ScheduledEmailRescheduleView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
+    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormView
 ):
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
-    context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_reschedule.html"
-    model = ScheduledEmail
+    form_class = ScheduledEmailRescheduleForm
     object: ScheduledEmail
+    title: str
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = f'Scheduled email "{self.object.subject}"'
-        context["log_entries"] = ScheduledEmailLog.objects.filter(
-            scheduled_email=self.object
-        ).order_by("-created_at")
-        return context
+    def dispatch(self, request, *args, **kwargs):
+        self.object = get_object_or_404(ScheduledEmail, pk=self.kwargs["pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        self.title = f'Scheduled email "{self.object.subject}"'
+        kwargs["scheduled_email"] = self.object
+        return super().get_context_data(**kwargs)
+
+    def get_initial(self) -> dict[str, Any]:
+        return {
+            "scheduled_at": self.object.scheduled_at,
+        }
+
+    def get_success_url(self) -> str:
+        return self.object.get_absolute_url()
+
+    def form_valid(self, form: ScheduledEmailRescheduleForm):
+        EmailController.reschedule_email(self.object, form.cleaned_data["scheduled_at"])
+        return super().form_valid(form)
 
 
 class ScheduledEmailCancelView(

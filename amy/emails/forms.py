@@ -1,6 +1,7 @@
 from django import forms
 
 from emails.models import ScheduledEmail
+from workshops.forms import BootstrapHelper
 
 
 class ScheduledEmailEditForm(forms.ModelForm):
@@ -23,3 +24,12 @@ class ScheduledEmailEditForm(forms.ModelForm):
         self.fields["to_header"].help_text = array_email_field_help_text
         self.fields["cc_header"].help_text = array_email_field_help_text
         self.fields["bcc_header"].help_text = array_email_field_help_text
+
+
+class ScheduledEmailRescheduleForm(forms.Form):
+    scheduled_at = forms.SplitDateTimeField(
+        label=ScheduledEmail._meta.get_field("scheduled_at").verbose_name,
+        help_text="Time in UTC",
+    )
+
+    helper = BootstrapHelper(submit_label="Update")
