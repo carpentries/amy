@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime
 import re
 from urllib.parse import quote
@@ -2617,38 +2618,38 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     def clean(self):
         super().clean()
-        errors = dict()
+        errors = defaultdict(list)
 
         # URL check
         if self.requirement.url_required and not self.url:
             msg = f"In the case of {self.requirement}, this field is required."
-            errors["url"] = msg
+            errors["url"].append(ValidationError(msg))
         elif (
             not self.requirement.url_required
             and self.url
             and not self.requirement.involvement_required  # involvements checked below
         ):
             msg = f"In the case of {self.requirement}, this field must be left empty."
-            errors["url"] = msg
+            errors["url"].append(ValidationError(msg))
 
         # event check
         if self.requirement.event_required and not self.event:
             msg = f"In the case of {self.requirement}, this field is required."
-            errors["event"] = msg
+            errors["event"].append(ValidationError(msg))
         elif not self.requirement.event_required and self.event:
             msg = f"In the case of {self.requirement}, this field must be left empty."
-            errors["event"] = msg
+            errors["event"].append(ValidationError(msg))
 
         # involvement check
         if self.requirement.involvement_required and not self.involvement_type:
             msg = f"In the case of {self.requirement}, this field is required."
-            errors["involvement_type"] = msg
+            errors["involvement_type"].append(ValidationError(msg))
         elif not self.requirement.involvement_required:
             msg = f"In the case of {self.requirement}, this field must be left empty."
             if self.involvement_type:
-                errors["involvement_type"] = msg
+                errors["involvement_type"].append(ValidationError(msg))
             if self.date:
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
 
         # checks on different involvements under the "Get Involved" requirement
         if self.requirement.involvement_required and self.involvement_type:
@@ -2657,27 +2658,27 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required."
                 )
-                errors["url"] = msg
+                errors["url"].append(ValidationError(msg))
 
             if self.involvement_type.date_required and not self.date:
                 msg = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required."
                 )
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
             elif not self.involvement_type.date_required and self.date:
                 msg = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field must be left empty."
                 )
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
             # verify that date is no later than today
             # (considering timezones ahead of UTC)
             elif self.date and self.date > timezone.localdate(
                 timezone=pytz.timezone("Etc/GMT-14")
             ):
                 msg = "Date must be in the past."
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
 
             if (
                 self.involvement_type.notes_required
@@ -2688,12 +2689,12 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required if there are no notes from the trainee."
                 )
-                errors["notes"] = [msg]
+                errors["notes"].append(ValidationError(msg))
 
         # state check
         if self.state == "f" and not self.notes:
             msg = "In the case of a Failed state, this field is required."
-            errors["notes"] = errors.get("notes", []) + [msg]
+            errors["notes"].append(ValidationError(msg))
 
         if errors:
             raise ValidationError(errors)
