@@ -104,6 +104,7 @@ class ScheduledEmailStatus(models.TextChoices):
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class ScheduledEmail(CreatedUpdatedMixin, models.Model):
