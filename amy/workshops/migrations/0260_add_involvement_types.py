@@ -41,7 +41,11 @@ class Migration(migrations.Migration):
             model_name="trainingprogress",
             name="trainee_notes",
             field=models.CharField(
-                blank=True, max_length=255, verbose_name="Notes from trainee"
+                blank=True,
+                default="",
+                null=False,
+                max_length=255,
+                verbose_name="Notes from trainee",
             ),
         ),
     ]
