@@ -2573,6 +2573,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     date = models.DateField(
         verbose_name="Date of occurrence",
+        help_text="Format: YYYY-MM-DD",
         null=True,
         blank=True,
     )
