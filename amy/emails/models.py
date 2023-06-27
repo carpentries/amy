@@ -132,8 +132,12 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
     reply_to_header = models.EmailField(
         blank=True, default="", verbose_name="Reply-To (header)"
     )
-    cc_header = ArrayField(models.EmailField(blank=False), verbose_name="CC (header)")
-    bcc_header = ArrayField(models.EmailField(blank=False), verbose_name="BCC (header)")
+    cc_header = ArrayField(
+        models.EmailField(blank=False), verbose_name="CC (header)", blank=True
+    )
+    bcc_header = ArrayField(
+        models.EmailField(blank=False), verbose_name="BCC (header)", blank=True
+    )
     subject = models.CharField(
         max_length=MAX_LENGTH,
         blank=False,
