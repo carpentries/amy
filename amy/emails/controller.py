@@ -41,3 +41,17 @@ class EmailController:
             scheduled_email=scheduled_email,
         )
         return scheduled_email
+
+    @staticmethod
+    def reschedule_email(
+        scheduled_email: ScheduledEmail, new_scheduled_at: datetime
+    ) -> ScheduledEmail:
+        scheduled_email.scheduled_at = new_scheduled_at
+        scheduled_email.save()
+        ScheduledEmailLog.objects.create(
+            details=f"Rescheduled email to run at {new_scheduled_at.isoformat()}",
+            state_before=scheduled_email.state,
+            state_after=scheduled_email.state,
+            scheduled_email=scheduled_email,
+        )
+        return scheduled_email
