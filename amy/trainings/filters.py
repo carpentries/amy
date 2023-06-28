@@ -37,8 +37,8 @@ def filter_trainees_by_trainee_name_or_email(queryset, name, value):
         return queryset
 
 
-def filter_trainees_by_unevaluated_lesson_contribution_presence(queryset, name, flag):
-    if flag:  # return only trainees with an unevaluated lesson contribution
+def filter_trainees_by_unevaluated_get_involved_presence(queryset, name, flag):
+    if flag:  # return only trainees with an unevaluated Get Involved submission
         return queryset.filter(trainingprogress__state="n").distinct()
     else:
         return queryset
@@ -87,10 +87,10 @@ class TraineeFilter(AMYFilterSet):
         widget=widgets.CheckboxInput,
     )
 
-    lesson_contribution = django_filters.BooleanFilter(
-        label="Only trainees with unevaluated Lesson Contribution",
+    get_involved = django_filters.BooleanFilter(
+        label="Only trainees with unevaluated Get Involved submission",
         widget=widgets.CheckboxInput,
-        method=filter_trainees_by_unevaluated_lesson_contribution_presence,
+        method=filter_trainees_by_unevaluated_get_involved_presence,
     )
 
     training_request = django_filters.BooleanFilter(
@@ -131,7 +131,7 @@ class TraineeFilter(AMYFilterSet):
         fields = [
             "search",
             "all_persons",
-            "lesson_contribution",
+            "get_involved",
             "is_instructor",
             "training",
         ]

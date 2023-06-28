@@ -4,13 +4,21 @@ from django.db.models import Q
 from django_countries.fields import CountryField
 
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from trainings.models import Involvement
 from workshops.fields import (
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
-from workshops.models import Event, GenderMixin, Language, Person, Task
+from workshops.models import (
+    Event,
+    GenderMixin,
+    Language,
+    Person,
+    Task,
+    TrainingProgress,
+)
 
 
 class AssignmentForm(forms.Form):
@@ -134,9 +142,59 @@ class AutoUpdateProfileForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class LessonContributionForm(forms.Form):
-    url = forms.URLField(label="URL")
+class GetInvolvedForm(forms.ModelForm):
+    involvement_type = forms.ModelChoiceField(
+        label="Activity",
+        help_text="If your activity is not included in this list, please select "
+        '"Other" and provide details under "Additional information" below.',
+        required=False,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=forms.RadioSelect(),
+    )
+    date = forms.DateField(
+        label="Date of activity",
+        help_text="If the activity took place over multiple days, please enter the "
+        "first day. Format: YYYY-MM-DD",
+        required=False,
+    )
+    url = forms.URLField(
+        label="URL",
+        help_text="A link to the activity, if there is one. For example, a "
+        "workshop website or GitHub contribution.",
+        required=False,
+    )
+    trainee_notes = forms.CharField(
+        label="Additional information",
+        help_text="If you attended a community meeting, please tell us which meeting "
+        'you attended. If you selected "Other" for the activity, please '
+        "provide details here.",
+        required=False,
+    )
     helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            "involvement_type",
+            "date",
+            "url",
+            "trainee_notes",
+        ]
+
+    def clean_trainee_notes(self):
+        """Raise an error if the trainee has not provided notes where required.
+
+        All other fields are cleaned in the TrainingProgress model itself.
+        This field is different as it should only show an error on this specific form.
+        """
+        involvement_type = self.cleaned_data["involvement_type"]
+        trainee_notes = self.cleaned_data["trainee_notes"]
+        if involvement_type.notes_required and not trainee_notes:
+            raise ValidationError(
+                f'This field is required for activity "{involvement_type}".'
+            )
+
+        return trainee_notes
 
 
 class SearchForm(forms.Form):

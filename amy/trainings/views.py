@@ -4,11 +4,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
 from trainings.filters import TraineeFilter
-from trainings.forms import (
-    BulkAddTrainingProgressForm,
-    BulkDiscardProgressesForm,
-    TrainingProgressForm,
-)
+from trainings.forms import BulkAddTrainingProgressForm, TrainingProgressForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -71,11 +67,6 @@ class TrainingProgressCreate(
     form_class = TrainingProgressForm
     populate_fields = ["trainee"]
 
-    def get_initial(self):
-        initial = super().get_initial()
-        initial["evaluated_by"] = self.request.user
-        return initial
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"].helper = context["form"].create_helper
@@ -108,7 +99,6 @@ def all_trainees_queryset():
             "trainingrequest_set",
             "trainingprogress_set",
             "trainingprogress_set__requirement",
-            "trainingprogress_set__evaluated_by",
         )
         .annotate(
             is_instructor=Sum(
@@ -131,34 +121,15 @@ def all_trainees(request):
     )
     trainees = get_pagination_items(request, filter.qs)
 
-    if request.method == "POST" and "discard" in request.POST:
-        # Bulk discard progress of selected trainees
-        form = BulkAddTrainingProgressForm()
-        discard_form = BulkDiscardProgressesForm(request.POST)
-        if discard_form.is_valid():
-            for trainee in discard_form.cleaned_data["trainees"]:
-                TrainingProgress.objects.filter(trainee=trainee).update(discarded=True)
-            messages.success(
-                request, "Successfully discarded progress of all selected trainees."
-            )
-
-            # Raw uri contains GET parameters from django filters. We use it
-            # to preserve filter settings.
-            return redirect(request.get_raw_uri())
-
-    elif request.method == "POST" and "submit" in request.POST:
+    if request.method == "POST":
         # Bulk add progress to selected trainees
-        instance = TrainingProgress(evaluated_by=request.user)
-        form = BulkAddTrainingProgressForm(request.POST, instance=instance)
-        discard_form = BulkDiscardProgressesForm()
+        form = BulkAddTrainingProgressForm(request.POST)
         if form.is_valid():
             for trainee in form.cleaned_data["trainees"]:
                 TrainingProgress.objects.create(
                     trainee=trainee,
-                    evaluated_by=request.user,
                     requirement=form.cleaned_data["requirement"],
                     state=form.cleaned_data["state"],
-                    discarded=False,
                     event=form.cleaned_data["event"],
                     url=form.cleaned_data["url"],
                     notes=form.cleaned_data["notes"],
@@ -182,13 +153,11 @@ def all_trainees(request):
             initial = None
 
         form = BulkAddTrainingProgressForm(initial=initial)
-        discard_form = BulkDiscardProgressesForm()
 
     context = {
         "title": "Trainees",
         "all_trainees": trainees,
         "filter": filter,
         "form": form,
-        "discard_form": discard_form,
     }
     return render(request, "trainings/all_trainees.html", context)

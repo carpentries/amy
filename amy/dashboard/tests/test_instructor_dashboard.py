@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from django.urls import reverse
 
+from trainings.models import Involvement
 from workshops.models import Award, Person, TrainingProgress, TrainingRequirement
 from workshops.tests.base import TestBase
 
@@ -36,10 +37,6 @@ class TestInstructorStatus(TestBase):
         self._setUpUsersAndLogin()
         self._setUpBadges()
         self.progress_url = reverse("training-progress")
-        TrainingRequirement.objects.create(
-            name="Lesson Contribution", url_required=True
-        )
-        TrainingRequirement.objects.create(name="Demo")
 
     def test_instructor_badge(self):
         """When the trainee is awarded both Carpentry Instructor badge,
@@ -61,19 +58,30 @@ class TestInstructorStatus(TestBase):
         self.assertNotContains(rv, "Congratulations, you're certified")
 
     def test_eligible_but_not_awarded(self):
-        """Test what is dispslayed when a trainee is eligible to be certified
-        as an SWC/DC Instructor, but doesn't have appropriate badge awarded
+        """Test what is displayed when a trainee is eligible to be certified
+        as an Instructor, but doesn't have appropriate badge awarded
         yet."""
         requirements = [
             "Training",
-            "Lesson Contribution",
-            "Discussion",
+            "Get Involved",
+            "Welcome Session",
             "Demo",
         ]
         for requirement in requirements:
+            if requirement == "Get Involved":
+                involvement = Involvement.objects.get(name="GitHub Contribution")
+                date = datetime.today()
+                url = "https://example.com"
+            else:
+                involvement = None
+                date = None
+                url = None
             TrainingProgress.objects.create(
                 trainee=self.admin,
                 requirement=TrainingRequirement.objects.get(name=requirement),
+                involvement_type=involvement,
+                date=date,
+                url=url,
             )
 
         admin = Person.objects.annotate_with_instructor_eligibility().get(
@@ -100,21 +108,6 @@ class TestInstructorTrainingStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Training passed")
 
-    def test_training_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.training, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Training not passed yet")
-
-    def test_last_training_discarded_but_another_is_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.training)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.training, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Training passed")
-
     def test_training_failed(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.training, state="f"
@@ -134,70 +127,64 @@ class TestInstructorTrainingStatus(TestBase):
         self.assertContains(rv, "Training not passed yet")
 
 
-class TestLessonContributionStatus(TestBase):
-    """Test that trainee dashboard displays status of passing Lesson Contribution.
-    Test that Lesson Contribution submission form works."""
+class TestGetInvolvedStatus(TestBase):
+    """Test that trainee dashboard displays status of passing Get Involved.
+    Test that Get Involved submission form works."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={"url_required": True}
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved", defaults={"involvement_required": True}
+        )
+        self.github_contribution, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution", defaults={"url_required": True}
+        )
+        self.other_involvement, _ = Involvement.objects.get_or_create(
+            name="Other", defaults={"display_name": "Other", "notes_required": True}
         )
         self.progress_url = reverse("training-progress")
 
-    def test_lesson_contribution_not_submitted(self):
+    def test_get_involved_not_submitted(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution not submitted")
+        self.assertContains(rv, "Get Involved step not submitted")
 
-    def test_lesson_contribution_waiting_to_be_evaluated(self):
+    def test_get_involved_waiting_to_be_evaluated(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution, state="n"
+            trainee=self.admin,
+            requirement=self.get_involved,
+            state="n",
+            involvement_type=self.github_contribution,
+            date=datetime.today(),
+            url="https://example.org",
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution evaluation pending")
+        self.assertContains(rv, "Get Involved step evaluation pending")
 
-    def test_lesson_contribution_passed(self):
+    def test_get_involved_passed(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=datetime.today(),
+            url="https://example.org",
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution accepted")
-
-    def test_lesson_contribution_not_accepted_when_lesson_contribution_passed_but_discarded(  # noqa: line too long
-        self,
-    ):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution not submitted")
-
-    def test_lesson_contribution_is_accepted_when_last_lesson_contribution_is_discarded_but_other_one_is_passed(  # noqa: line too long
-        self,
-    ):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution
-        )
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.lesson_contribution, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Lesson Contribution accepted")
+        self.assertContains(rv, "Get Involved submission accepted")
 
     def test_submission_form(self):
         data = {
             "url": "http://example.com",
-            "requirement": self.lesson_contribution.pk,
+            "requirement": self.get_involved.pk,
+            "involvement_type": self.github_contribution.pk,
+            "date": "2023-06-21",
         }
         rv = self.client.post(self.progress_url, data, follow=True)
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(
-            rv, "Your Lesson Contribution submission will be evaluated soon."
-        )
+        self.assertContains(rv, "Your Get Involved submission will be evaluated soon.")
         got = list(
             TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement"
+                "state", "trainee", "url", "requirement", "involvement_type", "date"
             )
         )
         expected = [
@@ -205,52 +192,63 @@ class TestLessonContributionStatus(TestBase):
                 "n",
                 self.admin.pk,
                 "http://example.com",
-                self.lesson_contribution.pk,
+                self.get_involved.pk,
+                self.github_contribution.pk,
+                date(2023, 6, 21),
             )
         ]
         self.assertEqual(got, expected)
 
+    def test_submission_form_invalid_notes(self):
+        """Test that errors relating to notes/trainee_notes fields are
+        handled correctly."""
+        data = {
+            "requirement": self.get_involved.pk,
+            "involvement_type": self.other_involvement.pk,
+            "date": "2023-06-21",
+        }
+        rv = self.client.post(self.progress_url, data, follow=True)
+        # if "notes" field error is not excluded, a server error will occur
+        # as there is no "notes" field on the form
+        # so a status code 200 means it has been excluded correctly
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "training-progress")
+        # check that "trainee_notes" field error is displayed
+        # special treatment needed due to quotation marks
+        self.assertContains(
+            rv,
+            'This field is required for activity "Other".',
+            html=True,
+        )
+        # no TrainingProgress should have been created
+        self.assertEqual(len(TrainingProgress.objects.all()), 0)
 
-class TestDiscussionSessionStatus(TestBase):
-    """Test that trainee dashboard displays status of passing Discussion
+
+class TestWelcomeSessionStatus(TestBase):
+    """Test that trainee dashboard displays status of passing Welcome
     Session. Test whether we display instructions for registering for a
     session."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.progress_url = reverse("training-progress")
 
     def test_session_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.discussion)
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.welcome)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session passed")
-
-    def test_session_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.discussion, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session not passed yet")
-
-    def test_last_session_discarded_but_another_is_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.discussion)
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.discussion, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session passed")
+        self.assertContains(rv, "Welcome Session passed")
 
     def test_session_failed(self):
         TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.discussion, state="f"
+            trainee=self.admin, requirement=self.welcome, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session not passed yet")
+        self.assertContains(rv, "Welcome Session not passed yet")
 
     def test_no_participation_in_a_session_yet(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Discussion Session not passed yet")
+        self.assertContains(rv, "Welcome Session not passed yet")
 
 
 class TestDemoSessionStatus(TestBase):
@@ -270,14 +268,6 @@ class TestDemoSessionStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Demo Session passed")
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
-
-    def test_session_passed_but_discarded(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.demo, discarded=True
-        )
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Demo Session not completed")
-        self.assertContains(rv, self.SESSION_LINK_TEXT)
 
     def test_session_failed(self):
         TrainingProgress.objects.create(

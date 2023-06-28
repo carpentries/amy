@@ -14,6 +14,7 @@ import webtest
 from webtest.forms import Upload
 
 from consents.models import Consent, Term, TermEnum
+from trainings.models import Involvement
 from workshops.filters import filter_taught_workshops
 from workshops.forms import PersonForm, PersonsMergeForm
 from workshops.mixins import GenderMixin
@@ -1292,12 +1293,15 @@ class TestGetMissingInstructorRequirements(TestBase):
     def setUp(self):
         self.person = Person.objects.create(username="person")
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={"url_required": True}
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved", defaults={"involvement_required": True}
         )
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.demo, _ = TrainingRequirement.objects.get_or_create(
             name="Demo", defaults={}
+        )
+        self.involvement, _ = Involvement.objects.get_or_create(
+            name="Test Involvement", defaults={}
         )
 
     def test_all_requirements_satisfied(self):
@@ -1305,10 +1309,14 @@ class TestGetMissingInstructorRequirements(TestBase):
             trainee=self.person, state="p", requirement=self.training
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.lesson_contribution
+            trainee=self.person,
+            state="p",
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 5, 1),
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.discussion
+            trainee=self.person, state="p", requirement=self.welcome
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.demo
@@ -1320,23 +1328,27 @@ class TestGetMissingInstructorRequirements(TestBase):
         self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
-        # Lesson Contribution was accepted, the second time.
+        # Get Involved was accepted, the second time.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.lesson_contribution
+            trainee=self.person,
+            state="f",
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 5, 1),
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.lesson_contribution
+            trainee=self.person,
+            state="p",
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 6, 1),
         )
         # Not passed progress should be ignored.
         TrainingProgress.objects.create(
             trainee=self.person, state="f", requirement=self.demo
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="n", requirement=self.discussion
-        )
-        # Passed discarded progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training, discarded=True
+            trainee=self.person, state="n", requirement=self.welcome
         )
 
         person = Person.objects.annotate_with_instructor_eligibility().get(
@@ -1344,7 +1356,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Discussion", "Demo"],
+            ["Training", "Welcome Session", "Demo"],
         )
 
     def test_none_requirement_is_fulfilled(self):
@@ -1353,7 +1365,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Lesson Contribution", "Discussion", "Demo"],
+            ["Training", "Get Involved", "Welcome Session", "Demo"],
         )
 
 

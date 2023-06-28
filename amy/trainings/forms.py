@@ -1,8 +1,9 @@
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Layout
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import Q
-from django.forms import RadioSelect, TextInput
+from django.forms import CharField, RadioSelect, TextInput
+
+from trainings.models import Involvement
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -18,27 +19,27 @@ class TrainingProgressForm(forms.ModelForm):
         queryset=Person.objects.all(),
         widget=ModelSelect2Widget(data_view="person-lookup"),
     )
-    evaluated_by = forms.ModelChoiceField(
-        label="Evaluated by",
-        required=False,
-        queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="admin-lookup"),
-    )
     requirement = forms.ModelChoiceField(
-        queryset=TrainingRequirement.objects.exclude(
-            Q(name__startswith="SWC")
-            | Q(name__startswith="DC")
-            | Q(name__startswith="LC")
-        ),
+        queryset=TrainingRequirement.objects.all(),
         label="Type",
         required=True,
     )
-
+    involvement_type = forms.ModelChoiceField(
+        label="Get Involved activity",
+        required=False,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=RadioSelect(),
+    )
     event = forms.ModelChoiceField(
         label="Event",
         required=False,
         queryset=Event.objects.all(),
         widget=ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),
+    )
+    trainee_notes = CharField(
+        label="Notes from trainee",
+        required=False,
+        disabled=True,
     )
 
     # helper used in edit view
@@ -62,31 +63,31 @@ class TrainingProgressForm(forms.ModelForm):
         model = TrainingProgress
         fields = [
             "trainee",
-            "evaluated_by",
             "requirement",
             "state",
-            "discarded",
+            "involvement_type",
             "event",
             "url",
+            "date",
+            "trainee_notes",
             "notes",
         ]
         widgets = {
             "state": RadioSelect,
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
+    class Media:
+        js = ("trainingprogress_form.js",)
 
-        trainee = cleaned_data.get("trainee")
+    def add_error(self, field: str, error: ValidationError | str):
+        """Overrides add_error to ignore any errors that are intended to appear
+        on the trainee-only "trainee_notes" field."""
+        if field == "trainee_notes":
+            return
+        elif hasattr(error, "error_dict") and "trainee_notes" in error.error_dict:
+            error.error_dict.pop("trainee_notes")
 
-        # check if trainee has at least one training task
-        training_tasks = trainee.get_training_tasks()
-
-        if not training_tasks:
-            raise ValidationError(
-                "It's not possible to add training progress "
-                "to a trainee without any training task."
-            )
+        super().add_error(field, error)
 
 
 class BulkAddTrainingProgressForm(forms.ModelForm):
@@ -100,13 +101,16 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
 
     requirement = forms.ModelChoiceField(
-        queryset=TrainingRequirement.objects.exclude(
-            Q(name__startswith="SWC")
-            | Q(name__startswith="DC")
-            | Q(name__startswith="LC")
-        ),
+        queryset=TrainingRequirement.objects.all(),
         label="Type",
         required=True,
+    )
+
+    involvement_type = forms.ModelChoiceField(
+        label="Type of involvement",
+        required=False,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=RadioSelect(),
     )
 
     helper = BootstrapHelper(
@@ -120,8 +124,10 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
         # the template where this form is used
         "requirement",
         "state",
+        "involvement_type",
         "event",
         "url",
+        "date",
         "notes",
     )
 
@@ -131,8 +137,10 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
             # no 'trainees'
             "requirement",
             "state",
+            "involvement_type",
             "event",
             "url",
+            "date",
             "notes",
         ]
         widgets = {
@@ -140,61 +148,5 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
             "notes": TextInput,
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        trainees = cleaned_data.get("trainees", [])
-
-        # check if all trainees have at least one training task
-        for trainee in trainees:
-            training_tasks = trainee.get_training_tasks()
-
-            if not training_tasks:
-                raise ValidationError(
-                    "It's not possible to add training "
-                    "progress to a trainee without any "
-                    "training task."
-                )
-
-
-class BulkDiscardProgressesForm(forms.Form):
-    """Form used to bulk discard all TrainingProgresses associated with
-    selected trainees."""
-
-    trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
-
-    helper = BootstrapHelper(
-        add_submit_button=False,
-        form_tag=False,
-        display_labels=False,
-        add_cancel_button=False,
-    )
-
-    SUBMIT_POPOVER = """<p>Discarded progress will be displayed in the following
-    way: <span class='badge badge-dark'><strike>Discarded</strike></span>.</p>
-
-    <p>If you want to permanently remove records from system,
-    click one of the progress labels and, then, click "delete" button.</p>"""
-
-    helper.layout = Layout(
-        # no 'trainees' -- you should take care of generating it manually in
-        # the template where this form is used
-        # We use formnovalidate on submit button to disable browser
-        # validation. This is necessary because this form is used along with
-        # BulkAddTrainingProgressForm, which have required fields. Both forms
-        # live inside the same <form> tag. Without this attribute, when you
-        # click the following submit button, the browser reports missing
-        # values in required fields in BulkAddTrainingProgressForm.
-        Submit(
-            "discard",
-            "Discard all progress of selected trainees",
-            formnovalidate="formnovalidate",
-            **{
-                "data-toggle": "popover",
-                "data-trigger": "hover",
-                "data-html": "true",
-                "data-content": SUBMIT_POPOVER,
-                "css_class": "btn btn-warning",
-            },
-        ),
-    )
+    class Media:
+        js = ("trainingprogress_form.js",)
