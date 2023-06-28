@@ -23,7 +23,7 @@ InvolvementDef = TypedDict(
 
 INVOLVEMENTS: list[InvolvementDef] = [
     {
-        "display_name": "Served as an Instructor or a Helper at a Carpentries workshop",
+        "display_name": "Served as an Instructor or a helper at a Carpentries workshop",
         "name": "Workshop Instructor/Helper",
         "url_required": True,
         "date_required": True,
