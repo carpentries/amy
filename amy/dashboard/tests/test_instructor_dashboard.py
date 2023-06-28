@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.urls import reverse
 
+from trainings.models import Involvement
 from workshops.models import Award, Person, TrainingProgress, TrainingRequirement
 from workshops.tests.base import TestBase
 
@@ -57,19 +58,30 @@ class TestInstructorStatus(TestBase):
         self.assertNotContains(rv, "Congratulations, you're certified")
 
     def test_eligible_but_not_awarded(self):
-        """Test what is dispslayed when a trainee is eligible to be certified
-        as an SWC/DC Instructor, but doesn't have appropriate badge awarded
+        """Test what is displayed when a trainee is eligible to be certified
+        as an Instructor, but doesn't have appropriate badge awarded
         yet."""
         requirements = [
             "Training",
-            "Lesson Contribution",
+            "Get Involved",
             "Welcome Session",
             "Demo",
         ]
         for requirement in requirements:
+            if requirement == "Get Involved":
+                involvement = Involvement.objects.get(name="GitHub Contribution")
+                date = datetime.today()
+                url = "https://example.com"
+            else:
+                involvement = None
+                date = None
+                url = None
             TrainingProgress.objects.create(
                 trainee=self.admin,
                 requirement=TrainingRequirement.objects.get(name=requirement),
+                involvement_type=involvement,
+                date=date,
+                url=url,
             )
 
         admin = Person.objects.annotate_with_instructor_eligibility().get(

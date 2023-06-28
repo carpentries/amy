@@ -24,6 +24,7 @@ TrainingRequirementDef = TypedDict(
         "name": str,
         "url_required": bool,
         "event_required": bool,
+        "involvement_required": bool,
     },
 )
 

@@ -19,6 +19,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 null=True,
                 verbose_name="Date of occurrence",
+                help_text="Format: YYYY-MM-DD",
             ),
         ),
         migrations.AddField(
@@ -41,7 +42,11 @@ class Migration(migrations.Migration):
             model_name="trainingprogress",
             name="trainee_notes",
             field=models.CharField(
-                blank=True, max_length=255, verbose_name="Notes from trainee"
+                blank=True,
+                default="",
+                null=False,
+                max_length=255,
+                verbose_name="Notes from trainee",
             ),
         ),
     ]

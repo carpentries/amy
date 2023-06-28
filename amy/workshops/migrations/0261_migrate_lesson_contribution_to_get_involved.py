@@ -16,13 +16,11 @@ def migrate_lesson_contributions_to_involvements(apps, schema_editor) -> None:
     TrainingProgress = apps.get_model("workshops", "TrainingProgress")
     Involvement = apps.get_model("trainings", "Involvement")
 
-    involvement, _ = Involvement.objects.get_or_create(
+    involvement = Involvement.objects.create(
         name="GitHub Contribution",
-        defaults={
-            "display_name": "Submitted a contribution to a Carpentries repository",
-            "url_required": True,
-            "date_required": True,
-        },
+        display_name="Submitted a contribution to a Carpentries repository",
+        url_required=True,
+        date_required=True,
     )
     updated_rows = TrainingProgress.objects.filter(
         requirement__name="Lesson Contribution"
@@ -43,6 +41,7 @@ def migrate_involvements_to_lesson_contributions(apps, schema_editor) -> None:
     This must occur after the renaming of Get Involved to Lesson Contribution.
     """
     TrainingProgress = apps.get_model("workshops", "TrainingProgress")
+    Involvement = apps.get_model("trainings", "Involvement")
 
     updated_rows = TrainingProgress.objects.filter(
         involvement_type__name="GitHub Contribution"
@@ -56,6 +55,8 @@ def migrate_involvements_to_lesson_contributions(apps, schema_editor) -> None:
         ),
     )
     print(f"Reverse-migrated {updated_rows} lesson contributions")
+
+    Involvement.objects.get(name="GitHub Contribution").delete()
 
 
 def rename_lesson_contribution_to_get_involved(apps, schema_editor) -> None:

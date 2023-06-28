@@ -353,11 +353,17 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
         TrainingProgress = self.new_state.apps.get_model(
             "workshops", "TrainingProgress"
         )
+        Involvement = self.new_state.apps.get_model("trainings", "Involvement")
 
         # test that Get Involved was renamed to Lesson Contribution
         get_involved = TrainingRequirement.objects.get(name="Lesson Contribution")
         self.assertTrue(get_involved.url_required)
         self.assertFalse(get_involved.involvement_required)
+
+        # test that GitHub Contribution Involvement was removed
+        self.assertEqual(
+            Involvement.objects.filter(name="GitHub Contribution").count(), 0
+        )
 
         # test that progresses were properly migrated
         self.assertEqual(

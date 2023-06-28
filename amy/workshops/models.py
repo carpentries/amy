@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime
 import re
 from urllib.parse import quote
@@ -658,11 +659,9 @@ class PersonManager(BaseUserManager):
                 )
             )
 
-        LESSON_CONTRIBUTION_NAMES = ["Lesson Contribution"]
-
         return self.annotate(
             passed_training=passed("Training"),
-            passed_lesson_contribution=passed_either(*LESSON_CONTRIBUTION_NAMES),
+            passed_get_involved=passed("Get Involved"),
             passed_welcome=passed("Welcome Session"),
             passed_demo=passed("Demo"),
         ).annotate(
@@ -673,7 +672,7 @@ class PersonManager(BaseUserManager):
             instructor_eligible=(
                 F("passed_training")
                 * F("passed_welcome")
-                * F("passed_lesson_contribution")
+                * F("passed_get_involved")
                 * F("passed_demo")
             )
         )
@@ -970,7 +969,7 @@ class Person(
         """
         fields = [
             ("passed_training", "Training"),
-            ("passed_lesson_contribution", "Lesson Contribution"),
+            ("passed_get_involved", "Get Involved"),
             ("passed_welcome", "Welcome Session"),
             ("passed_demo", "Demo"),
         ]
@@ -2572,6 +2571,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     date = models.DateField(
         verbose_name="Date of occurrence",
+        help_text="Format: YYYY-MM-DD",
         null=True,
         blank=True,
     )
@@ -2604,7 +2604,11 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     )
     url = models.URLField(null=True, blank=True, verbose_name="URL")
     trainee_notes = models.CharField(
-        blank=True, max_length=STR_LONGEST, verbose_name="Notes from trainee"
+        blank=True,
+        null=False,
+        default="",
+        max_length=STR_LONGEST,
+        verbose_name="Notes from trainee",
     )
     notes = models.TextField(blank=True)
 
@@ -2613,38 +2617,38 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     def clean(self):
         super().clean()
-        errors = dict()
+        errors = defaultdict(list)
 
         # URL check
         if self.requirement.url_required and not self.url:
             msg = f"In the case of {self.requirement}, this field is required."
-            errors["url"] = msg
+            errors["url"].append(ValidationError(msg))
         elif (
             not self.requirement.url_required
             and self.url
             and not self.requirement.involvement_required  # involvements checked below
         ):
             msg = f"In the case of {self.requirement}, this field must be left empty."
-            errors["url"] = msg
+            errors["url"].append(ValidationError(msg))
 
         # event check
         if self.requirement.event_required and not self.event:
             msg = f"In the case of {self.requirement}, this field is required."
-            errors["event"] = msg
+            errors["event"].append(ValidationError(msg))
         elif not self.requirement.event_required and self.event:
             msg = f"In the case of {self.requirement}, this field must be left empty."
-            errors["event"] = msg
+            errors["event"].append(ValidationError(msg))
 
         # involvement check
         if self.requirement.involvement_required and not self.involvement_type:
             msg = f"In the case of {self.requirement}, this field is required."
-            errors["involvement_type"] = msg
+            errors["involvement_type"].append(ValidationError(msg))
         elif not self.requirement.involvement_required:
             msg = f"In the case of {self.requirement}, this field must be left empty."
             if self.involvement_type:
-                errors["involvement_type"] = msg
+                errors["involvement_type"].append(ValidationError(msg))
             if self.date:
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
 
         # checks on different involvements under the "Get Involved" requirement
         if self.requirement.involvement_required and self.involvement_type:
@@ -2653,27 +2657,27 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required."
                 )
-                errors["url"] = msg
+                errors["url"].append(ValidationError(msg))
 
             if self.involvement_type.date_required and not self.date:
                 msg = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required."
                 )
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
             elif not self.involvement_type.date_required and self.date:
                 msg = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field must be left empty."
                 )
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
             # verify that date is no later than today
             # (considering timezones ahead of UTC)
             elif self.date and self.date > timezone.localdate(
                 timezone=pytz.timezone("Etc/GMT-14")
             ):
                 msg = "Date must be in the past."
-                errors["date"] = msg
+                errors["date"].append(ValidationError(msg))
 
             if (
                 self.involvement_type.notes_required
@@ -2684,12 +2688,12 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required if there are no notes from the trainee."
                 )
-                errors["notes"] = [msg]
+                errors["notes"].append(ValidationError(msg))
 
         # state check
         if self.state == "f" and not self.notes:
             msg = "In the case of a Failed state, this field is required."
-            errors["notes"] = errors.get("notes", []) + [msg]
+            errors["notes"].append(ValidationError(msg))
 
         if errors:
             raise ValidationError(errors)
