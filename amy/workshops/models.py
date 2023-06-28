@@ -2615,92 +2615,159 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self):
         return reverse("trainingprogress_edit", args=[str(self.id)])
 
-    def clean_fields(self, exclude=None):
-        super().clean_fields(exclude=exclude)
-        errors = defaultdict(list)
-
-        # URL check
-        if self.requirement.url_required and not self.url:
-            msg = f"In the case of {self.requirement}, this field is required."
-            errors["url"].append(ValidationError(msg))
+    def clean_url(
+        self,
+        requirement: TrainingRequirement,
+        involvement_type: Involvement | None = None,
+    ):
+        """A URL may be required by either a TrainingRequirement or an Involvement.
+        If a TrainingRequirement does not require a URL or an Involvement, it is not
+        permitted to enter a URL.
+        Where an Involvement is required, URLs are always permitted, even if the
+        specific Involvement chosen does not require one.
+        """
+        if not self.url:
+            if requirement.url_required:
+                msg = f"In the case of {requirement}, this field is required."
+                return ValidationError(msg)
+            elif (
+                requirement.involvement_required
+                and involvement_type
+                and involvement_type.url_required
+            ):
+                msg = (
+                    f'In the case of {requirement} - "{involvement_type}",'
+                    " this field is required."
+                )
+                return ValidationError(msg)
         elif (
-            not self.requirement.url_required
-            and self.url
-            and not self.requirement.involvement_required  # involvements checked below
+            self.url
+            and not requirement.url_required
+            and not requirement.involvement_required
         ):
-            msg = f"In the case of {self.requirement}, this field must be left empty."
-            errors["url"].append(ValidationError(msg))
+            msg = f"In the case of {requirement}, this field must be left empty."
+            return ValidationError(msg)
 
-        # event check
-        if self.requirement.event_required and not self.event:
-            msg = f"In the case of {self.requirement}, this field is required."
-            errors["event"].append(ValidationError(msg))
-        elif not self.requirement.event_required and self.event:
-            msg = f"In the case of {self.requirement}, this field must be left empty."
-            errors["event"].append(ValidationError(msg))
+    def clean_event(
+        self,
+        requirement: TrainingRequirement,
+        involvement_type: Involvement | None = None,
+    ):
+        """An event can only be required by a TrainingRequirement."""
+        if requirement.event_required and not self.event:
+            msg = f"In the case of {requirement}, this field is required."
+            return ValidationError(msg)
+        elif not requirement.event_required and self.event:
+            msg = f"In the case of {requirement}, this field must be left empty."
+            return ValidationError(msg)
 
-        # involvement check
-        if self.requirement.involvement_required and not self.involvement_type:
-            msg = f"In the case of {self.requirement}, this field is required."
-            errors["involvement_type"].append(ValidationError(msg))
-        elif not self.requirement.involvement_required:
-            msg = f"In the case of {self.requirement}, this field must be left empty."
-            if self.involvement_type:
-                errors["involvement_type"].append(ValidationError(msg))
-            if self.date:
-                errors["date"].append(ValidationError(msg))
+    def clean_involvement_type(
+        self,
+        requirement: TrainingRequirement,
+        involvement_type: Involvement | None = None,
+    ):
+        if requirement.involvement_required and not involvement_type:
+            msg = f"In the case of {requirement}, this field is required."
+            return ValidationError(msg)
+        elif not requirement.involvement_required and involvement_type:
+            msg = f"In the case of {requirement}, this field must be left empty."
+            return ValidationError(msg)
 
-        # checks on different involvements under the "Get Involved" requirement
-        if self.requirement.involvement_required and self.involvement_type:
-            if self.involvement_type.url_required and not self.url:
+    def clean_date(
+        self,
+        requirement: TrainingRequirement,
+        involvement_type: Involvement | None = None,
+    ):
+        """A date can only be required by an Involvement.
+        The date must be today or earlier."""
+        if requirement.involvement_required and involvement_type:
+            if involvement_type.date_required and not self.date:
                 msg = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required."
                 )
-                errors["url"].append(ValidationError(msg))
-
-            if self.involvement_type.date_required and not self.date:
-                msg = (
-                    f'In the case of {self.requirement} - "{self.involvement_type}",'
-                    " this field is required."
-                )
-                errors["date"].append(ValidationError(msg))
-            elif not self.involvement_type.date_required and self.date:
+                return ValidationError(msg)
+            elif not involvement_type.date_required and self.date:
                 msg = (
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field must be left empty."
                 )
-                errors["date"].append(ValidationError(msg))
-            # verify that date is no later than today
-            # (considering timezones ahead of UTC)
-            elif self.date and self.date > timezone.localdate(
-                timezone=pytz.timezone("Etc/GMT-14")
-            ):
-                msg = "Date must be in the past."
-                errors["date"].append(ValidationError(msg))
+                return ValidationError(msg)
+        elif not requirement.involvement_required and self.date:
+            msg = f"In the case of {requirement}, this field must be left empty."
+            return ValidationError(msg)
 
+        # if other checks passed, verify that date is no later than today
+        # (considering timezones ahead of UTC)
+        if self.date and self.date > timezone.localdate(
+            timezone=pytz.timezone("Etc/GMT-14")
+        ):
+            msg = "Date must be in the past."
+            return ValidationError(msg)
+
+    def clean_trainee_notes(
+        self,
+        requirement: TrainingRequirement,
+        involvement_type: Involvement | None = None,
+    ):
+        """Trainee notes can only be required by an Involvement."""
+        if requirement.involvement_required and involvement_type:
             if (
-                self.involvement_type.notes_required
+                involvement_type.notes_required
                 and not self.trainee_notes
                 and not self.notes
             ):
-                msg_trainee = (
-                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                msg = (
+                    f'In the case of {requirement} - "{involvement_type}",'
                     " this field is required."
                 )
-                msg_admin = (
-                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                return ValidationError(msg)
+
+    def clean_notes(
+        self,
+        requirement: TrainingRequirement,
+        involvement_type: Involvement | None = None,
+    ):
+        """Admin notes can be required by an Involvement
+        or by marking the state as failed."""
+        errors = []
+        if requirement.involvement_required and involvement_type:
+            if (
+                involvement_type.notes_required
+                and not self.trainee_notes
+                and not self.notes
+            ):
+                msg = (
+                    f'In the case of {requirement} - "{involvement_type}",'
                     " this field is required if there are no notes from the trainee."
                 )
-                if "trainee_notes" not in exclude:
-                    errors["trainee_notes"].append(ValidationError(msg_trainee))
-                if "notes" not in exclude:
-                    errors["notes"].append(ValidationError(msg_admin))
+                errors.append(ValidationError(msg))
 
-        # state check
         if self.state == "f" and not self.notes:
             msg = "In the case of a Failed state, this field is required."
-            errors["notes"].append(ValidationError(msg))
+            errors.append(ValidationError(msg))
+
+        return errors
+
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
+        errors = defaultdict(list)
+
+        validators = [
+            ("url", self.clean_url),
+            ("event", self.clean_event),
+            ("involvement_type", self.clean_involvement_type),
+            ("date", self.clean_date),
+            ("trainee_notes", self.clean_trainee_notes),
+            ("notes", self.clean_notes),
+        ]
+
+        for field, validator in validators:
+            if exclude and field in exclude:
+                continue
+            error = validator(self.requirement, self.involvement_type)
+            if error:
+                errors[field] = error
 
         if errors:
             raise ValidationError(errors)
