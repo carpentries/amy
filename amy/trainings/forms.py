@@ -95,6 +95,13 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
         required=True,
     )
 
+    involvement_type = forms.ModelChoiceField(
+        label="Type of involvement",
+        required=False,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=RadioSelect(),
+    )
+
     helper = BootstrapHelper(
         additional_form_class="training-progress",
         submit_label="Add",
@@ -106,8 +113,10 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
         # the template where this form is used
         "requirement",
         "state",
+        "involvement_type",
         "event",
         "url",
+        "date",
         "notes",
     )
 
@@ -117,11 +126,16 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
             # no 'trainees'
             "requirement",
             "state",
+            "involvement_type",
             "event",
             "url",
+            "date",
             "notes",
         ]
         widgets = {
             "state": RadioSelect,
             "notes": TextInput,
         }
+
+    class Media:
+        js = ("trainingprogress_form.js",)
