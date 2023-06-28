@@ -11,6 +11,7 @@
 /venv/amy/bin/python manage.py runscript seed_badges
 /venv/amy/bin/python manage.py runscript seed_training_requirements
 /venv/amy/bin/python manage.py runscript seed_involvements
+/venv/amy/bin/python manage.py runscript seed_emails
 
 /venv/amy/bin/python manage.py create_superuser
 

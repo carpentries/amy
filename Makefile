@@ -36,6 +36,7 @@ dev_database :
 	${MANAGE} runscript seed_communityroles
 	${MANAGE} runscript seed_training_requirements
 	${MANAGE} runscript seed_involvements
+	${MANAGE} runscript seed_emails
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
