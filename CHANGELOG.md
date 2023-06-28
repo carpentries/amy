@@ -13,6 +13,22 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.1.2 - 2023-06-04
+
+### Bugfixes
+* Allow longer auth tokens for password reset - [#2430](https://github.com/carpentries/amy/pull/2430) by @elichad
+
+### Features
+* Bump cryptography from 40.0.2 to 41.0.0 - [#2432](https://github.com/carpentries/amy/pull/2432) by @dependabot[bot]
+
+## v4.1.1 - 2023-05-28
+
+### Features
+* Bump requests from 2.27.1 to 2.31.0 - [#2423](https://github.com/carpentries/amy/pull/2423) by @dependabot[bot]
+* Bump pymdown-extensions from 9.11 to 10.0 - [#2419](https://github.com/carpentries/amy/pull/2419) by @dependabot[bot]
+* Bump django from 3.2.18 to 3.2.19 - [#2406](https://github.com/carpentries/amy/pull/2406) by @dependabot[bot]
+* Bump black to 23.3.0 - [#2403](https://github.com/carpentries/amy/pull/2403) by @elichad
+
 ## v4.1 - 2023-04-30
 
 ### Bugfixes
