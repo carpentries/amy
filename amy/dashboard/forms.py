@@ -181,19 +181,6 @@ class GetInvolvedForm(forms.ModelForm):
             "trainee_notes",
         ]
 
-    def add_error(self, field: str, error: ValidationError | str):
-        """Overrides add_error to ignore any errors that are intended to appear
-        on the admin-only "notes" field."""
-
-        # Intercept and simplify the involvement_type error
-        msg = "This field is required."
-        if field == "involvement_type":
-            error.error_list = [msg]
-        elif hasattr(error, "error_dict") and "involvement_type" in error.error_dict:
-            error.error_dict["involvement_type"] = [msg]
-
-        return super().add_error(field, error)
-
 
 class SearchForm(forms.Form):
     """Represent general searching form."""

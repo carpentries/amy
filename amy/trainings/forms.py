@@ -25,7 +25,7 @@ class TrainingProgressForm(forms.ModelForm):
         required=True,
     )
     involvement_type = forms.ModelChoiceField(
-        label="Type of involvement",
+        label="Get Involved activity",
         required=False,
         queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
         widget=RadioSelect(),

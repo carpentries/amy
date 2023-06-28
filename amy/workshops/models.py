@@ -2615,6 +2615,21 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self):
         return reverse("trainingprogress_edit", args=[str(self.id)])
 
+    def get_human_friendly_type(self, item: TrainingRequirement | Involvement):
+        human_friendly_type_names = {
+            TrainingRequirement: "progress type",
+            Involvement: "activity",
+        }
+        return human_friendly_type_names.get(type(item), "")
+
+    def get_required_error(self, item: TrainingRequirement | Involvement):
+        item_type = self.get_human_friendly_type(item)
+        return ValidationError(f'This field is required for {item_type} "{item}".')
+
+    def get_not_required_error(self, item: TrainingRequirement | Involvement):
+        item_type = self.get_human_friendly_type(item)
+        return ValidationError(f'This field must be empty for {item_type} "{item}".')
+
     def clean_url(
         self,
         requirement: TrainingRequirement,
@@ -2628,25 +2643,21 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         """
         if not self.url:
             if requirement.url_required:
-                msg = f"In the case of {requirement}, this field is required."
-                return ValidationError(msg)
+                return self.get_required_error(requirement)
+
             elif (
                 requirement.involvement_required
                 and involvement_type
                 and involvement_type.url_required
             ):
-                msg = (
-                    f'In the case of {requirement} - "{involvement_type}",'
-                    " this field is required."
-                )
-                return ValidationError(msg)
+                return self.get_required_error(involvement_type)
+
         elif (
             self.url
             and not requirement.url_required
             and not requirement.involvement_required
         ):
-            msg = f"In the case of {requirement}, this field must be left empty."
-            return ValidationError(msg)
+            return self.get_not_required_error(involvement_type)
 
     def clean_event(
         self,
@@ -2655,11 +2666,10 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     ):
         """An event can only be required by a TrainingRequirement."""
         if requirement.event_required and not self.event:
-            msg = f"In the case of {requirement}, this field is required."
-            return ValidationError(msg)
+            return self.get_required_error(requirement)
+
         elif not requirement.event_required and self.event:
-            msg = f"In the case of {requirement}, this field must be left empty."
-            return ValidationError(msg)
+            return self.get_not_required_error(requirement)
 
     def clean_involvement_type(
         self,
@@ -2667,11 +2677,10 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         involvement_type: Involvement | None = None,
     ):
         if requirement.involvement_required and not involvement_type:
-            msg = f"In the case of {requirement}, this field is required."
-            return ValidationError(msg)
+            return self.get_required_error(requirement)
+
         elif not requirement.involvement_required and involvement_type:
-            msg = f"In the case of {requirement}, this field must be left empty."
-            return ValidationError(msg)
+            return self.get_not_required_error(requirement)
 
     def clean_date(
         self,
@@ -2682,20 +2691,13 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         The date must be today or earlier."""
         if requirement.involvement_required and involvement_type:
             if involvement_type.date_required and not self.date:
-                msg = (
-                    f'In the case of {self.requirement} - "{self.involvement_type}",'
-                    " this field is required."
-                )
-                return ValidationError(msg)
+                return self.get_required_error(involvement_type)
+
             elif not involvement_type.date_required and self.date:
-                msg = (
-                    f'In the case of {self.requirement} - "{self.involvement_type}",'
-                    " this field must be left empty."
-                )
-                return ValidationError(msg)
+                return self.get_not_required_error(involvement_type)
+
         elif not requirement.involvement_required and self.date:
-            msg = f"In the case of {requirement}, this field must be left empty."
-            return ValidationError(msg)
+            return self.get_not_required_error(requirement)
 
         # if other checks passed, verify that date is no later than today
         # (considering timezones ahead of UTC)
@@ -2717,11 +2719,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                 and not self.trainee_notes
                 and not self.notes
             ):
-                msg = (
-                    f'In the case of {requirement} - "{involvement_type}",'
-                    " this field is required."
-                )
-                return ValidationError(msg)
+                return self.get_required_error(involvement_type)
 
     def clean_notes(
         self,
@@ -2738,13 +2736,13 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                 and not self.notes
             ):
                 msg = (
-                    f'In the case of {requirement} - "{involvement_type}",'
-                    " this field is required if there are no notes from the trainee."
+                    f'This field is required for activity "{involvement_type}" '
+                    "if there are no notes from the trainee."
                 )
                 errors.append(ValidationError(msg))
 
         if self.state == "f" and not self.notes:
-            msg = "In the case of a Failed state, this field is required."
+            msg = "This field is required if the state is marked as failed."
             errors.append(ValidationError(msg))
 
         return errors

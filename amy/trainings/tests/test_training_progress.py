@@ -503,13 +503,13 @@ class TestCRUDViews(TestBase):
         # check that "trainee_notes" field error is NOT displayed
         self.assertNotContains(
             rv,
-            'In the case of Get Involved - "Other", this field is required.',
+            'This field is required for activity "Other".',
             html=True,
         )
         # check that "notes" field error is displayed
         self.assertContains(
             rv,
-            'In the case of Get Involved - "Other", this field is required '
+            'This field is required for activity "Other" '
             "if there are no notes from the trainee.",
             html=True,
         )

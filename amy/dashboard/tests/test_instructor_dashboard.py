@@ -208,16 +208,16 @@ class TestGetInvolvedStatus(TestBase):
             "date": "2023-06-21",
         }
         rv = self.client.post(self.progress_url, data, follow=True)
-        # if "notes" field error is not filtered out, a server error will occur
+        # if "notes" field error is not excluded, a server error will occur
         # as there is no "notes" field on the form
-        # so a status code 200 means it has been removed correctly
+        # so a status code 200 means it has been excluded correctly
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
         # check that "trainee_notes" field error is displayed
         # special treatment needed due to quotation marks
         self.assertContains(
             rv,
-            'In the case of Get Involved - "Other", this field is required.',
+            'This field is required for activity "Other".',
             html=True,
         )
         # no TrainingProgress should have been created
