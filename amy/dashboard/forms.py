@@ -154,7 +154,7 @@ class GetInvolvedForm(forms.ModelForm):
     date = forms.DateField(
         label="Date of activity",
         help_text="If the activity took place over multiple days, please enter the "
-        "first day.",
+        "first day. Format: YYYY-MM-DD",
         required=False,
     )
     url = forms.URLField(
@@ -166,7 +166,7 @@ class GetInvolvedForm(forms.ModelForm):
     trainee_notes = forms.CharField(
         label="Additional information",
         help_text="If you attended a community meeting, please tell us which meeting "
-        'you attended. If you selected "Other" for the type of involvement, please '
+        'you attended. If you selected "Other" for the activity, please '
         "provide details here.",
         required=False,
     )
