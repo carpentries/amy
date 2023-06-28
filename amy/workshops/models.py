@@ -2707,20 +2707,6 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
             msg = "Date must be in the past."
             return ValidationError(msg)
 
-    def clean_trainee_notes(
-        self,
-        requirement: TrainingRequirement,
-        involvement_type: Involvement | None = None,
-    ):
-        """Trainee notes can only be required by an Involvement."""
-        if requirement.involvement_required and involvement_type:
-            if (
-                involvement_type.notes_required
-                and not self.trainee_notes
-                and not self.notes
-            ):
-                return self.get_required_error(involvement_type)
-
     def clean_notes(
         self,
         requirement: TrainingRequirement,
@@ -2751,12 +2737,13 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         super().clean_fields(exclude=exclude)
         errors = defaultdict(list)
 
+        # note: trainee_notes field is cleaned in GetInvolvedForm instead
+        #       as it should not display errors in admin-facing forms
         validators = [
             ("url", self.clean_url),
             ("event", self.clean_event),
             ("involvement_type", self.clean_involvement_type),
             ("date", self.clean_date),
-            ("trainee_notes", self.clean_trainee_notes),
             ("notes", self.clean_notes),
         ]
 

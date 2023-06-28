@@ -181,6 +181,21 @@ class GetInvolvedForm(forms.ModelForm):
             "trainee_notes",
         ]
 
+    def clean_trainee_notes(self):
+        """Raise an error if the trainee has not provided notes where required.
+
+        All other fields are cleaned in the TrainingProgress model itself.
+        This field is different as it should only show an error on this specific form.
+        """
+        involvement_type = self.cleaned_data["involvement_type"]
+        trainee_notes = self.cleaned_data["trainee_notes"]
+        if involvement_type.notes_required and not trainee_notes:
+            raise ValidationError(
+                f'This field is required for activity "{involvement_type}".'
+            )
+
+        return trainee_notes
+
 
 class SearchForm(forms.Form):
     """Represent general searching form."""

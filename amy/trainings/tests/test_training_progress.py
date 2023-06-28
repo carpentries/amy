@@ -193,7 +193,7 @@ class TestTrainingProgressValidation(TestBase):
         )
         p1.full_clean()
         p2.full_clean()
-        with self.assertValidationErrors(["notes", "trainee_notes"]):
+        with self.assertValidationErrors(["notes"]):
             p3.full_clean()
 
     def test_notes_required_and_trainee_notes_provided(self):
