@@ -422,6 +422,13 @@ class TestCRUDViews(TestBase):
                 "date_required": True,
             },
         )
+        self.involvement_other, _ = Involvement.objects.get_or_create(
+            name="Other",
+            defaults={
+                "display_name": "Other",
+                "notes_required": True,
+            },
+        )
         self.progress = TrainingProgress.objects.create(
             requirement=self.requirement,
             state="p",
@@ -455,7 +462,7 @@ class TestCRUDViews(TestBase):
             c[0].instance.pk
             for c in rv.context["form"].fields["involvement_type"].choices
         ]
-        self.assertEqual(choices, [self.involvement.pk])
+        self.assertEqual(choices, [self.involvement.pk, self.involvement_other.pk])
 
     def test_create_view_works(self):
         data = {
@@ -475,6 +482,39 @@ class TestCRUDViews(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "trainingprogress_edit")
         self.assertEqual(len(TrainingProgress.objects.all()), 2)
+
+    def test_create_view_submission_invalid_notes(self):
+        # Arrange
+        data = {
+            "requirement": self.get_involved.pk,
+            "state": "p",
+            "trainee": self.ironman.pk,
+            "involvement_type": self.involvement_other.pk,
+            "date": "2023-06-21",
+        }
+        progresses_before = len(TrainingProgress.objects.all())
+
+        # Act
+        rv = self.client.post(reverse("trainingprogress_add"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "trainingprogress_add")
+        # check that "trainee_notes" field error is NOT displayed
+        self.assertNotContains(
+            rv,
+            'This field is required for activity "Other".',
+            html=True,
+        )
+        # check that "notes" field error is displayed
+        self.assertContains(
+            rv,
+            'This field is required for activity "Other" '
+            "if there are no notes from the trainee.",
+            html=True,
+        )
+        # confirm that no TrainingProgress was created
+        self.assertEqual(len(TrainingProgress.objects.all()), progresses_before)
 
     def test_edit_view_loads(self):
         rv = self.client.get(reverse("trainingprogress_edit", args=[self.progress.pk]))
