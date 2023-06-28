@@ -2615,8 +2615,8 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self):
         return reverse("trainingprogress_edit", args=[str(self.id)])
 
-    def clean(self):
-        super().clean()
+    def clean_fields(self, exclude=None):
+        super().clean_fields(exclude=exclude)
         errors = defaultdict(list)
 
         # URL check
@@ -2692,8 +2692,10 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                     f'In the case of {self.requirement} - "{self.involvement_type}",'
                     " this field is required if there are no notes from the trainee."
                 )
-                errors["trainee_notes"].append(ValidationError(msg_trainee))
-                errors["notes"].append(ValidationError(msg_admin))
+                if "trainee_notes" not in exclude:
+                    errors["trainee_notes"].append(ValidationError(msg_trainee))
+                if "notes" not in exclude:
+                    errors["notes"].append(ValidationError(msg_admin))
 
         # state check
         if self.state == "f" and not self.notes:
