@@ -1,7 +1,9 @@
 from crispy_forms.layout import Layout
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import RadioSelect, TextInput
+from django.forms import CharField, RadioSelect, TextInput
+
+from trainings.models import Involvement
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -22,12 +24,22 @@ class TrainingProgressForm(forms.ModelForm):
         label="Type",
         required=True,
     )
-
+    involvement_type = forms.ModelChoiceField(
+        label="Type of involvement",
+        required=False,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=RadioSelect(),
+    )
     event = forms.ModelChoiceField(
         label="Event",
         required=False,
         queryset=Event.objects.all(),
         widget=ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),
+    )
+    trainee_notes = CharField(
+        label="Notes from trainee",
+        required=False,
+        disabled=True,
     )
 
     # helper used in edit view
@@ -53,13 +65,19 @@ class TrainingProgressForm(forms.ModelForm):
             "trainee",
             "requirement",
             "state",
+            "involvement_type",
             "event",
             "url",
+            "date",
+            "trainee_notes",
             "notes",
         ]
         widgets = {
             "state": RadioSelect,
         }
+
+    class Media:
+        js = ("trainingprogress_form.js",)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -74,6 +92,14 @@ class TrainingProgressForm(forms.ModelForm):
                 "It's not possible to add training progress "
                 "to a trainee without any training task."
             )
+
+        errors = dict()
+
+        # TODO: validation based on url_required in Involvement, etc
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
 
 
 class BulkAddTrainingProgressForm(forms.ModelForm):

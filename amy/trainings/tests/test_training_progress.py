@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from django.urls import reverse
 
 from trainings.forms import TrainingProgressForm
+from trainings.models import Involvement
 from workshops.models import (
     Event,
     Organization,
@@ -17,7 +17,7 @@ from workshops.tests.base import TestBase
 
 
 class TestTrainingProgressValidation(TestBase):
-    """Test that validation errors appear near right fields (url and event)."""
+    """Test that validation errors appear near right fields (url, event, etc)."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
@@ -27,11 +27,33 @@ class TestTrainingProgressValidation(TestBase):
         self.requirement = TrainingRequirement.objects.create(
             name="Welcome Session", url_required=False, event_required=False
         )
-        self.url_required = TrainingRequirement.objects.create(
-            name="Lesson Contribution", url_required=True, event_required=False
-        )
         self.event_required = TrainingRequirement.objects.create(
             name="Training", url_required=False, event_required=True
+        )
+        self.url_required = TrainingRequirement.objects.create(
+            name="Test for URLs", url_required=True, event_required=False
+        )
+        self.get_involved = TrainingRequirement.objects.create(
+            name="Get Involved",
+            url_required=False,
+            event_required=False,
+            involvement_required=True,
+        )
+        self.url_and_date_required, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution",
+            defaults={
+                "display_name": "GitHub Contribution",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.notes_required, _ = Involvement.objects.get_or_create(
+            name="Other without date",
+            defaults={
+                "display_name": "Other without date",
+                "notes_required": True,
+                "date_required": False,
+            },
         )
 
     def test_url_is_required(self):
@@ -41,9 +63,24 @@ class TestTrainingProgressValidation(TestBase):
         p2 = TrainingProgress.objects.create(
             requirement=self.url_required, trainee=self.admin
         )
+        p3 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            date=datetime(2023, 5, 31),
+        )
+        p4 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+            notes="Additional notes",
+        )
         p1.full_clean()
-        with self.assertRaises(ValidationError):
+        with self.assertValidationErrors(["url"]):
             p2.full_clean()
+        with self.assertValidationErrors(["url"]):
+            p3.full_clean()
+        p4.full_clean()
 
     def test_url_must_be_blank(self):
         p1 = TrainingProgress.objects.create(
@@ -56,9 +93,25 @@ class TestTrainingProgressValidation(TestBase):
             trainee=self.admin,
             url="http://example.com",
         )
-        with self.assertRaises(ValidationError):
+        p3 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+        )
+        p4 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+            url="http://example.com",
+            notes="Some notes",
+        )
+        with self.assertValidationErrors(["url"]):
             p1.full_clean()
         p2.full_clean()
+        p3.full_clean()
+        p4.full_clean()  # involvement URLs can be optional
 
     def test_event_is_required(self):
         p1 = TrainingProgress.objects.create(
@@ -68,7 +121,7 @@ class TestTrainingProgressValidation(TestBase):
             requirement=self.event_required, trainee=self.admin
         )
         p1.full_clean()
-        with self.assertRaises(ValidationError):
+        with self.assertValidationErrors(["event"]):
             p2.full_clean()
 
     def test_event_must_be_blank(self):
@@ -88,9 +141,153 @@ class TestTrainingProgressValidation(TestBase):
             trainee=self.admin,
             event=event,
         )
-        with self.assertRaises(ValidationError):
+        with self.assertValidationErrors(["event"]):
             p1.full_clean()
         p2.full_clean()
+
+    def test_involvement_is_required(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.requirement, trainee=self.admin
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            trainee=self.admin,
+        )
+        p1.full_clean()
+        with self.assertValidationErrors(["involvement_type"]):
+            p2.full_clean()
+
+    def test_involvement_must_be_blank(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.requirement,
+            trainee=self.admin,
+            involvement_type=self.url_and_date_required,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+        )
+        with self.assertValidationErrors(["involvement_type", "date", "url"]):
+            p1.full_clean()
+        p2.full_clean()
+
+    def test_notes_required(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.requirement, trainee=self.admin
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+            notes="Notes added by training team",
+        )
+        p3 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+        )
+        p1.full_clean()
+        p2.full_clean()
+        with self.assertValidationErrors(["notes"]):
+            p3.full_clean()
+
+    def test_notes_required_and_trainee_notes_provided(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+            trainee_notes="Notes submitted by trainee",
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+            trainee_notes="Notes submitted by trainee",
+            notes="Notes added by training team",
+        )
+        p1.full_clean()
+        p2.full_clean()
+
+    def test_notes_not_required(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+            trainee_notes="Notes submitted by trainee",
+            notes="Notes added by training team",
+        )
+        p1.full_clean()  # notes never have to be left blank
+
+    def test_date_required(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.requirement, trainee=self.admin
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            url="http://example.com",
+        )
+        p3 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+            notes="Additional notes",
+        )
+        p1.full_clean()
+        with self.assertValidationErrors(["date"]):
+            p2.full_clean()
+        p3.full_clean()
+
+    def test_date_in_past(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime.now() + timedelta(days=2),
+        )
+        p1.full_clean()
+        with self.assertValidationErrors(["date"]):
+            p2.full_clean()
+
+    def test_date_must_be_blank(self):
+        p1 = TrainingProgress.objects.create(
+            requirement=self.requirement, trainee=self.admin, date=datetime(2023, 5, 31)
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.url_and_date_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+        )
+        p3 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.notes_required,
+            trainee=self.admin,
+            date=datetime(2023, 5, 31),
+            notes="Additional notes",
+        )
+        with self.assertValidationErrors(["date"]):
+            p1.full_clean()
+        p2.full_clean()
+        with self.assertValidationErrors(["date"]):
+            p3.full_clean()
 
     def test_progress_with_failed_status_requires_notes(self):
         """Failed state requires notes. Other states do not"""
@@ -112,36 +309,8 @@ class TestTrainingProgressValidation(TestBase):
         )
         failed_progess_with_notes.full_clean()
         other_status_progress_no_notes.full_clean()
-        with self.assertRaises(ValidationError):
+        with self.assertValidationErrors(["notes"]):
             failed_progress_no_notes.full_clean()
-
-    def test_evaluated_progress_may_have_mentor_or_examiner_associated(self):
-        p1 = TrainingProgress.objects.create(
-            requirement=self.requirement,
-            trainee=self.admin,
-            state="p",
-        )
-        p2 = TrainingProgress.objects.create(
-            requirement=self.requirement,
-            trainee=self.admin,
-            state="p",
-        )
-        p1.full_clean()
-        p2.full_clean()
-
-    def test_unevaluated_progress_may_have_mentor_or_examiner_associated(self):
-        p1 = TrainingProgress.objects.create(
-            requirement=self.requirement,
-            trainee=self.admin,
-            state="n",
-        )
-        p2 = TrainingProgress.objects.create(
-            requirement=self.requirement,
-            trainee=self.admin,
-            state="n",
-        )
-        p1.full_clean()
-        p2.full_clean()
 
     def test_form_invalid_if_trainee_has_no_training_task(self):
         data = {
@@ -245,6 +414,28 @@ class TestCRUDViews(TestBase):
         self._setUpRoles()
 
         self.requirement = TrainingRequirement.objects.create(name="Welcome Session")
+        self.get_involved = TrainingRequirement.objects.create(
+            name="Get Involved",
+            url_required=False,
+            event_required=False,
+            involvement_required=True,
+        )
+        self.involvement, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution",
+            defaults={
+                "display_name": "GitHub Contribution",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.involvement2, _ = Involvement.objects.get_or_create(
+            name="To be archived",
+            defaults={
+                "display_name": "To be archived",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
         self.progress = TrainingProgress.objects.create(
             requirement=self.requirement,
             state="p",
@@ -267,6 +458,18 @@ class TestCRUDViews(TestBase):
         )
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(int(rv.context["form"].initial["trainee"]), self.ironman.pk)
+
+    def test_create_view_does_not_show_archived_involvements(self):
+        self.involvement2.archive()
+        rv = self.client.get(
+            reverse("trainingprogress_add"), {"type": self.get_involved.pk}
+        )
+        self.assertEqual(rv.status_code, 200)
+        choices = [
+            c[0].instance.pk
+            for c in rv.context["form"].fields["involvement_type"].choices
+        ]
+        self.assertEqual(choices, [self.involvement.pk])
 
     def test_create_view_works(self):
         data = {

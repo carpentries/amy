@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime
 import re
 from urllib.parse import quote
@@ -29,11 +30,13 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
+import pytz
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
 
 from autoemails.mixins import RQJobsMixin
+from trainings.models import Involvement
 from workshops import github_auth
 from workshops.consts import (
     FEE_DETAILS_URL,
@@ -1875,6 +1878,159 @@ class KnowledgeDomain(models.Model):
 # ------------------------------------------------------------
 
 
+class CurriculumManager(models.Manager):
+    def default_order(
+        self,
+        allow_unknown=True,
+        allow_other=True,
+        allow_mix_match=False,
+        dont_know_yet_first=False,
+    ):
+        """A specific order_by() clause with semi-ninja code."""
+
+        # This crazy django-ninja-code gives different weights to entries
+        # matching different criterias, and then sorts them by 'name'.
+        # For example when two entries (e.g. swc-r and swc-python) have the
+        # same weight (here: 10), then sorting by name comes in.
+        # Entries dc-other, swc-other, lc-other, or `I don't know` are made
+        # last of their "group".
+        qs = self.order_by(
+            Case(
+                When(carpentry="SWC", other=False, then=10),
+                When(carpentry="SWC", other=True, then=15),
+                When(carpentry="DC", other=False, then=20),
+                When(carpentry="DC", other=True, then=25),
+                When(carpentry="LC", other=False, then=30),
+                When(carpentry="LC", other=True, then=35),
+                When(unknown=True, then=1 if dont_know_yet_first else 200),
+                When(carpentry="", then=100),
+                default=1,
+            ),
+            "name",
+        )
+
+        # conditionally disable unknown ("I don't know") entry from appearing
+        # in the list
+        if not allow_unknown:
+            qs = qs.filter(unknown=False)
+
+        # conditionally disable other entries (swc-other, etc.) from appearing
+        # in the list
+        if not allow_other:
+            qs = qs.filter(other=False)
+
+        # conditionally disable Mix&Match entry from appearing in the list
+        if not allow_mix_match:
+            qs = qs.filter(mix_match=False)
+
+        return qs
+
+
+class Curriculum(ActiveMixin, models.Model):
+    CARPENTRIES_CHOICES = (
+        ("SWC", "Software Carpentry"),
+        ("DC", "Data Carpentry"),
+        ("LC", "Library Carpentry"),
+        ("", "unspecified / irrelevant"),
+    )
+    carpentry = models.CharField(
+        max_length=5,
+        choices=CARPENTRIES_CHOICES,
+        null=False,
+        blank=True,
+        default="",
+        verbose_name="Which Carpentry does this curriculum belong to?",
+    )
+    slug = models.CharField(
+        max_length=STR_MED,
+        null=False,
+        blank=False,
+        default="",
+        unique=True,
+        verbose_name="Curriculum ID",
+        help_text="Use computer-friendly text here, e.g. 'dc-ecology-r'.",
+    )
+    name = models.CharField(
+        max_length=200,
+        null=False,
+        blank=False,
+        default="",
+        unique=True,
+        verbose_name="Curriculum name",
+        help_text="Use user-friendly language, e.g. "
+        "'Data Carpentry (Ecology with R)'.",
+    )
+    description = models.TextField(
+        max_length=400,
+        null=False,
+        blank=True,
+        default="",
+        verbose_name="Curriculum longer description",
+        help_text="You can enter Markdown. It will be shown as a hover or "
+        "popup over the curriculum entry on forms.",
+    )
+    other = models.BooleanField(
+        null=False,
+        blank=True,
+        default=False,
+        verbose_name="Field marked as 'Other'",
+        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', "
+        "'DC Other', or simply 'Other')",
+    )
+    unknown = models.BooleanField(
+        null=False,
+        blank=True,
+        default=False,
+        verbose_name="Unknown entry",
+        help_text="Mark this curriculum record as 'I don't know yet', or "
+        "'Unknown', or 'Not sure yet'. There can be only one such "
+        "record in the database.",
+    )
+    mix_match = models.BooleanField(
+        null=False,
+        blank=True,
+        default=False,
+        verbose_name="Mix & Match",
+        help_text="Mark this curriculum record as 'Mix & Match'."
+        "There can be only one such record in the database.",
+    )
+    website = models.URLField(
+        blank=True,
+        default="",
+        verbose_name="Curriculum page",
+    )
+
+    objects = CurriculumManager()
+
+    class Meta:
+        verbose_name = "Curriculum"
+        verbose_name_plural = "Curricula"
+        ordering = [
+            "slug",
+        ]
+
+    def __str__(self):
+        return self.name
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        """When saving with `unknown=True`, update all other records with this
+        parameter to `unknown=False`. This helps keeping only one record with
+        `unknown=True` in the database - a specific case of uniqueness."""
+
+        # wrapped in transaction in order to prevent from updating records to
+        # `unknown=False` when saving fails
+        if self.unknown:
+            Curriculum.objects.filter(unknown=True).update(unknown=False)
+        # same for mix_match
+        if self.mix_match:
+            Curriculum.objects.filter(mix_match=True).update(mix_match=False)
+        return super().save(*args, **kwargs)
+
+
+# ------------------------------------------------------------
+
+
 class TrainingRequestManager(models.Manager):
     def get_queryset(self):
         """Enhance default TrainingRequest queryset with auto-computed
@@ -2400,6 +2556,10 @@ class TrainingRequirement(models.Model):
     # null (False).
     event_required = models.BooleanField(default=False)
 
+    # Determines whether TrainingProgress.involvement_type is required (True) or must be
+    # null (False).
+    involvement_required = models.BooleanField(default=False)
+
     def __str__(self):
         return self.name
 
@@ -2411,6 +2571,12 @@ class TrainingRequirement(models.Model):
 class TrainingProgress(CreatedUpdatedMixin, models.Model):
     trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
 
+    date = models.DateField(
+        verbose_name="Date of occurrence",
+        help_text="Format: YYYY-MM-DD",
+        null=True,
+        blank=True,
+    )
     requirement = models.ForeignKey(
         TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type"
     )
@@ -2423,6 +2589,13 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     )
     state = models.CharField(choices=STATES, default="p", max_length=1)
 
+    involvement_type = models.ForeignKey(
+        Involvement,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        verbose_name="Type of involvement",
+    )
     event = models.ForeignKey(
         Event,
         null=True,
@@ -2432,191 +2605,103 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         on_delete=models.SET_NULL,
     )
     url = models.URLField(null=True, blank=True, verbose_name="URL")
+    trainee_notes = models.CharField(
+        blank=True,
+        null=False,
+        default="",
+        max_length=STR_LONGEST,
+        verbose_name="Notes from trainee",
+    )
     notes = models.TextField(blank=True)
 
     def get_absolute_url(self):
         return reverse("trainingprogress_edit", args=[str(self.id)])
 
     def clean(self):
+        super().clean()
+        errors = defaultdict(list)
+
+        # URL check
         if self.requirement.url_required and not self.url:
-            msg = "In the case of {}, this field is required.".format(self.requirement)
-            raise ValidationError({"url": msg})
-        elif not self.requirement.url_required and self.url:
-            msg = "In the case of {}, this field must be left empty.".format(
-                self.requirement
-            )
-            raise ValidationError({"url": msg})
+            msg = f"In the case of {self.requirement}, this field is required."
+            errors["url"].append(ValidationError(msg))
+        elif (
+            not self.requirement.url_required
+            and self.url
+            and not self.requirement.involvement_required  # involvements checked below
+        ):
+            msg = f"In the case of {self.requirement}, this field must be left empty."
+            errors["url"].append(ValidationError(msg))
 
+        # event check
         if self.requirement.event_required and not self.event:
-            msg = "In the case of {}, this field is required.".format(self.requirement)
-            raise ValidationError({"event": msg})
+            msg = f"In the case of {self.requirement}, this field is required."
+            errors["event"].append(ValidationError(msg))
         elif not self.requirement.event_required and self.event:
-            msg = "In the case of {}, this field must be left empty.".format(
-                self.requirement
-            )
-            raise ValidationError({"event": msg})
+            msg = f"In the case of {self.requirement}, this field must be left empty."
+            errors["event"].append(ValidationError(msg))
 
+        # involvement check
+        if self.requirement.involvement_required and not self.involvement_type:
+            msg = f"In the case of {self.requirement}, this field is required."
+            errors["involvement_type"].append(ValidationError(msg))
+        elif not self.requirement.involvement_required:
+            msg = f"In the case of {self.requirement}, this field must be left empty."
+            if self.involvement_type:
+                errors["involvement_type"].append(ValidationError(msg))
+            if self.date:
+                errors["date"].append(ValidationError(msg))
+
+        # checks on different involvements under the "Get Involved" requirement
+        if self.requirement.involvement_required and self.involvement_type:
+            if self.involvement_type.url_required and not self.url:
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field is required."
+                )
+                errors["url"].append(ValidationError(msg))
+
+            if self.involvement_type.date_required and not self.date:
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field is required."
+                )
+                errors["date"].append(ValidationError(msg))
+            elif not self.involvement_type.date_required and self.date:
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field must be left empty."
+                )
+                errors["date"].append(ValidationError(msg))
+            # verify that date is no later than today
+            # (considering timezones ahead of UTC)
+            elif self.date and self.date > timezone.localdate(
+                timezone=pytz.timezone("Etc/GMT-14")
+            ):
+                msg = "Date must be in the past."
+                errors["date"].append(ValidationError(msg))
+
+            if (
+                self.involvement_type.notes_required
+                and not self.trainee_notes
+                and not self.notes
+            ):
+                msg = (
+                    f'In the case of {self.requirement} - "{self.involvement_type}",'
+                    " this field is required if there are no notes from the trainee."
+                )
+                errors["notes"].append(ValidationError(msg))
+
+        # state check
         if self.state == "f" and not self.notes:
             msg = "In the case of a Failed state, this field is required."
-            raise ValidationError({"notes": msg})
+            errors["notes"].append(ValidationError(msg))
 
-        super().clean()
+        if errors:
+            raise ValidationError(errors)
 
     class Meta:
         ordering = ["created_at"]
-
-
-# ------------------------------------------------------------
-
-
-class CurriculumManager(models.Manager):
-    def default_order(
-        self,
-        allow_unknown=True,
-        allow_other=True,
-        allow_mix_match=False,
-        dont_know_yet_first=False,
-    ):
-        """A specific order_by() clause with semi-ninja code."""
-
-        # This crazy django-ninja-code gives different weights to entries
-        # matching different criterias, and then sorts them by 'name'.
-        # For example when two entries (e.g. swc-r and swc-python) have the
-        # same weight (here: 10), then sorting by name comes in.
-        # Entries dc-other, swc-other, lc-other, or `I don't know` are made
-        # last of their "group".
-        qs = self.order_by(
-            Case(
-                When(carpentry="SWC", other=False, then=10),
-                When(carpentry="SWC", other=True, then=15),
-                When(carpentry="DC", other=False, then=20),
-                When(carpentry="DC", other=True, then=25),
-                When(carpentry="LC", other=False, then=30),
-                When(carpentry="LC", other=True, then=35),
-                When(unknown=True, then=1 if dont_know_yet_first else 200),
-                When(carpentry="", then=100),
-                default=1,
-            ),
-            "name",
-        )
-
-        # conditionally disable unknown ("I don't know") entry from appearing
-        # in the list
-        if not allow_unknown:
-            qs = qs.filter(unknown=False)
-
-        # conditionally disable other entries (swc-other, etc.) from appearing
-        # in the list
-        if not allow_other:
-            qs = qs.filter(other=False)
-
-        # conditionally disable Mix&Match entry from appearing in the list
-        if not allow_mix_match:
-            qs = qs.filter(mix_match=False)
-
-        return qs
-
-
-class Curriculum(ActiveMixin, models.Model):
-    CARPENTRIES_CHOICES = (
-        ("SWC", "Software Carpentry"),
-        ("DC", "Data Carpentry"),
-        ("LC", "Library Carpentry"),
-        ("", "unspecified / irrelevant"),
-    )
-    carpentry = models.CharField(
-        max_length=5,
-        choices=CARPENTRIES_CHOICES,
-        null=False,
-        blank=True,
-        default="",
-        verbose_name="Which Carpentry does this curriculum belong to?",
-    )
-    slug = models.CharField(
-        max_length=STR_MED,
-        null=False,
-        blank=False,
-        default="",
-        unique=True,
-        verbose_name="Curriculum ID",
-        help_text="Use computer-friendly text here, e.g. 'dc-ecology-r'.",
-    )
-    name = models.CharField(
-        max_length=200,
-        null=False,
-        blank=False,
-        default="",
-        unique=True,
-        verbose_name="Curriculum name",
-        help_text="Use user-friendly language, e.g. "
-        "'Data Carpentry (Ecology with R)'.",
-    )
-    description = models.TextField(
-        max_length=400,
-        null=False,
-        blank=True,
-        default="",
-        verbose_name="Curriculum longer description",
-        help_text="You can enter Markdown. It will be shown as a hover or "
-        "popup over the curriculum entry on forms.",
-    )
-    other = models.BooleanField(
-        null=False,
-        blank=True,
-        default=False,
-        verbose_name="Field marked as 'Other'",
-        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', "
-        "'DC Other', or simply 'Other')",
-    )
-    unknown = models.BooleanField(
-        null=False,
-        blank=True,
-        default=False,
-        verbose_name="Unknown entry",
-        help_text="Mark this curriculum record as 'I don't know yet', or "
-        "'Unknown', or 'Not sure yet'. There can be only one such "
-        "record in the database.",
-    )
-    mix_match = models.BooleanField(
-        null=False,
-        blank=True,
-        default=False,
-        verbose_name="Mix & Match",
-        help_text="Mark this curriculum record as 'Mix & Match'."
-        "There can be only one such record in the database.",
-    )
-    website = models.URLField(
-        blank=True,
-        default="",
-        verbose_name="Curriculum page",
-    )
-
-    objects = CurriculumManager()
-
-    class Meta:
-        verbose_name = "Curriculum"
-        verbose_name_plural = "Curricula"
-        ordering = [
-            "slug",
-        ]
-
-    def __str__(self):
-        return self.name
-
-    @transaction.atomic
-    def save(self, *args, **kwargs):
-        """When saving with `unknown=True`, update all other records with this
-        parameter to `unknown=False`. This helps keeping only one record with
-        `unknown=True` in the database - a specific case of uniqueness."""
-
-        # wrapped in transaction in order to prevent from updating records to
-        # `unknown=False` when saving fails
-        if self.unknown:
-            Curriculum.objects.filter(unknown=True).update(unknown=False)
-        # same for mix_match
-        if self.mix_match:
-            Curriculum.objects.filter(mix_match=True).update(mix_match=False)
-        return super().save(*args, **kwargs)
 
 
 # ------------------------------------------------------------

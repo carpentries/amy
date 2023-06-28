@@ -27,9 +27,19 @@ def progress_label(progress):
 def progress_description(progress):
     assert isinstance(progress, TrainingProgress)
 
-    text = "{state} {type}<br />on {day}.{notes}".format(
+    # build involvement details as needed
+    if progress.requirement.name == "Get Involved" and progress.involvement_type:
+        involvement = "<br />"
+        involvement += progress.involvement_type.name
+        if progress.involvement_type.name == "Other":
+            involvement += f": {progress.trainee_notes or 'No details provided'}"
+    else:
+        involvement = ""
+
+    text = "{state} {type}{involvement}<br />on {day}.{notes}".format(
         state=progress.get_state_display(),
         type=progress.requirement,
+        involvement=involvement,
         day=progress.created_at.strftime("%A %d %B %Y at %H:%M"),
         notes="<br />Notes: {}".format(escape(progress.notes))
         if progress.notes
