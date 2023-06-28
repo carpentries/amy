@@ -6,7 +6,7 @@ name: CI (feature)
 # but do run CI if a PR is made with any feature branch as a base
 on:
   push:
-    branches: [ 'feature/instructor-checkout-changes' ]
+    branches: [ ]
   pull_request:
     branches: [ 'feature/**' ]
 
