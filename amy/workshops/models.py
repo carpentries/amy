@@ -659,11 +659,9 @@ class PersonManager(BaseUserManager):
                 )
             )
 
-        LESSON_CONTRIBUTION_NAMES = ["Lesson Contribution"]
-
         return self.annotate(
             passed_training=passed("Training"),
-            passed_lesson_contribution=passed_either(*LESSON_CONTRIBUTION_NAMES),
+            passed_get_involved=passed("Get Involved"),
             passed_welcome=passed("Welcome Session"),
             passed_demo=passed("Demo"),
         ).annotate(
@@ -674,7 +672,7 @@ class PersonManager(BaseUserManager):
             instructor_eligible=(
                 F("passed_training")
                 * F("passed_welcome")
-                * F("passed_lesson_contribution")
+                * F("passed_get_involved")
                 * F("passed_demo")
             )
         )
@@ -971,7 +969,7 @@ class Person(
         """
         fields = [
             ("passed_training", "Training"),
-            ("passed_lesson_contribution", "Lesson Contribution"),
+            ("passed_get_involved", "Get Involved"),
             ("passed_welcome", "Welcome Session"),
             ("passed_demo", "Demo"),
         ]

@@ -1,6 +1,5 @@
 from crispy_forms.layout import Layout
 from django import forms
-from django.core.exceptions import ValidationError
 from django.forms import CharField, RadioSelect, TextInput
 
 from trainings.models import Involvement
@@ -79,28 +78,6 @@ class TrainingProgressForm(forms.ModelForm):
     class Media:
         js = ("trainingprogress_form.js",)
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        trainee = cleaned_data.get("trainee")
-
-        # check if trainee has at least one training task
-        training_tasks = trainee.get_training_tasks()
-
-        if not training_tasks:
-            raise ValidationError(
-                "It's not possible to add training progress "
-                "to a trainee without any training task."
-            )
-
-        errors = dict()
-
-        # TODO: validation based on url_required in Involvement, etc
-
-        # raise errors if any present
-        if errors:
-            raise ValidationError(errors)
-
 
 class BulkAddTrainingProgressForm(forms.ModelForm):
     event = forms.ModelChoiceField(
@@ -148,19 +125,3 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
             "state": RadioSelect,
             "notes": TextInput,
         }
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        trainees = cleaned_data.get("trainees", [])
-
-        # check if all trainees have at least one training task
-        for trainee in trainees:
-            training_tasks = trainee.get_training_tasks()
-
-            if not training_tasks:
-                raise ValidationError(
-                    "It's not possible to add training "
-                    "progress to a trainee without any "
-                    "training task."
-                )

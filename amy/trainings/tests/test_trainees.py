@@ -4,6 +4,7 @@ from functools import partial
 from django.urls import reverse
 
 from trainings.filters import filter_trainees_by_instructor_status
+from trainings.models import Involvement
 from trainings.views import all_trainees_queryset
 from workshops.models import (
     Award,
@@ -94,12 +95,15 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         self.demo, _ = TrainingRequirement.objects.get_or_create(
             name="Demo", defaults={"url_required": True}
         )
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={}
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved", defaults={}
         )
 
         self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.training = TrainingRequirement.objects.get(name="Training")
+        self.involvement, _ = Involvement.objects.get_or_create(
+            name="Test Involvement", defaults={}
+        )
 
     def _setUpInstructors(self):
         # prepare data
@@ -160,7 +164,9 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    requirement=self.lesson_contribution,
+                    requirement=self.get_involved,
+                    involvement_type=self.involvement,
+                    date=date(2023, 6, 1),
                     state="p",
                 ),
                 TrainingProgress(
@@ -191,7 +197,9 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    requirement=self.lesson_contribution,
+                    requirement=self.get_involved,
+                    involvement_type=self.involvement,
+                    date=date(2023, 6, 1),
                     state="p",
                 ),
                 TrainingProgress(
@@ -226,7 +234,9 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    requirement=self.lesson_contribution,
+                    requirement=self.get_involved,
+                    involvement_type=self.involvement,
+                    date=date(2023, 6, 1),
                     state="p",
                 ),
                 TrainingProgress(
@@ -295,7 +305,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=0,
                 passed_training=1,
                 passed_welcome=1,
-                passed_lesson_contribution=1,
+                passed_get_involved=1,
                 passed_demo=1,
                 instructor_eligible=1,
             ),
@@ -305,7 +315,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=4,
                 passed_training=1,
                 passed_welcome=1,
-                passed_lesson_contribution=1,
+                passed_get_involved=1,
                 passed_demo=1,
                 instructor_eligible=1,
             ),
@@ -315,7 +325,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 is_instructor=0,
                 passed_training=1,
                 passed_welcome=0,
-                passed_lesson_contribution=1,
+                passed_get_involved=1,
                 passed_demo=1,
                 instructor_eligible=0,
             ),
