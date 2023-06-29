@@ -3,9 +3,10 @@ from unittest import mock
 from urllib.parse import urlencode
 import weakref
 
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
+from emails.actions import persons_merged_receiver
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.signals import persons_merged_signal
 from workshops.models import Person
@@ -13,6 +14,17 @@ from workshops.tests.base import TestBase
 
 
 class TestPersonsMergedReceived(TestCase):
+    @mock.patch("emails.actions.logger")
+    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+        # Arrange
+        with self.settings(EMAIL_MODULE_ENABLED=False):
+            # Act
+            persons_merged_receiver(None)
+            # Assert
+            mock_logger.debug.assert_called_once_with(
+                "EMAIL_MODULE_ENABLED not set, skipping persons_merged_receiver"
+            )
+
     def test_signal_received(self) -> None:
         # Arrange
         person = Person.objects.create()
@@ -50,6 +62,7 @@ class TestPersonsMergedReceived(TestCase):
         # Finally
         persons_merged_signal.receivers = _copied_receivers[:]
 
+    @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_action_triggered(self) -> None:
         # Arrange
         person = Person.objects.create()
@@ -80,6 +93,7 @@ class TestPersonsMergedReceived(TestCase):
             request, f"Action was scheduled: {scheduled_email.get_absolute_url()}."
         )
 
+    @override_settings(EMAIL_MODULE_ENABLED=True)
     @mock.patch("emails.actions.messages")
     @mock.patch("emails.actions.timezone")
     def test_email_scheduled(
@@ -114,6 +128,7 @@ class TestPersonsMergedReceived(TestCase):
             to_header=[person.email],
         )
 
+    @override_settings(EMAIL_MODULE_ENABLED=True)
     @mock.patch("emails.actions.messages")
     def test_missing_template(self, mock_messages: mock.MagicMock) -> None:
         # Arrange
@@ -138,6 +153,7 @@ class TestPersonsMergedReceived(TestCase):
 
 
 class TestPersonsMergedSignalReceiverIntegration(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_integration(self) -> None:
         # Arrange
         self._setUpUsersAndLogin()

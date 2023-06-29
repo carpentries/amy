@@ -43,8 +43,10 @@ env = environ.Env(
         str,
         "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
     ),
-    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
+    # Feature flags
+    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
+    AMY_EMAIL_MODULE_ENABLED=(bool, False),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -600,6 +602,7 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRE
 # -----------------------------------------------------------------------------
 # This module is the next version of Autoemails.
 EMAIL_TEMPLATE_ENGINE_BACKEND = "db_backend"
+EMAIL_MODULE_ENABLED = env("AMY_EMAIL_MODULE_ENABLED")
 
 # Reports
 # -----------------------------------------------------------------------------

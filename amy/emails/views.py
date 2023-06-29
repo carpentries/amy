@@ -1,9 +1,16 @@
+from django.conf import settings
+
 from emails.models import EmailTemplate, ScheduledEmail
-from workshops.base_views import AMYListView
+from workshops.base_views import AMYListView, ConditionallyEnabledMixin
 from workshops.utils.access import OnlyForAdminsMixin
 
 
-class EmailTemplateListView(OnlyForAdminsMixin, AMYListView):
+class EmailModuleEnabledMixin(ConditionallyEnabledMixin):
+    def get_view_enabled(self) -> bool:
+        return settings.EMAIL_MODULE_ENABLED is True
+
+
+class EmailTemplateListView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_templates"
     template_name = "emails/email_template_list.html"
@@ -11,7 +18,7 @@ class EmailTemplateListView(OnlyForAdminsMixin, AMYListView):
     title = "Email Templates"
 
 
-class ScheduledEmailListView(OnlyForAdminsMixin, AMYListView):
+class ScheduledEmailListView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_emails"
     template_name = "emails/scheduled_email_list.html"
