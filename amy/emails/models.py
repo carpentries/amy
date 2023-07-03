@@ -1,6 +1,8 @@
 import uuid
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -161,6 +163,19 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         verbose_name="Linked template",
+    )
+
+    # This generic relation is limited only to single relation, and only to models
+    # defining their PK as numeric.
+    generic_relation_content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    generic_relation_pk = models.PositiveIntegerField(null=True, blank=True)
+    generic_relation = GenericForeignKey(
+        "generic_relation_content_type", "generic_relation_pk"
     )
 
     class Meta:

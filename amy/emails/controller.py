@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from django.db.models import Model
+
 from emails.models import (
     EmailTemplate,
     ScheduledEmail,
@@ -15,6 +17,7 @@ class EmailController:
         context: dict,
         scheduled_at: datetime,
         to_header: list[str],
+        generic_relation_obj: Model | None = None,
     ) -> ScheduledEmail:
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
         engine = EmailTemplate.get_engine()
@@ -33,6 +36,7 @@ class EmailController:
             subject=subject,
             body=body,
             template=template,
+            generic_relation=generic_relation_obj,
         )
         ScheduledEmailLog.objects.create(
             details=f"Scheduled {signal} to run at {scheduled_at.isoformat()}",

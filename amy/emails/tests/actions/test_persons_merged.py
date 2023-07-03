@@ -126,6 +126,7 @@ class TestPersonsMergedReceived(TestCase):
             context=context,
             scheduled_at=scheduled_at,
             to_header=[person.email],
+            generic_relation_obj=person,
         )
 
     @override_settings(EMAIL_MODULE_ENABLED=True)

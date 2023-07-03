@@ -123,8 +123,16 @@
     <td><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
   </tr>
   <tr>
-    <th>Related objects:</th>
-    <td>TODO</td>
+    <th>Related object:</th>
+    <td>
+      {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
+      <a href="{{ scheduled_email.generic_relation.get_absolute_url }}">{{ scheduled_email.generic_relation }}</a>
+      {% elif scheduled_email.generic_relation %}
+      {{ scheduled_email.generic_relation }}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
   </tr>
   <tr>
     <th>History:<br><small>(newest to oldest)</small></th>

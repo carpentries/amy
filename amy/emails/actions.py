@@ -47,11 +47,12 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
     }
     signal = "persons_merged"
     try:
-        scheduled_email = EmailController.schedule_email(  # noqa
+        scheduled_email = EmailController.schedule_email(
             signal=signal,
             context=context,
             scheduled_at=scheduled_at,
             to_header=[person.email],
+            generic_relation_obj=person,
         )
     except EmailTemplate.DoesNotExist:
         messages.warning(
@@ -63,4 +64,3 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
             request,
             f"Action was scheduled: {scheduled_email.get_absolute_url()}.",
         )
-    # TODO: associate scheduled_email with person
