@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.dispatch import receiver
 from django.http import HttpRequest
 from django.utils import timezone
+from django.utils.html import format_html
 from typing_extensions import Unpack
 
 from emails.controller import EmailController
@@ -62,5 +63,9 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
     else:
         messages.info(
             request,
-            f"Action was scheduled: {scheduled_email.get_absolute_url()}.",
+            format_html(
+                'Action was scheduled: <a href="{}">{}</a>.',
+                scheduled_email.get_absolute_url(),
+                scheduled_email.pk,
+            ),
         )

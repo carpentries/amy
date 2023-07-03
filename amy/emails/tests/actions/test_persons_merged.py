@@ -90,7 +90,9 @@ class TestPersonsMergedReceived(TestCase):
         # Assert
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages.info.assert_called_once_with(
-            request, f"Action was scheduled: {scheduled_email.get_absolute_url()}."
+            request,
+            f'Action was scheduled: <a href="{scheduled_email.get_absolute_url()}">'
+            f"{scheduled_email.pk}</a>.",
         )
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
