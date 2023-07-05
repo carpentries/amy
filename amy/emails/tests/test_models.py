@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from emails.models import (
@@ -124,6 +125,27 @@ class TestEmailTemplate(TestCase):
         self.assertIsNotNone(template.id)  # `id` should be UUID
         self.assertEqual(str(template), "Test Email Template")
 
+    def test_get_absolute_url(self) -> None:
+        # Arrange
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal="test_email_template",
+            subject="Greetings {{ name }}",
+            from_header="workshops@carpentries.org",
+            # Intentionally omitted.
+            # reply_to_header="",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        # Act
+        url = template.get_absolute_url()
+
+        # Assert
+        self.assertEqual(
+            url, reverse("email_template_detail", kwargs={"pk": template.pk})
+        )
+
 
 class TestScheduledEmail(TestCase):
     def test_object_create(self) -> None:
@@ -162,6 +184,40 @@ class TestScheduledEmail(TestCase):
         self.assertEqual(
             str(scheduled_email),
             "['peter@spiderman.net', 'harry@potter.co.uk']: Greetings Tony Stark",
+        )
+
+    def test_get_absolute_url(self) -> None:
+        # Arrange
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal="test_email_template",
+            subject="Greetings {{ name }}",
+            from_header="workshops@carpentries.org",
+            # Intentionally omitted.
+            # reply_to_header="",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = EmailTemplate.get_engine()
+        context = {"name": "Tony Stark"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net", "harry@potter.co.uk"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        # Act
+        url = scheduled_email.get_absolute_url()
+
+        # Assert
+        self.assertEqual(
+            url, reverse("scheduled_email_detail", kwargs={"pk": scheduled_email.pk})
         )
 
 

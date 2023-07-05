@@ -1,10 +1,15 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from emails.models import EmailTemplate, ScheduledEmail
+from emails.models import (
+    EmailTemplate,
+    ScheduledEmail,
+    ScheduledEmailLog,
+    ScheduledEmailStatus,
+)
 from workshops.tests.base import TestBase
 
 
@@ -39,6 +44,29 @@ class TestEmailTemplateListView(TestBase):
         # Assert
         self.assertEqual(list(rv.context["email_templates"]), [template1, template2])
         self.assertEqual(rv.context["title"], "Email templates")
+
+
+class TestEmailTemplateDetailView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        url = reverse("email_template_detail", kwargs={"pk": template.pk})
+
+        # Act
+        rv = self.client.get(url)
+
+        # Assert
+        self.assertEqual(rv.context["email_template"], template)
 
 
 class TestScheduledEmailListView(TestBase):
@@ -99,3 +127,188 @@ class TestScheduledEmailListView(TestBase):
             [scheduled_email2, scheduled_email1],  # Due to ordering
         )
         self.assertEqual(rv.context["title"], "Scheduled emails")
+
+
+class TestScheduledEmailDetailView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = EmailTemplate.get_engine()
+        context = {"name": "Harry"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        url = reverse("scheduled_email_detail", kwargs={"pk": scheduled_email.pk})
+
+        # Act
+        rv = self.client.get(url)
+
+        # Assert
+        self.assertEqual(
+            rv.context["scheduled_email"],
+            scheduled_email,
+        )
+        self.assertEqual(
+            rv.context["title"], f'Scheduled email "{scheduled_email.subject}"'
+        )
+        self.assertEqual(
+            list(rv.context["log_entries"]),
+            list(
+                ScheduledEmailLog.objects.filter(
+                    scheduled_email=scheduled_email
+                ).order_by("-created_at")
+            ),
+        )
+
+
+class TestScheduledEmailEditView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = EmailTemplate.get_engine()
+        context = {"name": "Harry"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        url = reverse("scheduled_email_edit", kwargs={"pk": scheduled_email.pk})
+        data = {
+            "to_header": "hermione@granger.com",
+            "from_header": "noreply@carpentries.org",
+            "reply_to_header": "",
+            "cc_header": "",
+            "bcc_header": "",
+            "subject": "Welcome, Hermione",
+            "body": "Hi Hermione!",
+        }
+
+        # Act
+        rv = self.client.post(url, data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 302)
+        scheduled_email.refresh_from_db()
+
+        self.assertEqual(scheduled_email.to_header, ["hermione@granger.com"])
+        self.assertEqual(scheduled_email.from_header, "noreply@carpentries.org")
+        self.assertEqual(scheduled_email.reply_to_header, "")
+        self.assertEqual(scheduled_email.cc_header, [])
+        self.assertEqual(scheduled_email.bcc_header, [])
+        self.assertEqual(scheduled_email.subject, "Welcome, Hermione")
+        self.assertEqual(scheduled_email.body, "Hi Hermione!")
+
+
+class TestScheduledEmailRescheduleView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = EmailTemplate.get_engine()
+        context = {"name": "Harry"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        url = reverse("scheduled_email_reschedule", kwargs={"pk": scheduled_email.pk})
+        new_scheduled_date = datetime(2023, 1, 1, 0, 0, tzinfo=UTC)
+        data = {
+            "scheduled_at_0": f"{new_scheduled_date:%Y-%m-%d}",
+            "scheduled_at_1": f"{new_scheduled_date:%H:%M:%S}",
+        }
+
+        # Act
+        rv = self.client.post(url, data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 302)
+        scheduled_email.refresh_from_db()
+        self.assertEqual(scheduled_email.scheduled_at, new_scheduled_date)
+
+
+class TestScheduledEmailCancelView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = EmailTemplate.get_engine()
+        context = {"name": "Harry"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        url = reverse("scheduled_email_cancel", kwargs={"pk": scheduled_email.pk})
+
+        # Act
+        rv = self.client.post(url, {})
+
+        # Assert
+        self.assertEqual(rv.status_code, 302)
+        scheduled_email.refresh_from_db()
+        self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
