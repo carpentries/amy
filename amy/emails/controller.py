@@ -59,3 +59,16 @@ class EmailController:
             scheduled_email=scheduled_email,
         )
         return scheduled_email
+
+    @staticmethod
+    def cancel_email(scheduled_email: ScheduledEmail) -> ScheduledEmail:
+        old_state = scheduled_email.state
+        scheduled_email.state = ScheduledEmailStatus.CANCELLED
+        scheduled_email.save()
+        ScheduledEmailLog.objects.create(
+            details="Email was cancelled",
+            state_before=old_state,
+            state_after=scheduled_email.state,
+            scheduled_email=scheduled_email,
+        )
+        return scheduled_email

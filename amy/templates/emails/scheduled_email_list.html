@@ -18,7 +18,7 @@
     {% for email in scheduled_emails %}
       <tr>
         <td><a href="{{ email.get_absolute_url }}">{{ email.id }}</a></td>
-        <td>{{ email.state }}</td>
+        <td class="text-{% if email.state == 'failed' %}danger{% elif email.state == 'succeeded'%}success{% elif email.state == 'cancelled' %}secondary{% else %}info{% endif %}">{{ email.state }}</td>
         <td>{{ email.scheduled_at }}</td>
         <td>
             {% if email.to_header %}

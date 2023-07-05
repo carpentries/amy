@@ -33,3 +33,7 @@ class ScheduledEmailRescheduleForm(forms.Form):
     )
 
     helper = BootstrapHelper(submit_label="Update")
+
+
+class ScheduledEmailCancelForm(forms.Form):
+    helper = BootstrapHelper(submit_label="Cancel the email (prevent from running)")
