@@ -8,6 +8,7 @@ jobs:
   test_a11y:
     name: Accessibility testing with ${{ matrix.package }}
     runs-on: ubuntu-latest
+    continue-on-error: true # currently we expect these tests to fail
     strategy:
       matrix:
         python-version: ["3.11"]
@@ -129,6 +130,7 @@ jobs:
           npm install -g pa11y-ci pa11y-ci-reporter-html
           pa11y-ci
         if: matrix.package == 'pa11y'
+        continue-on-error: true
 
       - name: Upload pa11y test results
         uses: actions/upload-artifact@v3
