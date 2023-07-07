@@ -2,8 +2,9 @@ from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
-from rq import Queue, SimpleWorker
 from rq.exceptions import NoSuchJobError
+from rq.queue import Queue
+from rq.worker import SimpleWorker
 
 from autoemails import admin
 from autoemails.job import Job
@@ -119,6 +120,12 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # anywhere else.
         queue = Queue("separate_queue", connection=self.connection)
         worker = SimpleWorker([queue], connection=queue.connection)
+
+        # !!! This is a hack required for this test to pass. Subscribing runs a thread
+        # that somehow disrupts how the data access to the queues works. There's no
+        # configuration available to disable the subscription, so a monkey-patching
+        # approach was used.
+        worker.subscribe = lambda: None
 
         # log admin user
         self._logSuperuserIn()

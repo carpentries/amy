@@ -68,7 +68,8 @@ class ArchiveActionMixin:
 
     def has_delete_permission(self, *args, **kwargs):
         """Determines if the admin class can delete objects.
-        See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission"""  # noqa
+        See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission
+        """  # noqa
         return False
 
     def warning_message(self, obj: Any) -> str:
@@ -105,12 +106,20 @@ class TermOptionInline(admin.TabularInline):
 
     def has_delete_permission(self, *args, **kwargs):
         """Determines if the admin class can delete objects.
-        See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission"""  # noqa
+        See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission
+        """  # noqa
         return False
 
 
 class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
-    list_display = ("slug", "content", "required_type", "archived_at")
+    list_display = (
+        "slug",
+        "content",
+        "training_request_content",
+        "short_description",
+        "required_type",
+        "archived_at",
+    )
     inlines = [
         TermOptionInline,
     ]

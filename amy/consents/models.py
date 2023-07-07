@@ -12,7 +12,7 @@ from django.utils.functional import cached_property
 from autoemails.mixins import RQJobsMixin
 from consents.exceptions import TermOptionDoesNotBelongToTermException
 from workshops.mixins import CreatedUpdatedArchivedMixin
-from workshops.models import STR_MED, Person
+from workshops.models import STR_LONG, STR_MED, Person, TrainingRequest
 
 
 class TermQuerySet(QuerySet):
@@ -67,10 +67,19 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
 
     slug = models.SlugField(unique=True)
     content = models.TextField(verbose_name="Content")
+    training_request_content = models.TextField(
+        verbose_name="Content for Training Request Form",
+        blank=True,
+        help_text=(
+            "If set, the regular content will be replaced with this"
+            " text on the instructor training request form."
+        ),
+    )
     required_type = models.CharField(
         max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
     )
     help_text = models.TextField(verbose_name="Help Text", blank=True)
+    short_description = models.CharField(max_length=STR_LONG)
     objects = TermManager.from_queryset(TermQuerySet)()
 
     @staticmethod
@@ -196,25 +205,12 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
                 )
 
 
-class ConsentQuerySet(QuerySet):
-    def active(self):
-        return self.filter(archived_at=None)
-
-
-class Consent(CreatedUpdatedArchivedMixin, models.Model):
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
     term_option = models.ForeignKey(TermOption, on_delete=models.PROTECT, null=True)
-    objects = Manager.from_queryset(ConsentQuerySet)()
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["person", "term"],
-                name="person__term__unique__when__archived_at__null",
-                condition=models.Q(archived_at__isnull=True),
-            ),
-        ]
+        abstract = True
 
     def save(self, *args, **kwargs):
         if self.term_option and self.term.pk != self.term_option.term.pk:
@@ -228,6 +224,25 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
 
     def is_active(self) -> bool:
         return self.archived_at is None
+
+
+class ConsentQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
+
+
+class Consent(BaseConsent):
+    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    objects = Manager.from_queryset(ConsentQuerySet)()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["person", "term"],
+                name="person__term__unique__when__archived_at__null",
+                condition=models.Q(archived_at__isnull=True),
+            ),
+        ]
 
     @classmethod
     def create_unset_consents_for_term(cls, term: Term) -> None:
@@ -245,10 +260,6 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
             )
             for person in Person.objects.all()
         )
-
-    def archive(self) -> None:
-        self.archived_at = timezone.now()
-        self.save()
 
     @classmethod
     def archive_all_for_term(cls, terms: Iterable[Term]) -> None:
@@ -281,3 +292,27 @@ class Consent(CreatedUpdatedArchivedMixin, models.Model):
             term_option=term_option,
             person_id=consent.person.pk,
         )
+
+
+class TrainingRequestConsentQuerySet(QuerySet):
+    def active(self):
+        return self.filter(archived_at=None)
+
+
+class TrainingRequestConsent(BaseConsent):
+    """
+    A consent for a training request. People filling out the training request form
+    should accept all required consents. This model is used to store the consents.
+    """
+
+    training_request = models.ForeignKey(TrainingRequest, on_delete=models.CASCADE)
+    objects = Manager.from_queryset(TrainingRequestConsentQuerySet)()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["training_request", "term"],
+                name="training_request__term__unique__when__archived_at__null",
+                condition=models.Q(archived_at__isnull=True),
+            ),
+        ]

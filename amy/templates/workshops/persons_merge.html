@@ -152,8 +152,28 @@
   </tr>
   <tr>
     <th>Consents</th>
-    <td></td>
-    <td></td>
+    <td>
+      <dl>
+      {% for consent in obj_a_consents.values %}
+        <dt>{{ consent.term.content}}</dt>
+        <dd>
+          <small class="d-block">{{ consent.created_at }}</small>
+          {{ consent.term_option|default:"Unset" }}
+        </dd>
+      {% endfor %}
+      </dl>
+    </td>
+    <td>
+      <dl>
+      {% for consent in obj_b_consents.values %}
+        <dt>{{ consent.term.content}}</dt>
+        <dd>
+          <small class="d-block">{{ consent.created_at }}</small>
+          {{ consent.term_option|default:"Unset" }}
+        </dd>
+      {% endfor %}
+      </dl>
+    </td>
     <th>{% include "includes/merge_radio.html" with field=form.consent_set %}</th>
   </tr>
 </table>

@@ -4,6 +4,7 @@ from functools import partial
 from django.urls import reverse
 
 from trainings.filters import filter_trainees_by_instructor_status
+from trainings.models import Involvement
 from trainings.views import all_trainees_queryset
 from workshops.models import (
     Award,
@@ -27,10 +28,14 @@ class TestTraineesView(TestBase):
         self._setUpRoles()
 
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={"url_required": True}
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved", defaults={"involvement_required": True}
         )
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
+        self.demo = TrainingRequirement.objects.get(name="Demo")
+        self.involvement, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution", defaults={"url_required": True}
+        )
 
         self.ttt_event = Event.objects.create(
             start=datetime(2018, 7, 14),
@@ -39,23 +44,7 @@ class TestTraineesView(TestBase):
         )
         self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 
-    def test_view_loads(self):
-        rv = self.client.get(reverse("all_trainees"))
-        self.assertEqual(rv.status_code, 200)
-
-    def test_bulk_add_progress(self):
-        TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=self.discussion, state="n"
-        )
-        data = {
-            "trainees": [self.spiderman.pk, self.ironman.pk],
-            "requirement": self.discussion.pk,
-            "state": "a",
-            "submit": "",
-        }
-
-        # all trainees need to have a training task to assign a training
-        # progress to them
+        # add some training tasks
         self.ironman.task_set.create(
             event=self.ttt_event,
             role=Role.objects.get(name="learner"),
@@ -65,49 +54,146 @@ class TestTraineesView(TestBase):
             role=Role.objects.get(name="learner"),
         )
 
-        rv = self.client.post(reverse("all_trainees"), data, follow=True)
+    def test_view_loads(self):
+        rv = self.client.get(reverse("all_trainees"))
+        self.assertEqual(rv.status_code, 200)
 
-        self.assertEqual(rv.resolver_match.view_name, "all_trainees")
-        msg = "Successfully changed progress of all selected trainees."
-        self.assertContains(rv, msg)
-        got = set(
-            TrainingProgress.objects.values_list(
-                "trainee", "requirement", "state", "evaluated_by"
-            )
-        )
-        expected = {
-            (self.spiderman.pk, self.discussion.pk, "n", None),
-            (self.spiderman.pk, self.discussion.pk, "a", self.admin.pk),
-            (self.ironman.pk, self.discussion.pk, "a", self.admin.pk),
-        }
-        self.assertEqual(got, expected)
-
-    def test_bulk_discard_progress(self):
-        spiderman_progress = TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=self.discussion, state="n"
-        )
-        ironman_progress = TrainingProgress.objects.create(
-            trainee=self.ironman, requirement=self.discussion, state="n"
-        )
-        blackwidow_progress = TrainingProgress.objects.create(
-            trainee=self.blackwidow, requirement=self.discussion, state="n"
+    def test_bulk_add_progress__welcome(self):
+        # Arrange
+        # create a pre-existing progress to ensure bulk adding doesn't interfere
+        TrainingProgress.objects.create(
+            trainee=self.spiderman, requirement=self.welcome, state="n"
         )
         data = {
             "trainees": [self.spiderman.pk, self.ironman.pk],
-            "discard": "",
+            "requirement": self.welcome.pk,
+            "state": "a",
+            "submit": "",
         }
+
+        # Act
         rv = self.client.post(reverse("all_trainees"), data, follow=True)
 
+        # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainees")
-        msg = "Successfully discarded progress of all selected trainees."
+        msg = "Successfully changed progress of all selected trainees."
         self.assertContains(rv, msg)
-        spiderman_progress.refresh_from_db()
-        self.assertTrue(spiderman_progress.discarded)
-        ironman_progress.refresh_from_db()
-        self.assertTrue(ironman_progress.discarded)
-        blackwidow_progress.refresh_from_db()
-        self.assertFalse(blackwidow_progress.discarded)
+
+        got = set(
+            TrainingProgress.objects.values_list("trainee", "requirement", "state")
+        )
+        expected = {
+            (self.spiderman.pk, self.welcome.pk, "n"),
+            (self.spiderman.pk, self.welcome.pk, "a"),
+            (self.ironman.pk, self.welcome.pk, "a"),
+        }
+        self.assertEqual(got, expected)
+
+    def test_bulk_add_progress__training(self):
+        # Arrange
+        # create a pre-existing progress to ensure bulk adding doesn't interfere
+        TrainingProgress.objects.create(
+            trainee=self.spiderman, requirement=self.training, state="n"
+        )
+        data = {
+            "trainees": [self.spiderman.pk, self.ironman.pk],
+            "requirement": self.training.pk,
+            "state": "a",
+            "event": self.ttt_event.pk,
+            "submit": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainees"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainees")
+        msg = "Successfully changed progress of all selected trainees."
+        self.assertContains(rv, msg)
+
+        got = set(
+            TrainingProgress.objects.values_list("trainee", "requirement", "state")
+        )
+        expected = {
+            (self.spiderman.pk, self.training.pk, "n"),
+            (self.spiderman.pk, self.training.pk, "a"),
+            (self.ironman.pk, self.training.pk, "a"),
+        }
+        self.assertEqual(got, expected)
+
+    def test_bulk_add_progress__demo(self):
+        # Arrange
+        # create a pre-existing progress to ensure bulk adding doesn't interfere
+        TrainingProgress.objects.create(
+            trainee=self.spiderman, requirement=self.demo, state="n"
+        )
+        data = {
+            "trainees": [self.spiderman.pk, self.ironman.pk],
+            "requirement": self.demo.pk,
+            "state": "a",
+            "submit": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainees"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainees")
+        msg = "Successfully changed progress of all selected trainees."
+        self.assertContains(rv, msg)
+
+        got = set(
+            TrainingProgress.objects.values_list("trainee", "requirement", "state")
+        )
+        expected = {
+            (self.spiderman.pk, self.demo.pk, "n"),
+            (self.spiderman.pk, self.demo.pk, "a"),
+            (self.ironman.pk, self.demo.pk, "a"),
+        }
+        self.assertEqual(got, expected)
+
+    def test_bulk_add_progress__get_involved(self):
+        # Arrange
+        # create a pre-existing progress to ensure bulk adding doesn't interfere
+        TrainingProgress.objects.create(
+            trainee=self.spiderman,
+            requirement=self.get_involved,
+            state="n",
+            involvement_type=self.involvement,
+            url="https://example.org",
+            date=date(2022, 5, 3),
+        )
+        data = {
+            "trainees": [self.spiderman.pk, self.ironman.pk],
+            "requirement": self.get_involved.pk,
+            "state": "a",
+            "involvement_type": self.involvement.pk,
+            "url": "https://example.org",
+            "date": "2023-6-21",
+            "submit": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainees"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainees")
+        msg = "Successfully changed progress of all selected trainees."
+        self.assertContains(rv, msg)
+
+        got = set(
+            TrainingProgress.objects.values_list("trainee", "requirement", "state")
+        )
+        expected = {
+            (self.spiderman.pk, self.get_involved.pk, "n"),
+            (self.spiderman.pk, self.get_involved.pk, "a"),
+            (self.ironman.pk, self.get_involved.pk, "a"),
+        }
+        self.assertEqual(got, expected)
 
 
 class TestFilterTraineesByInstructorStatus(TestBase):
@@ -123,12 +209,15 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         self.demo, _ = TrainingRequirement.objects.get_or_create(
             name="Demo", defaults={"url_required": True}
         )
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={}
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved", defaults={}
         )
 
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.training = TrainingRequirement.objects.get(name="Training")
+        self.involvement, _ = Involvement.objects.get_or_create(
+            name="Test Involvement", defaults={}
+        )
 
     def _setUpInstructors(self):
         # prepare data
@@ -179,25 +268,23 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
-                    requirement=self.discussion,
+                    requirement=self.welcome,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
-                    requirement=self.lesson_contribution,
+                    requirement=self.get_involved,
+                    involvement_type=self.involvement,
+                    date=date(2023, 6, 1),
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee1,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
@@ -214,25 +301,23 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
-                    requirement=self.discussion,
+                    requirement=self.welcome,
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
-                    requirement=self.lesson_contribution,
+                    requirement=self.get_involved,
+                    involvement_type=self.involvement,
+                    date=date(2023, 6, 1),
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee2,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
@@ -252,26 +337,24 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             [
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.training,
                     state="p",  # passed
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
-                    requirement=self.discussion,
+                    requirement=self.welcome,
                     state="f",  # failed
                     notes="Failed",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
-                    requirement=self.lesson_contribution,
+                    requirement=self.get_involved,
+                    involvement_type=self.involvement,
+                    date=date(2023, 6, 1),
                     state="p",
                 ),
                 TrainingProgress(
                     trainee=self.trainee3,
-                    evaluated_by=None,
                     requirement=self.demo,
                     state="p",
                 ),
@@ -335,8 +418,8 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 username="trainee1_trainee1",
                 is_instructor=0,
                 passed_training=1,
-                passed_discussion=1,
-                passed_lesson_contribution=1,
+                passed_welcome=1,
+                passed_get_involved=1,
                 passed_demo=1,
                 instructor_eligible=1,
             ),
@@ -345,8 +428,8 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 username="trainee2_trainee2",
                 is_instructor=4,
                 passed_training=1,
-                passed_discussion=1,
-                passed_lesson_contribution=1,
+                passed_welcome=1,
+                passed_get_involved=1,
                 passed_demo=1,
                 instructor_eligible=1,
             ),
@@ -355,8 +438,8 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 username="trainee3_trainee3",
                 is_instructor=0,
                 passed_training=1,
-                passed_discussion=0,
-                passed_lesson_contribution=1,
+                passed_welcome=0,
+                passed_get_involved=1,
                 passed_demo=1,
                 instructor_eligible=0,
             ),

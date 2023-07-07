@@ -1,6 +1,7 @@
 from django.core import mail
 from django.urls import reverse
 
+from consents.models import Term, TermOptionChoices
 from extforms.views import TrainingRequestCreate
 from workshops.models import Role, TrainingRequest
 from workshops.tests.base import TestBase
@@ -45,6 +46,23 @@ class TestTrainingRequestForm(TestBase):
             "agreed_to_teach_workshops": "on",
             "privacy_consent": True,
         }
+        self.data.update(self.add_terms_to_payload())
+
+    def add_terms_to_payload(self) -> dict[str, int]:
+        data = {}
+        terms = (
+            Term.objects.prefetch_active_options()
+            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
+            .order_by("slug")
+        )
+        for term in terms:
+            option = next(
+                option
+                for option in term.options
+                if option.option_type == TermOptionChoices.AGREE
+            )
+            data[term.slug] = option.pk
+        return data
 
     def test_request_added(self):
         email = "john@smith.com"

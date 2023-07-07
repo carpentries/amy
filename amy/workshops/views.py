@@ -60,6 +60,7 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
+from emails.signals import persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
@@ -274,15 +275,10 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
             .active()
             .select_related("term", "term_option")
         )
-        consent_by_term_slug = {consent.term.slug: consent for consent in consents}
-        context["consents"] = {
-            "May contact": consent_by_term_slug[TermEnum.MAY_CONTACT],
-            "Consent to publish profile": consent_by_term_slug[TermEnum.PUBLIC_PROFILE],
-            "Consent to include name when publishing lessons": consent_by_term_slug[
-                TermEnum.MAY_PUBLISH_NAME
-            ],
-            "Privacy policy agreement": consent_by_term_slug[TermEnum.PRIVACY_POLICY],
+        consent_by_description = {
+            consent.term.short_description: consent for consent in consents
         }
+        context["consents"] = consent_by_description
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
         return context
@@ -626,6 +622,9 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 "tasks": self.object.task_set.select_related("role", "event").order_by(
                     "-event__slug"
                 ),
+                "consents": self.object.consent_set.select_related("term").order_by(
+                    "-archived_at"
+                ),
                 "consents_form": ActiveTermConsentsForm(
                     form_tag=False,
                     prefix="consents",
@@ -869,6 +868,13 @@ def persons_merge(request):
                     "You were redirected to the base "
                     "person.",
                 )
+                persons_merged_signal.send(
+                    sender=base_obj,
+                    request=request,
+                    person_a_id=obj_a.id,
+                    person_b_id=obj_b.id,
+                    selected_person_id=base_obj.id,
+                )
                 return redirect(base_obj.get_absolute_url())
         else:
             messages.error(request, "Fix errors in the form.")
@@ -878,6 +884,18 @@ def persons_merge(request):
         "form": form,
         "obj_a": obj_a,
         "obj_b": obj_b,
+        "obj_a_consents": {
+            consent.term.key: consent
+            for consent in Consent.objects.active()
+            .select_related("term", "term_option")
+            .filter(person=obj_a)
+        },
+        "obj_b_consents": {
+            consent.term.key: consent
+            for consent in Consent.objects.active()
+            .select_related("term", "term_option")
+            .filter(person=obj_b)
+        },
     }
     return render(request, "workshops/persons_merge.html", context)
 

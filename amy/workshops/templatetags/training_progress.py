@@ -11,17 +11,13 @@ register = template.Library()
 def progress_label(progress):
     assert isinstance(progress, TrainingProgress)
 
-    if progress.discarded:
-        additional_label = "dark"
-
-    else:
-        switch = {
-            "n": "warning",
-            "f": "danger",
-            "a": "info",
-            "p": "success",
-        }
-        additional_label = switch[progress.state]
+    switch = {
+        "n": "warning",
+        "f": "danger",
+        "a": "info",
+        "p": "success",
+    }
+    additional_label = switch[progress.state]
 
     fmt = "badge badge-{}".format(additional_label)
     return mark_safe(fmt)
@@ -31,16 +27,26 @@ def progress_label(progress):
 def progress_description(progress):
     assert isinstance(progress, TrainingProgress)
 
-    text = "{discarded}{state} {type}<br />{evaluated_by}<br />on {day}.{notes}".format(
-        discarded="discarded " if progress.discarded else "",
+    # build involvement details as needed
+    if progress.requirement.name == "Get Involved" and progress.involvement_type:
+        involvement = "<br />"
+        involvement += progress.involvement_type.name
+        if progress.involvement_type.name == "Other":
+            involvement += f": {progress.trainee_notes or 'No details provided'}"
+    else:
+        involvement = ""
+
+    day = (
+        progress.date.strftime("%A %d %B %Y")
+        if progress.date
+        else progress.created_at.strftime("%A %d %B %Y at %H:%M")
+    )
+
+    text = "{state} {type}{involvement}<br />on {day}.{notes}".format(
         state=progress.get_state_display(),
         type=progress.requirement,
-        evaluated_by=(
-            "evaluated by {}".format(progress.evaluated_by.full_name)
-            if progress.evaluated_by is not None
-            else "submitted"
-        ),
-        day=progress.created_at.strftime("%A %d %B %Y at %H:%M"),
+        involvement=involvement,
+        day=day,
         notes="<br />Notes: {}".format(escape(progress.notes))
         if progress.notes
         else "",

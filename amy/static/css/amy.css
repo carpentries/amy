@@ -76,6 +76,11 @@ table .table-row-distinctive {
     border-top: 4px solid #dee2e6 !important;
 }
 
+caption {
+    caption-side: top;
+    color: #000000;
+}
+
 .form-group small {
     font-size: 0.8rem;
 }
@@ -106,7 +111,6 @@ table .table-row-distinctive {
     line-height: inherit;
     overflow: visible;
     text-transform: none;
-    -webkit-appearance: button;
     color: #dc3545;
     background-color: transparent;
     display: inline-block;

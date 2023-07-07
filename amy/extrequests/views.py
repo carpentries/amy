@@ -20,7 +20,7 @@ from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import EmailTemplate, Trigger
-from consents.models import Term, TermEnum, TermOption, TermOptionChoices
+from consents.models import Term, TermOption, TrainingRequestConsent
 from consents.util import reconsent_for_term_option_type
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
@@ -726,53 +726,30 @@ def _match_training_request_to_person(
         )
         return False
 
-    # Create new style consents according to selection from the training request
-    # form.
-    try:
-        option_type = (
-            TermOptionChoices.AGREE
-            if training_request.data_privacy_agreement
-            else TermOptionChoices.DECLINE
-        )
-
-        reconsent_for_term_option_type(
-            term_key=TermEnum.PRIVACY_POLICY,
-            term_option_type=option_type,
-            person=training_request.person,
-        )
-
-    except (Term.DoesNotExist, TermOption.DoesNotExist):
-        logger.warning(
-            f"Either Term {TermEnum.PRIVACY_POLICY} or its term option was not found, "
-            "can't proceed."
-        )
-        messages.error(
-            request,
-            f"Error when setting person's consents. Term {TermEnum.PRIVACY_POLICY} or "
-            "related term option may not exist.",
-        )
-        return False
-
-    try:
-        # If they created a training request, we assume they agreed to "may contact"
-        # consent.
-        reconsent_for_term_option_type(
-            term_key=TermEnum.MAY_CONTACT,
-            term_option_type=TermOptionChoices.AGREE,
-            person=training_request.person,
-        )
-
-    except (Term.DoesNotExist, TermOption.DoesNotExist):
-        logger.warning(
-            f"Either Term {TermEnum.MAY_CONTACT} or its term option was not found, "
-            "can't proceed."
-        )
-        messages.error(
-            request,
-            f"Error when setting person's consents. Term {TermEnum.MAY_CONTACT} or "
-            "related term option may not exist.",
-        )
-        return False
+    # Create new style consents based on the training request consents used in the
+    # training request form.
+    training_request_consents = TrainingRequestConsent.objects.filter(
+        training_request=training_request
+    ).select_related("term_option", "term")
+    for consent in training_request_consents:
+        try:
+            option_type = consent.term_option.option_type
+            reconsent_for_term_option_type(
+                term_key=consent.term.key,
+                term_option_type=option_type,
+                person=training_request.person,
+            )
+        except (Term.DoesNotExist, TermOption.DoesNotExist):
+            logger.warning(
+                f"Either Term {consent.term.key} or its term option was not found, "
+                "can't proceed."
+            )
+            messages.error(
+                request,
+                f"Error when setting person's consents. Term {consent.term.key} or "
+                "related term option may not exist.",
+            )
+            return False
 
     return True
 
@@ -825,10 +802,20 @@ def trainingrequest_details(request, pk):
             ).first()  # may return None
         form = MatchTrainingRequestForm(initial={"person": person})
 
+    TERM_SLUGS = ["may-contact", "privacy-policy", "public-profile"]
     context = {
         "title": "Training request #{}".format(req.pk),
         "req": req,
         "form": form,
+        "consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=req)
+        },
+        "consents_content": {
+            term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
+        },
     }
     return render(request, "requests/trainingrequest.html", context)
 
@@ -933,6 +920,8 @@ def trainingrequests_merge(request):
             difficult = (
                 "domains",
                 "previous_involvement",
+                "comments",
+                "trainingrequestconsent_set",
             )
 
             try:
@@ -963,6 +952,18 @@ def trainingrequests_merge(request):
         "obj_a": obj_a,
         "obj_b": obj_b,
         "form": form,
+        "obj_a_consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=obj_a)
+        },
+        "obj_b_consents": {
+            consent.term.key: consent
+            for consent in TrainingRequestConsent.objects.select_related(
+                "term", "term_option"
+            ).filter(training_request=obj_b)
+        },
     }
     return render(request, "requests/trainingrequests_merge.html", context)
 

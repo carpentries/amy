@@ -1,7 +1,11 @@
+import logging
+
 from django.core.management.base import BaseCommand, CommandError
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from workshops.models import Person
+
+logger = logging.getLogger("amy")
 
 
 class Command(BaseCommand):
@@ -12,7 +16,7 @@ class Command(BaseCommand):
         username = "admin"
 
         if Person.objects.filter(username=username).exists():
-            print("Admin user exists, quitting.")
+            logger.info("Admin user exists, quitting.")
             return
 
         try:
@@ -23,14 +27,14 @@ class Command(BaseCommand):
                 email="admin@example.org",
                 password="admin",
             )
-            print("Created admin user")
+            logger.info("Created admin user")
 
             role_config = CommunityRoleConfig.objects.get(name="instructor")
             CommunityRole.objects.create(
                 config=role_config,
                 person=admin,
             )
-            print("Assigned Instructor community role to admin user")
+            logger.info("Assigned Instructor community role to admin user")
 
         except Exception as e:
             raise CommandError("Failed to create admin: {0}".format(str(e)))

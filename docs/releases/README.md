@@ -1,6 +1,6 @@
 # Release notes
 
-[CHANGELOG](https://github.com/carpentries/amy/blob/develop/CHANGELOG.md).
+Release notes for version v4.0.5 and later are kept in the [CHANGELOG](https://github.com/carpentries/amy/blob/develop/CHANGELOG.md) file in the AMY repository.
 
 * [v4.0.4 (2022-11-04)](./v4.0.4.md)
 * [v4.0.3 (2022-10-31)](./v4.0.3.md)

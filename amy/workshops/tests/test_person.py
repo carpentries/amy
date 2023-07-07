@@ -14,6 +14,7 @@ import webtest
 from webtest.forms import Upload
 
 from consents.models import Consent, Term, TermEnum
+from trainings.models import Involvement
 from workshops.filters import filter_taught_workshops
 from workshops.forms import PersonForm, PersonsMergeForm
 from workshops.mixins import GenderMixin
@@ -761,6 +762,7 @@ class TestPersonMerging(TestBase):
             orcid="0000-0000-0000",
             is_active=True,
         )
+        self.person_consent_active_terms(self.person_a)
         self.person_a.award_set.create(
             badge=self.swc_instructor, awarded=date(2016, 2, 16)
         )
@@ -794,6 +796,9 @@ class TestPersonMerging(TestBase):
             term.slug: iter(term.options)
             for term in Term.objects.active().prefetch_active_options()
         }
+        privacy_policy_only_term = next(
+            term_options_by_term_slug[TermEnum.PRIVACY_POLICY]
+        )
 
         # consents for person_a
         person_a_consents_by_term_slug = {
@@ -802,15 +807,38 @@ class TestPersonMerging(TestBase):
             .active()
             .select_related("term", "term_option")
         }
-        # no privacy policy consent
-        Consent.reconsent(
+        self.person_a_consent_privacy_policy = Consent.reconsent(
+            person_a_consents_by_term_slug[TermEnum.PRIVACY_POLICY],
+            privacy_policy_only_term,
+        )
+        self.person_a_consent_privacy_policy.created_at = datetime(
+            2023, 4, 10, tzinfo=timezone.utc
+        )
+        self.person_a_consent_privacy_policy.save()
+        self.person_a_consent_may_contact = Consent.reconsent(
             person_a_consents_by_term_slug[TermEnum.MAY_CONTACT],
             next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
-        Consent.reconsent(
+        self.person_a_consent_may_contact.created_at = datetime(
+            2023, 4, 11, tzinfo=timezone.utc
+        )
+        self.person_a_consent_may_contact.save()
+        self.person_a_consent_public_profile = Consent.reconsent(
             person_a_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
             next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
+        self.person_a_consent_public_profile.created_at = datetime(
+            2023, 4, 11, tzinfo=timezone.utc
+        )
+        self.person_a_consent_public_profile.save()
+        self.person_a_consent_may_publish_name = Consent.reconsent(
+            person_a_consents_by_term_slug[TermEnum.MAY_PUBLISH_NAME],
+            next(term_options_by_term_slug[TermEnum.MAY_PUBLISH_NAME]),
+        )
+        self.person_a_consent_may_publish_name.created_at = datetime(
+            2023, 4, 10, tzinfo=timezone.utc
+        )
+        self.person_a_consent_may_publish_name.save()
 
         # create second person
         self.person_b = Person.objects.create(
@@ -864,18 +892,38 @@ class TestPersonMerging(TestBase):
             .active()
             .select_related("term", "term_option")
         }
-        Consent.reconsent(
+        self.person_b_consent_privacy_policy = Consent.reconsent(
             person_b_consents_by_term_slug[TermEnum.PRIVACY_POLICY],
-            next(term_options_by_term_slug[TermEnum.PRIVACY_POLICY]),
+            privacy_policy_only_term,
         )
-        Consent.reconsent(
+        self.person_b_consent_privacy_policy.created_at = datetime(
+            2023, 4, 11, tzinfo=timezone.utc
+        )
+        self.person_b_consent_privacy_policy.save()
+        self.person_b_consent_may_contact = Consent.reconsent(
             person_b_consents_by_term_slug[TermEnum.MAY_CONTACT],
             next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
-        Consent.reconsent(
+        self.person_b_consent_may_contact.created_at = datetime(
+            2023, 4, 10, tzinfo=timezone.utc
+        )
+        self.person_b_consent_may_contact.save()
+        self.person_b_consent_public_profile = Consent.reconsent(
             person_b_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
             next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
+        self.person_b_consent_public_profile.created_at = datetime(
+            2023, 4, 10, tzinfo=timezone.utc
+        )
+        self.person_b_consent_public_profile.save()
+        self.person_b_consent_may_publish_name = Consent.reconsent(
+            person_b_consents_by_term_slug[TermEnum.MAY_PUBLISH_NAME],
+            next(term_options_by_term_slug[TermEnum.MAY_PUBLISH_NAME]),
+        )
+        self.person_b_consent_may_publish_name.created_at = datetime(
+            2023, 4, 11, tzinfo=timezone.utc
+        )
+        self.person_b_consent_may_publish_name.save()
 
         # set up a strategy
         self.strategy = {
@@ -906,7 +954,7 @@ class TestPersonMerging(TestBase):
             "trainingprogress_set": "combine",
             "comment_comments": "combine",  # made by this person
             "comments": "combine",  # regarding this person
-            "consent_set": "combine",
+            "consent_set": "most_recent",
         }
         base_url = reverse("persons_merge")
         query = urlencode({"person_a": self.person_a.pk, "person_b": self.person_b.pk})
@@ -937,6 +985,7 @@ class TestPersonMerging(TestBase):
             "occupation": "combine",
             "orcid": "combine",
             "is_active": "combine",
+            "consent_set": "combine",  # it actually accepts only "most_recent"
         }
         # fields additionally accepting "combine"
         passing = {
@@ -948,7 +997,6 @@ class TestPersonMerging(TestBase):
             "trainingprogress_set": "combine",
             "comment_comments": "combine",
             "comments": "combine",
-            "consent_set": "combine",
         }
         data = hidden.copy()
         data.update(failing)
@@ -1113,58 +1161,49 @@ class TestPersonMerging(TestBase):
             set(comments),
         )
 
-    def test_merging_consents_combine(self):
+    def test_merging_consents_most_recent(self):
         """Ensure consents regarding persons are correctly merged using
         `merge_objects`.
-        This test uses strategy 1 (combine)."""
-        self.strategy["consent_set"] = "combine"
-        expected_consents = list(
-            Consent.objects.filter(person__in=[self.person_a, self.person_b])
-        )
-        rv = self.client.post(self.url, data=self.strategy)
-        self.assertEqual(rv.status_code, 302)
-        self.person_b.refresh_from_db()
-        self.assertCountEqual(
-            [
-                (c.term, c.term_option, c.person)
-                for c in Consent.objects.filter(person=self.person_b)
-            ],
-            [(c.term, c.term_option, self.person_b) for c in expected_consents],
-        )
+        This test uses "most_recent" strategy."""
+        # Arrange
+        self.strategy["consent_set"] = "most_recent"
 
-    def test_merging_consents_obj_a(self):
-        """Ensure consents regarding persons are correctly merged using
-        `merge_objects`.
-        This test uses strategy 2 (object a)."""
-        self.strategy["consent_set"] = "obj_a"
-        expected_consents = list(Consent.objects.filter(person=self.person_a))
+        # Act
         rv = self.client.post(self.url, data=self.strategy)
-        self.assertEqual(rv.status_code, 302)
-        self.person_b.refresh_from_db()
-        self.assertCountEqual(
-            [
-                (c.term, c.term_option, c.person)
-                for c in Consent.objects.filter(person=self.person_b)
-            ],
-            [(c.term, c.term_option, self.person_b) for c in expected_consents],
-        )
 
-    def test_merging_consents_obj_b(self):
-        """Ensure consents regarding persons are correctly merged using
-        `merge_objects`.
-        This test uses strategy 3 (object b)."""
-        self.strategy["consent_set"] = "obj_b"
-        expected_consents = list(Consent.objects.filter(person=self.person_b))
-        rv = self.client.post(self.url, data=self.strategy)
+        # Assert
         self.assertEqual(rv.status_code, 302)
-        self.person_b.refresh_from_db()
-        self.assertCountEqual(
-            [
-                (c.term, c.term_option, c.person)
-                for c in Consent.objects.filter(person=self.person_b)
-            ],
-            [(c.term, c.term_option, self.person_b) for c in expected_consents],
-        )
+
+        # Deleted consents because they are older from the pair of consents beloging to
+        # person A and B, and they are not assigned to person B.
+        with self.assertRaises(Consent.DoesNotExist):
+            self.person_a_consent_privacy_policy.refresh_from_db()
+        with self.assertRaises(Consent.DoesNotExist):
+            self.person_a_consent_may_publish_name.refresh_from_db()
+
+        # Not deleted consents because they are newer or assigned to person B.
+        self.person_b_consent_privacy_policy.refresh_from_db()
+        self.person_a_consent_may_contact.refresh_from_db()
+        self.person_b_consent_may_contact.refresh_from_db()
+        self.person_a_consent_public_profile.refresh_from_db()
+        self.person_b_consent_public_profile.refresh_from_db()
+        self.person_b_consent_may_publish_name.refresh_from_db()
+
+        # Archived because they are older from the pair.
+        self.assertTrue(self.person_b_consent_may_contact.is_archived())
+        self.assertTrue(self.person_b_consent_public_profile.is_archived())
+
+        # Active
+        self.assertTrue(self.person_b_consent_privacy_policy.is_active())
+        self.assertTrue(self.person_a_consent_may_contact.is_active())
+        self.assertTrue(self.person_a_consent_public_profile.is_active())
+        self.assertTrue(self.person_b_consent_may_publish_name.is_active())
+
+        # Assigned to base person (person B)
+        self.assertEqual(self.person_b_consent_privacy_policy.person, self.person_b)
+        self.assertEqual(self.person_a_consent_may_contact.person, self.person_b)
+        self.assertEqual(self.person_a_consent_public_profile.person, self.person_b)
+        self.assertEqual(self.person_b_consent_may_publish_name.person, self.person_b)
 
 
 def github_username_to_uid_mock(username):
@@ -1254,12 +1293,15 @@ class TestGetMissingInstructorRequirements(TestBase):
     def setUp(self):
         self.person = Person.objects.create(username="person")
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={"url_required": True}
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved", defaults={"involvement_required": True}
         )
-        self.discussion = TrainingRequirement.objects.get(name="Discussion")
+        self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.demo, _ = TrainingRequirement.objects.get_or_create(
             name="Demo", defaults={}
+        )
+        self.involvement, _ = Involvement.objects.get_or_create(
+            name="Test Involvement", defaults={}
         )
 
     def test_all_requirements_satisfied(self):
@@ -1267,10 +1309,14 @@ class TestGetMissingInstructorRequirements(TestBase):
             trainee=self.person, state="p", requirement=self.training
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.lesson_contribution
+            trainee=self.person,
+            state="p",
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 5, 1),
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.discussion
+            trainee=self.person, state="p", requirement=self.welcome
         )
         TrainingProgress.objects.create(
             trainee=self.person, state="p", requirement=self.demo
@@ -1282,23 +1328,27 @@ class TestGetMissingInstructorRequirements(TestBase):
         self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
-        # Lesson Contribution was accepted, the second time.
+        # Get Involved was accepted, the second time.
         TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.lesson_contribution
+            trainee=self.person,
+            state="f",
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 5, 1),
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.lesson_contribution
+            trainee=self.person,
+            state="p",
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 6, 1),
         )
         # Not passed progress should be ignored.
         TrainingProgress.objects.create(
             trainee=self.person, state="f", requirement=self.demo
         )
         TrainingProgress.objects.create(
-            trainee=self.person, state="n", requirement=self.discussion
-        )
-        # Passed discarded progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training, discarded=True
+            trainee=self.person, state="n", requirement=self.welcome
         )
 
         person = Person.objects.annotate_with_instructor_eligibility().get(
@@ -1306,7 +1356,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Discussion", "Demo"],
+            ["Training", "Welcome Session", "Demo"],
         )
 
     def test_none_requirement_is_fulfilled(self):
@@ -1315,7 +1365,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         )
         self.assertEqual(
             person.get_missing_instructor_requirements(),
-            ["Training", "Lesson Contribution", "Discussion", "Demo"],
+            ["Training", "Get Involved", "Welcome Session", "Demo"],
         )
 
 

@@ -17,12 +17,12 @@ from django_comments.models import Comment
 from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
-from consents.models import Consent, TermEnum
+from consents.models import Consent, Term, TermEnum
 from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
-    LessonContributionForm,
+    GetInvolvedForm,
     SearchForm,
     SignupForRecruitmentForm,
 )
@@ -144,8 +144,17 @@ def instructor_dashboard(request):
         .select_related("term", "term_option")
     )
     consents_by_key = {consent.term.key: consent for consent in consents}
+    # get display content for all visible terms
+    consents_content = {
+        term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
+    }
 
-    context = {"title": "Your profile", "user": user, "consents": consents_by_key}
+    context = {
+        "title": "Your profile",
+        "user": user,
+        "consents": consents_by_key,
+        "consents_content": consents_content,
+    }
     return render(request, "dashboard/instructor_dashboard.html", context)
 
 
@@ -199,7 +208,7 @@ def autoupdate_profile(request):
 
 @login_required
 def training_progress(request):
-    lesson_contribution_form = LessonContributionForm()
+    get_involved_form = GetInvolvedForm()
 
     # Add information about instructor training progress to request.user.
     request.user = (
@@ -214,33 +223,35 @@ def training_progress(request):
         .get(pk=request.user.pk)
     )
 
-    progresses = request.user.trainingprogress_set.filter(discarded=False)
-    last_lesson_contribution = (
-        progresses.filter(requirement__name="Lesson Contribution")
+    progresses = request.user.trainingprogress_set
+    last_get_involved = (
+        progresses.filter(requirement__name="Get Involved")
         .order_by("-created_at")
         .first()
     )
 
     if request.method == "POST":
-        lesson_contribution_form = LessonContributionForm(data=request.POST)
-        if lesson_contribution_form.is_valid():
-            TrainingProgress.objects.create(
-                trainee=request.user,
-                state="n",  # not evaluated yet
-                requirement=TrainingRequirement.objects.get(name="Lesson Contribution"),
-                url=lesson_contribution_form.cleaned_data["url"],
-            )
+        base_training_progress = TrainingProgress(
+            trainee=request.user,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+        get_involved_form = GetInvolvedForm(
+            data=request.POST, instance=base_training_progress
+        )
+        if get_involved_form.is_valid():
+            get_involved_form.save()
+
             messages.success(
-                request, "Your Lesson Contribution submission will be evaluated soon."
+                request, "Your Get Involved submission will be evaluated soon."
             )
             return redirect(reverse("training-progress"))
 
     context = {
         "title": "Your training progress",
-        "lesson_contribution_form": lesson_contribution_form,
-        "lesson_contribution_in_evaluation": (
-            last_lesson_contribution is not None
-            and last_lesson_contribution.state == "n"
+        "get_involved_form": get_involved_form,
+        "get_involved_in_evaluation": (
+            last_get_involved is not None and last_get_involved.state == "n"
         ),
     }
     return render(request, "dashboard/training_progress.html", context)
