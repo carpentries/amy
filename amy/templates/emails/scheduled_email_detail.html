@@ -126,30 +126,31 @@
       {% endif %}
     </td>
   </tr>
-  <tr>
-    <th>History:<br><small>(newest to oldest)</small></th>
-    <td>
-      <table class="table">
-        <tr>
-          <th>Timestamp</th>
-          <th>State before</th>
-          <th>State after</th>
-          <th>Details</th>
-          <th>ID</th>
-        </tr>
+</table>
 
-        {% for log in log_entries %}
-        <tr>
-          <td>{{ log.created_at }}</td>
-          <td>{{ log.state_before }}</td>
-          <td>{{ log.state_after }}</td>
-          <td><code>{{ log.details }}</code></td>
-          <td>{{ log.id }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </td>
-  </tr>
+<table class="table table-striped">
+  <caption>History<br> <small>(newest to oldest)</small></caption>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>State before</th>
+      <th>State after</th>
+      <th>Details</th>
+      <th>Log entry ID</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for log in log_entries %}
+    <tr>
+      <td>{{ log.created_at }}</td>
+      <td>{{ log.state_before }}</td>
+      <td>{{ log.state_after }}</td>
+      <td><code>{{ log.details }}</code></td>
+      <td>{{ log.id }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 
 {% endblock %}
