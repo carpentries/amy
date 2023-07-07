@@ -6,7 +6,7 @@ The automated tests aim to test one page corresponding to each template in `amy/
 
 The following pages cannot be effectively tested automatically at the moment. Problems include:
 
-* page inaccessible to logged-in admin (`/terms/action_required)
+* page inaccessible to logged-in admin (`/terms/action_required``)
 * objects unavailable (e.g. no available signups for instructors to view)
 * file upload required (bulk uploads)
 * domain/slug required in URL, but organizations and events are randomly generated
