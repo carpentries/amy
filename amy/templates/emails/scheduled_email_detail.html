@@ -9,15 +9,7 @@
 
 {% block content %}
 
-<div class="alert alert-{% if scheduled_email.state == 'failed' %}danger{% elif scheduled_email.state == 'succeeded'%}success{% elif scheduled_email.state == 'cancelled' %}secondary{% else %}info{% endif %}">
-  <p>
-    Email was scheduled to run
-    <relative-time datetime="{{ scheduled_email.scheduled_at.isoformat }}"></relative-time>.
-  </p>
-  <p>
-    Current status: <strong>{{ scheduled_email.state }}</strong>.
-  </p>
-</div>
+{% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
 
 {% if perms.emails.change_scheduledemail %}
 <div class="edit-object">

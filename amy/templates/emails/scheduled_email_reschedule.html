@@ -11,18 +11,7 @@
 
 {% block content %}
 
-<div class="alert alert-{% if scheduled_email.state == 'failed' %}danger{% elif scheduled_email.state == 'succeeded'%}success{% else %}info{% endif %}">
-  <p>
-    Email was scheduled to run
-    <relative-time datetime="{{ scheduled_email.scheduled_at.isoformat }}"></relative-time>.
-  </p>
-  <p>
-    Current status: <strong>{{ scheduled_email.state }}</strong>.
-  </p>
-  <p>
-    Template: <a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a>.
-  </p>
-</div>
+{% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
 
 {% crispy form %}
 
