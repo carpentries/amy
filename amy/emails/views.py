@@ -137,5 +137,7 @@ class ScheduledEmailCancelView(
         return self.object.get_absolute_url()
 
     def form_valid(self, form: ScheduledEmailRescheduleForm):
-        EmailController.cancel_email(self.object)
+        if form.cleaned_data.get("confirm"):
+            EmailController.cancel_email(self.object)
+
         return super().form_valid(form)

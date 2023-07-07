@@ -306,7 +306,7 @@ class TestScheduledEmailCancelView(TestBase):
         url = reverse("scheduled_email_cancel", kwargs={"pk": scheduled_email.pk})
 
         # Act
-        rv = self.client.post(url, {})
+        rv = self.client.post(url, {"confirm": "yes"})
 
         # Assert
         self.assertEqual(rv.status_code, 302)

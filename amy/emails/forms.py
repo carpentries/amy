@@ -36,4 +36,5 @@ class ScheduledEmailRescheduleForm(forms.Form):
 
 
 class ScheduledEmailCancelForm(forms.Form):
-    helper = BootstrapHelper(submit_label="Cancel the email (prevent from running)")
+    confirm = forms.CharField(required=False)
+    decline = forms.CharField(required=False)

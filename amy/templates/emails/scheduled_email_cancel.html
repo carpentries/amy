@@ -1,7 +1,5 @@
 {% extends "base_nav.html" %}
 
-{% load crispy_forms_tags %}
-
 {% block title %}
 <h1>
   Scheduled email <code>{{ scheduled_email.subject }}</code>
@@ -13,6 +11,16 @@
 
 {% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
 
-{% crispy form %}
+<form method="POST" class="form-horizontal" role="form">
+  {% csrf_token %}
+  <div class="form-group row">
+    <div class="col-12 col-lg-5"></div>
+    <div class="col-12 col-lg-2">
+      <p>Are you sure you want to cancel this email?</p>
+      <input type="submit" name="confirm" value="Yes" class="btn btn-danger float-left">
+      <input type="submit" name="decline" value="No" class="btn btn-secondary float-right mt-0">
+    </div>
+  </div>
+</form>
 
 {% endblock %}
