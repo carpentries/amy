@@ -116,7 +116,7 @@ jobs:
         with:
           name: lighthouse-ci-report
           path: lighthouse-ci-report/
-        if: failure() && matrix.package == 'lighthouse'
+        if: matrix.package == 'lighthouse'
 
       # Pa11y
       
@@ -137,4 +137,4 @@ jobs:
         with:
           name: pa11y-ci-report
           path: pa11y-ci-report/
-        if: failure() && matrix.package == 'pa11y'
+        if: matrix.package == 'pa11y'
