@@ -11,7 +11,12 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        package: ["lighthouse", "pa11y"]
+        # two options for package: "pa11y" and "lighthouse"
+        # both options use axe-core ruleset for a11y tests
+        # pa11y runs faster and produces smaller artifacts
+        # lighthouse includes performance tests and other checks for non-a11y best practices
+        # for now, just use pa11y as we focus on improving a11y specifically
+        package: ["pa11y"] 
       fail-fast: false # don't cancel lighthouse job if pa11y fails, and vice versa
     env:
       AMY_DATABASE_HOST: localhost
