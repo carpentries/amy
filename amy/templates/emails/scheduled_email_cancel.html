@@ -1,0 +1,26 @@
+{% extends "base_nav.html" %}
+
+{% block title %}
+<h1>
+  Scheduled email <code>{{ scheduled_email.subject }}</code>
+  (<relative-time datetime="{{ scheduled_email.scheduled_at.isoformat }}"></relative-time>)
+</h1>
+{% endblock title %}
+
+{% block content %}
+
+{% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
+
+<form method="POST" class="form-horizontal" role="form">
+  {% csrf_token %}
+  <div class="form-group row">
+    <div class="col-12 col-lg-5"></div>
+    <div class="col-12 col-lg-2">
+      <p>Are you sure you want to cancel this email?</p>
+      <input type="submit" name="confirm" value="Yes" class="btn btn-danger float-left">
+      <input type="submit" name="decline" value="No" class="btn btn-secondary float-right mt-0">
+    </div>
+  </div>
+</form>
+
+{% endblock %}
