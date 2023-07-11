@@ -9,7 +9,13 @@
     {% for change in log %}
     <tr>
       <td>{{ change.date_created|date:'M j, P' }} </td>
-      <td>{% if change.user %}{{ change.user.personal }}{%else%}Unknown user{%endif%} changed <a href="{% url 'object_changes' change.pk %}">{{ change.version_set.all|first }}</a></td>
+      <td>
+        {% if change.user %}
+          {{ change.user.personal }}
+        {%else%}
+          Unknown user
+        {%endif%} 
+        changed <a href="{% url 'object_changes' change.version_set.first.pk %}">{{ change.version_set.all|first }}</a></td>
     </tr>
     {% endfor %}
     </table>
