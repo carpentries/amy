@@ -135,7 +135,6 @@ class TestTTTEventLookupView(TestBase):
             "/" if trainee is None else f"/?trainee={trainee}"
         )
         view = TTTEventLookupView(request=request, term=term)
-        print(view.get_queryset())
         return view
 
     def test_get_queryset_no_term_no_trainee(self):
