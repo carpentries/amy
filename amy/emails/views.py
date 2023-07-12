@@ -5,12 +5,16 @@ from django.shortcuts import get_object_or_404
 
 from emails.controller import EmailController
 from emails.forms import (
+    EmailTemplateCreateForm,
+    EmailTemplateEditForm,
     ScheduledEmailCancelForm,
     ScheduledEmailEditForm,
     ScheduledEmailRescheduleForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
 from workshops.base_views import (
+    AMYCreateView,
+    AMYDeleteView,
     AMYDetailView,
     AMYFormView,
     AMYListView,
@@ -40,6 +44,54 @@ class EmailTemplateDetailView(
     context_object_name = "email_template"
     template_name = "emails/email_template_detail.html"
     model = EmailTemplate
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f'Email template "{self.object}"'
+        return context
+
+
+class EmailTemplateCreateView(
+    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYCreateView
+):
+    permission_required = ["emails.add_emailtemplate"]
+    context_object_name = "email_template"
+    template_name = "emails/email_template_create.html"
+    form_class = EmailTemplateCreateForm
+    model = EmailTemplate
+    object: EmailTemplate
+    title = "Create a new email template"
+
+
+class EmailTemplateEditView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView):
+    permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
+    context_object_name = "email_template"
+    template_name = "emails/email_template_edit.html"
+    form_class = EmailTemplateEditForm
+    model = EmailTemplate
+    object: EmailTemplate
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f'Email template "{self.object}"'
+        return context
+
+
+class EmailTemplateDeleteView(
+    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeleteView
+):
+    permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
+    context_object_name = "email_template"
+    model = EmailTemplate
+    object: EmailTemplate
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f'Email template "{self.object}"'
+        return context
+
+
+# -------------------------------------------------------------------------------
 
 
 class ScheduledEmailListView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):

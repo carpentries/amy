@@ -5,13 +5,38 @@ from emails import views
 urlpatterns = [
     path(
         "templates/",
-        views.EmailTemplateListView.as_view(),
-        name="email_templates_list",
+        include([
+            path(
+                "",
+                views.EmailTemplateListView.as_view(),
+                name="email_templates_list",
+            ),
+            path(
+                "create/",
+                views.EmailTemplateCreateView.as_view(),
+                name="email_template_create",
+            ),
+        ]),
     ),
     path(
         "template/<uuid:pk>/",
-        views.EmailTemplateDetailView.as_view(),
-        name="email_template_detail",
+        include([
+            path(
+                "",
+                views.EmailTemplateDetailView.as_view(),
+                name="email_template_detail",
+            ),
+            path(
+                "edit/",
+                views.EmailTemplateEditView.as_view(),
+                name="email_template_edit",
+            ),
+            path(
+                "delete/",
+                views.EmailTemplateDeleteView.as_view(),
+                name="email_template_delete",
+            ),
+        ]),
     ),
     path(
         "scheduled_emails/",

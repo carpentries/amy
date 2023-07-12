@@ -5,9 +5,9 @@
 
 {% block content %}
     {% if perms.emails.add_email_template %}
-    <p><a href="#TODO" class="btn btn-success">New email template</a></p>
+    <p><a href="{% url 'email_template_create' %}" class="btn btn-success">New email template</a></p>
     {% else %}
-    <p><a href="#TODO" class="btn btn-success disabled">New email template</a></p>
+    <p><a href="#" class="btn btn-success disabled">New email template</a></p>
     {% endif %}
 {% if email_templates %}
     <table class="table table-striped">
@@ -58,9 +58,9 @@
     </table>
     {% pagination email_templates %}
     {% if perms.emails.add_email_template %}
-    <p><a href="#TODO" class="btn btn-success">New email template</a></p>
+    <p><a href="{% url 'email_template_create' %}" class="btn btn-success">New email template</a></p>
     {% else %}
-    <p><a href="#TODO" class="btn btn-success disabled">New email template</a></p>
+    <p><a href="#" class="btn btn-success disabled">New email template</a></p>
     {% endif %}
 {% else %}
     <p>No email templates.</p>
