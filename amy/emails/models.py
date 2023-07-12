@@ -47,8 +47,12 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default="",
         help_text="If empty, the default reply-to address will be 'from_header'.",
     )
-    cc_header = ArrayField(models.EmailField(blank=False))
-    bcc_header = ArrayField(models.EmailField(max_length=MAX_LENGTH, blank=False))
+    cc_header = ArrayField(
+        models.EmailField(blank=False), verbose_name="CC (header)", blank=True
+    )
+    bcc_header = ArrayField(
+        models.EmailField(blank=False), verbose_name="BCC (header)", blank=True
+    )
     subject = models.CharField(
         max_length=MAX_LENGTH,
         blank=False,
