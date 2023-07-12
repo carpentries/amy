@@ -79,7 +79,13 @@ class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
-        results = models.Event.objects.filter(tags__name="TTT")
+        results = models.Event.objects.ttt()
+
+        if trainee := self.request.GET.get("trainee"):
+            learner_tasks = models.Task.objects.filter(
+                role__name="learner", person__id=trainee
+            )
+            results = results.filter(task__in=learner_tasks)
 
         if self.term:
             results = results.filter(slug__icontains=self.term)
