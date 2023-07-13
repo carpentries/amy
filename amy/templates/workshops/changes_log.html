@@ -15,7 +15,7 @@
         {%else%}
           Unknown user
         {%endif%} 
-        changed <a href="{% url 'object_changes' change.version_set.first.pk %}">{{ change.version_set.all|first }}</a></td>
+        changed <a href="{% url 'object_changes' change.version_set.first.pk %}">{{ change.version_set.first }}</a></td>
     </tr>
     {% endfor %}
     </table>
