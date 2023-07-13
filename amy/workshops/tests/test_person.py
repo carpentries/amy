@@ -740,9 +740,7 @@ class TestPersonMerging(TestBase):
 
         # create training requirement
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.lesson_contribution, _ = TrainingRequirement.objects.get_or_create(
-            name="Lesson Contribution", defaults={"url_required": True}
-        )
+        self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
 
         # create first person
         self.person_a = Person.objects.create(
@@ -866,7 +864,7 @@ class TestPersonMerging(TestBase):
         self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
         self.person_b.trainingprogress_set.create(requirement=self.training)
-        self.person_b.trainingprogress_set.create(requirement=self.lesson_contribution)
+        self.person_b.trainingprogress_set.create(requirement=self.demo)
 
         # comments made by this person
         self.cb_1 = Comment.objects.create(
