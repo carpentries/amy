@@ -244,14 +244,14 @@ and are considered answer choices for are term.
 
 #### Archive Behavior
 
-When options are archived, any consents that rely on that option are archived and a new unset consent is created by AMY for the user. If the term the option was attached to is required, archiving the option may result in an email sent to any users who answered with this option.
+When option is archived, any consents that rely on that option are archived and a new unset consent is created by AMY for the user. If the term the option was attached to is required, archiving the option may result in an email sent to any users who answered with this option.
 
 #### Commonly used fields
 
 * `term_id` id of the term this option belongs to. This is linked to the `consents_term` table. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
 * `option_type` determines whether or not a term option is considered as an agreement or a decline for that term.
 * `content` the text displayed to the user when the term is rendered.
-* `archived_at` if this option is archived, a timestamp of when it was archived
+* `archived_at` a timestamp of when the option was archived or `NULL` if it wasn't
 
 ### Consent
 
@@ -281,4 +281,4 @@ When training request consents are archived, a new unset consent is created by A
 * `training_request_id` id of the training request this consent option belongs to. This is linked to the `workshops_trainingrequest` table.
 * `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
 * `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
-* `archived_at` if this consent is archived, a timestamp of when it was archived.
+* `archived_at` a timestamp of when the consent was archived or `NULL` if it wasn't.
