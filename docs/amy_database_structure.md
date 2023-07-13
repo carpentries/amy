@@ -239,12 +239,11 @@ When a term is archived, that term's associated options and consents are archive
 
 ### TermOption
 
-`consents_termoption` - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term,
-and are considered answer choices for are term.
+`consents_termoption` - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term. Options are considered answer choices for the term.
 
 #### Archive Behavior
 
-When option is archived, any consents that rely on that option are archived and a new unset consent is created by AMY for the user. If the term the option was attached to is required, archiving the option may result in an email sent to any users who answered with this option.
+When an option is archived, any consents that rely on that option are archived and a new unset consent is created by AMY for the user. If the term the option was attached to is required, archiving the option may result in an email sent to any users who answered with this option.
 
 #### Commonly used fields
 
