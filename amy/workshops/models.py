@@ -2667,6 +2667,20 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         elif not requirement.event_required and self.event:
             return self.get_not_required_error(requirement)
 
+        # check this trainee doesn't already have a training progress for this event
+        if self.event:
+            existing_progress = self.trainee.trainingprogress_set.filter(
+                event=self.event
+            )
+            if existing_progress:
+                # if this progress is not the only progress, raise an error
+                if not (len(existing_progress) == 1 and self in existing_progress):
+                    msg = (
+                        f"Trainee {self.trainee} already has a training progress "
+                        "for event {self.event}."
+                    )
+                    return ValidationError(msg)
+
     def clean_involvement_type(
         self,
         requirement: TrainingRequirement,

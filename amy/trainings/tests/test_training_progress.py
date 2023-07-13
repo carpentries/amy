@@ -158,6 +158,8 @@ class TestTrainingProgressValidation(TestBase):
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         event = Event.objects.create(slug="ttt", host=org)
         event.tags.add(ttt)
+        event2 = Event.objects.create(slug="ttt-2", host=org)
+        event2.tags.add(ttt)
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
@@ -166,11 +168,32 @@ class TestTrainingProgressValidation(TestBase):
         p2 = TrainingProgress.objects.create(
             requirement=self.event_required,
             trainee=self.admin,
-            event=event,
+            event=event2,
         )
         with self.assertValidationErrors(["event"]):
             p1.full_clean()
         p2.full_clean()
+
+    def test_event_progress_already_exists(self):
+        org = Organization.objects.create(
+            domain="example.com", fullname="Test Organization"
+        )
+        ttt, _ = Tag.objects.get_or_create(name="TTT")
+        event = Event.objects.create(slug="ttt", host=org)
+        event.tags.add(ttt)
+        p1 = TrainingProgress.objects.create(
+            requirement=self.event_required,
+            trainee=self.admin,
+            event=event,
+        )
+        p1.full_clean()  # should be no error if only this progress exists
+        p2 = TrainingProgress.objects.create(
+            requirement=self.event_required,
+            trainee=self.admin,
+            event=event,
+        )
+        with self.assertValidationErrors(["event"]):
+            p2.full_clean()
 
     def test_involvement_is_required(self):
         p1 = TrainingProgress.objects.create(
