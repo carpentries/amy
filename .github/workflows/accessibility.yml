@@ -1,0 +1,130 @@
+name: Accessibility tests
+on:
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  test_a11y:
+    name: Accessibility testing with ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    continue-on-error: true # currently we expect these tests to fail
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        # two options for package: "pa11y" and "lighthouse"
+        # both options use axe-core ruleset for a11y tests
+        # pa11y runs faster and produces smaller artifacts
+        # lighthouse includes performance tests and other checks for non-a11y best practices
+        # for now, just use pa11y as we focus on improving a11y specifically
+        package: ["pa11y"] 
+      fail-fast: false # don't cancel lighthouse job if pa11y fails, and vice versa
+    env:
+      AMY_DATABASE_HOST: localhost
+      AMY_DATABASE_PORT: 5432
+      AMY_DATABASE_NAME: test_amy
+      AMY_DATABASE_USER: postgres
+      AMY_DATABASE_PASSWORD: postgres  
+      AMY_INSTRUCTOR_RECRUITMENT_ENABLED: True
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_amy
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+    steps:
+
+      # Database setup
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install pipenv
+          pipenv sync --dev
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install NodeJS dependencies
+        run: npm install
+
+      - name: Check migrations
+        run: |
+          pipenv run python manage.py makemigrations --dry-run --check;
+          if [[ $? != "0" ]]; then
+            exit 1;
+          fi;
+
+      - name: Collect static files
+        run: |
+          pipenv run python manage.py collectstatic --no-input;
+          if [[ $? != "0" ]]; then
+            exit 1;
+          fi;
+
+      - name: Set up dev database
+        run: |
+          echo "yes" | pipenv run make dev_database
+
+      - name: Set up Chromium
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: latest
+
+      # Lighthouse
+
+      - name: run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli@0.12.x 
+          npm install -g puppeteer
+          lhci autorun
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        if: matrix.package == 'lighthouse'
+
+      - name: Upload Lighthouse test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-ci-report
+          path: lighthouse-ci-report/
+        if: matrix.package == 'lighthouse'
+
+      # Pa11y
+      
+      - name: Start server in background
+        run: |
+          pipenv run make serve &
+        if: matrix.package == 'pa11y'
+
+      - name: Run pa11y
+        run: |
+          npm install -g pa11y-ci pa11y-ci-reporter-html
+          pa11y-ci
+        if: matrix.package == 'pa11y'
+        continue-on-error: true
+
+      - name: Upload pa11y test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pa11y-ci-report
+          path: pa11y-ci-report/
+        if: matrix.package == 'pa11y'
