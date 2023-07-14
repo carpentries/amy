@@ -1033,6 +1033,9 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
             ),
         }
 
+    class Media:
+        js = ("award_form.js",)
+
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
         failed_trainings = kwargs.pop("failed_trainings", False)

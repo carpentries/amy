@@ -71,6 +71,14 @@ class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Event.objects.all()
 
+        if person := self.request.GET.get("person"):
+            learner_progress = models.TrainingProgress.objects.filter(
+                trainee__id=person,
+                requirement=models.TrainingRequirement.objects.get(name="Training"),
+                state="p",
+            )
+            results = results.filter(trainingprogress__in=learner_progress)
+
         if self.term:
             results = results.filter(slug__icontains=self.term)
 

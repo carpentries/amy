@@ -2186,11 +2186,20 @@ class MockAwardCreate(
 
         # Determine initial event in AwardForm
         if "find-training" in self.request.GET:
+            initial.update(
+                {
+                    "badge": Badge.objects.get(name="instructor"),
+                }
+            )
             tasks = Person.objects.get(
                 pk=self.request.GET["person"]
             ).get_training_tasks()
             if tasks.count() == 1:
-                initial.update({"event": tasks[0].event})
+                initial.update(
+                    {
+                        "event": tasks[0].event,
+                    }
+                )
 
         return initial
 
