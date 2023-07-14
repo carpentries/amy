@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from functools import partial
+from html import escape
 
 from django.urls import reverse
 
@@ -120,6 +121,59 @@ class TestTraineesView(TestBase):
             (self.spiderman.pk, self.training.pk, "n"),
             (self.spiderman.pk, self.training.pk, "a"),
             (self.ironman.pk, self.training.pk, "a"),
+        }
+        self.assertEqual(got, expected)
+
+    def test_bulk_add_progress__training_with_failures(self):
+        # Arrange
+        # Intended result:
+        # spiderman: pass
+        # ironman: fail due to existing progress for this event
+        # blackwidow: fail due to no learner task for this event
+        TrainingProgress.objects.create(
+            trainee=self.ironman,
+            requirement=self.training,
+            state="n",
+            event=self.ttt_event,
+        )
+        data = {
+            "trainees": [self.spiderman.pk, self.ironman.pk, self.blackwidow.pk],
+            "requirement": self.training.pk,
+            "state": "a",
+            "event": self.ttt_event.pk,
+            "submit": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainees"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainees")
+
+        msgs = [
+            (
+                f"Trainee {escape(str(self.ironman))} already has a training progress "
+                f"for event {self.ttt_event}."
+            ),
+            (
+                f"Trainee {escape(str(self.blackwidow))} does not have a learner task "
+                f"for event {self.ttt_event}."
+            ),
+            (
+                "Changed progress of 1 trainee(s). "
+                "2 trainee(s) were skipped due to errors."
+            ),
+        ]
+        for msg in msgs:
+            self.assertContains(rv, msg)
+
+        got = set(
+            TrainingProgress.objects.values_list("trainee", "requirement", "state")
+        )
+        expected = {
+            (self.spiderman.pk, self.training.pk, "a"),  # new
+            (self.ironman.pk, self.training.pk, "n"),  # pre-existing
         }
         self.assertEqual(got, expected)
 

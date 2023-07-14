@@ -2667,19 +2667,33 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         elif not requirement.event_required and self.event:
             return self.get_not_required_error(requirement)
 
-        # check this trainee doesn't already have a training progress for this event
-        if self.event:
-            existing_progress = self.trainee.trainingprogress_set.filter(
-                event=self.event
-            )
-            if existing_progress:
-                # if this progress is not the only progress, raise an error
-                if not (len(existing_progress) == 1 and self in existing_progress):
-                    msg = (
-                        f"Trainee {self.trainee} already has a training progress "
-                        "for event {self.event}."
-                    )
-                    return ValidationError(msg)
+        if self.event and hasattr(self, "trainee") and self.trainee:
+            # check this trainee has a learner task for this event
+            try:
+                Task.objects.get(
+                    person=self.trainee,
+                    event=self.event,
+                    role=Role.objects.get(name="learner"),
+                )
+            except Task.DoesNotExist:
+                msg = (
+                    "This progress cannot be created without a corresponding learner "
+                    f"task. Trainee {self.trainee} does not have a learner task for "
+                    f"event {self.event}."
+                )
+                return ValidationError(msg)
+
+            # check this trainee doesn't already have a training progress for this event
+            return self.clean_event_existing_progress(self.event, self.trainee)
+
+    def clean_event_existing_progress(self, event, trainee):
+        if existing_progress := trainee.trainingprogress_set.filter(event=event):
+            if not (len(existing_progress) == 1 and self in existing_progress):
+                msg = (
+                    f"Trainee {self.trainee} already has a training progress "
+                    f"for event {self.event}."
+                )
+                return ValidationError(msg)
 
     def clean_involvement_type(
         self,

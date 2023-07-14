@@ -23,6 +23,7 @@ class TestTrainingProgressValidation(TestBase):
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
+        self._setUpRoles()  # used in event validation
 
         self.requirement = TrainingRequirement.objects.create(
             name="Welcome Session", url_required=False, event_required=False
@@ -55,6 +56,7 @@ class TestTrainingProgressValidation(TestBase):
                 "date_required": False,
             },
         )
+        self.learner = Role.objects.get(name="learner")
 
     def test_url_is_required(self):
         p1 = TrainingProgress.objects.create(
@@ -158,8 +160,10 @@ class TestTrainingProgressValidation(TestBase):
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         event = Event.objects.create(slug="ttt", host=org)
         event.tags.add(ttt)
+        event.task_set.create(person=self.admin, role=self.learner)
         event2 = Event.objects.create(slug="ttt-2", host=org)
         event2.tags.add(ttt)
+        event2.task_set.create(person=self.admin, role=self.learner)
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
@@ -174,7 +178,7 @@ class TestTrainingProgressValidation(TestBase):
             p1.full_clean()
         p2.full_clean()
 
-    def test_event_progress_already_exists(self):
+    def test_event_no_learner_task(self):
         org = Organization.objects.create(
             domain="example.com", fullname="Test Organization"
         )
@@ -186,12 +190,28 @@ class TestTrainingProgressValidation(TestBase):
             trainee=self.admin,
             event=event,
         )
-        p1.full_clean()  # should be no error if only this progress exists
-        p2 = TrainingProgress.objects.create(
+        with self.assertValidationErrors(["event"]):
+            p1.full_clean()
+
+    def test_event_progress_already_exists(self):
+        org = Organization.objects.create(
+            domain="example.com", fullname="Test Organization"
+        )
+        ttt, _ = Tag.objects.get_or_create(name="TTT")
+        event = Event.objects.create(slug="ttt", host=org)
+        event.tags.add(ttt)
+        event.task_set.create(person=self.admin, role=self.learner)
+        p1 = TrainingProgress.objects.create(
             requirement=self.event_required,
             trainee=self.admin,
             event=event,
         )
+        p2 = TrainingProgress(
+            requirement=self.event_required,
+            trainee=self.admin,
+            event=event,
+        )  # do not save to DB as the number of progresses affects the validation
+        p1.full_clean()  # should be no error if only this progress exists
         with self.assertValidationErrors(["event"]):
             p2.full_clean()
 
