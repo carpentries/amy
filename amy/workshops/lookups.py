@@ -71,6 +71,8 @@ class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Event.objects.all()
 
+        # person is provided through the AwardCreate view
+        # for which only the training progress is relevant for the event choice
         if person := self.request.GET.get("person"):
             learner_progress = models.TrainingProgress.objects.filter(
                 trainee__id=person,
@@ -89,6 +91,8 @@ class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Event.objects.ttt()
 
+        # trainee is provided through the TrainingProgress creation views
+        # for which learner tasks are relevant
         if trainee := self.request.GET.get("trainee"):
             learner_tasks = models.Task.objects.filter(
                 role__name="learner", person__id=trainee
