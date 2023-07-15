@@ -4,6 +4,7 @@
 {% endblock %}
 
 {% load crispy_forms_tags %}
+{% load dates %}
 
 {% block content %}
 
@@ -12,8 +13,8 @@
 {% endif %}
 
 <div>
-  <h2>Your progress of becoming The Carpentries Instructor</h2>
-
+  <h2>Your progress toward becoming a Carpentries Instructor</h2>
+  
   {% if user.instructor_badges %}
   <div class="alert alert-success" role="alert">
     <p>Congratulations, you're a certified:</p>
@@ -23,9 +24,38 @@
     {% endfor %}
     </ul>
   </div>
+  {% elif user.passed_training and user.passed_demo and user.passed_welcome and user.passed_get_involved %}
+  <div class="alert alert-info" role="alert">
+  <p>
+    Congratulations. You have successfully completed all steps towards Instructor certification. 
+    You will receive your certificate and more information by email in 1-2 weeks.
+  </p>
+  </div>
+  {% elif user.passed_training %}
+  <div class="alert alert-info" role="alert">
+    <p>
+      Please review your progress towards Instructor certification below. 
+      As a reminder, because you completed training on [DATE], you have until [DATE + 90 days] 
+      to complete these requirements. Visit our 
+      <a href="https://carpentries.github.io/instructor-training/checkout">checkout page</a>
+      for more information. 
+    </p>
+      If you would like an extension on this deadline, please contact us at 
+      <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org.</a>
+    </p>
+    <p>
+      If you have recently completed a training or step towards checkout, 
+      please allow 7-10 days for this information to show up in your profile.
+    </p>
+  </div>
+  {% else %}
+  <div class="alert alert-info" role="alert">
+    <p>
+      If you have recently completed a training or step towards checkout, 
+      please allow 7-10 days for this information to show up in your profile.
+    </p>
+  </div>
   {% endif %}
-
-  <div class="alert alert-warning" role="alert">Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge is correctly displayed, you are in good standing.</div>
 
   <table class="table table-striped">
     <tr>
@@ -34,7 +64,7 @@
         {% if user.passed_training %}
           <p class="text-success">Training passed.</p>
         {% else %}
-          <p>Training not passed yet.</p>
+          <p>Training not completed yet.</p>
         {% endif %}
       </td>
     </tr>
@@ -42,7 +72,7 @@
       <th rowspan="2">2. Get Involved</th>
       <td>
         {% if user.passed_get_involved %}
-        <p class="text-success">Get Involved submission accepted.</p>
+        <p class="text-success">Get Involved step passed.</p>
         {% elif get_involved_in_evaluation %}
         <p>Get Involved step evaluation pending.<br>Please wait while we evaluate your submission.</p>
         {% else %}
@@ -72,10 +102,18 @@
       <th>3. Welcome Session</th>
       <td>
         {% if user.passed_welcome %}
-          <p class="text-success">Welcome Session passed.</p>
+          <p class="text-success">Welcome Session completed.</p>
         {% else %}
-          <p>Welcome Session not passed yet.</p>
-          <p>Register for a Welcome Session on <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">this Etherpad</a>.</p>
+          <p>Welcome Session not completed yet.</p>
+          {% with is_late_in_year as show_next_year %}
+          <p>Register for a Welcome Session on
+            {% if show_next_year %}
+            one of these Etherpads: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>; <a href="https://pad.carpentries.org/welcome-sessions-{% next_year %}">Welcome Sessions {% next_year %}</a>.
+            {% else %}
+            this Etherpad: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>.
+            {% endif %}
+          </p>
+          {% endwith %}
         {% endif %}
       </td>
     </tr>
@@ -85,8 +123,8 @@
         {% if user.passed_demo %}
         <p class="text-success">Demo Session passed.</p>
         {% else %}
-        <p>Demo Session not completed.</p>
-        <p>You can register for a Demo Session on <a href="https://pad.carpentries.org/teaching-demos">this Etherpad</a>.</p>
+        <p>Demo Session not completed yet.</p>
+        <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
         {% endif %}
       </td>
     </tr>

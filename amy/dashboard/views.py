@@ -243,7 +243,9 @@ def training_progress(request):
             get_involved_form.save()
 
             messages.success(
-                request, "Your Get Involved submission will be evaluated soon."
+                request,
+                "Thank you. Your Get Involved submission will be reviewed within 7-10 "
+                "days.",
             )
             return redirect(reverse("training-progress"))
 
