@@ -469,7 +469,6 @@ class TestPerson(TestBase):
         self.assertEqual(
             int(swc_res.forms["main-form"]["award-event"].value), training.pk
         )
-        # swc_res.forms["main-form"]["award-badge"].select(self.instructor_badge.pk)
         res = swc_res.forms["main-form"].submit()
         self.assertRedirects(res, reverse("all_trainees"))
         self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)
