@@ -224,6 +224,17 @@ def training_progress(request):
     )
 
     progresses = request.user.trainingprogress_set
+    last_training = (
+        progresses.filter(requirement__name="Training").order_by("-created_at").first()
+    )
+    last_welcome = (
+        progresses.filter(requirement__name="Welcome Session")
+        .order_by("-created_at")
+        .first()
+    )
+    last_demo = (
+        progresses.filter(requirement__name="Demo").order_by("-created_at").first()
+    )
     last_get_involved = (
         progresses.filter(requirement__name="Get Involved")
         .order_by("-created_at")
@@ -252,9 +263,10 @@ def training_progress(request):
     context = {
         "title": "Your training progress",
         "get_involved_form": get_involved_form,
-        "get_involved_in_evaluation": (
-            last_get_involved is not None and last_get_involved.state == "n"
-        ),
+        "last_training": last_training,
+        "last_welcome": last_welcome,
+        "last_demo": last_demo,
+        "last_get_involved": last_get_involved,
     }
     return render(request, "dashboard/training_progress.html", context)
 

@@ -24,7 +24,7 @@
     {% endfor %}
     </ul>
   </div>
-  {% elif user.passed_training and user.passed_demo and user.passed_welcome and user.passed_get_involved %}
+  {% elif user.instructor_eligible %}
   <div class="alert alert-info" role="alert">
   <p>
     Congratulations. You have successfully completed all steps towards Instructor certification. 
@@ -35,17 +35,21 @@
   <div class="alert alert-info" role="alert">
     <p>
       Please review your progress towards Instructor certification below. 
-      As a reminder, because you completed training on [DATE], you have until [DATE + 90 days] 
-      to complete these requirements. Visit our 
-      <a href="https://carpentries.github.io/instructor-training/checkout">checkout page</a>
-      for more information. 
+      Based on your training date of {{ last_training.start_date }}, the 90-day deadline to complete these 
+      requirements is {% get_checkout_deadline last_training.start_date %}.
     </p>
-      If you would like an extension on this deadline, please contact us at 
-      <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org.</a>
+      If you would like an extension, please contact us at 
+      <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
+      and refer to your confirmation email for your updated deadline.
     </p>
     <p>
       If you have recently completed a training or step towards checkout, 
       please allow 7-10 days for this information to show up in your profile.
+    </p> 
+    <p>
+      Visit our 
+      <a href="https://carpentries.github.io/instructor-training/checkout">checkout page</a>
+      for more information. 
     </p>
   </div>
   {% else %}
@@ -62,7 +66,12 @@
       <th>1. Training</th>
       <td>
         {% if user.passed_training %}
-          <p class="text-success">Training passed.</p>
+          <p class="text-success">Training passed
+            {% if last_training %}
+              as of {{ last_training.end_date | date:'j F Y' }}
+            {% endif %}
+            .
+          </p>
         {% else %}
           <p>Training not completed yet.</p>
         {% endif %}
@@ -72,9 +81,18 @@
       <th rowspan="2">2. Get Involved</th>
       <td>
         {% if user.passed_get_involved %}
-        <p class="text-success">Get Involved step passed.</p>
-        {% elif get_involved_in_evaluation %}
-        <p>Get Involved step evaluation pending.<br>Please wait while we evaluate your submission.</p>
+        <p class="text-success">Get Involved step passed
+          {% if last_get_involved %}
+              as of {{ last_get_involved.last_updated_at | date:'j F Y'}}
+          {% endif %}
+          .
+        </p>
+        {% elif last_get_involved and last_get_involved.state == "n" %}
+        <p>Get Involved step evaluation pending
+          {% if last_get_involved %}
+              as of {{ last_get_involved.last_updated_at | date:'j F Y' }}
+          {% endif %}
+        .<br>Please wait while we evaluate your submission.</p>
         {% else %}
         <p>Get Involved step not submitted.</p>
         {% endif %}
@@ -102,10 +120,15 @@
       <th>3. Welcome Session</th>
       <td>
         {% if user.passed_welcome %}
-          <p class="text-success">Welcome Session completed.</p>
+          <p class="text-success">Welcome Session completed 
+            {% if last_welcome %}
+              as of {{ last_welcome.last_updated_at | date:'j F Y' }}
+            {% endif %}  
+            .
+          </p>
         {% else %}
           <p>Welcome Session not completed yet.</p>
-          {% with is_late_in_year as show_next_year %}
+          {% is_late_in_year as show_next_year %}
           <p>Register for a Welcome Session on
             {% if show_next_year %}
             one of these Etherpads: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>; <a href="https://pad.carpentries.org/welcome-sessions-{% next_year %}">Welcome Sessions {% next_year %}</a>.
@@ -113,7 +136,6 @@
             this Etherpad: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>.
             {% endif %}
           </p>
-          {% endwith %}
         {% endif %}
       </td>
     </tr>
@@ -121,7 +143,12 @@
       <th>4. Demo Session</th>
       <td>
         {% if user.passed_demo %}
-        <p class="text-success">Demo Session passed.</p>
+        <p class="text-success">Demo Session passed
+          {% if last_demo %}
+            as of {{ last_demo.last_updated_at | date:'j F Y' }}
+          {% endif %}
+          .
+        </p>
         {% else %}
         <p>Demo Session not completed yet.</p>
         <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
