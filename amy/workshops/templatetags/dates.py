@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django import template
 from django.utils.safestring import mark_safe
 from django.utils.timezone import now
@@ -20,17 +18,3 @@ def is_late_in_year():
     """return True if current month is October, November, or December"""
 
     return now().month >= 10
-
-
-@register.simple_tag
-def next_year():
-    """get the year after the current year"""
-
-    return now().year + 1
-
-
-@register.simple_tag
-def get_checkout_deadline(start_date):
-    """get the year after the current year"""
-
-    return start_date + timedelta(days=90)

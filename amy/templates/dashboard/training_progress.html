@@ -5,6 +5,7 @@
 
 {% load crispy_forms_tags %}
 {% load dates %}
+{% load training_progress %}
 
 {% block content %}
 
@@ -36,7 +37,7 @@
     <p>
       Please review your progress towards Instructor certification below. 
       Based on your training date of {{ last_training.start_date }}, the 90-day deadline to complete these 
-      requirements is {% get_checkout_deadline last_training.start_date %}.
+      requirements is {% checkout_deadline last_training.start_date %}.
     </p>
       If you would like an extension, please contact us at 
       <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
@@ -65,13 +66,10 @@
     <tr>
       <th>1. Training</th>
       <td>
-        {% if user.passed_training %}
-          <p class="text-success">Training passed
-            {% if last_training %}
-              as of {{ last_training.end_date | date:'j F Y' }}
-            {% endif %}
-            .
-          </p>
+        {% if last_training %}
+          {% progress_trainee_view last_training %}
+        {% elif user.passed_training %}
+          <p class="text-success">Training passed.</p>
         {% else %}
           <p>Training not completed yet.</p>
         {% endif %}
@@ -80,19 +78,13 @@
     <tr>
       <th rowspan="2">2. Get Involved</th>
       <td>
-        {% if user.passed_get_involved %}
-        <p class="text-success">Get Involved step passed
-          {% if last_get_involved %}
-              as of {{ last_get_involved.last_updated_at | date:'j F Y'}}
+        {% if last_get_involved %}
+          {% progress_trainee_view last_get_involved %}
+          {% if last_get_involved.state == "n" %}
+          <p>Please wait while we evaluate your submission.</p>
           {% endif %}
-          .
-        </p>
-        {% elif last_get_involved and last_get_involved.state == "n" %}
-        <p>Get Involved step evaluation pending
-          {% if last_get_involved %}
-              as of {{ last_get_involved.last_updated_at | date:'j F Y' }}
-          {% endif %}
-        .<br>Please wait while we evaluate your submission.</p>
+        {% elif user.passed_get_involved %}
+        <p class="text-success">Get Involved step passed.</p>
         {% else %}
         <p>Get Involved step not submitted.</p>
         {% endif %}
@@ -129,9 +121,10 @@
         {% else %}
           <p>Welcome Session not completed yet.</p>
           {% is_late_in_year as show_next_year %}
+          {% now 'Y' as current_year %}
           <p>Register for a Welcome Session on
             {% if show_next_year %}
-            one of these Etherpads: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>; <a href="https://pad.carpentries.org/welcome-sessions-{% next_year %}">Welcome Sessions {% next_year %}</a>.
+            one of these Etherpads: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>; <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year | add:'1' }}">Welcome Sessions {{ current_year | add:"1" }}</a>.
             {% else %}
             this Etherpad: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>.
             {% endif %}

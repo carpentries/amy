@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import template
 from django.template.defaultfilters import escape
 from django.utils.safestring import mark_safe
@@ -7,17 +9,21 @@ from workshops.models import TrainingProgress
 register = template.Library()
 
 
-@register.simple_tag
-def progress_label(progress):
-    assert isinstance(progress, TrainingProgress)
-
+def progress_state_class(state):
     switch = {
         "n": "warning",
         "f": "danger",
         "a": "info",
         "p": "success",
     }
-    additional_label = switch[progress.state]
+    return switch[state]
+
+
+@register.simple_tag
+def progress_label(progress):
+    assert isinstance(progress, TrainingProgress)
+
+    additional_label = progress_state_class(progress.state)
 
     fmt = "badge badge-{}".format(additional_label)
     return mark_safe(fmt)
@@ -52,4 +58,27 @@ def progress_description(progress):
         else "",
     )
     text = text[0].upper() + text[1:]
+    return mark_safe(text)
+
+
+@register.simple_tag
+def checkout_deadline(start_date):
+    """get the year after the current year"""
+
+    return start_date + timedelta(days=90)
+
+
+@register.simple_tag
+def progress_trainee_view(progress):
+    assert isinstance(progress, TrainingProgress)
+
+    date = progress.event.end if progress.event else progress.last_updated_at
+    notes = f"<br/>Notes: {progress.notes}" if progress.state in ["f", "a"] else ""
+
+    text = (
+        f'<p class="text-{progress_state_class(progress.state)}"> '
+        f"{progress.requirement.name} {progress.get_state_display().lower()} "
+        f'as of {date.strftime("%d %B %Y")}.{notes}</p>'
+    )
+
     return mark_safe(text)
