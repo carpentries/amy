@@ -1,10 +1,17 @@
 from django import forms
+from markdownx.fields import MarkdownxFormField
 
 from emails.models import EmailTemplate, ScheduledEmail
 from workshops.forms import BootstrapHelper
 
 
 class EmailTemplateCreateForm(forms.ModelForm):
+    body = MarkdownxFormField(
+        label=EmailTemplate._meta.get_field("body").verbose_name,
+        help_text=EmailTemplate._meta.get_field("body").help_text,
+        widget=forms.Textarea,
+    )
+
     class Meta:
         model = EmailTemplate
         fields = [

@@ -3,6 +3,7 @@ from typing import Any
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from markdownx.utils import markdownify
 
 from emails.controller import EmailController
 from emails.forms import (
@@ -45,10 +46,12 @@ class EmailTemplateDetailView(
     context_object_name = "email_template"
     template_name = "emails/email_template_detail.html"
     model = EmailTemplate
+    object: EmailTemplate
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
+        context["rendered_body"] = markdownify(self.object.body)
         return context
 
 

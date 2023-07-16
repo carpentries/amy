@@ -23,39 +23,39 @@
 <table class="table table-striped">
   <tr>
     <th width="20%">ID:</th>
-    <td>{{ email_template.id }}</td>
+    <td colspan="2">{{ email_template.id }}</td>
   </tr>
   <tr>
     <th>Active:</th>
-    <td><strong>{{ email_template.active|yesno }}</strong></td>
+    <td colspan="2"><strong>{{ email_template.active|yesno }}</strong></td>
   </tr>
   <tr>
     <th>Created at:</th>
-    <td>{{ email_template.created_at }}</td>
+    <td colspan="2">{{ email_template.created_at }}</td>
   </tr>
   <tr>
     <th>Last updated at:</th>
-    <td>{{ email_template.last_updated_at }}</td>
+    <td colspan="2">{{ email_template.last_updated_at }}</td>
   </tr>
   <tr>
     <th>Name:</th>
-    <td>{{ email_template.name }}</td>
+    <td colspan="2">{{ email_template.name }}</td>
   </tr>
   <tr>
     <th>Signal:</th>
-    <td><code>{{ email_template.signal }}</code></td>
+    <td colspan="2"><code>{{ email_template.signal }}</code></td>
   </tr>
   <tr>
     <th>From:</th>
-    <td>{{ email_template.from_header }}</td>
+    <td colspan="2">{{ email_template.from_header }}</td>
   </tr>
   <tr>
     <th>Reply-To:</th>
-    <td>{{ email_template.reply_to_header|default:"&mdash;" }}</td>
+    <td colspan="2">{{ email_template.reply_to_header|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>CC:</th>
-    <td>
+    <td colspan="2">
     {% if email_template.cc_header %}
       <ul>
       {% for email in email_template.cc_header %}
@@ -69,7 +69,7 @@
   </tr>
   <tr>
     <th>BCC:</th>
-    <td>
+    <td colspan="2">
     {% if email_template.bcc_header %}
       <ul>
       {% for email in email_template.bcc_header %}
@@ -83,12 +83,17 @@
   </tr>
   <tr>
     <th>Subject:</th>
-    <td><code>{{ email_template.subject }}</code></td>
+    <td colspan="2"><code>{{ email_template.subject }}</code></td>
   </tr>
   <tr>
     <th>Body: <br><small>(Markdown; converts to HTML when sent)</small></th>
     <td>
+      <strong>Raw:</strong>
       <pre>{{ email_template.body }}</pre>
+    </td>
+    <td>
+      <strong>Rendered:</strong>
+      {{ rendered_body|safe }}
     </td>
   </tr>
 </table>
