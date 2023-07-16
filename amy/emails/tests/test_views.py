@@ -67,6 +67,112 @@ class TestEmailTemplateDetailView(TestBase):
 
         # Assert
         self.assertEqual(rv.context["email_template"], template)
+        self.assertEqual(rv.context["title"], f'Email template "{template}"')
+        self.assertEqual(
+            rv.context["rendered_body"],
+            "<p>Hello, {{ name }}! Nice to meet <strong>you</strong>.</p>",
+        )
+
+
+class TestEmailTemplateCreateView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        url = reverse("email_template_create")
+        data = {
+            "name": "Greetings",
+            "signal": "greetings",
+            "from_header": "noreply@carpentries.org",
+            "reply_to_header": "",
+            "cc_header": "",
+            "bcc_header": "",
+            "subject": "Welcome, Hermione",
+            "body": "Hi Hermione!",
+        }
+
+        # Act
+        rv = self.client.post(url, data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 302)
+        template = EmailTemplate.objects.get(name="Greetings")
+
+        self.assertEqual(template.signal, "greetings")
+        self.assertEqual(template.from_header, "noreply@carpentries.org")
+        self.assertEqual(template.reply_to_header, "")
+        self.assertEqual(template.cc_header, [])
+        self.assertEqual(template.bcc_header, [])
+        self.assertEqual(template.subject, "Welcome, Hermione")
+        self.assertEqual(template.body, "Hi Hermione!")
+
+
+class TestEmailTemplateEditView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        url = reverse("email_template_edit", kwargs={"pk": template.pk})
+        data = {
+            "name": "Greetings",
+            "signal": "greetings",
+            "from_header": "noreply@carpentries.org",
+            "reply_to_header": "",
+            "cc_header": "",
+            "bcc_header": "",
+            "subject": "Welcome, Hermione",
+            "body": "Hi Hermione!",
+        }
+
+        # Act
+        rv = self.client.post(url, data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 302)
+        template.refresh_from_db()
+
+        self.assertEqual(template.name, "Greetings")
+        self.assertEqual(template.signal, "greetings")
+        self.assertEqual(template.from_header, "noreply@carpentries.org")
+        self.assertEqual(template.reply_to_header, "")
+        self.assertEqual(template.cc_header, [])
+        self.assertEqual(template.bcc_header, [])
+        self.assertEqual(template.subject, "Welcome, Hermione")
+        self.assertEqual(template.body, "Hi Hermione!")
+
+
+class TestEmailTemplateDeleteView(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        url = reverse("email_template_delete", kwargs={"pk": template.pk})
+
+        # Act
+        rv = self.client.post(url)
+
+        # Assert
+        self.assertEqual(rv.status_code, 302)
+        with self.assertRaises(EmailTemplate.DoesNotExist):
+            template.refresh_from_db()
 
 
 class TestScheduledEmailListView(TestBase):
@@ -176,6 +282,10 @@ class TestScheduledEmailDetailView(TestBase):
                     scheduled_email=scheduled_email
                 ).order_by("-created_at")
             ),
+        )
+        self.assertEqual(
+            rv.context["rendered_body"],
+            "<p>Hello, Harry! Nice to meet <strong>you</strong>.</p>",
         )
 
 
