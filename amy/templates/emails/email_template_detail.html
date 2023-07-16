@@ -2,25 +2,23 @@
 
 {% block content %}
 
-{% if perms.emails.change_emailtemplate %}
 <div class="edit-object">
-  <div class="btn-group">
-    <a class="btn btn-primary" href="{% url 'email_template_edit' email_template.id %}">Edit</a>
-  </div>
-  <div class="float-right">
-    <a class="btn btn-danger" href="{% url 'email_template_delete' email_template.id %}">Delete</a>
-  </div>
-</div>
-{% else %}
-<div class="edit-object">
-  <div class="btn-group">
+  {% if perms.emails.change_emailtemplate %}
+  <a class="btn btn-primary" href="{% url 'email_template_edit' email_template.id %}">Edit</a>
+  {% else %}
     <a class="btn btn-primary disabled" disabled href="#">Edit</a>
-  </div>
+  {% endif %}
   <div class="float-right">
-    <a class="btn btn-warning disabled" disabled href="#">Cancel</a>
+    {% if perms.emails.delete_emailtemplate %}
+    <form action="{% url 'email_template_delete' email_template.id %}" onsubmit='return confirm("Are you sure you wish to remove email template \"{{ email_template }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <a class="btn btn-danger disabled" disabled href="#">Delete</a>
+    {% endif %}
   </div>
 </div>
-{% endif %}
 
 <table class="table table-striped">
   <tr>

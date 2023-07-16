@@ -2,6 +2,7 @@ from typing import Any
 
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
 from emails.controller import EmailController
 from emails.forms import (
@@ -80,15 +81,11 @@ class EmailTemplateEditView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpda
 class EmailTemplateDeleteView(
     OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeleteView
 ):
-    permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
-    context_object_name = "email_template"
+    permission_required = ["emails.delete_emailtemplate"]
     model = EmailTemplate
-    object: EmailTemplate
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = f'Email template "{self.object}"'
-        return context
+    def get_success_url(self) -> str:
+        return reverse("email_templates_list")
 
 
 # -------------------------------------------------------------------------------
