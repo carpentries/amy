@@ -117,6 +117,7 @@ class ScheduledEmailDetailView(
         context["log_entries"] = ScheduledEmailLog.objects.filter(
             scheduled_email=self.object
         ).order_by("-created_at")
+        context["rendered_body"] = markdownify(self.object.body)
         return context
 
 

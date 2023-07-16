@@ -37,6 +37,12 @@ EmailTemplateEditForm = EmailTemplateCreateForm
 
 
 class ScheduledEmailEditForm(forms.ModelForm):
+    body = MarkdownxFormField(
+        label=ScheduledEmail._meta.get_field("body").verbose_name,
+        help_text=ScheduledEmail._meta.get_field("body").help_text,
+        widget=forms.Textarea,
+    )
+
     class Meta:
         model = ScheduledEmail
         fields = [
