@@ -122,13 +122,13 @@
           </p>
         {% else %}
           <p>Welcome Session not completed yet.</p>
-          {% is_late_in_year as show_next_year %}
+          {% now 'n' as current_month %}
           {% now 'Y' as current_year %}
           <p>Register for a Welcome Session on
-            {% if show_next_year %}
-            one of these Etherpads: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>; <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year | add:'1' }}">Welcome Sessions {{ current_year | add:"1" }}</a>.
+            {% if current_month|add:"0" >= 7 %}
+            one of these Etherpads: <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year }}">Welcome Sessions {{ current_year }}</a>; <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year | add:'1' }}">Welcome Sessions {{ current_year | add:"1" }}</a>.
             {% else %}
-            this Etherpad: <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">Welcome Sessions {% now 'Y' %}</a>.
+            this Etherpad: <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year }}">Welcome Sessions {{ current_year }}</a>.
             {% endif %}
           </p>
         {% endif %}
