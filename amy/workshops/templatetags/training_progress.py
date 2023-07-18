@@ -73,12 +73,16 @@ def progress_trainee_view(progress):
     assert isinstance(progress, TrainingProgress)
 
     date = progress.event.end if progress.event else progress.last_updated_at
-    notes = f"<br/>Notes: {progress.notes}" if progress.state in ["f", "a"] else ""
+    notes = (
+        f"<p>Administrator comments: {progress.notes}</p>"
+        if progress.state in ["f", "a"]
+        else ""
+    )
 
     text = (
         f'<p class="text-{progress_state_class(progress.state)}"> '
         f"{progress.requirement.name} {progress.get_state_display().lower()} "
-        f'as of {date.strftime("%d %B %Y")}.{notes}</p>'
+        f'as of {date.strftime("%d %B %Y")}.</p>{notes}'
     )
 
     return mark_safe(text)

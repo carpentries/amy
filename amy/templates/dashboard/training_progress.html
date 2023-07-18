@@ -111,7 +111,9 @@
     <tr>
       <th>3. Welcome Session</th>
       <td>
-        {% if user.passed_welcome %}
+        {% if last_welcome %}
+          {% progress_trainee_view last_welcome %}
+        {% elif user.passed_welcome %}
           <p class="text-success">Welcome Session completed 
             {% if last_welcome %}
               as of {{ last_welcome.last_updated_at | date:'j F Y' }}
@@ -135,7 +137,9 @@
     <tr>
       <th>4. Demo Session</th>
       <td>
-        {% if user.passed_demo %}
+        {% if last_demo %}
+          {% progress_trainee_view last_demo %}
+        {% elif user.passed_demo %}
         <p class="text-success">Demo Session passed
           {% if last_demo %}
             as of {{ last_demo.last_updated_at | date:'j F Y' }}
