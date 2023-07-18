@@ -25,6 +25,11 @@ from autoemails.base_views import ActionManageMixin
 from autoemails.job import Job
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import safe_next_or_default_url
+from emails.signals import (
+    instructor_confirmed_for_workshop_signal,
+    instructor_declined_from_workshop_signal,
+    instructor_signs_up_for_workshop_signal,
+)
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
     InstructorRecruitmentAddSignupForm,
@@ -335,6 +340,14 @@ class InstructorRecruitmentAddSignup(
         signup: InstructorRecruitmentSignup = form.save(commit=False)
         signup.recruitment = self.object
         signup.save()
+        instructor_signs_up_for_workshop_signal.send(
+            sender=signup,
+            request=self.request,
+            person_id=signup.person.pk,
+            event_id=signup.recruitment.event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):
@@ -403,6 +416,16 @@ class InstructorRecruitmentSignupChangeState(
             role=role,
         )
         self.add_automated_email(task)
+
+        instructor_confirmed_for_workshop_signal.send(
+            sender=self.object,
+            request=self.request,
+            person_id=self.object.person.pk,
+            event_id=self.object.recruitment.event.pk,
+            instructor_recruitment_id=self.object.recruitment.pk,
+            instructor_recruitment_signup_id=self.object.pk,
+        )
+
         return task
 
     def remove_instructor_task(self, person: Person, event: Event) -> None:
@@ -415,6 +438,15 @@ class InstructorRecruitmentSignupChangeState(
         else:
             self.remove_automated_email(task)
             task.delete()
+
+        instructor_declined_from_workshop_signal.send(
+            sender=self.object,
+            request=self.request,
+            person_id=self.object.person.pk,
+            event_id=self.object.recruitment.event.pk,
+            instructor_recruitment_id=self.object.recruitment.pk,
+            instructor_recruitment_signup_id=self.object.pk,
+        )
 
     def add_automated_email(self, task: Task) -> tuple[list[Job], list[RQJob]]:
         trigger_name = "new-instructor"
