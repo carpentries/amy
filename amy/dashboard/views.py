@@ -31,7 +31,7 @@ from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from recruitment.views import RecruitmentEnabledMixin
-from workshops.base_views import AMYListView, ConditionallyEnabledMixin
+from workshops.base_views import AMYListView, AMYUpdateView, ConditionallyEnabledMixin
 from workshops.models import (
     Airport,
     Badge,
@@ -257,6 +257,20 @@ def training_progress(request):
         "progress_demo": progress_demo,
     }
     return render(request, "dashboard/training_progress.html", context)
+
+
+class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
+    permission_required = "trainings.change_trainingprogress"
+    model = TrainingProgress
+    form_class = GetInvolvedForm
+    template_name = "includes/get_involved_form.html"
+    success_url = reverse_lazy("training-progress")
+    success_message = "Your Get Involved submission was updated successfully."
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str("Update your Get Involved submission")
+        return context
 
 
 # ------------------------------------------------------------

@@ -90,6 +90,14 @@
             <strong>URL:</strong> {% firstof progress_get_involved.url "No URL provided" %}<br/>
             <strong>Notes:</strong> {% firstof progress_get_involved.trainee_notes "No notes provided" %}
           </p>
+          {% if last_get_involved.state == "n" %}
+              {% block edit-actions %}
+              <p class="edit-object">
+                <a href="{% url 'get_involved_edit' last_get_involved.pk %}" class="btn btn-primary">Edit</a>                
+                <a href="{% url 'trainingprogress_delete' last_get_involved.id %}" class="btn btn-danger">Delete</a>                
+              </p>
+              {% endblock edit-actions %}
+          {% endif %}
           
           {% if progress_get_involved.state == "a" %}
             {% include 'includes/get_involved_form.html' %}

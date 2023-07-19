@@ -1,5 +1,12 @@
+{% extends "base.html" %}
+{% block navbar %}
+  {% include 'navigation_instructor_dashboard.html' %}
+{% endblock %}
+
+
 {% load crispy_forms_tags %}
 
+{% block content %}
 <p>
   Provide details of your Get Involved activity. Your submission will be reviewed within 7-10 days. 
   You can track your progress by returning to the <a href="{% url 'training-progress' %}">training progress</a> page.
@@ -14,3 +21,4 @@
   </a>.
 </p>
 {% crispy form %}
+{% endblock %}
