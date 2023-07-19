@@ -75,36 +75,31 @@
       </td>
     </tr>
     <tr>
-      <th rowspan="2">2. Get Involved</th>
+      <th>2. Get Involved</th>
       <td>
         {% if progress_get_involved %}
           {% include 'includes/progress_trainee_view.html' with progress=progress_get_involved %}
           {% if progress_get_involved.state == "n" %}
-          <p>Please wait while we evaluate your submission.</p>
+          <p>Your submission will be evaluated within 7-10 days.</p>
+          <p>You may update or delete your submission before it is evaluated. If you delete it, you will be allowed to create a new submission afterward.</p>
+          {% endif %}
+          <p>Details of your submission are below.</p>
+          <p>
+            <strong>Activity:</strong> {{ progress_get_involved.involvement_type }}<br/>
+            <strong>Date:</strong> {% firstof progress_get_involved.date "No dates provided" %}<br/>
+            <strong>URL:</strong> {% firstof progress_get_involved.url "No URL provided" %}<br/>
+            <strong>Notes:</strong> {% firstof progress_get_involved.trainee_notes "No notes provided" %}
+          </p>
+          
+          {% if progress_get_involved.state == "a" %}
+            {% include 'includes/get_involved_form.html' %}
           {% endif %}
         {% elif user.passed_get_involved %}
-        <p class="text-success">Get Involved step passed.</p>
+          <p class="text-success">Get Involved step passed.</p>
         {% else %}
-        <p>Get Involved step not submitted.</p>
+          <p>Get Involved step not submitted yet.</p>
+          {% include 'includes/get_involved_form.html' %}
         {% endif %}
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <p>
-          Provide details of your Get Involved activity. Your submission will be reviewed within 7-10 days. 
-          You can track your progress by returning to this page.
-        </p>
-        <p>
-          Only submit an activity that you have already completed.
-        </p>
-        <p>
-          If submitting a GitHub contribution, please be sure your contribution is to a repository in one of the 
-          <a href="https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html">
-            GitHub organisations owned by The Carpentries
-          </a>.
-        </p>
-        {% crispy get_involved_form %}
       </td>
     </tr>
     <tr>

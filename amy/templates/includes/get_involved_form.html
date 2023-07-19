@@ -1,0 +1,16 @@
+{% load crispy_forms_tags %}
+
+<p>
+  Provide details of your Get Involved activity. Your submission will be reviewed within 7-10 days. 
+  You can track your progress by returning to the <a href="{% url 'training-progress' %}">training progress</a> page.
+</p>
+<p>
+  Only submit an activity that you have already completed.
+</p>
+<p>
+  If submitting a GitHub contribution, please be sure your contribution is to a repository in one of the 
+  <a href="https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html">
+    GitHub organisations owned by The Carpentries
+  </a>.
+</p>
+{% crispy form %}
