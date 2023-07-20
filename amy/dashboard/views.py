@@ -31,7 +31,14 @@ from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from recruitment.views import RecruitmentEnabledMixin
-from workshops.base_views import AMYListView, AMYUpdateView, ConditionallyEnabledMixin
+from workshops.base_views import (
+    AMYCreateView,
+    AMYDeleteView,
+    AMYListView,
+    AMYUpdateView,
+    ConditionallyEnabledMixin,
+    RedirectSupportMixin,
+)
 from workshops.models import (
     Airport,
     Badge,
@@ -259,11 +266,51 @@ def training_progress(request):
     return render(request, "dashboard/training_progress.html", context)
 
 
-class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
+class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateView):
+    permission_required = "trainings.create_trainingprogress"
+    model = TrainingProgress
+    form_class = GetInvolvedForm
+    template_name = "get_involved_form.html"
+    success_url = reverse_lazy("training-progress")
+    success_message = (
+        "Thank you. Your Get Involved submission will be reviewed within 7-10 days."
+    )
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str("Submit your Get Involved activity")
+        return context
+
+    def post(self, request):
+        base_training_progress = TrainingProgress(
+            trainee=request.user,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+        get_involved_form = GetInvolvedForm(
+            data=request.POST, instance=base_training_progress
+        )
+
+        if get_involved_form.is_valid():
+            get_involved_form.save()
+
+            messages.success(
+                request,
+                "Thank you. Your Get Involved submission will be reviewed within 7-10 "
+                "days.",
+            )
+        else:
+            messages.error(
+                request, "Something went wrong. Please contact team@carpentries.org."
+            )
+        return redirect(reverse("training-progress"))
+
+
+class GetInvolvedUpdateView(LoginRequiredMixin, RedirectSupportMixin, AMYUpdateView):
     permission_required = "trainings.change_trainingprogress"
     model = TrainingProgress
     form_class = GetInvolvedForm
-    template_name = "includes/get_involved_form.html"
+    template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was updated successfully."
 
@@ -271,6 +318,13 @@ class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
         context = super().get_context_data(**kwargs)
         context["title"] = str("Update your Get Involved submission")
         return context
+
+
+class GetInvolvedDeleteView(LoginRequiredMixin, RedirectSupportMixin, AMYDeleteView):
+    permission_required = "trainings.delete_trainingprogress"
+    model = TrainingProgress
+    success_url = reverse_lazy("training-progress")
+    success_message = "Your Get Involved submission was deleted."
 
 
 # ------------------------------------------------------------

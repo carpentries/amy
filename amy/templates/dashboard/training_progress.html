@@ -91,22 +91,29 @@
             <strong>Notes:</strong> {% firstof progress_get_involved.trainee_notes "No notes provided" %}
           </p>
           {% if last_get_involved.state == "n" %}
-              {% block edit-actions %}
-              <p class="edit-object">
-                <a href="{% url 'get_involved_edit' last_get_involved.pk %}" class="btn btn-primary">Edit</a>                
-                <a href="{% url 'trainingprogress_delete' last_get_involved.id %}" class="btn btn-danger">Delete</a>                
+              <p class="edit-object float-left">
+                <a href="{% url 'get_involved_edit' last_get_involved.pk %}" class="btn btn-primary">Edit</a>  
               </p>
-              {% endblock edit-actions %}
+              <div class="delete-object float-left" style="padding-left: 2%;">
+                <form action="{% url 'get_involved_delete' last_get_involved.pk %}" onsubmit='return confirm("Are you sure you wish to delete your Get Involved submission?")' method="POST">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+              </div>              
           {% endif %}
           
           {% if progress_get_involved.state == "a" %}
-            {% include 'includes/get_involved_form.html' %}
+          <p class="create-object float-left">
+            <a href="{% url 'get_involved_create' %}" class="btn btn-primary">Submit another Get Involved activity</a>  
+          </p>
           {% endif %}
         {% elif user.passed_get_involved %}
           <p class="text-success">Get Involved step passed.</p>
         {% else %}
           <p>Get Involved step not submitted yet.</p>
-          {% include 'includes/get_involved_form.html' %}
+          <p class="create-object float-left">
+            <a href="{% url 'get_involved_create' %}" class="btn btn-primary">Submit a Get Involved activity</a>  
+          </p>
         {% endif %}
       </td>
     </tr>

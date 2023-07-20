@@ -47,19 +47,24 @@ urlpatterns = [
                     name="resign-from-recruitment",
                 ),
                 path(
-                    "get_involved/<int:pk>/",
+                    "get_involved/",
                     include(
                         [
                             path(
-                                "edit/",
+                                "create/",
+                                views.GetInvolvedCreateView.as_view(),
+                                name="get_involved_create",
+                            ),
+                            path(
+                                "<int:pk>/edit/",
                                 views.GetInvolvedUpdateView.as_view(),
                                 name="get_involved_edit",
                             ),
-                            # path(
-                            #     "delete/",
-                            #     views.GetInvolvedDeleteView.as_view(),
-                            #     name="get_involved_delete",
-                            # ),
+                            path(
+                                "<int:pk>/delete/",
+                                views.GetInvolvedDeleteView.as_view(),
+                                name="get_involved_delete",
+                            ),
                         ]
                     ),
                 ),
