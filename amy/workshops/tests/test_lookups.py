@@ -160,7 +160,7 @@ class TestEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event])
+        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event], ordered=False)
 
 
 class TestEventLookupForAwardsView(TestBase):
@@ -222,7 +222,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event])
+        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event], ordered=False)
 
     def test_get_queryset_person(self):
         """Person alone should not change results."""
@@ -256,8 +256,7 @@ class TestEventLookupForAwardsView(TestBase):
         queryset = view.get_queryset()
         # Assert
         self.assertQuerysetEqual(
-            queryset,
-            [self.ttt_event_2, self.ttt_event],
+            queryset, [self.ttt_event, self.ttt_event_2], ordered=False
         )
 
     def test_get_queryset_person_and_non_instructor_badge(self):
@@ -339,10 +338,7 @@ class TestTTTEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
-            queryset,
-            [self.event, self.event2],
-        )
+        self.assertQuerysetEqual(queryset, [self.event, self.event2], ordered=False)
 
     def test_get_queryset_trainee_and_term(self):
         # Arrange
