@@ -2686,9 +2686,9 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
             # check this trainee doesn't already have a training progress for this event
             return self.clean_event_existing_progress(self.event, self.trainee)
 
-    def clean_event_existing_progress(self, event, trainee):
-        if existing_progress := trainee.trainingprogress_set.filter(event=event):
-            if not (existing_progress.count() == 1 and self in existing_progress):
+    def clean_event_existing_progress(self, event: Event, trainee: Person):
+        if existing_progresses := trainee.trainingprogress_set.filter(event=event):
+            if not (existing_progresses.count() == 1 and self in existing_progresses):
                 msg = (
                     f"Trainee {self.trainee} already has a training progress "
                     f"for event {self.event}."
