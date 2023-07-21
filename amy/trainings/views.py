@@ -144,7 +144,7 @@ def all_trainees(request):
                 except ValidationError as e:
                     errors.append(e)
 
-            if len(errors) > 0:
+            if errors:
                 # build a user-friendly error set
                 for e in errors:
                     for k, v in e.error_dict.items():

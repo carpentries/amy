@@ -2187,22 +2187,19 @@ class MockAwardCreate(
 
         # Determine initial event in AwardForm
         if "find-training" in self.request.GET:
-            initial.update(
-                {
-                    "badge": Badge.objects.get(name="instructor"),
-                }
-            )
-            progresses = TrainingProgress.objects.filter(
-                trainee__id=self.request.GET["person"],
-                requirement=TrainingRequirement.objects.get(name="Training"),
-                state="p",
-            )
-            if progresses.count() == 1:
-                initial.update(
-                    {
-                        "event": progresses[0].event,
-                    }
+            initial["badge"] = Badge.objects.get(name="instructor")
+            try:
+                progress = TrainingProgress.objects.get(
+                    trainee__id=self.request.GET["person"],
+                    requirement=TrainingRequirement.objects.get(name="Training"),
+                    state="p",
                 )
+                initial["event"] = progress.event
+            except (
+                TrainingProgress.DoesNotExist,
+                TrainingProgress.MultipleObjectsReturned,
+            ):
+                pass
 
         return initial
 
