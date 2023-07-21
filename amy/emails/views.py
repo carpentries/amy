@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from markdownx.utils import markdownify
@@ -136,6 +137,18 @@ class ScheduledEmailEditView(
         context["title"] = f'Scheduled email "{self.object.subject}"'
         return context
 
+    def form_valid(self, form: ScheduledEmailEditForm) -> HttpResponse:
+        result = super().form_valid(form)
+
+        ScheduledEmailLog.objects.create(
+            details="Scheduled email was changed.",
+            state_before=self.object.state,
+            state_after=self.object.state,
+            scheduled_email=self.object,
+        )
+
+        return result
+
 
 class ScheduledEmailRescheduleView(
     OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormView
@@ -163,7 +176,7 @@ class ScheduledEmailRescheduleView(
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()
 
-    def form_valid(self, form: ScheduledEmailRescheduleForm):
+    def form_valid(self, form: ScheduledEmailRescheduleForm) -> HttpResponse:
         EmailController.reschedule_email(self.object, form.cleaned_data["scheduled_at"])
         return super().form_valid(form)
 

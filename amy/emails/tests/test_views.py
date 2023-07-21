@@ -333,6 +333,10 @@ class TestScheduledEmailEditView(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
+        email_log = (
+            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
+            .order_by("-created_at")[0]
+        )
 
         self.assertEqual(scheduled_email.to_header, ["hermione@granger.com"])
         self.assertEqual(scheduled_email.from_header, "noreply@carpentries.org")
@@ -341,6 +345,10 @@ class TestScheduledEmailEditView(TestBase):
         self.assertEqual(scheduled_email.bcc_header, [])
         self.assertEqual(scheduled_email.subject, "Welcome, Hermione")
         self.assertEqual(scheduled_email.body, "Hi Hermione!")
+
+        self.assertEqual(email_log.details, "Scheduled email was changed.")
+        self.assertEqual(email_log.state_before, email_log.state_after)
+        self.assertEqual(email_log.state_after, ScheduledEmailStatus.SCHEDULED)
 
 
 class TestScheduledEmailRescheduleView(TestBase):
