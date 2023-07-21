@@ -11,8 +11,8 @@ from emails.forms import (
     EmailTemplateCreateForm,
     EmailTemplateUpdateForm,
     ScheduledEmailCancelForm,
-    ScheduledEmailUpdateForm,
     ScheduledEmailRescheduleForm,
+    ScheduledEmailUpdateForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
 from workshops.base_views import (
@@ -60,7 +60,6 @@ class EmailTemplateCreateView(
     OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYCreateView
 ):
     permission_required = ["emails.add_emailtemplate"]
-    context_object_name = "email_template"
     template_name = "emails/email_template_create.html"
     form_class = EmailTemplateCreateForm
     model = EmailTemplate

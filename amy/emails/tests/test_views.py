@@ -333,10 +333,9 @@ class TestScheduledEmailUpdateView(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
-        email_log = (
-            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
-            .order_by("-created_at")[0]
-        )
+        email_log = ScheduledEmailLog.objects.filter(
+            scheduled_email=scheduled_email
+        ).order_by("-created_at")[0]
 
         self.assertEqual(scheduled_email.to_header, ["hermione@granger.com"])
         self.assertEqual(scheduled_email.from_header, "noreply@carpentries.org")
