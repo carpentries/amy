@@ -9,9 +9,9 @@ from markdownx.utils import markdownify
 from emails.controller import EmailController
 from emails.forms import (
     EmailTemplateCreateForm,
-    EmailTemplateEditForm,
+    EmailTemplateUpdateForm,
     ScheduledEmailCancelForm,
-    ScheduledEmailEditForm,
+    ScheduledEmailUpdateForm,
     ScheduledEmailRescheduleForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
@@ -68,11 +68,13 @@ class EmailTemplateCreateView(
     title = "Create a new email template"
 
 
-class EmailTemplateEditView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView):
+class EmailTemplateUpdateView(
+    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
+):
     permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_edit.html"
-    form_class = EmailTemplateEditForm
+    form_class = EmailTemplateUpdateForm
     model = EmailTemplate
     object: EmailTemplate
 
@@ -122,13 +124,13 @@ class ScheduledEmailDetailView(
         return context
 
 
-class ScheduledEmailEditView(
+class ScheduledEmailUpdateView(
     OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
 ):
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_edit.html"
-    form_class = ScheduledEmailEditForm
+    form_class = ScheduledEmailUpdateForm
     model = ScheduledEmail
     object: ScheduledEmail
 
@@ -137,7 +139,7 @@ class ScheduledEmailEditView(
         context["title"] = f'Scheduled email "{self.object.subject}"'
         return context
 
-    def form_valid(self, form: ScheduledEmailEditForm) -> HttpResponse:
+    def form_valid(self, form: ScheduledEmailUpdateForm) -> HttpResponse:
         result = super().form_valid(form)
 
         ScheduledEmailLog.objects.create(

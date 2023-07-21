@@ -33,10 +33,10 @@ class EmailTemplateCreateForm(forms.ModelForm):
         self.fields["bcc_header"].help_text = array_email_field_help_text
 
 
-EmailTemplateEditForm = EmailTemplateCreateForm
+EmailTemplateUpdateForm = EmailTemplateCreateForm
 
 
-class ScheduledEmailEditForm(forms.ModelForm):
+class ScheduledEmailUpdateForm(forms.ModelForm):
     body = MarkdownxFormField(
         label=ScheduledEmail._meta.get_field("body").verbose_name,
         help_text=ScheduledEmail._meta.get_field("body").help_text,

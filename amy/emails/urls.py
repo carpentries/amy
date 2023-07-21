@@ -28,7 +28,7 @@ urlpatterns = [
             ),
             path(
                 "edit/",
-                views.EmailTemplateEditView.as_view(),
+                views.EmailTemplateUpdateView.as_view(),
                 name="email_template_edit",
             ),
             path(
@@ -51,7 +51,7 @@ urlpatterns = [
         ),
         path(
             "edit/",
-            views.ScheduledEmailEditView.as_view(),
+            views.ScheduledEmailUpdateView.as_view(),
             name="scheduled_email_edit",
         ),
         path(

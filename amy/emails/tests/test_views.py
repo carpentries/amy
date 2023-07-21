@@ -107,7 +107,7 @@ class TestEmailTemplateCreateView(TestBase):
         self.assertEqual(template.body, "Hi Hermione!")
 
 
-class TestEmailTemplateEditView(TestBase):
+class TestEmailTemplateUpdateView(TestBase):
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_view(self) -> None:
         # Arrange
@@ -289,7 +289,7 @@ class TestScheduledEmailDetailView(TestBase):
         )
 
 
-class TestScheduledEmailEditView(TestBase):
+class TestScheduledEmailUpdateView(TestBase):
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_view(self) -> None:
         # Arrange
