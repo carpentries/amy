@@ -32,7 +32,7 @@ class EmailModuleEnabledMixin(ConditionallyEnabledMixin):
         return settings.EMAIL_MODULE_ENABLED is True
 
 
-class EmailTemplateListView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
+class AllEmailTemplates(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_templates"
     template_name = "emails/email_template_list.html"
@@ -40,9 +40,7 @@ class EmailTemplateListView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYList
     title = "Email templates"
 
 
-class EmailTemplateDetailView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetailView
-):
+class EmailTemplateDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetailView):
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_detail.html"
@@ -56,9 +54,7 @@ class EmailTemplateDetailView(
         return context
 
 
-class EmailTemplateCreateView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYCreateView
-):
+class EmailTemplateCreate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYCreateView):
     permission_required = ["emails.add_emailtemplate"]
     template_name = "emails/email_template_create.html"
     form_class = EmailTemplateCreateForm
@@ -67,9 +63,7 @@ class EmailTemplateCreateView(
     title = "Create a new email template"
 
 
-class EmailTemplateUpdateView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
-):
+class EmailTemplateUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView):
     permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_edit.html"
@@ -83,20 +77,18 @@ class EmailTemplateUpdateView(
         return context
 
 
-class EmailTemplateDeleteView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeleteView
-):
+class EmailTemplateDelete(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeleteView):
     permission_required = ["emails.delete_emailtemplate"]
     model = EmailTemplate
 
     def get_success_url(self) -> str:
-        return reverse("email_templates_list")
+        return reverse("all_emailtemplates")
 
 
 # -------------------------------------------------------------------------------
 
 
-class ScheduledEmailListView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
+class AllScheduledEmails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_emails"
     template_name = "emails/scheduled_email_list.html"
@@ -104,9 +96,7 @@ class ScheduledEmailListView(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYLis
     title = "Scheduled emails"
 
 
-class ScheduledEmailDetailView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetailView
-):
+class ScheduledEmailDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetailView):
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_detail.html"
@@ -123,9 +113,7 @@ class ScheduledEmailDetailView(
         return context
 
 
-class ScheduledEmailUpdateView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView
-):
+class ScheduledEmailUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView):
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_edit.html"
@@ -151,7 +139,7 @@ class ScheduledEmailUpdateView(
         return result
 
 
-class ScheduledEmailRescheduleView(
+class ScheduledEmailReschedule(
     OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormView
 ):
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
@@ -182,9 +170,7 @@ class ScheduledEmailRescheduleView(
         return super().form_valid(form)
 
 
-class ScheduledEmailCancelView(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormView
-):
+class ScheduledEmailCancel(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormView):
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_cancel.html"
     form_class = ScheduledEmailCancelForm

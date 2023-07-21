@@ -14,11 +14,11 @@
 {% if perms.emails.change_scheduledemail %}
 <div class="edit-object">
   <div class="btn-group">
-    <a class="btn btn-primary" href="{% url 'scheduled_email_edit' scheduled_email.id %}">Edit</a>
-    <a class="btn btn-warning" href="{% url 'scheduled_email_reschedule' scheduled_email.id %}">Reschedule</a>
+    <a class="btn btn-primary" href="{% url 'scheduledemail_edit' scheduled_email.id %}">Edit</a>
+    <a class="btn btn-warning" href="{% url 'scheduledemail_reschedule' scheduled_email.id %}">Reschedule</a>
   </div>
   <div class="float-right">
-    <a class="btn btn-danger" href="{% url 'scheduled_email_cancel' scheduled_email.id %}">Cancel</a>
+    <a class="btn btn-danger" href="{% url 'scheduledemail_cancel' scheduled_email.id %}">Cancel</a>
   </div>
 </div>
 {% else %}

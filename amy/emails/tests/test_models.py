@@ -143,7 +143,7 @@ class TestEmailTemplate(TestCase):
 
         # Assert
         self.assertEqual(
-            url, reverse("email_template_detail", kwargs={"pk": template.pk})
+            url, reverse("emailtemplate_details", kwargs={"pk": template.pk})
         )
 
 
@@ -217,7 +217,7 @@ class TestScheduledEmail(TestCase):
 
         # Assert
         self.assertEqual(
-            url, reverse("scheduled_email_detail", kwargs={"pk": scheduled_email.pk})
+            url, reverse("scheduledemail_details", kwargs={"pk": scheduled_email.pk})
         )
 
 

@@ -105,7 +105,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return self.name
 
     def get_absolute_url(self) -> str:
-        return reverse("email_template_detail", kwargs={"pk": self.pk})
+        return reverse("emailtemplate_details", kwargs={"pk": self.pk})
 
 
 class ScheduledEmailStatus(models.TextChoices):
@@ -189,7 +189,7 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         return f"{self.to_header}: {self.subject}"
 
     def get_absolute_url(self) -> str:
-        return reverse("scheduled_email_detail", kwargs={"pk": self.pk})
+        return reverse("scheduledemail_details", kwargs={"pk": self.pk})
 
 
 class ScheduledEmailLog(CreatedMixin, models.Model):
