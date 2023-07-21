@@ -4,7 +4,7 @@
 {% load tags %}
 
 {% block content %}
-    {% if perms.emails.add_email_template %}
+    {% if perms.emails.add_emailtemplate %}
     <p><a href="{% url 'email_template_create' %}" class="btn btn-success">New email template</a></p>
     {% else %}
     <p><a href="#" class="btn btn-success disabled">New email template</a></p>
@@ -57,7 +57,7 @@
     {% endfor %}
     </table>
     {% pagination email_templates %}
-    {% if perms.emails.add_email_template %}
+    {% if perms.emails.add_emailtemplate %}
     <p><a href="{% url 'email_template_create' %}" class="btn btn-success">New email template</a></p>
     {% else %}
     <p><a href="#" class="btn btn-success disabled">New email template</a></p>
