@@ -1026,7 +1026,7 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
                 data_view="person-lookup", attrs=SELECT2_SIDEBAR
             ),
             "event": ModelSelect2Widget(
-                data_view="event-lookup", attrs=SELECT2_SIDEBAR
+                data_view="event-lookup-for-awards", attrs=SELECT2_SIDEBAR
             ),
             "awarded_by": ModelSelect2Widget(
                 data_view="admin-lookup", attrs=SELECT2_SIDEBAR
