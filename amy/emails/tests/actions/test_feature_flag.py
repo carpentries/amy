@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from emails.actions import check_feature_flag
+from emails.utils import check_feature_flag
 
 
 class TestCheckFeatureFlag(TestCase):

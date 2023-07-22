@@ -14,7 +14,7 @@ from workshops.tests.base import TestBase
 
 
 class TestPersonsMergedReceived(TestCase):
-    @mock.patch("emails.actions.logger")
+    @mock.patch("emails.utils.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
         with self.settings(EMAIL_MODULE_ENABLED=False):
@@ -22,7 +22,8 @@ class TestPersonsMergedReceived(TestCase):
             persons_merged_receiver(None)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE_ENABLED not set, skipping persons_merged_receiver"
+                "EMAIL_MODULE_ENABLED not set, skipping receiver "
+                "persons_merged_receiver"
             )
 
     def test_signal_received(self) -> None:
@@ -78,7 +79,9 @@ class TestPersonsMergedReceived(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with mock.patch("emails.actions.messages") as mock_messages:
+        with mock.patch(
+            "emails.actions.messages_action_scheduled"
+        ) as mock_messages_action_scheduled:
             persons_merged_signal.send(
                 sender=person,
                 request=request,
@@ -89,21 +92,19 @@ class TestPersonsMergedReceived(TestCase):
 
         # Assert
         scheduled_email = ScheduledEmail.objects.get(template=template)
-        mock_messages.info.assert_called_once_with(
-            request,
-            f'Action was scheduled: <a href="{scheduled_email.get_absolute_url()}">'
-            f"{scheduled_email.pk}</a>.",
-        )
+        mock_messages_action_scheduled.assert_called_once_with(request, scheduled_email)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
-    @mock.patch("emails.actions.messages")
-    @mock.patch("emails.actions.timezone")
+    @mock.patch("emails.actions.messages_action_scheduled")
+    @mock.patch("emails.actions.immediate_action")
     def test_email_scheduled(
-        self, mock_timezone: mock.MagicMock, mock_messages: mock.MagicMock
+        self,
+        mock_immediate_action: mock.MagicMock,
+        mock_messages_action_scheduled: mock.MagicMock,
     ) -> None:
         # Arrange
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
-        mock_timezone.now.return_value = NOW
+        mock_immediate_action.return_value = NOW + timedelta(hours=1)
         person = Person.objects.create()
         request = RequestFactory().get("/")
         signal = "persons_merged"
@@ -132,8 +133,10 @@ class TestPersonsMergedReceived(TestCase):
         )
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
-    @mock.patch("emails.actions.messages")
-    def test_missing_template(self, mock_messages: mock.MagicMock) -> None:
+    @mock.patch("emails.actions.messages_missing_template")
+    def test_missing_template(
+        self, mock_messages_missing_template: mock.MagicMock
+    ) -> None:
         # Arrange
         person = Person.objects.create()
         request = RequestFactory().get("/")
@@ -149,10 +152,7 @@ class TestPersonsMergedReceived(TestCase):
         )
 
         # Assert
-        mock_messages.warning.assert_called_once_with(
-            request,
-            f"Action was not scheduled due to missing template for signal {signal}.",
-        )
+        mock_messages_missing_template.assert_called_once_with(request, signal)
 
 
 class TestPersonsMergedSignalReceiverIntegration(TestBase):
