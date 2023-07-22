@@ -32,7 +32,8 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     # This will tie the template with specific signal (trigger). Once the signal is
     # emitted, the connected template will be queued based on the signal details.
-    # TODO: this can become an enum later on, to limit the choices for the user.
+    # Note: this field is using choices in the form, not in the database, to avoid
+    # migrations every time we add a new signal.
     signal = models.SlugField(
         max_length=MAX_LENGTH,
         blank=False,
