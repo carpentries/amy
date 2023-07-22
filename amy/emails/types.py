@@ -3,6 +3,12 @@ from typing import TypedDict
 from django.http import HttpRequest
 
 
+class InstructorBadgeAwardedKwargs(TypedDict):
+    request: HttpRequest
+    person_id: int
+    award_id: int
+
+
 class InstructorConfirmedKwargs(TypedDict):
     request: HttpRequest
     person_id: int

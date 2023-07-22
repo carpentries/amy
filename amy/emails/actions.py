@@ -7,12 +7,14 @@ from typing_extensions import Unpack
 from emails.controller import EmailController
 from emails.models import EmailTemplate
 from emails.signals import (
+    instructor_badge_awarded_signal,
     instructor_confirmed_for_workshop_signal,
     instructor_declined_from_workshop_signal,
     instructor_signs_up_for_workshop_signal,
     persons_merged_signal,
 )
 from emails.types import (
+    InstructorBadgeAwardedKwargs,
     InstructorConfirmedKwargs,
     InstructorDeclinedKwargs,
     InstructorSignupKwargs,
@@ -25,9 +27,40 @@ from emails.utils import (
     messages_missing_template,
 )
 from recruitment.models import InstructorRecruitmentSignup
-from workshops.models import Event, Person
+from workshops.models import Award, Event, Person
 
 logger = logging.getLogger("amy")
+
+
+@receiver(instructor_badge_awarded_signal)
+@feature_flag_enabled
+def instructor_badge_awarded_receiver(
+    sender: Any, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
+) -> None:
+    request = kwargs["request"]
+    person_id = kwargs["person_id"]
+    award_id = kwargs["award_id"]
+
+    scheduled_at = immediate_action()
+    person = Person.objects.get(pk=person_id)
+    award = Award.objects.get(pk=award_id)
+    context = {
+        "person": person,
+        "award": award,
+    }
+    signal = instructor_badge_awarded_signal.signal_name
+    try:
+        scheduled_email = EmailController.schedule_email(
+            signal=signal,
+            context=context,
+            scheduled_at=scheduled_at,
+            to_header=[person.email],
+            generic_relation_obj=award,
+        )
+    except EmailTemplate.DoesNotExist:
+        messages_missing_template(request, signal)
+    else:
+        messages_action_scheduled(request, scheduled_email)
 
 
 @receiver(instructor_confirmed_for_workshop_signal)
