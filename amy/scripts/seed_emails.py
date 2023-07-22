@@ -31,6 +31,69 @@ EmailTemplateDef = TypedDict(
 EMAIL_TEMPLATES: list[EmailTemplateDef] = [
     EmailTemplateDef(
         active=True,
+        id=UUID("05e2b9da-e6b3-43f0-8c88-1458414b8945"),
+        name="Instructor Badge awarded",
+        signal="instructor_badge_awarded",
+        from_header="instructor.training@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="The Carpentries: Instructor badge awarded",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "Congratulations, you are a badged Instructor. "
+            "Your certificate is attached to this email. Here's how to get involved."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("e07e889b-cc5e-4eb1-9cf6-5f416da9ddaf"),
+        name="Instructor confirmed for workshop",
+        signal="instructor_confirmed_for_workshop",
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="The Carpentries: merged duplicate profiles",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "We have confirmed you to teach at (TODO event). For more details go to..."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("ce73a58e-eb31-41bd-af95-f5bdbc4db5d4"),
+        name="Instructor declined from workshop",
+        signal="instructor_declined_from_workshop",
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="The Carpentries: merged duplicate profiles",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "Thank you for your interest in (TODO event). We have confirmed "
+            "other instructors for this workshop. Please continue to join..."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("6931cf24-2e94-4f70-825e-e41b431f1d24"),
+        name="Instructor Signs Up for Workshop",
+        signal="instructor_signs_up_for_workshop",
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="The Carpentries: merged duplicate profiles",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "Thank you for your interest in teaching (TODO: workshop summary). "
+            "Our team will get back to you shortly."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
         id=UUID("5703079f-2f37-4aee-8267-fe6db3eee870"),
         name="Person records are merged",
         signal="persons_merged",
