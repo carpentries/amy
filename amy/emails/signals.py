@@ -10,6 +10,10 @@ class SignalName(StrEnum):
     instructor_signs_up_for_workshop = "instructor_signs_up_for_workshop"
     persons_merged = "persons_merged"
 
+    @staticmethod
+    def choices() -> list[tuple[str, str]]:
+        return [(signal_name.value, signal_name.value) for signal_name in SignalName]
+
 
 class Signal(DjangoSignal):
     signal_name: SignalName

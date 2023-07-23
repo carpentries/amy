@@ -14,7 +14,7 @@ class EmailTemplateCreateForm(forms.ModelForm):
     )
     signal = forms.CharField(
         help_text=EmailTemplate._meta.get_field("signal").help_text,
-        widget=forms.Select(choices=[(value, value) for value in SignalName]),
+        widget=forms.Select(choices=SignalName.choices()),
     )
 
     class Meta:
