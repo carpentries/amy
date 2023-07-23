@@ -55,7 +55,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         reply_to_header="",
         cc_header=[],
         bcc_header=[],
-        subject="The Carpentries: merged duplicate profiles",
+        subject="The Carpentries: Instructor confirmed for workshop",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "We have confirmed you to teach at (TODO event). For more details go to..."
@@ -70,7 +70,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         reply_to_header="",
         cc_header=[],
         bcc_header=[],
-        subject="The Carpentries: merged duplicate profiles",
+        subject="The Carpentries: Instructor declined from workshop",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "Thank you for your interest in (TODO event). We have confirmed "
@@ -86,7 +86,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         reply_to_header="",
         cc_header=[],
         bcc_header=[],
-        subject="The Carpentries: merged duplicate profiles",
+        subject="The Carpentries: new sign up for workshop",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "Thank you for your interest in teaching (TODO: workshop summary). "
