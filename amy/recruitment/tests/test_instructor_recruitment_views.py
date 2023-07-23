@@ -516,6 +516,7 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         # Assert
         self.assertEqual(success_message, "Added Harry Potter to Test")
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_form_valid(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
@@ -721,6 +722,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         )
         view.remove_instructor_task.assert_not_called()
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_add_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
@@ -754,6 +756,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_remove_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
@@ -778,6 +781,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         with self.assertRaises(Task.DoesNotExist):
             task.refresh_from_db()
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_remove_instructor_task__no_task(self) -> None:
         # Arrange
         super()._setUpRoles()
