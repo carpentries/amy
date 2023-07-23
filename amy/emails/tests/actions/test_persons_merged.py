@@ -13,7 +13,7 @@ from workshops.models import Person
 from workshops.tests.base import TestBase
 
 
-class TestPersonsMergedReceived(TestCase):
+class TestPersonsMergedReceiver(TestCase):
     @mock.patch("emails.utils.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
@@ -69,7 +69,7 @@ class TestPersonsMergedReceived(TestCase):
         person = Person.objects.create()
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal="persons_merged",
+            signal=persons_merged_signal.signal_name,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -107,7 +107,7 @@ class TestPersonsMergedReceived(TestCase):
         mock_immediate_action.return_value = NOW + timedelta(hours=1)
         person = Person.objects.create()
         request = RequestFactory().get("/")
-        signal = "persons_merged"
+        signal = persons_merged_signal.signal_name
         context = {"person": person}
         scheduled_at = NOW + timedelta(hours=1)
 
@@ -140,7 +140,7 @@ class TestPersonsMergedReceived(TestCase):
         # Arrange
         person = Person.objects.create()
         request = RequestFactory().get("/")
-        signal = "persons_merged"
+        signal = persons_merged_signal.signal_name
 
         # Act
         persons_merged_signal.send(
@@ -230,7 +230,7 @@ class TestPersonsMergedSignalReceiverIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal="persons_merged",
+            signal=persons_merged_signal.signal_name,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
