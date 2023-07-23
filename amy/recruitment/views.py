@@ -29,7 +29,6 @@ from autoemails.utils import safe_next_or_default_url
 from emails.signals import (
     instructor_confirmed_for_workshop_signal,
     instructor_declined_from_workshop_signal,
-    instructor_signs_up_for_workshop_signal,
 )
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
@@ -341,14 +340,6 @@ class InstructorRecruitmentAddSignup(
         signup: InstructorRecruitmentSignup = form.save(commit=False)
         signup.recruitment = self.object
         signup.save()
-        instructor_signs_up_for_workshop_signal.send(
-            sender=signup,
-            request=self.request,
-            person_id=signup.person.pk,
-            event_id=signup.recruitment.event.pk,
-            instructor_recruitment_id=signup.recruitment.pk,
-            instructor_recruitment_signup_id=signup.pk,
-        )
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):
