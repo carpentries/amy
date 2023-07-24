@@ -27,6 +27,7 @@ from autoemails.job import Job
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import safe_next_or_default_url
 from emails.signals import (
+    admin_signs_instructor_up_for_workshop_signal,
     instructor_confirmed_for_workshop_signal,
     instructor_declined_from_workshop_signal,
 )
@@ -340,6 +341,16 @@ class InstructorRecruitmentAddSignup(
         signup: InstructorRecruitmentSignup = form.save(commit=False)
         signup.recruitment = self.object
         signup.save()
+
+        admin_signs_instructor_up_for_workshop_signal.send(
+            sender=signup,
+            request=self.request,
+            person_id=signup.person.pk,
+            event_id=signup.recruitment.event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):

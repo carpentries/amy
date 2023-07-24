@@ -95,6 +95,23 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
     ),
     EmailTemplateDef(
         active=True,
+        id=UUID("2de9852e-d2e9-4b10-bcfb-0b19f21e2094"),
+        name="Admin Signs Instructor Up for Workshop",
+        signal=SignalName.admin_signs_instructor_up_for_workshop,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=["workshops@carpentries.org"],
+        bcc_header=[],
+        subject="Thank you for expressing interest in teaching (workshop)",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "At your request, we have registered your interest in teaching "
+            "(TODO: workshop summary). You may log in to your AMY profile at any time "
+            "to view or make updates. Our team will get back to you shortly."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
         id=UUID("5703079f-2f37-4aee-8267-fe6db3eee870"),
         name="Person records are merged",
         signal=SignalName.persons_merged,

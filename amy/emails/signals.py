@@ -8,6 +8,7 @@ class SignalName(StrEnum):
     instructor_confirmed_for_workshop = "instructor_confirmed_for_workshop"
     instructor_declined_from_workshop = "instructor_declined_from_workshop"
     instructor_signs_up_for_workshop = "instructor_signs_up_for_workshop"
+    admin_signs_instructor_up_for_workshop = "admin_signs_instructor_up_for_workshop"
     persons_merged = "persons_merged"
 
     @staticmethod
@@ -35,5 +36,8 @@ instructor_declined_from_workshop_signal = Signal(
 )
 instructor_signs_up_for_workshop_signal = Signal(
     signal_name=SignalName.instructor_signs_up_for_workshop
+)
+admin_signs_instructor_up_for_workshop_signal = Signal(
+    signal_name=SignalName.admin_signs_instructor_up_for_workshop
 )
 persons_merged_signal = Signal(signal_name=SignalName.persons_merged)

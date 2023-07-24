@@ -33,6 +33,14 @@ class InstructorSignupKwargs(TypedDict):
     instructor_recruitment_signup_id: int
 
 
+class AdminSignsInstructorUpKwargs(TypedDict):
+    request: HttpRequest
+    person_id: int
+    event_id: int
+    instructor_recruitment_id: int
+    instructor_recruitment_signup_id: int
+
+
 class PersonsMergedKwargs(TypedDict):
     request: HttpRequest
     person_a_id: int

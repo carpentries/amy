@@ -7,6 +7,7 @@ from typing_extensions import Unpack
 from emails.controller import EmailController
 from emails.models import EmailTemplate
 from emails.signals import (
+    admin_signs_instructor_up_for_workshop_signal,
     instructor_badge_awarded_signal,
     instructor_confirmed_for_workshop_signal,
     instructor_declined_from_workshop_signal,
@@ -14,6 +15,7 @@ from emails.signals import (
     persons_merged_signal,
 )
 from emails.types import (
+    AdminSignsInstructorUpKwargs,
     InstructorBadgeAwardedKwargs,
     InstructorConfirmedKwargs,
     InstructorDeclinedKwargs,
@@ -157,6 +159,42 @@ def instructor_signs_up_for_workshop_receiver(
         "instructor_recruitment_signup": instructor_recruitment_signup,
     }
     signal = instructor_signs_up_for_workshop_signal.signal_name
+    try:
+        scheduled_email = EmailController.schedule_email(
+            signal=signal,
+            context=context,
+            scheduled_at=scheduled_at,
+            to_header=[person.email],
+            generic_relation_obj=instructor_recruitment_signup,
+        )
+    except EmailTemplate.DoesNotExist:
+        messages_missing_template(request, signal)
+    else:
+        messages_action_scheduled(request, scheduled_email)
+
+
+@receiver(admin_signs_instructor_up_for_workshop_signal)
+@feature_flag_enabled
+def admin_signs_instructor_up_for_workshop_receiver(
+    sender: Any, **kwargs: Unpack[AdminSignsInstructorUpKwargs]
+) -> None:
+    request = kwargs["request"]
+    person_id = kwargs["person_id"]
+    event_id = kwargs["event_id"]
+    instructor_recruitment_signup_id = kwargs["instructor_recruitment_signup_id"]
+
+    scheduled_at = immediate_action()
+    person = Person.objects.get(pk=person_id)
+    event = Event.objects.get(pk=event_id)
+    instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
+        pk=instructor_recruitment_signup_id
+    )
+    context = {
+        "person": person,
+        "event": event,
+        "instructor_recruitment_signup": instructor_recruitment_signup,
+    }
+    signal = admin_signs_instructor_up_for_workshop_signal.signal_name
     try:
         scheduled_email = EmailController.schedule_email(
             signal=signal,
