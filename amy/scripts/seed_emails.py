@@ -37,9 +37,9 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal=SignalName.instructor_badge_awarded,
         from_header="instructor.training@carpentries.org",
         reply_to_header="",
-        cc_header=[],
+        cc_header=["instructor.training@carpentries.org"],
         bcc_header=[],
-        subject="The Carpentries: Instructor badge awarded",
+        subject="Congratulations! You are a certified Carpentries Instructor",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "Congratulations, you are a badged Instructor. "
@@ -53,9 +53,9 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal=SignalName.instructor_confirmed_for_workshop,
         from_header="workshops@carpentries.org",
         reply_to_header="",
-        cc_header=[],
+        cc_header=["workshops@carpentries.org"],
         bcc_header=[],
-        subject="The Carpentries: Instructor confirmed for workshop",
+        subject="You are confirmed to teach (workshop)",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "We have confirmed you to teach at (TODO event). For more details go to..."
@@ -68,9 +68,9 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal=SignalName.instructor_declined_from_workshop,
         from_header="workshops@carpentries.org",
         reply_to_header="",
-        cc_header=[],
+        cc_header=["workshops@carpentries.org"],
         bcc_header=[],
-        subject="The Carpentries: Instructor declined from workshop",
+        subject="(Workshop): Other Instructors placed",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "Thank you for your interest in (TODO event). We have confirmed "
@@ -84,9 +84,9 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal=SignalName.instructor_signs_up_for_workshop,
         from_header="workshops@carpentries.org",
         reply_to_header="",
-        cc_header=[],
+        cc_header=["workshops@carpentries.org"],
         bcc_header=[],
-        subject="The Carpentries: new sign up for workshop",
+        subject="Thank you for expressing interest in teaching (workshop)",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "Thank you for your interest in teaching (TODO: workshop summary). "
@@ -100,9 +100,9 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal=SignalName.persons_merged,
         from_header="team@carpentries.org",
         reply_to_header="",
-        cc_header=[],
+        cc_header=["team@carpentries.org"],
         bcc_header=[],
-        subject="The Carpentries: merged duplicate profiles",
+        subject="The Carpentries Database: Multiple records",
         body=(
             "Hi, {{ person.personal }} {{ person.family }}. "
             "We saw that you had two profiles in our database. "
