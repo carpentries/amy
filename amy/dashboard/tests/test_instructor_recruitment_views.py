@@ -356,6 +356,7 @@ class TestSignupForRecruitment(TestCase):
             },
         )
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_form_valid__obj_saved_with_recruitment_and_person(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
@@ -383,6 +384,7 @@ class TestSignupForRecruitment(TestCase):
         self.assertEqual(form_mock.save().recruitment, recruitment)
         self.assertEqual(form_mock.save().person, person)
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     @patch("dashboard.views.messages")
     def test_form_valid__tasks_nearby(self, mock_messages):
         # Arrange
@@ -422,6 +424,7 @@ class TestSignupForRecruitment(TestCase):
             f"{event2}",
         )
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     @patch("dashboard.views.messages")
     def test_form_valid__conflicting_signups(self, mock_messages):
         # Arrange
@@ -464,6 +467,7 @@ class TestSignupForRecruitment(TestCase):
             f"{signup.recruitment.event}",
         )
 
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     @patch("django.contrib.messages.views.messages")
     def test_form_valid__creates_a_new_signup(self, mock_contrib_messages_views):
         # Arrange
