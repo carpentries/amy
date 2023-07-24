@@ -14,11 +14,11 @@
 {% if perms.emails.change_scheduledemail %}
 <div class="edit-object">
   <div class="btn-group">
-    <a class="btn btn-primary" href="{% url 'scheduled_email_edit' scheduled_email.id %}">Edit</a>
-    <a class="btn btn-warning" href="{% url 'scheduled_email_reschedule' scheduled_email.id %}">Reschedule</a>
+    <a class="btn btn-primary" href="{% url 'scheduledemail_edit' scheduled_email.id %}">Edit</a>
+    <a class="btn btn-warning" href="{% url 'scheduledemail_reschedule' scheduled_email.id %}">Reschedule</a>
   </div>
   <div class="float-right">
-    <a class="btn btn-danger" href="{% url 'scheduled_email_cancel' scheduled_email.id %}">Cancel</a>
+    <a class="btn btn-danger" href="{% url 'scheduledemail_cancel' scheduled_email.id %}">Cancel</a>
   </div>
 </div>
 {% else %}
@@ -36,31 +36,31 @@
 <table class="table table-striped">
   <tr>
     <th width="20%">ID:</th>
-    <td>{{ scheduled_email.id }}</td>
+    <td colspan="2">{{ scheduled_email.id }}</td>
   </tr>
   <tr>
     <th>State:</th>
-    <td><strong>{{ scheduled_email.get_state_display }}</strong></td>
+    <td colspan="2"><strong>{{ scheduled_email.get_state_display }}</strong></td>
   </tr>
   <tr>
     <th>Created at:</th>
-    <td>{{ scheduled_email.created_at }}</td>
+    <td colspan="2">{{ scheduled_email.created_at }}</td>
   </tr>
   <tr>
     <th>Last updated at:</th>
-    <td>{{ scheduled_email.last_updated_at }}</td>
+    <td colspan="2">{{ scheduled_email.last_updated_at }}</td>
   </tr>
   <tr>
     <th>Scheduled to run:</th>
-    <td>{{ scheduled_email.scheduled_at }}</td>
+    <td colspan="2">{{ scheduled_email.scheduled_at }}</td>
   </tr>
   <tr>
     <th>From:</th>
-    <td>{{ scheduled_email.from_header }}</td>
+    <td colspan="2">{{ scheduled_email.from_header }}</td>
   </tr>
   <tr>
     <th>To:</th>
-    <td>
+    <td colspan="2">
       <ul>
         {% for email in scheduled_email.to_header %}
           <li>{{ email }}</li>
@@ -70,11 +70,11 @@
   </tr>
   <tr>
     <th>Reply-To:</th>
-    <td>{{ scheduled_email.reply_to_header|default:"&mdash;" }}</td>
+    <td colspan="2">{{ scheduled_email.reply_to_header|default:"&mdash;" }}</td>
   </tr>
   <tr>
     <th>CC:</th>
-    <td>
+    <td colspan="2">
     {% if scheduled_email.cc_header %}
       <ul>
       {% for email in scheduled_email.cc_header %}
@@ -88,7 +88,7 @@
   </tr>
   <tr>
     <th>BCC:</th>
-    <td>
+    <td colspan="2">
     {% if scheduled_email.bcc_header %}
       <ul>
       {% for email in scheduled_email.bcc_header %}
@@ -102,21 +102,26 @@
   </tr>
   <tr>
     <th>Subject:</th>
-    <td><code>{{ scheduled_email.subject }}</code></td>
+    <td colspan="2"><code>{{ scheduled_email.subject }}</code></td>
   </tr>
   <tr>
     <th>Body: <br><small>(Markdown; converts to HTML when sent)</small></th>
     <td>
+      <strong>Raw:</strong>
       <pre>{{ scheduled_email.body }}</pre>
+    </td>
+    <td>
+      <strong>Rendered:</strong>
+      {{ rendered_body|safe }}
     </td>
   </tr>
   <tr>
     <th>Template:</th>
-    <td><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
+    <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
   </tr>
   <tr>
     <th>Related object:</th>
-    <td>
+    <td colspan="2">
       {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
       <a href="{{ scheduled_email.generic_relation.get_absolute_url }}">{{ scheduled_email.generic_relation }}</a>
       {% elif scheduled_email.generic_relation %}
