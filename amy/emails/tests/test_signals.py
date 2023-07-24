@@ -67,3 +67,14 @@ class TestCreatedSignals(TestCase):
         # Assert
         for signal_name, signal_name_attribute in signals:
             self.assertEqual(signal_name, signal_name_attribute)
+
+    def test_receiver_connected(self) -> None:
+        # Arrange
+        signals = {
+            emails.signals.__dict__[signal]
+            for signal in emails.signals.__dict__
+            if signal.endswith("_signal")
+        }
+        # Act & Assert
+        for signal in signals:
+            self.assertEqual(len(signal.receivers), 1, signal.signal_name)
