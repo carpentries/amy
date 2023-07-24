@@ -30,6 +30,7 @@
   {% elif user.passed_training or user.passed_get_involved or user.passed_welcome or user.passed_demo %}
   <div class="alert alert-info" role="alert">
     <p>
+      {% checkout_deadline last_training.event.end as deadline %}
       Please review your progress towards Instructor certification below. 
       {% if progress_training %}
         {% checkout_deadline progress_training.event.end as deadline %}
