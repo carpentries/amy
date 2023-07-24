@@ -1,7 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from unittest import mock
 from urllib.parse import urlencode
-import weakref
 
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -26,42 +25,18 @@ class TestPersonsMergedReceiver(TestCase):
                 "persons_merged_receiver"
             )
 
-    def test_signal_received(self) -> None:
+    def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        person = Person.objects.create()
-        request = RequestFactory().get("/")
-        mock_action = mock.MagicMock()
-        _copied_receivers = persons_merged_signal.receivers[:]
-
-        # This hack replaces weakref to "emails.actions.persons_merged_receiver" with
-        # a mock. Otherwise mocking doesn't work, as after dereferencing the weakref
-        # the actual function is called.
-        persons_merged_signal.receivers[0] = (
-            persons_merged_signal.receivers[0][0],
-            weakref.ref(mock_action),
-        )
+        original_receivers = persons_merged_signal.receivers[:]
 
         # Act
-        persons_merged_signal.send(
-            sender=person,
-            request=request,
-            person_a_id=person.id,
-            person_b_id=person.id,
-            selected_person_id=person.id,
-        )
+        # attempt to connect the receiver
+        persons_merged_signal.connect(persons_merged_receiver)
+        new_receivers = persons_merged_signal.receivers[:]
 
         # Assert
-        mock_action.assert_called_once_with(
-            signal=mock.ANY,
-            sender=person,
-            request=request,
-            person_a_id=person.id,
-            person_b_id=person.id,
-            selected_person_id=person.id,
-        )
-
-        # Finally
-        persons_merged_signal.receivers = _copied_receivers[:]
+        # the same receiver list means this receiver has already been connected
+        self.assertEqual(original_receivers, new_receivers)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_action_triggered(self) -> None:

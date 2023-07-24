@@ -1,6 +1,5 @@
 from datetime import UTC, datetime, timedelta
 from unittest import mock
-import weakref
 
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -25,42 +24,18 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
                 "instructor_badge_awarded_receiver"
             )
 
-    def test_signal_received(self) -> None:
+    def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        badge = Badge.objects.create(name="instructor")
-        person = Person.objects.create()
-        award = Award.objects.create(badge=badge, person=person)
-        request = RequestFactory().get("/")
-        mock_action = mock.MagicMock()
-        _copied_receivers = instructor_badge_awarded_signal.receivers[:]
-
-        # This hack replaces weakref to "emails.actions.persons_merged_receiver" with
-        # a mock. Otherwise mocking doesn't work, as after dereferencing the weakref
-        # the actual function is called.
-        instructor_badge_awarded_signal.receivers[0] = (
-            instructor_badge_awarded_signal.receivers[0][0],
-            weakref.ref(mock_action),
-        )
+        original_receivers = instructor_badge_awarded_signal.receivers[:]
 
         # Act
-        instructor_badge_awarded_signal.send(
-            sender=award,
-            request=request,
-            person_id=person.pk,
-            award_id=award.pk,
-        )
+        # attempt to connect the receiver
+        instructor_badge_awarded_signal.connect(instructor_badge_awarded_receiver)
+        new_receivers = instructor_badge_awarded_signal.receivers[:]
 
         # Assert
-        mock_action.assert_called_once_with(
-            signal=mock.ANY,
-            sender=award,
-            request=request,
-            person_id=person.pk,
-            award_id=award.pk,
-        )
-
-        # Finally
-        instructor_badge_awarded_signal.receivers = _copied_receivers[:]
+        # the same receiver list means this receiver has already been connected
+        self.assertEqual(original_receivers, new_receivers)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_action_triggered(self) -> None:

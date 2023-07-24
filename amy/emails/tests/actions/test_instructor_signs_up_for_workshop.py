@@ -1,6 +1,5 @@
 from datetime import UTC, date, datetime, timedelta
 from unittest import mock
-import weakref
 
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -27,54 +26,20 @@ class TestInstructorSignsUpForWorkshopReceiver(TestCase):
                 "instructor_signs_up_for_workshop_receiver"
             )
 
-    def test_signal_received(self) -> None:
+    def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
-        person = Person.objects.create()
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person
-        )
-        request = RequestFactory().get("/")
-        mock_action = mock.MagicMock()
-        _copied_receivers = instructor_signs_up_for_workshop_signal.receivers[:]
-
-        # This hack replaces weakref to "emails.actions.persons_merged_receiver" with
-        # a mock. Otherwise mocking doesn't work, as after dereferencing the weakref
-        # the actual function is called.
-        instructor_signs_up_for_workshop_signal.receivers[0] = (
-            instructor_signs_up_for_workshop_signal.receivers[0][0],
-            weakref.ref(mock_action),
-        )
+        original_receivers = instructor_signs_up_for_workshop_signal.receivers[:]
 
         # Act
-        instructor_signs_up_for_workshop_signal.send(
-            sender=signup,
-            request=request,
-            person_id=signup.person.pk,
-            event_id=signup.recruitment.event.pk,
-            instructor_recruitment_id=signup.recruitment.pk,
-            instructor_recruitment_signup_id=signup.pk,
+        # attempt to connect the receiver
+        instructor_signs_up_for_workshop_signal.connect(
+            instructor_signs_up_for_workshop_receiver
         )
+        new_receivers = instructor_signs_up_for_workshop_signal.receivers[:]
 
         # Assert
-        mock_action.assert_called_once_with(
-            signal=mock.ANY,
-            sender=signup,
-            request=request,
-            person_id=signup.person.pk,
-            event_id=signup.recruitment.event.pk,
-            instructor_recruitment_id=signup.recruitment.pk,
-            instructor_recruitment_signup_id=signup.pk,
-        )
-
-        # Finally
-        instructor_signs_up_for_workshop_signal.receivers = _copied_receivers[:]
+        # the same receiver list means this receiver has already been connected
+        self.assertEqual(original_receivers, new_receivers)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_action_triggered(self) -> None:
