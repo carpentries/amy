@@ -3,7 +3,7 @@ from datetime import date, datetime
 from django.urls import reverse
 
 from trainings.models import Involvement
-from workshops.models import Award, Person, TrainingProgress, TrainingRequirement
+from workshops.models import Award, Event, Person, TrainingProgress, TrainingRequirement
 from workshops.tests.base import TestBase
 
 
@@ -104,7 +104,17 @@ class TestInstructorTrainingStatus(TestBase):
         self.progress_url = reverse("training-progress")
 
     def test_training_passed(self):
-        TrainingProgress.objects.create(trainee=self.admin, requirement=self.training)
+        self._setUpTags()
+        self._setUpOrganizations()
+        event = Event.objects.create(
+            slug="event-ttt",
+            start=date(2023, 6, 24),
+            end=date(2023, 6, 25),
+            host=self.org_alpha,
+        )
+        TrainingProgress.objects.create(
+            trainee=self.admin, requirement=self.training, event=event
+        )
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Training passed")
 
@@ -113,18 +123,18 @@ class TestInstructorTrainingStatus(TestBase):
             trainee=self.admin, requirement=self.training, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Training not passed yet")
+        self.assertContains(rv, "Training failed")
 
     def test_training_asked_to_repeat(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.training, state="a"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Training not passed yet")
+        self.assertContains(rv, "Training asked to repeat")
 
     def test_training_not_finished(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Training not passed yet")
+        self.assertContains(rv, "Training not completed yet")
 
 
 class TestGetInvolvedStatus(TestBase):
@@ -158,7 +168,7 @@ class TestGetInvolvedStatus(TestBase):
             url="https://example.org",
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Get Involved step evaluation pending")
+        self.assertContains(rv, "Get Involved not evaluated yet")
 
     def test_get_involved_passed(self):
         TrainingProgress.objects.create(
@@ -169,7 +179,7 @@ class TestGetInvolvedStatus(TestBase):
             url="https://example.org",
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Get Involved submission accepted")
+        self.assertContains(rv, "Get Involved passed")
 
     def test_submission_form(self):
         data = {
@@ -181,7 +191,9 @@ class TestGetInvolvedStatus(TestBase):
         rv = self.client.post(self.progress_url, data, follow=True)
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(rv, "Your Get Involved submission will be evaluated soon.")
+        self.assertContains(
+            rv, "Your Get Involved submission will be reviewed within 7-10 days."
+        )
         got = list(
             TrainingProgress.objects.values_list(
                 "state", "trainee", "url", "requirement", "involvement_type", "date"
@@ -244,11 +256,11 @@ class TestWelcomeSessionStatus(TestBase):
             trainee=self.admin, requirement=self.welcome, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Welcome Session not passed yet")
+        self.assertContains(rv, "Welcome Session failed")
 
     def test_no_participation_in_a_session_yet(self):
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Welcome Session not passed yet")
+        self.assertContains(rv, "Welcome Session not completed yet")
 
 
 class TestDemoSessionStatus(TestBase):
@@ -261,12 +273,12 @@ class TestDemoSessionStatus(TestBase):
             name="Demo", defaults={}
         )
         self.progress_url = reverse("training-progress")
-        self.SESSION_LINK_TEXT = "You can register for a Demo Session on"
+        self.SESSION_LINK_TEXT = "Register for a Demo Session on"
 
     def test_session_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Demo Session passed")
+        self.assertContains(rv, "Demo passed")
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
     def test_session_failed(self):
@@ -274,7 +286,7 @@ class TestDemoSessionStatus(TestBase):
             trainee=self.admin, requirement=self.demo, state="f"
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Demo Session not completed")
+        self.assertContains(rv, "Demo failed")
         self.assertContains(rv, self.SESSION_LINK_TEXT)
 
     def test_no_participation_in_a_session_yet(self):
@@ -285,5 +297,5 @@ class TestDemoSessionStatus(TestBase):
     def test_no_registration_instruction_when_trainee_passed_session(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Demo Session passed")
+        self.assertContains(rv, "Demo passed")
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)

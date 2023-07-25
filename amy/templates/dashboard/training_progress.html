@@ -35,10 +35,12 @@
   {% elif user.passed_training %}
   <div class="alert alert-info" role="alert">
     <p>
-      {% checkout_deadline progress_training.event.end as deadline %}
-      Please review your progress towards Instructor certification below. 
-      Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
-      requirements is {{ deadline }}.
+      {% if progress_training %}
+        {% checkout_deadline progress_training.event.end as deadline %}
+        Please review your progress towards Instructor certification below. 
+        Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
+        requirements is {{ deadline }}.
+      {% endif %}
     </p>
       If you would like an extension, please contact us at 
       <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
