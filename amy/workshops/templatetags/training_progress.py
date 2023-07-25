@@ -66,19 +66,30 @@ def checkout_deadline(start_date):
 
 
 @register.simple_tag
-def progress_trainee_view(progress):
+def progress_trainee_view(progress: TrainingProgress) -> str:
     assert isinstance(progress, TrainingProgress)
 
+    # state: follow our internal choices
+    # except for Welcome Session
+    # as 'passed' implies assessment, but you just have to show up
+    state_display = progress.get_state_display().lower()
+    if state_display == "passed" and progress.requirement.name == "Welcome Session":
+        state_display = "completed"
+
+    # date: show event dates for training, most recent update date otherwise
     date = progress.event.end if progress.event else progress.last_updated_at
+
+    # notes: show notes if state is failed or asked to repeat
     notes = (
         f"<p>Administrator comments: {progress.notes}</p>"
         if progress.state in ["f", "a"]
         else ""
     )
 
+    # put it all together
     text = (
         f'<p class="text-{progress_state_class(progress.state)}"> '
-        f"{progress.requirement.name} {progress.get_state_display().lower()} "
+        f"{progress.requirement.name} {state_display} "
         f'as of {date.strftime("%B %d, %Y")}.</p>{notes}'
     )
 

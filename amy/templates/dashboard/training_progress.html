@@ -138,6 +138,9 @@
       <td>
         {% if progress_demo %}
           {% progress_trainee_view progress_demo %}
+          {% if progress_demo.state == "a" %}
+            <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
+          {% endif %}
         {% elif user.passed_demo %}
         <p class="text-success">Demo Session passed.
         </p>

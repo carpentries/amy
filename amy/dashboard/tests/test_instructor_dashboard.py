@@ -245,11 +245,13 @@ class TestWelcomeSessionStatus(TestBase):
         self._setUpUsersAndLogin()
         self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.progress_url = reverse("training-progress")
+        self.SESSION_LINK_TEXT = "Register for a Welcome Session on"
 
     def test_session_passed(self):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.welcome)
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Welcome Session passed")
+        self.assertContains(rv, "Welcome Session completed")
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
     def test_session_failed(self):
         TrainingProgress.objects.create(
@@ -257,10 +259,12 @@ class TestWelcomeSessionStatus(TestBase):
         )
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Welcome Session failed")
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
     def test_no_participation_in_a_session_yet(self):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Welcome Session not completed yet")
+        self.assertContains(rv, self.SESSION_LINK_TEXT)
 
 
 class TestDemoSessionStatus(TestBase):
@@ -281,13 +285,20 @@ class TestDemoSessionStatus(TestBase):
         self.assertContains(rv, "Demo passed")
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
+    def test_session_asked_to_repeat(self):
+        TrainingProgress.objects.create(
+            trainee=self.admin, requirement=self.demo, state="a"
+        )
+        rv = self.client.get(self.progress_url)
+        self.assertContains(rv, "Demo asked to repeat")
+        self.assertContains(rv, self.SESSION_LINK_TEXT)
+
     def test_session_failed(self):
         TrainingProgress.objects.create(
             trainee=self.admin, requirement=self.demo, state="f"
         )
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Demo failed")
-        self.assertContains(rv, self.SESSION_LINK_TEXT)
 
     def test_no_participation_in_a_session_yet(self):
         rv = self.client.get(self.progress_url)
