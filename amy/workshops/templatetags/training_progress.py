@@ -82,7 +82,7 @@ def progress_trainee_view(progress):
     text = (
         f'<p class="text-{progress_state_class(progress.state)}"> '
         f"{progress.requirement.name} {progress.get_state_display().lower()} "
-        f'as of {date.strftime("%d %B %Y")}.</p>{notes}'
+        f'as of {date.strftime("%B %d, %Y")}.</p>{notes}'
     )
 
     return mark_safe(text)

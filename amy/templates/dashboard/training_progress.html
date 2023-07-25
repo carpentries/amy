@@ -36,7 +36,7 @@
   <div class="alert alert-info" role="alert">
     <p>
       Please review your progress towards Instructor certification below. 
-      Based on your training date of {{ last_training.start_date }}, the 90-day deadline to complete these 
+      Based on your training dates of {% human_daterange last_training.event.start last_training.event.end %}, the 90-day deadline to complete these 
       requirements is {% checkout_deadline last_training.start_date %}.
     </p>
       If you would like an extension, please contact us at 
