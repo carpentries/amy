@@ -23,9 +23,7 @@ def progress_state_class(state):
 def progress_label(progress):
     assert isinstance(progress, TrainingProgress)
 
-    additional_label = progress_state_class(progress.state)
-
-    fmt = "badge badge-{}".format(additional_label)
+    fmt = f"badge badge-{progress_state_class(progress.state)}"
     return mark_safe(fmt)
 
 
@@ -63,8 +61,7 @@ def progress_description(progress):
 
 @register.simple_tag
 def checkout_deadline(start_date):
-    """get the year after the current year"""
-
+    # we allow 90 days for checkout
     return start_date + timedelta(days=90)
 
 

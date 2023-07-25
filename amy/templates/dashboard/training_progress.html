@@ -14,7 +14,7 @@
 {% endif %}
 
 <div>
-  <h2>Your progress toward becoming a Carpentries Instructor</h2>
+  <h2>Your progress towards becoming a Carpentries Instructor</h2>
   
   {% if user.instructor_badges %}
   <div class="alert alert-success" role="alert">
@@ -35,9 +35,10 @@
   {% elif user.passed_training %}
   <div class="alert alert-info" role="alert">
     <p>
+      {% checkout_deadline last_training.event.end as deadline %}
       Please review your progress towards Instructor certification below. 
       Based on your training dates of {% human_daterange last_training.event.start last_training.event.end %}, the 90-day deadline to complete these 
-      requirements is {% checkout_deadline last_training.start_date %}.
+      requirements is {{ deadline }}.
     </p>
       If you would like an extension, please contact us at 
       <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
@@ -114,11 +115,7 @@
         {% if last_welcome %}
           {% progress_trainee_view last_welcome %}
         {% elif user.passed_welcome %}
-          <p class="text-success">Welcome Session completed 
-            {% if last_welcome %}
-              as of {{ last_welcome.last_updated_at | date:'j F Y' }}
-            {% endif %}  
-            .
+          <p class="text-success">Welcome Session completed.
           </p>
         {% else %}
           <p>Welcome Session not completed yet.</p>
@@ -140,11 +137,7 @@
         {% if last_demo %}
           {% progress_trainee_view last_demo %}
         {% elif user.passed_demo %}
-        <p class="text-success">Demo Session passed
-          {% if last_demo %}
-            as of {{ last_demo.last_updated_at | date:'j F Y' }}
-          {% endif %}
-          .
+        <p class="text-success">Demo Session passed.
         </p>
         {% else %}
         <p>Demo Session not completed yet.</p>
