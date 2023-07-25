@@ -30,7 +30,6 @@
   {% elif user.passed_training or user.passed_get_involved or user.passed_welcome or user.passed_demo %}
   <div class="alert alert-info" role="alert">
     <p>
-      {% checkout_deadline last_training.event.end as deadline %}
       Please review your progress towards Instructor certification below. 
       {% if progress_training %}
         {% checkout_deadline progress_training.event.end as deadline %}
@@ -82,7 +81,7 @@
           {% include 'includes/progress_trainee_view.html' with progress=progress_get_involved %}
           {% if progress_get_involved.state == "n" %}
           <p>Your submission will be evaluated within 7-10 days.</p>
-          <p>You may update or delete your submission before it is evaluated. If you delete it, you will be allowed to create a new submission afterward.</p>
+          <p>You may update or delete your submission before it is evaluated. If you delete it, you will be allowed to create a new submission afterwards.</p>
           {% endif %}
           <p>Details of your submission are below.</p>
           <p>
@@ -91,12 +90,12 @@
             <strong>URL:</strong> {% firstof progress_get_involved.url "No URL provided" %}<br/>
             <strong>Notes:</strong> {% firstof progress_get_involved.trainee_notes "No notes provided" %}
           </p>
-          {% if last_get_involved.state == "n" %}
+          {% if progress_get_involved.state == "n" %}
               <p class="edit-object float-left">
-                <a href="{% url 'get_involved_edit' last_get_involved.pk %}" class="btn btn-primary">Edit</a>  
+                <a href="{% url 'get_involved_edit' progress_get_involved.pk %}" class="btn btn-primary">Edit</a>  
               </p>
               <div class="delete-object float-left" style="padding-left: 2%;">
-                <form action="{% url 'get_involved_delete' last_get_involved.pk %}" onsubmit='return confirm("Are you sure you wish to delete your Get Involved submission?")' method="POST">
+                <form action="{% url 'get_involved_delete' progress_get_involved.pk %}" onsubmit='return confirm("Are you sure you wish to delete your Get Involved submission?")' method="POST">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
