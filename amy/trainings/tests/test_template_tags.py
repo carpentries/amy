@@ -253,7 +253,7 @@ class TestProgressTraineeViewTemplateTag(TestBase):
         expected = (
             '<p class="text-danger"> Demo failed as of '
             f'{datetime.today().strftime("%B %d, %Y")}.</p>'
-            "<p>Administrator comments: Reason for failure</p>"
+            # "<p>Administrator comments: Reason for failure</p>"
         )
         self.assertHTMLEqual(expected, got)
 
@@ -274,7 +274,7 @@ class TestProgressTraineeViewTemplateTag(TestBase):
         expected = (
             '<p class="text-info"> Demo asked to repeat as of '
             f'{datetime.today().strftime("%B %d, %Y")}.</p>'
-            "<p>Administrator comments: Reason for asking to repeat</p>"
+            # "<p>Administrator comments: Reason for asking to repeat</p>"
         )
         self.assertHTMLEqual(expected, got)
 

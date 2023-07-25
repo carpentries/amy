@@ -34,7 +34,7 @@
       {% if progress_training %}
         {% checkout_deadline progress_training.event.end as deadline %}
         Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
-        requirements is {{ deadline }}.
+        requirements is <strong>{{ deadline }}</strong>.
       {% endif %}
     </p>
       If you would like an extension, please contact us at 

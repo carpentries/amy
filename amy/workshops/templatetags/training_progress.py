@@ -80,17 +80,19 @@ def progress_trainee_view(progress: TrainingProgress) -> str:
     date = progress.event.end if progress.event else progress.last_updated_at
 
     # notes: show notes if state is failed or asked to repeat
-    notes = (
-        f"<p>Administrator comments: {progress.notes}</p>"
-        if progress.state in ["f", "a"]
-        else ""
-    )
+    # TODO: implement a separate field for these notes
+    # notes = (
+    #     f"<p>Administrator comments: {progress.notes}</p>"
+    #     if progress.state in ["f", "a"]
+    #     else ""
+    # )
 
     # put it all together
     text = (
         f'<p class="text-{progress_state_class(progress.state)}"> '
         f"{progress.requirement.name} {state_display} "
-        f'as of {date.strftime("%B %d, %Y")}.</p>{notes}'
+        f'as of {date.strftime("%B %d, %Y")}.</p>'
+        # f'{notes}' # TODO
     )
 
     return mark_safe(text)
