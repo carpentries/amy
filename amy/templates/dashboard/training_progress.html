@@ -35,9 +35,9 @@
   {% elif user.passed_training %}
   <div class="alert alert-info" role="alert">
     <p>
-      {% checkout_deadline last_training.event.end as deadline %}
+      {% checkout_deadline progress_training.event.end as deadline %}
       Please review your progress towards Instructor certification below. 
-      Based on your training dates of {% human_daterange last_training.event.start last_training.event.end %}, the 90-day deadline to complete these 
+      Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
       requirements is {{ deadline }}.
     </p>
       If you would like an extension, please contact us at 
@@ -67,8 +67,8 @@
     <tr>
       <th>1. Training</th>
       <td>
-        {% if last_training %}
-          {% progress_trainee_view last_training %}
+        {% if progress_training %}
+          {% progress_trainee_view progress_training %}
         {% elif user.passed_training %}
           <p class="text-success">Training passed.</p>
         {% else %}
@@ -79,9 +79,9 @@
     <tr>
       <th rowspan="2">2. Get Involved</th>
       <td>
-        {% if last_get_involved %}
-          {% progress_trainee_view last_get_involved %}
-          {% if last_get_involved.state == "n" %}
+        {% if progress_get_involved %}
+          {% progress_trainee_view progress_get_involved %}
+          {% if progress_get_involved.state == "n" %}
           <p>Please wait while we evaluate your submission.</p>
           {% endif %}
         {% elif user.passed_get_involved %}
@@ -112,8 +112,8 @@
     <tr>
       <th>3. Welcome Session</th>
       <td>
-        {% if last_welcome %}
-          {% progress_trainee_view last_welcome %}
+        {% if progress_welcome %}
+          {% progress_trainee_view progress_welcome %}
         {% elif user.passed_welcome %}
           <p class="text-success">Welcome Session completed.
           </p>
@@ -134,8 +134,8 @@
     <tr>
       <th>4. Demo Session</th>
       <td>
-        {% if last_demo %}
-          {% progress_trainee_view last_demo %}
+        {% if progress_demo %}
+          {% progress_trainee_view progress_demo %}
         {% elif user.passed_demo %}
         <p class="text-success">Demo Session passed.
         </p>

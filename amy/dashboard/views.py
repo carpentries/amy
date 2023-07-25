@@ -26,6 +26,7 @@ from dashboard.forms import (
     SearchForm,
     SignupForRecruitmentForm,
 )
+from dashboard.utils import get_passed_or_last_progress
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
@@ -223,23 +224,10 @@ def training_progress(request):
         .get(pk=request.user.pk)
     )
 
-    progresses = request.user.trainingprogress_set
-    last_training = (
-        progresses.filter(requirement__name="Training").order_by("-created_at").first()
-    )
-    last_welcome = (
-        progresses.filter(requirement__name="Welcome Session")
-        .order_by("-created_at")
-        .first()
-    )
-    last_demo = (
-        progresses.filter(requirement__name="Demo").order_by("-created_at").first()
-    )
-    last_get_involved = (
-        progresses.filter(requirement__name="Get Involved")
-        .order_by("-created_at")
-        .first()
-    )
+    progress_training = get_passed_or_last_progress(request.user, "Training")
+    progress_get_involved = get_passed_or_last_progress(request.user, "Get Involved")
+    progress_welcome = get_passed_or_last_progress(request.user, "Welcome Session")
+    progress_demo = get_passed_or_last_progress(request.user, "Demo")
 
     if request.method == "POST":
         base_training_progress = TrainingProgress(
@@ -263,10 +251,10 @@ def training_progress(request):
     context = {
         "title": "Your training progress",
         "get_involved_form": get_involved_form,
-        "last_training": last_training,
-        "last_welcome": last_welcome,
-        "last_demo": last_demo,
-        "last_get_involved": last_get_involved,
+        "progress_training": progress_training,
+        "progress_get_involved": progress_get_involved,
+        "progress_welcome": progress_welcome,
+        "progress_demo": progress_demo,
     }
     return render(request, "dashboard/training_progress.html", context)
 
