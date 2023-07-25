@@ -212,7 +212,7 @@ class TestProgressTraineeViewTemplateTag(TestBase):
 
         # Assert
         expected = (
-            '<p class="text-success"> Welcome Session passed as of '
+            '<p class="text-success"> Welcome Session completed as of '
             f'{datetime.today().strftime("%B %d, %Y")}.</p>'
         )
         self.assertHTMLEqual(expected, got)
