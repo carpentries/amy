@@ -39,7 +39,7 @@ class TestInstructorStatus(TestBase):
         self.progress_url = reverse("training-progress")
 
     def test_instructor_badge(self):
-        """When the trainee is awarded both Carpentry Instructor badge,
+        """When the trainee is awarded a Carpentries Instructor badge,
         we want to display that info in the dashboard."""
 
         Award.objects.create(
@@ -48,14 +48,30 @@ class TestInstructorStatus(TestBase):
             awarded=datetime(2016, 6, 1, 15, 0),
         )
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Congratulations, you're a certified")
+        self.assertContains(rv, "Congratulations, you're a certified Instructor!")
         self.assertIn(self.instructor_badge, rv.context["user"].instructor_badges)
 
-    def test_neither_swc_nor_dc_instructor(self):
+    def test_not_an_instructor(self):
         """Check that we don't display that the trainee is an instructor if
         they don't have appropriate badge."""
         rv = self.client.get(self.progress_url)
-        self.assertNotContains(rv, "Congratulations, you're certified")
+        self.assertNotContains(rv, "Congratulations, you're a certified Instructor!")
+        self.assertContains(
+            rv, "If you have recently completed a training or step towards checkout"
+        )
+
+    def test_progress_but_not_eligible(self):
+        """Check the correct alert is displayed when some progress is completed."""
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=TrainingRequirement.objects.get(name="Welcome Session"),
+            state="p",
+        )
+        rv = self.client.get(self.progress_url)
+        self.assertNotContains(rv, "Congratulations, you're a certified Instructor!")
+        self.assertContains(
+            rv, "Please review your progress towards Instructor certification below."
+        )
 
     def test_eligible_but_not_awarded(self):
         """Test what is displayed when a trainee is eligible to be certified
@@ -91,7 +107,11 @@ class TestInstructorStatus(TestBase):
 
         rv = self.client.get(self.progress_url)
 
-        self.assertNotContains(rv, "Congratulations, you're certified")
+        self.assertContains(
+            rv,
+            "You have successfully completed all steps towards Instructor "
+            "certification",
+        )
 
 
 class TestInstructorTrainingStatus(TestBase):

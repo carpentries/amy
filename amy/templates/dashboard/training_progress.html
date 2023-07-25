@@ -18,12 +18,7 @@
   
   {% if user.instructor_badges %}
   <div class="alert alert-success" role="alert">
-    <p>Congratulations, you're a certified:</p>
-    <ul>
-    {% for badge in user.instructor_badges %}
-      <li>{{ badge.title }}</li>
-    {% endfor %}
-    </ul>
+    <p>Congratulations, you're a certified Instructor!
   </div>
   {% elif user.instructor_eligible %}
   <div class="alert alert-info" role="alert">
@@ -32,12 +27,12 @@
     You will receive your certificate and more information by email in 1-2 weeks.
   </p>
   </div>
-  {% elif user.passed_training %}
+  {% elif user.passed_training or user.passed_get_involved or user.passed_welcome or user.passed_demo %}
   <div class="alert alert-info" role="alert">
     <p>
+      Please review your progress towards Instructor certification below. 
       {% if progress_training %}
         {% checkout_deadline progress_training.event.end as deadline %}
-        Please review your progress towards Instructor certification below. 
         Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
         requirements is {{ deadline }}.
       {% endif %}
