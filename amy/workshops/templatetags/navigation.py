@@ -28,7 +28,7 @@ def navbar_template(
 
     if active:
         classes.append("active")
-        screen_reader = mark_safe(' <span class="sr-only">(current)</span>')
+        screen_reader = mark_safe(' <span class="visually-hidden">(current)</span>')
 
     if deprecated:
         badge = mark_safe('<span class="badge bg-secondary">deprecated</span> ')
