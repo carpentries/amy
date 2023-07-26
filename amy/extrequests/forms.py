@@ -148,10 +148,10 @@ class BulkMatchTrainingRequestForm(forms.Form):
             "match",
             "Accept & match selected trainees to chosen training",
             **{
-                "data-toggle": "popover",
-                "data-html": "true",
-                "data-trigger": "hover",
-                "data-content": "If you want to <strong>re</strong>match "
+                "data-bs-toggle": "popover",
+                "data-bs-html": "true",
+                "data-bs-trigger": "hover",
+                "data-bs-content": "If you want to <strong>re</strong>match "
                 "trainees to other training, first "
                 "<strong>unmatch</strong> them!",
             },

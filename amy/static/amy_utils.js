@@ -72,7 +72,7 @@ $.fn.updateIdsInHref = function () {
 
 $(document).ready(function () {
   /* Enable Bootstrap Tooltips by default. */
-  $('[data-toggle="tooltip"]').tooltip();
+  $('[data-bs-toggle="tooltip"]').tooltip();
 
   /*
   Enable Bootstrap Popovers by default.
@@ -80,10 +80,10 @@ $(document).ready(function () {
   Example usage:
 
   <span class="btn btn-primary"
-        data-toggle="popover"
-        data-content="Content of a popup">Hover, focus or click me!</span>
+        data-bs-toggle="popover"
+        data-bs-content="Content of a popup">Hover, focus or click me!</span>
   */
-  $('[data-toggle="popover"]').popover({ placement: "auto" });
+  $('[data-bs-toggle="popover"]').popover({ placement: "auto" });
 
   /* Some pages may have checkboxes in tables selected by default; in those
   cases, we should update URL in a[amy-download-selected] when the page
@@ -159,7 +159,7 @@ $(document).ready(function () {
   $('select').on("select2:close", function () { $(this).focus(); });
 
   /* react on comment tab change: resize preview div */
-  $('.comment-form a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+  $('.comment-form a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
     var target_pane = $(e.target).attr("href");
     var prev_target_pane = $(e.relatedTarget).attr("href");
 
