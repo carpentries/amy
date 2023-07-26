@@ -36,12 +36,12 @@ footer {
 
 .banner-local {
     color: #000000;
-    background: linear-gradient(180deg, hsl(56, 100%, 50%), hsl(56, 80%, 50%));
+    background: #ffc107;
 }
 
 .banner-testing {
     color: #FFFFFF;
-    background: linear-gradient(180deg, hsl(0, 100%, 50%), hsl(0, 80%, 50%));
+    background: #dc3545;
 }
 
 .navbar-banner-displacement {
