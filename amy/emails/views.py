@@ -15,6 +15,7 @@ from emails.forms import (
     ScheduledEmailUpdateForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
+from emails.signals import ALL_SIGNALS
 from emails.utils import person_from_request
 from workshops.base_views import (
     AMYCreateView,
@@ -52,6 +53,19 @@ class EmailTemplateDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetai
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
         context["rendered_body"] = markdownify(self.object.body)
+
+        signal = next(
+            (
+                signal
+                for signal in ALL_SIGNALS
+                if signal.signal_name == self.object.signal
+            ),
+            None,
+        )
+        context["body_context_type"] = signal.context_type if signal else {}
+        context["body_context_annotations"] = context[
+            "body_context_type"
+        ].__annotations__
         return context
 
 
@@ -113,6 +127,20 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeta
             .order_by("-created_at")
         )
         context["rendered_body"] = markdownify(self.object.body)
+
+        signal = next(
+            (
+                signal
+                for signal in ALL_SIGNALS
+                if self.object.template
+                and signal.signal_name == self.object.template.signal
+            ),
+            None,
+        )
+        context["body_context_type"] = signal.context_type if signal else {}
+        context["body_context_annotations"] = context[
+            "body_context_type"
+        ].__annotations__
         return context
 
 

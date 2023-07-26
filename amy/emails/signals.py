@@ -63,3 +63,12 @@ persons_merged_signal = Signal(
     signal_name=SignalNameEnum.persons_merged,
     context_type=PersonsMergedContext,
 )
+
+ALL_SIGNALS = [
+    instructor_badge_awarded_signal,
+    instructor_confirmed_for_workshop_signal,
+    instructor_declined_from_workshop_signal,
+    instructor_signs_up_for_workshop_signal,
+    admin_signs_instructor_up_for_workshop_signal,
+    persons_merged_signal,
+]
