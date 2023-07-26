@@ -11,16 +11,16 @@ def bootstrap_tag_class(name):
     name_low = name.lower()
 
     mapping = {
-        "swc": "badge-primary",
-        "dc": "badge-success",
-        "online": "badge-info",
-        "lc": "badge-warning",
-        "ttt": "badge-danger",
-        "itt": "badge-danger",
-        "instructor": "badge-primary",
-        "trainer": "badge-dark",
+        "swc": "bg-primary",
+        "dc": "bg-success",
+        "online": "bg-info",
+        "lc": "bg-warning",
+        "ttt": "bg-danger",
+        "itt": "bg-danger",
+        "instructor": "bg-primary",
+        "trainer": "bg-dark",
     }
-    default = "badge-secondary"
+    default = "bg-secondary"
 
     return mark_safe(
         next(

@@ -7,7 +7,7 @@
 {% block content %}
   <h3>
     <a href="{{ object.event.get_absolute_url }}">{{ object.event.slug }}</a>
-    <span class="badge {% if object.status == "o" %}badge-warning{% elif object.status == "c" %}badge-success{% else %}badge-dark{% endif %}">
+    <span class="badge {% if object.status == "o" %}bg-warning{% elif object.status == "c" %}bg-success{% else %}bg-dark{% endif %}">
       {{ object.get_status_display }}
     </span>
   </h3>

@@ -8,10 +8,10 @@ register = template.Library()
 def state_label(req):
     assert hasattr(req, "state")
     switch = {
-        "p": "badge badge-warning",
-        "a": "badge badge-success",
-        "d": "badge badge-danger",
-        "w": "badge badge-secondary",
+        "p": "badge bg-warning",
+        "a": "badge bg-success",
+        "d": "badge bg-danger",
+        "w": "badge bg-secondary",
     }
     result = switch[req.state]
     return mark_safe(result)

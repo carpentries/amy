@@ -325,13 +325,13 @@ class TestTrainingProgressValidation(TestBase):
 
 class TestProgressLabelTemplateTag(TestBase):
     def test_passed(self):
-        self._test(state="p", expected="badge badge-success")
+        self._test(state="p", expected="badge bg-success")
 
     def test_not_evaluated_yet(self):
-        self._test(state="n", expected="badge badge-warning")
+        self._test(state="n", expected="badge bg-warning")
 
     def test_failed(self):
-        self._test(state="f", expected="badge badge-danger")
+        self._test(state="f", expected="badge bg-danger")
 
     def _test(self, state, expected):
         template = Template(r"{% load training_progress %}" r"{% progress_label p %}")

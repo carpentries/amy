@@ -80,13 +80,13 @@
     <td><a href="{{ e.get_absolute_url }}">{{ e.slug }}</a></td>
     <td>
     {% if e.host == organization %}
-    <span class="badge badge-pill badge-primary">Hosted</span>
+    <span class="badge rounded-pill bg-primary">Hosted</span>
     {% endif %}
     {% if e.sponsor == organization %}
-    <span class="badge badge-pill badge-secondary">Sponsored</span>
+    <span class="badge rounded-pill bg-secondary">Sponsored</span>
     {% endif %}
     {% if e.membership in main_organisation_memberships %}
-    <span class="badge badge-pill badge-success">Affiliated</span>
+    <span class="badge rounded-pill bg-success">Affiliated</span>
     {% endif %}
     </td>
     <td>{{ e.tags.all | join:", " }}</td>

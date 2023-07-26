@@ -27,10 +27,10 @@
         <i class="fas fa-question-circle"
            data-toggle="popover" data-html="true" data-trigger="hover"
            data-content="<p>
-                         <span class='badge badge-success'>Passed</span>
-                         <span class='badge badge-warning'>Not evaluated</span>
-                         <span class='badge badge-danger'>Failed</span>
-                         <span class='badge badge-info'>Asked to repeat</span>
+                         <span class='badge bg-success'>Passed</span>
+                         <span class='badge bg-warning'>Not evaluated</span>
+                         <span class='badge bg-danger'>Failed</span>
+                         <span class='badge bg-info'>Asked to repeat</span>
                          <p>Click one of labels below to edit or delete it.</p>
                         "></i>
       </th>
@@ -40,9 +40,9 @@
         Eligible
         <i class="fas fa-question-circle"
            data-toggle="popover" data-html="true" data-trigger="hover"
-           data-content="<span class='badge badge-dark'><strike>Not eligible to be certified</strike></span><br />
-                         <span class='badge badge-success'>Eligible to be certified</span><br />
-                         <span class='badge badge-secondary'>Certified</span>
+           data-content="<span class='badge bg-dark'><strike>Not eligible to be certified</strike></span><br />
+                         <span class='badge bg-success'>Eligible to be certified</span><br />
+                         <span class='badge bg-secondary'>Certified</span>
                         "></i>
       </th>
       <th class="additional-links"></th>
@@ -79,11 +79,11 @@
         </td>
         <td>
           {% if trainee.is_instructor %}
-            <span class="badge badge-secondary" data-toggle="popover" data-trigger="hover"
+            <span class="badge bg-secondary" data-toggle="popover" data-trigger="hover"
                   data-content="This person is an instructor">Instructor</span>
           {% endif %}
           {% if trainee.get_missing_instructor_requirements %}
-            <a class="badge badge-dark" data-toggle="popover" data-html="true" data-trigger="hover"
+            <a class="badge bg-dark" data-toggle="popover" data-html="true" data-trigger="hover"
                data-content="
                  Not eligible to be certified as an Instructor. Needs to pass:
                    <ul>
@@ -95,7 +95,7 @@
                "
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}"><strike>instructor badge</strike></a>
           {% else %}
-            <a class="badge badge-success" data-toggle="popover" data-html="true" data-trigger="hover"
+            <a class="badge bg-success" data-toggle="popover" data-html="true" data-trigger="hover"
                data-content="<p>Eligible to be certified as an Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">instructor badge</a>
           {% endif %}

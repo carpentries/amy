@@ -12,5 +12,5 @@
   &nbsp;
 {% endfor %}
 <a href="{% url 'trainingprogress_add' %}?trainee={{ person.id|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"
-   class="badge badge-secondary"
+   class="badge bg-secondary"
    data-toggle="popover" data-content="Click to add new progress" data-trigger="hover">+</a>

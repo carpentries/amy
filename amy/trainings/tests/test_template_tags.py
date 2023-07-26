@@ -110,10 +110,10 @@ class TestProgressLabelTemplateTag(TestCase):
         welcome, _ = TrainingRequirement.objects.get_or_create(name="Welcome Session")
 
         expected = {
-            "p": "badge badge-success",
-            "f": "badge badge-danger",
-            "a": "badge badge-info",
-            "n": "badge badge-warning",
+            "p": "badge bg-success",
+            "f": "badge bg-danger",
+            "a": "badge bg-info",
+            "n": "badge bg-warning",
         }
 
         for state in expected.keys():
