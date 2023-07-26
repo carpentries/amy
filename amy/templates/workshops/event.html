@@ -53,7 +53,7 @@
   <div class="col-md-6">
     {% last_modified event %}
   </div>
-  <div class="col-md-6 text-right">
+  <div class="col-md-6 text-end">
     {% include "includes/assigned_to.html" with object=event user=user assign_url='event_assign' %}
   </div>
 </div>
@@ -67,7 +67,7 @@
       {% else %}
       <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
       {% endif %}
-      <a href="#preview_modal" class="btn btn-secondary float-right" id="preview_event" data-toggle="modal" data-target="#preview_modal">Show preview</a>
+      <a href="#preview_modal" class="btn btn-secondary float-end" id="preview_event" data-toggle="modal" data-target="#preview_modal">Show preview</a>
     </p>
     {% endblock edit-actions %}
   </div>
@@ -186,14 +186,14 @@
 <hr>
 
 <div class="clearfix">
-  <div class="edit-object float-left">
+  <div class="edit-object float-start">
     {% if perms.workshops.change_event %}
     <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
     {% else %}
     <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </div>
-  <div class="delete-object float-right">
+  <div class="delete-object float-end">
     {% if perms.workshops.change_event %}
     <form action="{% url 'event_delete' slug=event.slug %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ event }}\"?")' method="POST">
       {% csrf_token %}

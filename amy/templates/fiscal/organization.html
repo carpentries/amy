@@ -43,14 +43,14 @@
 </table>
 
 <div class="clearfix">
-  <p class="edit-object float-left">
+  <p class="edit-object float-start">
     {% if perms.workshops.change_organization %}
     <a href="{% url 'organization_edit' organization.domain_quoted %}" class="btn btn-primary">Edit</a>
     {% else %}
     <a href="{% url 'organization_edit' organization.domain_quoted %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
-  <div class="delete-object float-right">
+  <div class="delete-object float-end">
     {% if perms.workshops.delete_organization %}
     <form action="{% url 'organization_delete' organization.domain_quoted %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ organization }}\"?")' method="POST">
       {% csrf_token %}

@@ -84,11 +84,11 @@
 
 <div class="clearfix">
   {% if perms.communityroles.change_communityrole %}
-  <p class="edit-object float-left"><a href="{% url 'communityrole_edit' role.pk %}" class="btn btn-primary">Edit</a></p>
+  <p class="edit-object float-start"><a href="{% url 'communityrole_edit' role.pk %}" class="btn btn-primary">Edit</a></p>
   {% else %}
-  <p class="edit-object float-left"><a href="" class="btn btn-primary disabled">Edit</a></p>
+  <p class="edit-object float-start"><a href="" class="btn btn-primary disabled">Edit</a></p>
   {% endif %}
-  <div class="delete-object float-right">
+  <div class="delete-object float-end">
     {% if perms.communityroles.delete_communityrole %}
       <form action="{% url 'communityrole_delete' role.pk %}?next={{ role.person.get_absolute_url }}" onsubmit='return confirm("Are you sure you wish to remove role \"{{ role.config }}\" from user \"{{ role.person }}\"?")' method="POST">
         {% csrf_token %}

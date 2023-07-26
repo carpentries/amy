@@ -8,7 +8,7 @@
   {% else %}
     <a class="btn btn-primary disabled" disabled href="#">Edit</a>
   {% endif %}
-  <div class="float-right">
+  <div class="float-end">
     {% if perms.emails.delete_emailtemplate %}
     <form action="{% url 'emailtemplate_delete' email_template.id %}" onsubmit='return confirm("Are you sure you wish to remove email template \"{{ email_template }}\"?")' method="POST">
       {% csrf_token %}

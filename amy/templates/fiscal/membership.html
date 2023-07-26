@@ -203,7 +203,7 @@
 </table>
 
 <div class="clearfix">
-  <div class="edit-object float-left">
+  <div class="edit-object float-start">
     <div class="btn-group" role="group">
       {% if perms.workshops.change_membership %}
       <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
@@ -219,7 +219,7 @@
       {% endif %}
     </div>
   </div>
-  <div class="delete-object float-right">
+  <div class="delete-object float-end">
     {% if perms.workshops.delete_membership %}
     <form action="{% url 'membership_delete' membership.id %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ membership }}\"?")' method="POST">
       {% csrf_token %}

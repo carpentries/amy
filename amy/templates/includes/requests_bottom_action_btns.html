@@ -1,6 +1,6 @@
 <div class="clearfix">
   {% if object.state == 'p' %}
-  <div class="btn-group float-left" role="group" aria-label="Accept or discard this {{ obj_name }}">
+  <div class="btn-group float-start" role="group" aria-label="Accept or discard this {{ obj_name }}">
     <div class="btn-group" role="group">
       <button type="button" id="btnAcceptDiscardGroup" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Accept this {{ obj_name }}</button>
       <div class="dropdown-menu" aria-labelledby="btnAcceptDiscardGroup">
@@ -24,15 +24,15 @@
   </div>
   {% else %}
   {% if change_permission %}
-  <a href="{% url set_state_URL object.pk 'pending' %}" class="btn btn-warning float-left">Reopen</a>
+  <a href="{% url set_state_URL object.pk 'pending' %}" class="btn btn-warning float-start">Reopen</a>
   {% else %}
-  <a href="#" class="btn btn-warning float-left disabled" aria-disabled="true">Reopen</a>
+  <a href="#" class="btn btn-warning float-start disabled" aria-disabled="true">Reopen</a>
   {% endif %}
   {% endif %}
 
   {% if change_permission %}
-  <a href="{% url edit_URL object.pk %}" class="btn btn-warning float-right">Edit</a>
+  <a href="{% url edit_URL object.pk %}" class="btn btn-warning float-end">Edit</a>
   {% else %}
-  <a href="#" class="btn btn-warning float-right disabled" aria-disabled="true">Edit</a>
+  <a href="#" class="btn btn-warning float-end disabled" aria-disabled="true">Edit</a>
   {% endif %}
 </div>

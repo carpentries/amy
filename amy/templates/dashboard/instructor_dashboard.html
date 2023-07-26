@@ -167,7 +167,7 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
   <div class="edit-object">
     <a href="{% url 'autoupdate_profile' %}" class="btn btn-primary">Update your profile</a>
     <a href="{% url 'api:export-person-data' %}?format=json" class="btn btn-secondary">Download your data</a>
-    <form action="{% url 'person_archive' person_id=user.id  %}" method="POST" class="float-right">
+    <form action="{% url 'person_archive' person_id=user.id  %}" method="POST" class="float-end">
       <input type="submit"
              value="Archive your Profile"
              class="btn btn-primary btn-danger"

@@ -142,7 +142,7 @@ class BootstrapHelper(FormHelper):
                     "Delete",
                     onclick="return " 'confirm("Are you sure you want to delete it?");',
                     form="delete-form",
-                    css_class="btn-danger float-right",
+                    css_class="btn-danger float-end",
                 )
             )
 
@@ -151,7 +151,7 @@ class BootstrapHelper(FormHelper):
                 Button(
                     "cancel",
                     "Cancel",
-                    css_class="btn-secondary float-right",
+                    css_class="btn-secondary float-end",
                     onclick="window.history.back()",
                 )
             )
