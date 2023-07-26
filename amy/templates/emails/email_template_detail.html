@@ -1,4 +1,5 @@
 {% extends "base_nav.html" %}
+{% load emails %}
 
 {% block content %}
 
@@ -94,6 +95,16 @@
     <td>
       <strong>Rendered:</strong>
       {{ rendered_body|safe }}
+    </td>
+  </tr>
+  <tr>
+    <th>Template variables</th>
+    <td colspan="2">
+      <ul>
+      {% for key, value in body_context_annotations.items %}
+      <li><code>{{ key }}</code>: {{ value|model_documentation_link|urlize }}</li>
+      {% endfor %}
+      </ul>
     </td>
   </tr>
 </table>
