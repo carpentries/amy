@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any, Mapping
 
 from django.db.models import Model
 
@@ -15,7 +16,7 @@ class EmailController:
     @staticmethod
     def schedule_email(
         signal: str,
-        context: dict,
+        context: Mapping[str, Any],
         scheduled_at: datetime,
         to_header: list[str],
         generic_relation_obj: Model | None = None,
@@ -24,8 +25,8 @@ class EmailController:
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
         engine = EmailTemplate.get_engine()
 
-        subject = EmailTemplate.render_template(engine, template.subject, context)
-        body = EmailTemplate.render_template(engine, template.body, context)
+        subject = EmailTemplate.render_template(engine, template.subject, dict(context))
+        body = EmailTemplate.render_template(engine, template.body, dict(context))
 
         scheduled_email = ScheduledEmail.objects.create(
             state="scheduled",
