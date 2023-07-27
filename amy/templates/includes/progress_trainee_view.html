@@ -1,0 +1,16 @@
+{% load training_progress %}
+
+<p>
+    {{ progress.requirement.name }}
+    {% if progress.requirement.name == "Welcome Session" and progress.state == "p" %}
+        <span class = "badge-success">&nbsp;completed&nbsp;</span>    
+    {% else %}
+        <span class = "badge-{% progress_state_class progress.state %}">&nbsp;{{ progress.get_state_display | lower}}&nbsp;</span>
+    {% endif %}
+    as of 
+    {% if progress.requirement.name == "Training" %}
+        {{ progress.event.end }}.
+    {% else %}
+        {{ progress.last_updated_at.date }}.
+    {% endif %}
+</p>

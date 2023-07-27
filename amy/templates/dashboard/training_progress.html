@@ -4,6 +4,8 @@
 {% endblock %}
 
 {% load crispy_forms_tags %}
+{% load dates %}
+{% load training_progress %}
 
 {% block content %}
 
@@ -12,39 +14,76 @@
 {% endif %}
 
 <div>
-  <h2>Your progress of becoming The Carpentries Instructor</h2>
-
+  <h2>Your progress towards becoming a Carpentries Instructor</h2>
+  
   {% if user.instructor_badges %}
   <div class="alert alert-success" role="alert">
-    <p>Congratulations, you're a certified:</p>
-    <ul>
-    {% for badge in user.instructor_badges %}
-      <li>{{ badge.title }}</li>
-    {% endfor %}
-    </ul>
+    <p>Congratulations, you're a certified Instructor!
+  </div>
+  {% elif user.instructor_eligible %}
+  <div class="alert alert-info" role="alert">
+  <p>
+    Congratulations. You have successfully completed all steps towards Instructor certification. 
+    You will receive your certificate and more information by email in 1-2 weeks.
+  </p>
+  </div>
+  {% elif user.passed_training or user.passed_get_involved or user.passed_welcome or user.passed_demo %}
+  <div class="alert alert-info" role="alert">
+    <p>
+      Please review your progress towards Instructor certification below. 
+      {% if progress_training %}
+        {% checkout_deadline progress_training.event.end as deadline %}
+        Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
+        requirements is <strong>{{ deadline }}</strong>.
+      {% endif %}
+    </p>
+    <p>
+      If you would like an extension, please contact us at 
+      <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
+      and refer to your confirmation email for your updated deadline.
+    </p>
+    <p>
+      If you have recently completed a training or step towards checkout, 
+      please allow 7-10 days for this information to show up in your profile.
+    </p> 
+    <p>
+      Visit our 
+      <a href="https://carpentries.github.io/instructor-training/checkout">checkout page</a>
+      for more information. 
+    </p>
+  </div>
+  {% else %}
+  <div class="alert alert-info" role="alert">
+    <p>
+      If you have recently completed a training or step towards checkout, 
+      please allow 7-10 days for this information to show up in your profile.
+    </p>
   </div>
   {% endif %}
-
-  <div class="alert alert-warning" role="alert">Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge is correctly displayed, you are in good standing.</div>
 
   <table class="table table-striped">
     <tr>
       <th>1. Training</th>
       <td>
-        {% if user.passed_training %}
+        {% if progress_training %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_training %}
+        {% elif user.passed_training %}
           <p class="text-success">Training passed.</p>
         {% else %}
-          <p>Training not passed yet.</p>
+          <p>Training not completed yet.</p>
         {% endif %}
       </td>
     </tr>
     <tr>
       <th rowspan="2">2. Get Involved</th>
       <td>
-        {% if user.passed_get_involved %}
-        <p class="text-success">Get Involved submission accepted.</p>
-        {% elif get_involved_in_evaluation %}
-        <p>Get Involved step evaluation pending.<br>Please wait while we evaluate your submission.</p>
+        {% if progress_get_involved %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_get_involved %}
+          {% if progress_get_involved.state == "n" %}
+          <p>Please wait while we evaluate your submission.</p>
+          {% endif %}
+        {% elif user.passed_get_involved %}
+        <p class="text-success">Get Involved step passed.</p>
         {% else %}
         <p>Get Involved step not submitted.</p>
         {% endif %}
@@ -71,22 +110,31 @@
     <tr>
       <th>3. Welcome Session</th>
       <td>
-        {% if user.passed_welcome %}
-          <p class="text-success">Welcome Session passed.</p>
+        {% if progress_welcome %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_welcome %}
+        {% elif user.passed_welcome %}
+          <p class="text-success">Welcome Session completed.
+          </p>
         {% else %}
-          <p>Welcome Session not passed yet.</p>
-          <p>Register for a Welcome Session on <a href="https://pad.carpentries.org/welcome-sessions-{% now 'Y' %}">this Etherpad</a>.</p>
+          <p>Welcome Session not completed yet.</p>
+          {% welcome_instructions %}
         {% endif %}
       </td>
     </tr>
     <tr>
       <th>4. Demo Session</th>
       <td>
-        {% if user.passed_demo %}
-        <p class="text-success">Demo Session passed.</p>
+        {% if progress_demo %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_demo %}
+          {% if progress_demo.state == "a" %}
+            <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
+          {% endif %}
+        {% elif user.passed_demo %}
+        <p class="text-success">Demo Session passed.
+        </p>
         {% else %}
-        <p>Demo Session not completed.</p>
-        <p>You can register for a Demo Session on <a href="https://pad.carpentries.org/teaching-demos">this Etherpad</a>.</p>
+        <p>Demo Session not completed yet.</p>
+        <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
         {% endif %}
       </td>
     </tr>
