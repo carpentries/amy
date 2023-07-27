@@ -53,17 +53,17 @@ urlpatterns = [
                             path(
                                 "create/",
                                 views.GetInvolvedCreateView.as_view(),
-                                name="get_involved_create",
+                                name="getinvolved_add",
                             ),
                             path(
                                 "<int:pk>/edit/",
                                 views.GetInvolvedUpdateView.as_view(),
-                                name="get_involved_edit",
+                                name="getinvolved_update",
                             ),
                             path(
                                 "<int:pk>/delete/",
                                 views.GetInvolvedDeleteView.as_view(),
-                                name="get_involved_delete",
+                                name="getinvolved_delete",
                             ),
                         ]
                     ),

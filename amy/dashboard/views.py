@@ -267,7 +267,7 @@ def training_progress(request):
 
 
 class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateView):
-    permission_required = "trainings.create_trainingprogress"
+    # permission_required = TODO
     model = TrainingProgress
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
@@ -282,6 +282,7 @@ class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateV
         return context
 
     def post(self, request):
+        self.object = None
         base_training_progress = TrainingProgress(
             trainee=request.user,
             state="n",  # not evaluated yet
@@ -292,22 +293,14 @@ class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateV
         )
 
         if get_involved_form.is_valid():
-            get_involved_form.save()
+            return self.form_valid(get_involved_form)
 
-            messages.success(
-                request,
-                "Thank you. Your Get Involved submission will be reviewed within 7-10 "
-                "days.",
-            )
         else:
-            messages.error(
-                request, "Something went wrong. Please contact team@carpentries.org."
-            )
-        return redirect(reverse("training-progress"))
+            return self.form_invalid(get_involved_form)
 
 
 class GetInvolvedUpdateView(LoginRequiredMixin, RedirectSupportMixin, AMYUpdateView):
-    permission_required = "trainings.change_trainingprogress"
+    # permission_required = TODO
     model = TrainingProgress
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
@@ -321,7 +314,7 @@ class GetInvolvedUpdateView(LoginRequiredMixin, RedirectSupportMixin, AMYUpdateV
 
 
 class GetInvolvedDeleteView(LoginRequiredMixin, RedirectSupportMixin, AMYDeleteView):
-    permission_required = "trainings.delete_trainingprogress"
+    # permission_required = TODO
     model = TrainingProgress
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was deleted."
