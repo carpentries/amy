@@ -87,4 +87,5 @@ def welcome_instructions(date: datetime | None = None):
             f"Welcome Sessions { date.year }</a>."
         )
     text += "</p>"
-    return text
+
+    return mark_safe(text)
