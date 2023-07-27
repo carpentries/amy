@@ -125,8 +125,8 @@ class TestInstructorTrainingStatus(TestBase):
 
         self.event = Event.objects.create(
             slug="event-ttt",
-            start=date(2023, 6, 24),
-            end=date(2023, 6, 25),
+            start=date(2023, 6, 4),
+            end=date(2023, 6, 5),
             host=self.org_alpha,
         )
         self.training = TrainingRequirement.objects.get(name="Training")
@@ -140,7 +140,7 @@ class TestInstructorTrainingStatus(TestBase):
         self.assertContains(
             rv,
             '<p>Training <span class="badge-success">passed</span> '
-            "as of June 25, 2023.</p>",
+            "as of June 5, 2023.</p>",
             html=True,
         )
 
@@ -152,7 +152,7 @@ class TestInstructorTrainingStatus(TestBase):
         self.assertContains(
             rv,
             '<p>Training <span class="badge-danger">failed</span> '
-            "as of June 25, 2023.</p>",
+            "as of June 5, 2023.</p>",
             html=True,
         )
 
@@ -164,7 +164,7 @@ class TestInstructorTrainingStatus(TestBase):
         self.assertContains(
             rv,
             '<p>Training <span class="badge-info">asked to repeat</span> '
-            "as of June 25, 2023.</p>",
+            "as of June 5, 2023.</p>",
             html=True,
         )
 
