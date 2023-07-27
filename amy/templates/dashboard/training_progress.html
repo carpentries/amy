@@ -37,6 +37,7 @@
         requirements is <strong>{{ deadline }}</strong>.
       {% endif %}
     </p>
+    <p>
       If you would like an extension, please contact us at 
       <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
       and refer to your confirmation email for your updated deadline.
@@ -65,7 +66,7 @@
       <th>1. Training</th>
       <td>
         {% if progress_training %}
-          {% progress_trainee_view progress_training %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_training %}
         {% elif user.passed_training %}
           <p class="text-success">Training passed.</p>
         {% else %}
@@ -77,7 +78,7 @@
       <th rowspan="2">2. Get Involved</th>
       <td>
         {% if progress_get_involved %}
-          {% progress_trainee_view progress_get_involved %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_get_involved %}
           {% if progress_get_involved.state == "n" %}
           <p>Please wait while we evaluate your submission.</p>
           {% endif %}
@@ -110,21 +111,13 @@
       <th>3. Welcome Session</th>
       <td>
         {% if progress_welcome %}
-          {% progress_trainee_view progress_welcome %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_welcome %}
         {% elif user.passed_welcome %}
           <p class="text-success">Welcome Session completed.
           </p>
         {% else %}
           <p>Welcome Session not completed yet.</p>
-          {% now 'n' as current_month %}
-          {% now 'Y' as current_year %}
-          <p>Register for a Welcome Session on
-            {% if current_month|add:"0" >= 11 %}
-            one of these Etherpads: <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year }}">Welcome Sessions {{ current_year }}</a>; <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year | add:'1' }}">Welcome Sessions {{ current_year | add:"1" }}</a>.
-            {% else %}
-            this Etherpad: <a href="https://pad.carpentries.org/welcome-sessions-{{ current_year }}">Welcome Sessions {{ current_year }}</a>.
-            {% endif %}
-          </p>
+          {% welcome_instructions %}
         {% endif %}
       </td>
     </tr>
@@ -132,7 +125,7 @@
       <th>4. Demo Session</th>
       <td>
         {% if progress_demo %}
-          {% progress_trainee_view progress_demo %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_demo %}
           {% if progress_demo.state == "a" %}
             <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
           {% endif %}

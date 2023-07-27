@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django import template
 from django.template.defaultfilters import escape
@@ -9,6 +9,7 @@ from workshops.models import TrainingProgress
 register = template.Library()
 
 
+@register.simple_tag
 def progress_state_class(state):
     switch = {
         "n": "warning",
@@ -20,17 +21,13 @@ def progress_state_class(state):
 
 
 @register.simple_tag
-def progress_label(progress):
-    assert isinstance(progress, TrainingProgress)
-
+def progress_label(progress: TrainingProgress):
     fmt = f"badge badge-{progress_state_class(progress.state)}"
     return mark_safe(fmt)
 
 
 @register.simple_tag
-def progress_description(progress):
-    assert isinstance(progress, TrainingProgress)
-
+def progress_description(progress: TrainingProgress):
     # build involvement details as needed
     if progress.requirement.name == "Get Involved" and progress.involvement_type:
         involvement = "<br />"
@@ -66,33 +63,28 @@ def checkout_deadline(start_date):
 
 
 @register.simple_tag
-def progress_trainee_view(progress: TrainingProgress) -> str:
-    assert isinstance(progress, TrainingProgress)
+def welcome_instructions(date: datetime | None = None):
+    """Show different Etherpad links dependent on the time of year.
 
-    # state: follow our internal choices
-    # except for Welcome Session
-    # as 'passed' implies assessment, but you just have to show up
-    state_display = progress.get_state_display().lower()
-    if state_display == "passed" and progress.requirement.name == "Welcome Session":
-        state_display = "completed"
-
-    # date: show event dates for training, most recent update date otherwise
-    date = progress.event.end if progress.event else progress.last_updated_at
-
-    # notes: show notes if state is failed or asked to repeat
-    # TODO: implement a separate field for these notes
-    # notes = (
-    #     f"<p>Administrator comments: {progress.notes}</p>"
-    #     if progress.state in ["f", "a"]
-    #     else ""
-    # )
-
-    # put it all together
-    text = (
-        f'<p class="text-{progress_state_class(progress.state)}"> '
-        f"{progress.requirement.name} {state_display} "
-        f'as of {date.strftime("%B %d, %Y")}.</p>'
-        # f'{notes}' # TODO
-    )
-
-    return mark_safe(text)
+    From January to October, show just this year's Etherpad link.
+    From November to December, show this year's and next year's Etherpad links.
+    """
+    if date is None:
+        date = datetime.now()
+    text = "<p>Register for a Welcome Session on "
+    if date.month >= 11:
+        text += (
+            f"one of these Etherpads: "
+            f'<a href="https://pad.carpentries.org/welcome-sessions-{ date.year }">'
+            f"Welcome Sessions { date.year }</a>; "
+            f'<a href="https://pad.carpentries.org/welcome-sessions-{ date.year+1 }">'
+            f"Welcome Sessions { date.year+1 }</a>."
+        )
+    else:
+        text += (
+            f"this Etherpad: "
+            f'<a href="https://pad.carpentries.org/welcome-sessions-{ date.year }">'
+            f"Welcome Sessions { date.year }</a>."
+        )
+    text += "</p>"
+    return text
