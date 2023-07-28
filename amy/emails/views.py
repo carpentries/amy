@@ -1,4 +1,4 @@
-from typing import Any, Iterable
+from typing import Any
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
@@ -16,7 +16,7 @@ from emails.forms import (
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
 from emails.signals import ALL_SIGNALS, Signal
-from emails.utils import person_from_request
+from emails.utils import find_signal_by_name, person_from_request
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -27,15 +27,6 @@ from workshops.base_views import (
     ConditionallyEnabledMixin,
 )
 from workshops.utils.access import OnlyForAdminsMixin
-
-
-def find_signal_by_name(
-    signal_name: str, all_signals: Iterable[Signal]
-) -> Signal | None:
-    return next(
-        (signal for signal in all_signals if signal.signal_name == signal_name),
-        None,
-    )
 
 
 class EmailModuleEnabledMixin(ConditionallyEnabledMixin):
