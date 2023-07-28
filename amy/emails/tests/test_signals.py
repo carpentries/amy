@@ -28,7 +28,7 @@ class TestSignal(TestCase):
     def test_signal_name(self) -> None:
         """Check if Signal contains an attribute `signal_name`."""
         # Arrange
-        signal = Signal(signal_name="test_signal_name")
+        signal = Signal(signal_name="test_signal_name", context_type=dict)
 
         # Act
         signal_name = signal.signal_name
