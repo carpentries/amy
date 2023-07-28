@@ -14,7 +14,14 @@ from emails.forms import (
     ScheduledEmailRescheduleForm,
     ScheduledEmailUpdateForm,
 )
-from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
+from emails.models import (
+    EmailTemplate,
+    ScheduledEmail,
+    ScheduledEmailLog,
+    ScheduledEmailStatus,
+    ScheduledEmailStatusActions,
+    ScheduledEmailStatusExplanation,
+)
 from emails.signals import ALL_SIGNALS
 from emails.utils import find_signal_by_name, person_from_request
 from workshops.base_views import (
@@ -131,6 +138,11 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
             .order_by("-created_at")
         )
         context["rendered_body"] = markdownify(self.object.body)
+
+        context["status_explanation"] = ScheduledEmailStatusExplanation[
+            ScheduledEmailStatus(self.object.state)
+        ]
+        context["ScheduledEmailStatusActions"] = ScheduledEmailStatusActions
         return context
 
 

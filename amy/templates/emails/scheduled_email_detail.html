@@ -15,11 +15,24 @@
 {% if perms.emails.change_scheduledemail %}
 <div class="edit-object">
   <div class="btn-group">
+    {% if scheduled_email.state in ScheduledEmailStatusActions.edit %}
     <a class="btn btn-primary" href="{% url 'scheduledemail_edit' scheduled_email.id %}">Edit</a>
+    {% else %}
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+    {% endif %}
+
+    {% if scheduled_email.state in ScheduledEmailStatusActions.reschedule %}
     <a class="btn btn-warning" href="{% url 'scheduledemail_reschedule' scheduled_email.id %}">Reschedule</a>
+    {% else %}
+    <a class="btn btn-warning disabled" disabled href="#">Reschedule</a>
+    {% endif %}
   </div>
   <div class="float-right">
+    {% if scheduled_email.state in ScheduledEmailStatusActions.cancel %}
     <a class="btn btn-danger" href="{% url 'scheduledemail_cancel' scheduled_email.id %}">Cancel</a>
+    {% else %}
+    <a class="btn btn-warning disabled" disabled href="#">Cancel</a>
+    {% endif %}
   </div>
 </div>
 {% else %}
@@ -41,7 +54,10 @@
   </tr>
   <tr>
     <th>State:</th>
-    <td colspan="2"><strong>{{ scheduled_email.get_state_display }}</strong></td>
+    <td colspan="2">
+      <strong>{{ scheduled_email.get_state_display }}</strong>
+      <p>{{ status_explanation }}</p>
+    </td>
   </tr>
   <tr>
     <th>Created at:</th>
