@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterable
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
@@ -15,7 +15,7 @@ from emails.forms import (
     ScheduledEmailUpdateForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
-from emails.signals import ALL_SIGNALS
+from emails.signals import ALL_SIGNALS, Signal
 from emails.utils import person_from_request
 from workshops.base_views import (
     AMYCreateView,
@@ -27,6 +27,15 @@ from workshops.base_views import (
     ConditionallyEnabledMixin,
 )
 from workshops.utils.access import OnlyForAdminsMixin
+
+
+def find_signal_by_name(
+    signal_name: str, all_signals: Iterable[Signal]
+) -> Signal | None:
+    return next(
+        (signal for signal in all_signals if signal.signal_name == signal_name),
+        None,
+    )
 
 
 class EmailModuleEnabledMixin(ConditionallyEnabledMixin):
@@ -54,18 +63,13 @@ class EmailTemplateDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetai
         context["title"] = f'Email template "{self.object}"'
         context["rendered_body"] = markdownify(self.object.body)
 
-        signal = next(
-            (
-                signal
-                for signal in ALL_SIGNALS
-                if signal.signal_name == self.object.signal
-            ),
-            None,
-        )
-        context["body_context_type"] = signal.context_type if signal else {}
-        context["body_context_annotations"] = context[
-            "body_context_type"
-        ].__annotations__
+        signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
 
@@ -128,19 +132,15 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeta
         )
         context["rendered_body"] = markdownify(self.object.body)
 
-        signal = next(
-            (
-                signal
-                for signal in ALL_SIGNALS
-                if self.object.template
-                and signal.signal_name == self.object.template.signal
-            ),
-            None,
-        )
-        context["body_context_type"] = signal.context_type if signal else {}
-        context["body_context_annotations"] = context[
-            "body_context_type"
-        ].__annotations__
+        signal: Signal | None = None
+        if self.object.template:
+            signal = find_signal_by_name(self.object.template.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
 
