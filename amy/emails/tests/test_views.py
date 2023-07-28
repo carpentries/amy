@@ -10,6 +10,8 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
+from emails.types import PersonsMergedContext
+from workshops.models import Person
 from workshops.tests.base import TestBase
 
 
@@ -53,7 +55,7 @@ class TestEmailTemplateDetails(TestBase):
         super()._setUpUsersAndLogin()
         template = EmailTemplate.objects.create(
             name="Test Email Template1",
-            signal="test_email_template1",
+            signal="persons_merged",
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -71,6 +73,13 @@ class TestEmailTemplateDetails(TestBase):
         self.assertEqual(
             rv.context["rendered_body"],
             "<p>Hello, {{ name }}! Nice to meet <strong>you</strong>.</p>",
+        )
+        self.assertEqual(rv.context["body_context_type"], PersonsMergedContext)
+        self.assertEqual(
+            rv.context["body_context_annotations"],
+            {
+                "person": Person,
+            },
         )
 
 
@@ -242,7 +251,7 @@ class TestScheduledEmailDetails(TestBase):
         super()._setUpUsersAndLogin()
         template = EmailTemplate.objects.create(
             name="Test Email Template1",
-            signal="test_email_template1",
+            signal="persons_merged",
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -286,6 +295,13 @@ class TestScheduledEmailDetails(TestBase):
         self.assertEqual(
             rv.context["rendered_body"],
             "<p>Hello, Harry! Nice to meet <strong>you</strong>.</p>",
+        )
+        self.assertEqual(rv.context["body_context_type"], PersonsMergedContext)
+        self.assertEqual(
+            rv.context["body_context_annotations"],
+            {
+                "person": Person,
+            },
         )
 
 
