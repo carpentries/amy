@@ -62,7 +62,7 @@ def instructor_badge_awarded_receiver(
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:
-        messages_action_scheduled(request, scheduled_email)
+        messages_action_scheduled(request, signal, scheduled_email)
 
 
 @receiver(instructor_confirmed_for_workshop_signal)
@@ -98,7 +98,7 @@ def instructor_confirmed_for_workshop_receiver(
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:
-        messages_action_scheduled(request, scheduled_email)
+        messages_action_scheduled(request, signal, scheduled_email)
 
 
 @receiver(instructor_declined_from_workshop_signal)
@@ -134,7 +134,7 @@ def instructor_declined_from_workshop_receiver(
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:
-        messages_action_scheduled(request, scheduled_email)
+        messages_action_scheduled(request, signal, scheduled_email)
 
 
 @receiver(instructor_signs_up_for_workshop_signal)
@@ -170,7 +170,7 @@ def instructor_signs_up_for_workshop_receiver(
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:
-        messages_action_scheduled(request, scheduled_email)
+        messages_action_scheduled(request, signal, scheduled_email)
 
 
 @receiver(admin_signs_instructor_up_for_workshop_signal)
@@ -206,7 +206,7 @@ def admin_signs_instructor_up_for_workshop_receiver(
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:
-        messages_action_scheduled(request, scheduled_email)
+        messages_action_scheduled(request, signal, scheduled_email)
 
 
 @receiver(persons_merged_signal)
@@ -232,4 +232,4 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:
-        messages_action_scheduled(request, scheduled_email)
+        messages_action_scheduled(request, signal, scheduled_email)

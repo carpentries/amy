@@ -81,7 +81,11 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
 
         # Assert
         scheduled_email = ScheduledEmail.objects.get(template=template)
-        mock_messages_action_scheduled.assert_called_once_with(request, scheduled_email)
+        mock_messages_action_scheduled.assert_called_once_with(
+            request,
+            instructor_declined_from_workshop_signal.signal_name,
+            scheduled_email,
+        )
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
     @mock.patch("emails.actions.messages_action_scheduled")

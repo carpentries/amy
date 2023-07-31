@@ -70,7 +70,8 @@ class TestMessagesMissingTemplate(TestCase):
         # Assert
         mock_messages_warning.assert_called_once_with(
             request,
-            f"Action was not scheduled due to missing template for signal {signal}.",
+            "Email action was not scheduled due to missing template for signal "
+            f"{signal}.",
         )
 
 
@@ -79,14 +80,18 @@ class TestMessagesActionScheduled(TestCase):
     def test_messages_action_scheduled(self, mock_messages_info) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        scheduled_email = ScheduledEmail()
+        signal_name = "test_signal"
+        scheduled_at = timezone.now()
+        scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
 
         # Act
-        messages_action_scheduled(request=request, scheduled_email=scheduled_email)
+        messages_action_scheduled(request, signal_name, scheduled_email)
 
         # Assert
         mock_messages_info.assert_called_once_with(
             request,
-            f'Action was scheduled: <a href="{scheduled_email.get_absolute_url()}">'
-            f"{scheduled_email.pk}</a>.",
+            f"New email action ({signal_name}) was scheduled to run "
+            f'<relative-time datetime="{scheduled_at}"></relative-time>: '
+            f'<a href="{scheduled_email.get_absolute_url()}"><code>'
+            f"{scheduled_email.pk}</code></a>.",
         )

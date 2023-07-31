@@ -43,17 +43,21 @@ def immediate_action() -> datetime:
 def messages_missing_template(request: HttpRequest, signal: str) -> None:
     messages.warning(
         request,
-        f"Action was not scheduled due to missing template for signal {signal}.",
+        f"Email action was not scheduled due to missing template for signal {signal}.",
     )
 
 
 def messages_action_scheduled(
-    request: HttpRequest, scheduled_email: ScheduledEmail
+    request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
 ) -> None:
     messages.info(
         request,
         format_html(
-            'Action was scheduled: <a href="{}">{}</a>.',
+            "New email action ({}) was scheduled to run "
+            '<relative-time datetime="{}"></relative-time>: '
+            '<a href="{}"><code>{}</code></a>.',
+            signal_name,
+            scheduled_email.scheduled_at,
             scheduled_email.get_absolute_url(),
             scheduled_email.pk,
         ),
