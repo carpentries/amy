@@ -13,7 +13,7 @@ from workshops.models import Event, Organization, Person
 from workshops.tests.base import TestBase
 
 
-class TestInstructorConfirmedForWorkshopReceiver(TestCase):
+class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
     @mock.patch("emails.utils.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
@@ -171,7 +171,7 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
         mock_messages_missing_template.assert_called_once_with(request, signal)
 
 
-class TestInstructorConfirmedForWorkshopReceiverIntegration(TestBase):
+class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
     @override_settings(EMAIL_MODULE_ENABLED=True)
     @mock.patch("django.contrib.messages.views.messages")

@@ -76,7 +76,7 @@ class TestMessagesMissingTemplate(TestCase):
 
 class TestMessagesActionScheduled(TestCase):
     @mock.patch("emails.utils.messages.info")
-    def test_messages_missing_template(self, mock_messages_info) -> None:
+    def test_messages_action_scheduled(self, mock_messages_info) -> None:
         # Arrange
         request = RequestFactory().get("/")
         scheduled_email = ScheduledEmail()
