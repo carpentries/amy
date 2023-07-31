@@ -2367,8 +2367,8 @@ class TrainingRequest(
         verbose_name="I agree to complete this training within three months of"
         " the training course. The completion steps are described"
         ' at <a href="http://carpentries.github.io/instructor-'
-        'training/checkout/">http://carpentries.github.io/'
-        "instructor-training/checkout/</a>.",
+        'training/checkout">http://carpentries.github.io/'
+        "instructor-training/checkout</a>.",
     )
     workshop_teaching_agreement = models.BooleanField(
         null=False,
