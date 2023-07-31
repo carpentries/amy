@@ -215,6 +215,18 @@ pa11y-ci
 
 Pa11y will exit with a failure code if accessibility failures are found. Reports are stored in the `pa11y-ci-report/` folder.
 
+## Edit the CSS theme
+
+The AMY theme is primarily based on Bootstrap 4. 
+
+To update the custom CSS that sits on top of the Bootstrap theme, edit `amy/static/css/amy.css`.
+
+To override Bootstrap 4 defaults such as colors, edit the [Sass](https://sass-lang.com/) file `amy/static/scss/custom_bootstrap.scss` as required, then compile it to CSS:
+```shell
+$ npx sass amy/static/scss/custom_bootstrap.scss amy/static/css/custom_bootstrap.min.css --style compressed
+```
+See the [Bootstrap documentation](https://getbootstrap.com/docs/4.0/getting-started/theming/) for more guidance on overriding Bootstrap defaults.
+
 [bootstrap]: https://getbootstrap.com/
 [contact-address]: mailto:team@carpentries.org
 [django]: https://www.djangoproject.com
