@@ -3,7 +3,7 @@ from typing import TypedDict
 from uuid import UUID
 
 from emails.models import EmailTemplate
-from emails.signals import SignalName
+from emails.signals import SignalNameEnum
 from workshops.utils.seeding import deprecate_models, seed_models
 
 logger = logging.getLogger("amy")
@@ -34,7 +34,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         active=True,
         id=UUID("05e2b9da-e6b3-43f0-8c88-1458414b8945"),
         name="Instructor Badge awarded",
-        signal=SignalName.instructor_badge_awarded,
+        signal=SignalNameEnum.instructor_badge_awarded,
         from_header="instructor.training@carpentries.org",
         reply_to_header="",
         cc_header=["instructor.training@carpentries.org"],
@@ -50,7 +50,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         active=True,
         id=UUID("e07e889b-cc5e-4eb1-9cf6-5f416da9ddaf"),
         name="Instructor confirmed for workshop",
-        signal=SignalName.instructor_confirmed_for_workshop,
+        signal=SignalNameEnum.instructor_confirmed_for_workshop,
         from_header="workshops@carpentries.org",
         reply_to_header="",
         cc_header=["workshops@carpentries.org"],
@@ -65,7 +65,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         active=True,
         id=UUID("ce73a58e-eb31-41bd-af95-f5bdbc4db5d4"),
         name="Instructor declined from workshop",
-        signal=SignalName.instructor_declined_from_workshop,
+        signal=SignalNameEnum.instructor_declined_from_workshop,
         from_header="workshops@carpentries.org",
         reply_to_header="",
         cc_header=["workshops@carpentries.org"],
@@ -81,7 +81,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         active=True,
         id=UUID("6931cf24-2e94-4f70-825e-e41b431f1d24"),
         name="Instructor Signs Up for Workshop",
-        signal=SignalName.instructor_signs_up_for_workshop,
+        signal=SignalNameEnum.instructor_signs_up_for_workshop,
         from_header="workshops@carpentries.org",
         reply_to_header="",
         cc_header=["workshops@carpentries.org"],
@@ -97,7 +97,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         active=True,
         id=UUID("2de9852e-d2e9-4b10-bcfb-0b19f21e2094"),
         name="Admin Signs Instructor Up for Workshop",
-        signal=SignalName.admin_signs_instructor_up_for_workshop,
+        signal=SignalNameEnum.admin_signs_instructor_up_for_workshop,
         from_header="workshops@carpentries.org",
         reply_to_header="",
         cc_header=["workshops@carpentries.org"],
@@ -114,7 +114,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         active=True,
         id=UUID("5703079f-2f37-4aee-8267-fe6db3eee870"),
         name="Person records are merged",
-        signal=SignalName.persons_merged,
+        signal=SignalNameEnum.persons_merged,
         from_header="team@carpentries.org",
         reply_to_header="",
         cc_header=["team@carpentries.org"],

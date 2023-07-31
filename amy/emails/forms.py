@@ -2,7 +2,7 @@ from django import forms
 from markdownx.fields import MarkdownxFormField
 
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.signals import SignalName
+from emails.signals import SignalNameEnum
 from workshops.forms import BootstrapHelper
 
 
@@ -14,7 +14,7 @@ class EmailTemplateCreateForm(forms.ModelForm):
     )
     signal = forms.CharField(
         help_text=EmailTemplate._meta.get_field("signal").help_text,
-        widget=forms.Select(choices=SignalName.choices()),
+        widget=forms.Select(choices=SignalNameEnum.choices()),
     )
 
     class Meta:

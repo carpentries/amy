@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 import emails.signals
-from emails.signals import Signal, SignalName
+from emails.signals import Signal, SignalNameEnum
 
 
 class TestSignalName(TestCase):
@@ -15,7 +15,7 @@ class TestSignalName(TestCase):
         }
 
         # Act
-        choices = SignalName.choices()
+        choices = SignalNameEnum.choices()
 
         # Assert
         for choice in choices:
@@ -42,7 +42,7 @@ class TestCreatedSignals(TestCase):
         """All signals should be reflected in SignalName values, and all SignalName
         values should be reflected by Signal instances."""
         # Arrange
-        signal_name_values = {signal_name.value for signal_name in SignalName}
+        signal_name_values = {signal_name.value for signal_name in SignalNameEnum}
         signals = {
             signal[:-7]  # remove "_signal" suffix from actual name
             for signal in emails.signals.__dict__
