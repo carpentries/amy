@@ -93,7 +93,7 @@ class TestGetInvolvedCreateView(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
         self.assertContains(
-            rv, "Your Get Involved submission will be reviewed within 7-10 days."
+            rv, "Your Get Involved submission will be evaluated within 7-10 days."
         )
         got = list(
             TrainingProgress.objects.values_list(
@@ -232,3 +232,430 @@ class TestGetInvolvedDeleteView(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
         self.assertEqual(set(TrainingProgress.objects.all()), set())
+
+
+class TestGetInvolvedCreateViewPermissions(TestBase):
+    def setUp(self):
+        super().setUp()
+        super()._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved",
+            defaults={
+                "url_required": False,
+                "event_required": False,
+                "involvement_required": True,
+            },
+        )
+        self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
+        self.github_contribution, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution",
+            defaults={
+                "display_name": "GitHub Contribution",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.involvement_to_be_archived, _ = Involvement.objects.get_or_create(
+            name="To be archived",
+            defaults={
+                "display_name": "To be archived",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.involvement_other, _ = Involvement.objects.get_or_create(
+            name="Other",
+            defaults={
+                "display_name": "Other",
+                "notes_required": True,
+            },
+        )
+
+    def test_cannot_create_if_not_evaluated_yet(self):
+        # Arrange
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 1),
+            url="https://example.org",
+            state="n",
+        )
+
+        data = {
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_add"))
+        rv_post = self.client.post(reverse("getinvolved_add"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 403)
+        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_post.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv_post,
+            "You may not create a new Get Involved submission while you already have "
+            "a submission awaiting evaluation.",
+        )
+
+    def test_cannot_create_if_passed(self):
+        # Arrange
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 1),
+            url="https://example.org",
+            state="p",
+        )
+
+        data = {
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_add"))
+        rv_post = self.client.post(reverse("getinvolved_add"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 403)
+        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_post.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv_post,
+            "You may not create a new Get Involved submission as you have already "
+            "passed this step!",
+        )
+
+    def test_cannot_create_if_failed(self):
+        # Arrange
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 1),
+            url="https://example.org",
+            state="p",
+        )
+
+        data = {
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_add"))
+        rv_post = self.client.post(reverse("getinvolved_add"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 403)
+        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_post.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv_post,
+            "You may not create a new Get Involved submission as you have failed this "
+            "step.",
+        )
+
+    def test_can_create_if_asked_to_repeat(self):
+        # Arrange
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 1),
+            url="https://example.org",
+            state="a",
+        )
+
+        data = {
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_add"))
+        rv_post = self.client.post(reverse("getinvolved_add"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 200)
+        self.assertEqual(rv_post.status_code, 200)
+        self.assertEqual(rv_post.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv_post,
+            "Your Get Involved submission will be reviewed within 7-10 days.",
+        )
+
+    def test_trainee_cannot_set_type_or_state(self):
+        # Arrange
+
+        data = {
+            "requirement": self.demo,
+            "state": "p",
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_add"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv,
+            "Data included forbidden keys.",
+        )
+
+
+class TestGetInvolvedUpdateViewPermissions(TestBase):
+    def setUp(self):
+        super().setUp()
+        super()._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved",
+            defaults={
+                "url_required": False,
+                "event_required": False,
+                "involvement_required": True,
+            },
+        )
+        self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
+        self.github_contribution, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution",
+            defaults={
+                "display_name": "GitHub Contribution",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.involvement_to_be_archived, _ = Involvement.objects.get_or_create(
+            name="To be archived",
+            defaults={
+                "display_name": "To be archived",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.involvement_other, _ = Involvement.objects.get_or_create(
+            name="Other",
+            defaults={
+                "display_name": "Other",
+                "notes_required": True,
+            },
+        )
+
+    def test_cannot_update_other_trainees_submission(self):
+        # Arrange
+        progress = TrainingProgress.objects.create(
+            trainee=self.spiderman,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 1),
+            url="https://example.org",
+            state="n",
+        )
+        data = {
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_update", args=[progress.pk]))
+        rv_post = self.client.post(
+            reverse("getinvolved_update", args=[progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 403)
+        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_post.resolver_match.view_name, "training-progress")
+        self.assertContains(rv_post, "Forbidden")
+
+    def test_cannot_update_progress_of_other_type(self):
+        # Arrange
+        progress = TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.demo,
+            date=date(2023, 7, 31),
+            state="n",
+        )
+        data = {
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_update", args=[progress.pk]))
+        rv_post = self.client.post(
+            reverse("getinvolved_update", args=[progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 403)
+        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_post.resolver_match.view_name, "training-progress")
+        self.assertContains(rv_post, "Forbidden")
+
+    def test_cannot_update_evaluated_progress(self):
+        # Arrange
+        progress = TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 31),
+            state="a",
+        )
+        data = {
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_update", args=[progress.pk]))
+        rv_post = self.client.post(
+            reverse("getinvolved_update", args=[progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 403)
+        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_post.resolver_match.view_name, "training-progress")
+        self.assertContains(rv_post, "Forbidden")
+
+    def test_trainee_cannot_set_type_or_state(self):
+        # Arrange
+        progress = TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 31),
+            state="a",
+        )
+        data = {
+            "requirement": self.demo,
+            "state": "p",
+            "involvement_type": self.github_contribution.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("getinvolved_update", args=[progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv,
+            "Data included forbidden keys.",
+        )
+
+
+class TestGetInvolvedDeleteViewPermissions(TestBase):
+    def setUp(self):
+        super().setUp()
+        super()._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
+            name="Get Involved",
+            defaults={
+                "url_required": False,
+                "event_required": False,
+                "involvement_required": True,
+            },
+        )
+        self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
+        self.github_contribution, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution",
+            defaults={
+                "display_name": "GitHub Contribution",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.involvement_to_be_archived, _ = Involvement.objects.get_or_create(
+            name="To be archived",
+            defaults={
+                "display_name": "To be archived",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.involvement_other, _ = Involvement.objects.get_or_create(
+            name="Other",
+            defaults={
+                "display_name": "Other",
+                "notes_required": True,
+            },
+        )
+
+    def test_cannot_delete_other_trainees_submission(self):
+        # Arrange
+        progress = TrainingProgress.objects.create(
+            trainee=self.spiderman,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 31),
+            url="https://example.org",
+            state="n",
+        )
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
+
+        # Assert
+        self.assertEqual(rv.status_code, 403)
+
+    def test_cannot_delete_progress_of_other_type(self):
+        # Arrange
+        progress = TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.demo,
+            date=date(2023, 7, 31),
+            state="n",
+        )
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
+
+        # Assert
+        self.assertEqual(rv.status_code, 403)
+
+    def test_cannot_delete_evaluated_progress(self):
+        # Arrange
+        progress = TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            date=date(2023, 7, 31),
+            state="a",
+        )
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
+
+        # Assert
+        self.assertEqual(rv.status_code, 403)
