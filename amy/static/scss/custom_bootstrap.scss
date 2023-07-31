@@ -1,0 +1,97 @@
+// custom_bootstrap.scss
+
+// after editing, compile with Sass:
+// $ npx sass amy/static/scss/custom_bootstrap.scss amy/static/css/custom_bootstrap.min.css --style compressed
+
+// Color system
+// Majority taken from Bootstrap 5 palette 
+// https://getbootstrap.com/docs/5.0/customize/color/
+
+$white: #fff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d; // hsl(208, 7, 46)
+$gray-650: hsl(209, 8, 38); // custom
+$gray-700: #495057; // hsl(210, 9, 31)
+$gray-800: #343a40;
+$gray-900: #212529;
+$black: #000;
+
+$blue: #0060f0; // custom for better contrast with .table-striped and .alert-*
+$indigo: #6610f2;
+$purple: #6f42c1;
+$pink: #d63384;
+$red: #dc3545;
+$orange: #fd7e14;
+$yellow: #ffc107;
+$green: #198754;
+$teal: #20c997;
+$cyan: #0dcaf2; // very slightly custom to be a light enough background to switch to dark text
+
+$colors: (
+    "blue": $blue,
+    "indigo": $indigo,
+    "purple": $purple,
+    "pink": $pink,
+    "red": $red,
+    "orange": $orange,
+    "yellow": $yellow,
+    "green": $green,
+    "teal": $teal,
+    "cyan": $cyan,
+    "black": $black,
+    "white": $white,
+    "gray": $gray-600,
+    "gray-dark": $gray-800
+);
+
+$primary: $blue ;
+$secondary: $gray-650; // custom for improved contrast everywhere
+$success: $green ;
+$info: $cyan ;
+$warning: $yellow ;
+$danger: $red ;
+$light: $gray-100 ;
+$dark: $gray-800 ; // custom for improved contrast with $blue (i.e. between text & links)
+
+$theme-colors: (
+    "primary": $primary,
+    "secondary": $secondary,
+    "success": $success,
+    "info": $info,
+    "warning": $warning,
+    "danger": $danger,
+    "light": $light,
+    "dark": $dark
+);
+
+// include all of Bootstrap
+
+@import "../../../node_modules/bootstrap/scss/bootstrap";
+
+// override some color settings
+
+.navbar-expand-lg .navbar-nav .nav-link {
+    color: $gray-500;
+}
+
+.navbar-expand-lg .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+    color: $white;
+}
+
+.navbar-dark .navbar-nav .show>.nav-link,
+.navbar-dark .navbar-nav .active>.nav-link,
+.navbar-dark .navbar-nav .nav-link.show,
+.navbar-dark .navbar-nav .nav-link.active {
+    color: $white;
+}
+
+// rarely used; prefer .badge-info and .badge-warning
+.text-info,
+.text-warning {
+    background-color: $dark; // necessary for contrast
+}
