@@ -3,7 +3,7 @@ import re
 from urllib.parse import unquote
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
@@ -245,14 +245,32 @@ def training_progress(request):
 
 
 class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateView):
-    # permission_required = TODO
     model = TrainingProgress
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = (
-        "Thank you. Your Get Involved submission will be reviewed within 7-10 days."
+        "Thank you. Your Get Involved submission will be evaluated within 7-10 days."
     )
+
+    def user_may_create_submission(self, user):
+        """The user may create a submission if either of the conditions below are met:
+        1. no progress exists for the Get Involved step for this user
+        2. all existing progress for the Get Involved step for this user has state "a"
+        """
+        get_involved = TrainingRequirement.objects.get(name="Get Involved")
+        existing_progresses = TrainingProgress.objects.filter(
+            requirement=get_involved, trainee=user
+        )
+        num_existing = existing_progresses.count()
+        if num_existing == 0:
+            return True
+        else:
+            num_asked_to_repeat = existing_progresses.filter(state="a").count()
+            if num_asked_to_repeat == num_existing:
+                return True
+            else:
+                return False
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
@@ -261,29 +279,65 @@ class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateV
 
     def post(self, request):
         self.object = None
+
         base_training_progress = TrainingProgress(
             trainee=request.user,
             state="n",  # not evaluated yet
             requirement=TrainingRequirement.objects.get(name="Get Involved"),
         )
-        get_involved_form = GetInvolvedForm(
-            data=request.POST, instance=base_training_progress
-        )
+        # select data specifically to prevent user from submitting extra args
+        data = {
+            "involvement_type": request.POST.get("involvement_type"),
+            "date": request.POST.get("date"),
+            "url": request.POST.get("url"),
+            "trainee_notes": request.POST.get("trainee_notes"),
+        }
+        get_involved_form = GetInvolvedForm(data=data, instance=base_training_progress)
 
-        if get_involved_form.is_valid():
+        user_may_create_submission = self.user_may_create_submission(request.user)
+        if get_involved_form.is_valid() and user_may_create_submission:
             return self.form_valid(get_involved_form)
-
         else:
+            if not user_may_create_submission:
+                self.form_invalid_message = (
+                    "You already have an existing submission. "
+                    "You may not create another submission unless your previous "
+                    'submission has the status "asked to repeat."'
+                )
             return self.form_invalid(get_involved_form)
 
 
-class GetInvolvedUpdateView(LoginRequiredMixin, RedirectSupportMixin, AMYUpdateView):
-    # permission_required = TODO
+class GetInvolvedUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView
+):
     model = TrainingProgress
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was updated successfully."
+    pk_url_kwarg = "pk"
+
+    def has_permission(self):
+        """The user has permission if all the conditions below are met:
+        1. the progress exists
+        2. the progress belongs to the user
+        3. the progress is for the Get Involved step
+        4. the progress has not yet been evaluated
+        """
+        progress_pk = self.kwargs.get(self.pk_url_kwarg)
+        try:
+            progress = TrainingProgress.objects.get(pk=progress_pk)
+            get_involved = TrainingRequirement.objects.get(name="Get Involved")
+            if (
+                progress.trainee == self.request.user
+                and progress.requirement == get_involved
+                and progress.state == "n"
+            ):
+                return True
+            else:
+                return False
+        except TrainingProgress.DoesNotExist:
+            return False
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
@@ -291,11 +345,35 @@ class GetInvolvedUpdateView(LoginRequiredMixin, RedirectSupportMixin, AMYUpdateV
         return context
 
 
-class GetInvolvedDeleteView(LoginRequiredMixin, RedirectSupportMixin, AMYDeleteView):
-    # permission_required = TODO
+class GetInvolvedDeleteView(
+    LoginRequiredMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYDeleteView
+):
     model = TrainingProgress
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was deleted."
+    pk_url_kwarg = "pk"
+
+    def has_permission(self):
+        """The user has permission if all the conditions below are met:
+        1. the progress exists
+        2. the progress belongs to the user
+        3. the progress is for the Get Involved step
+        4. the progress has not yet been evaluated
+        """
+        progress_pk = self.kwargs.get(self.pk_url_kwarg)
+        try:
+            progress = TrainingProgress.objects.get(pk=progress_pk)
+            get_involved = TrainingRequirement.objects.get(involvement_required=True)
+            if (
+                progress.trainee == self.request.user
+                and progress.requirement == get_involved
+                and progress.state == "n"
+            ):
+                return True
+            else:
+                return False
+        except TrainingProgress.DoesNotExist:
+            return False
 
 
 # ------------------------------------------------------------
