@@ -86,7 +86,7 @@
           <p>Details of your submission are below.</p>
           <p>
             <strong>Activity:</strong> {{ progress_get_involved.involvement_type }}<br/>
-            <strong>Date:</strong> {% firstof progress_get_involved.date "No dates provided" %}<br/>
+            <strong>Date:</strong> {% firstof progress_get_involved.date|date:'F j, Y' "No date provided" %}<br/>
             <strong>URL:</strong> {% firstof progress_get_involved.url "No URL provided" %}<br/>
             <strong>Notes:</strong> {% firstof progress_get_involved.trainee_notes "No notes provided" %}
           </p>

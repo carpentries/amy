@@ -197,6 +197,7 @@ class TestGetInvolvedStatus(TestBase):
             involvement_type=self.github_contribution,
             date=datetime.today(),
             url="https://example.org",
+            trainee_notes="Notes from trainee",
         )
         self.PROGRESS_SUMMARY_BLOCK = (
             "<p>"
@@ -204,7 +205,7 @@ class TestGetInvolvedStatus(TestBase):
             "repository<br/>"
             f'<strong>Date:</strong> {datetime.today().strftime("%B %-d, %Y")}<br/>'
             "<strong>URL:</strong> https://example.org<br/>"
-            "<strong>Notes:</strong> No notes provided"
+            "<strong>Notes:</strong> Notes from trainee"
             "</p>"
         )
         self.EDIT_CLASS = "edit-object"  # class on the Edit button
@@ -301,6 +302,31 @@ class TestGetInvolvedStatus(TestBase):
         self.assertNotContains(rv, self.DELETE_CLASS)
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
         self.assertContains(rv, "Submit another Get Involved activity")
+
+    def test_get_involved_details_not_provided(self):
+        """Check that optional fields are summarised correctly when empty"""
+        self.progress.delete()
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            state="n",
+        )
+
+        # Act
+        rv = self.client.get(self.progress_url)
+
+        # Assert
+        PROGRESS_SUMMARY_BLOCK = (
+            "<p>"
+            "<strong>Activity:</strong> Submitted a contribution to a Carpentries "
+            "repository<br/>"
+            "<strong>Date:</strong> No date provided<br/>"
+            "<strong>URL:</strong> No URL provided<br/>"
+            "<strong>Notes:</strong> No notes provided"
+            "</p>"
+        )
+        self.assertContains(rv, PROGRESS_SUMMARY_BLOCK, html=True)
 
 
 class TestWelcomeSessionStatus(TestBase):
