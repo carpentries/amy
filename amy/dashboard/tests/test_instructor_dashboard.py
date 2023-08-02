@@ -83,9 +83,12 @@ class TestInstructorStatus(TestBase):
             "Welcome Session",
             "Demo",
         ]
+        workshop_instructor, _ = Involvement.objects.get_or_create(
+            name="Workshop Instructor/Helper"
+        )
         for requirement in requirements:
             if requirement == "Get Involved":
-                involvement = Involvement.objects.get(name="GitHub Contribution")
+                involvement = workshop_instructor
                 date = datetime.today()
                 url = "https://example.com"
             else:
@@ -182,8 +185,8 @@ class TestGetInvolvedStatus(TestBase):
         self.get_involved, _ = TrainingRequirement.objects.get_or_create(
             name="Get Involved", defaults={"involvement_required": True}
         )
-        self.github_contribution, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution", defaults={"url_required": True}
+        self.workshop_instructor, _ = Involvement.objects.get_or_create(
+            name="Workshop Instructor/Helper", defaults={"url_required": True}
         )
         self.other_involvement, _ = Involvement.objects.get_or_create(
             name="Other", defaults={"display_name": "Other", "notes_required": True}
@@ -194,7 +197,7 @@ class TestGetInvolvedStatus(TestBase):
         self.progress = TrainingProgress.objects.create(
             trainee=self.admin,
             requirement=self.get_involved,
-            involvement_type=self.github_contribution,
+            involvement_type=self.workshop_instructor,
             date=datetime.today(),
             url="https://example.org",
             trainee_notes="Notes from trainee",
@@ -309,7 +312,7 @@ class TestGetInvolvedStatus(TestBase):
         TrainingProgress.objects.create(
             trainee=self.admin,
             requirement=self.get_involved,
-            involvement_type=self.github_contribution,
+            involvement_type=self.workshop_instructor,
             state="n",
         )
 

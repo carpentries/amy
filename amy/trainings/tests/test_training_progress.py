@@ -47,14 +47,6 @@ class TestTrainingProgressValidation(TestBase):
                 "date_required": True,
             },
         )
-        self.github_url_required, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution",
-            defaults={
-                "display_name": "GitHub Contribution",
-                "url_required": True,
-                "date_required": True,
-            },
-        )
         self.notes_required, _ = Involvement.objects.get_or_create(
             name="Other without date",
             defaults={
@@ -139,7 +131,7 @@ class TestTrainingProgressValidation(TestBase):
         )
         p2 = TrainingProgress.objects.create(
             requirement=self.get_involved,
-            involvement_type=self.github_url_required,
+            involvement_type=github_url_required,
             trainee=self.admin,
             url="http://example.com",
             date=datetime(2023, 5, 31),
@@ -449,7 +441,7 @@ class TestCRUDViews(TestBase):
                 "date_required": True,
             },
         )
-        self.involvement2, _ = Involvement.objects.get_or_create(
+        self.involvement_to_be_archived, _ = Involvement.objects.get_or_create(
             name="To be archived",
             defaults={
                 "display_name": "To be archived",
@@ -488,7 +480,7 @@ class TestCRUDViews(TestBase):
         self.assertEqual(int(rv.context["form"].initial["trainee"]), self.ironman.pk)
 
     def test_create_view_does_not_show_archived_involvements(self):
-        self.involvement2.archive()
+        self.involvement_to_be_archived.archive()
         rv = self.client.get(
             reverse("trainingprogress_add"), {"type": self.get_involved.pk}
         )
