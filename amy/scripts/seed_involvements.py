@@ -37,7 +37,7 @@ INVOLVEMENTS: list[InvolvementDef] = [
         "notes_required": True,
     },
     {
-        "display_name": "Submitted a contribution to a Carpentries repository",
+        "display_name": "Submitted a contribution to a Carpentries repository on GitHub",  # noqa
         "name": "GitHub Contribution",
         "url_required": True,
         "date_required": True,

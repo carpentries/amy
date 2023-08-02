@@ -40,6 +40,14 @@ class TestTrainingProgressValidation(TestBase):
             involvement_required=True,
         )
         self.url_and_date_required, _ = Involvement.objects.get_or_create(
+            name="Workshop Instructor/Helper",
+            defaults={
+                "display_name": "Workshop Instructor/Helper",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        self.github_url_required, _ = Involvement.objects.get_or_create(
             name="GitHub Contribution",
             defaults={
                 "display_name": "GitHub Contribution",
@@ -112,6 +120,33 @@ class TestTrainingProgressValidation(TestBase):
         p2.full_clean()
         p3.full_clean()
         p4.full_clean()  # involvement URLs can be optional
+
+    def test_url_associated_with_github_organisation(self):
+        github_url_required, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution",
+            defaults={
+                "display_name": "GitHub Contribution",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        p1 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=github_url_required,
+            trainee=self.admin,
+            url="https://github.com/carpentries/amy/issues/2470",
+            date=datetime(2023, 5, 31),
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=self.github_url_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+        )
+        p1.full_clean()
+        with self.assertValidationErrors(["url"]):
+            p2.full_clean()
 
     def test_event_is_required(self):
         p1 = TrainingProgress.objects.create(
