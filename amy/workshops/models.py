@@ -2678,7 +2678,9 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         if not any(f"github.com/{org}" in url for org in self.CARPENTRIES_GITHUB_ORGS):
             msg = (
                 "This URL is not associated with a repository in any of the "
-                "GitHub organisations owned by The Carpentries."
+                "GitHub organisations owned by The Carpentries. "
+                "If you need help resolving this error, please contact us using the "
+                "details at the top of this form."
             )
             return ValidationError(msg)
 
