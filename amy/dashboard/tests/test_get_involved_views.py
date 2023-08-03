@@ -95,7 +95,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         # Arrange
         data = {
             "involvement_type": self.involvement.pk,
-            "url": "https://example.org",
+            "url": "https://github.com/carpentries",
             "date": "2023-07-27",
         }
 
@@ -176,7 +176,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
             (
                 "n",
                 self.user.pk,
-                "https://example.org",
+                "https://github.com/carpentries",
                 self.get_involved.pk,
                 self.involvement.pk,
                 date(2023, 7, 27),

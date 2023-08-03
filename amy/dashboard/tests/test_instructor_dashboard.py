@@ -186,7 +186,12 @@ class TestGetInvolvedStatus(TestBase):
             name="Get Involved", defaults={"involvement_required": True}
         )
         self.workshop_instructor, _ = Involvement.objects.get_or_create(
-            name="Workshop Instructor/Helper", defaults={"url_required": True}
+            name="Workshop Instructor/Helper",
+            defaults={
+                "display_name": "Served as an Instructor or a helper at a Carpentries "
+                "workshop",
+                "url_required": True,
+            },
         )
         self.other_involvement, _ = Involvement.objects.get_or_create(
             name="Other", defaults={"display_name": "Other", "notes_required": True}
@@ -204,8 +209,8 @@ class TestGetInvolvedStatus(TestBase):
         )
         self.PROGRESS_SUMMARY_BLOCK = (
             "<p>"
-            "<strong>Activity:</strong> Submitted a contribution to a Carpentries "
-            "repository<br/>"
+            "<strong>Activity:</strong> Served as an Instructor or a helper at a "
+            "Carpentries workshop<br/>"
             f'<strong>Date:</strong> {datetime.today().strftime("%B %-d, %Y")}<br/>'
             "<strong>URL:</strong> https://example.org<br/>"
             "<strong>Notes:</strong> Notes from trainee"
@@ -308,6 +313,7 @@ class TestGetInvolvedStatus(TestBase):
 
     def test_get_involved_details_not_provided(self):
         """Check that optional fields are summarised correctly when empty"""
+        # Arrange
         self.progress.delete()
         TrainingProgress.objects.create(
             trainee=self.admin,
@@ -322,8 +328,8 @@ class TestGetInvolvedStatus(TestBase):
         # Assert
         PROGRESS_SUMMARY_BLOCK = (
             "<p>"
-            "<strong>Activity:</strong> Submitted a contribution to a Carpentries "
-            "repository<br/>"
+            "<strong>Activity:</strong> Served as an Instructor or a helper at a "
+            "Carpentries workshop<br/>"
             "<strong>Date:</strong> No date provided<br/>"
             "<strong>URL:</strong> No URL provided<br/>"
             "<strong>Notes:</strong> No notes provided"
