@@ -30,15 +30,13 @@ class TestGetInvolvedViewBase(TestBase):
         )
 
         # set up and log in as a trainee
-        self.user = Person(
+        self.user = Person.objects.create_user(
             username="trainee_alice",
             personal="Alice",
             family="Trainee",
             email="alice_trainee@example.com",
-            is_active=True,
+            password="password",
         )
-        self.user.set_password("password")
-        self.user.save()
         consent_to_all_required_consents(self.user)
         self.client.login(username="trainee_alice", password="password")
 
