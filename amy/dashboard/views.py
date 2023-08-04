@@ -252,25 +252,6 @@ class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
         "Thank you. Your Get Involved submission will be evaluated within 7-10 days."
     )
 
-    def user_may_create_submission(self, user):
-        """The user may create a submission if either of the conditions below are met:
-        1. no progress exists for the Get Involved step for this user
-        2. all existing progress for the Get Involved step for this user has state "a"
-        """
-        get_involved = TrainingRequirement.objects.get(name="Get Involved")
-        existing_progresses = TrainingProgress.objects.filter(
-            requirement=get_involved, trainee=user
-        )
-        num_existing = existing_progresses.count()
-        if num_existing == 0:
-            return True
-        else:
-            num_asked_to_repeat = existing_progresses.filter(state="a").count()
-            if num_asked_to_repeat == num_existing:
-                return True
-            else:
-                return False
-
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
         context["title"] = "Submit your Get Involved activity"
