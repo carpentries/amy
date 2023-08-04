@@ -167,6 +167,22 @@ class TestGetInvolvedForm(TestCase):
         )
         self.assertNotIn("notes", form.errors.keys())
 
+    def test_clean_custom_validation__no_involvement_type(self):
+        """Check that trainee_notes validation works when no involvement is chosen"""
+        # Arrange
+        data = {}
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["involvement_type"],
+            ['This field is required for progress type "Get Involved".'],
+        )
+        self.assertNotIn("trainee_notes", form.errors.keys())
+
     def test_custom_validation__existing_not_evaluated_yet(self):
         # Arrange
         # create pre-existing submission
@@ -186,8 +202,6 @@ class TestGetInvolvedForm(TestCase):
 
         # Act
         form = GetInvolvedForm(data, instance=self.base_instance)
-
-        # Assert
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(
             form.errors["__all__"],

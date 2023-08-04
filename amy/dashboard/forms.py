@@ -144,6 +144,12 @@ class AutoUpdateProfileForm(forms.ModelForm):
 
 
 class GetInvolvedForm(forms.ModelForm):
+    """Trainee-facing form for submitting training progress.
+
+    All fields have required=False to prevent confusion, as required fields change
+    based on the involvement choice.
+    """
+
     involvement_type = forms.ModelChoiceField(
         label="Activity",
         help_text="If your activity is not included in this list, please select "
@@ -171,7 +177,7 @@ class GetInvolvedForm(forms.ModelForm):
         "provide details here.",
         required=False,
     )
-    helper = BootstrapHelper(add_cancel_button=False)
+    helper = BootstrapHelper(add_cancel_button=True)
 
     class Meta:
         model = TrainingProgress
@@ -209,7 +215,7 @@ class GetInvolvedForm(forms.ModelForm):
         """
         involvement_type = self.cleaned_data["involvement_type"]
         trainee_notes = self.cleaned_data["trainee_notes"]
-        if involvement_type.notes_required and not trainee_notes:
+        if involvement_type and involvement_type.notes_required and not trainee_notes:
             raise ValidationError(
                 f'This field is required for activity "{involvement_type}".'
             )
