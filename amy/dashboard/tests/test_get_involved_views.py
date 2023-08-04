@@ -69,14 +69,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
 
     def test_create_view_does_not_show_archived_involvements(self):
         # Arrange
-        self.github_contribution, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution",
-            defaults={
-                "display_name": "GitHub Contribution",
-                "url_required": True,
-                "date_required": True,
-            },
-        )
+        self.github_contribution = Involvement.objects.get(name="GitHub Contribution")
         self.involvement_to_be_archived.archive()
 
         # Act
