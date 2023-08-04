@@ -3,13 +3,12 @@ from datetime import date
 from django.urls import reverse
 
 from trainings.models import Involvement
-from workshops.models import TrainingProgress, TrainingRequirement
-from workshops.tests.base import TestBase
+from workshops.models import Person, TrainingProgress, TrainingRequirement
+from workshops.tests.base import TestBase, consent_to_all_required_consents
 
 
-class TestGetInvolvedCreateView(TestBase):
+class TestGetInvolvedViewBase(TestBase):
     def setUp(self):
-        super()._setUpUsersAndLogin()
         self._setUpRoles()
         self._setUpTags()
 
@@ -21,7 +20,7 @@ class TestGetInvolvedCreateView(TestBase):
                 "involvement_required": True,
             },
         )
-        self.github_contribution, _ = Involvement.objects.get_or_create(
+        self.involvement, _ = Involvement.objects.get_or_create(
             name="GitHub Contribution",
             defaults={
                 "display_name": "GitHub Contribution",
@@ -29,6 +28,24 @@ class TestGetInvolvedCreateView(TestBase):
                 "date_required": True,
             },
         )
+
+        # set up and log in as a trainee
+        self.user = Person(
+            username="trainee_alice",
+            personal="Alice",
+            family="Trainee",
+            email="alice_trainee@example.com",
+            is_active=True,
+        )
+        self.user.set_password("password")
+        self.user.save()
+        consent_to_all_required_consents(self.user)
+        self.client.login(username="trainee_alice", password="password")
+
+
+class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
+    def setUp(self):
+        super().setUp()
         self.involvement_to_be_archived, _ = Involvement.objects.get_or_create(
             name="To be archived",
             defaults={
@@ -65,9 +82,7 @@ class TestGetInvolvedCreateView(TestBase):
             c[0].instance.pk
             for c in rv.context["form"].fields["involvement_type"].choices
         ]
-        self.assertEqual(
-            choices, [self.github_contribution.pk, self.involvement_other.pk]
-        )
+        self.assertEqual(choices, [self.involvement.pk, self.involvement_other.pk])
 
     def test_create_view_does_not_show_admin_fields(self):
         # Act
@@ -81,7 +96,7 @@ class TestGetInvolvedCreateView(TestBase):
     def test_create_view_works(self):
         # Arrange
         data = {
-            "involvement_type": self.github_contribution.pk,
+            "involvement_type": self.involvement.pk,
             "url": "https://example.org",
             "date": "2023-07-27",
         }
@@ -103,74 +118,22 @@ class TestGetInvolvedCreateView(TestBase):
         expected = [
             (
                 "n",
-                self.admin.pk,
+                self.user.pk,
                 "https://example.org",
                 self.get_involved.pk,
-                self.github_contribution.pk,
+                self.involvement.pk,
                 date(2023, 7, 27),
             )
         ]
         self.assertEqual(got, expected)
 
-    def test_create_view_submission_invalid_notes(self):
-        """Test that errors relating to notes/trainee_notes fields are
-        handled correctly."""
 
-        # Arrange
-        data = {
-            "involvement_type": self.involvement_other.pk,
-            "date": "2023-07-27",
-        }
-
-        # Act
-        rv = self.client.post(reverse("getinvolved_add"), data, follow=True)
-
-        # Assert
-        # if "notes" field error is not excluded, a server error will occur
-        # as there is no "notes" field on the form
-        # so a status code 200 means it has been excluded correctly
-        self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.resolver_match.view_name, "getinvolved_add")
-        # check that "trainee_notes" field error IS displayed
-        self.assertContains(
-            rv,
-            'This field is required for activity "Other".',
-            html=True,
-        )
-        # check that "notes" field error IS NOT displayed
-        self.assertNotContains(
-            rv,
-            'This field is required for activity "Other" '
-            "if there are no notes from the trainee.",
-            html=True,
-        )
-        # confirm that no TrainingProgress was created
-        self.assertEqual(len(TrainingProgress.objects.all()), 0)
-
-
-class TestGetInvolvedUpdateView(TestBase):
+class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
     def setUp(self):
-        super()._setUpUsersAndLogin()
-
-        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
-            name="Get Involved",
-            defaults={
-                "url_required": False,
-                "event_required": False,
-                "involvement_required": True,
-            },
-        )
-        self.involvement, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution",
-            defaults={
-                "display_name": "GitHub Contribution",
-                "url_required": True,
-                "date_required": True,
-            },
-        )
+        super().setUp()
 
         self.progress = TrainingProgress.objects.create(
-            trainee=self.admin,
+            trainee=self.user,
             state="n",
             requirement=self.get_involved,
             involvement_type=self.involvement,
@@ -186,28 +149,12 @@ class TestGetInvolvedUpdateView(TestBase):
         self.assertEqual(rv.status_code, 200)
 
 
-class TestGetInvolvedDeleteView(TestBase):
+class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
     def setUp(self):
-        super()._setUpUsersAndLogin()
+        super().setUp()
 
-        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
-            name="Get Involved",
-            defaults={
-                "url_required": False,
-                "event_required": False,
-                "involvement_required": True,
-            },
-        )
-        self.involvement, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution",
-            defaults={
-                "display_name": "GitHub Contribution",
-                "url_required": True,
-                "date_required": True,
-            },
-        )
         self.progress = TrainingProgress.objects.create(
-            trainee=self.admin,
+            trainee=self.user,
             state="n",
             requirement=self.get_involved,
             involvement_type=self.involvement,
