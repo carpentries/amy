@@ -5,39 +5,64 @@ from emails import views
 urlpatterns = [
     path(
         "templates/",
-        views.EmailTemplateListView.as_view(),
-        name="email_templates_list",
+        include([
+            path(
+                "",
+                views.AllEmailTemplates.as_view(),
+                name="all_emailtemplates",
+            ),
+            path(
+                "create/",
+                views.EmailTemplateCreate.as_view(),
+                name="emailtemplate_add",
+            ),
+        ]),
     ),
     path(
         "template/<uuid:pk>/",
-        views.EmailTemplateDetailView.as_view(),
-        name="email_template_detail",
+        include([
+            path(
+                "",
+                views.EmailTemplateDetails.as_view(),
+                name="emailtemplate_details",
+            ),
+            path(
+                "edit/",
+                views.EmailTemplateUpdate.as_view(),
+                name="emailtemplate_edit",
+            ),
+            path(
+                "delete/",
+                views.EmailTemplateDelete.as_view(),
+                name="emailtemplate_delete",
+            ),
+        ]),
     ),
     path(
         "scheduled_emails/",
-        views.ScheduledEmailListView.as_view(),
-        name="scheduled_emails_list",
+        views.AllScheduledEmails.as_view(),
+        name="all_scheduledemails",
     ),
     path("scheduled_email/<uuid:pk>/", include([
         path(
             "",
-            views.ScheduledEmailDetailView.as_view(),
-            name="scheduled_email_detail",
+            views.ScheduledEmailDetails.as_view(),
+            name="scheduledemail_details",
         ),
         path(
             "edit/",
-            views.ScheduledEmailEditView.as_view(),
-            name="scheduled_email_edit",
+            views.ScheduledEmailUpdate.as_view(),
+            name="scheduledemail_edit",
         ),
         path(
             "reschedule/",
-            views.ScheduledEmailRescheduleView.as_view(),
-            name="scheduled_email_reschedule",
+            views.ScheduledEmailReschedule.as_view(),
+            name="scheduledemail_reschedule",
         ),
         path(
             "cancel/",
-            views.ScheduledEmailCancelView.as_view(),
-            name="scheduled_email_cancel",
+            views.ScheduledEmailCancel.as_view(),
+            name="scheduledemail_cancel",
         ),
     ])),
 ]
