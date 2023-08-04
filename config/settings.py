@@ -429,7 +429,7 @@ if not DEBUG and (
     not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]
 ):
     raise ImproperlyConfigured(
-        "Mailgun settings are required when running " "with DEBUG=False."
+        "Mailgun settings are required when running with DEBUG=False."
     )
 
 
