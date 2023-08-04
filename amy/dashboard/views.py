@@ -27,6 +27,7 @@ from dashboard.forms import (
     SignupForRecruitmentForm,
 )
 from dashboard.utils import get_passed_or_last_progress
+from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
@@ -476,6 +477,15 @@ class SignupForRecruitment(
                 "You have applied to other workshops on the same dates: "
                 f"{', '.join(gen)}",
             )
+
+        instructor_signs_up_for_workshop_signal.send(
+            sender=obj,
+            request=self.request,
+            person_id=obj.person.pk,
+            event_id=obj.recruitment.event.pk,
+            instructor_recruitment_id=obj.recruitment.pk,
+            instructor_recruitment_signup_id=obj.pk,
+        )
 
         return super().form_valid(form)
 

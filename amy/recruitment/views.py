@@ -1,5 +1,6 @@
 from datetime import date
 import logging
+from typing import Callable
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -9,7 +10,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db import IntegrityError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms import BaseForm
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import View
@@ -25,6 +26,11 @@ from autoemails.base_views import ActionManageMixin
 from autoemails.job import Job
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import safe_next_or_default_url
+from emails.signals import (
+    admin_signs_instructor_up_for_workshop_signal,
+    instructor_confirmed_for_workshop_signal,
+    instructor_declined_from_workshop_signal,
+)
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
     InstructorRecruitmentAddSignupForm,
@@ -335,6 +341,16 @@ class InstructorRecruitmentAddSignup(
         signup: InstructorRecruitmentSignup = form.save(commit=False)
         signup.recruitment = self.object
         signup.save()
+
+        admin_signs_instructor_up_for_workshop_signal.send(
+            sender=signup,
+            request=self.request,
+            person_id=signup.person.pk,
+            event_id=signup.recruitment.event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):
@@ -380,13 +396,23 @@ class InstructorRecruitmentSignupChangeState(
         self.object.state = action_to_state_mapping[form.cleaned_data["action"]]
         self.object.save()
 
-        state_to_method_action_mapping = {
+        state_to_method_action_mapping: dict[
+            str,
+            Callable[
+                [HttpRequest, InstructorRecruitmentSignup, Person, Event], Task | None
+            ],
+        ] = {
             "a": self.add_instructor_task,
             "d": self.remove_instructor_task,
         }
         handler = state_to_method_action_mapping[self.object.state]
         try:
-            handler(self.object.person, self.object.recruitment.event)
+            handler(
+                self.request,
+                self.object,
+                self.object.person,
+                self.object.recruitment.event,
+            )
             return super().form_valid(form)
         except IntegrityError:
             messages.error(
@@ -395,7 +421,13 @@ class InstructorRecruitmentSignupChangeState(
             )
             return HttpResponseRedirect(self.get_success_url())
 
-    def add_instructor_task(self, person: Person, event: Event) -> Task:
+    def add_instructor_task(
+        self,
+        request: HttpRequest,
+        signup: InstructorRecruitmentSignup,
+        person: Person,
+        event: Event,
+    ) -> Task:
         role = Role.objects.get(name="instructor")
         task = Task.objects.create(
             event=event,
@@ -403,9 +435,25 @@ class InstructorRecruitmentSignupChangeState(
             role=role,
         )
         self.add_automated_email(task)
+
+        instructor_confirmed_for_workshop_signal.send(
+            sender=signup,
+            request=request,
+            person_id=person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+
         return task
 
-    def remove_instructor_task(self, person: Person, event: Event) -> None:
+    def remove_instructor_task(
+        self,
+        request: HttpRequest,
+        signup: InstructorRecruitmentSignup,
+        person: Person,
+        event: Event,
+    ) -> None:
         """Remove instructor task from a Person only if the task exists. If it doesn't,
         don't throw errors."""
         try:
@@ -415,6 +463,15 @@ class InstructorRecruitmentSignupChangeState(
         else:
             self.remove_automated_email(task)
             task.delete()
+
+        instructor_declined_from_workshop_signal.send(
+            sender=signup,
+            request=request,
+            person_id=person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
 
     def add_automated_email(self, task: Task) -> tuple[list[Job], list[RQJob]]:
         trigger_name = "new-instructor"

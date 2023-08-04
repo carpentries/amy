@@ -1,52 +1,226 @@
-from datetime import timedelta
 import logging
-from typing import Any, TypedDict
+from typing import Any
 
-from django.conf import settings
-from django.contrib import messages
 from django.dispatch import receiver
-from django.http import HttpRequest
-from django.utils import timezone
-from django.utils.html import format_html
 from typing_extensions import Unpack
 
 from emails.controller import EmailController
 from emails.models import EmailTemplate
-from emails.signals import persons_merged_signal
-from workshops.models import Person
+from emails.signals import (
+    admin_signs_instructor_up_for_workshop_signal,
+    instructor_badge_awarded_signal,
+    instructor_confirmed_for_workshop_signal,
+    instructor_declined_from_workshop_signal,
+    instructor_signs_up_for_workshop_signal,
+    persons_merged_signal,
+)
+from emails.types import (
+    AdminSignsInstructorUpKwargs,
+    InstructorBadgeAwardedKwargs,
+    InstructorConfirmedKwargs,
+    InstructorDeclinedKwargs,
+    InstructorSignupKwargs,
+    PersonsMergedKwargs,
+)
+from emails.utils import (
+    feature_flag_enabled,
+    immediate_action,
+    messages_action_scheduled,
+    messages_missing_template,
+)
+from recruitment.models import InstructorRecruitmentSignup
+from workshops.models import Award, Event, Person
 
 logger = logging.getLogger("amy")
 
 
-class PersonsMergedKwargs(TypedDict):
-    request: HttpRequest
-    person_a_id: int
-    person_b_id: int
-    selected_person_id: int
+@receiver(instructor_badge_awarded_signal)
+@feature_flag_enabled
+def instructor_badge_awarded_receiver(
+    sender: Any, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
+) -> None:
+    request = kwargs["request"]
+    person_id = kwargs["person_id"]
+    award_id = kwargs["award_id"]
+
+    scheduled_at = immediate_action()
+    person = Person.objects.get(pk=person_id)
+    award = Award.objects.get(pk=award_id)
+    context = {
+        "person": person,
+        "award": award,
+    }
+    signal = instructor_badge_awarded_signal.signal_name
+    try:
+        scheduled_email = EmailController.schedule_email(
+            signal=signal,
+            context=context,
+            scheduled_at=scheduled_at,
+            to_header=[person.email],
+            generic_relation_obj=award,
+        )
+    except EmailTemplate.DoesNotExist:
+        messages_missing_template(request, signal)
+    else:
+        messages_action_scheduled(request, signal, scheduled_email)
 
 
-def check_feature_flag() -> bool:
-    """Receivers will be connected no matter if EMAIL_MODULE_ENABLED is set or not.
-    This function helps check if the receiver should exit early when the feature flag
-    is disabled."""
-    return settings.EMAIL_MODULE_ENABLED is True
+@receiver(instructor_confirmed_for_workshop_signal)
+@feature_flag_enabled
+def instructor_confirmed_for_workshop_receiver(
+    sender: Any, **kwargs: Unpack[InstructorConfirmedKwargs]
+) -> None:
+    request = kwargs["request"]
+    person_id = kwargs["person_id"]
+    event_id = kwargs["event_id"]
+    instructor_recruitment_signup_id = kwargs["instructor_recruitment_signup_id"]
+
+    scheduled_at = immediate_action()
+    person = Person.objects.get(pk=person_id)
+    event = Event.objects.get(pk=event_id)
+    instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
+        pk=instructor_recruitment_signup_id
+    )
+    context = {
+        "person": person,
+        "event": event,
+        "instructor_recruitment_signup": instructor_recruitment_signup,
+    }
+    signal = instructor_confirmed_for_workshop_signal.signal_name
+    try:
+        scheduled_email = EmailController.schedule_email(
+            signal=signal,
+            context=context,
+            scheduled_at=scheduled_at,
+            to_header=[person.email],
+            generic_relation_obj=instructor_recruitment_signup,
+        )
+    except EmailTemplate.DoesNotExist:
+        messages_missing_template(request, signal)
+    else:
+        messages_action_scheduled(request, signal, scheduled_email)
+
+
+@receiver(instructor_declined_from_workshop_signal)
+@feature_flag_enabled
+def instructor_declined_from_workshop_receiver(
+    sender: Any, **kwargs: Unpack[InstructorDeclinedKwargs]
+) -> None:
+    request = kwargs["request"]
+    person_id = kwargs["person_id"]
+    event_id = kwargs["event_id"]
+    instructor_recruitment_signup_id = kwargs["instructor_recruitment_signup_id"]
+
+    scheduled_at = immediate_action()
+    person = Person.objects.get(pk=person_id)
+    event = Event.objects.get(pk=event_id)
+    instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
+        pk=instructor_recruitment_signup_id
+    )
+    context = {
+        "person": person,
+        "event": event,
+        "instructor_recruitment_signup": instructor_recruitment_signup,
+    }
+    signal = instructor_declined_from_workshop_signal.signal_name
+    try:
+        scheduled_email = EmailController.schedule_email(
+            signal=signal,
+            context=context,
+            scheduled_at=scheduled_at,
+            to_header=[person.email],
+            generic_relation_obj=instructor_recruitment_signup,
+        )
+    except EmailTemplate.DoesNotExist:
+        messages_missing_template(request, signal)
+    else:
+        messages_action_scheduled(request, signal, scheduled_email)
+
+
+@receiver(instructor_signs_up_for_workshop_signal)
+@feature_flag_enabled
+def instructor_signs_up_for_workshop_receiver(
+    sender: Any, **kwargs: Unpack[InstructorSignupKwargs]
+) -> None:
+    request = kwargs["request"]
+    person_id = kwargs["person_id"]
+    event_id = kwargs["event_id"]
+    instructor_recruitment_signup_id = kwargs["instructor_recruitment_signup_id"]
+
+    scheduled_at = immediate_action()
+    person = Person.objects.get(pk=person_id)
+    event = Event.objects.get(pk=event_id)
+    instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
+        pk=instructor_recruitment_signup_id
+    )
+    context = {
+        "person": person,
+        "event": event,
+        "instructor_recruitment_signup": instructor_recruitment_signup,
+    }
+    signal = instructor_signs_up_for_workshop_signal.signal_name
+    try:
+        scheduled_email = EmailController.schedule_email(
+            signal=signal,
+            context=context,
+            scheduled_at=scheduled_at,
+            to_header=[person.email],
+            generic_relation_obj=instructor_recruitment_signup,
+        )
+    except EmailTemplate.DoesNotExist:
+        messages_missing_template(request, signal)
+    else:
+        messages_action_scheduled(request, signal, scheduled_email)
+
+
+@receiver(admin_signs_instructor_up_for_workshop_signal)
+@feature_flag_enabled
+def admin_signs_instructor_up_for_workshop_receiver(
+    sender: Any, **kwargs: Unpack[AdminSignsInstructorUpKwargs]
+) -> None:
+    request = kwargs["request"]
+    person_id = kwargs["person_id"]
+    event_id = kwargs["event_id"]
+    instructor_recruitment_signup_id = kwargs["instructor_recruitment_signup_id"]
+
+    scheduled_at = immediate_action()
+    person = Person.objects.get(pk=person_id)
+    event = Event.objects.get(pk=event_id)
+    instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
+        pk=instructor_recruitment_signup_id
+    )
+    context = {
+        "person": person,
+        "event": event,
+        "instructor_recruitment_signup": instructor_recruitment_signup,
+    }
+    signal = admin_signs_instructor_up_for_workshop_signal.signal_name
+    try:
+        scheduled_email = EmailController.schedule_email(
+            signal=signal,
+            context=context,
+            scheduled_at=scheduled_at,
+            to_header=[person.email],
+            generic_relation_obj=instructor_recruitment_signup,
+        )
+    except EmailTemplate.DoesNotExist:
+        messages_missing_template(request, signal)
+    else:
+        messages_action_scheduled(request, signal, scheduled_email)
 
 
 @receiver(persons_merged_signal)
+@feature_flag_enabled
 def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) -> None:
-    if not check_feature_flag():
-        logger.debug("EMAIL_MODULE_ENABLED not set, skipping persons_merged_receiver")
-        return
-
     request = kwargs["request"]
     selected_person_id = kwargs["selected_person_id"]
 
-    scheduled_at = timezone.now() + timedelta(hours=1)
+    scheduled_at = immediate_action()
     person = Person.objects.get(pk=selected_person_id)
     context = {
         "person": person,
     }
-    signal = "persons_merged"
+    signal = persons_merged_signal.signal_name
     try:
         scheduled_email = EmailController.schedule_email(
             signal=signal,
@@ -56,16 +230,6 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
             generic_relation_obj=person,
         )
     except EmailTemplate.DoesNotExist:
-        messages.warning(
-            request,
-            f"Action was not scheduled due to missing template for signal {signal}.",
-        )
+        messages_missing_template(request, signal)
     else:
-        messages.info(
-            request,
-            format_html(
-                'Action was scheduled: <a href="{}">{}</a>.',
-                scheduled_email.get_absolute_url(),
-                scheduled_email.pk,
-            ),
-        )
+        messages_action_scheduled(request, signal, scheduled_email)

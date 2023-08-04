@@ -516,6 +516,9 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         # Assert
         self.assertEqual(success_message, "Added Harry Potter to Test")
 
+    # Disable email module so that signals don't fail on fetching a mocked object
+    # from DB.
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_form_valid(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
@@ -702,9 +705,9 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
     def test_form_valid(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
-        mock_object = mock.MagicMock()
+        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(
-            object=mock_object, request=request
+            object=mock_signup, request=request
         )
         view.add_instructor_task = mock.MagicMock()
         view.remove_instructor_task = mock.MagicMock()
@@ -714,18 +717,22 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         # Act
         view.form_valid(form)
         # Assert
-        self.assertEqual(mock_object.state, "a")
-        mock_object.save.assert_called_once()
+        self.assertEqual(mock_signup.state, "a")
+        mock_signup.save.assert_called_once()
         view.add_instructor_task.assert_called_once_with(
-            mock_object.person, mock_object.recruitment.event
+            request, mock_signup, mock_signup.person, mock_signup.recruitment.event
         )
         view.remove_instructor_task.assert_not_called()
 
+    # Disable email module so that signals don't fail on fetching a mocked object
+    # from DB.
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_add_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         self._prepare_email_automation_data()
         request = RequestFactory().post("/")
+        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -738,7 +745,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         )
         event.tags.add(self.automated_email_tag)
         # Act
-        task = view.add_instructor_task(person, event)
+        task = view.add_instructor_task(request, mock_signup, person, event)
         # Assert
         self.assertTrue(task.pk)
         self.assertTrue(NewInstructorAction.check(task))
@@ -753,11 +760,15 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    # Disable email module so that signals don't fail on fetching a mocked object
+    # from DB.
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_remove_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         self._prepare_email_automation_data()
         request = RequestFactory().post("/")
+        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -771,16 +782,20 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
         role = Role.objects.get(name="instructor")
         task = Task.objects.create(person=person, event=event, role=role)
         # Act
-        view.remove_instructor_task(person, event)
+        view.remove_instructor_task(request, mock_signup, person, event)
         # Assert
         with self.assertRaises(Task.DoesNotExist):
             task.refresh_from_db()
 
+    # Disable email module so that signals don't fail on fetching a mocked object
+    # from DB.
+    @override_settings(EMAIL_MODULE_ENABLED=False)
     def test_remove_instructor_task__no_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         self._prepare_email_automation_data()
         request = RequestFactory().post("/")
+        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -792,7 +807,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
             administrator=organization,
         )
         # Act & Assert - no error
-        view.remove_instructor_task(person, event)
+        view.remove_instructor_task(request, mock_signup, person, event)
 
     def test_post__form_valid(self) -> None:
         # Arrange

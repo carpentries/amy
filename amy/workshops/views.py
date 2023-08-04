@@ -60,7 +60,7 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
-from emails.signals import persons_merged_signal
+from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
@@ -2233,6 +2233,14 @@ class MockAwardCreate(
             logger.debug(
                 f"Created {len(roles_result)} Community Roles for badge {badge} and "
                 f"person {person}"
+            )
+
+        if badge.name == "instructor":
+            instructor_badge_awarded_signal.send(
+                sender=self.object,
+                request=self.request,
+                person_id=person.pk,
+                award_id=self.object.pk,
             )
 
         return result
