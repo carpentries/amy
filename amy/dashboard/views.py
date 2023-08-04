@@ -37,7 +37,6 @@ from workshops.base_views import (
     AMYListView,
     AMYUpdateView,
     ConditionallyEnabledMixin,
-    RedirectSupportMixin,
 )
 from workshops.models import (
     Airport,
@@ -244,7 +243,7 @@ def training_progress(request):
     return render(request, "dashboard/training_progress.html", context)
 
 
-class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateView):
+class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
     # permission_required = TODO
     model = TrainingProgress
     form_class = GetInvolvedForm
@@ -256,28 +255,25 @@ class GetInvolvedCreateView(LoginRequiredMixin, RedirectSupportMixin, AMYCreateV
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        context["title"] = str("Submit your Get Involved activity")
+        context["title"] = "Submit your Get Involved activity"
         return context
 
-    def post(self, request):
-        self.object = None
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
         base_training_progress = TrainingProgress(
-            trainee=request.user,
+            trainee=self.request.user,
             state="n",  # not evaluated yet
             requirement=TrainingRequirement.objects.get(name="Get Involved"),
         )
-        get_involved_form = GetInvolvedForm(
-            data=request.POST, instance=base_training_progress
-        )
+        kwargs["instance"] = base_training_progress
+        return kwargs
 
-        if get_involved_form.is_valid():
-            return self.form_valid(get_involved_form)
-
-        else:
-            return self.form_invalid(get_involved_form)
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        return super().post(request, *args, **kwargs)
 
 
-class GetInvolvedUpdateView(LoginRequiredMixin, RedirectSupportMixin, AMYUpdateView):
+class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
     # permission_required = TODO
     model = TrainingProgress
     form_class = GetInvolvedForm
@@ -287,11 +283,11 @@ class GetInvolvedUpdateView(LoginRequiredMixin, RedirectSupportMixin, AMYUpdateV
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
-        context["title"] = str("Update your Get Involved submission")
+        context["title"] = "Update your Get Involved submission"
         return context
 
 
-class GetInvolvedDeleteView(LoginRequiredMixin, RedirectSupportMixin, AMYDeleteView):
+class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
     # permission_required = TODO
     model = TrainingProgress
     success_url = reverse_lazy("training-progress")
