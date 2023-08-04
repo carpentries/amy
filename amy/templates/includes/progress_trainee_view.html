@@ -9,8 +9,8 @@
     {% endif %}
     as of 
     {% if progress.requirement.name == "Training" %}
-        {{ progress.event.end }}.
+        {{ progress.event.end | date:'F j, Y'}}.
     {% else %}
-        {{ progress.last_updated_at.date }}.
+        {{ progress.last_updated_at.date | date:'F j, Y'}}.
     {% endif %}
 </p>

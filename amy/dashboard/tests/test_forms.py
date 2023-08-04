@@ -2,9 +2,18 @@ from datetime import date
 
 from django.test import TestCase
 
-from dashboard.forms import SignupForRecruitmentForm
+from dashboard.forms import GetInvolvedForm, SignupForRecruitmentForm
 from recruitment.models import InstructorRecruitment
-from workshops.models import Event, Organization, Person, Role, Task
+from trainings.models import Involvement
+from workshops.models import (
+    Event,
+    Organization,
+    Person,
+    Role,
+    Task,
+    TrainingProgress,
+    TrainingRequirement,
+)
 
 
 class TestSignupForRecruitmentForm(TestCase):
@@ -106,3 +115,41 @@ class TestSignupForRecruitmentForm(TestCase):
                 f"{conflicting_task.event.slug}"
             ],
         )
+
+
+class TestGetInvolvedForm(TestCase):
+    def test_fields(self):
+        # Act
+        form = GetInvolvedForm()
+
+        # Assert
+        self.assertEqual(
+            {"involvement_type", "date", "url", "trainee_notes"}, form.fields.keys()
+        )
+
+    def test_clean_custom_validation__trainee_notes(self):
+        # Arrange
+        person = Person.objects.create(
+            personal="Test", family="User", email="test@user.com"
+        )
+        involvement, _ = Involvement.objects.get_or_create(
+            name="Other", defaults={"display_name": "Other", "notes_required": True}
+        )
+        data = {"involvement_type": involvement, "date": date(2023, 7, 27)}
+        base_instance = TrainingProgress(
+            trainee=person,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+
+        # Act
+        form = GetInvolvedForm(data, instance=base_instance)
+
+        # Assert
+        # expect to see an error on "trainee_notes" and not on "notes"
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["trainee_notes"],
+            ['This field is required for activity "Other".'],
+        )
+        self.assertNotIn("notes", form.errors.keys())

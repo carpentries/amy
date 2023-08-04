@@ -189,97 +189,144 @@ class TestGetInvolvedStatus(TestBase):
             name="Other", defaults={"display_name": "Other", "notes_required": True}
         )
         self.progress_url = reverse("training-progress")
+        self.SESSION_LINK_TEXT = "Submit a Get Involved activity"
 
-    def test_get_involved_not_submitted(self):
-        rv = self.client.get(self.progress_url)
-        self.assertContains(rv, "Get Involved step not submitted")
-
-    def test_get_involved_waiting_to_be_evaluated(self):
-        TrainingProgress.objects.create(
+        self.progress = TrainingProgress.objects.create(
             trainee=self.admin,
             requirement=self.get_involved,
-            state="n",
             involvement_type=self.github_contribution,
             date=datetime.today(),
             url="https://example.org",
+            trainee_notes="Notes from trainee",
         )
+        self.PROGRESS_SUMMARY_BLOCK = (
+            "<p>"
+            "<strong>Activity:</strong> Submitted a contribution to a Carpentries "
+            "repository<br/>"
+            f'<strong>Date:</strong> {datetime.today().strftime("%B %-d, %Y")}<br/>'
+            "<strong>URL:</strong> https://example.org<br/>"
+            "<strong>Notes:</strong> Notes from trainee"
+            "</p>"
+        )
+        self.EDIT_CLASS = "edit-object"  # class on the Edit button
+        self.DELETE_CLASS = "delete-object"  # class on the Delete button
+
+    def test_get_involved_not_submitted(self):
+        # Arrange
+        self.progress.delete()
+
+        # Act
         rv = self.client.get(self.progress_url)
+
+        # Assert
+        self.assertContains(rv, "Get Involved step not submitted")
+        self.assertContains(rv, self.SESSION_LINK_TEXT)
+
+    def test_get_involved_waiting_to_be_evaluated(self):
+        # Arrange
+        self.progress.state = "n"
+        self.progress.save()
+
+        # Act
+        rv = self.client.get(self.progress_url)
+
+        # Assert
         self.assertContains(
             rv,
             '<p>Get Involved <span class="badge-warning">not evaluated yet</span> '
             f'as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
             html=True,
         )
+        self.assertContains(rv, self.PROGRESS_SUMMARY_BLOCK, html=True)
+        self.assertContains(rv, self.EDIT_CLASS)
+        self.assertContains(rv, self.DELETE_CLASS)
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT, html=True)
 
     def test_get_involved_passed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin,
-            requirement=self.get_involved,
-            involvement_type=self.github_contribution,
-            date=datetime.today(),
-            url="https://example.org",
-        )
+        # Arrange
+        self.progress.state = "p"
+        self.progress.save()
+
+        # Act
         rv = self.client.get(self.progress_url)
+
+        # Assert
         self.assertContains(
             rv,
             '<p>Get Involved <span class="badge-success">passed</span> '
             f'as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
             html=True,
         )
+        self.assertContains(rv, self.PROGRESS_SUMMARY_BLOCK, html=True)
+        self.assertNotContains(rv, self.EDIT_CLASS)
+        self.assertNotContains(rv, self.DELETE_CLASS)
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_submission_form(self):
-        data = {
-            "url": "http://example.com",
-            "requirement": self.get_involved.pk,
-            "involvement_type": self.github_contribution.pk,
-            "date": "2023-06-21",
-        }
-        rv = self.client.post(self.progress_url, data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(
-            rv, "Your Get Involved submission will be reviewed within 7-10 days."
-        )
-        got = list(
-            TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement", "involvement_type", "date"
-            )
-        )
-        expected = [
-            (
-                "n",
-                self.admin.pk,
-                "http://example.com",
-                self.get_involved.pk,
-                self.github_contribution.pk,
-                date(2023, 6, 21),
-            )
-        ]
-        self.assertEqual(got, expected)
+    def test_get_involved_failed(self):
+        # Arrange
+        self.progress.state = "f"
+        self.progress.save()
 
-    def test_submission_form_invalid_notes(self):
-        """Test that errors relating to notes/trainee_notes fields are
-        handled correctly."""
-        data = {
-            "requirement": self.get_involved.pk,
-            "involvement_type": self.other_involvement.pk,
-            "date": "2023-06-21",
-        }
-        rv = self.client.post(self.progress_url, data, follow=True)
-        # if "notes" field error is not excluded, a server error will occur
-        # as there is no "notes" field on the form
-        # so a status code 200 means it has been excluded correctly
-        self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        # check that "trainee_notes" field error is displayed
-        # special treatment needed due to quotation marks
+        # Act
+        rv = self.client.get(self.progress_url)
+
+        # Assert
         self.assertContains(
             rv,
-            'This field is required for activity "Other".',
+            '<p>Get Involved <span class="badge-danger">failed</span> '
+            f'as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
             html=True,
         )
-        # no TrainingProgress should have been created
-        self.assertEqual(len(TrainingProgress.objects.all()), 0)
+        self.assertContains(rv, self.PROGRESS_SUMMARY_BLOCK, html=True)
+        self.assertNotContains(rv, self.EDIT_CLASS)
+        self.assertNotContains(rv, self.DELETE_CLASS)
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT)
+
+    def test_get_involved_asked_to_repeat(self):
+        # Arrange
+        self.progress.state = "a"
+        self.progress.save()
+
+        # Act
+        rv = self.client.get(self.progress_url)
+
+        # Assert
+        self.assertContains(
+            rv,
+            '<p>Get Involved <span class="badge-info">asked to repeat</span> '
+            f'as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
+            html=True,
+        )
+        self.assertContains(rv, self.PROGRESS_SUMMARY_BLOCK, html=True)
+        self.assertNotContains(rv, self.EDIT_CLASS)
+        self.assertNotContains(rv, self.DELETE_CLASS)
+        self.assertNotContains(rv, self.SESSION_LINK_TEXT)
+        self.assertContains(rv, "Submit another Get Involved activity")
+
+    def test_get_involved_details_not_provided(self):
+        """Check that optional fields are summarised correctly when empty"""
+        self.progress.delete()
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=self.get_involved,
+            involvement_type=self.github_contribution,
+            state="n",
+        )
+
+        # Act
+        rv = self.client.get(self.progress_url)
+
+        # Assert
+        PROGRESS_SUMMARY_BLOCK = (
+            "<p>"
+            "<strong>Activity:</strong> Submitted a contribution to a Carpentries "
+            "repository<br/>"
+            "<strong>Date:</strong> No date provided<br/>"
+            "<strong>URL:</strong> No URL provided<br/>"
+            "<strong>Notes:</strong> No notes provided"
+            "</p>"
+        )
+        self.assertContains(rv, PROGRESS_SUMMARY_BLOCK, html=True)
 
 
 class TestWelcomeSessionStatus(TestBase):

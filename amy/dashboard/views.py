@@ -31,7 +31,13 @@ from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from recruitment.views import RecruitmentEnabledMixin
-from workshops.base_views import AMYListView, ConditionallyEnabledMixin
+from workshops.base_views import (
+    AMYCreateView,
+    AMYDeleteView,
+    AMYListView,
+    AMYUpdateView,
+    ConditionallyEnabledMixin,
+)
 from workshops.models import (
     Airport,
     Badge,
@@ -209,8 +215,6 @@ def autoupdate_profile(request):
 
 @login_required
 def training_progress(request):
-    get_involved_form = GetInvolvedForm()
-
     # Add information about instructor training progress to request.user.
     request.user = (
         Person.objects.annotate_with_instructor_eligibility()
@@ -229,34 +233,65 @@ def training_progress(request):
     progress_welcome = get_passed_or_last_progress(request.user, "Welcome Session")
     progress_demo = get_passed_or_last_progress(request.user, "Demo")
 
-    if request.method == "POST":
-        base_training_progress = TrainingProgress(
-            trainee=request.user,
-            state="n",  # not evaluated yet
-            requirement=TrainingRequirement.objects.get(name="Get Involved"),
-        )
-        get_involved_form = GetInvolvedForm(
-            data=request.POST, instance=base_training_progress
-        )
-        if get_involved_form.is_valid():
-            get_involved_form.save()
-
-            messages.success(
-                request,
-                "Thank you. Your Get Involved submission will be reviewed within 7-10 "
-                "days.",
-            )
-            return redirect(reverse("training-progress"))
-
     context = {
         "title": "Your training progress",
-        "get_involved_form": get_involved_form,
         "progress_training": progress_training,
         "progress_get_involved": progress_get_involved,
         "progress_welcome": progress_welcome,
         "progress_demo": progress_demo,
     }
     return render(request, "dashboard/training_progress.html", context)
+
+
+class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
+    # permission_required = TODO
+    model = TrainingProgress
+    form_class = GetInvolvedForm
+    template_name = "get_involved_form.html"
+    success_url = reverse_lazy("training-progress")
+    success_message = (
+        "Thank you. Your Get Involved submission will be reviewed within 7-10 days."
+    )
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Submit your Get Involved activity"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        base_training_progress = TrainingProgress(
+            trainee=self.request.user,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+        kwargs["instance"] = base_training_progress
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        return super().post(request, *args, **kwargs)
+
+
+class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
+    # permission_required = TODO
+    model = TrainingProgress
+    form_class = GetInvolvedForm
+    template_name = "get_involved_form.html"
+    success_url = reverse_lazy("training-progress")
+    success_message = "Your Get Involved submission was updated successfully."
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update your Get Involved submission"
+        return context
+
+
+class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
+    # permission_required = TODO
+    model = TrainingProgress
+    success_url = reverse_lazy("training-progress")
+    success_message = "Your Get Involved submission was deleted."
 
 
 # ------------------------------------------------------------
