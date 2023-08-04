@@ -170,7 +170,7 @@ class GetInvolvedForm(forms.ModelForm):
         "provide details here.",
         required=False,
     )
-    helper = BootstrapHelper(add_cancel_button=False)
+    helper = BootstrapHelper(add_cancel_button=True)
 
     class Meta:
         model = TrainingProgress
