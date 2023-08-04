@@ -153,3 +153,27 @@ class TestGetInvolvedForm(TestCase):
             ['This field is required for activity "Other".'],
         )
         self.assertNotIn("notes", form.errors.keys())
+
+    def test_clean_custom_validation__no_involvement_type(self):
+        """Check that trainee_notes validation works when no involvement is chosen"""
+        # Arrange
+        person = Person.objects.create(
+            personal="Test", family="User", email="test@user.com"
+        )
+        data = {}
+        base_instance = TrainingProgress(
+            trainee=person,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+
+        # Act
+        form = GetInvolvedForm(data, instance=base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["involvement_type"],
+            ['This field is required for progress type "Get Involved".'],
+        )
+        self.assertNotIn("trainee_notes", form.errors.keys())
