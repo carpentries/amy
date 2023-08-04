@@ -3,8 +3,17 @@ import re
 from urllib.parse import unquote
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import (
+    Case,
+    Count,
+    IntegerField,
+    Prefetch,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -272,35 +281,25 @@ class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
         return super().post(request, *args, **kwargs)
 
 
-class GetInvolvedUpdateView(LoginRequiredMixin, PermissionRequiredMixin, AMYUpdateView):
-    model = TrainingProgress
+class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was updated successfully."
     pk_url_kwarg = "pk"
 
-    def has_permission(self):
-        """The user has permission if all the conditions below are met:
-        1. the progress exists
-        2. the progress belongs to the user
-        3. the progress is for the Get Involved step
-        4. the progress has not yet been evaluated
-        """
-        progress_pk = self.kwargs.get(self.pk_url_kwarg)
-        try:
-            progress = TrainingProgress.objects.get(pk=progress_pk)
-            get_involved = TrainingRequirement.objects.get(name="Get Involved")
-            if (
-                progress.trainee == self.request.user
-                and progress.requirement == get_involved
-                and progress.state == "n"
-            ):
-                return True
-            else:
-                return False
-        except TrainingProgress.DoesNotExist:
-            return False
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[TrainingProgress]:
+        # user should only be able to update progress that belongs to them and has not
+        # been evaluated yet
+        return TrainingProgress.objects.filter(
+            trainee=self.request.user,
+            requirement__name="Get Involved",
+            state="n",
+        )
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
@@ -308,33 +307,24 @@ class GetInvolvedUpdateView(LoginRequiredMixin, PermissionRequiredMixin, AMYUpda
         return context
 
 
-class GetInvolvedDeleteView(LoginRequiredMixin, PermissionRequiredMixin, AMYDeleteView):
+class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
     model = TrainingProgress
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was deleted."
     pk_url_kwarg = "pk"
 
-    def has_permission(self):
-        """The user has permission if all the conditions below are met:
-        1. the progress exists
-        2. the progress belongs to the user
-        3. the progress is for the Get Involved step
-        4. the progress has not yet been evaluated
-        """
-        progress_pk = self.kwargs.get(self.pk_url_kwarg)
-        try:
-            progress = TrainingProgress.objects.get(pk=progress_pk)
-            get_involved = TrainingRequirement.objects.get(involvement_required=True)
-            if (
-                progress.trainee == self.request.user
-                and progress.requirement == get_involved
-                and progress.state == "n"
-            ):
-                return True
-            else:
-                return False
-        except TrainingProgress.DoesNotExist:
-            return False
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[TrainingProgress]:
+        # user should only be able to delete progress that belongs to them and has not
+        # been evaluated yet
+        return TrainingProgress.objects.filter(
+            trainee=self.request.user,
+            requirement__name="Get Involved",
+            state="n",
+        )
 
 
 # ------------------------------------------------------------

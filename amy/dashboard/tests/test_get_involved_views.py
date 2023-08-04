@@ -401,8 +401,8 @@ class TestGetInvolvedUpdateViewPermissions(TestBase):
         )
 
         # Assert
-        self.assertEqual(rv_get.status_code, 403)
-        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_get.status_code, 404)
+        self.assertEqual(rv_post.status_code, 404)
 
     def test_cannot_update_progress_of_other_type(self):
         # Arrange
@@ -425,8 +425,8 @@ class TestGetInvolvedUpdateViewPermissions(TestBase):
         )
 
         # Assert
-        self.assertEqual(rv_get.status_code, 403)
-        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_get.status_code, 404)
+        self.assertEqual(rv_post.status_code, 404)
 
     def test_cannot_update_non_existent_progress(self):
         # Arrange
@@ -444,8 +444,8 @@ class TestGetInvolvedUpdateViewPermissions(TestBase):
         )
 
         # Assert
-        self.assertEqual(rv_get.status_code, 403)
-        self.assertEqual(rv_post.status_code, 403)
+        self.assertEqual(rv_get.status_code, 404)
+        self.assertEqual(rv_post.status_code, 404)
 
     def test_trainee_cannot_set_type_or_state(self):
         # Arrange
@@ -567,7 +567,7 @@ class TestGetInvolvedDeleteViewPermissions(TestBase):
         rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
 
         # Assert
-        self.assertEqual(rv.status_code, 403)
+        self.assertEqual(rv.status_code, 404)
 
     def test_cannot_delete_progress_of_other_type(self):
         # Arrange
@@ -582,7 +582,7 @@ class TestGetInvolvedDeleteViewPermissions(TestBase):
         rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
 
         # Assert
-        self.assertEqual(rv.status_code, 403)
+        self.assertEqual(rv.status_code, 404)
 
     def test_cannot_delete_evaluated_progress(self):
         # Arrange
@@ -598,7 +598,7 @@ class TestGetInvolvedDeleteViewPermissions(TestBase):
         rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
 
         # Assert
-        self.assertEqual(rv.status_code, 403)
+        self.assertEqual(rv.status_code, 404)
 
     def test_cannot_delete_non_existent_progress(self):
         # Arrange
@@ -608,4 +608,4 @@ class TestGetInvolvedDeleteViewPermissions(TestBase):
         rv = self.client.post(reverse("getinvolved_delete", args=[id]))
 
         # Assert
-        self.assertEqual(rv.status_code, 403)
+        self.assertEqual(rv.status_code, 404)
