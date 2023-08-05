@@ -84,6 +84,14 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdate
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
+
+        signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
 
@@ -146,6 +154,16 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdat
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
+
+        signal: Signal | None = None
+        if self.object.template:
+            signal = find_signal_by_name(self.object.template.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
     def form_valid(self, form: ScheduledEmailUpdateForm) -> HttpResponse:

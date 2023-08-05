@@ -1,6 +1,7 @@
 {% extends "base_nav.html" %}
 
 {% load crispy_forms_tags %}
+{% load emails %}
 
 {% block title %}
 <h1>
@@ -14,5 +15,18 @@
 {% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
 
 {% crispy form %}
+
+<div class="row">
+  <div class="col-12 col-lg-2">
+    <strong>Template variables</strong>
+  </div>
+  <div class="col-12 col-lg-10">
+    <ul>
+    {% for key, value in body_context_annotations.items %}
+    <li><code>{{ key }}</code>: {{ value|model_documentation_link|urlize }}</li>
+    {% endfor %}
+    </ul>
+  </div>
+</div>
 
 {% endblock %}
