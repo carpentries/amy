@@ -150,7 +150,7 @@ class TestEmailTemplateUpdateView(TestBase):
         template.refresh_from_db()
 
         self.assertEqual(template.name, "Greetings")
-        self.assertEqual(template.signal, "greetings")
+        self.assertEqual(template.signal, "test_email_template1")
         self.assertEqual(template.from_header, "noreply@carpentries.org")
         self.assertEqual(template.reply_to_header, "")
         self.assertEqual(template.cc_header, [])
