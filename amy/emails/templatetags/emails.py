@@ -15,6 +15,10 @@ def is_email_module_enabled() -> bool:
 
 @register.filter
 def model_documentation_link(model: Model) -> str:
+    # This is a limited mapping of model to its documentation link. It should
+    # be expanded as needed.
+    # If our model documentation grows, we should consider including link to model
+    # documentation inside every model. Then this mapping would become obsolete.
     mapping = {
         "InstructorRecruitmentSignup": (
             "https://carpentries.github.io/amy/design/database_models/"

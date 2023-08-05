@@ -16,6 +16,8 @@ class TestEmailsTemplateTags(TestCase):
 class TestModelDocumentationLink(TestCase):
     def test_model_documentation_link__valid_model(self) -> None:
         # Arrange
+        # Real models are replaced with their metaclass BaseModel, so the tests don't
+        # work with real models and instead mocks are used.
         model = MagicMock()
         model.__class__.__name__ = "Person"
 
@@ -30,6 +32,8 @@ class TestModelDocumentationLink(TestCase):
 
     def test_model_documentation_link__invalid_model(self) -> None:
         # Arrange
+        # Real models are replaced with their metaclass BaseModel, so the tests don't
+        # work with real models and instead mocks are used.
         model = MagicMock()
         # Badge is not in the mapping yet
         model.__class__.__name__ = "Badge"
