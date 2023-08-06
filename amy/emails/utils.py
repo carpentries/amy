@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import logging
+from typing import cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -8,6 +9,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from emails.models import ScheduledEmail
+from workshops.models import Person
 
 logger = logging.getLogger("amy")
 
@@ -62,3 +64,14 @@ def messages_action_scheduled(
             scheduled_email.pk,
         ),
     )
+
+
+def person_from_request(request: HttpRequest) -> Person | None:
+    """Simplify getting person from request, or None if they're not authenticated."""
+    if (
+        not hasattr(request, "user")  # field often not present in unit tests
+        or not request.user.is_authenticated  # don't return AnonymousUser
+    ):
+        return None
+
+    return cast(Person, request.user)
