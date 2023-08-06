@@ -106,9 +106,11 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeta
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
-        context["log_entries"] = ScheduledEmailLog.objects.filter(
-            scheduled_email=self.object
-        ).order_by("-created_at")
+        context["log_entries"] = (
+            ScheduledEmailLog.objects.select_related("author")
+            .filter(scheduled_email=self.object)
+            .order_by("-created_at")
+        )
         context["rendered_body"] = markdownify(self.object.body)
         return context
 
