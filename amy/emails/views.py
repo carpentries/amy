@@ -1,7 +1,7 @@
 from typing import Any
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from markdownx.utils import markdownify
@@ -15,6 +15,7 @@ from emails.forms import (
     ScheduledEmailUpdateForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
+from emails.utils import person_from_request
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -136,6 +137,7 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdat
             state_before=self.object.state,
             state_after=self.object.state,
             scheduled_email=self.object,
+            author=person_from_request(self.request),
         )
 
         return result
@@ -148,9 +150,11 @@ class ScheduledEmailReschedule(
     template_name = "emails/scheduled_email_reschedule.html"
     form_class = ScheduledEmailRescheduleForm
     object: ScheduledEmail
+    request: HttpRequest
     title: str
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        self.request = request
         self.object = get_object_or_404(ScheduledEmail, pk=self.kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
@@ -168,7 +172,11 @@ class ScheduledEmailReschedule(
         return self.object.get_absolute_url()
 
     def form_valid(self, form: ScheduledEmailRescheduleForm) -> HttpResponse:
-        EmailController.reschedule_email(self.object, form.cleaned_data["scheduled_at"])
+        EmailController.reschedule_email(
+            self.object,
+            form.cleaned_data["scheduled_at"],
+            author=person_from_request(self.request),
+        )
         return super().form_valid(form)
 
 
@@ -177,9 +185,11 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormV
     template_name = "emails/scheduled_email_cancel.html"
     form_class = ScheduledEmailCancelForm
     object: ScheduledEmail
+    request: HttpRequest
     title: str
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        self.request = request
         self.object = get_object_or_404(ScheduledEmail, pk=self.kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
@@ -193,6 +203,9 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormV
 
     def form_valid(self, form: ScheduledEmailRescheduleForm):
         if form.cleaned_data.get("confirm"):
-            EmailController.cancel_email(self.object)
+            EmailController.cancel_email(
+                self.object,
+                author=person_from_request(self.request),
+            )
 
         return super().form_valid(form)
