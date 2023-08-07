@@ -106,7 +106,66 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
         self.assertContains(
-            rv, "Your Get Involved submission will be reviewed within 7-10 days."
+            rv, "Your Get Involved submission will be evaluated within 7-10 days."
+        )
+        got = list(
+            TrainingProgress.objects.values_list(
+                "state", "trainee", "url", "requirement", "involvement_type", "date"
+            )
+        )
+        expected = [
+            (
+                "n",
+                self.user.pk,
+                "https://example.org",
+                self.get_involved.pk,
+                self.involvement.pk,
+                date(2023, 7, 27),
+            )
+        ]
+        self.assertEqual(got, expected)
+
+    def test_cannot_create_if_not_logged_in(self):
+        self.client.logout()
+
+        data = {
+            "involvement_type": self.involvement.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_add"))
+        rv_post = self.client.post(reverse("getinvolved_add"), data)
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 302)
+        self.assertEqual(rv_post.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv_get.url.startswith(reverse("login")))
+        self.assertTrue(rv_post.url.startswith(reverse("login")))
+
+    def test_trainee_cannot_set_type_or_state(self):
+        # Arrange
+
+        demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
+        data = {
+            "requirement": demo,
+            "state": "p",
+            "involvement_type": self.involvement.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_add"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv, "Your Get Involved submission will be evaluated within 7-10 days."
         )
         got = list(
             TrainingProgress.objects.values_list(
@@ -139,12 +198,176 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
             date=date(2023, 7, 27),
         )
 
-    def test_edit_view_loads(self):
+    def test_update_view_loads(self):
         # Act
         rv = self.client.get(reverse("getinvolved_update", args=[self.progress.pk]))
 
         # Assert
         self.assertEqual(rv.status_code, 200)
+
+    def test_update_view_works(self):
+        # Arrange
+        data = {
+            "involvement_type": self.involvement.pk,
+            "url": "https://second-example.org",
+            "date": "2023-08-03",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv, "Your Get Involved submission was updated successfully."
+        )
+        got = list(
+            TrainingProgress.objects.values_list(
+                "state", "trainee", "url", "requirement", "involvement_type", "date"
+            )
+        )
+        expected = [
+            (
+                "n",
+                self.user.pk,
+                "https://second-example.org",
+                self.get_involved.pk,
+                self.involvement.pk,
+                date(2023, 8, 3),
+            )
+        ]
+        self.assertEqual(got, expected)
+
+    def test_cannot_update_if_not_logged_in(self):
+        self.client.logout()
+
+        # Arrange
+        data = {
+            "involvement_type": self.involvement.pk,
+            "url": "https://second-example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_update", args=[self.progress.pk]))
+        rv_post = self.client.post(
+            reverse("getinvolved_update", args=[self.progress.pk]), data
+        )
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 302)
+        self.assertEqual(rv_post.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv_get.url.startswith(reverse("login")))
+        self.assertTrue(rv_post.url.startswith(reverse("login")))
+
+    def test_cannot_update_evaluated_progress(self):
+        # Arrange
+        self.progress.state = "p"
+        self.progress.save()
+
+        data = {
+            "involvement_type": self.involvement.pk,
+            "url": "https://second-example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_update", args=[self.progress.pk]))
+        rv_post = self.client.post(
+            reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 404)
+        self.assertEqual(rv_post.status_code, 404)
+
+    def test_cannot_update_progress_of_other_type(self):
+        # Arrange
+        demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
+        progress = TrainingProgress.objects.create(
+            trainee=self.user,
+            requirement=demo,
+            date=date(2023, 7, 31),
+            state="n",
+        )
+        data = {
+            "involvement_type": self.involvement.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_update", args=[progress.pk]))
+        rv_post = self.client.post(
+            reverse("getinvolved_update", args=[progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 404)
+        self.assertEqual(rv_post.status_code, 404)
+
+    def test_cannot_update_non_existent_progress(self):
+        # Arrange
+        id = 1000
+        data = {
+            "involvement_type": self.involvement.pk,
+            "url": "https://example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv_get = self.client.get(reverse("getinvolved_update", args=[id]))
+        rv_post = self.client.post(
+            reverse("getinvolved_update", args=[id]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv_get.status_code, 404)
+        self.assertEqual(rv_post.status_code, 404)
+
+    def test_trainee_cannot_set_type_or_state(self):
+        # Arrange
+        demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
+        data = {
+            "requirement": demo,
+            "state": "p",
+            "involvement_type": self.involvement.pk,
+            "url": "https://second-example.org",
+            "date": "2023-07-27",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "training-progress")
+        self.assertContains(
+            rv, "Your Get Involved submission was updated successfully."
+        )
+        got = list(
+            TrainingProgress.objects.values_list(
+                "state", "trainee", "url", "requirement", "involvement_type", "date"
+            )
+        )
+        expected = [
+            (  # date changed but not state or requirement
+                "n",
+                self.user.pk,
+                "https://second-example.org",
+                self.get_involved.pk,
+                self.involvement.pk,
+                date(2023, 7, 27),
+            )
+        ]
+        self.assertEqual(got, expected)
 
 
 class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
@@ -177,3 +400,76 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
         self.assertEqual(set(TrainingProgress.objects.all()), set())
+
+    def test_cannot_delete_if_not_logged_in(self):
+        # Arrange
+        self.client.logout()
+
+        # Act
+        rv_post = self.client.post(
+            reverse("getinvolved_delete", args=[self.progress.pk])
+        )
+
+        # Assert
+        self.assertEqual(rv_post.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv_post.url.startswith(reverse("login")))
+
+    def test_cannot_delete_other_trainees_submission(self):
+        # Arrange
+        other_trainee = Person.objects.create(
+            personal="Bob", family="Trainee", email="bob_trainee@example.com"
+        )
+
+        progress = TrainingProgress.objects.create(
+            trainee=other_trainee,
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 7, 31),
+            url="https://example.org",
+            state="n",
+        )
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
+
+        # Assert
+        self.assertEqual(rv.status_code, 404)
+
+    def test_cannot_delete_progress_of_other_type(self):
+        # Arrange
+        demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
+        progress = TrainingProgress.objects.create(
+            trainee=self.user,
+            requirement=demo,
+            date=date(2023, 7, 31),
+            state="n",
+        )
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_delete", args=[progress.pk]))
+
+        # Assert
+        self.assertEqual(rv.status_code, 404)
+
+    def test_cannot_delete_evaluated_progress(self):
+        # Arrange
+        self.progress.state = "a"
+        self.progress.save()
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_delete", args=[self.progress.pk]))
+
+        # Assert
+        self.assertEqual(rv.status_code, 404)
+
+    def test_cannot_delete_non_existent_progress(self):
+        # Arrange
+        id = 1000
+
+        # Act
+        rv = self.client.post(reverse("getinvolved_delete", args=[id]))
+
+        # Assert
+        self.assertEqual(rv.status_code, 404)

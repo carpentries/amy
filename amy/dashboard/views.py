@@ -4,7 +4,16 @@ from urllib.parse import unquote
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
+from django.db.models import (
+    Case,
+    Count,
+    IntegerField,
+    Prefetch,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -245,13 +254,12 @@ def training_progress(request):
 
 
 class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
-    # permission_required = TODO
     model = TrainingProgress
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = (
-        "Thank you. Your Get Involved submission will be reviewed within 7-10 days."
+        "Thank you. Your Get Involved submission will be evaluated within 7-10 days."
     )
 
     def get_context_data(self, **kwargs) -> dict:
@@ -275,12 +283,24 @@ class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
 
 
 class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
-    # permission_required = TODO
-    model = TrainingProgress
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was updated successfully."
+    pk_url_kwarg = "pk"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[TrainingProgress]:
+        # user should only be able to update progress that belongs to them and has not
+        # been evaluated yet
+        return TrainingProgress.objects.filter(
+            trainee=self.request.user,
+            requirement__name="Get Involved",
+            state="n",
+        )
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
@@ -289,10 +309,23 @@ class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
 
 
 class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
-    # permission_required = TODO
     model = TrainingProgress
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was deleted."
+    pk_url_kwarg = "pk"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[TrainingProgress]:
+        # user should only be able to delete progress that belongs to them and has not
+        # been evaluated yet
+        return TrainingProgress.objects.filter(
+            trainee=self.request.user,
+            requirement__name="Get Involved",
+            state="n",
+        )
 
 
 # ------------------------------------------------------------

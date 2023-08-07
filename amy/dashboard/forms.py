@@ -18,6 +18,7 @@ from workshops.models import (
     Person,
     Task,
     TrainingProgress,
+    TrainingRequirement,
 )
 
 
@@ -187,6 +188,25 @@ class GetInvolvedForm(forms.ModelForm):
             "trainee_notes",
         ]
 
+    def user_may_create_submission(self, user: Person) -> bool:
+        """The user may create a submission if either of the conditions below are met:
+        1. no progress exists for the Get Involved step for this user
+        2. all existing progress for the Get Involved step for this user has state "a"
+        """
+        get_involved = TrainingRequirement.objects.get(name="Get Involved")
+        existing_progresses = TrainingProgress.objects.filter(
+            requirement=get_involved, trainee=user
+        )
+        num_existing = existing_progresses.count()
+        if num_existing == 0:
+            return True
+        else:
+            num_asked_to_repeat = existing_progresses.filter(state="a").count()
+            if num_asked_to_repeat == num_existing:
+                return True
+            else:
+                return False
+
     def clean_trainee_notes(self):
         """Raise an error if the trainee has not provided notes where required.
 
@@ -201,6 +221,25 @@ class GetInvolvedForm(forms.ModelForm):
             )
 
         return trainee_notes
+
+    def clean(self) -> None:
+        super().clean()
+
+        # check that the user may create/update this TrainingProgress instance
+        if self.instance:
+            if self.instance.pk is None and not self.user_may_create_submission(
+                self.instance.trainee
+            ):
+                raise ValidationError(
+                    "You already have an existing submission. "
+                    "You may not create another submission unless your previous "
+                    'submission has the status "asked to repeat."'
+                )
+            elif self.instance.pk and self.instance.state != "n":
+                raise ValidationError(
+                    "This submission can no longer be edited as it has already been "
+                    "evaluated."
+                )
 
 
 class SearchForm(forms.Form):
