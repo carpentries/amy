@@ -83,9 +83,12 @@ class TestInstructorStatus(TestBase):
             "Welcome Session",
             "Demo",
         ]
+        workshop_instructor, _ = Involvement.objects.get_or_create(
+            name="Workshop Instructor/Helper"
+        )
         for requirement in requirements:
             if requirement == "Get Involved":
-                involvement = Involvement.objects.get(name="GitHub Contribution")
+                involvement = workshop_instructor
                 date = datetime.today()
                 url = "https://example.com"
             else:
@@ -182,8 +185,13 @@ class TestGetInvolvedStatus(TestBase):
         self.get_involved, _ = TrainingRequirement.objects.get_or_create(
             name="Get Involved", defaults={"involvement_required": True}
         )
-        self.github_contribution, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution", defaults={"url_required": True}
+        self.workshop_instructor, _ = Involvement.objects.get_or_create(
+            name="Workshop Instructor/Helper",
+            defaults={
+                "display_name": "Served as an Instructor or a helper at a Carpentries "
+                "workshop",
+                "url_required": True,
+            },
         )
         self.other_involvement, _ = Involvement.objects.get_or_create(
             name="Other", defaults={"display_name": "Other", "notes_required": True}
@@ -194,15 +202,15 @@ class TestGetInvolvedStatus(TestBase):
         self.progress = TrainingProgress.objects.create(
             trainee=self.admin,
             requirement=self.get_involved,
-            involvement_type=self.github_contribution,
+            involvement_type=self.workshop_instructor,
             date=datetime.today(),
             url="https://example.org",
             trainee_notes="Notes from trainee",
         )
         self.PROGRESS_SUMMARY_BLOCK = (
             "<p>"
-            "<strong>Activity:</strong> Submitted a contribution to a Carpentries "
-            "repository<br/>"
+            "<strong>Activity:</strong> Served as an Instructor or a helper at a "
+            "Carpentries workshop<br/>"
             f'<strong>Date:</strong> {datetime.today().strftime("%B %-d, %Y")}<br/>'
             "<strong>URL:</strong> https://example.org<br/>"
             "<strong>Notes:</strong> Notes from trainee"
@@ -305,11 +313,12 @@ class TestGetInvolvedStatus(TestBase):
 
     def test_get_involved_details_not_provided(self):
         """Check that optional fields are summarised correctly when empty"""
+        # Arrange
         self.progress.delete()
         TrainingProgress.objects.create(
             trainee=self.admin,
             requirement=self.get_involved,
-            involvement_type=self.github_contribution,
+            involvement_type=self.workshop_instructor,
             state="n",
         )
 
@@ -319,8 +328,8 @@ class TestGetInvolvedStatus(TestBase):
         # Assert
         PROGRESS_SUMMARY_BLOCK = (
             "<p>"
-            "<strong>Activity:</strong> Submitted a contribution to a Carpentries "
-            "repository<br/>"
+            "<strong>Activity:</strong> Served as an Instructor or a helper at a "
+            "Carpentries workshop<br/>"
             "<strong>Date:</strong> No date provided<br/>"
             "<strong>URL:</strong> No URL provided<br/>"
             "<strong>Notes:</strong> No notes provided"

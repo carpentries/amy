@@ -2612,6 +2612,22 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
     )
     notes = models.TextField(blank=True)
 
+    CARPENTRIES_GITHUB_ORGS = [
+        "carpentries",
+        "datacarpentry",
+        "librarycarpentry",
+        "swcarpentry",
+        "carpentries-es",
+        "Reproducible-Science-Curriculum",
+        "CarpentryCon",
+        "CarpentryConnect",
+        "carpentries-workshops",
+        "data-lessons",
+        "carpentries-lab",
+        "carpentries-incubator",
+        "carpentrieslab",
+    ]
+
     def get_absolute_url(self):
         return reverse("trainingprogress_edit", args=[str(self.id)])
 
@@ -2651,13 +2667,22 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                 and involvement_type.url_required
             ):
                 return self.get_required_error(involvement_type)
+        else:
+            if not requirement.url_required and not requirement.involvement_required:
+                return self.get_not_required_error(involvement_type)
+            elif involvement_type and involvement_type.name == "GitHub Contribution":
+                return self.clean_github_url(self.url)
 
-        elif (
-            self.url
-            and not requirement.url_required
-            and not requirement.involvement_required
-        ):
-            return self.get_not_required_error(involvement_type)
+    def clean_github_url(self, url):
+        """Check if URL is associated with a Carpentries GitHub organisation"""
+        if not any(f"github.com/{org}" in url for org in self.CARPENTRIES_GITHUB_ORGS):
+            msg = (
+                "This URL is not associated with a repository in any of the "
+                "GitHub organisations owned by The Carpentries. "
+                "If you need help resolving this error, please contact us using the "
+                "details at the top of this form."
+            )
+            return ValidationError(msg)
 
     def clean_event(
         self,

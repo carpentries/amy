@@ -208,7 +208,7 @@ class TestExportingPersonData(BaseExportingTest):
             involvement_type=github_contribution,
             state="a",  # asked to repeat
             event=None,
-            url="http://example.org/lesson",
+            url="https://github.com/carpentries",
             date=datetime.date(2023, 5, 31),
             trainee_notes="Notes submitted by trainee",
         )
@@ -564,7 +564,7 @@ class TestExportingPersonData(BaseExportingTest):
                 },
                 "state": "Asked to repeat",
                 "event": None,
-                "url": "http://example.org/lesson",
+                "url": "https://github.com/carpentries",
                 "date": "2023-05-31",
                 "trainee_notes": "Notes submitted by trainee",
             },

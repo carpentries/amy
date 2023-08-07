@@ -40,9 +40,9 @@ class TestTrainingProgressValidation(TestBase):
             involvement_required=True,
         )
         self.url_and_date_required, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution",
+            name="Workshop Instructor/Helper",
             defaults={
-                "display_name": "GitHub Contribution",
+                "display_name": "Workshop Instructor/Helper",
                 "url_required": True,
                 "date_required": True,
             },
@@ -112,6 +112,33 @@ class TestTrainingProgressValidation(TestBase):
         p2.full_clean()
         p3.full_clean()
         p4.full_clean()  # involvement URLs can be optional
+
+    def test_url_associated_with_github_organisation(self):
+        github_url_required, _ = Involvement.objects.get_or_create(
+            name="GitHub Contribution",
+            defaults={
+                "display_name": "GitHub Contribution",
+                "url_required": True,
+                "date_required": True,
+            },
+        )
+        p1 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=github_url_required,
+            trainee=self.admin,
+            url="https://github.com/carpentries/amy/issues/2470",
+            date=datetime(2023, 5, 31),
+        )
+        p2 = TrainingProgress.objects.create(
+            requirement=self.get_involved,
+            involvement_type=github_url_required,
+            trainee=self.admin,
+            url="http://example.com",
+            date=datetime(2023, 5, 31),
+        )
+        p1.full_clean()
+        with self.assertValidationErrors(["url"]):
+            p2.full_clean()
 
     def test_event_is_required(self):
         p1 = TrainingProgress.objects.create(
@@ -414,7 +441,7 @@ class TestCRUDViews(TestBase):
                 "date_required": True,
             },
         )
-        self.involvement2, _ = Involvement.objects.get_or_create(
+        self.involvement_to_be_archived, _ = Involvement.objects.get_or_create(
             name="To be archived",
             defaults={
                 "display_name": "To be archived",
@@ -453,7 +480,7 @@ class TestCRUDViews(TestBase):
         self.assertEqual(int(rv.context["form"].initial["trainee"]), self.ironman.pk)
 
     def test_create_view_does_not_show_archived_involvements(self):
-        self.involvement2.archive()
+        self.involvement_to_be_archived.archive()
         rv = self.client.get(
             reverse("trainingprogress_add"), {"type": self.get_involved.pk}
         )

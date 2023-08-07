@@ -34,7 +34,7 @@ class TestTraineesView(TestBase):
         self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.demo = TrainingRequirement.objects.get(name="Demo")
         self.involvement, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution", defaults={"url_required": True}
+            name="Workshop Instructor/Helper", defaults={"url_required": True}
         )
 
         self.ttt_event = Event.objects.create(

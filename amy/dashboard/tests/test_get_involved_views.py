@@ -21,9 +21,9 @@ class TestGetInvolvedViewBase(TestBase):
             },
         )
         self.involvement, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution",
+            name="Workshop Instructor/Helper",
             defaults={
-                "display_name": "GitHub Contribution",
+                "display_name": "Workshop Instructor/Helper",
                 "url_required": True,
                 "date_required": True,
             },
@@ -69,6 +69,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
 
     def test_create_view_does_not_show_archived_involvements(self):
         # Arrange
+        self.github_contribution = Involvement.objects.get(name="GitHub Contribution")
         self.involvement_to_be_archived.archive()
 
         # Act
@@ -80,7 +81,14 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
             c[0].instance.pk
             for c in rv.context["form"].fields["involvement_type"].choices
         ]
-        self.assertEqual(choices, [self.involvement.pk, self.involvement_other.pk])
+        self.assertEqual(
+            choices,
+            [
+                self.github_contribution.pk,
+                self.involvement.pk,
+                self.involvement_other.pk,
+            ],
+        )
 
     def test_create_view_does_not_show_admin_fields(self):
         # Act

@@ -42,9 +42,9 @@ class TestTraineeFilter(TestBase):
             involvement_required=True,
         )
         self.url_and_date_required, _ = Involvement.objects.get_or_create(
-            name="GitHub Contribution",
+            name="Workshop Instructor/Helper",
             defaults={
-                "display_name": "GitHub Contribution",
+                "display_name": "Workshop Instructor/Helper",
                 "url_required": True,
                 "date_required": True,
             },

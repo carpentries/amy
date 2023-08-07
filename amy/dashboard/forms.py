@@ -166,8 +166,12 @@ class GetInvolvedForm(forms.ModelForm):
     )
     url = forms.URLField(
         label="URL",
-        help_text="A link to the activity, if there is one. For example, a "
-        "workshop website or GitHub contribution.",
+        help_text="A link to the activity, if there is one. If you served "
+        "at a workshop, enter the workshop website. "
+        "If you made a GitHub contribution, enter that link and ensure it is "
+        "associated with a repository in one of the "
+        '<a href="https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html">'  # noqa
+        "GitHub organisations owned by The Carpentries</a>.",
         required=False,
     )
     trainee_notes = forms.CharField(

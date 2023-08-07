@@ -30,14 +30,14 @@ INVOLVEMENTS: list[InvolvementDef] = [
         "notes_required": False,
     },
     {
-        "display_name": "Attended an Instructor meeting, regional meetup, or other community meeting",  # noqa
+        "display_name": "Attended a regional meetup, skill-up, or other community meeting",  # noqa
         "name": "Community Meeting",
         "url_required": False,
         "date_required": True,
         "notes_required": True,
     },
     {
-        "display_name": "Submitted a contribution to a Carpentries repository",
+        "display_name": "Submitted a contribution to a Carpentries repository on GitHub",  # noqa
         "name": "GitHub Contribution",
         "url_required": True,
         "date_required": True,
