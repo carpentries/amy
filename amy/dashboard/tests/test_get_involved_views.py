@@ -141,6 +141,10 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         # Assert
         self.assertEqual(rv_get.status_code, 302)
         self.assertEqual(rv_post.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv_get.url.startswith(reverse("login")))
+        self.assertTrue(rv_post.url.startswith(reverse("login")))
 
     def test_trainee_cannot_set_type_or_state(self):
         # Arrange
@@ -256,6 +260,10 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         # Assert
         self.assertEqual(rv_get.status_code, 302)
         self.assertEqual(rv_post.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv_get.url.startswith(reverse("login")))
+        self.assertTrue(rv_post.url.startswith(reverse("login")))
 
     def test_cannot_update_evaluated_progress(self):
         # Arrange
@@ -404,6 +412,9 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
 
         # Assert
         self.assertEqual(rv_post.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv_post.url.startswith(reverse("login")))
 
     def test_cannot_delete_other_trainees_submission(self):
         # Arrange
