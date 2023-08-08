@@ -52,6 +52,10 @@ Individuals can view this information but can not edit it directly.  Please cont
 
 Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge and submit their “Get Involved” step towards certification.  Log into your AMY profile and click on “Training Progress” in the top menu bar:
 
+[image]
+
+If you have completed your training, you will see a page like this. You may submit your “Get Involved” step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements.  Please allow 7-10 days for each of these steps to be evaluated and recorded.  
+
 #### Submitting your "Get Involved" step
 
 #### Lesson Demonstration
