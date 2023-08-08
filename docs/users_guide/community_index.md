@@ -77,7 +77,7 @@ Once you submit your Get Involved step, your summary page will show your submiss
 
 ### Teaching Demonstration
 
-The Trainer leading your Lesson Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team. 
+The Trainer leading your Teaching Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team. 
 
 ### Welcome Session
 
