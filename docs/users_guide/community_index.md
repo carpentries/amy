@@ -54,7 +54,7 @@ Carpentries Instructor trainees can log in to AMY to view their checkout progres
 
 [image]
 
-If you have completed your training, you will see a page like this. You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements.  
+If you have completed your training, you will see a page like this. You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon completion of all three steps.  
 
 **Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
@@ -63,7 +63,7 @@ If you have completed your training, you will see a page like this. You may subm
 [image]
 
 To submit your "Get Involved" step, click on the blue "Submit a Get Involved Activity" button.  
-This will take you to a page where you can select what type of activity you are submitting and provide additional information.  Note the information required for each activity:
+This will take you to a page where you can select what type of activity you are submitting and provide additional information.  Note the additional information required for each activity:
 
 * Attended a regional meetup, skill-up, or other community meeting: Date of event and description of event
 * Submitted a contribution to a Carpentries repository on GitHub: Date of contribution and link to contribution.  This must be to a repo in a [Carpentries organisation](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html).  
@@ -84,8 +84,7 @@ If you signed in on the welcome session Etherpad, your participation will be rec
 
 [image]
 
-Once you have completed all three steps, your summary page will show your status as complete.  You will receive an email with a pdf certificate attached in 7-10 days after completing your final checkout step.
-
+Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge and you will receive an email with a pdf certificate attached.  
 
 
 ### Viewing teaching opportunities
