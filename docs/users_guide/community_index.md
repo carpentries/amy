@@ -58,6 +58,18 @@ If you have completed your training, you will see a page like this. You may subm
 
 #### Submitting your "Get Involved" step
 
+[image]
+
+To submit your “Get Involved” step, click on the blue “Submit a Get Involved Activity” button.  
+This will take you to a page where you can select what type of activity you are submitting and provide additional information.  Note the information required for each activity:
+
+* Attended a regional meetup, skill-up, or other community meeting: Date of event and description of event
+* Submitted a contribution to a Carpentries repository on GitHub: Date of contribution and link to contribution.  This must be to a repo in a [Carpentries organisation](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html).  
+* Served as an Instructor or a helper at a Carpentries workshop: Date of workshop and link to workshop website 
+* Other: Date and description of contribution
+
+Once you submit your Get Involved step, your summary page will show your submission is pending.  This will be verified within 7-10 days.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  
+
 #### Lesson Demonstration
 
 #### Welcome Session
