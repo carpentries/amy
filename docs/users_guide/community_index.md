@@ -54,7 +54,9 @@ Carpentries Instructor trainees can log in to AMY to view their checkout progres
 
 [image]
 
-If you have completed your training, you will see a page like this. You may submit your “Get Involved” step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements.  Please allow 7-10 days for each of these steps to be evaluated and recorded.  
+If you have completed your training, you will see a page like this. You may submit your “Get Involved” step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements.  
+
+**Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
 #### Submitting your "Get Involved" step
 
@@ -68,15 +70,15 @@ This will take you to a page where you can select what type of activity you are 
 * Served as an Instructor or a helper at a Carpentries workshop: Date of workshop and link to workshop website 
 * Other: Date and description of contribution
 
-Once you submit your Get Involved step, your summary page will show your submission is pending.  This will be verified within 7-10 days.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  
+Once you submit your Get Involved step, your summary page will show your submission is pending.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  
 
 #### Lesson Demonstration
 
-The Trainer leading your Lesson Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo.  This information will appear on your summary page in 7-10 days after completing the Lesson Demonstration.
+The Trainer leading your Lesson Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team. 
 
 #### Welcome Session
 
-If you signed in on the welcome session Etherpad, your participation will be recorded by our Insturcotr Training team.  This information will appear on your summary page in 7-10 days after completing the Welcome Session. 
+If you signed in on the welcome session Etherpad, your participation will be recorded by our Instructor Training team. 
 
 ### Certificate
 
