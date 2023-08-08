@@ -75,9 +75,9 @@ Note the additional information required for each activity:
 
 Once you submit your Get Involved step, your summary page will show your submission is pending.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  If you are asked to repeat, follow the same steps to submit a new "Get Involved" step.
 
-### Lesson Demonstration
+### Teaching Demonstration
 
-The Trainer leading your Lesson Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team. 
+The Trainer leading your Teaching Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team. 
 
 ### Welcome Session
 
