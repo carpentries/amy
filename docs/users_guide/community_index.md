@@ -52,7 +52,7 @@ Individuals can view this information but can not edit it directly.  Please cont
 
 Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge and submit their "Get Involved" step towards certification.  More information about the [Instructor Training checkout process is in our curriculum](https://carpentries.github.io/instructor-training/checkout.html).  Log into your AMY profile and click on "Training Progress" in the top menu bar:
 
-[image]
+![AMY Training Progress Menu](images/training_progress_menu.png)
 
 If you have completed your training, you will see a page like this. You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon completion of all three steps.  
 
@@ -60,10 +60,15 @@ If you have completed your training, you will see a page like this. You may subm
 
 #### Submitting your "Get Involved" step
 
-[image]
-
 To submit your "Get Involved" step, click on the blue "Submit a Get Involved Activity" button.  
-This will take you to a page where you can select what type of activity you are submitting and provide additional information.  Note the additional information required for each activity:
+
+![AMY Training Progress Submit](images/training_progress_submit.png)
+
+This will take you to a page where you can select what type of activity you are submitting and provide additional information.  
+
+![AMY Submit Get Involved](images/get_involved_submit.png)
+
+Note the additional information required for each activity:
 
 * Attended a regional meetup, skill-up, or other community meeting: Date of event and description of event
 * Submitted a contribution to a Carpentries repository on GitHub: Date of contribution and link to contribution.  This must be to a repo in a [Carpentries organisation](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html).  
@@ -82,9 +87,9 @@ If you signed in on the welcome session Etherpad, your participation will be rec
 
 ### Certificate
 
-[image]
-
 Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge and you will receive an email with a pdf certificate attached.  
+
+![AMY Checkout Complete](images/checkout_complete.png)
 
 
 ### Viewing teaching opportunities
