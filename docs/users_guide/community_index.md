@@ -72,10 +72,17 @@ Once you submit your Get Involved step, your summary page will show your submiss
 
 #### Lesson Demonstration
 
+The Trainer leading your Lesson Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo.  This information will appear on your summary page in 7-10 days after completing the Lesson Demonstration.
+
 #### Welcome Session
+
+If you signed in on the welcome session Etherpad, your participation will be recorded by our Insturcotr Training team.  This information will appear on your summary page in 7-10 days after completing the Welcome Session. 
 
 ### Certificate
 
+[image]
+
+Once you have completed all three steps, your summary page will show your status as complete.  You will receive an email with a pdf certificate attached in 7-10 days after completing your final checkout step.
 
 
 
