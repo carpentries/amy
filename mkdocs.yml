@@ -12,7 +12,7 @@ theme:
 nav:
     - 'Home': 'index.md'
     - 'For Carpentries Community members':
-        - 'Community Users Guide': 'users_guide/community_index.md'
+        - 'AMY Community Users Guide': 'users_guide/community_index.md'
     - 'For AMY Administrators':
         - 'Users Guide': 'users_guide/admin_index.md'
         - 'Database Structure': 'amy_database_structure.md'
