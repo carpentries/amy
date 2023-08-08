@@ -1,13 +1,11 @@
-## AMY: The Carpentries' internal database
-
-### Logging in
+## Logging in
 
 * Active Carpentries community members can [log in to AMY here](https://amy.carpentries.org) via GitHub.  Contact [The Carpentries Core Team](mailto:team@carpentries.org) if you have difficulty logging in.
 
 ![AMY login screen goes here](images/amy_login_screen.png)
 
 
-### User profiles
+## User profiles
 
 The Carpentries can maintain the following information about individuals in our program. Any of the following can be updated directly by the individual, except for *email* and *GitHub username* as these two fields are used for login.  *Personal (first) name* is the only required field.
 
@@ -36,7 +34,7 @@ The Carpentries can maintain the following information about individuals in our 
     * Do you consent to publish your profile on The Carpentries website?
 
 
-### Additional user information
+## Additional user information
 
 In addition to the following information, The Carpentries also maintains data on user activity.  This may include:
 
@@ -48,7 +46,7 @@ In addition to the following information, The Carpentries also maintains data on
 
 Individuals can view this information but can not edit it directly.  Please contact team@carpentries.org with questions about this information.
 
-### Instructor Training
+## Instructor Training
 
 Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge and submit their "Get Involved" step towards certification.  More information about the [Instructor Training checkout process is in our curriculum](https://carpentries.github.io/instructor-training/checkout.html).  Log into your AMY profile and click on "Training Progress" in the top menu bar:
 
@@ -58,7 +56,7 @@ If you have completed your training, you will see a page like this. You may subm
 
 **Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
-#### Submitting your "Get Involved" step
+### Submitting your "Get Involved" step
 
 To submit your "Get Involved" step, click on the blue "Submit a Get Involved Activity" button.  
 
@@ -77,22 +75,22 @@ Note the additional information required for each activity:
 
 Once you submit your Get Involved step, your summary page will show your submission is pending.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  
 
-#### Lesson Demonstration
+### Lesson Demonstration
 
 The Trainer leading your Lesson Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team. 
 
-#### Welcome Session
+### Welcome Session
 
 If you signed in on the welcome session Etherpad, your participation will be recorded by our Instructor Training team. 
 
-#### Certificate
+### Certificate
 
 Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge and you will receive an email with a pdf certificate attached.  
 
 ![AMY Checkout Complete](images/checkout_complete.png)
 
 
-### Viewing teaching opportunities
+## Viewing teaching opportunities
 
 Currently badged and active Instructors can view and sign up for upcoming teaching opportunities at Centrally-Organised workshops by clicking the "View upcoming teaching opportunities with The Carpentries" button at the top of their profile page. This button is available only to currently badged and active Instructors.
 
@@ -104,7 +102,7 @@ The next page will list all upcoming teaching opportunites.  This list can be so
 
 Instructors can then register their interest in teaching specific workshop.  A workshop administrator will follow up shortly to confirm or decline each instructor.
 
-#### Notes about signing up 
+### Notes about signing up 
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
 * Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact workshops@carpentries.org if they are interested in teaching concurrent workshops to discuss scheduling options.
