@@ -85,7 +85,7 @@ The Trainer leading your Lesson Demonstration will inform the Instructor Trainin
 
 If you signed in on the welcome session Etherpad, your participation will be recorded by our Instructor Training team. 
 
-### Certificate
+#### Certificate
 
 Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge and you will receive an email with a pdf certificate attached.  
 
