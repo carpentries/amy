@@ -98,9 +98,13 @@ Currently badged and active Instructors can view and sign up for upcoming teachi
 
 The next page will list all upcoming teaching opportunites.  This list can be sorted and filtered by criteria such as country and curriculum.
 
-![AMY Instructor signup filter view](images/amy_teaching_opportunities_filter.png)
+![AMY Instructor signup filter view](images/upcoming_teaching_opportunities.png)
 
-Instructors can then register their interest in teaching specific workshop.  A workshop administrator will follow up shortly to confirm or decline each instructor.
+Instructors can then register their interest in teaching specific workshop.  
+
+![AMY Instructor signup form](images/workshop_intersted_signup.png)
+
+A workshop administrator will follow up shortly to confirm or decline each instructor.
 
 ### Notes about signing up 
 
