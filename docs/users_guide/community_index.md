@@ -50,11 +50,11 @@ Individuals can view this information but can not edit it directly.  Please cont
 
 ### Instructor Training
 
-Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge and submit their “Get Involved” step towards certification.  More information about the [Instructor Training checkout process is in our curriculum](https://carpentries.github.io/instructor-training/checkout.html).  Log into your AMY profile and click on “Training Progress” in the top menu bar:
+Carpentries Instructor trainees can log in to AMY to view their checkout progress towards their Instructor badge and submit their "Get Involved" step towards certification.  More information about the [Instructor Training checkout process is in our curriculum](https://carpentries.github.io/instructor-training/checkout.html).  Log into your AMY profile and click on "Training Progress" in the top menu bar:
 
 [image]
 
-If you have completed your training, you will see a page like this. You may submit your “Get Involved” step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements.  
+If you have completed your training, you will see a page like this. You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements.  
 
 **Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
@@ -62,7 +62,7 @@ If you have completed your training, you will see a page like this. You may subm
 
 [image]
 
-To submit your “Get Involved” step, click on the blue “Submit a Get Involved Activity” button.  
+To submit your "Get Involved" step, click on the blue "Submit a Get Involved Activity" button.  
 This will take you to a page where you can select what type of activity you are submitting and provide additional information.  Note the information required for each activity:
 
 * Attended a regional meetup, skill-up, or other community meeting: Date of event and description of event
