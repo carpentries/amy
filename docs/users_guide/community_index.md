@@ -52,7 +52,7 @@ Carpentries Instructor trainees can log in to AMY to view their checkout progres
 
 ![AMY Training Progress Menu](images/training_progress_menu.png)
 
-If you have completed your training, you will see a page like this. You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon completion of all three steps.  
+You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon completion of all three steps.  
 
 **Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
@@ -68,12 +68,12 @@ This will take you to a page where you can select what type of activity you are 
 
 Note the additional information required for each activity:
 
-* Attended a regional meetup, skill-up, or other community meeting: Date of event and description of event
+* Attended a regional meetup, skill-up, or other community meeting: Date of event and description of event (as additional information)
 * Submitted a contribution to a Carpentries repository on GitHub: Date of contribution and link to contribution.  This must be to a repo in a [Carpentries organisation](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html).  
 * Served as an Instructor or a helper at a Carpentries workshop: Date of workshop and link to workshop website 
-* Other: Date and description of contribution
+* Other: Date and description of contribution (as additional information)
 
-Once you submit your Get Involved step, your summary page will show your submission is pending.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  
+Once you submit your Get Involved step, your summary page will show your submission is pending.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  If you are asked to repeat, follow the same steps to submit a new "Get Involved" step.
 
 ### Lesson Demonstration
 
