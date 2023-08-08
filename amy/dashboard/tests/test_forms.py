@@ -151,6 +151,31 @@ class TestGetInvolvedForm(TestCase):
             {"involvement_type", "date", "url", "trainee_notes"}, form.fields.keys()
         )
 
+    def test_clean_custom_validation__url(self):
+        # Arrange
+        github_contribution = Involvement.objects.get(name="GitHub Contribution")
+        data = {
+            "involvement_type": github_contribution,
+            "date": date(2023, 7, 27),
+            "url": "https://not-a-github-url.org",
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        expected_msg = (
+            "This URL is not associated with a repository in any of the "
+            "GitHub organisations owned by The Carpentries. "
+            "If you need help resolving this error, please contact us using the "
+            "details at the top of this form."
+        )
+        self.assertEqual(
+            form.errors["url"],
+            [expected_msg],
+        )
+
     def test_clean_custom_validation__trainee_notes(self):
         # Arrange
         data = {"involvement_type": self.involvement, "date": date(2023, 7, 27)}

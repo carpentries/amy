@@ -114,6 +114,7 @@ class TestTrainingProgressValidation(TestBase):
         p4.full_clean()  # involvement URLs can be optional
 
     def test_url_associated_with_github_organisation(self):
+        """Regression test for #2507: should not fail model validation"""
         github_url_required, _ = Involvement.objects.get_or_create(
             name="GitHub Contribution",
             defaults={
@@ -136,9 +137,8 @@ class TestTrainingProgressValidation(TestBase):
             url="http://example.com",
             date=datetime(2023, 5, 31),
         )
-        p1.full_clean()
-        with self.assertValidationErrors(["url"]):
-            p2.full_clean()
+        p1.full_clean()  # should pass everywhere
+        p2.full_clean()  # URL should pass here, but fail in GetInvolvedForm
 
     def test_event_is_required(self):
         p1 = TrainingProgress.objects.create(
