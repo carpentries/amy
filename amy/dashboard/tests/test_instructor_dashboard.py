@@ -116,6 +116,64 @@ class TestInstructorStatus(TestBase):
             "certification",
         )
 
+    def test_deadline_shown_when_training_passed(self):
+        """Test that checkout deadline is displayed when trainee has passed training,
+        but not completed all other steps."""
+        self._setUpOrganizations()
+        event = Event.objects.create(
+            slug="event-ttt",
+            start=date(2023, 6, 4),
+            end=date(2023, 6, 5),
+            host=self.org_alpha,
+        )
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=TrainingRequirement.objects.get(name="Training"),
+            event=event,
+            state="p",
+        )
+
+        rv = self.client.get(self.progress_url)
+        # check that the right if/else block is used
+        self.assertContains(
+            rv,
+            "Please review your progress towards Instructor certification below.",
+        )
+        # check that the deadline is shown
+        self.assertContains(
+            rv,
+            "Based on your training dates of",
+        )
+
+    def test_deadline_not_shown_when_training_not_passed(self):
+        """Test that checkout deadline is displayed when trainee has passed training,
+        but not completed all other steps."""
+        self._setUpOrganizations()
+        event = Event.objects.create(
+            slug="event-ttt",
+            start=date(2023, 6, 4),
+            end=date(2023, 6, 5),
+            host=self.org_alpha,
+        )
+        TrainingProgress.objects.create(
+            trainee=self.admin,
+            requirement=TrainingRequirement.objects.get(name="Training"),
+            event=event,
+            state="f",
+        )
+
+        rv = self.client.get(self.progress_url)
+        # check that the right if/else block is used
+        self.assertContains(
+            rv,
+            "Please review your progress towards Instructor certification below.",
+        )
+        # check that no deadline is shown
+        self.assertNotContains(
+            rv,
+            "Based on your training dates of",
+        )
+
 
 class TestInstructorTrainingStatus(TestBase):
     """Test that instructor dashboard displays status of passing Instructor
