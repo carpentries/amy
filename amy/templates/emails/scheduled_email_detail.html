@@ -12,26 +12,34 @@
 
 {% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
 
+{% allowed_actions_for_status scheduled_email.state as available_status_actions %}
+
 {% if perms.emails.change_scheduledemail %}
 <div class="edit-object">
   <div class="btn-group">
-    {% if scheduled_email.state in ScheduledEmailStatusActions.edit %}
+    {% if "edit" in available_status_actions %}
     <a class="btn btn-primary" href="{% url 'scheduledemail_edit' scheduled_email.id %}">Edit</a>
     {% else %}
-    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="You can only edit emails that are in the 'scheduled', 'failed' or 'succeeded' states.">
+      <a class="btn btn-primary disabled" style="pointer-events:none" disabled href="#">Edit</a>
+    </span>
     {% endif %}
 
-    {% if scheduled_email.state in ScheduledEmailStatusActions.reschedule %}
+    {% if "reschedule" in available_status_actions %}
     <a class="btn btn-warning" href="{% url 'scheduledemail_reschedule' scheduled_email.id %}">Reschedule</a>
     {% else %}
-    <a class="btn btn-warning disabled" disabled href="#">Reschedule</a>
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="You can only reschedule emails that are in the 'scheduled', 'failed' or 'cancelled' states.">
+      <a class="btn btn-warning disabled" style="pointer-events:none" disabled href="#">Reschedule</a>
+    </span>
     {% endif %}
   </div>
   <div class="float-right">
-    {% if scheduled_email.state in ScheduledEmailStatusActions.cancel %}
+    {% if "cancel" in available_status_actions %}
     <a class="btn btn-danger" href="{% url 'scheduledemail_cancel' scheduled_email.id %}">Cancel</a>
     {% else %}
-    <a class="btn btn-warning disabled" disabled href="#">Cancel</a>
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="You can only cancel emails that are in the 'scheduled' or 'failed' states.">
+      <a class="btn btn-warning disabled" style="pointer-events:none" disabled href="#">Cancel</a>
+    </span>
     {% endif %}
   </div>
 </div>
