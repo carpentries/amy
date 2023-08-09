@@ -1,9 +1,9 @@
-from typing import Any
+from typing import Any, cast
 
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from flags.views import FlaggedViewMixin
+from django.views.generic.detail import SingleObjectMixin
 from markdownx.utils import markdownify
 
 from emails.controller import EmailController
@@ -155,6 +155,15 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
     model = ScheduledEmail
     object: ScheduledEmail
 
+    # Will lock this object in the database for the duration of the request.
+    # Most specifically, we want to lock it when we're saving the form. This way the DB
+    # helps us make sure the data is consistent.
+    # Additionally, we're limiting the queryset to only those objects that can be edited
+    # (see ScheduledEmailStatusActions).
+    queryset = ScheduledEmail.objects.filter(
+        state__in=ScheduledEmailStatusActions["edit"]
+    ).select_for_update()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
@@ -174,7 +183,9 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
         return result
 
 
-class ScheduledEmailReschedule(OnlyForAdminsMixin, FlaggedViewMixin, AMYFormView):
+class ScheduledEmailReschedule(
+    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView
+):
     flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_reschedule.html"
@@ -183,9 +194,18 @@ class ScheduledEmailReschedule(OnlyForAdminsMixin, FlaggedViewMixin, AMYFormView
     request: HttpRequest
     title: str
 
+    # Will lock this object in the database for the duration of the request.
+    # Most specifically, we want to lock it when we're saving the form. This way the DB
+    # helps us make sure the data is consistent.
+    # Additionally, we're limiting the queryset to only those objects that can be edited
+    # (see ScheduledEmailStatusActions).
+    queryset = ScheduledEmail.objects.filter(
+        state__in=ScheduledEmailStatusActions["reschedule"]
+    ).select_for_update()
+
     def dispatch(self, request: HttpRequest, *args, **kwargs):
         self.request = request
-        self.object = get_object_or_404(ScheduledEmail, pk=self.kwargs["pk"])
+        self.object = cast(ScheduledEmail, self.get_object())
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -210,7 +230,9 @@ class ScheduledEmailReschedule(OnlyForAdminsMixin, FlaggedViewMixin, AMYFormView
         return super().form_valid(form)
 
 
-class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, AMYFormView):
+class ScheduledEmailCancel(
+    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView
+):
     flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_cancel.html"
@@ -219,9 +241,18 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, AMYFormView):
     request: HttpRequest
     title: str
 
+    # Will lock this object in the database for the duration of the request.
+    # Most specifically, we want to lock it when we're saving the form. This way the DB
+    # helps us make sure the data is consistent.
+    # Additionally, we're limiting the queryset to only those objects that can be edited
+    # (see ScheduledEmailStatusActions).
+    queryset = ScheduledEmail.objects.filter(
+        state__in=ScheduledEmailStatusActions["cancel"]
+    ).select_for_update()
+
     def dispatch(self, request: HttpRequest, *args, **kwargs):
         self.request = request
-        self.object = get_object_or_404(ScheduledEmail, pk=self.kwargs["pk"])
+        self.object = cast(ScheduledEmail, self.get_object())
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -232,7 +263,7 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, AMYFormView):
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()
 
-    def form_valid(self, form: ScheduledEmailRescheduleForm):
+    def form_valid(self, form: ScheduledEmailCancelForm):
         if form.cleaned_data.get("confirm"):
             EmailController.cancel_email(
                 self.object,
