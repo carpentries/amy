@@ -57,10 +57,16 @@ class EmailController:
         author: Person | None = None,
     ) -> ScheduledEmail:
         scheduled_email.scheduled_at = new_scheduled_at
+
+        # Rescheduling a cancelled email will make it scheduled again.
+        state_before = scheduled_email.state
+        if scheduled_email.state == ScheduledEmailStatus.CANCELLED:
+            scheduled_email.state = ScheduledEmailStatus.SCHEDULED
+
         scheduled_email.save()
         ScheduledEmailLog.objects.create(
             details=f"Rescheduled email to run at {new_scheduled_at.isoformat()}",
-            state_before=scheduled_email.state,
+            state_before=state_before,
             state_after=scheduled_email.state,
             scheduled_email=scheduled_email,
             author=author,
