@@ -183,6 +183,22 @@ class GetInvolvedForm(forms.ModelForm):
     )
     helper = BootstrapHelper(add_cancel_button=True)
 
+    CARPENTRIES_GITHUB_ORGS = [
+        "carpentries",
+        "datacarpentry",
+        "librarycarpentry",
+        "swcarpentry",
+        "carpentries-es",
+        "Reproducible-Science-Curriculum",
+        "CarpentryCon",
+        "CarpentryConnect",
+        "carpentries-workshops",
+        "data-lessons",
+        "carpentries-lab",
+        "carpentries-incubator",
+        "carpentrieslab",
+    ]
+
     class Meta:
         model = TrainingProgress
         fields = [
@@ -210,6 +226,33 @@ class GetInvolvedForm(forms.ModelForm):
                 return True
             else:
                 return False
+
+    def clean_url(self):
+        """Check if URL is associated with a Carpentries GitHub organisation"""
+        involvement_type = self.cleaned_data["involvement_type"]
+        url = self.cleaned_data["url"]
+        if involvement_type and involvement_type.name == "GitHub Contribution":
+            if not url:
+                # This check is part of model validation, but form validation runs
+                # first. As an empty URL will trigger the next error, first replicate
+                # the "URL required" error check here for this specific Involvement.
+                msg = (
+                    "This field is required for activity "
+                    f'"{involvement_type.display_name}".'
+                )
+                raise ValidationError(msg)
+            elif not any(
+                f"github.com/{org}" in url for org in self.CARPENTRIES_GITHUB_ORGS
+            ):
+                msg = (
+                    "This URL is not associated with a repository in any of the "
+                    "GitHub organisations owned by The Carpentries. "
+                    "If you need help resolving this error, please contact us using "
+                    "the details at the top of this form."
+                )
+                raise ValidationError(msg)
+
+        return url
 
     def clean_trainee_notes(self):
         """Raise an error if the trainee has not provided notes where required.
