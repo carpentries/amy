@@ -27,21 +27,23 @@
     You will receive your certificate and more information by email in 1-2 weeks.
   </p>
   </div>
-  {% elif user.passed_training or user.passed_get_involved or user.passed_welcome or user.passed_demo %}
+  {% elif progress_training or progress_get_involved or progress_welcome or progress_demo %}
   <div class="alert alert-info" role="alert">
     <p>
-      Please review your progress towards Instructor certification below. 
-      {% if progress_training %}
+      Please review your progress towards Instructor certification below.
+    </p>
+    {% if progress_training and user.passed_training %}
+    <p>
         {% checkout_deadline progress_training.event.end as deadline %}
         Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
         requirements is <strong>{{ deadline | date:'F j, Y'}}</strong>.
-      {% endif %}
     </p>
     <p>
       If you would like an extension, please contact us at 
       <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
       and refer to your confirmation email for your updated deadline.
     </p>
+    {% endif %}
     <p>
       If you have recently completed a training or step towards checkout, 
       please allow 7-10 days for this information to show up in your profile.
