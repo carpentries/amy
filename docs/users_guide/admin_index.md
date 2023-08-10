@@ -380,11 +380,13 @@ Hover over any progress to see more information about it. Click on the plus sign
 
 Each person's individual record also has a line for Instructor Training Progress. Again, hover over any item to see more information, or click the plus sign to add another item.
 
-![AMY training progress in instructor profile](images/instructor_training_progress.png)
+![AMY checkout progress in instructor profile](images/instructor_training_progress.png)
 
-#### Adding training progress one by one
+#### Adding checkout progress one by one
 
-![AMY training progress steps](images/new_training_progress.png)
+Click the plus sign in the "Trainees" page or an individual person's record to add a new progress item.
+
+![AMY checkout progress steps](images/new_training_progress.png)
 
 * **Trainee** The page will pre-fill the trainee if possible. Otherwise, start typing in the person's name.  Auto-completed suggested names will appear.
 * **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or a community contribution (Get Involved). When a choice is made, additional fields may appear (see below).
@@ -406,7 +408,13 @@ Go to the "Trainees" page under the "More" menu.
 
 To add the same step to many trainees, select the relevant trainees using the checkboxes on the left of each row, then complete the form at the bottom of the page. This form has the same fields as the [individual progress form](#tracking-checkout-progress), minus the **Trainee** field. When the form is submitted, an identical item will be added to each selected trainee.
 
-![Bulk add training progress form](images/bulk_add_progress.png)
+![Bulk add checkout progress form](images/bulk_add_progress.png)
+
+#### Updating and deleting checkout progress
+
+Click on any progress item in the "Trainees" view or a person's individual record to view and update the details of that item. On the update page, there is also a "Delete" button in the top right, which will remove the item completely.
+
+Items cannot be updated or deleted in bulk.
 
 #### Evaluating Get Involved submissions
 
