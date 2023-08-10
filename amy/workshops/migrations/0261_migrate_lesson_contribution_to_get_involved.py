@@ -18,7 +18,7 @@ def migrate_lesson_contributions_to_involvements(apps, schema_editor) -> None:
 
     involvement = Involvement.objects.create(
         name="GitHub Contribution",
-        display_name="Submitted a contribution to a Carpentries repository",
+        display_name="Submitted a contribution to a Carpentries repository on GitHub",
         url_required=True,
         date_required=True,
     )

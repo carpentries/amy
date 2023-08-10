@@ -557,7 +557,7 @@ class TestExportingPersonData(BaseExportingTest):
                 },
                 "involvement_type": {
                     "name": "GitHub Contribution",
-                    "display_name": "Submitted a contribution to a Carpentries repository",  # noqa
+                    "display_name": "Submitted a contribution to a Carpentries repository on GitHub",  # noqa
                     "url_required": True,
                     "date_required": True,
                     "notes_required": False,
