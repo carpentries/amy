@@ -376,14 +376,21 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 
 ![AMY training progress steps](images/new_training_progress.png)
 
-* **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
-* **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
+* **Trainee** The page will pre-select the trainee if possible. Otherwise, start typing in the person's name.  Auto-completed suggested names will appear.
+* **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or a community contribution (Get Involved). When a choice is made, additional fields may appear (see below).
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
-* **Notes** Any free notes from the admin.
+* **Notes** Any free notes from the admin. Notes must be provided if the state is set to Failed, or if certain Get Involved activities have been selected.
+
+Additional fields will appear depending on the Type selection:
+* **Event** The training event that the trainee attended. Only required when Type is set to Training.
+* **Get Involved activity** The activity that the trainee completed for the Get Involved step. Only required when Type is set to Get Involved.  
+Each activity, when selected, requires some or all of the **URL**, **Date**, and **Notes** fields to be filled as well. More information on these requirements can be found in the [community user guide](#submitting-your-get-involved-step). When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed. 
+* **URL** A URL to a GitHub contribution, workshop website, or other contribution. Only required for some Get Involved activities.
+* **Date** The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. Required for all Get Involved activities.
 
 ### Issuing Badges
 
-The Carpentries has various badges that can be issued, including Data Carpentry Instructor, Software Carpentry Instructor, Trainer, Maintainer, and more.  
+The Carpentries has various badges that can be issued, including Instructor, Trainer, Maintainer, and more.  
 
 An individual badge can be issued by going to a person's record and clicking the `Edit` button.  Choose the `Awards` tab on the next screen.  
 
