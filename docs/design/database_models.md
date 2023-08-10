@@ -209,7 +209,8 @@ Represents a requirement that a prospect future instructor need to pass.
 This model also falls into `trainings` domain.
 
 ### `TrainingProgress`
-Intermediate table for M2M between persons and training requirements. Indicates "pass",
+Intermediate table for M2M between `Person`, `TrainingRequirement`, and optionally 
+`Involvement`. Indicates "pass",
 "fail", or "asked to repeat" progress of a person over a particular requirement.
 Once all required requirements are passed, person can become an instructor.
 
@@ -346,3 +347,12 @@ list of choices is maintained as `ACTION_CHOICES`.
 ### `RQJob`
 Represents a [`python-rq`](https://python-rq.org/) job. This job is identified by UUID
 and links to Redis entry maintained by RQ library.
+
+----------------------------------------------------------------------------------------
+
+## Training application - `trainings/models.py`
+
+### `Involvement`
+
+Represents an activity that can be completed as part of the Get Involved step of 
+Instructor Training checkout. Referenced by [`TrainingProgress`](#trainingprogress).
