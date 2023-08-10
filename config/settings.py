@@ -197,6 +197,7 @@ if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
 # Github API token (optional). Setting this token reduces limits and quotes
 # on Github API.
 GITHUB_API_TOKEN = env("AMY_GITHUB_API_TOKEN")
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
