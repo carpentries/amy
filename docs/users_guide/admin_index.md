@@ -374,13 +374,23 @@ A list of all current trainees and their progress can be seen on the "Trainees" 
 
 ![Trainees link under More menu](images/trainees_menu.png)
 
-Hover over any progress to see more information about it. Click on the plus sign next to a trainee's progress to track a new step for that trainee. Click on the "information" or "pencil" icon at the right of each row to view or edit the trainee's profile.
-
 ![All trainees page](images/all_trainees.png)
 
-Each person's individual record also has a line for Instructor Training Progress. Again, hover over any item to see more information, or click the plus sign to add another item.
+The colour of each item represents its state:
+* Green: Passed
+* Blue: Asked to repeat
+* Yellow: Not evaluated yet
+* Red: Failed
+
+Hover over any item to see more information about it, including its state, date, and any notes.
+
+Click on the plus sign next to a trainee's progress to track a new step for that trainee. Click on the "information" or "pencil" icon at the right of each row to view or edit the trainee's profile.
+
+Each person's individual record also has a line for Instructor Training Progress. 
 
 ![AMY checkout progress in instructor profile](images/instructor_training_progress.png)
+
+Again, hover over any item to see more information, or click the plus sign to add another item.
 
 #### Adding checkout progress one by one
 
