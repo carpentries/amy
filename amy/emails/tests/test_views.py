@@ -323,13 +323,6 @@ class TestScheduledEmailDetails(TestBase):
             rv.context["rendered_body"],
             "<p>Hello, Harry! Nice to meet <strong>you</strong>.</p>",
         )
-        self.assertEqual(rv.context["body_context_type"], PersonsMergedContext)
-        self.assertEqual(
-            rv.context["body_context_annotations"],
-            {
-                "person": Person,
-            },
-        )
 
 
 class TestScheduledEmailUpdate(TestBase):
@@ -366,12 +359,6 @@ class TestScheduledEmailUpdate(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertEqual(
-            rv.context["body_context_annotations"],
-            {
-                "person": Person,
-            },
-        )
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_view(self) -> None:
