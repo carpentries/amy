@@ -15,7 +15,7 @@ from emails.forms import (
     ScheduledEmailUpdateForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
-from emails.signals import ALL_SIGNALS, Signal
+from emails.signals import ALL_SIGNALS
 from emails.utils import find_signal_by_name, person_from_request
 from workshops.base_views import (
     AMYCreateView,
@@ -130,16 +130,6 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeta
             .order_by("-created_at")
         )
         context["rendered_body"] = markdownify(self.object.body)
-
-        signal: Signal | None = None
-        if self.object.template:
-            signal = find_signal_by_name(self.object.template.signal, ALL_SIGNALS)
-
-        context["body_context_type"] = None
-        context["body_context_annotations"] = {}
-        if signal:
-            context["body_context_type"] = signal.context_type
-            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
 
@@ -154,16 +144,6 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdat
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
-
-        signal: Signal | None = None
-        if self.object.template:
-            signal = find_signal_by_name(self.object.template.signal, ALL_SIGNALS)
-
-        context["body_context_type"] = None
-        context["body_context_annotations"] = {}
-        if signal:
-            context["body_context_type"] = signal.context_type
-            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
     def form_valid(self, form: ScheduledEmailUpdateForm) -> HttpResponse:

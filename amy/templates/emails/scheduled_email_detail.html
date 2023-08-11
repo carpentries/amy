@@ -117,18 +117,8 @@
     </td>
   </tr>
   <tr>
-    <th>Template:</th>
+    <th>Email template:</th>
     <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
-  </tr>
-  <tr>
-    <th>Template variables</th>
-    <td colspan="2">
-      <ul>
-      {% for key, value in body_context_annotations.items %}
-      <li><code>{{ key }}</code>: {{ value|model_documentation_link|urlize }}</li>
-      {% endfor %}
-      </ul>
-    </td>
   </tr>
   <tr>
     <th>Related object:</th>
