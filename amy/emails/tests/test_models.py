@@ -12,6 +12,7 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
+from workshops.models import Person
 
 
 class TestEmailTemplate(TestCase):
@@ -248,11 +249,13 @@ class TestScheduledEmailLog(TestCase):
             body=template.render_template(engine, template.body, context),
             template=template,
         )
+        author = Person.objects.create()
         # Act
         log = ScheduledEmailLog.objects.create(
             details="Preparing scheduled email",
             state_after=ScheduledEmailStatus.SCHEDULED,
             scheduled_email=scheduled_email,
+            author=author,
         )
         # Assert
         self.assertIsNotNone(log.id)  # `id` should be UUID

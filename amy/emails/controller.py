@@ -8,6 +8,7 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
+from workshops.models import Person
 
 
 class EmailController:
@@ -18,6 +19,7 @@ class EmailController:
         scheduled_at: datetime,
         to_header: list[str],
         generic_relation_obj: Model | None = None,
+        author: Person | None = None,
     ) -> ScheduledEmail:
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
         engine = EmailTemplate.get_engine()
@@ -43,12 +45,15 @@ class EmailController:
             state_before=None,
             state_after=ScheduledEmailStatus.SCHEDULED,
             scheduled_email=scheduled_email,
+            author=author,
         )
         return scheduled_email
 
     @staticmethod
     def reschedule_email(
-        scheduled_email: ScheduledEmail, new_scheduled_at: datetime
+        scheduled_email: ScheduledEmail,
+        new_scheduled_at: datetime,
+        author: Person | None = None,
     ) -> ScheduledEmail:
         scheduled_email.scheduled_at = new_scheduled_at
         scheduled_email.save()
@@ -57,11 +62,15 @@ class EmailController:
             state_before=scheduled_email.state,
             state_after=scheduled_email.state,
             scheduled_email=scheduled_email,
+            author=author,
         )
         return scheduled_email
 
     @staticmethod
-    def cancel_email(scheduled_email: ScheduledEmail) -> ScheduledEmail:
+    def cancel_email(
+        scheduled_email: ScheduledEmail,
+        author: Person | None = None,
+    ) -> ScheduledEmail:
         old_state = scheduled_email.state
         scheduled_email.state = ScheduledEmailStatus.CANCELLED
         scheduled_email.save()
@@ -70,5 +79,6 @@ class EmailController:
             state_before=old_state,
             state_after=scheduled_email.state,
             scheduled_email=scheduled_email,
+            author=author,
         )
         return scheduled_email

@@ -141,6 +141,7 @@
       <th>State before</th>
       <th>State after</th>
       <th>Details</th>
+      <th>Author</th>
       <th>Log entry ID</th>
     </tr>
   </thead>
@@ -152,6 +153,13 @@
       <td>{{ log.state_before }}</td>
       <td>{{ log.state_after }}</td>
       <td><code>{{ log.details }}</code></td>
+      <td>
+        {% if log.author %}
+        <a href="{{ log.author.get_absolute_url }}">{{ log.author }}</a>
+        {% else %}
+        &mdash;
+        {% endif %}
+      </td>
       <td>{{ log.id }}</td>
     </tr>
     {% endfor %}
