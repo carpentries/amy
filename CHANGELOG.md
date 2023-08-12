@@ -51,6 +51,16 @@ Then paste output from that script here.
 * Rename Discussion to Welcome Session, remove deprecated TrainingRequirements - [#2420](https://github.com/carpentries/amy/pull/2420) by @elichad
 * Remove 'evaluated_by' and 'discarded' fields from TrainingProgress - [#2416](https://github.com/carpentries/amy/pull/2416) by @elichad
 
+### Testers
+Thanks to the following AMY users for testing this release:
+* @JFormoso 
+* @karenword
+* @klbarnes20 
+* @maneesha
+* @quirksahern
+* @ragamouf
+* @Talishask
+
 ## v4.1.2 - 2023-06-04
 
 ### Bugfixes
