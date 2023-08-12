@@ -33,6 +33,7 @@ known_first_party = [
   "consents",
   "communityroles",
   "dashboard",
+  "emails",
   "extcomments",
   "extforms",
   "extrequests",

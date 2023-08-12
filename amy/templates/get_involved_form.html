@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block navbar %}
+  {% include 'navigation_instructor_dashboard.html' %}
+{% endblock %}
+
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<p>
+  Provide details of your Get Involved activity. Your submission will be reviewed within 7-10 days. 
+  You can track your progress by returning to the <a href="{% url 'training-progress' %}">training progress</a> page.
+</p>
+<p>
+  Only submit an activity that you have already completed.
+</p>
+<p>
+  If you have any questions or difficulty completing the form, please contact us at 
+  <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>.
+</p>
+{% crispy form %}
+{% endblock %}

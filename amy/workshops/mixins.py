@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.functional import cached_property
 
 
@@ -24,6 +25,15 @@ class ActiveMixin(models.Model):
         abstract = True
 
 
+class CreatedMixin(models.Model):
+    """This mixin provides a field for storing instance creation time."""
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    class Meta:
+        abstract = True
+
+
 class CreatedUpdatedMixin(models.Model):
     """This mixin provides two fields for storing instance creation time and
     last update time. It's faster than checking model revisions (and they
@@ -43,6 +53,13 @@ class CreatedUpdatedArchivedMixin(CreatedUpdatedMixin):
 
     class Meta:
         abstract = True
+
+    def archive(self) -> None:
+        """
+        Archive self.
+        """
+        self.archived_at = timezone.now()
+        self.save()
 
 
 class DataPrivacyAgreementMixin(models.Model):

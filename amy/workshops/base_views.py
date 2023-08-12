@@ -1,6 +1,7 @@
 from smtplib import SMTPException
 from typing import Optional
 
+from anymail.exceptions import AnymailRequestsAPIError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -342,7 +343,7 @@ class AutoresponderMixin:
 
         try:
             email.send()
-        except SMTPException as e:
+        except (SMTPException, AnymailRequestsAPIError) as e:
             if not fail_silently:
                 raise e
 

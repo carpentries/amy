@@ -27,7 +27,7 @@ env = environ.Env(
     AMY_RECAPTCHA_PRIVATE_KEY=(str, "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"),
     AMY_SOCIAL_AUTH_GITHUB_KEY=(str, ""),
     AMY_SOCIAL_AUTH_GITHUB_SECRET=(str, ""),
-    AMY_GITHUB_API_TOKEN=(str, ""),
+    AMY_GITHUB_API_TOKEN=(str, "fakeToken"),
     AMY_REDIS_URL=(str, "redis://localhost:6379/"),
     AMY_STATIC_HOST=(str, ""),
     AMY_LIVE_EMAIL=(bool, False),
@@ -43,8 +43,10 @@ env = environ.Env(
         str,
         "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
     ),
-    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
+    # Feature flags
+    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
+    AMY_EMAIL_MODULE_ENABLED=(bool, False),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -171,6 +173,7 @@ LOCAL_APPS = [
     "amy.consents.apps.ConsentsConfig",
     "amy.communityroles.apps.CommunityRolesConfig",
     "amy.recruitment.apps.RecruitmentConfig",
+    "amy.emails.apps.EmailsConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -194,6 +197,7 @@ if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
 # Github API token (optional). Setting this token reduces limits and quotes
 # on Github API.
 GITHUB_API_TOKEN = env("AMY_GITHUB_API_TOKEN")
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
 SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.social_details",
     "social_core.pipeline.social_auth.social_uid",
@@ -426,7 +430,7 @@ if not DEBUG and (
     not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]
 ):
     raise ImproperlyConfigured(
-        "Mailgun settings are required when running " "with DEBUG=False."
+        "Mailgun settings are required when running with DEBUG=False."
     )
 
 
@@ -544,8 +548,8 @@ LOGGING = {
 
 # Debug Toolbar
 # -----------------------------------------------------------------------------
-DEBUG_TOOLBAR_PATCH_SETTINGS = False
 INTERNAL_IPS = ["127.0.0.1", "::1"]
+DEBUG_TOOLBAR_CONFIG = {"SHOW_COLLAPSED": True}
 
 # Django-contrib-comments
 # -----------------------------------------------------------------------------
@@ -594,6 +598,12 @@ TEST_RUNNER = "workshops.tests.runner.SilenceLogsRunner"
 # These settings describe internal `autoemails` application behavior.
 # On test server: 'amy-tests@carpentries.org'
 AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS")
+
+# Email module
+# -----------------------------------------------------------------------------
+# This module is the next version of Autoemails.
+EMAIL_TEMPLATE_ENGINE_BACKEND = "db_backend"
+EMAIL_MODULE_ENABLED = env("AMY_EMAIL_MODULE_ENABLED")
 
 # Reports
 # -----------------------------------------------------------------------------

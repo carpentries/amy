@@ -1,0 +1,161 @@
+{% extends "base_nav.html" %}
+
+{% block title %}
+<h1>
+  Scheduled email <code>{{ scheduled_email.subject }}</code>
+  (<relative-time datetime="{{ scheduled_email.scheduled_at.isoformat }}"></relative-time>)
+</h1>
+{% endblock title %}
+
+{% block content %}
+
+{% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
+
+{% if perms.emails.change_scheduledemail %}
+<div class="edit-object">
+  <div class="btn-group">
+    <a class="btn btn-primary" href="{% url 'scheduledemail_edit' scheduled_email.id %}">Edit</a>
+    <a class="btn btn-warning" href="{% url 'scheduledemail_reschedule' scheduled_email.id %}">Reschedule</a>
+  </div>
+  <div class="float-right">
+    <a class="btn btn-danger" href="{% url 'scheduledemail_cancel' scheduled_email.id %}">Cancel</a>
+  </div>
+</div>
+{% else %}
+<div class="edit-object">
+  <div class="btn-group">
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+    <a class="btn btn-warning disabled" disabled href="#">Reschedule</a>
+  </div>
+  <div class="float-right">
+    <a class="btn btn-warning disabled" disabled href="#">Cancel</a>
+  </div>
+</div>
+{% endif %}
+
+<table class="table table-striped">
+  <tr>
+    <th width="20%">ID:</th>
+    <td colspan="2">{{ scheduled_email.id }}</td>
+  </tr>
+  <tr>
+    <th>State:</th>
+    <td colspan="2"><strong>{{ scheduled_email.get_state_display }}</strong></td>
+  </tr>
+  <tr>
+    <th>Created at:</th>
+    <td colspan="2">{{ scheduled_email.created_at }}</td>
+  </tr>
+  <tr>
+    <th>Last updated at:</th>
+    <td colspan="2">{{ scheduled_email.last_updated_at }}</td>
+  </tr>
+  <tr>
+    <th>Scheduled to run:</th>
+    <td colspan="2">{{ scheduled_email.scheduled_at }}</td>
+  </tr>
+  <tr>
+    <th>From:</th>
+    <td colspan="2">{{ scheduled_email.from_header }}</td>
+  </tr>
+  <tr>
+    <th>To:</th>
+    <td colspan="2">
+      <ul>
+        {% for email in scheduled_email.to_header %}
+          <li>{{ email }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Reply-To:</th>
+    <td colspan="2">{{ scheduled_email.reply_to_header|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>CC:</th>
+    <td colspan="2">
+    {% if scheduled_email.cc_header %}
+      <ul>
+      {% for email in scheduled_email.cc_header %}
+        <li>{{ email }}</li>
+      {% endfor %}
+      </ul>
+    {% else %}
+    &mdash;
+    {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>BCC:</th>
+    <td colspan="2">
+    {% if scheduled_email.bcc_header %}
+      <ul>
+      {% for email in scheduled_email.bcc_header %}
+        <li>{{ email }}</li>
+      {% endfor %}
+      </ul>
+    {% else %}
+    &mdash;
+    {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Subject:</th>
+    <td colspan="2"><code>{{ scheduled_email.subject }}</code></td>
+  </tr>
+  <tr>
+    <th>Body: <br><small>(Markdown; converts to HTML when sent)</small></th>
+    <td>
+      <strong>Raw:</strong>
+      <pre>{{ scheduled_email.body }}</pre>
+    </td>
+    <td>
+      <strong>Rendered:</strong>
+      {{ rendered_body|safe }}
+    </td>
+  </tr>
+  <tr>
+    <th>Template:</th>
+    <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
+  </tr>
+  <tr>
+    <th>Related object:</th>
+    <td colspan="2">
+      {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
+      <a href="{{ scheduled_email.generic_relation.get_absolute_url }}">{{ scheduled_email.generic_relation }}</a>
+      {% elif scheduled_email.generic_relation %}
+      {{ scheduled_email.generic_relation }}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<table class="table table-striped">
+  <caption><h2>History</h2> <small>(newest to oldest)</small></caption>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>State before</th>
+      <th>State after</th>
+      <th>Details</th>
+      <th>Log entry ID</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for log in log_entries %}
+    <tr>
+      <td>{{ log.created_at }}</td>
+      <td>{{ log.state_before }}</td>
+      <td>{{ log.state_after }}</td>
+      <td><code>{{ log.details }}</code></td>
+      <td>{{ log.id }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

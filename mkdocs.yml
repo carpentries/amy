@@ -28,6 +28,7 @@ nav:
         - 'CI/CD': 'design/cicd.md'
         - 'Procedures': 'procedures.md'
         - 'Releases': './releases/README.md'
+        - 'Accessibility Testing': 'accessibility_testing.md'
         - 'Projects':
           - 'Projects': './design/projects/README.md'
           - 'Automated emails': './design/projects/2019_automated_emails.md'

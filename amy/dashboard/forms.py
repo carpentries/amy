@@ -4,13 +4,22 @@ from django.db.models import Q
 from django_countries.fields import CountryField
 
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from trainings.models import Involvement
 from workshops.fields import (
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
-from workshops.models import Event, GenderMixin, Language, Person, Task
+from workshops.models import (
+    Event,
+    GenderMixin,
+    Language,
+    Person,
+    Task,
+    TrainingProgress,
+    TrainingRequirement,
+)
 
 
 class AssignmentForm(forms.Form):
@@ -134,9 +143,150 @@ class AutoUpdateProfileForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class LessonContributionForm(forms.Form):
-    url = forms.URLField(label="URL")
-    helper = BootstrapHelper(add_cancel_button=False)
+class GetInvolvedForm(forms.ModelForm):
+    """Trainee-facing form for submitting training progress.
+
+    All fields have required=False to prevent confusion, as required fields change
+    based on the involvement choice.
+    """
+
+    involvement_type = forms.ModelChoiceField(
+        label="Activity",
+        help_text="If your activity is not included in this list, please select "
+        '"Other" and provide details under "Additional information" below.',
+        required=False,
+        queryset=Involvement.objects.default_order().filter(archived_at__isnull=True),
+        widget=forms.RadioSelect(),
+    )
+    date = forms.DateField(
+        label="Date of activity",
+        help_text="If the activity took place over multiple days, please enter the "
+        "first day. Format: YYYY-MM-DD",
+        required=False,
+    )
+    url = forms.URLField(
+        label="URL",
+        help_text="A link to the activity, if there is one. If you served "
+        "at a workshop, enter the workshop website. "
+        "If you made a GitHub contribution, enter that link and ensure it is "
+        "associated with a repository in one of the "
+        '<a href="https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html">'  # noqa
+        "GitHub organisations owned by The Carpentries</a>.",
+        required=False,
+    )
+    trainee_notes = forms.CharField(
+        label="Additional information",
+        help_text="If you attended a community meeting, please tell us which meeting "
+        'you attended. If you selected "Other" for the activity, please '
+        "provide details here.",
+        required=False,
+    )
+    helper = BootstrapHelper(add_cancel_button=True)
+
+    CARPENTRIES_GITHUB_ORGS = [
+        "carpentries",
+        "datacarpentry",
+        "librarycarpentry",
+        "swcarpentry",
+        "carpentries-es",
+        "Reproducible-Science-Curriculum",
+        "CarpentryCon",
+        "CarpentryConnect",
+        "carpentries-workshops",
+        "data-lessons",
+        "carpentries-lab",
+        "carpentries-incubator",
+        "carpentrieslab",
+    ]
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            "involvement_type",
+            "date",
+            "url",
+            "trainee_notes",
+        ]
+
+    def user_may_create_submission(self, user: Person) -> bool:
+        """The user may create a submission if either of the conditions below are met:
+        1. no progress exists for the Get Involved step for this user
+        2. all existing progress for the Get Involved step for this user has state "a"
+        """
+        get_involved = TrainingRequirement.objects.get(name="Get Involved")
+        existing_progresses = TrainingProgress.objects.filter(
+            requirement=get_involved, trainee=user
+        )
+        num_existing = existing_progresses.count()
+        if num_existing == 0:
+            return True
+        else:
+            num_asked_to_repeat = existing_progresses.filter(state="a").count()
+            if num_asked_to_repeat == num_existing:
+                return True
+            else:
+                return False
+
+    def clean_url(self):
+        """Check if URL is associated with a Carpentries GitHub organisation"""
+        involvement_type = self.cleaned_data["involvement_type"]
+        url = self.cleaned_data["url"]
+        if involvement_type and involvement_type.name == "GitHub Contribution":
+            if not url:
+                # This check is part of model validation, but form validation runs
+                # first. As an empty URL will trigger the next error, first replicate
+                # the "URL required" error check here for this specific Involvement.
+                msg = (
+                    "This field is required for activity "
+                    f'"{involvement_type.display_name}".'
+                )
+                raise ValidationError(msg)
+            elif not any(
+                f"github.com/{org}" in url for org in self.CARPENTRIES_GITHUB_ORGS
+            ):
+                msg = (
+                    "This URL is not associated with a repository in any of the "
+                    "GitHub organisations owned by The Carpentries. "
+                    "If you need help resolving this error, please contact us using "
+                    "the details at the top of this form."
+                )
+                raise ValidationError(msg)
+
+        return url
+
+    def clean_trainee_notes(self):
+        """Raise an error if the trainee has not provided notes where required.
+
+        All other fields are cleaned in the TrainingProgress model itself.
+        This field is different as it should only show an error on this specific form.
+        """
+        involvement_type = self.cleaned_data["involvement_type"]
+        trainee_notes = self.cleaned_data["trainee_notes"]
+        if involvement_type and involvement_type.notes_required and not trainee_notes:
+            raise ValidationError(
+                f'This field is required for activity "{involvement_type}".'
+            )
+
+        return trainee_notes
+
+    def clean(self) -> None:
+        super().clean()
+
+        # check that the user may create/update this TrainingProgress instance
+        if self.instance:
+            if self.instance.pk is None and not self.user_may_create_submission(
+                self.instance.trainee
+            ):
+                raise ValidationError(
+                    "You already have an existing submission. "
+                    "You may not create another submission unless your previous "
+                    'submission has the status "asked to repeat."'
+                )
+            elif self.instance.pk and self.instance.state != "n":
+                raise ValidationError(
+                    "This submission can no longer be edited as it has already been "
+                    "evaluated."
+                )
 
 
 class SearchForm(forms.Form):

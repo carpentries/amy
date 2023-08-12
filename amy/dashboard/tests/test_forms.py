@@ -2,9 +2,18 @@ from datetime import date
 
 from django.test import TestCase
 
-from dashboard.forms import SignupForRecruitmentForm
+from dashboard.forms import GetInvolvedForm, SignupForRecruitmentForm
 from recruitment.models import InstructorRecruitment
-from workshops.models import Event, Organization, Person, Role, Task
+from trainings.models import Involvement
+from workshops.models import (
+    Event,
+    Organization,
+    Person,
+    Role,
+    Task,
+    TrainingProgress,
+    TrainingRequirement,
+)
 
 
 class TestSignupForRecruitmentForm(TestCase):
@@ -106,3 +115,272 @@ class TestSignupForRecruitmentForm(TestCase):
                 f"{conflicting_task.event.slug}"
             ],
         )
+
+
+class TestGetInvolvedForm(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.person = Person.objects.create(
+            personal="Test", family="User", email="test@user.com"
+        )
+        self.get_involved = TrainingRequirement.objects.get(name="Get Involved")
+
+        self.involvement, _ = Involvement.objects.get_or_create(
+            name="Other", defaults={"display_name": "Other", "notes_required": True}
+        )
+        self.base_instance = TrainingProgress(
+            trainee=self.person,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+        self.EXISTING_SUBMISSION_ERROR_TEXT = (
+            "You already have an existing submission. "
+            "You may not create another submission unless your previous "
+            'submission has the status "asked to repeat."'
+        )
+        self.ALREADY_EVALUATED_ERROR_TEXT = (
+            "This submission can no longer be edited as it has already been evaluated."
+        )
+
+    def test_fields(self):
+        # Act
+        form = GetInvolvedForm()
+
+        # Assert
+        self.assertEqual(
+            {"involvement_type", "date", "url", "trainee_notes"}, form.fields.keys()
+        )
+
+    def test_clean_custom_validation__url_empty(self):
+        # Arrange
+        github_contribution = Involvement.objects.get(
+            name="GitHub Contribution",
+        )
+        data = {
+            "involvement_type": github_contribution,
+            "date": date(2023, 7, 27),
+            "url": "",
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        expected_msg = (
+            "This field is required for activity "
+            '"Submitted a contribution to a Carpentries repository on GitHub".'
+        )
+        self.assertEqual(
+            form.errors["url"],
+            [expected_msg],
+        )
+
+    def test_clean_custom_validation__url_invalid(self):
+        # Arrange
+        github_contribution = Involvement.objects.get(name="GitHub Contribution")
+        data = {
+            "involvement_type": github_contribution,
+            "date": date(2023, 7, 27),
+            "url": "https://not-a-github-url.org",
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        expected_msg = (
+            "This URL is not associated with a repository in any of the "
+            "GitHub organisations owned by The Carpentries. "
+            "If you need help resolving this error, please contact us using the "
+            "details at the top of this form."
+        )
+        self.assertEqual(
+            form.errors["url"],
+            [expected_msg],
+        )
+
+    def test_clean_custom_validation__trainee_notes(self):
+        # Arrange
+        data = {"involvement_type": self.involvement, "date": date(2023, 7, 27)}
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        # expect to see an error on "trainee_notes" and not on "notes"
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["trainee_notes"],
+            ['This field is required for activity "Other".'],
+        )
+        self.assertNotIn("notes", form.errors.keys())
+
+    def test_clean_custom_validation__no_involvement_type(self):
+        """Check that trainee_notes validation works when no involvement is chosen"""
+        # Arrange
+        data = {}
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["involvement_type"],
+            ['This field is required for progress type "Get Involved".'],
+        )
+        self.assertNotIn("trainee_notes", form.errors.keys())
+
+    def test_custom_validation__existing_not_evaluated_yet(self):
+        # Arrange
+        # create pre-existing submission
+        TrainingProgress.objects.create(
+            trainee=self.person,
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 7, 1),
+            trainee_notes="Notes from trainee",
+            state="n",
+        )
+        data = {
+            "involvement_type": self.involvement,
+            "trainee_notes": "Notes from trainee",
+            "date": date(2023, 7, 27),
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["__all__"],
+            [self.EXISTING_SUBMISSION_ERROR_TEXT],
+        )
+
+    def test_custom_validation__existing_passed(self):
+        # Arrange
+        # create pre-existing submission
+        TrainingProgress.objects.create(
+            trainee=self.person,
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 7, 1),
+            trainee_notes="Notes from trainee",
+            state="p",
+        )
+        data = {
+            "involvement_type": self.involvement,
+            "trainee_notes": "Notes from trainee",
+            "date": date(2023, 7, 27),
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["__all__"],
+            [self.EXISTING_SUBMISSION_ERROR_TEXT],
+        )
+
+    def test_custom_validation__existing_failed(self):
+        # Arrange
+        # create pre-existing submission
+        TrainingProgress.objects.create(
+            trainee=self.person,
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 7, 1),
+            trainee_notes="Notes from trainee",
+            state="f",
+        )
+        data = {
+            "involvement_type": self.involvement,
+            "trainee_notes": "Notes from trainee",
+            "date": date(2023, 7, 27),
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["__all__"],
+            [self.EXISTING_SUBMISSION_ERROR_TEXT],
+        )
+
+    def test_custom_validation__existing_asked_to_repeat(self):
+        # Arrange
+        # create pre-existing submission
+        TrainingProgress.objects.create(
+            trainee=self.person,
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 7, 1),
+            trainee_notes="Notes from trainee",
+            state="a",
+        )
+        data = {
+            "involvement_type": self.involvement,
+            "trainee_notes": "Notes from trainee",
+            "date": date(2023, 7, 27),
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), True)
+
+    def test_custom_validation__already_evaluated(self):
+        # Arrange
+        # create pre-existing submission
+        progress = TrainingProgress.objects.create(
+            trainee=self.person,
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 7, 1),
+            trainee_notes="Notes from trainee",
+            state="p",
+        )
+        data = {
+            "involvement_type": self.involvement,
+            "trainee_notes": "Updated notes from trainee",
+            "date": date(2023, 7, 27),
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=progress)
+
+        # Assert
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(
+            form.errors["__all__"],
+            [self.ALREADY_EVALUATED_ERROR_TEXT],
+        )
+
+    def test_custom_validation__not_already_evaluated(self):
+        # Arrange
+        # create pre-existing submission
+        progress = TrainingProgress.objects.create(
+            trainee=self.person,
+            requirement=self.get_involved,
+            involvement_type=self.involvement,
+            date=date(2023, 7, 1),
+            trainee_notes="Notes from trainee",
+            state="n",
+        )
+        data = {
+            "involvement_type": self.involvement,
+            "trainee_notes": "Updated notes from trainee",
+            "date": date(2023, 7, 27),
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=progress)
+
+        # Assert
+        self.assertEqual(form.is_valid(), True)

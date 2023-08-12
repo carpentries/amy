@@ -4,101 +4,149 @@
 {% endblock %}
 
 {% load crispy_forms_tags %}
+{% load dates %}
+{% load training_progress %}
 
 {% block content %}
 
-{% if swc_form.errors or dc_form.errors %}
-  <div class="alert alert-danger" role="alert">Fix errors in your Lesson Contribution submission.</div>
+{% if get_involved_form.errors %}
+  <div class="alert alert-danger" role="alert">Fix errors in your Get Involved submission.</div>
 {% endif %}
 
 <div>
-  <h2>Your progress of becoming The Carpentries Instructor</h2>
-
+  <h2>Your progress towards becoming a Carpentries Instructor</h2>
+  
   {% if user.instructor_badges %}
   <div class="alert alert-success" role="alert">
-    <p>Congratulations, you're a certified:</p>
-    <ul>
-    {% for badge in user.instructor_badges %}
-      <li>{{ badge.title }}</li>
-    {% endfor %}
-    </ul>
+    <p>Congratulations, you're a certified Instructor!
+  </div>
+  {% elif user.instructor_eligible %}
+  <div class="alert alert-info" role="alert">
+  <p>
+    Congratulations. You have successfully completed all steps towards Instructor certification. 
+    You will receive your certificate and more information by email in 1-2 weeks.
+  </p>
+  </div>
+  {% elif progress_training or progress_get_involved or progress_welcome or progress_demo %}
+  <div class="alert alert-info" role="alert">
+    <p>
+      Please review your progress towards Instructor certification below.
+    </p>
+    {% if progress_training and user.passed_training %}
+    <p>
+        {% checkout_deadline progress_training.event.end as deadline %}
+        Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
+        requirements is <strong>{{ deadline | date:'F j, Y'}}</strong>.
+    </p>
+    <p>
+      If you would like an extension, please contact us at 
+      <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
+      and refer to your confirmation email for your updated deadline.
+    </p>
+    {% endif %}
+    <p>
+      If you have recently completed a training or step towards checkout, 
+      please allow 7-10 days for this information to show up in your profile.
+    </p> 
+    <p>
+      Visit our 
+      <a href="https://carpentries.github.io/instructor-training/checkout">checkout page</a>
+      for more information. 
+    </p>
+  </div>
+  {% else %}
+  <div class="alert alert-info" role="alert">
+    <p>
+      If you have recently completed a training or step towards checkout, 
+      please allow 7-10 days for this information to show up in your profile.
+    </p>
   </div>
   {% endif %}
-
-  <div class="alert alert-warning" role="alert">Due to the structure of our checkout tracking progress, all steps towards checkout may not be included here. If your instructor badge is correctly displayed, you are in good standing.</div>
 
   <table class="table table-striped">
     <tr>
       <th>1. Training</th>
       <td>
-        {% if user.passed_training %}
+        {% if progress_training %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_training %}
+        {% elif user.passed_training %}
           <p class="text-success">Training passed.</p>
         {% else %}
-          <p>Training not passed yet.</p>
+          <p>Training not completed yet.</p>
         {% endif %}
       </td>
     </tr>
     <tr>
-      <th rowspan="2">2. Lesson Contribution</th>
+      <th>2. Get Involved</th>
       <td>
-        {% if user.passed_lesson_contribution %}
-        <p class="text-success">Lesson Contribution accepted.</p>
-        {% elif lesson_contribution_in_evaluation %}
-        <p>Lesson Contribution evaluation pending.<br>Please wait while we evaluate your contribution.</p>
+        {% if progress_get_involved %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_get_involved %}
+          {% if progress_get_involved.state == "n" %}
+          <p>Your submission will be evaluated within 7-10 days.</p>
+          <p>You may edit or delete your submission before it is evaluated. If you delete it, you will be allowed to create a new submission afterwards.</p>
+          {% endif %}
+          <p>Details of your submission are below.</p>
+          <p>
+            <strong>Activity:</strong> {{ progress_get_involved.involvement_type }}<br/>
+            <strong>Date:</strong> {% firstof progress_get_involved.date|date:'F j, Y' "No date provided" %}<br/>
+            <strong>URL:</strong> {% firstof progress_get_involved.url "No URL provided" %}<br/>
+            <strong>Notes:</strong> {% firstof progress_get_involved.trainee_notes "No notes provided" %}
+          </p>
+          {% if progress_get_involved.state == "n" %}
+              <p class="edit-object float-left">
+                <a href="{% url 'getinvolved_update' progress_get_involved.pk %}" class="btn btn-primary">Edit</a>  
+              </p>
+              <div class="delete-object float-left pl-4">
+                <form action="{% url 'getinvolved_delete' progress_get_involved.pk %}" onsubmit='return confirm("Are you sure you wish to delete your Get Involved submission?")' method="POST">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+              </div>              
+          {% endif %}
+          
+          {% if progress_get_involved.state == "a" %}
+          <p class="create-object float-left">
+            <a href="{% url 'getinvolved_add' %}" class="btn btn-primary">Submit another Get Involved activity</a>  
+          </p>
+          {% endif %}
+        {% elif user.passed_get_involved %}
+          <p class="text-success">Get Involved step passed.</p>
         {% else %}
-        <p>Lesson Contribution not submitted.</p>
+          <p>Get Involved step not submitted yet.</p>
+          <p class="create-object float-left">
+            <a href="{% url 'getinvolved_add' %}" class="btn btn-primary">Submit a Get Involved activity</a>  
+          </p>
         {% endif %}
       </td>
     </tr>
     <tr>
+      <th>3. Welcome Session</th>
       <td>
-        <p>
-          Submit link to your contribution on Github. Your contribution will be reviewed within 7-10 days.<br>
-          If you do not use GitHub, you may submit your lesson contribution via
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSeMBOj5Rdh8Mgk0ebRbeRyHhGHKbItdft6avWuEzmeg8CgWbA/viewform">this form</a>.
-          A Carpentries Core Team member will create an issue based on the relevant repository, and will
-          send you a link so that you may view any responses. In either case, you can track your progress
-          by returning to this page.
-        </p>
-        <p>
-          Please be sure your contribution is to a repo in one of these organisations:
-        </p>
-        <ul>
-          <li><a href="https://github.com/carpentries">The Carpentries</a></li>
-          <li><a href="https://github.com/datacarpentry">Data Carpentry</a></li>
-          <li><a href="https://github.com/librarycarpentry">Library Carpentry</a></li>
-          <li><a href="https://github.com/swcarpentry">Software Carpentry</a></li>
-          <li><a href="https://github.com/carpentries-es">The Carpentries - Spanish Translations</a></li>
-          <li><a href="https://github.com/Reproducible-Science-Curriculum">Reproducible Science Curriculum</a></li>
-          <li><a href="https://github.com/carpentrycon">CarpentryCon</a></li>
-          <li><a href="https://github.com/carpentryconnect">CarpentryConnect</a></li>
-          <li><a href="https://github.com/carpentries-workshops">carpentries-workshops</a></li>
-          <li><a href="https://github.com/data-lessons">data-lessons</a></li>
-          <li><a href="https://github.com/carpentrieslab">The Carpentries Lab</a></li>
-          <li><a href="https://github.com/carpentries-incubator">carpentries-incubator</a></li>
-         </ul>
-        {% crispy lesson_contribution_form %}
-      </td>
-    </tr>
-    <tr>
-      <th>3. Discussion Session</th>
-      <td>
-        {% if user.passed_discussion %}
-          <p class="text-success">Discussion Session passed.</p>
+        {% if progress_welcome %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_welcome %}
+        {% elif user.passed_welcome %}
+          <p class="text-success">Welcome Session completed.
+          </p>
         {% else %}
-          <p>Discussion Session not passed yet.</p>
-          <p>Register for a Discussion Session on <a href="https://pad.carpentries.org/community-discussions">this Etherpad</a>. Register for only one session even if you want to become an Instructor for more than one Carpentry lesson program.</p>
+          <p>Welcome Session not completed yet.</p>
+          {% welcome_instructions %}
         {% endif %}
       </td>
     </tr>
     <tr>
       <th>4. Demo Session</th>
       <td>
-        {% if user.passed_demo %}
-        <p class="text-success">Demo Session passed.</p>
+        {% if progress_demo %}
+          {% include 'includes/progress_trainee_view.html' with progress=progress_demo %}
+          {% if progress_demo.state == "a" %}
+            <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
+          {% endif %}
+        {% elif user.passed_demo %}
+        <p class="text-success">Demo Session passed.
+        </p>
         {% else %}
-        <p>Demo Session not completed.</p>
-        <p>You can register for a Demo Session on <a href="https://pad.carpentries.org/teaching-demos">this Etherpad</a>.</p>
+        <p>Demo Session not completed yet.</p>
+        <p>Register for a Demo Session on this Etherpad: <a href="https://pad.carpentries.org/teaching-demos">Teaching Demos</a>.</p>
         {% endif %}
       </td>
     </tr>
@@ -106,7 +154,7 @@
   </table>
 
 
-  <p>In the case of any questions, please send us email at <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a></p>
+  <p>If you have any questions, please contact us at <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a></p>
 </div>
 
 {% endblock %}

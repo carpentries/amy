@@ -4,7 +4,16 @@ from urllib.parse import unquote
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
+from django.db.models import (
+    Case,
+    Count,
+    IntegerField,
+    Prefetch,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
 from django.forms.widgets import HiddenInput
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -22,15 +31,23 @@ from dashboard.filters import UpcomingTeachingOpportunitiesFilter
 from dashboard.forms import (
     AssignmentForm,
     AutoUpdateProfileForm,
-    LessonContributionForm,
+    GetInvolvedForm,
     SearchForm,
     SignupForRecruitmentForm,
 )
+from dashboard.utils import get_passed_or_last_progress
+from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from recruitment.views import RecruitmentEnabledMixin
-from workshops.base_views import AMYListView, ConditionallyEnabledMixin
+from workshops.base_views import (
+    AMYCreateView,
+    AMYDeleteView,
+    AMYListView,
+    AMYUpdateView,
+    ConditionallyEnabledMixin,
+)
 from workshops.models import (
     Airport,
     Badge,
@@ -208,8 +225,6 @@ def autoupdate_profile(request):
 
 @login_required
 def training_progress(request):
-    lesson_contribution_form = LessonContributionForm()
-
     # Add information about instructor training progress to request.user.
     request.user = (
         Person.objects.annotate_with_instructor_eligibility()
@@ -223,36 +238,94 @@ def training_progress(request):
         .get(pk=request.user.pk)
     )
 
-    progresses = request.user.trainingprogress_set.filter(discarded=False)
-    last_lesson_contribution = (
-        progresses.filter(requirement__name="Lesson Contribution")
-        .order_by("-created_at")
-        .first()
-    )
-
-    if request.method == "POST":
-        lesson_contribution_form = LessonContributionForm(data=request.POST)
-        if lesson_contribution_form.is_valid():
-            TrainingProgress.objects.create(
-                trainee=request.user,
-                state="n",  # not evaluated yet
-                requirement=TrainingRequirement.objects.get(name="Lesson Contribution"),
-                url=lesson_contribution_form.cleaned_data["url"],
-            )
-            messages.success(
-                request, "Your Lesson Contribution submission will be evaluated soon."
-            )
-            return redirect(reverse("training-progress"))
+    progress_training = get_passed_or_last_progress(request.user, "Training")
+    progress_get_involved = get_passed_or_last_progress(request.user, "Get Involved")
+    progress_welcome = get_passed_or_last_progress(request.user, "Welcome Session")
+    progress_demo = get_passed_or_last_progress(request.user, "Demo")
 
     context = {
         "title": "Your training progress",
-        "lesson_contribution_form": lesson_contribution_form,
-        "lesson_contribution_in_evaluation": (
-            last_lesson_contribution is not None
-            and last_lesson_contribution.state == "n"
-        ),
+        "progress_training": progress_training,
+        "progress_get_involved": progress_get_involved,
+        "progress_welcome": progress_welcome,
+        "progress_demo": progress_demo,
     }
     return render(request, "dashboard/training_progress.html", context)
+
+
+class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
+    model = TrainingProgress
+    form_class = GetInvolvedForm
+    template_name = "get_involved_form.html"
+    success_url = reverse_lazy("training-progress")
+    success_message = (
+        "Thank you. Your Get Involved submission will be evaluated within 7-10 days."
+    )
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Submit your Get Involved activity"
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        base_training_progress = TrainingProgress(
+            trainee=self.request.user,
+            state="n",  # not evaluated yet
+            requirement=TrainingRequirement.objects.get(name="Get Involved"),
+        )
+        kwargs["instance"] = base_training_progress
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.request = request
+        return super().post(request, *args, **kwargs)
+
+
+class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
+    form_class = GetInvolvedForm
+    template_name = "get_involved_form.html"
+    success_url = reverse_lazy("training-progress")
+    success_message = "Your Get Involved submission was updated successfully."
+    pk_url_kwarg = "pk"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[TrainingProgress]:
+        # user should only be able to update progress that belongs to them and has not
+        # been evaluated yet
+        return TrainingProgress.objects.filter(
+            trainee=self.request.user,
+            requirement__name="Get Involved",
+            state="n",
+        )
+
+    def get_context_data(self, **kwargs) -> dict:
+        context = super().get_context_data(**kwargs)
+        context["title"] = "Update your Get Involved submission"
+        return context
+
+
+class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
+    model = TrainingProgress
+    success_url = reverse_lazy("training-progress")
+    success_message = "Your Get Involved submission was deleted."
+    pk_url_kwarg = "pk"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.request = request
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self) -> QuerySet[TrainingProgress]:
+        # user should only be able to delete progress that belongs to them and has not
+        # been evaluated yet
+        return TrainingProgress.objects.filter(
+            trainee=self.request.user,
+            requirement__name="Get Involved",
+            state="n",
+        )
 
 
 # ------------------------------------------------------------
@@ -437,6 +510,15 @@ class SignupForRecruitment(
                 "You have applied to other workshops on the same dates: "
                 f"{', '.join(gen)}",
             )
+
+        instructor_signs_up_for_workshop_signal.send(
+            sender=obj,
+            request=self.request,
+            person_id=obj.person.pk,
+            event_id=obj.recruitment.event.pk,
+            instructor_recruitment_id=obj.recruitment.pk,
+            instructor_recruitment_signup_id=obj.pk,
+        )
 
         return super().form_valid(form)
 

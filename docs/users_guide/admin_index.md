@@ -55,7 +55,7 @@ The following fields are included in the Member view:
 * **Agreement start** and **Agreement end** Start and end dates of the membership agreement.  A notification displays if the membership is not approximately one year long.
 * **Extensions** Extensions are created using the "Extend" button at the bottom of the main membership page. The duration of the extension can be edited here.
 * **Contribution type** What the member contribution was (Financial, Person-days, or other)
-* **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar/index.html) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Instructor training applications using the member code are [manually matched to this member and a training event](#accepting-trainee-applications).
+* **Registration code** A unique registration code used to unlock [Instructor Training registration in Eventbrite](https://carpentries.github.io/instructor-training/training_calendar) and match up the trainee's application to this membership. These are not automated. Eventbrite registration is manually set up within Eventbrite. Instructor training applications using the member code are [manually matched to this member and a training event](#accepting-trainee-applications).
 * **Link to member agreement** Link to the Google Drive folder with the member agreement.
 * **Workshops without admin fee per agreement** Number of workshops allowed in the terms of the agreement.
 * **Public instructor training seats** Number of public instructor training seats allowed in the terms of the agreement.
@@ -377,10 +377,8 @@ Click on the plus sign in the Training Progress line. This will go to a screen w
 ![AMY training progress steps](images/new_training_progress.png)
 
 * **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
-* **Evaluated by** This will default to the current admin user.
-* **Type** This will be the training event (Training), the discussion session (Discussion), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
+* **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
-* **Discarded** This field is not currently used.
 * **Notes** Any free notes from the admin.
 
 ### Issuing Badges

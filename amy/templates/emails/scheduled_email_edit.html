@@ -1,0 +1,18 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+<h1>
+  Scheduled email <code>{{ scheduled_email.subject }}</code>
+  (<relative-time datetime="{{ scheduled_email.scheduled_at.isoformat }}"></relative-time>)
+</h1>
+{% endblock title %}
+
+{% block content %}
+
+{% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
+
+{% crispy form %}
+
+{% endblock %}

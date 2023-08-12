@@ -7,9 +7,9 @@
 {% block content %}
 
 <form role="form" class="form-horizontal training-progress" method="post">
-{% if form.errors.trainees or discard_form.errors.trainees %}
+{% if form.errors.trainees %}
   <div class="alert alert-danger" role="alert">Select at least one trainee.</div>
-{% elif form.errors or discard_form.errors %}
+{% elif form.errors %}
   <div class="alert alert-danger" role="alert">Fix errors below and try again.</div>
 {% endif %}
 
@@ -31,9 +31,6 @@
                          <span class='badge badge-warning'>Not evaluated</span>
                          <span class='badge badge-danger'>Failed</span>
                          <span class='badge badge-info'>Asked to repeat</span>
-                         <!-- 'Discarded' is also strokethrough, but for some reason it would not display in popover -->
-                         <span class='badge badge-dark'>Discarded</span>
-                         </p>
                          <p>Click one of labels below to edit or delete it.</p>
                         "></i>
       </th>
@@ -56,7 +53,7 @@
           <input type="checkbox" name="trainees" value="{{ trainee.pk }}"
                  respond-to-select-all-checkbox
                  email="{{ trainee.email|default:'' }}"
-                 {% if trainee in form.cleaned_data.trainees or trainee in discard_form.cleaned_data.trainees %}checked {% endif %}
+                 {% if trainee in form.cleaned_data.trainees %}checked {% endif %}
           />
         </td>
         <td>
@@ -113,7 +110,7 @@
       </tr>
     {% endfor %}
     </table>
-    <p>{% crispy discard_form %} <a class="btn btn-primary text-light" bulk-email-on-click>Mail selected trainees</a></p>
+    <p><a class="btn btn-primary text-light" bulk-email-on-click>Mail selected trainees</a></p>
     {% pagination all_trainees %}
 
 

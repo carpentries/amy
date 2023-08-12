@@ -1,8 +1,10 @@
+from contextlib import contextmanager
 import datetime
 from typing import Iterable
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django_webtest import WebTest
 import webtest.forms
 
@@ -567,6 +569,24 @@ class TestBase(
             msg='Expected "{}" to be selected '
             "while {} is/are selected.".format(expected, selected),
         )
+
+    @contextmanager
+    def assertValidationErrors(self, fields):
+        """
+        Assert that a validation error is raised, containing all the specified
+        fields, and only the specified fields.
+
+        Snippet by Senko Rašić
+        https://goodcode.io/articles/django-assert-raises-validationerror/
+
+        >>> with assertValidationErrors(["field1","field2"]):
+        >>>     p.full_clean()
+        """
+        try:
+            yield
+            raise AssertionError("ValidationError not raised")
+        except ValidationError as e:
+            self.assertEqual(set(fields), set(e.message_dict.keys()))
 
     def passCaptcha(self, data_dictionary):
         """Extends provided `data_dictionary` with RECAPTCHA pass data."""

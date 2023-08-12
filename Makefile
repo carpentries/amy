@@ -11,17 +11,21 @@ all : commands
 commands : Makefile
 	@sed -n 's/^## //p' $<
 
-## test         : run all tests.
+## test         : run all tests except migration tests.
 test :
-	${MANAGE} test
+	${MANAGE} test --exclude-tag migration_test
 
 ## fast_test    : run all tests really fast.
 fast_test:
-	${MANAGE} test --keepdb --parallel
+	${MANAGE} test --keepdb --parallel --exclude-tag migration_test
 
 ## fast_test_fail	: run all tests really fast, fails as soon as any test fails.
 fast_test_fail:
-	${MANAGE} test --keepdb --parallel --failfast
+	${MANAGE} test --keepdb --parallel --failfast --exclude-tag migration_test
+
+## test_migrations    : test database migrations only
+test_migrations:
+	${MANAGE} test --parallel --tag migration_test
 
 ## dev_database : re-make database using saved data
 dev_database :
@@ -31,6 +35,8 @@ dev_database :
 	${MANAGE} runscript seed_autoemails
 	${MANAGE} runscript seed_communityroles
 	${MANAGE} runscript seed_training_requirements
+	${MANAGE} runscript seed_involvements
+	${MANAGE} runscript seed_emails
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions

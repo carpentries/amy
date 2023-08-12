@@ -4,6 +4,7 @@ from autoemails.models import EmailTemplate
 from communityroles.models import CommunityRoleConfig
 from consents.models import Consent, Term
 from recruitment.models import InstructorRecruitment
+from trainings.models import Involvement
 from workshops.models import (
     Airport,
     Award,
@@ -410,14 +411,27 @@ class TrainingRequirementSerializer(serializers.ModelSerializer):
             "name",
             "url_required",
             "event_required",
+            "involvement_required",
+        )
+
+
+class InvolvementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Involvement
+        fields = (
+            "name",
+            "display_name",
+            "url_required",
+            "date_required",
+            "notes_required",
         )
 
 
 class TrainingProgressSerializer(serializers.ModelSerializer):
     requirement = TrainingRequirementSerializer(many=False, read_only=True)
+    involvement_type = InvolvementSerializer(many=False, read_only=True)
     state = serializers.CharField(source="get_state_display")
     event = EventSerializerSimplified(many=False, read_only=True)
-    evaluated_by = PersonNameSerializer(many=False, read_only=True)
 
     class Meta:
         model = TrainingProgress
@@ -425,11 +439,12 @@ class TrainingProgressSerializer(serializers.ModelSerializer):
             "created_at",
             "last_updated_at",
             "requirement",
+            "involvement_type",
             "state",
-            "discarded",
-            "evaluated_by",
             "event",
             "url",
+            "date",
+            "trainee_notes",
         )
 
 

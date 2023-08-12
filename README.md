@@ -178,7 +178,54 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
     $ pipenv run python manage.py rqworker
     $ pipenv run python manage.py rqscheduler
     ```
+## Run accessibility tests locally
 
+Accessibility tests are run with [Google Lighthouse](https://github.com/GoogleChrome/lighthouse) and [Pa11y](https://pa11y.org) as part of the CI process. It's sometimes helpful to run these programs locally to debug or test changes. For more information on the tests, see the [accessibility tests documentation](docs/accessibility_testing.md)
+
+For both Lighthouse and pa11y tests, Google Chrome or Chromium must be installed. On Ubuntu:
+
+```shell
+sudo apt install google-chrome-stable
+```
+
+### Lighthouse
+
+Uses [lighthouse-ci](https://github.com/GoogleChrome/lighthouse-ci) with configuration defined in [lighthouserc.js](./lighthouserc.js).
+
+Ensure Chrome is on the path by setting the `CHROME_PATH` environment variable.
+
+```shell
+npm install -g @lhci/cli@0.12.x puppeteer
+export CHROME_PATH=/path/to/chrome
+lhci autorun
+```
+
+Lighthouse will exit with a failure code if accessibility failures are found. Reports are stored in the `lighthouse-ci-report/` folder.
+
+### Pa11y
+
+Uses [pa11y-ci](https://github.com/pa11y/pa11y-ci) with configuration defined in [.pa11yci](./.pa11yci).
+
+Change `executablePath` in .pa11yci to point to your Chrome installation.
+
+```shell
+npm install -g pa11y-ci pa11y-ci-reporter-html
+pa11y-ci
+```
+
+Pa11y will exit with a failure code if accessibility failures are found. Reports are stored in the `pa11y-ci-report/` folder.
+
+## Edit the CSS theme
+
+The AMY theme is primarily based on Bootstrap 4. 
+
+To update the custom CSS that sits on top of the Bootstrap theme, edit `amy/static/css/amy.css`.
+
+To override Bootstrap 4 defaults such as colors, edit the [Sass](https://sass-lang.com/) file `amy/static/scss/custom_bootstrap.scss` as required, then compile it to CSS:
+```shell
+$ npx sass amy/static/scss/custom_bootstrap.scss amy/static/css/custom_bootstrap.min.css --style compressed
+```
+See the [Bootstrap documentation](https://getbootstrap.com/docs/4.0/getting-started/theming/) for more guidance on overriding Bootstrap defaults.
 
 [bootstrap]: https://getbootstrap.com/
 [contact-address]: mailto:team@carpentries.org

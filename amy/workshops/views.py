@@ -60,6 +60,7 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
+from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
@@ -866,6 +867,13 @@ def persons_merge(request):
                     "Persons were merged successfully. "
                     "You were redirected to the base "
                     "person.",
+                )
+                persons_merged_signal.send(
+                    sender=base_obj,
+                    request=request,
+                    person_a_id=obj_a.id,
+                    person_b_id=obj_b.id,
+                    selected_person_id=base_obj.id,
                 )
                 return redirect(base_obj.get_absolute_url())
         else:
@@ -2225,6 +2233,14 @@ class MockAwardCreate(
             logger.debug(
                 f"Created {len(roles_result)} Community Roles for badge {badge} and "
                 f"person {person}"
+            )
+
+        if badge.name == "instructor":
+            instructor_badge_awarded_signal.send(
+                sender=self.object,
+                request=self.request,
+                person_id=person.pk,
+                award_id=self.object.pk,
             )
 
         return result

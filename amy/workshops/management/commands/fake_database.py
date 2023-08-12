@@ -20,6 +20,7 @@ from extrequests.models import (
     WorkshopInquiryRequest,
 )
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from trainings.models import Involvement
 from workshops.models import (
     AcademicLevel,
     Airport,
@@ -241,13 +242,10 @@ class Command(BaseCommand):
                 print(f"Error generating fake trainees: {e}")
 
     def fake_training_progresses(self, p, training):
-        trainers = Person.objects.filter(award__badge__name="trainer")
         for r in TrainingRequirement.objects.all():
             if randbool(0.4):
                 notes = ""
-                if (
-                    "Homework" in r.name or "Lesson Contribution" in r.name
-                ) and randbool(0.5):
+                if "Get Involved" in r.name and randbool(0.5):
                     state = "n"
                 else:
                     if randbool(0.90):
@@ -256,23 +254,42 @@ class Command(BaseCommand):
                         state = "a"
                     else:
                         state = "f"
-                        notes = "Failed"
+                        notes += "Failed"
 
-                evaluated_by = None if state == "n" else choice(trainers)
                 event = training if r.name == "Training" else None
-                url = (
-                    self.faker.url()
-                    if ("Homework" in r.name or "Lesson Contribution" in r.name)
-                    else None
-                )
+                if r.involvement_required:
+                    involvement_type = choice(Involvement.objects.all())
+                    date = (
+                        self.faker.date_time_between(start_date="-5y").date()
+                        if involvement_type.date_required
+                        else None
+                    )
+                    url = self.faker.url() if involvement_type.url_required else None
+                    trainee_notes = (
+                        self.faker.sentence()
+                        if involvement_type.notes_required and randbool(0.5)
+                        else ""
+                    )
+                    notes += (
+                        self.faker.sentence()
+                        if involvement_type.notes_required and not trainee_notes
+                        else ""
+                    )
+                else:
+                    involvement_type = None
+                    date = None
+                    url = self.faker.url() if r.url_required else None
+                    trainee_notes = ""
+
                 TrainingProgress.objects.create(
                     trainee=p,
                     requirement=r,
-                    evaluated_by=evaluated_by,
+                    involvement_type=involvement_type,
                     state=state,
-                    discarded=randbool(0.05),
                     event=event,
                     url=url,
+                    date=date,
+                    trainee_notes=trainee_notes,
                     notes=notes,
                 )
 

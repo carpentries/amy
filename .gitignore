@@ -47,3 +47,8 @@ site/
 
 # environment variables
 .env
+
+# accessibility packages
+.lighthouseci
+lighthouse-ci-report
+pa11y-ci-report
