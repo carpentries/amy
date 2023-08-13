@@ -21,7 +21,7 @@ class TestPersonsMergedReceiver(TestCase):
             persons_merged_receiver(None)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE_ENABLED not set, skipping receiver "
+                "EMAIL_MODULE feature flag not set, skipping receiver "
                 "persons_merged_receiver"
             )
 

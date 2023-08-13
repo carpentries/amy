@@ -20,7 +20,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
             instructor_badge_awarded_receiver(None)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE_ENABLED not set, skipping receiver "
+                "EMAIL_MODULE feature flag not set, skipping receiver "
                 "instructor_badge_awarded_receiver"
             )
 

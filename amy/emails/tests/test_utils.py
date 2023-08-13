@@ -9,7 +9,6 @@ import pytz
 from emails.models import ScheduledEmail
 from emails.signals import Signal
 from emails.utils import (
-    check_feature_flag,
     feature_flag_enabled,
     find_signal_by_name,
     immediate_action,
@@ -20,31 +19,25 @@ from emails.utils import (
 from workshops.models import Person
 
 
-class TestCheckFeatureFlag(TestCase):
-    def test_check_feature_flag(self) -> None:
-        with self.settings(EMAIL_MODULE_ENABLED=False):
-            self.assertEqual(check_feature_flag(), False)
-        with self.settings(EMAIL_MODULE_ENABLED=True):
-            self.assertEqual(check_feature_flag(), True)
-
-
 class TestFeatureFlagEnabled(TestCase):
     def test_feature_flag_enabled_decorator(self) -> None:
-        with self.settings(EMAIL_MODULE_ENABLED=False):
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
+            request = RequestFactory().get("/")
 
             @feature_flag_enabled
-            def test_func():
+            def test_func(**kwargs):
                 return True
 
-            self.assertEqual(test_func(), None)
+            self.assertEqual(test_func(request=request), None)
 
-        with self.settings(EMAIL_MODULE_ENABLED=True):
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}):
+            request = RequestFactory().get("/")
 
             @feature_flag_enabled
-            def test_func():
+            def test_func(**kwargs):
                 return True
 
-            self.assertEqual(test_func(), True)
+            self.assertEqual(test_func(request=request), True)
 
 
 class TestImmediateAction(TestCase):

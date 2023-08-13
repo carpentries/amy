@@ -22,7 +22,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
             instructor_declined_from_workshop_receiver(None)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE_ENABLED not set, skipping receiver "
+                "EMAIL_MODULE feature flag not set, skipping receiver "
                 "instructor_declined_from_workshop_receiver"
             )
 

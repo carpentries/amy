@@ -2,12 +2,12 @@ from datetime import datetime, timedelta
 import logging
 from typing import Iterable, cast
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
 from flags import conditions
+from flags.state import flag_enabled
 
 from emails.models import ScheduledEmail
 from emails.signals import Signal
@@ -23,21 +23,15 @@ def session_condition(value, request: HttpRequest, **kwargs):
     return request.session.get(value, False)
 
 
-def check_feature_flag() -> bool:
-    """Receivers will be connected no matter if EMAIL_MODULE_ENABLED is set or not.
-    This function helps check if the receiver should exit early when the feature flag
-    is disabled."""
-    return settings.EMAIL_MODULE_ENABLED is True
-
-
 def feature_flag_enabled(func):
     """Check if the feature flag is enabled before running the receiver.
     If the feature flag is disabled, the receiver will exit early and not run."""
 
     def wrapper(*args, **kwargs):
-        if not check_feature_flag():
+        request = kwargs.get("request")
+        if not (request and flag_enabled("EMAIL_MODULE", request=request)):
             logger.debug(
-                f"EMAIL_MODULE_ENABLED not set, skipping receiver {func.__name__}"
+                f"EMAIL_MODULE feature flag not set, skipping receiver {func.__name__}"
             )
             return
         return func(*args, **kwargs)
