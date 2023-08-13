@@ -158,6 +158,7 @@ THIRD_PARTY_APPS = [
     "django_rq",
     "djangoformsetjs",
     "django_better_admin_arrayfield",
+    "flags",
 ]
 LOCAL_APPS = [
     "amy.workshops.apps.WorkshopsConfig",

@@ -39,6 +39,7 @@ whitenoise = "~=6.1"
 django-better-admin-arrayfield = "==1.4.2"
 django-test-migrations = "~=1.3.0"
 typing-extensions = "*"
+django-flags = "~=5.0.13"
 
 [dev-packages]
 django-webtest = "~=1.9.8"
