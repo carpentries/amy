@@ -17,7 +17,7 @@ class TestInstructorSignsUpForWorkshopReceiver(TestCase):
     @mock.patch("emails.utils.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
-        with self.settings(EMAIL_MODULE_ENABLED=False):
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
             instructor_signs_up_for_workshop_receiver(None)
             # Assert
@@ -41,7 +41,7 @@ class TestInstructorSignsUpForWorkshopReceiver(TestCase):
         # the same receiver list means this receiver has already been connected
         self.assertEqual(original_receivers, new_receivers)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
         organization = Organization.objects.first()
@@ -87,7 +87,7 @@ class TestInstructorSignsUpForWorkshopReceiver(TestCase):
             scheduled_email,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.messages_action_scheduled")
     @mock.patch("emails.actions.immediate_action")
     def test_email_scheduled(
@@ -142,7 +142,7 @@ class TestInstructorSignsUpForWorkshopReceiver(TestCase):
             author=None,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.messages_missing_template")
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock
@@ -178,7 +178,7 @@ class TestInstructorSignsUpForWorkshopReceiver(TestCase):
 
 class TestInstructorSignsUpForWorkshopReceiverIntegration(TestBase):
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("django.contrib.messages.views.messages")
     @mock.patch("emails.actions.messages_action_scheduled")
     def test_integration(

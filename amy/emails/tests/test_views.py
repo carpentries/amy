@@ -16,7 +16,7 @@ from workshops.tests.base import TestBase
 
 
 class TestAllEmailTemplates(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -49,7 +49,7 @@ class TestAllEmailTemplates(TestBase):
 
 
 class TestEmailTemplateDetails(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -84,7 +84,7 @@ class TestEmailTemplateDetails(TestBase):
 
 
 class TestEmailTemplateCreate(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -117,7 +117,7 @@ class TestEmailTemplateCreate(TestBase):
 
 
 class TestEmailTemplateUpdateView(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view_context(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -144,7 +144,7 @@ class TestEmailTemplateUpdateView(TestBase):
             },
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -187,7 +187,7 @@ class TestEmailTemplateUpdateView(TestBase):
 
 
 class TestEmailTemplateDeleteView(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -212,7 +212,7 @@ class TestEmailTemplateDeleteView(TestBase):
 
 
 class TestAllScheduledEmails(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -272,7 +272,7 @@ class TestAllScheduledEmails(TestBase):
 
 
 class TestScheduledEmailDetails(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -326,7 +326,7 @@ class TestScheduledEmailDetails(TestBase):
 
 
 class TestScheduledEmailUpdate(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view_context(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -360,7 +360,7 @@ class TestScheduledEmailUpdate(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -421,7 +421,7 @@ class TestScheduledEmailUpdate(TestBase):
 
 
 class TestScheduledEmailReschedule(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -464,7 +464,7 @@ class TestScheduledEmailReschedule(TestBase):
 
 
 class TestScheduledEmailCancel(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()

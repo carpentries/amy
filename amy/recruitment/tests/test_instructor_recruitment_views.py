@@ -518,7 +518,7 @@ class TestInstructorRecruitmentAddSignup(TestBase):
 
     # Disable email module so that signals don't fail on fetching a mocked object
     # from DB.
-    @override_settings(EMAIL_MODULE_ENABLED=False)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     def test_form_valid(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
@@ -726,7 +726,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
 
     # Disable email module so that signals don't fail on fetching a mocked object
     # from DB.
-    @override_settings(EMAIL_MODULE_ENABLED=False)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     def test_add_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
@@ -762,7 +762,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
 
     # Disable email module so that signals don't fail on fetching a mocked object
     # from DB.
-    @override_settings(EMAIL_MODULE_ENABLED=False)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     def test_remove_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
@@ -789,7 +789,7 @@ class TestInstructorRecruitmentSignupChangeState(FakeRedisTestCaseMixin, TestBas
 
     # Disable email module so that signals don't fail on fetching a mocked object
     # from DB.
-    @override_settings(EMAIL_MODULE_ENABLED=False)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     def test_remove_instructor_task__no_task(self) -> None:
         # Arrange
         super()._setUpRoles()
