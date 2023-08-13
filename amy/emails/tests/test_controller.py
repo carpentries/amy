@@ -207,6 +207,39 @@ class TestEmailController(TestCase):
         )
         self.assertEqual(latest_log.author, person)
 
+    def test_reschedule_cancelled_email(self) -> None:
+        # Arrange
+        old_scheduled_date = datetime(2023, 7, 5, 10, 00, tzinfo=UTC)
+        new_scheduled_date = datetime(2024, 7, 5, 10, 00, tzinfo=UTC)
+        signal = "test_email_template"
+        EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=signal,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+
+        scheduled_email = EmailController.schedule_email(
+            signal,
+            context={"name": "Harry"},
+            scheduled_at=old_scheduled_date,
+            to_header=["harry@potter.com"],
+        )
+        cancelled_scheduled_email = EmailController.cancel_email(scheduled_email)
+
+        # Act
+        rescheduled_email = EmailController.reschedule_email(
+            cancelled_scheduled_email,
+            new_scheduled_date,
+        )
+
+        # Assert
+        self.assertEqual(rescheduled_email.scheduled_at, new_scheduled_date)
+        self.assertEqual(rescheduled_email.state, ScheduledEmailStatus.SCHEDULED)
+
     def test_cancel_email(self) -> None:
         # Arrange
         now = timezone.now()
