@@ -1,4 +1,6 @@
-{% load navigation emails %}
+{% load navigation feature_flags %}
+{% flag_enabled 'EMAIL_MODULE' as EMAIL_MODULE_ENABLED %}
+
 {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow {% if SITE_BANNER_STYLE != 'production' %}navbar-banner-displacement{% endif %}">
       <a class="navbar-brand" href="{% url 'admin-dashboard' %}">AMY</a>
@@ -55,7 +57,6 @@
               <div class="dropdown-divider"></div>
               {% navbar_element "Search" "search" True %}
               {% navbar_element "Recently changed" "changes_log" True %}
-              {% is_email_module_enabled as EMAIL_MODULE_ENABLED %}
               {% if EMAIL_MODULE_ENABLED %}
                 <div class="dropdown-divider"></div>
                 {% navbar_element "Scheduled emails" "all_scheduledemails" True %}
