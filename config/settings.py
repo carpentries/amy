@@ -650,3 +650,22 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
     raise ImproperlyConfigured(
         "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
     )
+
+# Feature Flags
+# -----------------------------------------------------------------------------
+# These flags are used to enable/disable features in AMY.
+# See https://cfpb.github.io/django-flags/ for more details.
+FLAGS = {
+    # Enables instructor recruitment views; this should be enabled in all environments.
+    # The flag itself was not migrated from envvar to django-flags mechanism.
+    # "INSTRUCTOR_RECRUITMENT": [{"condition": "boolean", "value": True}],
+    # -------
+    # Enables the new email module. It's only for logged-in users and it has to be
+    # enabled through `?enable_email_module` GET parameter or the same parameter stored
+    # in request session.
+    "EMAIL_MODULE": [
+        {"condition": "anonymous", "value": False, "required": True},
+        {"condition": "parameter", "value": "enable_email_module="},
+        {"condition": "session", "value": "enable_email_module"},
+    ],
+}

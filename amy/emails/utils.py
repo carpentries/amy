@@ -7,12 +7,20 @@ from django.contrib import messages
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
+from flags import conditions
 
 from emails.models import ScheduledEmail
 from emails.signals import Signal
 from workshops.models import Person
 
 logger = logging.getLogger("amy")
+
+
+@conditions.register("session")  # type: ignore
+def session_condition(value, request: HttpRequest, **kwargs):
+    """Additional condition for django-flags. It reads a specific value from
+    request session."""
+    return request.session.get(value, False)
 
 
 def check_feature_flag() -> bool:
