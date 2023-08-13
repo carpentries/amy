@@ -288,6 +288,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "workshops.middleware.github_auth.GithubAuthMiddleware",
     "consents.middleware.TermsMiddleware",
+    "workshops.middleware.feature_flags.SaveSessionFeatureFlagMiddleware",
 ]
 
 # STATIC
