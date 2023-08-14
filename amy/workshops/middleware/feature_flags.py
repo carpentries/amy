@@ -1,5 +1,5 @@
 from django.http import HttpRequest
-from flags.sources import get_flags
+from flags.sources import Condition, Flag, get_flags
 
 
 class SaveSessionFeatureFlagMiddleware:
@@ -11,16 +11,49 @@ class SaveSessionFeatureFlagMiddleware:
 
     def __call__(self, request: HttpRequest):
         flags = get_flags(request=request)
-        parameter_conditions = [
+        parameter_conditions = self.conditions_of_type(flags, type="parameter")
+
+        for condition in parameter_conditions:
+            param_name = self.get_parameter_name_from_condition(condition)
+
+            # set feature flag in session if the conditions are met
+            if condition.check(request=request):
+                self.enable_feature_flag(request, param_name)
+
+            # disable the feature flag in session of the request parameter is set to
+            # "false"
+            elif (
+                request.session.get(param_name, None) is True
+                and request.GET.get(param_name) == "false"
+            ):
+                self.disable_feature_flag(request, param_name)
+
+        return self.get_response(request)
+
+    @staticmethod
+    def conditions_of_type(flags: dict[str, Flag], type: str) -> list[Condition]:
+        return [
             condition
             for flag_name, flag in flags.items()
             for condition in flag.conditions
-            if condition.condition == "parameter"
+            if condition.condition == type
         ]
 
-        for parameter_condition in parameter_conditions:
-            if parameter_condition.check(request=request):
-                value, *_ = parameter_condition.value.split("=")
-                request.session[value] = True
+    @staticmethod
+    def get_parameter_name_from_condition(condition):
+        try:
+            param_name, *_ = condition.value.split("=")
+        except ValueError:
+            param_name = condition.value
 
-        return self.get_response(request)
+        return param_name
+
+    @staticmethod
+    def enable_feature_flag(request: HttpRequest, flag_name: str):
+        """Set a feature flag in the session."""
+        request.session[flag_name] = True
+
+    @staticmethod
+    def disable_feature_flag(request: HttpRequest, flag_name: str):
+        """Set a feature flag in the session."""
+        request.session[flag_name] = False
