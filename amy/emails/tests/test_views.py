@@ -10,6 +10,8 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
+from emails.types import PersonsMergedContext
+from workshops.models import Person
 from workshops.tests.base import TestBase
 
 
@@ -53,7 +55,7 @@ class TestEmailTemplateDetails(TestBase):
         super()._setUpUsersAndLogin()
         template = EmailTemplate.objects.create(
             name="Test Email Template1",
-            signal="test_email_template1",
+            signal="persons_merged",
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -71,6 +73,13 @@ class TestEmailTemplateDetails(TestBase):
         self.assertEqual(
             rv.context["rendered_body"],
             "<p>Hello, {{ name }}! Nice to meet <strong>you</strong>.</p>",
+        )
+        self.assertEqual(rv.context["body_context_type"], PersonsMergedContext)
+        self.assertEqual(
+            rv.context["body_context_annotations"],
+            {
+                "person": Person,
+            },
         )
 
 
@@ -109,6 +118,33 @@ class TestEmailTemplateCreate(TestBase):
 
 class TestEmailTemplateUpdateView(TestBase):
     @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view_context(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="persons_merged",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        url = reverse("emailtemplate_edit", kwargs={"pk": template.pk})
+
+        # Act
+        rv = self.client.get(url)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(
+            rv.context["body_context_annotations"],
+            {
+                "person": Person,
+            },
+        )
+
+    @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_view(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
@@ -141,7 +177,7 @@ class TestEmailTemplateUpdateView(TestBase):
         template.refresh_from_db()
 
         self.assertEqual(template.name, "Greetings")
-        self.assertEqual(template.signal, "greetings")
+        self.assertEqual(template.signal, "test_email_template1")
         self.assertEqual(template.from_header, "noreply@carpentries.org")
         self.assertEqual(template.reply_to_header, "")
         self.assertEqual(template.cc_header, [])
@@ -242,7 +278,7 @@ class TestScheduledEmailDetails(TestBase):
         super()._setUpUsersAndLogin()
         template = EmailTemplate.objects.create(
             name="Test Email Template1",
-            signal="test_email_template1",
+            signal="persons_merged",
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -290,6 +326,40 @@ class TestScheduledEmailDetails(TestBase):
 
 
 class TestScheduledEmailUpdate(TestBase):
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_view_context(self) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="persons_merged",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = EmailTemplate.get_engine()
+        context = {"name": "Harry"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        url = reverse("scheduledemail_edit", kwargs={"pk": scheduled_email.pk})
+
+        # Act
+        rv = self.client.get(url)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_view(self) -> None:
         # Arrange

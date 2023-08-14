@@ -1,18 +1,14 @@
 from django.test import TestCase
 
 import emails.signals
-from emails.signals import Signal, SignalNameEnum
+from emails.signals import ALL_SIGNALS, Signal, SignalNameEnum
 
 
 class TestSignalName(TestCase):
     def test_choices(self) -> None:
         """Check if SignalName.choices() returns all defined signals."""
         # Arrange
-        signal_names = {
-            emails.signals.__dict__[signal].signal_name
-            for signal in emails.signals.__dict__
-            if signal.endswith("_signal")
-        }
+        signal_names = {item.signal_name for item in ALL_SIGNALS}
 
         # Act
         choices = SignalNameEnum.choices()
@@ -28,7 +24,7 @@ class TestSignal(TestCase):
     def test_signal_name(self) -> None:
         """Check if Signal contains an attribute `signal_name`."""
         # Arrange
-        signal = Signal(signal_name="test_signal_name")
+        signal = Signal(signal_name="test_signal_name", context_type=dict)
 
         # Act
         signal_name = signal.signal_name

@@ -1,4 +1,5 @@
 {% extends "base_nav.html" %}
+{% load emails %}
 
 {% block title %}
 <h1>
@@ -116,7 +117,7 @@
     </td>
   </tr>
   <tr>
-    <th>Template:</th>
+    <th>Email template:</th>
     <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
   </tr>
   <tr>

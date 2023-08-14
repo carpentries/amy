@@ -15,11 +15,17 @@ from emails.signals import (
     persons_merged_signal,
 )
 from emails.types import (
+    AdminSignsInstructorUpContext,
     AdminSignsInstructorUpKwargs,
+    InstructorBadgeAwardedContext,
     InstructorBadgeAwardedKwargs,
+    InstructorConfirmedContext,
     InstructorConfirmedKwargs,
+    InstructorDeclinedContext,
     InstructorDeclinedKwargs,
+    InstructorSignupContext,
     InstructorSignupKwargs,
+    PersonsMergedContext,
     PersonsMergedKwargs,
 )
 from emails.utils import (
@@ -47,7 +53,7 @@ def instructor_badge_awarded_receiver(
     scheduled_at = immediate_action()
     person = Person.objects.get(pk=person_id)
     award = Award.objects.get(pk=award_id)
-    context = {
+    context: InstructorBadgeAwardedContext = {
         "person": person,
         "award": award,
     }
@@ -83,7 +89,7 @@ def instructor_confirmed_for_workshop_receiver(
     instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
         pk=instructor_recruitment_signup_id
     )
-    context = {
+    context: InstructorConfirmedContext = {
         "person": person,
         "event": event,
         "instructor_recruitment_signup": instructor_recruitment_signup,
@@ -120,7 +126,7 @@ def instructor_declined_from_workshop_receiver(
     instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
         pk=instructor_recruitment_signup_id
     )
-    context = {
+    context: InstructorDeclinedContext = {
         "person": person,
         "event": event,
         "instructor_recruitment_signup": instructor_recruitment_signup,
@@ -157,7 +163,7 @@ def instructor_signs_up_for_workshop_receiver(
     instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
         pk=instructor_recruitment_signup_id
     )
-    context = {
+    context: InstructorSignupContext = {
         "person": person,
         "event": event,
         "instructor_recruitment_signup": instructor_recruitment_signup,
@@ -194,7 +200,7 @@ def admin_signs_instructor_up_for_workshop_receiver(
     instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
         pk=instructor_recruitment_signup_id
     )
-    context = {
+    context: AdminSignsInstructorUpContext = {
         "person": person,
         "event": event,
         "instructor_recruitment_signup": instructor_recruitment_signup,
@@ -223,7 +229,7 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
 
     scheduled_at = immediate_action()
     person = Person.objects.get(pk=selected_person_id)
-    context = {
+    context: PersonsMergedContext = {
         "person": person,
     }
     signal = persons_merged_signal.signal_name

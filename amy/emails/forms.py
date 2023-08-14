@@ -38,7 +38,16 @@ class EmailTemplateCreateForm(forms.ModelForm):
         self.fields["bcc_header"].help_text = array_email_field_help_text
 
 
-EmailTemplateUpdateForm = EmailTemplateCreateForm
+class EmailTemplateUpdateForm(EmailTemplateCreateForm):
+    signal = forms.CharField(
+        required=False,
+        disabled=True,
+        help_text=EmailTemplate._meta.get_field("signal").help_text,
+        widget=forms.Select(choices=SignalNameEnum.choices()),
+    )
+
+    class Meta(EmailTemplateCreateForm.Meta):
+        pass
 
 
 class ScheduledEmailUpdateForm(forms.ModelForm):

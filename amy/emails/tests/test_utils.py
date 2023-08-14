@@ -7,9 +7,11 @@ from django.utils import timezone
 import pytz
 
 from emails.models import ScheduledEmail
+from emails.signals import Signal
 from emails.utils import (
     check_feature_flag,
     feature_flag_enabled,
+    find_signal_by_name,
     immediate_action,
     messages_action_scheduled,
     messages_missing_template,
@@ -127,3 +129,36 @@ class TestPersonFromRequest(TestCase):
         result = person_from_request(request)
         # Assert
         self.assertEqual(result, user)
+
+
+class TestFindSignalByName(TestCase):
+    def test_find_signal_by_name__empty_signal_list(self) -> None:
+        # Arrange
+        all_signals = []
+
+        # Act
+        result = find_signal_by_name("test", all_signals)
+
+        # Assert
+        self.assertEqual(result, None)
+
+    def test_find_signal_by_name__signal_not_found(self) -> None:
+        # Arrange
+        all_signals = [Signal(signal_name="not_found", context_type=dict)]
+
+        # Act
+        result = find_signal_by_name("test", all_signals)
+
+        # Assert
+        self.assertEqual(result, None)
+
+    def test_find_signal_by_name__signal_found(self) -> None:
+        # Arrange
+        expected = Signal(signal_name="test", context_type=dict)
+        all_signals = [Signal(signal_name="not_found", context_type=dict), expected]
+
+        # Act
+        result = find_signal_by_name("test", all_signals)
+
+        # Assert
+        self.assertEqual(result, expected)

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import logging
-from typing import cast
+from typing import Iterable, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from emails.models import ScheduledEmail
+from emails.signals import Signal
 from workshops.models import Person
 
 logger = logging.getLogger("amy")
@@ -75,3 +76,12 @@ def person_from_request(request: HttpRequest) -> Person | None:
         return None
 
     return cast(Person, request.user)
+
+
+def find_signal_by_name(
+    signal_name: str, all_signals: Iterable[Signal]
+) -> Signal | None:
+    return next(
+        (signal for signal in all_signals if signal.signal_name == signal_name),
+        None,
+    )

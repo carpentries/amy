@@ -15,7 +15,8 @@ from emails.forms import (
     ScheduledEmailUpdateForm,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
-from emails.utils import person_from_request
+from emails.signals import ALL_SIGNALS
+from emails.utils import find_signal_by_name, person_from_request
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -52,6 +53,14 @@ class EmailTemplateDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetai
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
         context["rendered_body"] = markdownify(self.object.body)
+
+        signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
 
@@ -75,6 +84,14 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdate
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
+
+        signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = signal.context_type.__annotations__
         return context
 
 
