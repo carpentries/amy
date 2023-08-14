@@ -369,6 +369,7 @@ TEMPLATES = [
                 # AMY version
                 "workshops.context_processors.version",
                 "workshops.context_processors.site_banner",
+                "workshops.context_processors.feature_flags_enabled",
                 # Consent enums
                 "consents.context_processors.terms",
                 # GitHub auth

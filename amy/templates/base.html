@@ -33,9 +33,19 @@
   <body>
 
     {% if SITE_BANNER_STYLE == "local" %}
-    <section class="banner banner-local">This is a local version of AMY.</section>
+    <section class="banner banner-local">
+      This is a local version of AMY.
+      {% if user.is_admin %}
+      You have {{ FEATURE_FLAGS_ENABLED|length }} feature flag{{ FEATURE_FLAGS_ENABLED|length|pluralize }} <a href="{% url 'feature_flags' %}">enabled</a>.
+      {% endif %}
+    </section>
     {% elif SITE_BANNER_STYLE == "testing" %}
-    <section class="banner banner-testing">You are on the test version of AMY. Do not use real data. Data may not be persistent.</section>
+    <section class="banner banner-testing">
+      You are on the test version of AMY. Do not use real data. Data may not be persistent.
+      {% if user.is_admin %}
+      You have {{ FEATURE_FLAGS_ENABLED|length }} feature flag{{ FEATURE_FLAGS_ENABLED|length|pluralize }} <a href="{% url 'feature_flags' %}">enabled</a>.
+      {% endif %}
+    </section>
     {% endif %}
 
     {% block navbar %}{% endblock navbar %}
