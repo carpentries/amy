@@ -664,7 +664,7 @@ FLAGS = {
     # in request session.
     "EMAIL_MODULE": [
         {"condition": "anonymous", "value": False, "required": True},
-        {"condition": "parameter", "value": "enable_email_module="},
+        {"condition": "parameter", "value": "enable_email_module=true"},
         {"condition": "session", "value": "enable_email_module"},
     ],
 }
