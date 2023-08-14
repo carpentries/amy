@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest import mock
 
+from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 import pytz
@@ -12,7 +13,9 @@ from emails.utils import (
     immediate_action,
     messages_action_scheduled,
     messages_missing_template,
+    person_from_request,
 )
+from workshops.models import Person
 
 
 class TestCheckFeatureFlag(TestCase):
@@ -95,3 +98,32 @@ class TestMessagesActionScheduled(TestCase):
             f'<a href="{scheduled_email.get_absolute_url()}"><code>'
             f"{scheduled_email.pk}</code></a>.",
         )
+
+
+class TestPersonFromRequest(TestCase):
+    def test_person_from_request__no_user_field(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        # Act
+        result = person_from_request(request)
+        # Assert
+        self.assertIsNone(result)
+
+    def test_person_from_request__anonymous_user(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        request.user = AnonymousUser()
+        # Act
+        result = person_from_request(request)
+        # Assert
+        self.assertIsNone(result)
+
+    def test_person_from_request__authenticated_user(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        user = Person.objects.create()
+        request.user = user
+        # Act
+        result = person_from_request(request)
+        # Assert
+        self.assertEqual(result, user)

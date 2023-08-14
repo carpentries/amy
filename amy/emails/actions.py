@@ -27,6 +27,7 @@ from emails.utils import (
     immediate_action,
     messages_action_scheduled,
     messages_missing_template,
+    person_from_request,
 )
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import Award, Event, Person
@@ -58,6 +59,7 @@ def instructor_badge_awarded_receiver(
             scheduled_at=scheduled_at,
             to_header=[person.email],
             generic_relation_obj=award,
+            author=person_from_request(request),
         )
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
@@ -94,6 +96,7 @@ def instructor_confirmed_for_workshop_receiver(
             scheduled_at=scheduled_at,
             to_header=[person.email],
             generic_relation_obj=instructor_recruitment_signup,
+            author=person_from_request(request),
         )
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
@@ -130,6 +133,7 @@ def instructor_declined_from_workshop_receiver(
             scheduled_at=scheduled_at,
             to_header=[person.email],
             generic_relation_obj=instructor_recruitment_signup,
+            author=person_from_request(request),
         )
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
@@ -166,6 +170,7 @@ def instructor_signs_up_for_workshop_receiver(
             scheduled_at=scheduled_at,
             to_header=[person.email],
             generic_relation_obj=instructor_recruitment_signup,
+            author=person_from_request(request),
         )
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
@@ -202,6 +207,7 @@ def admin_signs_instructor_up_for_workshop_receiver(
             scheduled_at=scheduled_at,
             to_header=[person.email],
             generic_relation_obj=instructor_recruitment_signup,
+            author=person_from_request(request),
         )
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
@@ -228,6 +234,7 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
             scheduled_at=scheduled_at,
             to_header=[person.email],
             generic_relation_obj=person,
+            author=person_from_request(request),
         )
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)

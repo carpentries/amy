@@ -12,6 +12,7 @@ from django.urls import reverse
 from reversion import revisions as reversion
 
 from workshops.mixins import ActiveMixin, CreatedMixin, CreatedUpdatedMixin
+from workshops.models import Person
 
 DJANGO_TEMPLATE_DOCS = (
     "https://docs.djangoproject.com/en/dev/topics/"
@@ -222,6 +223,7 @@ class ScheduledEmailLog(CreatedMixin, models.Model):
     )
 
     scheduled_email = models.ForeignKey(ScheduledEmail, on_delete=models.CASCADE)
+    author = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self) -> str:
         return f"[{self.state_before}->{self.state_after}]: {self.details}"
