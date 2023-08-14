@@ -401,22 +401,21 @@ Click the plus sign in the "Trainees" page or an individual person's record to a
 * **Trainee** The page will pre-fill the trainee if possible. Otherwise, start typing in the person's name.  Auto-completed suggested names will appear.
 * **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or a community contribution (Get Involved). When a choice is made, additional fields may appear (see below).
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
-* **Notes** Any free notes from the admin. Notes are required if the state is set to Failed, or if certain Get Involved activities have been selected.
+* **Notes** Any free notes from the admin. Notes are required if the state is set to Failed, or if certain Get Involved activities have been selected ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
 
 Additional fields will appear depending on the Type selection:
 
 * **Event** The training event that the trainee attended. The trainee should have a learner task at this event (see [Assigning people to events](#assigning-people-to-events)). This field is only required when **Type** is set to Training.
 * **Get Involved activity** The activity that the trainee completed for the Get Involved step. This field is only required when **Type** is set to Get Involved.  
-Each activity, when selected, requires some or all of the **URL**, **Date**, and **Notes** fields to be filled as well. More information on these requirements can be found in the
-[community user guide](./community_index.md#submitting-your-get-involved-step). When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed. 
-* **URL** A URL to a GitHub contribution, workshop website, or other contribution. This field is only required for some Get Involved activities.
-* **Date** The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. This field is required for all Get Involved activities.
+Each activity, when selected, requires some or all of the **URL**, **Date**, and **Notes** fields to be filled as well. The community user guide contains a [table of these requirements](./community_index.md#information-required-for-each-get-involved-activity). When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed. 
+* **URL** A URL to a GitHub contribution, workshop website, or other contribution. This field is only required for some Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
+* **Date** The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. This field is required for all Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)). 
 
 #### Adding checkout progress in bulk
 
 Go to the "Trainees" page under the "More" menu.
 
-To add the same step to many trainees, select the relevant trainees using the checkboxes on the left of each row, then complete the form at the bottom of the page. This form has the same fields as the [individual progress form](#tracking-checkout-progress), minus the **Trainee** field. When the form is submitted, an identical item will be added to each selected trainee.
+To add the same step to many trainees, select the relevant trainees using the checkboxes on the left of each row, then complete the form at the bottom of the page. This form has the same fields as the [individual progress form](#adding-checkout-progress-one-by-one), minus the **Trainee** field. When the form is submitted, an identical item will be added to each selected trainee.
 
 ![Bulk add checkout progress form](images/bulk_add_progress.png)
 
