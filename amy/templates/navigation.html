@@ -94,6 +94,7 @@
               <div class="dropdown-divider"></div>
               {% if user.is_superuser %}
               <a class="dropdown-item" href="{% url 'admin:index' %}">Django Admin</a>
+              <a class="dropdown-item" href="{% url 'feature_flags' %}">Feature flags</a>
               <div class="dropdown-divider"></div>
               {% endif %}
               <a class="dropdown-item" href="{% url 'logout' %}">Log out</a>
