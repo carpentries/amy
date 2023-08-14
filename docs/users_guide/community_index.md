@@ -62,16 +62,20 @@ To submit your "Get Involved" step, click on the blue "Submit a Get Involved Act
 
 ![AMY Training Progress Submit](images/training_progress_submit.png)
 
-This will take you to a page where you can select what type of activity you are submitting and provide additional information.  
+This will take you to a page where you can select what type of activity you are submitting and provide additional information. The table below shows which information must be provided for each activity.
 
 ![AMY Submit Get Involved](images/get_involved_submit.png)
 
-Note the additional information required for each activity:
+#### Information required for each Get Involved activity
 
-* Attended a regional meetup, skill-up, or other community meeting: Date of event and description of event (as additional information)
-* Submitted a contribution to a Carpentries repository on GitHub: Date of contribution and link to contribution.  This must be to a repo in a [Carpentries organisation](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html).  
-* Served as an Instructor or a helper at a Carpentries workshop: Date of workshop and link to workshop website 
-* Other: Date and description of contribution (as additional information)
+| Activity | Date required? | URL required? | Additional information required? |
+| --- | --- | --- | --- |
+| Attended a regional meetup, skill-up, or other community meeting | yes | no | yes, description of event |
+| Submitted a contribution to a Carpentries repository on GitHub | yes | yes, to a contribution to a repo in a [Carpentries organisation](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html) | no |
+| Served as an Instructor or a helper at a Carpentries workshop | yes | yes, to a workshop website | no |
+| Other | yes | no | yes, description of contribution |
+
+#### After submitting
 
 Once you submit your Get Involved step, your summary page will show your submission is pending.  Please come back to this page to check on your progress. You may edit or delete your information at any time before it is evaluated.  If you are asked to repeat, follow the same steps to submit a new "Get Involved" step.
 
