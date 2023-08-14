@@ -368,22 +368,90 @@ Click "Accept & match selected trainees to chosen training." The search screen w
 
 #### Tracking Checkout Progress
 
-The above steps note that a trainee was accepted in to a training event. Completion of the training event and three steps towards trainee checkout can be tracked in AMY.  Each person's record will have a line for Instructor Training Progress. Hover over any item to see more information.
+The above steps note that a trainee was accepted in to a training event. Completion of the training event and three steps towards trainee checkout can be tracked in AMY.
 
-![AMY training progress](images/instructor_training_progress.png)
+A list of all current trainees and their progress can be seen on the "Trainees" page under the "More" menu.
 
-Click on the plus sign in the Training Progress line. This will go to a screen where you can track all the steps towards certification.
+![Trainees link under More menu](images/trainees_menu.png)
 
-![AMY training progress steps](images/new_training_progress.png)
+![All trainees page](images/all_trainees.png)
 
-* **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
-* **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
+The colour of each item represents its state:
+* Green: Passed
+* Blue: Asked to repeat
+* Yellow: Not evaluated yet
+* Red: Failed
+
+Hover over any item to see more information about it, including its state, date, and any notes.
+
+Click on the plus sign next to a trainee's progress to track a new step for that trainee. Click on the "information" or "pencil" icon at the right of each row to view or edit the trainee's profile.
+
+Each person's individual record also has a line for Instructor Training Progress. 
+
+![AMY checkout progress in instructor profile](images/instructor_training_progress.png)
+
+Again, hover over any item to see more information, or click the plus sign to add another item.
+
+#### Adding checkout progress one by one
+
+Click the plus sign in the "Trainees" page or an individual person's record to add a new progress item.
+
+![AMY checkout progress steps](images/new_training_progress.png)
+
+* **Trainee** The page will pre-fill the trainee if possible. Otherwise, start typing in the person's name.  Auto-completed suggested names will appear.
+* **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or a community contribution (Get Involved). When a choice is made, additional fields may appear (see below).
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
-* **Notes** Any free notes from the admin.
+* **Notes** Any free notes from the admin. Notes are required if the state is set to Failed, or if certain Get Involved activities have been selected ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
+
+Additional fields will appear depending on the Type selection:
+
+* **Event** The training event that the trainee attended. The trainee should have a learner task at this event (see [Assigning people to events](#assigning-people-to-events)). This field is only required when **Type** is set to Training.
+* **Get Involved activity** The activity that the trainee completed for the Get Involved step. This field is only required when **Type** is set to Get Involved.  
+Each activity, when selected, requires some or all of the **URL**, **Date**, and **Notes** fields to be filled as well. The community user guide contains a [table of these requirements](./community_index.md#information-required-for-each-get-involved-activity). When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed. 
+* **URL** A URL to a GitHub contribution, workshop website, or other contribution. This field is only required for some Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
+* **Date** The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. This field is required for all Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)). 
+
+#### Adding checkout progress in bulk
+
+Go to the "Trainees" page under the "More" menu.
+
+To add the same step to many trainees, select the relevant trainees using the checkboxes on the left of each row, then complete the form at the bottom of the page. This form has the same fields as the [individual progress form](#adding-checkout-progress-one-by-one), minus the **Trainee** field. When the form is submitted, an identical item will be added to each selected trainee.
+
+![Bulk add checkout progress form](images/bulk_add_progress.png)
+
+#### Updating and deleting checkout progress
+
+Click on any progress item in the "Trainees" view or a person's individual record to view and update the details of that item. On the update page, there is also a "Delete" button in the top right, which will remove the item completely.
+
+Items cannot be updated or deleted in bulk.
+
+#### Evaluating Get Involved submissions
+
+Trainees may submit a contribution for the Get Involved checkout step through the instructor dashboard - see the [community user guide](./community_index.md#submitting-your-get-involved-step) to understand how their side of the submission works.
+
+Submissions must be evaluated by an administrator to ensure that the contribution is valid.
+
+In the "Trainees" page (under the "More" menu), select the filter "Only trainees with unevaluated Get Involved submission" in the left sidebar, then click "Submit" at the bottom of the sidebar. This will update the page to show only trainees awaiting evaluation. 
+
+![Trainees with unevaluated submissions](images/trainees_with_unevaluated_submissions.png)
+
+The relevant items are shown with a yellow background, which represents the "Not evaluated yet" state. Clicking on any of these items takes you to view the details of the submission and update its state. Notice there is an extra non-editable field: **Trainee notes**, which contains information provided by the trainee as part of their submission.
+
+![Progress edit page](images/evaluate_get_involved_submission.png)
+
+#### Issuing Instructor Badge
+
+The Instructor badge can be issued through a person's record (see [Issuing Badges](#issuing-badges)) or through the Trainees page.
+
+On the Trainees page, the **Eligible** column shows whether the trainee has passed all checkout steps and is eligible for an instructor badge. If the trainee is eligible, the "instructor badge" button will appear green and can be clicked to award the badge. If the trainee is not eligible, the button appears grey and the text is struck through.
+
+![Trainees page with instructor eligibility highlighted](images/trainees_eligible_instructor.png)
+
+If eligible, clicking the "instructor badge" button takes you to a screen where the details of the badge can be added. See [Issuing Badges](#issuing-badges) for guidance on completing this form. The **Person** and **Event** fields will be pre-filled.
 
 ### Issuing Badges
 
-The Carpentries has various badges that can be issued, including Data Carpentry Instructor, Software Carpentry Instructor, Trainer, Maintainer, and more.  
+The Carpentries has various badges that can be issued, including Instructor, Trainer, Maintainer, and more.  
 
 An individual badge can be issued by going to a person's record and clicking the `Edit` button.  Choose the `Awards` tab on the next screen.  
 
