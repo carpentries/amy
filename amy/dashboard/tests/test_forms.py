@@ -201,6 +201,21 @@ class TestGetInvolvedForm(TestCase):
             [expected_msg],
         )
 
+    def test_clean_custom_validation__url_case(self):
+        # Arrange
+        github_contribution = Involvement.objects.get(name="GitHub Contribution")
+        data = {
+            "involvement_type": github_contribution,
+            "date": date(2023, 7, 27),
+            "url": "https://GitHub.com/CaRpEnTrIeS",
+        }
+
+        # Act
+        form = GetInvolvedForm(data, instance=self.base_instance)
+
+        # Assert
+        self.assertEqual(form.is_valid(), True)
+
     def test_clean_custom_validation__trainee_notes(self):
         # Arrange
         data = {"involvement_type": self.involvement, "date": date(2023, 7, 27)}
