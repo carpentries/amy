@@ -46,28 +46,21 @@ Execute the following commands on your local machine, not production.
 
 2.  Make sure you have configured repositories:
 
-    - `origin` for your repository on GitHub
-    - `upstream` for [`carpentries/amy` repo on GitHub](https://github.com/carpentries/amy)
+    - `origin` for [`carpentries/amy` repo on GitHub](https://github.com/carpentries/amy)
 
-    For example, this is the correct configuration for `chrismedrela`:
+    For example, this is the correct configuration:
 
         $ git remote -v
-        origin	git@github.com:chrismedrela/amy.git (fetch)
-        origin	git@github.com:chrismedrela/amy.git (push)
-        upstream	git@github.com:carpentries/amy.git (fetch)
-        upstream	git@github.com:carpentries/amy.git (push)
+        origin	git@github.com:carpentries/amy.git (fetch)
+        origin	git@github.com:carpentries/amy.git (push)
 
 3.  Make sure your local `develop` and `main` branches are up to date:
 
         $ git checkout develop
-        $ git pull upstream develop
-        $ git push origin develop
+        $ git pull origin develop
 
         $ git checkout main
-        $ git pull upstream main
-        $ git push origin main
-
-    Pushes to your `origin` remote are optional.
+        $ git pull origin main
 
 4.  Merge `develop` into `main` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
 
@@ -95,7 +88,6 @@ Execute the following commands on your local machine, not production.
 9.  Push `main` and the new tag everywhere:
 
         $ git push origin main --tags
-        $ git push upstream main --tags
 
 10. Bump version on `develop` (dev version corresponding to the milestone):
 
@@ -109,7 +101,6 @@ Execute the following commands on your local machine, not production.
 
 11. And push it everywhere:
 
-        $ git push upstream develop
         $ git push origin develop
 
 ---
