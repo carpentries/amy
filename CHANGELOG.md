@@ -13,6 +13,11 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.2.1 - 2023-08-15
+
+### Bugfixes
+* Make GitHub organization check case insensitive - [#2518](https://github.com/carpentries/amy/pull/2518) by @elichad
+
 ## v4.2 - 2023-08-11
 
 ### Bugfixes
@@ -53,9 +58,9 @@ Then paste output from that script here.
 
 ### Testers
 Thanks to the following AMY users for testing this release:
-* @JFormoso 
+* @JFormoso
 * @karenword
-* @klbarnes20 
+* @klbarnes20
 * @maneesha
 * @quirksahern
 * @ragamouf
