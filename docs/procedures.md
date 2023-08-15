@@ -36,6 +36,8 @@ of new features in case they would have to be released to production
 5. Write to <amy@lists.carpentries.org> mailing list.
    The suggested subject of the new thread is "[AMY] New release v2.X.Y".
 
+6. Post release announcement on Slack with user-appropriate notes on the important changes.
+
 ## Release Procedure
 
 We assume that you want to release AMY v2.X.Y.
@@ -120,4 +122,12 @@ What are the changes:
 
 ## Deployment procedure using Ansible
 
-Moved to relevant repository `README.md`.
+1. Back up the database through the AWS console (RDS > Databases > prod-amy > Actions (top right) > Take snapshot).
+
+2. Check for pending maintenance through the AWS console (RDS > Databases > prod-amy > Maintenance and Backups (below Summary section)) and complete it if needed.
+
+3. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for before deployment of this release.
+
+4. Run the Ansible deployment as described in the relevant repository `README.md`.
+
+5. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for after deployment of this release.
