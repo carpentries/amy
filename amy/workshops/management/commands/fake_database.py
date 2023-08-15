@@ -690,7 +690,6 @@ class Command(BaseCommand):
                 ).date(),
                 other_preferred_dates="Alternatively: soon",
                 language=language,
-                number_attendees=choice(WorkshopRequest.ATTENDEES_NUMBER_CHOICES)[0],
                 audience_description=self.faker.sentence(),
                 administrative_fee=administrative_fee,
                 scholarship_circumstances=scholarship_circumstances,
@@ -778,9 +777,6 @@ class Command(BaseCommand):
                 ).date(),
                 other_preferred_dates="Alternatively: soon",
                 language=language,
-                number_attendees=choice(
-                    WorkshopInquiryRequest.ATTENDEES_NUMBER_CHOICES
-                )[0],
                 administrative_fee=administrative_fee,
                 travel_expences_agreement=True,
                 travel_expences_management=travel_expences_management,

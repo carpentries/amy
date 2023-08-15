@@ -53,7 +53,6 @@ class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase)
             preferred_dates=None,
             other_preferred_dates="soon",
             language=Language.objects.get(name="English"),
-            number_attendees="10-40",
             audience_description="Students of Hogwarts",
             administrative_fee="nonprofit",
             scholarship_circumstances="",

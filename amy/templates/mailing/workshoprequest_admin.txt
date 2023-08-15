@@ -16,7 +16,6 @@ Preferred date: {{ object.preferred_dates|date:'Y-m-d' }}
 Other dates for the workshop: {{ object.other_preferred_dates }}
 "Dates too soon" warning shown: {{ object.preferred_dates_too_soon|yesno }}
 Language the workshop will be conducted in: {{ object.language }}
-Anticipated number of attendees: {{ object.get_number_attendees_display }}
 Audience description: {{ object.audience_description|default:"---" }}
 Administrative fee payment: {{ object.get_administrative_fee_display }}
 Scholarship circumstances: {{ object.scholarship_circumstances|default:"---" }}

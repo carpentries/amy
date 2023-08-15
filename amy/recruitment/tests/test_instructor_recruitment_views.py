@@ -298,7 +298,6 @@ class TestInstructorRecruitmentCreateView(TestBase):
             country="GB",
             audience_description="Students of Hogwarts",
             user_notes="Only Gryffindor allowed.",
-            number_attendees="10-40",
             administrative_fee="nonprofit",
             language=Language.objects.get(name="English"),
         )

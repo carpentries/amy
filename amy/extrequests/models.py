@@ -231,22 +231,6 @@ class WorkshopInquiryRequest(
         ("40-80", "40-80 (two rooms, four instructors)"),
         ("80-120", "80-120 (three rooms, six instructors)"),
     )
-    number_attendees = models.CharField(
-        max_length=15,
-        choices=ATTENDEES_NUMBER_CHOICES,
-        blank=True,
-        null=True,
-        default=None,
-        verbose_name="Anticipated number of attendees",
-        help_text="These recommendations are for in-person workshops. "
-        "This number doesn't need to be precise, but will help us "
-        "decide how many instructors your workshop will need. "
-        "Each workshop must have at least two instructors.<br>"
-        "For online Carpentries workshops, we recommend a maximum of "
-        "20 learners per class. If your workshop attendance will "
-        "exceed 20 learners please be sure to include a note in the "
-        "comments section below. ",
-    )
     FEE_CHOICES = (
         (
             "nonprofit",
