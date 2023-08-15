@@ -33,10 +33,7 @@ of new features in case they would have to be released to production
 
 4. Follow [Deployment Procedure](#deployment-procedure-using-ansible).
 
-5. Write to <amy@lists.carpentries.org> mailing list.
-   The suggested subject of the new thread is "[AMY] New release v2.X.Y".
-
-6. Post release announcement on Slack with user-appropriate notes on the important changes.
+5. Write user-friendly release notes and share them in release announcements on Slack - use `#core-team` for admin-only changes and `#general` for community-facing changes.
 
 ## Release Procedure
 
