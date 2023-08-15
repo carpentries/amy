@@ -1,4 +1,4 @@
-# Manual Deployment Steps
+# Release-Specific Manual Deployment Steps
 
 This document tracks steps that must be completed manually before or after the specified release is deployed.
 
