@@ -186,7 +186,7 @@ class GetInvolvedForm(forms.ModelForm):
     CARPENTRIES_GITHUB_ORGS = [
         "carpentries",
         "datacarpentry",
-        "librarycarpentry",
+        "LibraryCarpentry",
         "swcarpentry",
         "carpentries-es",
         "Reproducible-Science-Curriculum",
@@ -241,16 +241,19 @@ class GetInvolvedForm(forms.ModelForm):
                     f'"{involvement_type.display_name}".'
                 )
                 raise ValidationError(msg)
-            elif not any(
-                f"github.com/{org}" in url for org in self.CARPENTRIES_GITHUB_ORGS
-            ):
-                msg = (
-                    "This URL is not associated with a repository in any of the "
-                    "GitHub organisations owned by The Carpentries. "
-                    "If you need help resolving this error, please contact us using "
-                    "the details at the top of this form."
-                )
-                raise ValidationError(msg)
+            else:
+                case_insensitive_url = url.casefold()
+                if not any(
+                    f"github.com/{org}".casefold() in case_insensitive_url
+                    for org in self.CARPENTRIES_GITHUB_ORGS
+                ):
+                    msg = (
+                        "This URL is not associated with a repository in any of the "
+                        "GitHub organisations owned by The Carpentries. "
+                        "If you need help resolving this error, please contact us "
+                        "using the details at the top of this form."
+                    )
+                    raise ValidationError(msg)
 
         return url
 
