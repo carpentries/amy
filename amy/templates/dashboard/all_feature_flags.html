@@ -14,21 +14,6 @@
       <td>{{ flag.name }}</td>
       <td>
         {% flag_enabled flag.name as state %}{{ state|yesno|title }}.
-
-        {% comment %}
-        This system for enabling or disabling feature flags should only be used if
-        the feature flag can be enabled by a single parameter condition set to `=true`.
-        There should also be included a session condition. For example:
-        ```
-        FLAGS = {
-          "EMAIL_MODULE": [
-              {"condition": "anonymous", "value": False, "required": True},
-              {"condition": "parameter", "value": "enable_email_module=true"},
-              {"condition": "session", "value": "enable_email_module"},
-          ],
-        }
-        ```
-        {% endcomment %}
         {% first_parameter_condition flag as parameter %}
         {% if not state %}
           <a href="?{{ parameter.value|url_strip_param_value }}=true">Enable.</a>

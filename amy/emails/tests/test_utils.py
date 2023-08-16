@@ -15,8 +15,20 @@ from emails.utils import (
     messages_action_scheduled,
     messages_missing_template,
     person_from_request,
+    session_condition,
 )
 from workshops.models import Person
+
+
+class TestSessionCondition(TestCase):
+    def test_session_condition(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        request.session = {"test": True}  # type: ignore
+        # Act
+        result = session_condition(value="test", request=request)
+        # Assert
+        self.assertEqual(result, True)
 
 
 class TestFeatureFlagEnabled(TestCase):
@@ -38,6 +50,23 @@ class TestFeatureFlagEnabled(TestCase):
                 return True
 
             self.assertEqual(test_func(request=request), True)
+
+    def test_feature_flag_enabled_decorator__missing_request(self) -> None:
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
+
+            @feature_flag_enabled
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(), None)
+
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}):
+
+            @feature_flag_enabled
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(), None)
 
 
 class TestImmediateAction(TestCase):

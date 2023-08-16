@@ -24,7 +24,7 @@ class SaveSessionFeatureFlagMiddleware:
             # "false"
             elif (
                 request.session.get(param_name, None) is True
-                and request.GET.get(param_name) == "false"
+                and request.GET.get(param_name, "").lower() == "false"
             ):
                 self.disable_feature_flag(request, param_name)
 
@@ -40,7 +40,7 @@ class SaveSessionFeatureFlagMiddleware:
         ]
 
     @staticmethod
-    def get_parameter_name_from_condition(condition):
+    def get_parameter_name_from_condition(condition: Condition) -> str:
         try:
             param_name, *_ = condition.value.split("=")
         except ValueError:
@@ -49,11 +49,11 @@ class SaveSessionFeatureFlagMiddleware:
         return param_name
 
     @staticmethod
-    def enable_feature_flag(request: HttpRequest, flag_name: str):
+    def enable_feature_flag(request: HttpRequest, flag_name: str) -> None:
         """Set a feature flag in the session."""
         request.session[flag_name] = True
 
     @staticmethod
-    def disable_feature_flag(request: HttpRequest, flag_name: str):
+    def disable_feature_flag(request: HttpRequest, flag_name: str) -> None:
         """Set a feature flag in the session."""
         request.session[flag_name] = False

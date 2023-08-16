@@ -655,11 +655,26 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
 # -----------------------------------------------------------------------------
 # These flags are used to enable/disable features in AMY.
 # See https://cfpb.github.io/django-flags/ for more details.
+
+# ------------
+# The system for enabling or disabling feature flags by users themselves should only be
+# used if the feature flag can be enabled by a single parameter condition set to `=true`
+# Disabling the feature flag should be done by setting the URL parameter to `=false`.
+# There should also be included a session condition. For example:
+#
+#     FLAGS = {
+#         "EMAIL_MODULE": [
+#             {"condition": "anonymous", "value": False, "required": True},
+#             {"condition": "parameter", "value": "enable_email_module=true"},
+#             {"condition": "session", "value": "enable_email_module"},
+#         ],
+#     }
+# ------------
 FLAGS = {
     # Enables instructor recruitment views; this should be enabled in all environments.
     # The flag itself was not migrated from envvar to django-flags mechanism.
     # "INSTRUCTOR_RECRUITMENT": [{"condition": "boolean", "value": True}],
-    # -------
+    # ------------
     # Enables the new email module. It's only for logged-in users and it has to be
     # enabled through `?enable_email_module` GET parameter or the same parameter stored
     # in request session.
