@@ -77,6 +77,7 @@ class TestMessagesMissingTemplate(TestCase):
             request,
             "Email action was not scheduled due to missing template for signal "
             f"{signal}.",
+            extra_tags="only-for-admins",
         )
 
 
@@ -99,6 +100,7 @@ class TestMessagesActionScheduled(TestCase):
             f'<relative-time datetime="{scheduled_at}"></relative-time>: '
             f'<a href="{scheduled_email.get_absolute_url()}"><code>'
             f"{scheduled_email.pk}</code></a>.",
+            extra_tags="only-for-admins",
         )
 
 
