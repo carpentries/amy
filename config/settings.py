@@ -466,6 +466,7 @@ MESSAGE_TAGS = {
     message_constants.WARNING: "warning alert-warning",
     message_constants.ERROR: "error alert-danger",
 }
+ONLY_FOR_ADMINS_TAG = "only-for-admins"
 
 # django-countries
 # -----------------------------------------------------------------------------

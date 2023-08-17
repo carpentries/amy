@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.messages import constants
 from django.contrib.messages.storage.base import Message
 from django.test import RequestFactory, TestCase
@@ -44,7 +45,9 @@ class TestMessageAllowed(TestCase):
         )
         request = RequestFactory().get("/")
         request.user = person
-        message = Message(constants.INFO, "Test message", extra_tags="only-for-admins")
+        message = Message(
+            constants.INFO, "Test message", extra_tags=settings.ONLY_FOR_ADMINS_TAG
+        )
 
         # Act
         result = message_allowed(message, request)
@@ -61,7 +64,9 @@ class TestMessageAllowed(TestCase):
         )
         request = RequestFactory().get("/")
         request.user = person
-        message = Message(constants.INFO, "Test message", extra_tags="only-for-admins")
+        message = Message(
+            constants.INFO, "Test message", extra_tags=settings.ONLY_FOR_ADMINS_TAG
+        )
 
         # Act
         result = message_allowed(message, request)

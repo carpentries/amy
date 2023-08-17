@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
@@ -77,7 +78,7 @@ class TestMessagesMissingTemplate(TestCase):
             request,
             "Email action was not scheduled due to missing template for signal "
             f"{signal}.",
-            extra_tags="only-for-admins",
+            extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
 
@@ -100,7 +101,7 @@ class TestMessagesActionScheduled(TestCase):
             f'<relative-time datetime="{scheduled_at}"></relative-time>: '
             f'<a href="{scheduled_email.get_absolute_url()}"><code>'
             f"{scheduled_email.pk}</code></a>.",
-            extra_tags="only-for-admins",
+            extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
 
