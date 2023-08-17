@@ -1,4 +1,4 @@
-{% load static %}
+{% load static notifications %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -47,7 +47,8 @@
         {% if messages %}
           {% for message in messages %}
             {# if message is tagged as only for admins then show it only for admins #}
-            {% if "only-for-admins" in message.tags and request.user.is_authenticated and request.user.is_admin or "only-for-admins" not in message.tags %}
+            {% message_allowed message request as show_message %}
+            {% if show_message %}
             <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
               {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
               <strong>Error:</strong>
