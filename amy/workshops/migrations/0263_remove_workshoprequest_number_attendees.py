@@ -22,8 +22,8 @@ class Migration(migrations.Migration):
                 max_length=15,
                 choices=ATTENDEES_NUMBER_CHOICES,
                 blank=False,
-                null=True,  # must be made nullable for migration to be reversible
-                default=None,
+                null=False,
+                default="",  # must have a default for migration to be reversible
                 verbose_name="Anticipated number of attendees",
                 help_text="These recommendations are for in-person workshops. "
                 "This number doesn't need to be precise, but will help us "
