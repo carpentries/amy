@@ -225,12 +225,6 @@ class WorkshopInquiryRequest(
         " language, but cannot guarantee the availability of "
         "non-English speaking Instructors.",
     )
-    ATTENDEES_NUMBER_CHOICES = (
-        UNSURE_CHOICE,
-        ("10-40", "10-40 (one room, two instructors)"),
-        ("40-80", "40-80 (two rooms, four instructors)"),
-        ("80-120", "80-120 (three rooms, six instructors)"),
-    )
     FEE_CHOICES = (
         (
             "nonprofit",
