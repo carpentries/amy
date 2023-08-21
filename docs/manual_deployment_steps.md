@@ -16,7 +16,10 @@ Nothing yet.
 
 * Run seeding scripts `seed_training_requirements.py` and `seed_involvements.py` on the server:
     ```
-    $ source .venv/bin/postactivate
-    $ .venv/bin/python manage.py runscript <script>
+    $ sudo su
+    # cd /webapps/amy.carpentries.org/repo/
+    # source .venv/bin/postactivate
+    # .venv/bin/python3 manage.py runscript seed_involvements
+    # .venv/bin/python3 manage.py runscript seed_training_requirements
     ```
 * Merge updated documentation to `develop`
