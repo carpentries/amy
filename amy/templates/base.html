@@ -1,4 +1,4 @@
-{% load static %}
+{% load static notifications %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -46,19 +46,23 @@
         <div class="{% block maincolumn %}col-sm-12 col-md-12{% endblock maincolumn %} main pb-5">
         {% if messages %}
           {% for message in messages %}
-          <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
-            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
-            <strong>Error:</strong>
-            {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
-            <strong>Warning:</strong>
-            {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
-            <strong>Success:</strong>
+            {# if message is tagged as only for admins then show it only for admins #}
+            {% message_allowed message request as show_message %}
+            {% if show_message %}
+            <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+              {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+              <strong>Error:</strong>
+              {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+              <strong>Warning:</strong>
+              {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+              <strong>Success:</strong>
+              {% endif %}
+              {{ message }}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
             {% endif %}
-            {{ message }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
           {% endfor %}
         {% endif %}
 

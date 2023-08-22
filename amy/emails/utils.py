@@ -47,6 +47,7 @@ def messages_missing_template(request: HttpRequest, signal: str) -> None:
     messages.warning(
         request,
         f"Email action was not scheduled due to missing template for signal {signal}.",
+        extra_tags=settings.ONLY_FOR_ADMINS_TAG,
     )
 
 
@@ -64,6 +65,7 @@ def messages_action_scheduled(
             scheduled_email.get_absolute_url(),
             scheduled_email.pk,
         ),
+        extra_tags=settings.ONLY_FOR_ADMINS_TAG,
     )
 
 
