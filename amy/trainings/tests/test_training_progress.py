@@ -210,9 +210,9 @@ class TestTrainingProgressValidation(TestBase):
             requirement=self.event_required,
             trainee=self.admin,
             event=event,
-        )  # do not save to DB as the number of progresses affects the validation
+        )  # do not save to DB as this violates the unique constraint we want to test
         p1.full_clean()  # should be no error if only this progress exists
-        with self.assertValidationErrors(["event"]):
+        with self.assertValidationErrors(["__all__"]):
             p2.full_clean()
 
     def test_involvement_is_required(self):

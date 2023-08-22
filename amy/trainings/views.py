@@ -142,18 +142,29 @@ def all_trainees(request):
                     progress.full_clean()
                     progress.save()
                 except ValidationError as e:
+                    unique_constraint_message = (
+                        "Training progress with this Trainee "
+                        "and Training already exists."
+                    )
+                    if unique_constraint_message in e.messages:
+                        msg = (
+                            f"Trainee {trainee} already has a training progress "
+                            f'for event {form.cleaned_data["event"]}.'
+                        )
+                        e.error_dict["__all__"].append(ValidationError(msg))
                     errors.append(e)
 
             if errors:
                 # build a user-friendly error set
                 for e in errors:
                     for k, v in e.error_dict.items():
+                        error_list = ""
                         for field_error in v:
-                            error_list = " ".join(
-                                [f.message for f in field_error.error_list]
+                            error_list += " " + " ".join(
+                                [str(f.message) for f in field_error.error_list]
                             )
-                            msg = f"{form.fields[k].label}: {error_list}"
-                            messages.error(request, msg)
+                        msg = f"{error_list}"
+                        messages.error(request, msg)
 
                 changed_count = len(form.cleaned_data["trainees"]) - len(errors)
                 info_msg = (
