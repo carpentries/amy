@@ -3,7 +3,7 @@ from flags.sources import Condition, Flag
 
 from workshops.templatetags.feature_flag_conditions import (
     first_parameter_condition,
-    url_strip_param_value,
+    parameter_strip_value,
 )
 
 
@@ -30,18 +30,18 @@ class TestFeatureFlagConditions(TestCase):
         # Assert
         self.assertIsNone(result)
 
-    def test_url_strip_param_value(self):
+    def test_url_parameter_strip_value(self):
         # Arrange
         url = "https://example.com/?test=1asdf"
         # Act
-        result = url_strip_param_value(url)
+        result = parameter_strip_value(url)
         # Assert
         self.assertEqual(result, "https://example.com/?test")
 
-    def test_url_strip_param_value__missing_rhs(self):
+    def test_url_parameter_strip_value__missing_rhs(self):
         # Arrange
         url = "test"
         # Act
-        result = url_strip_param_value(url)
+        result = parameter_strip_value(url)
         # Assert
         self.assertEqual(result, "test")

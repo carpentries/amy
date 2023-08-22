@@ -10,7 +10,7 @@ def first_parameter_condition(flag: Flag) -> Condition | None:
 
 
 @register.filter
-def url_strip_param_value(url: str) -> str:
+def parameter_strip_value(url: str) -> str:
     try:
         value, *_ = url.split("=")
     except ValueError:

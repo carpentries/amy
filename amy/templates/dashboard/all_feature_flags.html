@@ -27,9 +27,9 @@
         {% flag_enabled flag.name as state %}{{ state|yesno|title }}.
         {% first_parameter_condition flag as parameter %}
         {% if not state %}
-          <a href="?{{ parameter.value|url_strip_param_value }}=true">Enable.</a>
+          <a href="?{{ parameter.value|parameter_strip_value }}=true">Enable.</a>
         {% else %}
-          <a href="?{{ parameter.value|url_strip_param_value }}=false">Disable.</a>
+          <a href="?{{ parameter.value|parameter_strip_value }}=false">Disable.</a>
         {% endif %}
       </td>
     </tr>
