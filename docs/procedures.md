@@ -61,34 +61,38 @@ Execute the following commands on your local machine, not production.
         $ git checkout main
         $ git pull origin main
 
-4.  Merge `develop` into `main` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
+4. Create a release branch `release/vX.Y.Z` from `develop`. Major/minor release branches should be based on the `HEAD` of `develop`, but bugfix releases may be based on older commits to avoid including features intended for the next major/minor release.
+
+5. *Bugfix releases only:* Cherry-pick commits from `develop` to `release/vX.Y.Z` as required to fix bugs. Skip any commits that add new features.
+
+6.  Merge `release/vX.Y.Z` into `main` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
 
         $ git checkout main
-        $ git merge --no-ff develop
+        $ git merge --no-ff release/vX.Y.Z
 
-5.  Bump version on `main` (non-dev version corresponding to the milestone):
+7.  Bump version on `main` (non-dev version corresponding to the milestone):
 
         $ # manually edit version in `amy/__init__.py` and `package.json`
         $ # use non-dev version string, e.g. `"v3.3.0"`
         $ git add amy/__init__.py package.json
         $ git commit -m "Bumping version to vX.Y.0"
 
-7.  Just to be safe, run tests:
+8.  Just to be safe, run tests:
 
         $ make test
 
-8.  Tag a release.
+9.  Tag a release.
 
         $ git tag -a "vX.Y.0" -s -m "AMY release vX.Y.0"
 
     Omit `-s` flag if you cannot create signed tags.
     See [Git documentation](https://git-scm.com/book/tr/v2/Git-Tools-Signing-Your-Work) for more info about signed tags.
 
-9.  Push `main` and the new tag everywhere:
+10.  Push `main` and the new tag everywhere:
 
         $ git push origin main --tags
 
-10. Bump version on `develop` (dev version corresponding to the milestone):
+11. Bump version on `develop` (dev version corresponding to the milestone):
 
         $ git checkout develop
         $ # manually edit version in `amy/__init__.py` and `package.json`
@@ -98,28 +102,15 @@ Execute the following commands on your local machine, not production.
 
     This step is only needed if next development cycle begins (ie. no hotfix release was done).
 
-11. And push it everywhere:
+12. And push it everywhere:
 
         $ git push origin develop
 
 ---
 
-**Note:** it is acceptable to use a release branch as a base for release. This is very
-useful for example if a bugfix release must be created, but a feature from upcoming
-minor/major release has already been merged to `develop`. This is also useful when multiple
-features are worked on simultaneously.
-
-What are the changes:
-
-1. Code is branched out from `develop` (not necessarily the `HEAD`) to `release/vX.Y.Z`
-   branch.
-2. Optional cherry-picks follow from `develop` to `release/vX.Y.Z`.
-3. Release branch is merged to `main` with `--no-ff` option.
-
-
 ## Deployment procedure using Ansible
 
-1. Back up the database through the AWS console (RDS > Databases > (cluster name) > Actions (top right) > Take snapshot). Use the naming scheme `vA-B-C-YYYY-MM-DD` for current version A.B.C (i.e. the version before the one that will be deployed) and date YYYY-MM-DD, e.g. `v4-2-0-2023-08-12`.
+1. Back up the database through the AWS console (RDS > Databases > (cluster name) > Actions (top right) > Take snapshot). Use the naming scheme `vA-B-C-YYYY-MM-DD` for version A.B.C (the version before the one that will be deployed) and date YYYY-MM-DD, e.g. `v4-2-0-2023-08-12`.
 
 2. Check for pending maintenance through the AWS console (RDS > Databases > (cluster name) > Maintenance and Backups (below Summary section)) and complete it if needed.
 
