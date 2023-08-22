@@ -55,6 +55,31 @@ class TestEmailController(TestCase):
                 to_header=["harry@potter.com"],
             )
 
+    def test_schedule_email__inactive_template(self) -> None:
+        # Arrange
+        now = timezone.now()
+        signal = "test_email_template"
+        EmailTemplate.objects.create(
+            active=False,
+            name="Test Email Template",
+            signal=signal,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            # invalid Django template syntax
+            subject="Greetings",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+
+        # Act & Assert
+        with self.assertRaises(EmailTemplate.DoesNotExist):
+            EmailController.schedule_email(
+                signal,
+                context={"name": "Harry"},
+                scheduled_at=now,
+                to_header=["harry@potter.com"],
+            )
+
     def test_schedule_email__invalid_template(self) -> None:
         # Arrange
         now = timezone.now()

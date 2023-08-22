@@ -21,6 +21,7 @@ class EmailTemplateCreateForm(forms.ModelForm):
         model = EmailTemplate
         fields = [
             "name",
+            "active",
             "signal",
             "from_header",
             "reply_to_header",

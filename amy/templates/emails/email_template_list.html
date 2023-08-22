@@ -14,6 +14,7 @@
       <tr>
         <th>ID</th>
         <th>Name</th>
+        <th>Active</th>
         <th>Signal</th>
         <th>From</th>
         <th>Reply-To</th>
@@ -26,6 +27,7 @@
       <tr>
         <td><a href="{{ template.get_absolute_url }}">{{ template.id }}</a></td>
         <td>{{ template.name }}</td>
+        <td>{{ template.active|yesno }}</td>
         <td><code>{{ template.signal }}</code></td>
         <td>{{ template.from_header }}</td>
         <td>{{ template.reply_to_header|default:"&mdash;" }}</td>
