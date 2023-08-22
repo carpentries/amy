@@ -3,6 +3,17 @@
 
 {% block content %}
 
+<p class="lead">
+  Feature flags, also known as feature toggles, are a development technique used in web
+  applications to enable or disable specific features or functionalities without the need
+  for code changes. This allows developers to control the release of new features,
+  experiment with different options, and manage user experiences dynamically.
+</p>
+<p class="lead">
+  If you have enabled a feature flag, remember that it's active only for you and not for
+  others, unless they also enable the same feature flag.
+</p>
+
 {% if feature_flags %}
   <table class="table table-striped">
     <thead>
