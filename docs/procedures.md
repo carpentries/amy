@@ -119,9 +119,9 @@ What are the changes:
 
 ## Deployment procedure using Ansible
 
-1. Back up the database through the AWS console (RDS > Databases > prod-amy > Actions (top right) > Take snapshot).
+1. Back up the database through the AWS console (RDS > Databases > (cluster name) > Actions (top right) > Take snapshot). Use the naming scheme `vA-B-C-YYYY-MM-DD` for current version A.B.C (i.e. the version before the one that will be deployed) and date YYYY-MM-DD, e.g. `v4-2-0-2023-08-12`.
 
-2. Check for pending maintenance through the AWS console (RDS > Databases > prod-amy > Maintenance and Backups (below Summary section)) and complete it if needed.
+2. Check for pending maintenance through the AWS console (RDS > Databases > (cluster name) > Maintenance and Backups (below Summary section)) and complete it if needed.
 
 3. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for before deployment of this release.
 
