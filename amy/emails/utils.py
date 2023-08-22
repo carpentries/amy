@@ -7,7 +7,6 @@ from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
 from flags import conditions
-from flags.state import flag_enabled
 
 from emails.models import ScheduledEmail
 from emails.signals import Signal
@@ -21,22 +20,6 @@ def session_condition(value, request: HttpRequest, **kwargs):
     """Additional condition for django-flags. It reads a specific value from
     request session."""
     return request.session.get(value, False)
-
-
-def feature_flag_enabled(func):
-    """Check if the feature flag is enabled before running the receiver.
-    If the feature flag is disabled, the receiver will exit early and not run."""
-
-    def wrapper(*args, **kwargs):
-        request = kwargs.get("request")
-        if not (request and flag_enabled("EMAIL_MODULE", request=request)):
-            logger.debug(
-                f"EMAIL_MODULE feature flag not set, skipping receiver {func.__name__}"
-            )
-            return
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 def immediate_action() -> datetime:

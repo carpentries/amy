@@ -14,15 +14,16 @@ from workshops.tests.base import TestBase, consent_to_all_required_consents
 
 
 class TestInstructorSignsUpForWorkshopReceiver(TestCase):
-    @mock.patch("emails.utils.logger")
+    @mock.patch("workshops.utils.feature_flags.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
+        request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            instructor_signs_up_for_workshop_receiver(None)
+            instructor_signs_up_for_workshop_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping receiver "
+                "EMAIL_MODULE feature flag not set, skipping "
                 "instructor_signs_up_for_workshop_receiver"
             )
 

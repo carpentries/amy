@@ -9,7 +9,6 @@ import pytz
 from emails.models import ScheduledEmail
 from emails.signals import Signal
 from emails.utils import (
-    feature_flag_enabled,
     find_signal_by_name,
     immediate_action,
     messages_action_scheduled,
@@ -29,44 +28,6 @@ class TestSessionCondition(TestCase):
         result = session_condition(value="test", request=request)
         # Assert
         self.assertEqual(result, True)
-
-
-class TestFeatureFlagEnabled(TestCase):
-    def test_feature_flag_enabled_decorator(self) -> None:
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
-            request = RequestFactory().get("/")
-
-            @feature_flag_enabled
-            def test_func(**kwargs):
-                return True
-
-            self.assertEqual(test_func(request=request), None)
-
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}):
-            request = RequestFactory().get("/")
-
-            @feature_flag_enabled
-            def test_func(**kwargs):
-                return True
-
-            self.assertEqual(test_func(request=request), True)
-
-    def test_feature_flag_enabled_decorator__missing_request(self) -> None:
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
-
-            @feature_flag_enabled
-            def test_func(**kwargs):
-                return True
-
-            self.assertEqual(test_func(), None)
-
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}):
-
-            @feature_flag_enabled
-            def test_func(**kwargs):
-                return True
-
-            self.assertEqual(test_func(), None)
 
 
 class TestImmediateAction(TestCase):

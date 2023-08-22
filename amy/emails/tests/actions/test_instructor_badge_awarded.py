@@ -12,15 +12,16 @@ from workshops.tests.base import TestBase
 
 
 class TestInstructorBadgeAwardedReceiver(TestCase):
-    @mock.patch("emails.utils.logger")
+    @mock.patch("workshops.utils.feature_flags.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
+        request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            instructor_badge_awarded_receiver(None)
+            instructor_badge_awarded_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping receiver "
+                "EMAIL_MODULE feature flag not set, skipping "
                 "instructor_badge_awarded_receiver"
             )
 
