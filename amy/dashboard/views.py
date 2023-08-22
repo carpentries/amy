@@ -64,7 +64,7 @@ from workshops.models import (
     TrainingRequest,
     TrainingRequirement,
 )
-from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
+from workshops.utils.access import admin_required, login_required
 
 # Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = [TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE, TermEnum.MAY_PUBLISH_NAME]
@@ -744,7 +744,7 @@ def search(request):
 # ------------------------------------------------------------
 
 
-class AllFeatureFlags(OnlyForAdminsMixin, TemplateView):
+class AllFeatureFlags(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/all_feature_flags.html"
 
     def get(self, request: HttpRequest, *args, **kwargs):
