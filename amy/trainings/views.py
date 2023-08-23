@@ -158,12 +158,11 @@ def all_trainees(request):
                 # build a user-friendly error set
                 for e in errors:
                     for k, v in e.error_dict.items():
-                        error_list = ""
+                        msg = ""
                         for field_error in v:
-                            error_list += " " + " ".join(
+                            msg += " " + " ".join(
                                 [str(f.message) for f in field_error.error_list]
                             )
-                        msg = f"{error_list}"
                         messages.error(request, msg)
 
                 changed_count = len(form.cleaned_data["trainees"]) - len(errors)
