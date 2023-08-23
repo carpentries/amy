@@ -390,3 +390,30 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
         self.assertIsNone(demo_progress.involvement_type)
         self.assertIsNone(demo_progress.date)
         self.assertEqual(demo_progress.notes, "")
+
+
+class TestWorkshops0263Rollback(MigratorTestCase):
+    migrate_from = ("workshops", "0263_remove_workshoprequest_number_attendees")
+    migrate_to = (
+        "workshops",
+        "0262_alter_trainingrequest_training_completion_agreement",
+    )
+
+    def prepare(self):
+        """Prepare some data before the migration."""
+        # create some requests
+        WorkshopRequest = self.old_state.apps.get_model("workshops", "WorkshopRequest")
+        Language = self.old_state.apps.get_model("workshops", "Language")
+        WorkshopRequest.objects.create(
+            location="London",
+            country="GB",
+            language=Language.objects.get(name="English"),
+            administrative_fee="nonprofit",
+            travel_expences_agreement=True,
+        )
+
+    def test_workshops_0263_rollback(self):
+        """Ensure the migration can be rolled back without an error."""
+        WorkshopRequest = self.new_state.apps.get_model("workshops", "WorkshopRequest")
+        request = WorkshopRequest.objects.get(location="London")
+        self.assertEqual(request.number_attendees, "")
