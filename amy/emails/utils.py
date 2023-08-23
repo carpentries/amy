@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import logging
 from typing import Iterable, cast
 
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest
 from django.utils import timezone
