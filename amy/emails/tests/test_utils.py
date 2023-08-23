@@ -10,42 +10,25 @@ import pytz
 from emails.models import ScheduledEmail
 from emails.signals import Signal
 from emails.utils import (
-    check_feature_flag,
-    feature_flag_enabled,
     find_signal_by_name,
     immediate_action,
     messages_action_scheduled,
     messages_missing_template,
     person_from_request,
+    session_condition,
 )
 from workshops.models import Person
 
 
-class TestCheckFeatureFlag(TestCase):
-    def test_check_feature_flag(self) -> None:
-        with self.settings(EMAIL_MODULE_ENABLED=False):
-            self.assertEqual(check_feature_flag(), False)
-        with self.settings(EMAIL_MODULE_ENABLED=True):
-            self.assertEqual(check_feature_flag(), True)
-
-
-class TestFeatureFlagEnabled(TestCase):
-    def test_feature_flag_enabled_decorator(self) -> None:
-        with self.settings(EMAIL_MODULE_ENABLED=False):
-
-            @feature_flag_enabled
-            def test_func():
-                return True
-
-            self.assertEqual(test_func(), None)
-
-        with self.settings(EMAIL_MODULE_ENABLED=True):
-
-            @feature_flag_enabled
-            def test_func():
-                return True
-
-            self.assertEqual(test_func(), True)
+class TestSessionCondition(TestCase):
+    def test_session_condition(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        request.session = {"test": True}  # type: ignore
+        # Act
+        result = session_condition(value="test", request=request)
+        # Assert
+        self.assertEqual(result, True)
 
 
 class TestImmediateAction(TestCase):

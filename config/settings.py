@@ -46,7 +46,6 @@ env = environ.Env(
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
     # Feature flags
     AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
-    AMY_EMAIL_MODULE_ENABLED=(bool, False),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -158,6 +157,7 @@ THIRD_PARTY_APPS = [
     "django_rq",
     "djangoformsetjs",
     "django_better_admin_arrayfield",
+    "flags",
 ]
 LOCAL_APPS = [
     "amy.workshops.apps.WorkshopsConfig",
@@ -287,6 +287,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "workshops.middleware.github_auth.GithubAuthMiddleware",
     "consents.middleware.TermsMiddleware",
+    "workshops.middleware.feature_flags.SaveSessionFeatureFlagMiddleware",
 ]
 
 # STATIC
@@ -368,6 +369,7 @@ TEMPLATES = [
                 # AMY version
                 "workshops.context_processors.version",
                 "workshops.context_processors.site_banner",
+                "workshops.context_processors.feature_flags_enabled",
                 # Consent enums
                 "consents.context_processors.terms",
                 # GitHub auth
@@ -551,6 +553,23 @@ LOGGING = {
 # -----------------------------------------------------------------------------
 INTERNAL_IPS = ["127.0.0.1", "::1"]
 DEBUG_TOOLBAR_CONFIG = {"SHOW_COLLAPSED": True}
+DEBUG_TOOLBAR_PANELS = [
+    "debug_toolbar.panels.history.HistoryPanel",
+    "debug_toolbar.panels.versions.VersionsPanel",
+    "debug_toolbar.panels.timer.TimerPanel",
+    "debug_toolbar.panels.settings.SettingsPanel",
+    "debug_toolbar.panels.headers.HeadersPanel",
+    "debug_toolbar.panels.request.RequestPanel",
+    "debug_toolbar.panels.sql.SQLPanel",
+    "debug_toolbar.panels.staticfiles.StaticFilesPanel",
+    "debug_toolbar.panels.templates.TemplatesPanel",
+    "debug_toolbar.panels.cache.CachePanel",
+    "debug_toolbar.panels.signals.SignalsPanel",
+    "debug_toolbar.panels.redirects.RedirectsPanel",
+    "debug_toolbar.panels.profiling.ProfilingPanel",
+    "flags.panels.FlagsPanel",
+    "flags.panels.FlagChecksPanel",
+]
 
 # Django-contrib-comments
 # -----------------------------------------------------------------------------
@@ -604,7 +623,6 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRE
 # -----------------------------------------------------------------------------
 # This module is the next version of Autoemails.
 EMAIL_TEMPLATE_ENGINE_BACKEND = "db_backend"
-EMAIL_MODULE_ENABLED = env("AMY_EMAIL_MODULE_ENABLED")
 
 # Reports
 # -----------------------------------------------------------------------------
@@ -633,3 +651,37 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
     raise ImproperlyConfigured(
         "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
     )
+
+# Feature Flags
+# -----------------------------------------------------------------------------
+# These flags are used to enable/disable features in AMY.
+# See https://cfpb.github.io/django-flags/ for more details.
+
+# ------------
+# The system for enabling or disabling feature flags by users themselves should only be
+# used if the feature flag can be enabled by a single parameter condition set to `=true`
+# Disabling the feature flag should be done by setting the URL parameter to `=false`.
+# There should also be included a session condition. For example:
+#
+#     FLAGS = {
+#         "EMAIL_MODULE": [
+#             {"condition": "anonymous", "value": False, "required": True},
+#             {"condition": "parameter", "value": "enable_email_module=true"},
+#             {"condition": "session", "value": "enable_email_module"},
+#         ],
+#     }
+# ------------
+FLAGS = {
+    # Enables instructor recruitment views; this should be enabled in all environments.
+    # The flag itself was not migrated from envvar to django-flags mechanism.
+    # "INSTRUCTOR_RECRUITMENT": [{"condition": "boolean", "value": True}],
+    # ------------
+    # Enables the new email module. It's only for logged-in users and it has to be
+    # enabled through `?enable_email_module` GET parameter or the same parameter stored
+    # in request session.
+    "EMAIL_MODULE": [
+        {"condition": "anonymous", "value": False, "required": True},
+        {"condition": "parameter", "value": "enable_email_module=true"},
+        {"condition": "session", "value": "enable_email_module"},
+    ],
+}

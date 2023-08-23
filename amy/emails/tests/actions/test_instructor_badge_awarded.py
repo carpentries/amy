@@ -12,15 +12,16 @@ from workshops.tests.base import TestBase
 
 
 class TestInstructorBadgeAwardedReceiver(TestCase):
-    @mock.patch("emails.utils.logger")
+    @mock.patch("workshops.utils.feature_flags.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
-        with self.settings(EMAIL_MODULE_ENABLED=False):
+        request = RequestFactory().get("/")
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            instructor_badge_awarded_receiver(None)
+            instructor_badge_awarded_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE_ENABLED not set, skipping receiver "
+                "EMAIL_MODULE feature flag not set, skipping "
                 "instructor_badge_awarded_receiver"
             )
 
@@ -37,7 +38,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         # the same receiver list means this receiver has already been connected
         self.assertEqual(original_receivers, new_receivers)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
         badge = Badge.objects.create(name="instructor")
@@ -73,7 +74,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
             scheduled_email,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.messages_action_scheduled")
     @mock.patch("emails.actions.immediate_action")
     def test_email_scheduled(
@@ -116,7 +117,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
             author=None,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.messages_missing_template")
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock
@@ -141,7 +142,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
 
 
 class TestInstructorBadgeAwardedReceiverIntegration(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
         self._setUpUsersAndLogin()

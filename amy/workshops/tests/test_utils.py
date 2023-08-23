@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
+from unittest.mock import patch
 
-from django.test import RequestFactory
+from django.test import RequestFactory, TestCase
 from django.utils import timezone
 import requests.exceptions
 import requests_mock
@@ -12,6 +13,7 @@ from workshops.tests.base import TestBase
 from workshops.utils.consents import archive_least_recent_active_consents
 from workshops.utils.dates import human_daterange
 from workshops.utils.emails import match_notification_email
+from workshops.utils.feature_flags import feature_flag_enabled
 from workshops.utils.metadata import (
     datetime_decode,
     datetime_match,
@@ -1229,3 +1231,59 @@ class TestArchiveLeastRecentActiveConsents(TestBase):
         for consent in consents:
             self.assertIsNone(consent.term_option)
             self.assertEqual(consent.person, self.base_obj)
+
+
+class TestFeatureFlagEnabled(TestCase):
+    def test_feature_flag_enabled_decorator(self) -> None:
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+            request = RequestFactory().get("/")
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(request=request), None)
+            mock_logger.debug.assert_called_once_with(
+                "EMAIL_MODULE feature flag not set, skipping test_func"
+            )
+
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+            request = RequestFactory().get("/")
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(request=request), True)
+            mock_logger.debug.assert_not_called()
+
+    def test_feature_flag_enabled_decorator__missing_request(self) -> None:
+        DEBUG_MSG = (
+            "Cannot check EMAIL_MODULE feature flag, `request` parameter to "
+            "test_func is missing"
+        )
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(), None)
+            mock_logger.debug.assert_called_once_with(DEBUG_MSG)
+
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(), None)
+            mock_logger.debug.assert_called_once_with(DEBUG_MSG)

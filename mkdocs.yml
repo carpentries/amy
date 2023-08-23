@@ -40,6 +40,7 @@ nav:
           - 'Community Roles': './design/projects/2021_community_roles.md'
           - 'Instructor Selection': './design/projects/2021_instructor_selection.md'
           - 'Single Instructor Badge': './design/projects/2021_single_instructor_badge.md'
+        - 'Feature flags': 'design/feature_flags.md'
     - 'About The Carpentries':
         - 'The Carpentries': 'https://carpentries.org'
         - 'Data Carpentry': 'https://datacarpentry.org/'

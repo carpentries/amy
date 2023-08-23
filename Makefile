@@ -29,7 +29,7 @@ test_migrations:
 
 ## dev_database : re-make database using saved data
 dev_database :
-	${MANAGE} reset_db
+	${MANAGE} reset_db --skip-checks
 	${MANAGE} migrate
 	${MANAGE} runscript seed_badges
 	${MANAGE} runscript seed_autoemails

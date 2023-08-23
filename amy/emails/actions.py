@@ -29,7 +29,6 @@ from emails.types import (
     PersonsMergedKwargs,
 )
 from emails.utils import (
-    feature_flag_enabled,
     immediate_action,
     messages_action_scheduled,
     messages_missing_template,
@@ -37,12 +36,13 @@ from emails.utils import (
 )
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import Award, Event, Person
+from workshops.utils.feature_flags import feature_flag_enabled
 
 logger = logging.getLogger("amy")
 
 
 @receiver(instructor_badge_awarded_signal)
-@feature_flag_enabled
+@feature_flag_enabled("EMAIL_MODULE")
 def instructor_badge_awarded_receiver(
     sender: Any, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
 ) -> None:
@@ -74,7 +74,7 @@ def instructor_badge_awarded_receiver(
 
 
 @receiver(instructor_confirmed_for_workshop_signal)
-@feature_flag_enabled
+@feature_flag_enabled("EMAIL_MODULE")
 def instructor_confirmed_for_workshop_receiver(
     sender: Any, **kwargs: Unpack[InstructorConfirmedKwargs]
 ) -> None:
@@ -111,7 +111,7 @@ def instructor_confirmed_for_workshop_receiver(
 
 
 @receiver(instructor_declined_from_workshop_signal)
-@feature_flag_enabled
+@feature_flag_enabled("EMAIL_MODULE")
 def instructor_declined_from_workshop_receiver(
     sender: Any, **kwargs: Unpack[InstructorDeclinedKwargs]
 ) -> None:
@@ -148,7 +148,7 @@ def instructor_declined_from_workshop_receiver(
 
 
 @receiver(instructor_signs_up_for_workshop_signal)
-@feature_flag_enabled
+@feature_flag_enabled("EMAIL_MODULE")
 def instructor_signs_up_for_workshop_receiver(
     sender: Any, **kwargs: Unpack[InstructorSignupKwargs]
 ) -> None:
@@ -185,7 +185,7 @@ def instructor_signs_up_for_workshop_receiver(
 
 
 @receiver(admin_signs_instructor_up_for_workshop_signal)
-@feature_flag_enabled
+@feature_flag_enabled("EMAIL_MODULE")
 def admin_signs_instructor_up_for_workshop_receiver(
     sender: Any, **kwargs: Unpack[AdminSignsInstructorUpKwargs]
 ) -> None:
@@ -222,7 +222,7 @@ def admin_signs_instructor_up_for_workshop_receiver(
 
 
 @receiver(persons_merged_signal)
-@feature_flag_enabled
+@feature_flag_enabled("EMAIL_MODULE")
 def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) -> None:
     request = kwargs["request"]
     selected_person_id = kwargs["selected_person_id"]

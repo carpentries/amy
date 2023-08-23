@@ -14,15 +14,16 @@ from workshops.tests.base import TestBase
 
 
 class TestInstructorConfirmedForWorkshopReceiver(TestCase):
-    @mock.patch("emails.utils.logger")
+    @mock.patch("workshops.utils.feature_flags.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
-        with self.settings(EMAIL_MODULE_ENABLED=False):
+        request = RequestFactory().get("/")
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            instructor_confirmed_for_workshop_receiver(None)
+            instructor_confirmed_for_workshop_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE_ENABLED not set, skipping receiver "
+                "EMAIL_MODULE feature flag not set, skipping "
                 "instructor_confirmed_for_workshop_receiver"
             )
 
@@ -41,7 +42,7 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
         # the same receiver list means this receiver has already been connected
         self.assertEqual(original_receivers, new_receivers)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
         organization = Organization.objects.first()
@@ -87,7 +88,7 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
             scheduled_email,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.messages_action_scheduled")
     @mock.patch("emails.actions.immediate_action")
     def test_email_scheduled(
@@ -142,7 +143,7 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
             author=None,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.messages_missing_template")
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock
@@ -178,7 +179,7 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
 
 class TestInstructorConfirmedForWorkshopReceiverIntegration(TestBase):
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("django.contrib.messages.views.messages")
     @mock.patch("emails.actions.messages_action_scheduled")
     def test_integration(

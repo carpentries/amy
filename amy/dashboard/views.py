@@ -15,13 +15,15 @@ from django.db.models import (
     When,
 )
 from django.forms.widgets import HiddenInput
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
-from django.views.generic import View
+from django.views.generic import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
+from flags.sources import get_flags
 
 from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
@@ -737,3 +739,21 @@ def search(request):
         "training_requests": training_requests,
     }
     return render(request, "dashboard/search.html", context)
+
+
+# ------------------------------------------------------------
+
+
+class AllFeatureFlags(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/all_feature_flags.html"
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        self.request = request
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        flags = get_flags(request=self.request)
+        context["feature_flags"] = sorted(flags.values(), key=lambda x: x.name)
+        context["title"] = "Feature flags"
+        return context
