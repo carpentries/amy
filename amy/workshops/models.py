@@ -2667,22 +2667,6 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         elif not requirement.event_required and self.event:
             return self.get_not_required_error(requirement)
 
-        if self.event and hasattr(self, "trainee") and self.trainee:
-            # check this trainee has a learner task for this event
-            try:
-                Task.objects.get(
-                    person=self.trainee,
-                    event=self.event,
-                    role=Role.objects.get(name="learner"),
-                )
-            except Task.DoesNotExist:
-                msg = (
-                    "This progress cannot be created without a corresponding learner "
-                    f"task. Trainee {self.trainee} does not have a learner task for "
-                    f"event {self.event}."
-                )
-                return ValidationError(msg)
-
     def clean_involvement_type(
         self,
         requirement: TrainingRequirement,

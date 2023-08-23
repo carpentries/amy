@@ -3,6 +3,7 @@ from django import forms
 from django.forms import CharField, RadioSelect, TextInput
 
 from trainings.models import Involvement
+from trainings.utils import raise_validation_error_if_no_learner_task
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -79,6 +80,12 @@ class TrainingProgressForm(forms.ModelForm):
 
     class Media:
         js = ("trainingprogress_form.js",)
+
+    def clean_event(self):
+        trainee = self.cleaned_data["trainee"]
+        event = self.cleaned_data["event"]
+        raise_validation_error_if_no_learner_task(trainee, event)
+        return event
 
 
 class BulkAddTrainingProgressForm(forms.ModelForm):

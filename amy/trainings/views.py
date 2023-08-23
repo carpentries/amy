@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 
 from trainings.filters import TraineeFilter
 from trainings.forms import BulkAddTrainingProgressForm, TrainingProgressForm
+from trainings.utils import raise_validation_error_if_no_learner_task
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -129,12 +130,14 @@ def all_trainees(request):
             errors = []
             for trainee in form.cleaned_data["trainees"]:
                 try:
+                    event = form.cleaned_data["event"]
+                    raise_validation_error_if_no_learner_task(trainee, event)
                     progress = TrainingProgress(
                         trainee=trainee,
                         requirement=form.cleaned_data["requirement"],
                         involvement_type=form.cleaned_data["involvement_type"],
                         state=form.cleaned_data["state"],
-                        event=form.cleaned_data["event"],
+                        event=event,
                         url=form.cleaned_data["url"],
                         date=form.cleaned_data["date"],
                         notes=form.cleaned_data["notes"],
@@ -157,13 +160,8 @@ def all_trainees(request):
             if errors:
                 # build a user-friendly error set
                 for e in errors:
-                    for k, v in e.error_dict.items():
-                        msg = ""
-                        for field_error in v:
-                            msg += " " + " ".join(
-                                [str(f.message) for f in field_error.error_list]
-                            )
-                        messages.error(request, msg)
+                    msg = " ".join(e.messages)
+                    messages.error(request, msg)
 
                 changed_count = len(form.cleaned_data["trainees"]) - len(errors)
                 info_msg = (

@@ -178,21 +178,6 @@ class TestTrainingProgressValidation(TestBase):
             p1.full_clean()
         p2.full_clean()
 
-    def test_event_no_learner_task(self):
-        org = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
-        ttt, _ = Tag.objects.get_or_create(name="TTT")
-        event = Event.objects.create(slug="ttt", host=org)
-        event.tags.add(ttt)
-        p1 = TrainingProgress.objects.create(
-            requirement=self.event_required,
-            trainee=self.admin,
-            event=event,
-        )
-        with self.assertValidationErrors(["event"]):
-            p1.full_clean()
-
     def test_event_progress_already_exists(self):
         org = Organization.objects.create(
             domain="example.com", fullname="Test Organization"
@@ -504,12 +489,6 @@ class TestCRUDViews(TestBase):
             state="p",
             trainee=self.ironman,
         )
-        self.ttt_event = Event.objects.create(
-            start=datetime(2018, 7, 14),
-            slug="2018-07-14-training",
-            host=Organization.objects.first(),
-        )
-        self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 
     def test_create_view_loads(self):
         rv = self.client.get(reverse("trainingprogress_add"))
@@ -540,13 +519,6 @@ class TestCRUDViews(TestBase):
             "state": "p",
             "trainee": self.ironman.pk,
         }
-
-        # in order to add training progress, the trainee needs to have
-        # a training task
-        self.ironman.task_set.create(
-            event=self.ttt_event,
-            role=Role.objects.get(name="learner"),
-        )
 
         rv = self.client.post(reverse("trainingprogress_add"), data, follow=True)
         self.assertEqual(rv.status_code, 200)
