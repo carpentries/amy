@@ -61,7 +61,7 @@ Execute the following commands on your local machine, not production.
         $ git checkout main
         $ git pull origin main
 
-4. Create a release branch `release/vX.Y.Z` from `develop`. Major/minor release branches should be based on the `HEAD` of `develop`, but bugfix releases may be based on older commits to avoid including features intended for the next major/minor release.
+4. Create a release branch `release/vX.Y.Z`. Major/minor release branches should be based on the `HEAD` of `develop`, but bugfix releases may be based on older commits, such as the previous release branch or `main`, to avoid including features intended for the next major/minor release. For more details on managing branches, see https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow.
 
 5. *Bugfix releases only:* Cherry-pick commits from `develop` to `release/vX.Y.Z` as required to fix bugs. Skip any commits that add new features.
 
