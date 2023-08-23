@@ -33,8 +33,7 @@ of new features in case they would have to be released to production
 
 4. Follow [Deployment Procedure](#deployment-procedure-using-ansible).
 
-5. Write to <amy@lists.carpentries.org> mailing list.
-   The suggested subject of the new thread is "[AMY] New release v2.X.Y".
+5. Write user-friendly release notes and share them in release announcements on Slack - use `#core-team` for admin-only changes and `#general` for community-facing changes.
 
 ## Release Procedure
 
@@ -46,58 +45,54 @@ Execute the following commands on your local machine, not production.
 
 2.  Make sure you have configured repositories:
 
-    - `origin` for your repository on GitHub
-    - `upstream` for [`carpentries/amy` repo on GitHub](https://github.com/carpentries/amy)
+    - `origin` for [`carpentries/amy` repo on GitHub](https://github.com/carpentries/amy)
 
-    For example, this is the correct configuration for `chrismedrela`:
+    For example, this is the correct configuration:
 
         $ git remote -v
-        origin	git@github.com:chrismedrela/amy.git (fetch)
-        origin	git@github.com:chrismedrela/amy.git (push)
-        upstream	git@github.com:carpentries/amy.git (fetch)
-        upstream	git@github.com:carpentries/amy.git (push)
+        origin	git@github.com:carpentries/amy.git (fetch)
+        origin	git@github.com:carpentries/amy.git (push)
 
 3.  Make sure your local `develop` and `main` branches are up to date:
 
         $ git checkout develop
-        $ git pull upstream develop
-        $ git push origin develop
+        $ git pull origin develop
 
         $ git checkout main
-        $ git pull upstream main
-        $ git push origin main
+        $ git pull origin main
 
-    Pushes to your `origin` remote are optional.
+4. Create a release branch `release/vX.Y.Z`. Major/minor release branches should be based on the `HEAD` of `develop`, but bugfix releases may be based on older commits, such as the previous release branch or `main`, to avoid including features intended for the next major/minor release. For more details on managing branches, see https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow.
 
-4.  Merge `develop` into `main` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
+5. *Bugfix releases only:* Cherry-pick commits from `develop` to `release/vX.Y.Z` as required to fix bugs. Skip any commits that add new features.
+
+6.  Merge `release/vX.Y.Z` into `main` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
 
         $ git checkout main
-        $ git merge --no-ff develop
+        $ git merge --no-ff release/vX.Y.Z
 
-5.  Bump version on `main` (non-dev version corresponding to the milestone):
+7.  Bump version on `main` (non-dev version corresponding to the milestone):
 
         $ # manually edit version in `amy/__init__.py` and `package.json`
         $ # use non-dev version string, e.g. `"v3.3.0"`
         $ git add amy/__init__.py package.json
         $ git commit -m "Bumping version to vX.Y.0"
 
-7.  Just to be safe, run tests:
+8.  Just to be safe, run tests:
 
         $ make test
 
-8.  Tag a release.
+9.  Tag a release.
 
         $ git tag -a "vX.Y.0" -s -m "AMY release vX.Y.0"
 
     Omit `-s` flag if you cannot create signed tags.
     See [Git documentation](https://git-scm.com/book/tr/v2/Git-Tools-Signing-Your-Work) for more info about signed tags.
 
-9.  Push `main` and the new tag everywhere:
+10.  Push `main` and the new tag everywhere:
 
         $ git push origin main --tags
-        $ git push upstream main --tags
 
-10. Bump version on `develop` (dev version corresponding to the milestone):
+11. Bump version on `develop` (dev version corresponding to the milestone):
 
         $ git checkout develop
         $ # manually edit version in `amy/__init__.py` and `package.json`
@@ -107,26 +102,20 @@ Execute the following commands on your local machine, not production.
 
     This step is only needed if next development cycle begins (ie. no hotfix release was done).
 
-11. And push it everywhere:
+12. And push it everywhere:
 
-        $ git push upstream develop
         $ git push origin develop
 
 ---
 
-**Note:** it is acceptable to use a release branch as a base for release. This is very
-useful for example if a bugfix release must be created, but a feature from upcoming
-minor/major release has already been merged to `develop`. This is also useful when multiple
-features are worked on simultaneously.
-
-What are the changes:
-
-1. Code is branched out from `develop` (not necessarily the `HEAD`) to `release/vX.Y.Z`
-   branch.
-2. Optional cherry-picks follow from `develop` to `release/vX.Y.Z`.
-3. Release branch is merged to `main` with `--no-ff` option.
-
-
 ## Deployment procedure using Ansible
 
-Moved to relevant repository `README.md`.
+1. Back up the database through the AWS console (RDS > Databases > (cluster name) > Actions (top right) > Take snapshot). Use the naming scheme `vA-B-C-YYYY-MM-DD` for version A.B.C (the version before the one that will be deployed) and date YYYY-MM-DD, e.g. `v4-2-0-2023-08-12`.
+
+2. Check for pending maintenance through the AWS console (RDS > Databases > (cluster name) > Maintenance and Backups (below Summary section)) and complete it if needed.
+
+3. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for before deployment of this release.
+
+4. Run the Ansible deployment as described in the relevant repository `README.md`.
+
+5. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for after deployment of this release.
