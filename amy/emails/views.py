@@ -2,8 +2,8 @@ from typing import Any, cast
 
 from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
-from flags.views import FlaggedViewMixin
 from django.views.generic.detail import SingleObjectMixin
+from flags.views import FlaggedViewMixin
 from markdownx.utils import markdownify
 
 from emails.controller import EmailController
