@@ -3,13 +3,14 @@ from typing import Any
 from django.dispatch import receiver
 from typing_extensions import Unpack
 
-from emails.controller import EmailController
+from emails.controller import EmailController, EmailControllerException
 from emails.models import EmailTemplate
 from emails.signals import admin_signs_instructor_up_for_workshop_signal
 from emails.types import AdminSignsInstructorUpContext, AdminSignsInstructorUpKwargs
 from emails.utils import (
     immediate_action,
     messages_action_scheduled,
+    messages_missing_recipients,
     messages_missing_template,
     person_from_request,
 )
@@ -45,10 +46,12 @@ def admin_signs_instructor_up_for_workshop_receiver(
             signal=signal,
             context=context,
             scheduled_at=scheduled_at,
-            to_header=[person.email],
+            to_header=[person.email] if person.email else [],
             generic_relation_obj=instructor_recruitment_signup,
             author=person_from_request(request),
         )
+    except EmailControllerException:
+        messages_missing_recipients(request, signal)
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:

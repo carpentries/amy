@@ -12,6 +12,10 @@ from emails.models import (
 from workshops.models import Person
 
 
+class EmailControllerException(Exception):
+    pass
+
+
 class EmailController:
     @staticmethod
     def schedule_email(
@@ -22,6 +26,11 @@ class EmailController:
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
+        if not to_header:
+            raise EmailControllerException(
+                "Email must have at least one recipient, but `to_header` is empty."
+            )
+
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
         engine = EmailTemplate.get_engine()
 

@@ -29,6 +29,15 @@ def immediate_action() -> datetime:
     return timezone.now() + timedelta(hours=1)
 
 
+def messages_missing_recipients(request: HttpRequest, signal: str) -> None:
+    messages.warning(
+        request,
+        f"Email action was not scheduled due to missing recipients for signal {signal}."
+        " Please check if the persons involved have email addresses set.",
+        extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+    )
+
+
 def messages_missing_template(request: HttpRequest, signal: str) -> None:
     messages.warning(
         request,
