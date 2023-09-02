@@ -52,7 +52,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         recruitment = InstructorRecruitment.objects.create(
             event=event, notes="Test notes"
         )
-        person = Person.objects.create()
+        person = Person.objects.create(email="text@example.org")
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -69,7 +69,8 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
 
         # Act
         with mock.patch(
-            "emails.actions.messages_action_scheduled"
+            "emails.actions.admin_signs_instructor_up_for_workshop"
+            ".messages_action_scheduled"
         ) as mock_messages_action_scheduled:
             admin_signs_instructor_up_for_workshop_signal.send(
                 sender=signup,
@@ -89,8 +90,13 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.messages_action_scheduled")
-    @mock.patch("emails.actions.immediate_action")
+    @mock.patch(
+        "emails.actions.admin_signs_instructor_up_for_workshop"
+        ".messages_action_scheduled"
+    )
+    @mock.patch(
+        "emails.actions.admin_signs_instructor_up_for_workshop.immediate_action"
+    )
     def test_email_scheduled(
         self,
         mock_immediate_action: mock.MagicMock,
@@ -104,7 +110,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         recruitment = InstructorRecruitment.objects.create(
             event=event, notes="Test notes"
         )
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -122,7 +128,8 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
 
         # Act
         with mock.patch(
-            "emails.actions.EmailController.schedule_email"
+            "emails.actions.admin_signs_instructor_up_for_workshop"
+            ".EmailController.schedule_email"
         ) as mock_schedule_email:
             admin_signs_instructor_up_for_workshop_signal.send(
                 sender=signup,
@@ -144,7 +151,10 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.messages_missing_template")
+    @mock.patch(
+        "emails.actions.admin_signs_instructor_up_for_workshop"
+        ".messages_missing_template"
+    )
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock
     ) -> None:
@@ -156,7 +166,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         recruitment = InstructorRecruitment.objects.create(
             event=event, notes="Test notes"
         )
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -181,7 +191,10 @@ class TestAdminSignsInstructorUpForWorkshopReceiverIntegration(TestBase):
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("django.contrib.messages.views.messages")
-    @mock.patch("emails.actions.messages_action_scheduled")
+    @mock.patch(
+        "emails.actions.admin_signs_instructor_up_for_workshop"
+        ".messages_action_scheduled"
+    )
     def test_integration(
         self,
         mock_messages_action_scheduled: mock.MagicMock,
@@ -189,7 +202,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiverIntegration(TestBase):
     ) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create_user(
+        person = Person.objects.create_user(  # type: ignore
             username="test_test",
             personal="Test",
             family="User",

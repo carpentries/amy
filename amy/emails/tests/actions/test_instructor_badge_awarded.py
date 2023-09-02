@@ -42,7 +42,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
     def test_action_triggered(self) -> None:
         # Arrange
         badge = Badge.objects.create(name="instructor")
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         award = Award.objects.create(badge=badge, person=person)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -57,7 +57,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
 
         # Act
         with mock.patch(
-            "emails.actions.messages_action_scheduled"
+            "emails.actions.instructor_badge_awarded.messages_action_scheduled"
         ) as mock_messages_action_scheduled:
             instructor_badge_awarded_signal.send(
                 sender=award,
@@ -75,8 +75,8 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.messages_action_scheduled")
-    @mock.patch("emails.actions.immediate_action")
+    @mock.patch("emails.actions.instructor_badge_awarded.messages_action_scheduled")
+    @mock.patch("emails.actions.instructor_badge_awarded.immediate_action")
     def test_email_scheduled(
         self,
         mock_immediate_action: mock.MagicMock,
@@ -86,7 +86,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
         mock_immediate_action.return_value = NOW + timedelta(hours=1)
         badge = Badge.objects.create(name="instructor")
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         award = Award.objects.create(badge=badge, person=person)
         request = RequestFactory().get("/")
         signal = instructor_badge_awarded_signal.signal_name
@@ -98,7 +98,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
 
         # Act
         with mock.patch(
-            "emails.actions.EmailController.schedule_email"
+            "emails.actions.instructor_badge_awarded.EmailController.schedule_email"
         ) as mock_schedule_email:
             instructor_badge_awarded_signal.send(
                 sender=award,
@@ -118,13 +118,13 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.messages_missing_template")
+    @mock.patch("emails.actions.instructor_badge_awarded.messages_missing_template")
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock
     ) -> None:
         # Arrange
         badge = Badge.objects.create(name="instructor")
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         award = Award.objects.create(badge=badge, person=person)
         request = RequestFactory().get("/")
         signal = instructor_badge_awarded_signal.signal_name

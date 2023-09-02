@@ -73,13 +73,13 @@ instructor_training_approaching_signal = Signal(
 )
 # Emitted when conditions for the previous signal may have changed and
 # the email should be re-calculated.
-instructor_training_approaching_change_signal = Signal(
+instructor_training_approaching_update_signal = Signal(
     signal_name=instructor_training_approaching_signal.signal_name,
     context_type=InstructorTrainingApproachingContext,
 )
 # Emitted when conditions for the previous signal may have changed and
 # the email should be cancelled.
-instructor_training_approaching_cancel_signal = Signal(
+instructor_training_approaching_remove_signal = Signal(
     signal_name=instructor_training_approaching_signal.signal_name,
     context_type=InstructorTrainingApproachingContext,
 )
