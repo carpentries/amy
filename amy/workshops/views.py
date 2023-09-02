@@ -60,6 +60,10 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
+from emails.actions.instructor_training_approaching import (
+    instructor_training_approaching_strategy,
+    run_instructor_training_approaching_strategy,
+)
 from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
@@ -1861,6 +1865,12 @@ class TaskCreate(
                 request=self.request,
             )
 
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(event),
+            self.request,
+            event,
+        )
+
         # return remembered results
         return res
 
@@ -2070,6 +2080,7 @@ class TaskDelete(
     permission_required = "workshops.delete_task"
     success_url = reverse_lazy("all_tasks")
     pk_url_kwarg = "task_id"
+    object: Task
 
     def before_delete(self, *args, **kwargs):
         jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
@@ -2160,6 +2171,12 @@ class TaskDelete(
                 object_=self.event,
                 request=self.request,
             )
+
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
 
 # ------------------------------------------------------------

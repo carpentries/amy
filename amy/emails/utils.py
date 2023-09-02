@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import logging
 from typing import Iterable, cast
 
@@ -27,6 +27,14 @@ def immediate_action() -> datetime:
     """Timezone-aware datetime object for immediate action (supposed to run after
     1 hour from being scheduled)."""
     return timezone.now() + timedelta(hours=1)
+
+
+def one_month_before(date: date) -> datetime:
+    """Timezone-aware datetime object for action scheduled one month before, uses
+    current time in UTC as time component of the returned datetime object."""
+    current_time_utc = datetime.now(timezone.utc).time()
+    date_shifted = date - timedelta(days=30)
+    return datetime.combine(date_shifted, current_time_utc)  # TODO: fix naive datetime
 
 
 def messages_missing_recipients(request: HttpRequest, signal: str) -> None:
@@ -59,6 +67,20 @@ def messages_action_scheduled(
             scheduled_email.scheduled_at,
             scheduled_email.get_absolute_url(),
             scheduled_email.pk,
+        ),
+        extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+    )
+
+
+def messages_action_cancelled(
+    request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
+) -> None:
+    messages.info(
+        request,
+        format_html(
+            'Existing <a href="{}">email action ({})</a> was cancelled.',
+            scheduled_email.get_absolute_url(),
+            signal_name,
         ),
         extra_tags=settings.ONLY_FOR_ADMINS_TAG,
     )
