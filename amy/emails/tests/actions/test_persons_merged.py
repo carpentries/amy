@@ -113,6 +113,28 @@ class TestPersonsMergedReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @mock.patch("emails.actions.persons_merged.messages_missing_recipients")
+    def test_missing_recipients(
+        self, mock_messages_missing_recipients: mock.MagicMock
+    ) -> None:
+        # Arrange
+        person = Person.objects.create()  # no email will cause missing recipients error
+        request = RequestFactory().get("/")
+        signal = persons_merged_signal.signal_name
+
+        # Act
+        persons_merged_signal.send(
+            sender=person,
+            request=request,
+            person_a_id=person.pk,
+            person_b_id=person.pk,
+            selected_person_id=person.pk,
+        )
+
+        # Assert
+        mock_messages_missing_recipients.assert_called_once_with(request, signal)
+
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.persons_merged.messages_missing_template")
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock

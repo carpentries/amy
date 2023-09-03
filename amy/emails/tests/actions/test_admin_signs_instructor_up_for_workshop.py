@@ -153,6 +153,42 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch(
         "emails.actions.admin_signs_instructor_up_for_workshop"
+        ".messages_missing_recipients"
+    )
+    def test_missing_recipients(
+        self, mock_messages_missing_recipients: mock.MagicMock
+    ) -> None:
+        # Arrange
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event", host=organization, administrator=organization
+        )
+        recruitment = InstructorRecruitment.objects.create(
+            event=event, notes="Test notes"
+        )
+        person = Person.objects.create()  # no email will cause missing recipients error
+        signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person
+        )
+        request = RequestFactory().get("/")
+        signal = admin_signs_instructor_up_for_workshop_signal.signal_name
+
+        # Act
+        admin_signs_instructor_up_for_workshop_signal.send(
+            sender=signup,
+            request=request,
+            person_id=signup.person.pk,
+            event_id=signup.recruitment.event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+
+        # Assert
+        mock_messages_missing_recipients.assert_called_once_with(request, signal)
+
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @mock.patch(
+        "emails.actions.admin_signs_instructor_up_for_workshop"
         ".messages_missing_template"
     )
     def test_missing_template(

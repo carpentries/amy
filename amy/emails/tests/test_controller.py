@@ -4,7 +4,7 @@ from django.template.exceptions import TemplateSyntaxError
 from django.test import TestCase
 from django.utils import timezone
 
-from emails.controller import EmailController
+from emails.controller import EmailController, EmailControllerException
 from emails.models import EmailTemplate, ScheduledEmailLog, ScheduledEmailStatus
 from workshops.models import Person
 
@@ -40,6 +40,23 @@ class TestEmailController(TestCase):
         self.assertEqual(scheduled_email.scheduled_at, now)
         self.assertEqual(log.scheduled_email, scheduled_email)
         self.assertEqual(log.details, f"Scheduled {signal} to run at {now.isoformat()}")
+
+    def test_schedule_email__no_recipients(self) -> None:
+        # Arrange
+        now = timezone.now()
+        signal = "test_email_template"
+
+        # Act & Assert
+        with self.assertRaises(
+            EmailControllerException,
+            msg="Email must have at least one recipient, but `to_header` is empty.",
+        ):
+            EmailController.schedule_email(
+                signal,
+                context={"name": "Harry"},
+                scheduled_at=now,
+                to_header=[],
+            )
 
     def test_schedule_email__no_template(self) -> None:
         # Arrange

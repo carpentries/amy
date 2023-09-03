@@ -118,6 +118,29 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @mock.patch("emails.actions.instructor_badge_awarded.messages_missing_recipients")
+    def test_missing_recipients(
+        self, mock_messages_missing_recipients: mock.MagicMock
+    ) -> None:
+        # Arrange
+        badge = Badge.objects.create(name="instructor")
+        person = Person.objects.create()  # no email will cause missing recipients error
+        award = Award.objects.create(badge=badge, person=person)
+        request = RequestFactory().get("/")
+        signal = instructor_badge_awarded_signal.signal_name
+
+        # Act
+        instructor_badge_awarded_signal.send(
+            sender=award,
+            request=request,
+            person_id=person.pk,
+            award_id=award.pk,
+        )
+
+        # Assert
+        mock_messages_missing_recipients.assert_called_once_with(request, signal)
+
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("emails.actions.instructor_badge_awarded.messages_missing_template")
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock
