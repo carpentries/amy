@@ -1,5 +1,5 @@
-from datetime import timedelta
-from unittest import mock
+from datetime import date, datetime, time, timedelta
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -12,8 +12,12 @@ from emails.signals import Signal
 from emails.utils import (
     find_signal_by_name,
     immediate_action,
+    messages_action_cancelled,
     messages_action_scheduled,
+    messages_action_updated,
+    messages_missing_recipients,
     messages_missing_template,
+    one_month_before,
     person_from_request,
     session_condition,
 )
@@ -46,8 +50,46 @@ class TestImmediateAction(TestCase):
         self.assertTrue(immediate - timedelta(hours=1) - now < timedelta(seconds=1))
 
 
+class TestOneMonthBefore(TestCase):
+    @patch("emails.utils.datetime", wraps=datetime)
+    def test_one_month_before(self, mock_datetime) -> None:
+        # Arrange
+        mock_datetime.now.return_value = datetime(
+            2020, 1, 31, 12, 0, 0, tzinfo=pytz.UTC
+        )
+        start_date = date(2020, 1, 31)
+
+        # Act
+        calculated = one_month_before(start_date)
+
+        # Assert
+        self.assertEqual(calculated.tzinfo, pytz.UTC)
+        self.assertEqual(calculated.date(), date(2020, 1, 1))
+        self.assertEqual(calculated.timetz(), time(12, 0, 0, tzinfo=pytz.UTC))
+
+
+class TestMessagesMissingRecipients(TestCase):
+    @patch("emails.utils.messages.warning")
+    def test_messages_missing_recipients(self, mock_messages_warning) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        signal = "test_signal"
+
+        # Act
+        messages_missing_recipients(request=request, signal=signal)
+
+        # Assert
+        mock_messages_warning.assert_called_once_with(
+            request,
+            "Email action was not scheduled due to missing recipients for signal "
+            f"{signal}. Please check if the persons involved have email "
+            "addresses set.",
+            extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+        )
+
+
 class TestMessagesMissingTemplate(TestCase):
-    @mock.patch("emails.utils.messages.warning")
+    @patch("emails.utils.messages.warning")
     def test_messages_missing_template(self, mock_messages_warning) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -66,7 +108,7 @@ class TestMessagesMissingTemplate(TestCase):
 
 
 class TestMessagesActionScheduled(TestCase):
-    @mock.patch("emails.utils.messages.info")
+    @patch("emails.utils.messages.info")
     def test_messages_action_scheduled(self, mock_messages_info) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -84,6 +126,48 @@ class TestMessagesActionScheduled(TestCase):
             f'<relative-time datetime="{scheduled_at}"></relative-time>: '
             f'<a href="{scheduled_email.get_absolute_url()}"><code>'
             f"{scheduled_email.pk}</code></a>.",
+            extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+        )
+
+
+class TestMessagesActionUpdated(TestCase):
+    @patch("emails.utils.messages.info")
+    def test_messages_action_updated(self, mock_messages_info) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        signal_name = "test_signal"
+        scheduled_at = timezone.now()
+        scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
+
+        # Act
+        messages_action_updated(request, signal_name, scheduled_email)
+
+        # Assert
+        mock_messages_info.assert_called_once_with(
+            request,
+            f'Existing <a href="{scheduled_email.get_absolute_url()}">email action '
+            f"({signal_name})</a> was updated.",
+            extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+        )
+
+
+class TestMessagesActionCancelled(TestCase):
+    @patch("emails.utils.messages.warning")
+    def test_messages_action_cancelled(self, mock_messages_warning) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        signal_name = "test_signal"
+        scheduled_at = timezone.now()
+        scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
+
+        # Act
+        messages_action_cancelled(request, signal_name, scheduled_email)
+
+        # Assert
+        mock_messages_warning.assert_called_once_with(
+            request,
+            f'Existing <a href="{scheduled_email.get_absolute_url()}">email action '
+            f"({signal_name})</a> was cancelled.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 

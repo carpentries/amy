@@ -32,9 +32,9 @@ def immediate_action() -> datetime:
 def one_month_before(date: date) -> datetime:
     """Timezone-aware datetime object for action scheduled one month before, uses
     current time in UTC as time component of the returned datetime object."""
-    current_time_utc = datetime.now(timezone.utc).time()
+    current_time_utc = datetime.now(timezone.utc).timetz()
     date_shifted = date - timedelta(days=30)
-    return datetime.combine(date_shifted, current_time_utc)  # TODO: fix naive datetime
+    return datetime.combine(date_shifted, current_time_utc)
 
 
 def messages_missing_recipients(request: HttpRequest, signal: str) -> None:
