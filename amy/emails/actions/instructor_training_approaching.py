@@ -22,6 +22,7 @@ from emails.types import (
 from emails.utils import (
     messages_action_cancelled,
     messages_action_scheduled,
+    messages_action_updated,
     messages_missing_recipients,
     messages_missing_template,
     one_month_before,
@@ -129,7 +130,6 @@ def instructor_training_approaching_receiver(
         messages_action_scheduled(request, signal, scheduled_email)
 
 
-# TODO: change implementation, currently it doesn't update anything
 @receiver(instructor_training_approaching_update_signal)
 @feature_flag_enabled("EMAIL_MODULE")
 def instructor_training_approaching_update_receiver(
@@ -152,9 +152,32 @@ def instructor_training_approaching_update_receiver(
         "instructors": instructors,
     }
     signal = instructor_training_approaching_signal.signal_name
+
+    ct = ContentType.objects.get_for_model(event)  # type: ignore
     try:
-        scheduled_email = EmailController.schedule_email(
-            signal=signal,
+        scheduled_email = ScheduledEmail.objects.select_for_update().get(
+            generic_relation_content_type=ct,
+            generic_relation_pk=event.pk,
+            template__signal=signal,
+            state="scheduled",
+        )
+
+    except ScheduledEmail.DoesNotExist:
+        logger.warning(
+            f"Scheduled email for signal {signal} and event {event} does not exist."
+        )
+        return
+
+    except ScheduledEmail.MultipleObjectsReturned:
+        logger.warning(
+            f"Too many scheduled emails for signal {signal} and event {event}."
+            " Can't update them."
+        )
+        return
+
+    try:
+        scheduled_email = EmailController.update_scheduled_email(
+            scheduled_email=scheduled_email,
             context=context,
             scheduled_at=scheduled_at,
             to_header=instructor_emails,
@@ -166,7 +189,7 @@ def instructor_training_approaching_update_receiver(
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
     else:
-        messages_action_scheduled(request, signal, scheduled_email)
+        messages_action_updated(request, signal, scheduled_email)
 
 
 @receiver(instructor_training_approaching_remove_signal)

@@ -72,10 +72,24 @@ def messages_action_scheduled(
     )
 
 
-def messages_action_cancelled(
+def messages_action_updated(
     request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
 ) -> None:
     messages.info(
+        request,
+        format_html(
+            'Existing <a href="{}">email action ({})</a> was updated.',
+            scheduled_email.get_absolute_url(),
+            signal_name,
+        ),
+        extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+    )
+
+
+def messages_action_cancelled(
+    request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
+) -> None:
+    messages.warning(
         request,
         format_html(
             'Existing <a href="{}">email action ({})</a> was cancelled.',

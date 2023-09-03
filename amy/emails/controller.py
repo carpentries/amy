@@ -92,3 +92,46 @@ class EmailController:
             author=author,
         )
         return scheduled_email
+
+    @staticmethod
+    def update_scheduled_email(
+        scheduled_email: ScheduledEmail,
+        context: Mapping[str, Any],
+        scheduled_at: datetime,
+        to_header: list[str],
+        generic_relation_obj: Model | None = None,
+        author: Person | None = None,
+    ) -> ScheduledEmail:
+        if not to_header:
+            raise EmailControllerException(
+                "Email must have at least one recipient, but `to_header` is empty."
+            )
+
+        template = scheduled_email.template
+        if not template:
+            raise EmailControllerException(
+                "Scheduled email must be linked to a template."
+            )
+
+        signal = template.signal
+        engine = EmailTemplate.get_engine()
+        old_state = scheduled_email.state
+
+        subject = EmailTemplate.render_template(engine, template.subject, dict(context))
+        body = EmailTemplate.render_template(engine, template.body, dict(context))
+
+        scheduled_email.scheduled_at = scheduled_at
+        scheduled_email.subject = subject
+        scheduled_email.body = body
+        scheduled_email.to_header = to_header
+        scheduled_email.generic_relation = generic_relation_obj
+        scheduled_email.save()
+
+        ScheduledEmailLog.objects.create(
+            details=f"Updated {signal}",
+            state_before=old_state,
+            state_after=ScheduledEmailStatus.SCHEDULED,
+            scheduled_email=scheduled_email,
+            author=author,
+        )
+        return scheduled_email
