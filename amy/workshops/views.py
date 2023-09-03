@@ -1163,6 +1163,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     )
     slug_field = "slug"
     template_name = "workshops/event_edit_form.html"
+    object: Event
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1320,6 +1321,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
                 request=self.request,
             )
 
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
         return res
 
 
@@ -1327,6 +1334,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Event
     permission_required = "workshops.delete_event"
     success_url = reverse_lazy("all_events")
+    object: Event
 
     def before_delete(self, *args, **kwargs):
         jobs = self.object.rq_jobs.filter(
@@ -1377,6 +1385,12 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
             jobs=jobs.values_list("job_id", flat=True),
             object_=self.object,
             request=self.request,
+        )
+
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object),
+            self.request,
+            self.object,
         )
 
 
