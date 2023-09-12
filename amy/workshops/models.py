@@ -2876,6 +2876,28 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         verbose_name="Department/School/Library affiliation (if applicable)",
     )
 
+    MEMBERSHIP_AFFILIATION_CHOICES = (
+        (True, "Yes"),
+        (False, "No"),
+    )
+    membership_affiliation = models.BooleanField(
+        null=False,
+        default=False,
+        blank=True,
+        choices=MEMBERSHIP_AFFILIATION_CHOICES,
+        verbose_name="Are you affiliated with a Carpentries member organization?",
+        help_text="This may be the same as your institution above, "
+        "or another institution.",
+    )
+    membership_code = models.CharField(
+        max_length=STR_MED,
+        blank=True,
+        null=False,
+        default="",
+        verbose_name="Please enter the registration code for your organization's "
+        "membership.",
+    )
+
     ONLINE_INPERSON_CHOICES = (
         ("online", "Online"),
         ("inperson", "In-person"),
