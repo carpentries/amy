@@ -686,7 +686,7 @@ FLAGS = {
     ],
     "ENFORCE_MEMBER_CODES": [
         {"condition": "anonymous", "value": False, "required": True},
-        {"condition": "parameter", "value": "enable_email_module=true"},
-        {"condition": "session", "value": "enable_email_module"},
+        {"condition": "parameter", "value": "enforce_member_codes=true"},
+        {"condition": "session", "value": "enforce_member_codes"},
     ],
 }
