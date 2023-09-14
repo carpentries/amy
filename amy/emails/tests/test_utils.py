@@ -17,6 +17,7 @@ from emails.utils import (
     messages_action_updated,
     messages_missing_recipients,
     messages_missing_template,
+    messages_missing_template_link,
     one_month_before,
     person_from_request,
     session_condition,
@@ -103,6 +104,26 @@ class TestMessagesMissingTemplate(TestCase):
             request,
             "Email action was not scheduled due to missing template for signal "
             f"{signal}.",
+            extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+        )
+
+
+class TestMessagesMissingTemplateLink(TestCase):
+    @patch("emails.utils.messages.warning")
+    def test_messages_missing_template(self, mock_messages_warning) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        scheduled_email = ScheduledEmail()
+
+        # Act
+        messages_missing_template_link(request=request, scheduled_email=scheduled_email)
+
+        # Assert
+        mock_messages_warning.assert_called_once_with(
+            request,
+            f'Email action <a href="{ scheduled_email.get_absolute_url }">'
+            f"<code>{ scheduled_email.pk }</code></a> update was not performed due"
+            " to missing linked template.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 

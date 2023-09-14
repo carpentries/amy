@@ -54,6 +54,18 @@ def messages_missing_template(request: HttpRequest, signal: str) -> None:
     )
 
 
+def messages_missing_template_link(
+    request: HttpRequest, scheduled_email: ScheduledEmail
+) -> None:
+    messages.warning(
+        request,
+        f'Email action <a href="{ scheduled_email.get_absolute_url }">'
+        f"<code>{ scheduled_email.pk }</code></a> update was not performed due"
+        " to missing linked template.",
+        extra_tags=settings.ONLY_FOR_ADMINS_TAG,
+    )
+
+
 def messages_action_scheduled(
     request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
 ) -> None:
