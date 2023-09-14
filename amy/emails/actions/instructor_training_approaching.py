@@ -7,7 +7,11 @@ from django.http import HttpRequest
 from django.utils import timezone
 from typing_extensions import Unpack
 
-from emails.controller import EmailController, EmailControllerException
+from emails.controller import (
+    EmailController,
+    EmailControllerMissingRecipientsException,
+    EmailControllerMissingTemplateException,
+)
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.signals import (
     instructor_training_approaching_remove_signal,
@@ -25,6 +29,7 @@ from emails.utils import (
     messages_action_updated,
     messages_missing_recipients,
     messages_missing_template,
+    messages_missing_template_link,
     one_month_before,
     person_from_request,
 )
@@ -122,7 +127,7 @@ def instructor_training_approaching_receiver(
             generic_relation_obj=event,
             author=person_from_request(request),
         )
-    except EmailControllerException:
+    except EmailControllerMissingRecipientsException:
         messages_missing_recipients(request, signal)
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
@@ -155,11 +160,15 @@ def instructor_training_approaching_update_receiver(
 
     ct = ContentType.objects.get_for_model(event)  # type: ignore
     try:
-        scheduled_email = ScheduledEmail.objects.select_for_update().get(
-            generic_relation_content_type=ct,
-            generic_relation_pk=event.pk,
-            template__signal=signal,
-            state="scheduled",
+        scheduled_email = (
+            ScheduledEmail.objects.select_for_update()
+            .select_related("template")
+            .get(
+                generic_relation_content_type=ct,
+                generic_relation_pk=event.pk,
+                template__signal=signal,
+                state="scheduled",
+            )
         )
 
     except ScheduledEmail.DoesNotExist:
@@ -184,10 +193,12 @@ def instructor_training_approaching_update_receiver(
             generic_relation_obj=event,
             author=person_from_request(request),
         )
-    except EmailControllerException:
+    except EmailControllerMissingRecipientsException:
         messages_missing_recipients(request, signal)
-    except EmailTemplate.DoesNotExist:
-        messages_missing_template(request, signal)
+    except EmailControllerMissingTemplateException:
+        # Note: this is not realistically possible because the scheduled email
+        # is looked up using a specific template signal.
+        messages_missing_template_link(request, scheduled_email)
     else:
         messages_action_updated(request, signal, scheduled_email)
 

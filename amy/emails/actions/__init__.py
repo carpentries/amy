@@ -14,5 +14,7 @@ from emails.actions.instructor_signs_up_for_workshop import (
 )
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_receiver,
+    instructor_training_approaching_remove_receiver,
+    instructor_training_approaching_update_receiver,
 )
 from emails.actions.persons_merged import persons_merged_receiver
