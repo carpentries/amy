@@ -3,7 +3,7 @@ from typing import Any
 from django.dispatch import receiver
 from typing_extensions import Unpack
 
-from emails.controller import EmailController, EmailControllerException
+from emails.controller import EmailController, EmailControllerMissingRecipientsException
 from emails.models import EmailTemplate
 from emails.signals import instructor_signs_up_for_workshop_signal
 from emails.types import InstructorSignupContext, InstructorSignupKwargs
@@ -50,7 +50,7 @@ def instructor_signs_up_for_workshop_receiver(
             generic_relation_obj=instructor_recruitment_signup,
             author=person_from_request(request),
         )
-    except EmailControllerException:
+    except EmailControllerMissingRecipientsException:
         messages_missing_recipients(request, signal)
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)

@@ -16,6 +16,14 @@ class EmailControllerException(Exception):
     pass
 
 
+class EmailControllerMissingRecipientsException(EmailControllerException):
+    pass
+
+
+class EmailControllerMissingTemplateException(EmailControllerException):
+    pass
+
+
 class EmailController:
     @staticmethod
     def schedule_email(
@@ -27,7 +35,7 @@ class EmailController:
         author: Person | None = None,
     ) -> ScheduledEmail:
         if not to_header:
-            raise EmailControllerException(
+            raise EmailControllerMissingRecipientsException(
                 "Email must have at least one recipient, but `to_header` is empty."
             )
 
@@ -103,13 +111,13 @@ class EmailController:
         author: Person | None = None,
     ) -> ScheduledEmail:
         if not to_header:
-            raise EmailControllerException(
+            raise EmailControllerMissingRecipientsException(
                 "Email must have at least one recipient, but `to_header` is empty."
             )
 
         template = scheduled_email.template
         if not template:
-            raise EmailControllerException(
+            raise EmailControllerMissingTemplateException(
                 "Scheduled email must be linked to a template."
             )
 

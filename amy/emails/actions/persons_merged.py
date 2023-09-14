@@ -3,7 +3,7 @@ from typing import Any
 from django.dispatch import receiver
 from typing_extensions import Unpack
 
-from emails.controller import EmailController, EmailControllerException
+from emails.controller import EmailController, EmailControllerMissingRecipientsException
 from emails.models import EmailTemplate
 from emails.signals import persons_merged_signal
 from emails.types import PersonsMergedContext, PersonsMergedKwargs
@@ -39,7 +39,7 @@ def persons_merged_receiver(sender: Any, **kwargs: Unpack[PersonsMergedKwargs]) 
             generic_relation_obj=person,
             author=person_from_request(request),
         )
-    except EmailControllerException:
+    except EmailControllerMissingRecipientsException:
         messages_missing_recipients(request, signal)
     except EmailTemplate.DoesNotExist:
         messages_missing_template(request, signal)
