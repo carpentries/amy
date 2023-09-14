@@ -1899,6 +1899,7 @@ class TaskUpdate(
     queryset = Task.objects.select_related("event", "role", "person")
     form_class = TaskForm
     pk_url_kwarg = "task_id"
+    object: Task
 
     def form_valid(self, form):
         """Check if RQ job conditions changed, and add/delete jobs if
@@ -2080,6 +2081,12 @@ class TaskUpdate(
                 object_=self.object.event,
                 request=self.request,
             )
+
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
         return res
 
