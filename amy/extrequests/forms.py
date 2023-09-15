@@ -385,6 +385,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             (self["institution_other_URL"], "Institution URL address"),
         ]
 
+        # move "membership_code" field to "membership_affiliation" subfield
+        self["membership_affiliation"].field.widget.subfields = [
+            (self["membership_code"], "Member registration code"),
+        ]
+
         # remove additional fields
         self.helper.layout.fields.remove("travel_expences_management_other")
         self.helper.layout.fields.remove("public_event_other")
@@ -392,6 +397,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove("carpentries_info_source_other")
         self.helper.layout.fields.remove("institution_other_name")
         self.helper.layout.fields.remove("institution_other_URL")
+        self.helper.layout.fields.remove("membership_code")
 
         # add warning alert for dates falling within next 2-3 months
         DATES_TOO_SOON_WARNING = (
@@ -419,7 +425,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
-            "membership_code",
+            "membership_affiliation",
             "country",
             "audience_description",
             "user_notes",
