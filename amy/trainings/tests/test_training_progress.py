@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from django.urls import reverse
 
@@ -23,6 +24,7 @@ class TestTrainingProgressValidation(TestBase):
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
+        self._setUpRoles()  # used in event validation
 
         self.requirement = TrainingRequirement.objects.create(
             name="Welcome Session", url_required=False, event_required=False
@@ -55,6 +57,7 @@ class TestTrainingProgressValidation(TestBase):
                 "date_required": False,
             },
         )
+        self.learner = Role.objects.get(name="learner")
 
     def test_url_is_required(self):
         p1 = TrainingProgress.objects.create(
@@ -158,6 +161,10 @@ class TestTrainingProgressValidation(TestBase):
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         event = Event.objects.create(slug="ttt", host=org)
         event.tags.add(ttt)
+        event.task_set.create(person=self.admin, role=self.learner)
+        event2 = Event.objects.create(slug="ttt-2", host=org)
+        event2.tags.add(ttt)
+        event2.task_set.create(person=self.admin, role=self.learner)
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
@@ -166,11 +173,39 @@ class TestTrainingProgressValidation(TestBase):
         p2 = TrainingProgress.objects.create(
             requirement=self.event_required,
             trainee=self.admin,
-            event=event,
+            event=event2,
         )
         with self.assertValidationErrors(["event"]):
             p1.full_clean()
         p2.full_clean()
+
+    def test_event_progress_already_exists(self):
+        org = Organization.objects.create(
+            domain="example.com", fullname="Test Organization"
+        )
+        ttt, _ = Tag.objects.get_or_create(name="TTT")
+        event = Event.objects.create(slug="ttt", host=org)
+        event.tags.add(ttt)
+        event.task_set.create(person=self.admin, role=self.learner)
+        p1 = TrainingProgress.objects.create(
+            requirement=self.event_required,
+            trainee=self.admin,
+            event=event,
+        )
+        p2 = TrainingProgress(
+            requirement=self.event_required,
+            trainee=self.admin,
+            event=event,
+        )  # do not save to DB as this violates the unique constraint we want to test
+        p1.full_clean()  # should be no error if only this progress exists
+        with self.assertRaises(ValidationError) as ctx:
+            p2.full_clean()
+        error_dict = ctx.exception.message_dict
+        self.assertEqual(set(["__all__"]), set(error_dict.keys()))
+        self.assertEqual(
+            error_dict["__all__"],
+            ["Training progress with this Trainee and Training already exists."],
+        )
 
     def test_involvement_is_required(self):
         p1 = TrainingProgress.objects.create(
@@ -461,12 +496,6 @@ class TestCRUDViews(TestBase):
             state="p",
             trainee=self.ironman,
         )
-        self.ttt_event = Event.objects.create(
-            start=datetime(2018, 7, 14),
-            slug="2018-07-14-training",
-            host=Organization.objects.first(),
-        )
-        self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 
     def test_create_view_loads(self):
         rv = self.client.get(reverse("trainingprogress_add"))
@@ -497,13 +526,6 @@ class TestCRUDViews(TestBase):
             "state": "p",
             "trainee": self.ironman.pk,
         }
-
-        # in order to add training progress, the trainee needs to have
-        # a training task
-        self.ironman.task_set.create(
-            event=self.ttt_event,
-            role=Role.objects.get(name="learner"),
-        )
 
         rv = self.client.post(reverse("trainingprogress_add"), data, follow=True)
         self.assertEqual(rv.status_code, 200)

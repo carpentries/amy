@@ -1,10 +1,12 @@
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db.models import Case, Count, F, IntegerField, Prefetch, Sum, When
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
 from trainings.filters import TraineeFilter
 from trainings.forms import BulkAddTrainingProgressForm, TrainingProgressForm
+from trainings.utils import raise_validation_error_if_no_learner_task
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -125,18 +127,52 @@ def all_trainees(request):
         # Bulk add progress to selected trainees
         form = BulkAddTrainingProgressForm(request.POST)
         if form.is_valid():
+            errors = []
             for trainee in form.cleaned_data["trainees"]:
-                TrainingProgress.objects.create(
-                    trainee=trainee,
-                    requirement=form.cleaned_data["requirement"],
-                    state=form.cleaned_data["state"],
-                    event=form.cleaned_data["event"],
-                    url=form.cleaned_data["url"],
-                    notes=form.cleaned_data["notes"],
+                try:
+                    event = form.cleaned_data["event"]
+                    raise_validation_error_if_no_learner_task(trainee, event)
+                    progress = TrainingProgress(
+                        trainee=trainee,
+                        requirement=form.cleaned_data["requirement"],
+                        involvement_type=form.cleaned_data["involvement_type"],
+                        state=form.cleaned_data["state"],
+                        event=event,
+                        url=form.cleaned_data["url"],
+                        date=form.cleaned_data["date"],
+                        notes=form.cleaned_data["notes"],
+                    )
+                    progress.full_clean()
+                    progress.save()
+                except ValidationError as e:
+                    unique_constraint_message = (
+                        "Training progress with this Trainee "
+                        "and Training already exists."
+                    )
+                    if unique_constraint_message in e.messages:
+                        msg = (
+                            f"Trainee {trainee} already has a training progress "
+                            f'for event {form.cleaned_data["event"]}.'
+                        )
+                        e.error_dict["__all__"].append(ValidationError(msg))
+                    errors.append(e)
+
+            if errors:
+                # build a user-friendly error set
+                for e in errors:
+                    msg = " ".join(e.messages)
+                    messages.error(request, msg)
+
+                changed_count = len(form.cleaned_data["trainees"]) - len(errors)
+                info_msg = (
+                    f"Changed progress of {changed_count} trainee(s). "
+                    f"{len(errors)} trainee(s) were skipped due to errors."
                 )
-            messages.success(
-                request, "Successfully changed progress of all selected trainees."
-            )
+                messages.info(request, info_msg)
+            else:
+                messages.success(
+                    request, "Successfully changed progress of all selected trainees."
+                )
 
             return redirect(request.get_raw_uri())
 

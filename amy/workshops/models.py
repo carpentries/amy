@@ -2755,6 +2755,12 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     class Meta:
         ordering = ["created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["trainee", "event"],
+                name="unique_trainee_at_event",
+            )
+        ]
 
 
 # ------------------------------------------------------------

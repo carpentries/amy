@@ -7,8 +7,25 @@ from django.http.response import Http404
 from django.test import RequestFactory
 from django.urls import reverse
 
-from workshops.lookups import AwardLookupView, GenericObjectLookupView, urlpatterns
-from workshops.models import Award, Badge, Lesson, Person
+from workshops.lookups import (
+    AwardLookupView,
+    EventLookupForAwardsView,
+    EventLookupView,
+    GenericObjectLookupView,
+    TTTEventLookupView,
+    urlpatterns,
+)
+from workshops.models import (
+    Award,
+    Badge,
+    Event,
+    Lesson,
+    Person,
+    Role,
+    Tag,
+    TrainingProgress,
+    TrainingRequirement,
+)
 from workshops.tests.base import (
     TestBase,
     TestViewPermissionsMixin,
@@ -102,6 +119,237 @@ class TestAwardLookupView(TestBase):
                     | Q(badge__name__icontains=term)
                 )
             ),
+        )
+
+
+class TestEventLookupView(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.event = Event.objects.create(slug="queryset-test", host=self.org_alpha)
+        self.event_2 = Event.objects.create(
+            slug="different-slug-test", host=self.org_alpha
+        )
+        self.ttt_event = Event.objects.create(
+            slug="queryset-test-ttt", host=self.org_alpha
+        )
+        self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
+
+    def setUpView(
+        self, term: str = "", person: Optional[int] = None
+    ) -> EventLookupView:
+        # path doesn't matter
+        request = RequestFactory().get("/" if person is None else f"/?person={person}")
+        view = EventLookupView(request=request, term=term)
+        return view
+
+    def test_get_queryset_no_term(self):
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Event.objects.all())
+
+    def test_get_queryset_term(self):
+        # Arrange
+        term = "query"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event], ordered=False)
+
+
+class TestEventLookupForAwardsView(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.event = Event.objects.create(slug="queryset-test", host=self.org_alpha)
+        self.ttt_event = Event.objects.create(
+            slug="queryset-test-ttt", host=self.org_alpha
+        )
+        self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
+        self.ttt_event.task_set.create(
+            person=self.blackwidow, role=Role.objects.get(name="learner")
+        )
+        TrainingProgress.objects.create(
+            trainee=self.blackwidow,
+            requirement=TrainingRequirement.objects.get(name="Training"),
+            state="p",
+            event=self.ttt_event,
+        )
+        self.ttt_event_2 = Event.objects.create(
+            slug="different-slug-ttt", host=self.org_alpha
+        )
+        self.ttt_event_2.tags.add(Tag.objects.get(name="TTT"))
+        self.ttt_event_2.task_set.create(
+            person=self.blackwidow, role=Role.objects.get(name="learner")
+        )
+        TrainingProgress.objects.create(
+            trainee=self.blackwidow,
+            requirement=TrainingRequirement.objects.get(name="Training"),
+            state="p",
+            event=self.ttt_event_2,
+        )
+
+    def setUpView(
+        self, term: str = "", person: Optional[int] = None, badge: Optional[int] = None
+    ) -> EventLookupForAwardsView:
+        # path doesn't matter
+        request = RequestFactory().get(
+            f"/?person={person if person else ''}&badge={badge if badge else ''}"
+        )
+        view = EventLookupForAwardsView(request=request, term=term)
+        return view
+
+    def test_get_queryset_no_args(self):
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Event.objects.all())
+
+    def test_get_queryset_term(self):
+        # Arrange
+        term = "query"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event], ordered=False)
+
+    def test_get_queryset_person(self):
+        """Person alone should not change results."""
+        # Arrange
+        view = self.setUpView(person=self.blackwidow.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset,
+            Event.objects.all(),
+        )
+
+    def test_get_queryset_badge(self):
+        """Badge alone should not change results."""
+        # Arrange
+        view = self.setUpView(badge=self.instructor_badge.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset,
+            Event.objects.all(),
+        )
+
+    def test_get_queryset_person_and_instructor_badge(self):
+        """Person and instructor badge combined should change results."""
+        # Arrange
+        view = self.setUpView(person=self.blackwidow.pk, badge=self.instructor_badge.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset, [self.ttt_event, self.ttt_event_2], ordered=False
+        )
+
+    def test_get_queryset_person_and_non_instructor_badge(self):
+        """Person and maintainer badge combined should not change results."""
+        # Arrange
+        view = self.setUpView(
+            person=self.blackwidow.pk, badge=Badge.objects.get(name="maintainer").pk
+        )
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset,
+            Event.objects.all(),
+        )
+
+    def test_get_queryset_person_and_badge_and_term(self):
+        # Arrange
+        term = "query"
+        view = self.setUpView(
+            term=term, person=self.blackwidow.pk, badge=self.instructor_badge.pk
+        )
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset,
+            [self.ttt_event],
+        )
+
+
+class TestTTTEventLookupView(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.event = Event.objects.create(slug="queryset-test", host=self.org_alpha)
+        self.event.tags.add(Tag.objects.get(name="TTT"))
+        self.event.task_set.create(
+            person=self.blackwidow, role=Role.objects.get(name="learner")
+        )
+        self.event2 = Event.objects.create(slug="different-slug", host=self.org_alpha)
+        self.event2.tags.add(Tag.objects.get(name="TTT"))
+        self.event2.task_set.create(
+            person=self.blackwidow, role=Role.objects.get(name="learner")
+        )
+
+    def setUpView(
+        self, term: str = "", trainee: Optional[int] = None
+    ) -> TTTEventLookupView:
+        # path doesn't matter
+        request = RequestFactory().get(
+            "/" if trainee is None else f"/?trainee={trainee}"
+        )
+        view = TTTEventLookupView(request=request, term=term)
+        return view
+
+    def test_get_queryset_no_term_no_trainee(self):
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Event.objects.ttt())
+
+    def test_get_queryset_term(self):
+        # Arrange
+        term = "query"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.event])
+
+    def test_get_queryset_trainee(self):
+        # Arrange
+        view = self.setUpView(trainee=self.blackwidow.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.event, self.event2], ordered=False)
+
+    def test_get_queryset_trainee_and_term(self):
+        # Arrange
+        term = "query"
+        view = self.setUpView(term=term, trainee=self.blackwidow.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset,
+            [self.event],
         )
 
 

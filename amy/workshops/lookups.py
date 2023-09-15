@@ -77,9 +77,44 @@ class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class EventLookupForAwardsView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        results = models.Event.objects.all()
+
+        # if awarding an Instructor badge, find relevant events this person attended
+        person = self.request.GET.get("person")
+        badge = self.request.GET.get("badge")
+        if (
+            person
+            and badge
+            and int(badge) == models.Badge.objects.get(name="instructor").pk
+        ):
+            learner_progresses = models.TrainingProgress.objects.filter(
+                trainee__id=person,
+                requirement__in=models.TrainingRequirement.objects.filter(
+                    event_required=True
+                ),
+                state="p",
+            )
+            results = results.filter(trainingprogress__in=learner_progresses)
+
+        if self.term:
+            results = results.filter(slug__icontains=self.term)
+
+        return results
+
+
 class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
-        results = models.Event.objects.filter(tags__name="TTT")
+        results = models.Event.objects.ttt()
+
+        # trainee is provided through the TrainingProgress creation views
+        # for which learner tasks are relevant
+        if trainee := self.request.GET.get("trainee"):
+            learner_tasks = models.Task.objects.filter(
+                role__name="learner", person__id=trainee
+            )
+            results = results.filter(task__in=learner_tasks)
 
         if self.term:
             results = results.filter(slug__icontains=self.term)
@@ -435,6 +470,11 @@ urlpatterns = [
     path("badges/", BadgeLookupView.as_view(), name="badge-lookup"),
     path("lessons/", LessonLookupView.as_view(), name="lesson-lookup"),
     path("events/", EventLookupView.as_view(), name="event-lookup"),
+    path(
+        "events_for_awards/",
+        EventLookupForAwardsView.as_view(),
+        name="event-lookup-for-awards",
+    ),
     path("ttt_events/", TTTEventLookupView.as_view(), name="ttt-event-lookup"),
     path(
         "organizations/", OrganizationLookupView.as_view(), name="organization-lookup"

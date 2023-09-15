@@ -110,6 +110,7 @@ from workshops.models import (
     Tag,
     Task,
     TrainingProgress,
+    TrainingRequirement,
 )
 from workshops.signals import create_comment_signal
 from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
@@ -2186,11 +2187,19 @@ class MockAwardCreate(
 
         # Determine initial event in AwardForm
         if "find-training" in self.request.GET:
-            tasks = Person.objects.get(
-                pk=self.request.GET["person"]
-            ).get_training_tasks()
-            if tasks.count() == 1:
-                initial.update({"event": tasks[0].event})
+            initial["badge"] = Badge.objects.get(name="instructor")
+            try:
+                progress = TrainingProgress.objects.get(
+                    trainee__id=self.request.GET["person"],
+                    requirement=TrainingRequirement.objects.get(name="Training"),
+                    state="p",
+                )
+                initial["event"] = progress.event
+            except (
+                TrainingProgress.DoesNotExist,
+                TrainingProgress.MultipleObjectsReturned,
+            ):
+                pass
 
         return initial
 

@@ -1,4 +1,3 @@
-
 function updateTrainingProgressForm() {
     /* At this moment, `this` should be <select> tag of "Type" field. */
     var type = $(this).find(":selected").text();
@@ -43,4 +42,20 @@ $(document).ready(function () {
     var selectField = $('form.training-progress #id_requirement')
     selectField.change(updateTrainingProgressForm);
     updateTrainingProgressForm.call(selectField);
+
+    let trainee = $("#id_trainee").val();
+    $("#id_event").select2({
+        ajax: {
+            data: (params) => {
+                const query = {
+                    trainee: trainee,
+                    // `field_id` is required on backend by django-select2 views
+                    field_id: $("#id_event").data("field_id"),
+                    ...params,
+                };
+                return query;
+            },
+        },
+    });
 });
+
