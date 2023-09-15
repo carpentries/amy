@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.test import override_settings
 from django.urls import reverse
 
 from autoemails.models import EmailTemplate, RQJob, Trigger
@@ -33,6 +34,8 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "email": "hpotter@magic.gov",
             "institution_other_name": "Ministry of Magic",
             "institution_other_URL": "magic.gov.uk",
+            "membership_affiliation": "no",
+            "membership_code": "",
             "location": "London",
             "country": "GB",
             "requested_workshop_types": [
@@ -174,6 +177,94 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
         self.assertIn("institution_other_name", form.errors)
         self.assertIn("institution_other_URL", form.errors)
         self.assertNotIn("institution_department", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_yes_code_valid(self):
+        # 1: affiliation "yes" and valid code - no error
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "valid123",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertNotIn("membership_code", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_yes_code_invalid(self):
+        # 2: affiliation "yes" and invalid code - error on code
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "invalid",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertIn("membership_code", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_yes_code_empty(self):
+        # 3: affiliation "yes" and empty code - error on code
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertIn("membership_code", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_unsure_code_valid(self):
+        # 4: affiliation "unsure" and valid code - no error
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "valid123",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertNotIn("membership_code", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_unsure_code_invalid(self):
+        # 5: affiliation "unsure" and invalid code - error on code
+        data = {
+            "membership_affiliation": "unsure",
+            "membership_code": "invalid",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertIn("membership_code", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_unsure_code_empty(self):
+        # 6: affiliation "unsure" and empty code - no error
+        data = {
+            "membership_affiliation": "unsure",
+            "membership_code": "",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertNotIn("membership_code", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_no_code_not_empty(self):
+        # 7: affiliation "no" and non-empty code - error on code
+        data = {
+            "membership_affiliation": "no",
+            "membership_code": "",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertIn("membership_code", form.errors)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_no_code_empty(self):
+        # 8: affiliation "no" and empty code - no error
+        data = {
+            "membership_affiliation": "no",
+            "membership_code": "",
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn("membership_affiliation", form.errors)
+        self.assertNotIn("membership_code", form.errors)
 
     def test_dates_validation(self):
         """Ensure preferred dates validation."""

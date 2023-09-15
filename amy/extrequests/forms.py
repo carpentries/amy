@@ -35,6 +35,7 @@ from workshops.models import (
     TrainingRequest,
     WorkshopRequest,
 )
+from workshops.utils.feature_flags import feature_flag_enabled
 
 
 class BulkChangeTrainingRequestForm(forms.Form):
@@ -449,6 +450,32 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         essentially works just like `Model.__str__`."""
         return "{}".format(obj.fullname)
 
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def clean_membership_info(self) -> dict:
+        print("cleaning_membership_info")
+        errors = dict()
+        affiliation = self.cleaned_data.get("membership_affiliation")  # yes/no/unsure
+        code = self.cleaned_data.get("membership_code", "")
+        if affiliation in ["yes", "unsure"] and code:
+            # ensure that code belongs to a membership
+            try:
+                Membership.objects.get(registration_code=code)
+            except Membership.DoesNotExist:
+                errors["membership_code"] = ValidationError(
+                    "This code is invalid. "
+                    "Please contact your Member Affiliate to verify your code."
+                )
+        elif affiliation == "yes" and not code:
+            errors["membership_code"] = ValidationError(
+                "This field is required if you selected 'Yes' above."
+            )
+        elif affiliation == "no" and code:
+            errors["membership_code"] = ValidationError(
+                "This field must be empty if you selected 'No' above."
+            )
+
+        return errors
+
     def clean(self):
         super().clean()
         errors = dict()
@@ -571,6 +598,12 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                     'planned for less than 2 months away or "Other" arrangements '
                     "were selected."
                 )
+
+        # 8: enforce membership registration codes
+        membership_errors = self.clean_membership_info()
+        print(membership_errors)
+        if membership_errors:
+            errors.update(membership_errors)
 
         # raise errors if any present
         if errors:

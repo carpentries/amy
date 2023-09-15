@@ -2884,7 +2884,7 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
     membership_affiliation = models.CharField(
         max_length=STR_MED,
         null=False,
-        default=False,
+        default="no",
         blank=True,
         choices=MEMBERSHIP_AFFILIATION_CHOICES,
         verbose_name="Are you affiliated with a Carpentries member organization?",
@@ -2898,7 +2898,8 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         default="",
         verbose_name="Membership registration code",
         help_text="If you are affiliated with a Carpentries member organization, "
-        "please enter the registration code associated with the membership.",
+        "please enter the registration code associated with the membership. "
+        "Your Member Affiliate can provide this.",
     )
 
     ONLINE_INPERSON_CHOICES = (
