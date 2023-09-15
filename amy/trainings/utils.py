@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-from workshops.models import Event, Person, Role, Task
+from workshops.models import Event, Person, Task
 
 
 def raise_validation_error_if_no_learner_task(trainee: Person, event: Event) -> None:
@@ -12,7 +12,7 @@ def raise_validation_error_if_no_learner_task(trainee: Person, event: Event) -> 
         Task.objects.get(
             person=trainee,
             event=event,
-            role=Role.objects.get(name="learner"),
+            role__name="learner",
         )
         return
     except Task.DoesNotExist:

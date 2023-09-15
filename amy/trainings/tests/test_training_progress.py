@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from django.urls import reverse
 
@@ -197,8 +198,14 @@ class TestTrainingProgressValidation(TestBase):
             event=event,
         )  # do not save to DB as this violates the unique constraint we want to test
         p1.full_clean()  # should be no error if only this progress exists
-        with self.assertValidationErrors(["__all__"]):
+        with self.assertRaises(ValidationError) as ctx:
             p2.full_clean()
+        error_dict = ctx.exception.message_dict
+        self.assertEqual(set(["__all__"]), set(error_dict.keys()))
+        self.assertEqual(
+            error_dict["__all__"],
+            ["Training progress with this Trainee and Training already exists."],
+        )
 
     def test_involvement_is_required(self):
         p1 = TrainingProgress.objects.create(
