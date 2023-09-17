@@ -466,7 +466,7 @@ class TestScheduledEmailUpdate(TestBase):
         # Act
         results = queryset.all()
 
-        # Assert - none of the defined scheduled emails can be retrieved with this query
+        # Assert - all of the defined scheduled emails can be retrieved with this query
         self.assertEqual(results.count(), 3)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
@@ -577,7 +577,7 @@ class TestScheduledEmailReschedule(TestBase):
         # Act
         results = queryset.all()
 
-        # Assert - none of the defined scheduled emails can be retrieved with this query
+        # Assert - all of the defined scheduled emails can be retrieved with this query
         self.assertEqual(results.count(), 3)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
@@ -682,7 +682,7 @@ class TestScheduledEmailCancel(TestBase):
         # Act
         results = queryset.all()
 
-        # Assert - none of the defined scheduled emails can be retrieved with this query
+        # Assert - all of the defined scheduled emails can be retrieved with this query
         self.assertEqual(results.count(), 2)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)

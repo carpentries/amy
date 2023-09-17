@@ -15,7 +15,8 @@
 
 {% if scheduled_email.state == 'cancelled' %}
 <div class="alert alert-warning" role="alert">
-  <strong>Warning</strong>: if you reschedule a cancelled email, it will become scheduled again and may be sent immediately.
+  <strong>Warning</strong>: if you reschedule a cancelled email, it will become
+  scheduled again and will be sent immediately if the scheduled time is in the past.
 </div>
 {% endif %}
 
