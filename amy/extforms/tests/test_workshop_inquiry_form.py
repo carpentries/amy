@@ -25,6 +25,8 @@ class TestWorkshopInquiryExternalForm(TestBase):
                 "institution_other_name",
                 "institution_other_URL",
                 "institution_department",
+                "membership_affiliation",
+                "membership_code",
                 "location",
                 "country",
                 "routine_data",
