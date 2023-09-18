@@ -45,8 +45,8 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "email": "hpotter@magic.gov",
             "institution_other_name": "Ministry of Magic",
             "institution_other_URL": "magic.gov.uk",
-            "membership_affiliation": "no",
-            "membership_code": "",
+            "member_affiliation": "no",
+            "member_code": "",
             "location": "London",
             "country": "GB",
             "requested_workshop_types": [
@@ -394,8 +394,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # Arrange
         self.setUpMembership()
         data = {
-            "membership_affiliation": "yes",
-            "membership_code": "valid123",
+            "member_affiliation": "yes",
+            "member_code": "valid123",
         }
 
         # Act
@@ -412,8 +412,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # 2: affiliation "yes" and invalid code - error on code
         # Arrange
         data = {
-            "membership_affiliation": "yes",
-            "membership_code": "invalid",
+            "member_affiliation": "yes",
+            "member_code": "invalid",
         }
 
         # Act
@@ -430,8 +430,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # 3: affiliation "yes" and empty code - error on code
         # Arrange
         data = {
-            "membership_affiliation": "yes",
-            "membership_code": "",
+            "member_affiliation": "yes",
+            "member_code": "",
         }
 
         # Act
@@ -450,8 +450,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # 4: affiliation "unsure" and valid code - no error
         # Arrange
         data = {
-            "membership_affiliation": "yes",
-            "membership_code": "valid123",
+            "member_affiliation": "yes",
+            "member_code": "valid123",
         }
 
         # Act
@@ -468,8 +468,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # 5: affiliation "unsure" and invalid code - error on code
         # Arrange
         data = {
-            "membership_affiliation": "unsure",
-            "membership_code": "invalid",
+            "member_affiliation": "unsure",
+            "member_code": "invalid",
         }
 
         # Act
@@ -486,8 +486,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # 6: affiliation "unsure" and empty code - no error
         # Arrange
         data = {
-            "membership_affiliation": "unsure",
-            "membership_code": "",
+            "member_affiliation": "unsure",
+            "member_code": "",
         }
 
         # Act
@@ -506,8 +506,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # Arrange
         self.setUpMembership()
         data = {
-            "membership_affiliation": "no",
-            "membership_code": "valid123",
+            "member_affiliation": "no",
+            "member_code": "valid123",
         }
 
         # Act
@@ -524,8 +524,8 @@ class TestWorkshopRequestCreateView(TestBase):
         # 8: affiliation "no" and empty code - no error
         # Arrange
         data = {
-            "membership_affiliation": "no",
-            "membership_code": "",
+            "member_affiliation": "no",
+            "member_code": "",
         }
 
         # Act

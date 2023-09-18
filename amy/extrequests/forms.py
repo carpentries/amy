@@ -302,8 +302,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "membership_affiliation",
-            "membership_code",
+            "member_affiliation",
+            "member_code",
             "location",
             "country",
             "online_inperson",
@@ -389,9 +389,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             (self["institution_other_URL"], "Institution URL address"),
         ]
 
-        # move "membership_code" field to "membership_affiliation" subfield
-        self["membership_affiliation"].field.widget.subfields = [
-            (self["membership_code"], "Member registration code"),
+        # move "member_code" field to "member_affiliation" subfield
+        self["member_affiliation"].field.widget.subfields = [
+            (self["member_code"], "Member registration code"),
         ]
 
         # remove additional fields
@@ -401,7 +401,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove("carpentries_info_source_other")
         self.helper.layout.fields.remove("institution_other_name")
         self.helper.layout.fields.remove("institution_other_URL")
-        self.helper.layout.fields.remove("membership_code")
+        self.helper.layout.fields.remove("member_code")
 
         # add warning alert for dates falling within next 2-3 months
         DATES_TOO_SOON_WARNING = (
@@ -429,7 +429,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
-            "membership_affiliation",
+            "member_affiliation",
             "country",
             "audience_description",
             "user_notes",
@@ -456,23 +456,23 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
     def clean_membership_info(self, request: HttpRequest) -> dict:
         errors = dict()
-        affiliation = self.cleaned_data.get("membership_affiliation")  # yes/no/unsure
-        code = self.cleaned_data.get("membership_code", "")
+        affiliation = self.cleaned_data.get("member_affiliation")  # yes/no/unsure
+        code = self.cleaned_data.get("member_code", "")
         if affiliation in ["yes", "unsure"] and code:
             # ensure that code belongs to a membership
             try:
                 Membership.objects.get(registration_code=code)
             except Membership.DoesNotExist:
-                errors["membership_code"] = ValidationError(
+                errors["member_code"] = ValidationError(
                     "This code is invalid. "
                     "Please contact your Member Affiliate to verify your code."
                 )
         elif affiliation == "yes" and not code:
-            errors["membership_code"] = ValidationError(
+            errors["member_code"] = ValidationError(
                 "This field is required if you selected 'Yes' above."
             )
         elif affiliation == "no" and code:
-            errors["membership_code"] = ValidationError(
+            errors["member_code"] = ValidationError(
                 "This field must be empty if you selected 'No' above."
             )
 
@@ -743,8 +743,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "membership_affiliation",
-            "membership_code",
+            "member_affiliation",
+            "member_code",
             "location",
             "country",
             "online_inperson",
@@ -897,7 +897,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
-            "membership_code",
+            "member_code",
             "audience_description",
             "country",
             "user_notes",
@@ -1163,8 +1163,8 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "membership_affiliation",
-            "membership_code",
+            "member_affiliation",
+            "member_code",
             "online_inperson",
             "workshop_format",
             "workshop_format_other",
@@ -1241,7 +1241,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
-            "membership_code",
+            "member_code",
             "additional_contact",
             "language",
             "online_inperson",
