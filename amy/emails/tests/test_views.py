@@ -458,7 +458,6 @@ class TestScheduledEmailUpdate(TestBase):
                 for state in [
                     ScheduledEmailStatus.SCHEDULED,
                     ScheduledEmailStatus.FAILED,
-                    ScheduledEmailStatus.SUCCEEDED,
                 ]
             ]
         )
@@ -467,7 +466,7 @@ class TestScheduledEmailUpdate(TestBase):
         results = queryset.all()
 
         # Assert - all of the defined scheduled emails can be retrieved with this query
-        self.assertEqual(results.count(), 3)
+        self.assertEqual(results.count(), 2)
 
     @override_settings(EMAIL_MODULE_ENABLED=True)
     def test_disallowed_email_statuses(self) -> None:

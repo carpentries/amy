@@ -125,8 +125,6 @@ ScheduledEmailStatusActions = {
     "edit": [
         ScheduledEmailStatus.SCHEDULED,
         ScheduledEmailStatus.FAILED,
-        # note: will not re-send the email or affect emails already sent
-        ScheduledEmailStatus.SUCCEEDED,
     ],
     "reschedule": [
         ScheduledEmailStatus.SCHEDULED,
