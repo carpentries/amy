@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from django.test import override_settings
+from django.test import RequestFactory, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -9,8 +9,15 @@ from emails.models import (
     ScheduledEmail,
     ScheduledEmailLog,
     ScheduledEmailStatus,
+    ScheduledEmailStatusActions,
+    ScheduledEmailStatusExplanation,
 )
 from emails.types import PersonsMergedContext
+from emails.views import (
+    ScheduledEmailCancel,
+    ScheduledEmailReschedule,
+    ScheduledEmailUpdate,
+)
 from workshops.models import Person
 from workshops.tests.base import TestBase
 
@@ -323,6 +330,15 @@ class TestScheduledEmailDetails(TestBase):
             rv.context["rendered_body"],
             "<p>Hello, Harry! Nice to meet <strong>you</strong>.</p>",
         )
+        self.assertEqual(
+            rv.context["status_explanation"],
+            ScheduledEmailStatusExplanation[
+                ScheduledEmailStatus(scheduled_email.state)
+            ],
+        )
+        self.assertEqual(
+            rv.context["ScheduledEmailStatusActions"], ScheduledEmailStatusActions
+        )
 
 
 class TestScheduledEmailUpdate(TestBase):
@@ -419,6 +435,73 @@ class TestScheduledEmailUpdate(TestBase):
         self.assertEqual(email_log.state_before, email_log.state_after)
         self.assertEqual(email_log.state_after, ScheduledEmailStatus.SCHEDULED)
 
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_allowed_email_statuses(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        view = ScheduledEmailUpdate(request=request)
+        queryset = view.get_queryset()
+
+        ScheduledEmail.objects.bulk_create(
+            [
+                ScheduledEmail(
+                    scheduled_at=timezone.now() + timedelta(hours=1),
+                    to_header=["peter@spiderman.net"],
+                    from_header="test@example.org",
+                    reply_to_header="",
+                    cc_header=[],
+                    bcc_header=[],
+                    subject="Test",
+                    body="Test",
+                    state=state,
+                )
+                for state in [
+                    ScheduledEmailStatus.SCHEDULED,
+                    ScheduledEmailStatus.FAILED,
+                ]
+            ]
+        )
+
+        # Act
+        results = queryset.all()
+
+        # Assert - all of the defined scheduled emails can be retrieved with this query
+        self.assertEqual(results.count(), 2)
+
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_disallowed_email_statuses(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        view = ScheduledEmailUpdate(request=request)
+        queryset = view.get_queryset()
+
+        ScheduledEmail.objects.bulk_create(
+            [
+                ScheduledEmail(
+                    scheduled_at=timezone.now() + timedelta(hours=1),
+                    to_header=["peter@spiderman.net"],
+                    from_header="test@example.org",
+                    reply_to_header="",
+                    cc_header=[],
+                    bcc_header=[],
+                    subject="Test",
+                    body="Test",
+                    state=state,
+                )
+                for state in [
+                    ScheduledEmailStatus.LOCKED,
+                    ScheduledEmailStatus.RUNNING,
+                    ScheduledEmailStatus.CANCELLED,
+                ]
+            ]
+        )
+
+        # Act
+        results = queryset.all()
+
+        # Assert - none of the defined scheduled emails can be retrieved with this query
+        self.assertEqual(results.count(), 0)
+
 
 class TestScheduledEmailReschedule(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -462,6 +545,74 @@ class TestScheduledEmailReschedule(TestBase):
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.scheduled_at, new_scheduled_date)
 
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_allowed_email_statuses(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        view = ScheduledEmailReschedule(request=request)
+        queryset = view.get_queryset()
+
+        ScheduledEmail.objects.bulk_create(
+            [
+                ScheduledEmail(
+                    scheduled_at=timezone.now() + timedelta(hours=1),
+                    to_header=["peter@spiderman.net"],
+                    from_header="test@example.org",
+                    reply_to_header="",
+                    cc_header=[],
+                    bcc_header=[],
+                    subject="Test",
+                    body="Test",
+                    state=state,
+                )
+                for state in [
+                    ScheduledEmailStatus.SCHEDULED,
+                    ScheduledEmailStatus.FAILED,
+                    ScheduledEmailStatus.CANCELLED,
+                ]
+            ]
+        )
+
+        # Act
+        results = queryset.all()
+
+        # Assert - all of the defined scheduled emails can be retrieved with this query
+        self.assertEqual(results.count(), 3)
+
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_disallowed_email_statuses(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        view = ScheduledEmailReschedule(request=request)
+        queryset = view.get_queryset()
+
+        ScheduledEmail.objects.bulk_create(
+            [
+                ScheduledEmail(
+                    scheduled_at=timezone.now() + timedelta(hours=1),
+                    to_header=["peter@spiderman.net"],
+                    from_header="test@example.org",
+                    reply_to_header="",
+                    cc_header=[],
+                    bcc_header=[],
+                    subject="Test",
+                    body="Test",
+                    state=state,
+                )
+                for state in [
+                    ScheduledEmailStatus.LOCKED,
+                    ScheduledEmailStatus.RUNNING,
+                    ScheduledEmailStatus.SUCCEEDED,
+                ]
+            ]
+        )
+
+        # Act
+        results = queryset.all()
+
+        # Assert - none of the defined scheduled emails can be retrieved with this query
+        self.assertEqual(results.count(), 0)
+
 
 class TestScheduledEmailCancel(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -499,3 +650,71 @@ class TestScheduledEmailCancel(TestBase):
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
+
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_allowed_email_statuses(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        view = ScheduledEmailCancel(request=request)
+        queryset = view.get_queryset()
+
+        ScheduledEmail.objects.bulk_create(
+            [
+                ScheduledEmail(
+                    scheduled_at=timezone.now() + timedelta(hours=1),
+                    to_header=["peter@spiderman.net"],
+                    from_header="test@example.org",
+                    reply_to_header="",
+                    cc_header=[],
+                    bcc_header=[],
+                    subject="Test",
+                    body="Test",
+                    state=state,
+                )
+                for state in [
+                    ScheduledEmailStatus.SCHEDULED,
+                    ScheduledEmailStatus.FAILED,
+                ]
+            ]
+        )
+
+        # Act
+        results = queryset.all()
+
+        # Assert - all of the defined scheduled emails can be retrieved with this query
+        self.assertEqual(results.count(), 2)
+
+    @override_settings(EMAIL_MODULE_ENABLED=True)
+    def test_disallowed_email_statuses(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        view = ScheduledEmailCancel(request=request)
+        queryset = view.get_queryset()
+
+        ScheduledEmail.objects.bulk_create(
+            [
+                ScheduledEmail(
+                    scheduled_at=timezone.now() + timedelta(hours=1),
+                    to_header=["peter@spiderman.net"],
+                    from_header="test@example.org",
+                    reply_to_header="",
+                    cc_header=[],
+                    bcc_header=[],
+                    subject="Test",
+                    body="Test",
+                    state=state,
+                )
+                for state in [
+                    ScheduledEmailStatus.LOCKED,
+                    ScheduledEmailStatus.RUNNING,
+                    ScheduledEmailStatus.SUCCEEDED,
+                    ScheduledEmailStatus.CANCELLED,
+                ]
+            ]
+        )
+
+        # Act
+        results = queryset.all()
+
+        # Assert - none of the defined scheduled emails can be retrieved with this query
+        self.assertEqual(results.count(), 0)

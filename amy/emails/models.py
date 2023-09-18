@@ -111,12 +111,42 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
 
 class ScheduledEmailStatus(models.TextChoices):
-    SCHEDULED = "scheduled"
-    LOCKED = "locked"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+    SCHEDULED = "scheduled"  # editing, cancelling allowed
+    LOCKED = "locked"  # nothing allowed
+    RUNNING = "running"  # nothing allowed
+    SUCCEEDED = "succeeded"  # editing allowed with note about re-sending
+    FAILED = "failed"  # editing, cancelling allowed
+    CANCELLED = "cancelled"  # allowed to re-schedule
+
+
+# List of states when specific actions are allowed. This is used in per-object
+# permissions to block or allow specific actions.
+ScheduledEmailStatusActions = {
+    "edit": [
+        ScheduledEmailStatus.SCHEDULED,
+        ScheduledEmailStatus.FAILED,
+    ],
+    "reschedule": [
+        ScheduledEmailStatus.SCHEDULED,
+        ScheduledEmailStatus.FAILED,
+        ScheduledEmailStatus.CANCELLED,
+    ],
+    "cancel": [
+        ScheduledEmailStatus.SCHEDULED,
+        ScheduledEmailStatus.FAILED,
+    ],
+}
+
+
+# Displayed in scheduled email details view.
+ScheduledEmailStatusExplanation = {
+    ScheduledEmailStatus.SCHEDULED: "Scheduled to be sent",
+    ScheduledEmailStatus.LOCKED: "Locked for sending; worker is processing it",
+    ScheduledEmailStatus.RUNNING: "Sending in progress",
+    ScheduledEmailStatus.SUCCEEDED: "Sent successfully",
+    ScheduledEmailStatus.FAILED: "Sending failed; worker will re-try soon",
+    ScheduledEmailStatus.CANCELLED: "Sending cancelled",
+}
 
 
 class ScheduledEmail(CreatedUpdatedMixin, models.Model):
