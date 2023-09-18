@@ -14,6 +14,7 @@ from workshops.models import (
     Event,
     InfoSource,
     Language,
+    Membership,
     Organization,
     Role,
     Tag,
@@ -25,6 +26,16 @@ from workshops.tests.base import FormTestHelper, TestBase
 
 class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
+
+    def setUpMembership(self):
+        Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date(2023, 8, 15),
+            agreement_end=date(2024, 8, 14),
+            contribution_type="financial",
+            registration_code="valid123",
+        )
 
     def test_minimal_form(self):
         """Test if minimal form works."""
@@ -177,94 +188,6 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
         self.assertIn("institution_other_name", form.errors)
         self.assertIn("institution_other_URL", form.errors)
         self.assertNotIn("institution_department", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_yes_code_valid(self):
-        # 1: affiliation "yes" and valid code - no error
-        data = {
-            "membership_affiliation": "yes",
-            "membership_code": "valid123",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertNotIn("membership_code", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_yes_code_invalid(self):
-        # 2: affiliation "yes" and invalid code - error on code
-        data = {
-            "membership_affiliation": "yes",
-            "membership_code": "invalid",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertIn("membership_code", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_yes_code_empty(self):
-        # 3: affiliation "yes" and empty code - error on code
-        data = {
-            "membership_affiliation": "yes",
-            "membership_code": "",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertIn("membership_code", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_unsure_code_valid(self):
-        # 4: affiliation "unsure" and valid code - no error
-        data = {
-            "membership_affiliation": "yes",
-            "membership_code": "valid123",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertNotIn("membership_code", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_unsure_code_invalid(self):
-        # 5: affiliation "unsure" and invalid code - error on code
-        data = {
-            "membership_affiliation": "unsure",
-            "membership_code": "invalid",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertIn("membership_code", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_unsure_code_empty(self):
-        # 6: affiliation "unsure" and empty code - no error
-        data = {
-            "membership_affiliation": "unsure",
-            "membership_code": "",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertNotIn("membership_code", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_no_code_not_empty(self):
-        # 7: affiliation "no" and non-empty code - error on code
-        data = {
-            "membership_affiliation": "no",
-            "membership_code": "",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertIn("membership_code", form.errors)
-
-    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__affiliation_no_code_empty(self):
-        # 8: affiliation "no" and empty code - no error
-        data = {
-            "membership_affiliation": "no",
-            "membership_code": "",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn("membership_affiliation", form.errors)
-        self.assertNotIn("membership_code", form.errors)
 
     def test_dates_validation(self):
         """Ensure preferred dates validation."""
@@ -433,6 +356,186 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             self.assertNotIn("preferred_dates", form.errors)
             self.assertNotIn("other_preferred_dates", form.errors)
             self.assertNotIn("instructor_availability", form.errors)
+
+
+class TestWorkshopRequestCreateView(TestBase):
+    """
+    Tests membership code validation which relies on the ENFORCE_MEMBER_CODES flag.
+    All other form validation is tested in the TestWorkshopRequestBaseForm class above.
+    """
+
+    INVALID_CODE_ERROR = (
+        "This code is invalid. "
+        "Please contact your Member Affiliate to verify your code."
+    )
+    MUST_ENTER_CODE = "This field is required if you selected &#x27;Yes&#x27; above."
+    MUST_NOT_ENTER_CODE = (
+        "This field must be empty if you selected &#x27;No&#x27; above."
+    )
+
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
+
+    def setUpMembership(self):
+        Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date(2023, 8, 15),
+            agreement_end=date(2024, 8, 14),
+            contribution_type="financial",
+            registration_code="valid123",
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_yes_code_valid(self):
+        # 1: affiliation "yes" and valid code - no error
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.MUST_ENTER_CODE)
+        self.assertNotContains(rv, self.MUST_NOT_ENTER_CODE)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_yes_code_invalid(self):
+        # 2: affiliation "yes" and invalid code - error on code
+        # Arrange
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.MUST_ENTER_CODE)
+        self.assertNotContains(rv, self.MUST_NOT_ENTER_CODE)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_yes_code_empty(self):
+        # 3: affiliation "yes" and empty code - error on code
+        # Arrange
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        print(rv.content)
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+        self.assertIn(self.MUST_ENTER_CODE, rv.content.decode("utf-8"))
+        self.assertNotContains(rv, self.MUST_NOT_ENTER_CODE)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_unsure_code_valid(self):
+        self.setUpMembership()
+        # 4: affiliation "unsure" and valid code - no error
+        # Arrange
+        data = {
+            "membership_affiliation": "yes",
+            "membership_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.MUST_ENTER_CODE)
+        self.assertNotContains(rv, self.MUST_NOT_ENTER_CODE)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_unsure_code_invalid(self):
+        # 5: affiliation "unsure" and invalid code - error on code
+        # Arrange
+        data = {
+            "membership_affiliation": "unsure",
+            "membership_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.MUST_ENTER_CODE)
+        self.assertNotContains(rv, self.MUST_NOT_ENTER_CODE)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_unsure_code_empty(self):
+        # 6: affiliation "unsure" and empty code - no error
+        # Arrange
+        data = {
+            "membership_affiliation": "unsure",
+            "membership_code": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.MUST_ENTER_CODE)
+        self.assertNotContains(rv, self.MUST_NOT_ENTER_CODE)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_no_code_not_empty(self):
+        # 7: affiliation "no" and non-empty code - error on code
+        # even if a valid code is entered, an error is produced
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "membership_affiliation": "no",
+            "membership_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.MUST_ENTER_CODE)
+        self.assertContains(rv, self.MUST_NOT_ENTER_CODE)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__affiliation_no_code_empty(self):
+        # 8: affiliation "no" and empty code - no error
+        # Arrange
+        data = {
+            "membership_affiliation": "no",
+            "membership_code": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.MUST_ENTER_CODE)
+        self.assertNotContains(rv, self.MUST_NOT_ENTER_CODE)
 
 
 class TestWorkshopRequestViews(TestBase):

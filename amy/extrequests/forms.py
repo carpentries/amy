@@ -5,6 +5,7 @@ from crispy_forms.layout import HTML, Div, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
+from django.http import HttpRequest
 
 from extrequests.models import (
     DataVariant,
@@ -353,6 +354,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # the field isn't required, but we want user to fill it
@@ -451,8 +454,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         return "{}".format(obj.fullname)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def clean_membership_info(self) -> dict:
-        print("cleaning_membership_info")
+    def clean_membership_info(self, request: HttpRequest) -> dict:
         errors = dict()
         affiliation = self.cleaned_data.get("membership_affiliation")  # yes/no/unsure
         code = self.cleaned_data.get("membership_code", "")
@@ -600,8 +602,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 )
 
         # 8: enforce membership registration codes
-        membership_errors = self.clean_membership_info()
-        print(membership_errors)
+        membership_errors = self.clean_membership_info(request=self.request_http)
         if membership_errors:
             errors.update(membership_errors)
 
