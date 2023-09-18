@@ -79,7 +79,7 @@ class WorkshopRequestCreate(
     page_title = "Request a Carpentries Workshop"
     template_name = "forms/workshoprequest.html"
     success_url = reverse_lazy("workshop_request_confirm")
-    email_fail_silently = False
+    email_fail_silently = True
 
     autoresponder_subject = "Workshop request confirmation"
     autoresponder_body_template_txt = "mailing/workshoprequest.txt"
@@ -167,7 +167,7 @@ class WorkshopInquiryRequestCreate(
     page_title = "Inquiry about Carpentries Workshop"
     template_name = "forms/workshopinquiry.html"
     success_url = reverse_lazy("workshop_inquiry_confirm")
-    email_fail_silently = False
+    email_fail_silently = True
 
     autoresponder_subject = "Workshop inquiry confirmation"
     autoresponder_body_template_txt = "mailing/workshopinquiry.txt"
@@ -255,7 +255,7 @@ class SelfOrganisedSubmissionCreate(
     page_title = "Submit a self-organised workshop"
     template_name = "forms/selforganised_submission.html"
     success_url = reverse_lazy("selforganised_submission_confirm")
-    email_fail_silently = False
+    email_fail_silently = True
 
     autoresponder_subject = "Self-organised submission confirmation"
     autoresponder_body_template_txt = "mailing/selforganisedsubmission.txt"

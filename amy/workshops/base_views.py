@@ -246,7 +246,11 @@ class EmailSendMixin:
 
     def send_email(self, email):
         """Send a prepared email out."""
-        return email.send(fail_silently=self.email_fail_silently)
+        try:
+            email.send()
+        except (SMTPException, AnymailRequestsAPIError) as e:
+            if not self.email_fail_silently:
+                raise e
 
     def form_valid(self, form):
         """Once form is valid, send the email."""
