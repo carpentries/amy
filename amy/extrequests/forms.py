@@ -454,7 +454,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         return "{}".format(obj.fullname)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def clean_membership_info(self, request: HttpRequest) -> dict:
+    def validate_member_code(self, request: HttpRequest) -> dict:
         errors = dict()
         affiliation = self.cleaned_data.get("member_affiliation")  # yes/no/unsure
         code = self.cleaned_data.get("member_code", "")
@@ -602,7 +602,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 )
 
         # 8: enforce membership registration codes
-        membership_errors = self.clean_membership_info(request=self.request_http)
+        membership_errors = self.validate_member_code(request=self.request_http)
         if membership_errors:
             errors.update(membership_errors)
 
