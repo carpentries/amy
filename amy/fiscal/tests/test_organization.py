@@ -117,3 +117,33 @@ class TestOrganization(TestBase):
         # Assert
         self.assertIn(self.org_beta, self.org_alpha.affiliated_organizations.all())
         self.assertIn(self.org_alpha, self.org_beta.affiliated_organizations.all())
+
+    def test_manager_administrators(self):
+        """Ensure the correct organizations are returned as possible administrators."""
+        # Arrange - `setUp()` also creates 2 organisations these filters should ignore
+        self._setUpAdministrators()
+        expected_domains = [
+            "self-organized",
+            "software-carpentry.org",
+            "datacarpentry.org",
+            "librarycarpentry.org",
+            # Instructor Training organisation
+            "carpentries.org",
+            # Collaborative Lesson Development Training organisation
+            "carpentries.org/community-lessons/",
+        ]
+
+        # Act
+        organizations_with_admin_domain = Organization.objects.filter(
+            domain__in=expected_domains
+        )
+        administrators = Organization.objects.administrators()
+
+        # Assert
+        # check that all ADMIN_DOMAINS are represented
+        self.assertSetEqual(
+            set(expected_domains), set(Organization.objects.ADMIN_DOMAINS)
+        )
+        self.assertEqual(organizations_with_admin_domain.count(), len(expected_domains))
+        # check that administrators() returns what we expect
+        self.assertQuerysetEqual(organizations_with_admin_domain, administrators)

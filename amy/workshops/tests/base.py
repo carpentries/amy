@@ -529,6 +529,29 @@ class TestBase(
             award=Award.objects.get(person=self.ron, badge=self.instructor_badge),
         )
 
+    def _setUpAdministrators(self) -> None:
+        """Adds administrator organizations to the database."""
+        Organization.objects.bulk_create(
+            [
+                Organization(domain="self-organized", fullname="Self-Organized"),
+                Organization(
+                    domain="software-carpentry.org",
+                    fullname="Software Carpentry",
+                ),
+                Organization(domain="datacarpentry.org", fullname="Data Carpentry"),
+                Organization(
+                    domain="librarycarpentry.org",
+                    fullname="Library Carpentry",
+                ),
+                Organization(domain="carpentries.org", fullname="Instructor Training"),
+                Organization(
+                    domain="carpentries.org/community-lessons/",
+                    fullname="Collaborative Lesson Development Training",
+                ),
+            ],
+            ignore_conflicts=True,
+        )
+
     @staticmethod
     def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
         consent = Consent.objects.get(
