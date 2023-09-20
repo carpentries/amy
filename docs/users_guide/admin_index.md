@@ -171,7 +171,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Membership** Select the Membership this event should be applied to, by membership term and membership dates.
 
-* **Administrator** Select the administrator from the drop down menu.  This will always be  `Data Carpentry`, `Library Carpentry`, `Software Carpentry`,  `Instructor Training`, or `Self-Organised`.
+* **Administrator** Select the administrator from the drop down menu.  This will always be  `Data Carpentry`, `Library Carpentry`, `Software Carpentry`,  `Instructor Training`, `Collaborative Lesson Development Training` or `Self-Organised`.
 
 * **Is this workshop public** If the workshop Host consents, choose "Public." This will list the workshop on the websites for The Carpentries, the associated lesson programs, and The Carpentries data feeds.  If "Private" it will not be listed publicly anywhere.
 
@@ -608,7 +608,7 @@ Clicking "Events" on the top menu bar will take you to a list of *all* recorded 
 * **Assigned to**: The admin user the event is assigned to
 * **Tags**: Any tags applied to that event
 * **Host**: The organisation hosting the event
-* **Administrator** The event administrator (A lesson program for centrally organised workshops, self organised, or Instructor Training)
+* **Administrator** The event administrator (A lesson program for centrally organised workshops, self organised, Instructor Training, or Collaborative Lesson Development Training)
 * **Completed** Whether the "completed" box has been checked, indicating all necessary work for that event is complete
 * **Country** Country from the event's location
 * **Continent** Continent based on the country
