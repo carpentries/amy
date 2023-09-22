@@ -11,7 +11,7 @@ from emails.actions.instructor_training_approaching import (
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
-    instructor_training_approaching_signal,
+    INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     instructor_training_approaching_update_signal,
 )
 from workshops.models import Event, Organization, Person, Role, Tag, Task
@@ -80,7 +80,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_update_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -112,7 +112,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_updated.assert_called_once_with(
             request,
-            instructor_training_approaching_signal.signal_name,
+            INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             scheduled_email,
         )
 
@@ -128,7 +128,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         request = RequestFactory().get("/")
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_update_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -180,7 +180,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
     ) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        signal = instructor_training_approaching_update_signal.signal_name
+        signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
         event = self.event
 
         # Act
@@ -205,7 +205,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
     ) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        signal = instructor_training_approaching_update_signal.signal_name
+        signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
         template = EmailTemplate.objects.create(
             name="Test Email Template",
             signal=signal,
@@ -259,7 +259,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         request = RequestFactory().get("/")
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_update_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -275,7 +275,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             state="scheduled",
             generic_relation=self.event,
         )
-        signal = instructor_training_approaching_update_signal.signal_name
+        signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
         self.instructor1.email = ""
         self.instructor1.save()
         self.instructor2.email = ""
@@ -303,7 +303,7 @@ class TestInstructorTrainingApproachingReceiverUpdateIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],

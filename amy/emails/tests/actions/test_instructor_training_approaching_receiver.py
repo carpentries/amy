@@ -6,7 +6,10 @@ from django.urls import reverse
 
 from emails.actions import instructor_training_approaching_receiver
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.signals import instructor_training_approaching_signal
+from emails.signals import (
+    INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+    instructor_training_approaching_signal,
+)
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
@@ -45,7 +48,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         # Arrange
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -90,7 +93,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_scheduled.assert_called_once_with(
             request,
-            instructor_training_approaching_signal.signal_name,
+            INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             scheduled_email,
         )
 
@@ -125,7 +128,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         Task.objects.create(event=event, person=instructor2, role=instructor_role)
 
         request = RequestFactory().get("/")
-        signal = instructor_training_approaching_signal.signal_name
+        signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
         context = {"event": event, "instructors": [instructor1, instructor2]}
         scheduled_at = datetime(2023, 8, 5, 12, 0, tzinfo=UTC)
         mock_one_month_before.return_value = scheduled_at
@@ -179,7 +182,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         )
         Task.objects.create(event=event, person=instructor1, role=instructor_role)
         Task.objects.create(event=event, person=instructor2, role=instructor_role)
-        signal = instructor_training_approaching_signal.signal_name
+        signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 
         # Act
         instructor_training_approaching_signal.send(
@@ -218,7 +221,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         )
         Task.objects.create(event=event, person=instructor1, role=instructor_role)
         Task.objects.create(event=event, person=instructor2, role=instructor_role)
-        signal = instructor_training_approaching_signal.signal_name
+        signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 
         # Act
         instructor_training_approaching_signal.send(
@@ -242,7 +245,7 @@ class TestInstructorTrainingApproachingReceiverIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],

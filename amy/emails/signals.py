@@ -67,20 +67,21 @@ persons_merged_signal = Signal(
 )
 
 # Runs 1 month before the event.
+INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME = "instructor_training_approaching"
 instructor_training_approaching_signal = Signal(
-    signal_name="instructor_training_approaching",
+    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     context_type=InstructorTrainingApproachingContext,
 )
 # Emitted when conditions for the previous signal may have changed and
 # the email should be re-calculated.
 instructor_training_approaching_update_signal = Signal(
-    signal_name=instructor_training_approaching_signal.signal_name,
+    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     context_type=InstructorTrainingApproachingContext,
 )
 # Emitted when conditions for the previous signal may have changed and
 # the email should be cancelled.
 instructor_training_approaching_remove_signal = Signal(
-    signal_name=instructor_training_approaching_signal.signal_name,
+    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     context_type=InstructorTrainingApproachingContext,
 )
 

@@ -11,8 +11,8 @@ from emails.actions.instructor_training_approaching import (
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
+    INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     instructor_training_approaching_remove_signal,
-    instructor_training_approaching_signal,
 )
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
@@ -80,7 +80,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_remove_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -112,7 +112,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_cancelled.assert_called_once_with(
             request,
-            instructor_training_approaching_remove_signal.signal_name,
+            INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             scheduled_email,
         )
 
@@ -126,7 +126,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         request = RequestFactory().get("/")
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_remove_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -170,7 +170,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         request = RequestFactory().get("/")
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_remove_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -232,7 +232,7 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],

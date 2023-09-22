@@ -1,14 +1,15 @@
 from datetime import UTC, date, datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
 
 from emails.actions.instructor_training_approaching import (
+    EmailStrategyException,
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.signals import instructor_training_approaching_signal
+from emails.signals import INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 from emails.types import StrategyEnum
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
@@ -59,7 +60,7 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
         )
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -88,7 +89,7 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
         )
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_training_approaching_signal.signal_name,
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -191,6 +192,9 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         )
 
     @patch(
+        "emails.actions.instructor_training_approaching.logger",
+    )
+    @patch(
         "emails.actions.instructor_training_approaching."
         "instructor_training_approaching_signal",
     )
@@ -207,6 +211,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         mock_instructor_training_approaching_remove_signal,
         mock_instructor_training_approaching_update_signal,
         mock_instructor_training_approaching_signal,
+        mock_logger,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP
@@ -220,3 +225,18 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         mock_instructor_training_approaching_signal.send.assert_not_called()
         mock_instructor_training_approaching_update_signal.send.assert_not_called()
         mock_instructor_training_approaching_remove_signal.send.assert_not_called()
+        mock_logger.debug.assert_called_once_with(
+            f"Strategy {strategy} for {event} is a no-op"
+        )
+
+    def test_invalid_strategy(self) -> None:
+        # Arrange
+        strategy = MagicMock()
+        request = RequestFactory().get("/")
+        event = Event(start=datetime.today())
+
+        # Act & Assert
+        with self.assertRaises(
+            EmailStrategyException, msg=f"Unknown strategy {strategy}"
+        ):
+            run_instructor_training_approaching_strategy(strategy, request, event)

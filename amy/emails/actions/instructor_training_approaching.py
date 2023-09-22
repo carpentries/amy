@@ -14,6 +14,8 @@ from emails.controller import (
 )
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.signals import (
+    INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+    Signal,
     instructor_training_approaching_remove_signal,
     instructor_training_approaching_signal,
     instructor_training_approaching_update_signal,
@@ -39,6 +41,10 @@ from workshops.utils.feature_flags import feature_flag_enabled
 logger = logging.getLogger("amy")
 
 
+class EmailStrategyException(Exception):
+    pass
+
+
 def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     logger.info(f"Running InstructorTrainingApproaching strategy for {event}")
 
@@ -56,7 +62,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     has_email_scheduled = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
-        template__signal=instructor_training_approaching_signal.signal_name,
+        template__signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
         state="scheduled",
     ).exists()
     logger.debug(f"{has_email_scheduled=}")
@@ -77,15 +83,20 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
 def run_instructor_training_approaching_strategy(
     strategy: StrategyEnum, request: HttpRequest, event: Event
 ) -> None:
-    mapping = {
+    mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_approaching_signal,
         StrategyEnum.UPDATE: instructor_training_approaching_update_signal,
         StrategyEnum.REMOVE: instructor_training_approaching_remove_signal,
+        StrategyEnum.NOOP: None,
     }
     if strategy not in mapping:
-        return
+        raise EmailStrategyException(f"Unknown strategy {strategy}")
 
     signal = mapping[strategy]
+
+    if not signal:
+        logger.debug(f"Strategy {strategy} for {event} is a no-op")
+        return
 
     logger.debug(f"Sending signal for {event} as result of strategy {strategy}")
     signal.send(
@@ -117,10 +128,10 @@ def instructor_training_approaching_receiver(
         "event": event,
         "instructors": instructors,
     }
-    signal = instructor_training_approaching_signal.signal_name
+    signal_name = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
     try:
         scheduled_email = EmailController.schedule_email(
-            signal=signal,
+            signal=signal_name,
             context=context,
             scheduled_at=scheduled_at,
             to_header=instructor_emails,
@@ -128,11 +139,11 @@ def instructor_training_approaching_receiver(
             author=person_from_request(request),
         )
     except EmailControllerMissingRecipientsException:
-        messages_missing_recipients(request, signal)
+        messages_missing_recipients(request, signal_name)
     except EmailTemplate.DoesNotExist:
-        messages_missing_template(request, signal)
+        messages_missing_template(request, signal_name)
     else:
-        messages_action_scheduled(request, signal, scheduled_email)
+        messages_action_scheduled(request, signal_name, scheduled_email)
 
 
 @receiver(instructor_training_approaching_update_signal)
@@ -156,7 +167,7 @@ def instructor_training_approaching_update_receiver(
         "event": event,
         "instructors": instructors,
     }
-    signal = instructor_training_approaching_signal.signal_name
+    signal_name = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 
     ct = ContentType.objects.get_for_model(event)  # type: ignore
     try:
@@ -166,20 +177,21 @@ def instructor_training_approaching_update_receiver(
             .get(
                 generic_relation_content_type=ct,
                 generic_relation_pk=event.pk,
-                template__signal=signal,
+                template__signal=signal_name,
                 state="scheduled",
             )
         )
 
     except ScheduledEmail.DoesNotExist:
         logger.warning(
-            f"Scheduled email for signal {signal} and event {event} does not exist."
+            f"Scheduled email for signal {signal_name} and event {event} "
+            "does not exist."
         )
         return
 
     except ScheduledEmail.MultipleObjectsReturned:
         logger.warning(
-            f"Too many scheduled emails for signal {signal} and event {event}."
+            f"Too many scheduled emails for signal {signal_name} and event {event}."
             " Can't update them."
         )
         return
@@ -194,13 +206,13 @@ def instructor_training_approaching_update_receiver(
             author=person_from_request(request),
         )
     except EmailControllerMissingRecipientsException:
-        messages_missing_recipients(request, signal)
+        messages_missing_recipients(request, signal_name)
     except EmailControllerMissingTemplateException:
         # Note: this is not realistically possible because the scheduled email
         # is looked up using a specific template signal.
         messages_missing_template_link(request, scheduled_email)
     else:
-        messages_action_updated(request, signal, scheduled_email)
+        messages_action_updated(request, signal_name, scheduled_email)
 
 
 @receiver(instructor_training_approaching_remove_signal)
@@ -210,13 +222,13 @@ def instructor_training_approaching_remove_receiver(
 ) -> None:
     request = kwargs["request"]
     event = kwargs["event"]
-    signal = instructor_training_approaching_remove_signal.signal_name
+    signal_name = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 
     ct = ContentType.objects.get_for_model(event)  # type: ignore
     scheduled_emails = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
-        template__signal=signal,
+        template__signal=signal_name,
         state="scheduled",
     ).select_for_update()
 
@@ -225,4 +237,4 @@ def instructor_training_approaching_remove_receiver(
             scheduled_email=scheduled_email,
             author=person_from_request(request),
         )
-        messages_action_cancelled(request, signal, scheduled_email)
+        messages_action_cancelled(request, signal_name, scheduled_email)
