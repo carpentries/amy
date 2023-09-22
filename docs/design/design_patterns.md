@@ -39,6 +39,12 @@ This document acts as a reference for where certain design patterns can be found
 4. Set the `queryset_other`, `context_other_object_name`, and `pk_url_kwarg` variables in the view according to the original object. These are used by `AMYCreateAndFetchObjectView` to select the correct object to use data from. The object will become available as `self.other_object` in the view
 5. Override [`get_initial()`](https://docs.djangoproject.com/en/4.2/ref/class-based-views/mixins-editing/#django.views.generic.edit.FormMixin.get_initial) to set form fields based on data in `self.other_object`
 
+**Reference files**:
+
+* `extrequests/views.py` - all the `...AcceptEvent` classes
+* `extrequests/urls.py`
+* `extrequests/base_views.py` - `WRFInitial` and `AMYCreateAndFetchObjectView`
+
 ## Tests
 
 ### Migration tests
