@@ -45,6 +45,17 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             event=self.event, person=self.instructor2, role=instructor_role
         )
 
+    def setUpEmailTemplate(self) -> EmailTemplate:
+        return EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+
     @patch("workshops.utils.feature_flags.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
@@ -78,15 +89,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         # Arrange
         request = RequestFactory().get("/")
 
-        template = EmailTemplate.objects.create(
-            name="Test Email Template",
-            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-            from_header="workshops@carpentries.org",
-            cc_header=["team@carpentries.org"],
-            bcc_header=[],
-            subject="Greetings {{ name }}",
-            body="Hello, {{ name }}! Nice to meet **you**.",
-        )
+        template = self.setUpEmailTemplate()
         scheduled_email = ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -124,15 +127,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
     ) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        template = EmailTemplate.objects.create(
-            name="Test Email Template",
-            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-            from_header="workshops@carpentries.org",
-            cc_header=["team@carpentries.org"],
-            bcc_header=[],
-            subject="Greetings {{ name }}",
-            body="Hello, {{ name }}! Nice to meet **you**.",
-        )
+        template = self.setUpEmailTemplate()
         scheduled_email = ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -168,15 +163,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
     ) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        template = EmailTemplate.objects.create(
-            name="Test Email Template",
-            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-            from_header="workshops@carpentries.org",
-            cc_header=["team@carpentries.org"],
-            bcc_header=[],
-            subject="Greetings {{ name }}",
-            body="Hello, {{ name }}! Nice to meet **you**.",
-        )
+        template = self.setUpEmailTemplate()
         scheduled_email1 = ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),

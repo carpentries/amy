@@ -15,6 +15,41 @@ from workshops.tests.base import TestBase
 
 
 class TestInstructorTrainingApproachingReceiver(TestCase):
+    def setUp(self) -> None:
+        self.template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings",
+            body="Hello! Nice to meet **you**.",
+        )
+        ttt_organization = Organization.objects.create(
+            domain="carpentries.org", fullname="Instructor Training"
+        )
+        self.event = Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.create(domain="example.com", fullname="Example"),
+            administrator=ttt_organization,
+            start=date.today() + timedelta(days=30),
+        )
+        ttt_tag = Tag.objects.create(name="TTT")
+        self.event.tags.add(ttt_tag)
+        instructor_role = Role.objects.create(name="instructor")
+        self.instructor1 = Person.objects.create(
+            personal="Test", family="Test", email="test1@example.org", username="test1"
+        )
+        self.instructor2 = Person.objects.create(
+            personal="Test", family="Test", email="test2@example.org", username="test2"
+        )
+        Task.objects.create(
+            event=self.event, person=self.instructor1, role=instructor_role
+        )
+        Task.objects.create(
+            event=self.event, person=self.instructor2, role=instructor_role
+        )
+
     @patch("workshops.utils.feature_flags.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
@@ -46,51 +81,21 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
-        template = EmailTemplate.objects.create(
-            name="Test Email Template",
-            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-            from_header="workshops@carpentries.org",
-            cc_header=["team@carpentries.org"],
-            bcc_header=[],
-            subject="Greetings {{ name }}",
-            body="Hello, {{ name }}! Nice to meet **you**.",
-        )
         request = RequestFactory().get("/")
-
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        event = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.create(domain="example.com", fullname="Example"),
-            administrator=ttt_organization,
-            start=date.today() + timedelta(days=30),
-        )
-        ttt_tag = Tag.objects.create(name="TTT")
-        event.tags.add(ttt_tag)
-        instructor_role = Role.objects.create(name="instructor")
-        instructor1 = Person.objects.create(
-            personal="Test", family="Test", email="test1@example.org", username="test1"
-        )
-        instructor2 = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
-        Task.objects.create(event=event, person=instructor1, role=instructor_role)
-        Task.objects.create(event=event, person=instructor2, role=instructor_role)
 
         # Act
         with patch(
             "emails.actions.instructor_training_approaching.messages_action_scheduled"
         ) as mock_messages_action_scheduled:
             instructor_training_approaching_signal.send(
-                sender=event,
+                sender=self.event,
                 request=request,
-                event=event,
-                event_start_date=event.start,
+                event=self.event,
+                event_start_date=self.event.start,
             )
 
         # Assert
-        scheduled_email = ScheduledEmail.objects.get(template=template)
+        scheduled_email = ScheduledEmail.objects.get(template=self.template)
         mock_messages_action_scheduled.assert_called_once_with(
             request,
             INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
@@ -106,30 +111,12 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         mock_messages_action_scheduled: MagicMock,
     ) -> None:
         # Arrange
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        event = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.create(domain="example.com", fullname="Example"),
-            administrator=ttt_organization,
-            start=date(2023, 9, 4),
-        )
-        ttt_tag = Tag.objects.create(name="TTT")
-        event.tags.add(ttt_tag)
-        instructor_role = Role.objects.create(name="instructor")
-        instructor1 = Person.objects.create(
-            personal="Test", family="Test", email="test1@example.org", username="test1"
-        )
-        instructor2 = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
-        Task.objects.create(event=event, person=instructor1, role=instructor_role)
-        Task.objects.create(event=event, person=instructor2, role=instructor_role)
-
         request = RequestFactory().get("/")
         signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
-        context = {"event": event, "instructors": [instructor1, instructor2]}
+        context = {
+            "event": self.event,
+            "instructors": [self.instructor1, self.instructor2],
+        }
         scheduled_at = datetime(2023, 8, 5, 12, 0, tzinfo=UTC)
         mock_one_month_before.return_value = scheduled_at
 
@@ -138,10 +125,10 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
             "emails.actions.persons_merged.EmailController.schedule_email"
         ) as mock_schedule_email:
             instructor_training_approaching_signal.send(
-                sender=event,
+                sender=self.event,
                 request=request,
-                event=event,
-                event_start_date=event.start,
+                event=self.event,
+                event_start_date=self.event.start,
             )
 
         # Assert
@@ -149,8 +136,8 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
             signal=signal,
             context=context,
             scheduled_at=scheduled_at,
-            to_header=[instructor1.email, instructor2.email],
-            generic_relation_obj=event,
+            to_header=[self.instructor1.email, self.instructor2.email],
+            generic_relation_obj=self.event,
             author=None,
         )
 
@@ -160,36 +147,19 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         self, mock_messages_missing_recipients: MagicMock
     ) -> None:
         # Arrange
+        self.instructor1.email = None
+        self.instructor1.save()
+        self.instructor2.email = None
+        self.instructor2.save()
         request = RequestFactory().get("/")
-
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        event = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.create(domain="example.com", fullname="Example"),
-            administrator=ttt_organization,
-            start=date.today() + timedelta(days=30),
-        )
-        ttt_tag = Tag.objects.create(name="TTT")
-        event.tags.add(ttt_tag)
-        instructor_role = Role.objects.create(name="instructor")
-        instructor1 = Person.objects.create(
-            personal="Test", family="Test", username="test1"
-        )
-        instructor2 = Person.objects.create(
-            personal="Test", family="Test", username="test2"
-        )
-        Task.objects.create(event=event, person=instructor1, role=instructor_role)
-        Task.objects.create(event=event, person=instructor2, role=instructor_role)
         signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 
         # Act
         instructor_training_approaching_signal.send(
-            sender=event,
+            sender=self.event,
             request=request,
-            event=event,
-            event_start_date=event.start,
+            event=self.event,
+            event_start_date=self.event.start,
         )
 
         # Assert
@@ -200,35 +170,15 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
-
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        event = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.create(domain="example.com", fullname="Example"),
-            administrator=ttt_organization,
-            start=date.today() + timedelta(days=30),
-        )
-        ttt_tag = Tag.objects.create(name="TTT")
-        event.tags.add(ttt_tag)
-        instructor_role = Role.objects.create(name="instructor")
-        instructor1 = Person.objects.create(
-            personal="Test", family="Test", email="test1@example.org", username="test1"
-        )
-        instructor2 = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
-        Task.objects.create(event=event, person=instructor1, role=instructor_role)
-        Task.objects.create(event=event, person=instructor2, role=instructor_role)
+        self.template.delete()
         signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 
         # Act
         instructor_training_approaching_signal.send(
-            sender=event,
+            sender=self.event,
             request=request,
-            event=event,
-            event_start_date=event.start,
+            event=self.event,
+            event_start_date=self.event.start,
         )
 
         # Assert
