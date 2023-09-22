@@ -98,6 +98,12 @@ class WorkshopRequestCreate(
         context["title"] = self.page_title
         return context
 
+    def get_form_kwargs(self):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
     def get_email_kwargs(self):
         return {
             "to": match_notification_email(self.object),

@@ -5,6 +5,7 @@ from crispy_forms.layout import HTML, Div, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
+from django.http import HttpRequest
 
 from extrequests.models import (
     DataVariant,
@@ -35,6 +36,7 @@ from workshops.models import (
     TrainingRequest,
     WorkshopRequest,
 )
+from workshops.utils.feature_flags import feature_flag_enabled
 
 
 class BulkChangeTrainingRequestForm(forms.Form):
@@ -300,6 +302,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
+            "member_affiliation",
+            "member_code",
             "location",
             "country",
             "online_inperson",
@@ -350,6 +354,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # the field isn't required, but we want user to fill it
@@ -383,6 +389,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             (self["institution_other_URL"], "Institution URL address"),
         ]
 
+        # move "member_code" field to "member_affiliation" subfield
+        self["member_affiliation"].field.widget.subfields = [
+            (self["member_code"], "Member registration code"),
+        ]
+
         # remove additional fields
         self.helper.layout.fields.remove("travel_expences_management_other")
         self.helper.layout.fields.remove("public_event_other")
@@ -390,6 +401,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove("carpentries_info_source_other")
         self.helper.layout.fields.remove("institution_other_name")
         self.helper.layout.fields.remove("institution_other_URL")
+        self.helper.layout.fields.remove("member_code")
 
         # add warning alert for dates falling within next 2-3 months
         DATES_TOO_SOON_WARNING = (
@@ -417,6 +429,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
+            "member_affiliation",
             "country",
             "audience_description",
             "user_notes",
@@ -439,6 +452,31 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         """Static method that overrides ModelChoiceField choice labels,
         essentially works just like `Model.__str__`."""
         return "{}".format(obj.fullname)
+
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(self, request: HttpRequest) -> dict:
+        errors = dict()
+        affiliation = self.cleaned_data.get("member_affiliation")  # yes/no/unsure
+        code = self.cleaned_data.get("member_code", "")
+        if affiliation in ["yes", "unsure"] and code:
+            # ensure that code belongs to a membership
+            try:
+                Membership.objects.get(registration_code=code)
+            except Membership.DoesNotExist:
+                errors["member_code"] = ValidationError(
+                    "This code is invalid. "
+                    "Please contact your Member Affiliate to verify your code."
+                )
+        elif affiliation == "yes" and not code:
+            errors["member_code"] = ValidationError(
+                "This field is required if you selected 'Yes' above."
+            )
+        elif affiliation == "no" and code:
+            errors["member_code"] = ValidationError(
+                "This field must be empty if you selected 'No' above."
+            )
+
+        return errors
 
     def clean(self):
         super().clean()
@@ -562,6 +600,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                     'planned for less than 2 months away or "Other" arrangements '
                     "were selected."
                 )
+
+        # 8: enforce membership registration codes
+        membership_errors = self.validate_member_code(request=self.request_http)
+        if membership_errors:
+            errors.update(membership_errors)
 
         # raise errors if any present
         if errors:
@@ -700,6 +743,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
+            "member_affiliation",
+            "member_code",
             "location",
             "country",
             "online_inperson",
@@ -852,6 +897,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
+            "member_code",
             "audience_description",
             "country",
             "user_notes",
@@ -1117,6 +1163,8 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
+            "member_affiliation",
+            "member_code",
             "online_inperson",
             "workshop_format",
             "workshop_format_other",
@@ -1193,6 +1241,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
+            "member_code",
             "additional_contact",
             "language",
             "online_inperson",

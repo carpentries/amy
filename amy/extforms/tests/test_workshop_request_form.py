@@ -24,6 +24,8 @@ class TestWorkshopRequestExternalForm(TestBase):
                 "institution_other_name",
                 "institution_other_URL",
                 "institution_department",
+                "member_affiliation",
+                "member_code",
                 "location",
                 "country",
                 "requested_workshop_types",
