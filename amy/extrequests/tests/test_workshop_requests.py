@@ -438,7 +438,6 @@ class TestWorkshopRequestCreateView(TestBase):
         rv = self.client.post(reverse("workshop_request"), data=data)
 
         # Assert
-        print(rv.content)
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, self.INVALID_CODE_ERROR)
         self.assertIn(self.MUST_ENTER_CODE, rv.content.decode("utf-8"))
@@ -635,6 +634,59 @@ class TestWorkshopRequestViews(TestBase):
         self.assertEqual(rv.status_code, 302)
         request = Event.objects.get(slug="2018-10-28-test-event").workshoprequest
         self.assertEqual(request, self.wr1)
+
+    def test_accept_with_event_autofill(self):
+        """Ensure that fields are autofilled correctly when creating an Event from a
+        WorkshopRequest."""
+        # Arrange
+        expected_membership = Membership.objects.create(
+            name="Hogwarts",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            registration_code="hogwarts55",
+        )
+        wr = WorkshopRequest.objects.create(
+            # required fields
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@potter.com",
+            location="Scotland",
+            country="GB",
+            language=Language.objects.get(name="English"),
+            audience_description="Students of Hogwarts",
+            administrative_fee="forprofit",
+            travel_expences_management="reimbursed",
+            # fields that should be autofilled
+            institution=Organization.objects.first(),
+            preferred_dates=date.today(),
+            online_inperson="online",
+            workshop_listed=False,
+            additional_contact="hermione@granger.com",
+            member_affiliation="yes",
+            member_code="hogwarts55",
+        )
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        wr.requested_workshop_types.set([curriculum])
+
+        expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
+
+        # Act
+        rv = self.client.get(reverse("workshoprequest_accept_event", args=[wr.pk]))
+        form_initial = rv.context["form"].initial
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertQuerysetEqual(
+            form_initial["curricula"].all(), wr.requested_workshop_types.all()
+        )
+        self.assertQuerysetEqual(form_initial["tags"], expected_tags)
+        self.assertEqual(form_initial["public_status"], "private")
+        self.assertEqual(form_initial["contact"], wr.additional_contact)
+        self.assertEqual(form_initial["host"].pk, wr.institution.pk)
+        self.assertEqual(form_initial["start"], wr.preferred_dates)
+        self.assertEqual(form_initial["end"], wr.preferred_dates + timedelta(days=1))
+        self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(

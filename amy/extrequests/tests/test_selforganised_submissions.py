@@ -11,7 +11,16 @@ from extrequests.forms import SelfOrganisedSubmissionBaseForm
 from extrequests.models import SelfOrganisedSubmission
 import extrequests.views
 from workshops.forms import EventCreateForm
-from workshops.models import Curriculum, Event, Language, Organization, Role, Tag, Task
+from workshops.models import (
+    Curriculum,
+    Event,
+    Language,
+    Membership,
+    Organization,
+    Role,
+    Tag,
+    Task,
+)
 from workshops.tests.base import FormTestHelper, TestBase
 
 
@@ -339,6 +348,58 @@ class TestSelfOrganisedSubmissionViews(TestBase):
             slug="2018-10-28-test-event"
         ).selforganisedsubmission
         self.assertEqual(request, self.sos1)
+
+    def test_accept_with_event_autofill(self):
+        """Ensure that fields are autofilled correctly when creating an Event from a
+        SelfOrganisedSubmission."""
+        # Arrange
+        expected_membership = Membership.objects.create(
+            name="Hogwarts",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            registration_code="hogwarts55",
+        )
+        sos = SelfOrganisedSubmission.objects.create(
+            # required fields
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@potter.com",
+            country="GB",
+            language=Language.objects.get(name="English"),
+            # fields that should be autofilled
+            institution=Organization.objects.first(),
+            start=date.today(),
+            end=date.today() + timedelta(days=1),
+            online_inperson="online",
+            workshop_listed=False,
+            additional_contact="hermione@granger.com",
+            member_affiliation="yes",
+            member_code="hogwarts55",
+        )
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        sos.workshop_types.set([curriculum])
+
+        expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
+
+        # Act
+        rv = self.client.get(
+            reverse("selforganisedsubmission_accept_event", args=[sos.pk])
+        )
+        form_initial = rv.context["form"].initial
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertQuerysetEqual(
+            form_initial["curricula"].all(), sos.workshop_types.all()
+        )
+        self.assertQuerysetEqual(form_initial["tags"], expected_tags)
+        self.assertEqual(form_initial["public_status"], "private")
+        self.assertEqual(form_initial["contact"], sos.additional_contact)
+        self.assertEqual(form_initial["host"].pk, sos.institution.pk)
+        self.assertEqual(form_initial["start"], sos.start)
+        self.assertEqual(form_initial["end"], sos.end)
+        self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(
