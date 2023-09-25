@@ -30,13 +30,13 @@
           {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
     <tr><th>Affiliated with a member?</th>
-      <td>
-        {{ object.member_affiliation|default:"&mdash;" }}
-      </td></tr>
+        <td>
+          {{ object.member_affiliation|default:"&mdash;" }}
+        </td></tr>
     <tr><th>Member registration code:</th>
-      <td>
-        {{ object.member_code|default:"&mdash;" }}
-      </td></tr>
+        <td>
+          {{ object.member_code|default:"&mdash;" }}
+        </td></tr>
     <tr><th>Workshop location:</th>
         <td>{{ object.location }}</td></tr>
     <tr><th>Country:</th>

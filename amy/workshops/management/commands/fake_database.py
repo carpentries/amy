@@ -629,7 +629,7 @@ class Command(BaseCommand):
         member_code = ""
         if member_affiliation != "no":
             if randbool(0.75):
-                # 50% of time, use an existing member code
+                # 75% of time, use an existing member code
                 # may or may not be a valid choice depending on membership dates
                 membership = choice(Membership.objects.all())
                 member_code = membership.registration_code
