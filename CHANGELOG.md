@@ -13,6 +13,12 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.2.2 - 2023-09-27
+
+### Features
+
+* Add CLDT to admin domains - [#2536](https://github.com/carpentries/amy/pull/2536) by @elichad
+
 ## v4.2.1 - 2023-08-15
 
 ### Bugfixes
