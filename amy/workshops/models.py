@@ -75,7 +75,10 @@ class OrganizationManager(models.Manager):
         "software-carpentry.org",
         "datacarpentry.org",
         "librarycarpentry.org",
-        "carpentries.org",  # Instructor Training organisation
+        # Instructor Training organisation
+        "carpentries.org",
+        # Collaborative Lesson Development Training organisation
+        "carpentries.org/community-lessons/",
     ]
 
     def administrators(self):
