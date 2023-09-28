@@ -52,7 +52,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         recruitment = InstructorRecruitment.objects.create(
             event=event, notes="Test notes"
         )
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -69,7 +69,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
 
         # Act
         with mock.patch(
-            "emails.actions.messages_action_scheduled"
+            "emails.actions.instructor_declined_from_workshop.messages_action_scheduled"
         ) as mock_messages_action_scheduled:
             instructor_declined_from_workshop_signal.send(
                 sender=signup,
@@ -89,8 +89,10 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.messages_action_scheduled")
-    @mock.patch("emails.actions.immediate_action")
+    @mock.patch(
+        "emails.actions.instructor_declined_from_workshop.messages_action_scheduled"
+    )
+    @mock.patch("emails.actions.instructor_declined_from_workshop.immediate_action")
     def test_email_scheduled(
         self,
         mock_immediate_action: mock.MagicMock,
@@ -104,7 +106,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         recruitment = InstructorRecruitment.objects.create(
             event=event, notes="Test notes"
         )
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -122,7 +124,8 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
 
         # Act
         with mock.patch(
-            "emails.actions.EmailController.schedule_email"
+            "emails.actions.instructor_declined_from_workshop"
+            ".EmailController.schedule_email"
         ) as mock_schedule_email:
             instructor_declined_from_workshop_signal.send(
                 sender=signup,
@@ -144,7 +147,44 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.messages_missing_template")
+    @mock.patch(
+        "emails.actions.instructor_declined_from_workshop.messages_missing_recipients"
+    )
+    def test_missing_recipients(
+        self, mock_messages_missing_recipients: mock.MagicMock
+    ) -> None:
+        # Arrange
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event", host=organization, administrator=organization
+        )
+        recruitment = InstructorRecruitment.objects.create(
+            event=event, notes="Test notes"
+        )
+        person = Person.objects.create()  # no email will cause missing recipients error
+        signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person
+        )
+        request = RequestFactory().get("/")
+        signal = instructor_declined_from_workshop_signal.signal_name
+
+        # Act
+        instructor_declined_from_workshop_signal.send(
+            sender=signup,
+            request=request,
+            person_id=signup.person.pk,
+            event_id=signup.recruitment.event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+
+        # Assert
+        mock_messages_missing_recipients.assert_called_once_with(request, signal)
+
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @mock.patch(
+        "emails.actions.instructor_declined_from_workshop.messages_missing_template"
+    )
     def test_missing_template(
         self, mock_messages_missing_template: mock.MagicMock
     ) -> None:
@@ -156,7 +196,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         recruitment = InstructorRecruitment.objects.create(
             event=event, notes="Test notes"
         )
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -181,7 +221,9 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
     @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @mock.patch("django.contrib.messages.views.messages")
-    @mock.patch("emails.actions.messages_action_scheduled")
+    @mock.patch(
+        "emails.actions.instructor_declined_from_workshop.messages_action_scheduled"
+    )
     def test_integration(
         self,
         mock_messages_action_scheduled: mock.MagicMock,
@@ -190,7 +232,7 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
         # Arrange
         self._setUpRoles()
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create_user(
+        person = Person.objects.create_user(  # type: ignore
             username="test_test",
             personal="Test",
             family="User",

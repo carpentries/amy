@@ -60,6 +60,10 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
+from emails.actions.instructor_training_approaching import (
+    instructor_training_approaching_strategy,
+    run_instructor_training_approaching_strategy,
+)
 from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
@@ -1160,6 +1164,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     )
     slug_field = "slug"
     template_name = "workshops/event_edit_form.html"
+    object: Event
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1317,6 +1322,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
                 request=self.request,
             )
 
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
         return res
 
 
@@ -1324,6 +1335,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Event
     permission_required = "workshops.delete_event"
     success_url = reverse_lazy("all_events")
+    object: Event
 
     def before_delete(self, *args, **kwargs):
         jobs = self.object.rq_jobs.filter(
@@ -1374,6 +1386,12 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
             jobs=jobs.values_list("job_id", flat=True),
             object_=self.object,
             request=self.request,
+        )
+
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object),
+            self.request,
+            self.object,
         )
 
 
@@ -1862,6 +1880,12 @@ class TaskCreate(
                 request=self.request,
             )
 
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(event),
+            self.request,
+            event,
+        )
+
         # return remembered results
         return res
 
@@ -1876,6 +1900,7 @@ class TaskUpdate(
     queryset = Task.objects.select_related("event", "role", "person")
     form_class = TaskForm
     pk_url_kwarg = "task_id"
+    object: Task
 
     def form_valid(self, form):
         """Check if RQ job conditions changed, and add/delete jobs if
@@ -2058,6 +2083,12 @@ class TaskUpdate(
                 request=self.request,
             )
 
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
         return res
 
 
@@ -2071,6 +2102,7 @@ class TaskDelete(
     permission_required = "workshops.delete_task"
     success_url = reverse_lazy("all_tasks")
     pk_url_kwarg = "task_id"
+    object: Task
 
     def before_delete(self, *args, **kwargs):
         jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
@@ -2161,6 +2193,12 @@ class TaskDelete(
                 object_=self.event,
                 request=self.request,
             )
+
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
 
 # ------------------------------------------------------------

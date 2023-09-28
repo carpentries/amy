@@ -1,3 +1,5 @@
+from datetime import date
+from enum import StrEnum
 from typing import TypedDict
 
 from django.http import HttpRequest
@@ -82,3 +84,21 @@ class PersonsMergedKwargs(TypedDict):
 
 class PersonsMergedContext(TypedDict):
     person: Person
+
+
+class InstructorTrainingApproachingKwargs(TypedDict):
+    request: HttpRequest
+    event: Event
+    event_start_date: date
+
+
+class InstructorTrainingApproachingContext(TypedDict):
+    event: Event
+    instructors: list[Person]
+
+
+class StrategyEnum(StrEnum):
+    CREATE = "create"
+    UPDATE = "update"
+    REMOVE = "remove"
+    NOOP = "noop"

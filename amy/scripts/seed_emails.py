@@ -127,6 +127,23 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
             "Log in to AMY to view your profile and verify things are correct."
         ),
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("a002c623-b849-4843-a589-08020f4b8589"),
+        name="Instructor Training Approaching",
+        signal=SignalNameEnum.instructor_training_approaching,
+        from_header="instructor.training@carpentries.org",
+        reply_to_header="",
+        cc_header=["instructor.training@carpentries.org"],
+        bcc_header=[],
+        subject="(Workshop) is one month away!",
+        body=(
+            "Hi, {{ instructor.0.personal }} {{ instructor.0.family }} and "
+            "{{ instructor.1.personal }} {{ instructor.1.family }}."
+            "Thank you for participating in the instructor training program. "
+            "Your training is one month away. Please be sure to do the following... "
+        ),
+    ),
 ]
 
 

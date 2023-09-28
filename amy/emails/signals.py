@@ -9,6 +9,7 @@ from emails.types import (
     InstructorConfirmedContext,
     InstructorDeclinedContext,
     InstructorSignupContext,
+    InstructorTrainingApproachingContext,
     PersonsMergedContext,
 )
 
@@ -20,6 +21,7 @@ class SignalNameEnum(StrEnum):
     instructor_signs_up_for_workshop = "instructor_signs_up_for_workshop"
     admin_signs_instructor_up_for_workshop = "admin_signs_instructor_up_for_workshop"
     persons_merged = "persons_merged"
+    instructor_training_approaching = "instructor_training_approaching"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -62,6 +64,25 @@ admin_signs_instructor_up_for_workshop_signal = Signal(
 persons_merged_signal = Signal(
     signal_name=SignalNameEnum.persons_merged,
     context_type=PersonsMergedContext,
+)
+
+# Runs 1 month before the event.
+INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME = "instructor_training_approaching"
+instructor_training_approaching_signal = Signal(
+    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+    context_type=InstructorTrainingApproachingContext,
+)
+# Emitted when conditions for the previous signal may have changed and
+# the email should be re-calculated.
+instructor_training_approaching_update_signal = Signal(
+    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+    context_type=InstructorTrainingApproachingContext,
+)
+# Emitted when conditions for the previous signal may have changed and
+# the email should be cancelled.
+instructor_training_approaching_remove_signal = Signal(
+    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+    context_type=InstructorTrainingApproachingContext,
 )
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
