@@ -1,15 +1,13 @@
 from datetime import datetime
-from typing import Any
 
 from typing_extensions import Unpack
 
+from emails.actions.base_action import BaseAction
 from emails.signals import admin_signs_instructor_up_for_workshop_signal
 from emails.types import AdminSignsInstructorUpContext, AdminSignsInstructorUpKwargs
 from emails.utils import immediate_action
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import Event, Person
-
-from .base_action import BaseAction
 
 
 class AdminSignsInstructorUpForWorkshopReceiver(BaseAction):
@@ -34,11 +32,13 @@ class AdminSignsInstructorUpForWorkshopReceiver(BaseAction):
 
     def get_generic_relation_object(
         self, context: AdminSignsInstructorUpContext, **kwargs
-    ) -> Any:
+    ) -> InstructorRecruitmentSignup:
         return context["instructor_recruitment_signup"]
 
-    def get_recipients(self, **kwargs) -> list[str]:
-        person = Person.objects.get(pk=kwargs["person_id"])
+    def get_recipients(
+        self, context: AdminSignsInstructorUpContext, **kwargs
+    ) -> list[str]:
+        person = context["person"]
         return [person.email] if person.email else []
 
 

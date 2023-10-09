@@ -50,7 +50,7 @@ class BaseAction(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_recipients(self, **kwargs) -> list[str]:
+    def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
         raise NotImplementedError()
 
     def __call__(self, sender: Any, **kwargs) -> None:
@@ -67,7 +67,7 @@ class BaseAction(ABC):
                 signal=self.signal,
                 context=context,
                 scheduled_at=scheduled_at,
-                to_header=self.get_recipients(**kwargs),
+                to_header=self.get_recipients(context, **kwargs),
                 generic_relation_obj=self.get_generic_relation_object(
                     context, **kwargs
                 ),
