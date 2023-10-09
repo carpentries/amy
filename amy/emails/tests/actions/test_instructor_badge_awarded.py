@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from unittest import mock
+from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -12,8 +12,8 @@ from workshops.tests.base import TestBase
 
 
 class TestInstructorBadgeAwardedReceiver(TestCase):
-    @mock.patch("workshops.utils.feature_flags.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    @patch("emails.actions.base_action.logger")
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -21,8 +21,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
             instructor_badge_awarded_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_badge_awarded_receiver"
+                "EMAIL_MODULE feature flag not set, skipping instructor_badge_awarded"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -56,8 +55,8 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with mock.patch(
-            "emails.actions.instructor_badge_awarded.messages_action_scheduled"
+        with patch(
+            "emails.actions.base_action.messages_action_scheduled"
         ) as mock_messages_action_scheduled:
             instructor_badge_awarded_signal.send(
                 sender=award,
@@ -75,12 +74,12 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.instructor_badge_awarded.messages_action_scheduled")
-    @mock.patch("emails.actions.instructor_badge_awarded.immediate_action")
+    @patch("emails.actions.base_action.messages_action_scheduled")
+    @patch("emails.actions.instructor_badge_awarded.immediate_action")
     def test_email_scheduled(
         self,
-        mock_immediate_action: mock.MagicMock,
-        mock_messages_action_scheduled: mock.MagicMock,
+        mock_immediate_action: MagicMock,
+        mock_messages_action_scheduled: MagicMock,
     ) -> None:
         # Arrange
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
@@ -97,8 +96,8 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with mock.patch(
-            "emails.actions.instructor_badge_awarded.EmailController.schedule_email"
+        with patch(
+            "emails.actions.base_action.EmailController.schedule_email"
         ) as mock_schedule_email:
             instructor_badge_awarded_signal.send(
                 sender=award,
@@ -118,9 +117,9 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.instructor_badge_awarded.messages_missing_recipients")
+    @patch("emails.actions.base_action.messages_missing_recipients")
     def test_missing_recipients(
-        self, mock_messages_missing_recipients: mock.MagicMock
+        self, mock_messages_missing_recipients: MagicMock
     ) -> None:
         # Arrange
         badge = Badge.objects.create(name="instructor")
@@ -141,10 +140,8 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         mock_messages_missing_recipients.assert_called_once_with(request, signal)
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @mock.patch("emails.actions.instructor_badge_awarded.messages_missing_template")
-    def test_missing_template(
-        self, mock_messages_missing_template: mock.MagicMock
-    ) -> None:
+    @patch("emails.actions.base_action.messages_missing_template")
+    def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
         badge = Badge.objects.create(name="instructor")
         person = Person.objects.create(email="test@example.org")
