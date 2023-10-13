@@ -642,7 +642,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         required=False,
         queryset=Membership.objects.all(),
         widget=ModelSelect2Widget(
-            data_view="membership-lookup",
+            data_view="membership-lookup-for-tasks",
             attrs=SELECT2_SIDEBAR,
         ),
     )
@@ -668,6 +668,9 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             ),
             "seat_public": forms.RadioSelect(),
         }
+
+    class Media:
+        js = ("task_form.js",)
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
