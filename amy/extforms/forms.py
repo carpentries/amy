@@ -5,6 +5,7 @@ from crispy_forms.layout import HTML, Div, Field, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.http import HttpRequest
 
 from consents.forms import option_display_value
 from consents.models import Term, TrainingRequestConsent
@@ -19,7 +20,8 @@ from workshops.fields import (
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
-from workshops.models import TrainingRequest
+from workshops.models import Membership, TrainingRequest
+from workshops.utils.feature_flags import feature_flag_enabled
 
 
 class TrainingRequestForm(forms.ModelForm):
@@ -88,6 +90,7 @@ class TrainingRequestForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # Only active and required terms.
@@ -192,11 +195,32 @@ class TrainingRequestForm(forms.ModelForm):
         )
         return field
 
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(self, request: HttpRequest) -> dict:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+
+        if not member_code:
+            return
+
+        # ensure that code belongs to a membership
+        # TODO: implement further validation for active membership, etc
+        #       and update text accordingly
+        try:
+            Membership.objects.get(registration_code=member_code)
+        except Membership.DoesNotExist:
+            errors["member_code"] = ValidationError(
+                "This code is invalid. "
+                "Please contact your Member Affiliate to verify your code."
+            )
+
+        return errors
+
     def clean(self):
         super().clean()
         errors = dict()
 
-        # 1: validate registration code / group name
+        # 1: validate registration code
         review_process = self.cleaned_data.get("review_process", "")
         member_code = self.cleaned_data.get("member_code", "").split()
 
@@ -213,6 +237,11 @@ class TrainingRequestForm(forms.ModelForm):
             errors["review_process"] = ValidationError(
                 "Registration code must be empty for open training review " "process."
             )
+
+        # confirm that code is valid
+        membership_errors = self.validate_member_code(request=self.request_http)
+        if membership_errors:
+            errors.update(membership_errors)
 
         if errors:
             raise ValidationError(errors)
