@@ -33,7 +33,7 @@ class TrainingRequestForm(forms.ModelForm):
         model = TrainingRequest
         fields = (
             "review_process",
-            "group_name",
+            "member_code",
             "personal",
             "family",
             "email",
@@ -132,13 +132,13 @@ class TrainingRequestForm(forms.ModelForm):
 
     def set_fake_required_fields(self) -> None:
         # fake requiredness of the registration code / group name
-        self["group_name"].field.widget.fake_required = True  # type: ignore
+        self["member_code"].field.widget.fake_required = True  # type: ignore
 
     def set_accordion(self, layout: Layout) -> None:
         # special accordion display for the review process
         self["review_process"].field.widget.subfields = {  # type: ignore
             "preapproved": [
-                self["group_name"],
+                self["member_code"],
             ],
             "open": [],  # this option doesn't require any additional fields
         }
@@ -150,7 +150,7 @@ class TrainingRequestForm(forms.ModelForm):
         pos_index = layout.fields.index("review_process")
 
         layout.fields.remove("review_process")
-        layout.fields.remove("group_name")
+        layout.fields.remove("member_code")
 
         # insert div+field at previously saved position
         layout.insert(
@@ -198,18 +198,18 @@ class TrainingRequestForm(forms.ModelForm):
 
         # 1: validate registration code / group name
         review_process = self.cleaned_data.get("review_process", "")
-        group_name = self.cleaned_data.get("group_name", "").split()
+        member_code = self.cleaned_data.get("member_code", "").split()
 
         # it's required when review_process is 'preapproved', but not when
         # 'open'
-        if review_process == "preapproved" and not group_name:
+        if review_process == "preapproved" and not member_code:
             errors["review_process"] = ValidationError(
                 "Registration code is required for pre-approved training "
                 "review process."
             )
 
         # it's required to be empty when review_process is 'open'
-        if review_process == "open" and group_name:
+        if review_process == "open" and member_code:
             errors["review_process"] = ValidationError(
                 "Registration code must be empty for open training review " "process."
             )

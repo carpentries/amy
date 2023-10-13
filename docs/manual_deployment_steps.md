@@ -6,6 +6,10 @@ This document tracks steps that must be completed manually before or after the s
 
 Nothing yet.
 
+### After
+
+* Update Redash queries about training requests to change `group_name` to `member_code` (in line with changes to the `TrainingRequest` model).
+
 ## v4.2
 
 ### Before
@@ -15,6 +19,7 @@ Nothing yet.
 ### After
 
 * Run seeding scripts `seed_training_requirements.py` and `seed_involvements.py` on the server:
+
     ```
     $ sudo su
     # cd /webapps/amy.carpentries.org/repo/
@@ -22,4 +27,5 @@ Nothing yet.
     # .venv/bin/python3 manage.py runscript seed_involvements
     # .venv/bin/python3 manage.py runscript seed_training_requirements
     ```
+
 * Merge updated documentation to `develop`

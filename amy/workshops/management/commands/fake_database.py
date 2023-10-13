@@ -316,7 +316,7 @@ class Command(BaseCommand):
             state=state,
             person=person_or_None,
             review_process="preapproved" if registration_code else "open",
-            group_name=registration_code,
+            member_code=registration_code,
             personal=person.personal,
             middle="",
             family=person.family,

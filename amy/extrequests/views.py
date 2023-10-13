@@ -879,7 +879,7 @@ def trainingrequests_merge(request):
             easy = (
                 "state",
                 "person",
-                "group_name",
+                "member_code",
                 "personal",
                 "middle",
                 "family",

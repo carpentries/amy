@@ -2102,7 +2102,7 @@ class TrainingRequest(
         verbose_name="Application Type",
     )
 
-    group_name = models.CharField(
+    member_code = models.CharField(
         blank=True,
         default="",
         null=False,

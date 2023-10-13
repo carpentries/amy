@@ -13,7 +13,7 @@ class TestTrainingRequestForm(TestBase):
         self._setUpRoles()
         self.data = {
             "review_process": "preapproved",
-            "group_name": "coolprogrammers",
+            "member_code": "coolprogrammers",
             "personal": "John",
             "family": "Smith",
             "email": "john@smith.com",
@@ -84,9 +84,9 @@ class TestTrainingRequestForm(TestBase):
         #     f.write(msg.message().as_bytes())
 
     def test_review_process_validation(self):
-        # 1: shouldn't pass when review_process requires group_name
+        # 1: shouldn't pass when review_process requires member_code
         self.data["review_process"] = "preapproved"
-        self.data["group_name"] = ""
+        self.data["member_code"] = ""
         self.passCaptcha(self.data)
 
         rv = self.client.post(reverse("training_request"), self.data, follow=True)
@@ -95,9 +95,9 @@ class TestTrainingRequestForm(TestBase):
         self.assertIn("fix errors in the form below", content)
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
 
-        # 2: shouldn't pass when review_process requires *NO* group_name
+        # 2: shouldn't pass when review_process requires *NO* member_code
         self.data["review_process"] = "open"
-        self.data["group_name"] = "some_code"
+        self.data["member_code"] = "some_code"
         self.passCaptcha(self.data)
 
         rv = self.client.post(reverse("training_request"), self.data, follow=True)

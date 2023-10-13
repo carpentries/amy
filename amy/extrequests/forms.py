@@ -1465,7 +1465,7 @@ class TrainingRequestsMergeForm(forms.Form):
     id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     state = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     person = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    group_name = forms.ChoiceField(
+    member_code = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,
