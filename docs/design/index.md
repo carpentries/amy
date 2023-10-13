@@ -9,5 +9,5 @@ Table of contents:
 3. [Model versioning](./model_versioning.md)
 4. [Templates hierarchy](./template_hierarchy.md)
 5. [Views hierarchy](./views_hierarchy.md)
-6. [Server infrastructure](./server_infrastructure.md)
-7. [Design patterns reference](./design_patterns.md)
+6. [Design patterns reference](./design_patterns.md)
+7. [Server infrastructure](./server_infrastructure.md)
