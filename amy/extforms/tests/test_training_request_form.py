@@ -83,13 +83,16 @@ class TestTrainingRequestForm(TestBase):
         return data
 
     def test_request_added(self):
-        email = "john@smith.com"
+        # Arrange
+        email = self.data.get("email")
         self.passCaptcha(self.data)
 
+        # Act
         rv = self.client.post(reverse("training_request"), self.data, follow=True)
+
+        # Assert
         self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode("utf-8")
-        self.assertNotIn("fix errors in the form below", content)
+        self.assertNotContains(rv, "fix errors in the form below")
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
 
         # Test that the sender was emailed
@@ -98,32 +101,59 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(msg.to, [email])
         self.assertEqual(msg.subject, TrainingRequestCreate.autoresponder_subject)
         self.assertIn("A copy of your request", msg.body)
-        # with open('email.eml', 'wb') as f:
-        #     f.write(msg.message().as_bytes())
+
+    def test_invalid_request_not_added(self):
+        # Arrange
+        self.data.pop("personal")  # remove a required field
+        self.passCaptcha(self.data)
+
+        # Act
+        rv = self.client.post(reverse("training_request"), self.data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "fix errors in the form below")
+        self.assertEqual(TrainingRequest.objects.all().count(), 0)
+
+        # Test that the sender was not emailed
+        self.assertEqual(len(mail.outbox), 0)
+
+        self.assertEqual(TrainingRequest.objects.all().count(), 0)
 
     def test_review_process_validation__preapproved_code_empty(self):
         # 1: shouldn't pass when review_process requires member_code
-        self.data["review_process"] = "preapproved"
-        self.data["member_code"] = ""
-        self.passCaptcha(self.data)
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "",
+        }
 
-        rv = self.client.post(reverse("training_request"), self.data, follow=True)
+        # Act
+        rv = self.client.post(reverse("training_request"), data, follow=True)
+
+        # Assert
         self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode("utf-8")
-        self.assertIn("fix errors in the form below", content)
-        self.assertEqual(TrainingRequest.objects.all().count(), 0)
+        self.assertContains(
+            rv,
+            "Registration code is required for pre-approved training review process.",
+        )
 
     def test_review_process_validation__open_code_nonempty(self):
         # 2: shouldn't pass when review_process requires *NO* member_code
-        self.data["review_process"] = "open"
-        self.data["member_code"] = "some_code"
-        self.passCaptcha(self.data)
+        # Arrange
+        data = {
+            "review_process": "open",
+            "member_code": "some_code",
+        }
 
-        rv = self.client.post(reverse("training_request"), self.data, follow=True)
+        # Act
+        rv = self.client.post(reverse("training_request"), data, follow=True)
+
+        # Assert
         self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode("utf-8")
-        self.assertIn("fix errors in the form below", content)
-        self.assertEqual(TrainingRequest.objects.all().count(), 0)
+        self.assertContains(
+            rv, "Registration code must be empty for open training review process."
+        )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_valid(self):

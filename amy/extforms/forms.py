@@ -235,7 +235,7 @@ class TrainingRequestForm(forms.ModelForm):
         # it's required to be empty when review_process is 'open'
         if review_process == "open" and member_code:
             errors["review_process"] = ValidationError(
-                "Registration code must be empty for open training review " "process."
+                "Registration code must be empty for open training review process."
             )
 
         # confirm that code is valid
