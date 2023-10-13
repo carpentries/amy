@@ -582,7 +582,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         )
 
     def test_get_queryset_person_and_learner_role_and_ttt_event_and_term(self):
-        """Person, role, and event combined should change results."""
+        """Person, role, event, and term combined should change results."""
         # Arrange
         term = "alpha"
         view = self.setUpView(
