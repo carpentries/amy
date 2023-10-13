@@ -187,10 +187,10 @@ class TestTrainingRequestForm(TestBase):
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_early(self):
-        # 3: code before membership start date - error on code
+        # 3: code used >90 days before membership start date - error on code
         # Arrange
         self.setUpMembership()
-        self.membership.agreement_start = date.today() + timedelta(days=1)
+        self.membership.agreement_start = date.today() + timedelta(days=91)
         self.membership.save()
         data = {
             "review_process": "preapproved",
@@ -206,10 +206,10 @@ class TestTrainingRequestForm(TestBase):
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_late(self):
-        # 4: code after membership end date - error on code
+        # 4: code used >90 days after membership end date - error on code
         # Arrange
         self.setUpMembership()
-        self.membership.agreement_end = date.today() - timedelta(days=1)
+        self.membership.agreement_end = date.today() - timedelta(days=91)
         self.membership.save()
         data = {
             "review_process": "preapproved",
