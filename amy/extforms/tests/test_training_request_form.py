@@ -1,13 +1,21 @@
+from datetime import date, timedelta
+
 from django.core import mail
+from django.test import override_settings
 from django.urls import reverse
 
 from consents.models import Term, TermOptionChoices
 from extforms.views import TrainingRequestCreate
-from workshops.models import Role, TrainingRequest
+from workshops.models import Membership, Role, TrainingRequest
 from workshops.tests.base import TestBase
 
 
 class TestTrainingRequestForm(TestBase):
+    INVALID_MEMBER_CODE_ERROR = (
+        "This code is invalid. "
+        "Please contact your Member Affiliate to verify your code."
+    )
+
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
@@ -48,6 +56,16 @@ class TestTrainingRequestForm(TestBase):
         }
         self.data.update(self.add_terms_to_payload())
 
+    def setUpMembership(self):
+        Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            contribution_type="financial",
+            registration_code="valid123",
+        )
+
     def add_terms_to_payload(self) -> dict[str, int]:
         data = {}
         terms = (
@@ -83,7 +101,7 @@ class TestTrainingRequestForm(TestBase):
         # with open('email.eml', 'wb') as f:
         #     f.write(msg.message().as_bytes())
 
-    def test_review_process_validation(self):
+    def test_review_process_validation__preapproved_code_empty(self):
         # 1: shouldn't pass when review_process requires member_code
         self.data["review_process"] = "preapproved"
         self.data["member_code"] = ""
@@ -95,6 +113,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertIn("fix errors in the form below", content)
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
 
+    def test_review_process_validation__open_code_nonempty(self):
         # 2: shouldn't pass when review_process requires *NO* member_code
         self.data["review_process"] = "open"
         self.data["member_code"] = "some_code"
@@ -105,3 +124,36 @@ class TestTrainingRequestForm(TestBase):
         content = rv.content.decode("utf-8")
         self.assertIn("fix errors in the form below", content)
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid(self):
+        # 1: valid code - no error
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_invalid(self):
+        # 2: invalid code - error on code
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
