@@ -11,10 +11,7 @@ from workshops.tests.base import TestBase
 
 
 class TestTrainingRequestForm(TestBase):
-    INVALID_MEMBER_CODE_ERROR = (
-        "This code is invalid. "
-        "Please contact your Member Affiliate to verify your code."
-    )
+    INVALID_MEMBER_CODE_ERROR = "This code is invalid."
 
     def setUp(self):
         self._setUpUsersAndLogin()
@@ -57,7 +54,7 @@ class TestTrainingRequestForm(TestBase):
         self.data.update(self.add_terms_to_payload())
 
     def setUpMembership(self):
-        Membership.objects.create(
+        self.membership = Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
             agreement_start=date.today() - timedelta(weeks=26),
@@ -179,6 +176,44 @@ class TestTrainingRequestForm(TestBase):
         data = {
             "review_process": "preapproved",
             "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_inactive_early(self):
+        # 3: code before membership start date - error on code
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_start = date.today() + timedelta(days=1)
+        self.membership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_inactive_late(self):
+        # 4: code after membership end date - error on code
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_end = date.today() - timedelta(days=1)
+        self.membership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
         }
 
         # Act

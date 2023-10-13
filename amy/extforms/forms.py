@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Iterable, cast
 
 from captcha.fields import ReCaptchaField
@@ -199,20 +200,29 @@ class TrainingRequestForm(forms.ModelForm):
     def validate_member_code(self, request: HttpRequest) -> dict:
         errors = dict()
         member_code = self.cleaned_data.get("member_code", "")
+        error_msg = (
+            "This code is invalid. "
+            "This may be due to a typo, an expired code, "
+            "or a code that has not yet been activated. "
+            "Please confirm that you have copied the code correctly, "
+            "or contact your site contact to verify your code."
+        )
 
         if not member_code:
             return
 
-        # ensure that code belongs to a membership
-        # TODO: implement further validation for active membership, etc
-        #       and update text accordingly
         try:
-            Membership.objects.get(registration_code=member_code)
+            # find relevant membership - may raise Membership.DoesNotExist
+            membership = Membership.objects.get(registration_code=member_code)
+            # confirm that membership is currently active
+            if (
+                not membership.agreement_start
+                <= date.today()
+                <= membership.agreement_end
+            ):
+                errors["member_code"] = ValidationError(error_msg)
         except Membership.DoesNotExist:
-            errors["member_code"] = ValidationError(
-                "This code is invalid. "
-                "Please contact your Member Affiliate to verify your code."
-            )
+            errors["member_code"] = ValidationError(error_msg)
 
         return errors
 
