@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from typing import Any
 
@@ -7,12 +8,13 @@ from django.http import HttpRequest
 from django.utils import timezone
 from typing_extensions import Unpack
 
+from emails.actions.base_action import BaseAction
 from emails.controller import (
     EmailController,
     EmailControllerMissingRecipientsException,
     EmailControllerMissingTemplateException,
 )
-from emails.models import EmailTemplate, ScheduledEmail
+from emails.models import ScheduledEmail
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     Signal,
@@ -27,10 +29,8 @@ from emails.types import (
 )
 from emails.utils import (
     messages_action_cancelled,
-    messages_action_scheduled,
     messages_action_updated,
     messages_missing_recipients,
-    messages_missing_template,
     messages_missing_template_link,
     one_month_before,
     person_from_request,
@@ -107,43 +107,40 @@ def run_instructor_training_approaching_strategy(
     )
 
 
-@receiver(instructor_training_approaching_signal)
-@feature_flag_enabled("EMAIL_MODULE")
-def instructor_training_approaching_receiver(
-    sender: Any, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
-) -> None:
-    request = kwargs["request"]
-    event = kwargs["event"]
-    event_start_date = kwargs["event_start_date"]
-    instructors = [
-        task.person
-        for task in Task.objects.filter(event=event, role__name="instructor")
-    ]
-    instructor_emails = [
-        instructor.email for instructor in instructors if instructor.email
-    ]
+class InstructorTrainingApproachingReceiver(BaseAction):
+    signal = instructor_training_approaching_signal.signal_name
 
-    scheduled_at = one_month_before(event_start_date)
-    context: InstructorTrainingApproachingContext = {
-        "event": event,
-        "instructors": instructors,
-    }
-    signal_name = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
-    try:
-        scheduled_email = EmailController.schedule_email(
-            signal=signal_name,
-            context=context,
-            scheduled_at=scheduled_at,
-            to_header=instructor_emails,
-            generic_relation_obj=event,
-            author=person_from_request(request),
-        )
-    except EmailControllerMissingRecipientsException:
-        messages_missing_recipients(request, signal_name)
-    except EmailTemplate.DoesNotExist:
-        messages_missing_template(request, signal_name)
-    else:
-        messages_action_scheduled(request, signal_name, scheduled_email)
+    def get_scheduled_at(self, **kwargs) -> datetime:
+        event_start_date = kwargs["event_start_date"]
+        return one_month_before(event_start_date)
+
+    def get_context(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> InstructorTrainingApproachingContext:
+        event = kwargs["event"]
+        instructors = [
+            task.person
+            for task in Task.objects.filter(event=event, role__name="instructor")
+        ]
+        return {
+            "event": event,
+            "instructors": instructors,
+        }
+
+    def get_generic_relation_object(
+        self, context: InstructorTrainingApproachingContext, **kwargs
+    ) -> Event:
+        return context["event"]
+
+    def get_recipients(
+        self, context: InstructorTrainingApproachingContext, **kwargs
+    ) -> list[str]:
+        instructors = context["instructors"]
+        return [instructor.email for instructor in instructors if instructor.email]
+
+
+instructor_training_approaching_receiver = InstructorTrainingApproachingReceiver()
+instructor_training_approaching_signal.connect(instructor_training_approaching_receiver)
 
 
 @receiver(instructor_training_approaching_update_signal)

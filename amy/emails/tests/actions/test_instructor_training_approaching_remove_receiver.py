@@ -283,8 +283,7 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
         request = RequestFactory().get("/")
 
         with patch(
-            "emails.actions.instructor_training_approaching."
-            "messages_action_scheduled"
+            "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
             run_instructor_training_approaching_strategy(
                 instructor_training_approaching_strategy(event),
