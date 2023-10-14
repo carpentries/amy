@@ -140,7 +140,8 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.persons_merged.EmailController.cancel_email"
+            "emails.actions.instructor_training_approaching"
+            ".EmailController.cancel_email"
         ) as mock_cancel_email:
             instructor_training_approaching_remove_signal.send(
                 sender=self.event,
@@ -185,7 +186,8 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.persons_merged.EmailController.cancel_email"
+            "emails.actions.instructor_training_approaching"
+            ".EmailController.cancel_email"
         ) as mock_cancel_email:
             instructor_training_approaching_remove_signal.send(
                 sender=self.event,

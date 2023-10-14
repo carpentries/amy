@@ -122,7 +122,8 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.persons_merged.EmailController.schedule_email"
+            "emails.actions.instructor_training_approaching"
+            ".EmailController.schedule_email"
         ) as mock_schedule_email:
             instructor_training_approaching_signal.send(
                 sender=self.event,
