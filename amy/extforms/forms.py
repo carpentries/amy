@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from typing import Iterable, cast
 
 from captcha.fields import ReCaptchaField
@@ -218,9 +218,9 @@ class TrainingRequestForm(forms.ModelForm):
             membership = Membership.objects.get(registration_code=member_code)
             # confirm that membership is currently active
             # grace period: 90 days before and after
-            valid_start = membership.agreement_start - timedelta(days=90)
-            valid_end = membership.agreement_end + timedelta(days=90)
-            if not valid_start <= date.today() <= valid_end:
+            if not membership.active_on_date(
+                date.today(), grace_before=90, grace_after=90
+            ):
                 errors["member_code"] = ValidationError(error_msg)
         except Membership.DoesNotExist:
             errors["member_code"] = ValidationError(error_msg)
