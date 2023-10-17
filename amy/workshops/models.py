@@ -361,6 +361,11 @@ class Membership(models.Model):
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
+    def active_on_date(self, date: datetime.date, grace_before=0, grace_after=0):
+        start_date = self.agreement_start - datetime.timedelta(days=grace_before)
+        end_date = self.agreement_end + datetime.timedelta(days=grace_after)
+        return start_date <= date <= end_date
+
     def _base_queryset(self):
         """Provide universal queryset for looking up workshops for this membership."""
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
