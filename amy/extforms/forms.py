@@ -197,7 +197,9 @@ class TrainingRequestForm(forms.ModelForm):
         return field
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def validate_member_code(self, request: HttpRequest) -> dict:
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
         errors = dict()
         member_code = self.cleaned_data.get("member_code", "")
         error_msg = (
@@ -209,7 +211,7 @@ class TrainingRequestForm(forms.ModelForm):
         )
 
         if not member_code:
-            return
+            return None
 
         try:
             # find relevant membership - may raise Membership.DoesNotExist

@@ -454,7 +454,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         return "{}".format(obj.fullname)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def validate_member_code(self, request: HttpRequest) -> dict:
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
         errors = dict()
         affiliation = self.cleaned_data.get("member_affiliation")  # yes/no/unsure
         code = self.cleaned_data.get("member_code", "")

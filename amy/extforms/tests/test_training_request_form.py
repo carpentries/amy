@@ -118,7 +118,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
 
     def test_review_process_validation__preapproved_code_empty(self):
-        # 1: shouldn't pass when review_process requires member_code
+        """Shouldn't pass when review_process requires member_code."""
         # Arrange
         data = {
             "review_process": "preapproved",
@@ -136,7 +136,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     def test_review_process_validation__open_code_nonempty(self):
-        # 2: shouldn't pass when review_process requires *NO* member_code
+        """Shouldn't pass when review_process requires *NO* member_code."""
         # Arrange
         data = {
             "review_process": "open",
@@ -154,7 +154,7 @@ class TestTrainingRequestForm(TestBase):
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_valid(self):
-        # 1: valid code - no error
+        """Valid member code should pass."""
         # Arrange
         self.setUpMembership()
         data = {
@@ -171,7 +171,7 @@ class TestTrainingRequestForm(TestBase):
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_invalid(self):
-        # 2: invalid code - error on code
+        """Invalid member code should not pass."""
         # Arrange
         data = {
             "review_process": "preapproved",
@@ -187,7 +187,7 @@ class TestTrainingRequestForm(TestBase):
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_early(self):
-        # 3: code used >90 days before membership start date - error on code
+        """Code used >90 days before membership start date should not pass."""
         # Arrange
         self.setUpMembership()
         self.membership.agreement_start = date.today() + timedelta(days=91)
@@ -206,7 +206,7 @@ class TestTrainingRequestForm(TestBase):
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_late(self):
-        # 4: code used >90 days after membership end date - error on code
+        """Code used >90 days after membership end date should not pass."""
         # Arrange
         self.setUpMembership()
         self.membership.agreement_end = date.today() - timedelta(days=91)
