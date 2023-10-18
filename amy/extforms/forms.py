@@ -207,7 +207,7 @@ class TrainingRequestForm(forms.ModelForm):
             "This may be due to a typo, an expired code, "
             "or a code that has not yet been activated. "
             "Please confirm that you have copied the code correctly, "
-            "or contact your site contact to verify your code."
+            "or confirm the code with the Membership Contact for your group."
         )
 
         if not member_code:
