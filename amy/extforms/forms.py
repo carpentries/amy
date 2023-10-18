@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Iterable, cast
 
 from captcha.fields import ReCaptchaField
@@ -5,6 +6,7 @@ from crispy_forms.layout import HTML, Div, Field, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.http import HttpRequest
 
 from consents.forms import option_display_value
 from consents.models import Term, TrainingRequestConsent
@@ -19,7 +21,8 @@ from workshops.fields import (
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
-from workshops.models import TrainingRequest
+from workshops.models import Membership, TrainingRequest
+from workshops.utils.feature_flags import feature_flag_enabled
 
 
 class TrainingRequestForm(forms.ModelForm):
@@ -33,7 +36,7 @@ class TrainingRequestForm(forms.ModelForm):
         model = TrainingRequest
         fields = (
             "review_process",
-            "group_name",
+            "member_code",
             "personal",
             "family",
             "email",
@@ -88,6 +91,7 @@ class TrainingRequestForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # Only active and required terms.
@@ -132,13 +136,13 @@ class TrainingRequestForm(forms.ModelForm):
 
     def set_fake_required_fields(self) -> None:
         # fake requiredness of the registration code / group name
-        self["group_name"].field.widget.fake_required = True  # type: ignore
+        self["member_code"].field.widget.fake_required = True  # type: ignore
 
     def set_accordion(self, layout: Layout) -> None:
         # special accordion display for the review process
         self["review_process"].field.widget.subfields = {  # type: ignore
             "preapproved": [
-                self["group_name"],
+                self["member_code"],
             ],
             "open": [],  # this option doesn't require any additional fields
         }
@@ -150,7 +154,7 @@ class TrainingRequestForm(forms.ModelForm):
         pos_index = layout.fields.index("review_process")
 
         layout.fields.remove("review_process")
-        layout.fields.remove("group_name")
+        layout.fields.remove("member_code")
 
         # insert div+field at previously saved position
         layout.insert(
@@ -192,27 +196,63 @@ class TrainingRequestForm(forms.ModelForm):
         )
         return field
 
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+        error_msg = (
+            "This code is invalid. "
+            "This may be due to a typo, an expired code, "
+            "or a code that has not yet been activated. "
+            "Please confirm that you have copied the code correctly, "
+            "or confirm the code with the Membership Contact for your group."
+        )
+
+        if not member_code:
+            return None
+
+        try:
+            # find relevant membership - may raise Membership.DoesNotExist
+            membership = Membership.objects.get(registration_code=member_code)
+            # confirm that membership is currently active
+            # grace period: 90 days before and after
+            if not membership.active_on_date(
+                date.today(), grace_before=90, grace_after=90
+            ):
+                errors["member_code"] = ValidationError(error_msg)
+        except Membership.DoesNotExist:
+            errors["member_code"] = ValidationError(error_msg)
+
+        return errors
+
     def clean(self):
         super().clean()
         errors = dict()
 
-        # 1: validate registration code / group name
+        # 1: validate registration code
         review_process = self.cleaned_data.get("review_process", "")
-        group_name = self.cleaned_data.get("group_name", "").split()
+        member_code = self.cleaned_data.get("member_code", "").split()
 
         # it's required when review_process is 'preapproved', but not when
         # 'open'
-        if review_process == "preapproved" and not group_name:
+        if review_process == "preapproved" and not member_code:
             errors["review_process"] = ValidationError(
                 "Registration code is required for pre-approved training "
                 "review process."
             )
 
         # it's required to be empty when review_process is 'open'
-        if review_process == "open" and group_name:
+        if review_process == "open" and member_code:
             errors["review_process"] = ValidationError(
-                "Registration code must be empty for open training review " "process."
+                "Registration code must be empty for open training review process."
             )
+
+        # confirm that code is valid
+        membership_errors = self.validate_member_code(request=self.request_http)
+        if membership_errors:
+            errors.update(membership_errors)
 
         if errors:
             raise ValidationError(errors)

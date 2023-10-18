@@ -361,6 +361,17 @@ class Membership(models.Model):
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
+    def active_on_date(
+        self, date: datetime.date, grace_before: int = 0, grace_after: int = 0
+    ) -> bool:
+        """Returns True if the date is within the membership agreement dates,
+        with an optional grace period (in days) at the start and/or end of the
+        agreement.
+        """
+        start_date = self.agreement_start - datetime.timedelta(days=grace_before)
+        end_date = self.agreement_end + datetime.timedelta(days=grace_after)
+        return start_date <= date <= end_date
+
     def _base_queryset(self):
         """Provide universal queryset for looking up workshops for this membership."""
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
@@ -2102,7 +2113,7 @@ class TrainingRequest(
         verbose_name="Application Type",
     )
 
-    group_name = models.CharField(
+    member_code = models.CharField(
         blank=True,
         default="",
         null=False,

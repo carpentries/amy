@@ -137,7 +137,7 @@ class TestExportingPersonData(BaseExportingTest):
             state="p",  # pending
             person=self.user,
             review_process="preapproved",
-            group_name="Mosquitos",
+            member_code="Mosquitos",
             personal="User",
             middle="",
             family="Primary",
@@ -471,7 +471,7 @@ class TestExportingPersonData(BaseExportingTest):
                 "last_updated_at": data["training_requests"][0]["last_updated_at"],
                 "state": "Pending",
                 "review_process": "preapproved",
-                "group_name": "Mosquitos",
+                "member_code": "Mosquitos",
                 "personal": "User",
                 "middle": "",
                 "family": "Primary",

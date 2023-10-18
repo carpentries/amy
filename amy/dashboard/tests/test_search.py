@@ -118,7 +118,7 @@ class TestSearch(TestBase):
         )
 
         TrainingRequest.objects.create(
-            group_name="Leprechauns",
+            member_code="Leprechauns",
             personal="Victor",
             family="Krum",
             email="vkrum@durmstrang.edu",

@@ -38,8 +38,8 @@ class TrainingRequestFilter(AMYFilterSet):
         method="filter_by_person",
     )
 
-    group_name = django_filters.CharFilter(
-        field_name="group_name", lookup_expr="icontains", label="Group"
+    member_code = django_filters.CharFilter(
+        field_name="member_code", lookup_expr="icontains", label="Group"
     )
 
     state = django_filters.ChoiceFilter(
@@ -82,7 +82,7 @@ class TrainingRequestFilter(AMYFilterSet):
         model = TrainingRequest
         fields = [
             "search",
-            "group_name",
+            "member_code",
             "state",
             "matched",
             "affiliation",

@@ -1,19 +1,24 @@
+from datetime import date, timedelta
+
 from django.core import mail
+from django.test import override_settings
 from django.urls import reverse
 
 from consents.models import Term, TermOptionChoices
 from extforms.views import TrainingRequestCreate
-from workshops.models import Role, TrainingRequest
+from workshops.models import Membership, Role, TrainingRequest
 from workshops.tests.base import TestBase
 
 
 class TestTrainingRequestForm(TestBase):
+    INVALID_MEMBER_CODE_ERROR = "This code is invalid."
+
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
         self.data = {
             "review_process": "preapproved",
-            "group_name": "coolprogrammers",
+            "member_code": "coolprogrammers",
             "personal": "John",
             "family": "Smith",
             "email": "john@smith.com",
@@ -48,6 +53,16 @@ class TestTrainingRequestForm(TestBase):
         }
         self.data.update(self.add_terms_to_payload())
 
+    def setUpMembership(self):
+        self.membership = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            contribution_type="financial",
+            registration_code="valid123",
+        )
+
     def add_terms_to_payload(self) -> dict[str, int]:
         data = {}
         terms = (
@@ -65,13 +80,16 @@ class TestTrainingRequestForm(TestBase):
         return data
 
     def test_request_added(self):
-        email = "john@smith.com"
+        # Arrange
+        email = self.data.get("email")
         self.passCaptcha(self.data)
 
+        # Act
         rv = self.client.post(reverse("training_request"), self.data, follow=True)
+
+        # Assert
         self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode("utf-8")
-        self.assertNotIn("fix errors in the form below", content)
+        self.assertNotContains(rv, "fix errors in the form below")
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
 
         # Test that the sender was emailed
@@ -80,28 +98,127 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(msg.to, [email])
         self.assertEqual(msg.subject, TrainingRequestCreate.autoresponder_subject)
         self.assertIn("A copy of your request", msg.body)
-        # with open('email.eml', 'wb') as f:
-        #     f.write(msg.message().as_bytes())
 
-    def test_review_process_validation(self):
-        # 1: shouldn't pass when review_process requires group_name
-        self.data["review_process"] = "preapproved"
-        self.data["group_name"] = ""
+    def test_invalid_request_not_added(self):
+        # Arrange
+        self.data.pop("personal")  # remove a required field
         self.passCaptcha(self.data)
 
+        # Act
         rv = self.client.post(reverse("training_request"), self.data, follow=True)
+
+        # Assert
         self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode("utf-8")
-        self.assertIn("fix errors in the form below", content)
+        self.assertContains(rv, "fix errors in the form below")
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
 
-        # 2: shouldn't pass when review_process requires *NO* group_name
-        self.data["review_process"] = "open"
-        self.data["group_name"] = "some_code"
-        self.passCaptcha(self.data)
+        # Test that the sender was not emailed
+        self.assertEqual(len(mail.outbox), 0)
 
-        rv = self.client.post(reverse("training_request"), self.data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode("utf-8")
-        self.assertIn("fix errors in the form below", content)
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
+
+    def test_review_process_validation__preapproved_code_empty(self):
+        """Shouldn't pass when review_process requires member_code."""
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(
+            rv,
+            "Registration code is required for pre-approved training review process.",
+        )
+
+    def test_review_process_validation__open_code_nonempty(self):
+        """Shouldn't pass when review_process requires *NO* member_code."""
+        # Arrange
+        data = {
+            "review_process": "open",
+            "member_code": "some_code",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(
+            rv, "Registration code must be empty for open training review process."
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid(self):
+        """Valid member code should pass."""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_invalid(self):
+        """Invalid member code should not pass."""
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_inactive_early(self):
+        """Code used >90 days before membership start date should not pass."""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_start = date.today() + timedelta(days=91)
+        self.membership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_inactive_late(self):
+        """Code used >90 days after membership end date should not pass."""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_end = date.today() - timedelta(days=91)
+        self.membership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)

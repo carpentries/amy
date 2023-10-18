@@ -382,8 +382,8 @@ class TestWorkshopRequestCreateView(TestBase):
         Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
-            agreement_start=date(2023, 8, 15),
-            agreement_end=date(2024, 8, 14),
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
             contribution_type="financial",
             registration_code="valid123",
         )

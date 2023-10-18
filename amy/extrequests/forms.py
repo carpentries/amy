@@ -454,7 +454,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         return "{}".format(obj.fullname)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def validate_member_code(self, request: HttpRequest) -> dict:
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
         errors = dict()
         affiliation = self.cleaned_data.get("member_affiliation")  # yes/no/unsure
         code = self.cleaned_data.get("member_code", "")
@@ -1465,7 +1467,7 @@ class TrainingRequestsMergeForm(forms.Form):
     id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     state = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     person = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    group_name = forms.ChoiceField(
+    member_code = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,

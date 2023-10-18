@@ -16,7 +16,7 @@ class TrainingRequestCSVColumns:
         "awards": "Badges",
         "training_tasks": "Training Tasks",
         "review_process": "Application Type",
-        "group_name": "Registration Code",
+        "member_code": "Registration Code",
         "personal": "Personal",
         "middle": "Middle",
         "family": "Family",
