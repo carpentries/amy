@@ -2123,6 +2123,14 @@ class TrainingRequest(
         "a Carpentries member site or for a specific scheduled "
         "event, please enter it here:",
     )
+    member_code_override = models.BooleanField(
+        null=False,
+        default=False,
+        blank=True,
+        verbose_name="Continue with registration code marked as invalid",
+        help_text="A member of our team will check the code and follow up with you if "
+        "there are any problems that require your attention.",
+    )
 
     personal = models.CharField(
         max_length=STR_LONG,
