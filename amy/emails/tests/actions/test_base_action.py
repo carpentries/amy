@@ -532,6 +532,39 @@ class TestBaseActionCancel(TestCase):
             request, instance.signal, mock_cancel_email.return_value
         )
 
+    @patch("emails.actions.base_action.feature_flag_enabled", return_value=True)
+    @patch("emails.actions.base_action.person_from_request")
+    @patch("emails.actions.base_action.EmailController.cancel_email")
+    @patch("emails.actions.base_action.messages_action_cancelled")
+    def test_call__multiple_scheduled_emails(
+        self,
+        mock_action_cancelled: MagicMock,
+        mock_cancel_email: MagicMock,
+        mock_person_from_request: MagicMock,
+        mock_feature_flag_enabled: MagicMock,
+    ) -> None:
+        # Arrange
+        instance = BaseActionCancelForTesting()
+        event = instance.get_generic_relation_object({})
+
+        template = self.setUpEmailTemplate(instance.signal)
+        self.setUpScheduledEmail(template, event)
+        self.setUpScheduledEmail(template, event)
+
+        # Act
+        sender = MagicMock()
+        request = RequestFactory().get("/")
+        kwargs = {"request": request}
+        instance(sender, **kwargs)
+
+        # Assert
+        mock_feature_flag_enabled.assert_called_once_with(
+            "EMAIL_MODULE", f"{instance.signal}_remove", **kwargs
+        )
+        self.assertEqual(mock_person_from_request.call_count, 2)
+        self.assertEqual(mock_cancel_email.call_count, 2)
+        self.assertEqual(mock_action_cancelled.call_count, 2)
+
     @patch("emails.actions.base_action.feature_flag_enabled", return_value=False)
     @patch("emails.actions.base_action.EmailController.cancel_email")
     def test_call__feature_flag_not_enabled(
