@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.core import mail
+from django.forms import CheckboxInput, HiddenInput
 from django.test import override_settings
 from django.urls import reverse
 
@@ -134,6 +135,11 @@ class TestTrainingRequestForm(TestBase):
             rv,
             "Registration code is required for pre-approved training review process.",
         )
+        # test that override field is not visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            HiddenInput,
+        )
 
     def test_review_process_validation__open_code_nonempty(self):
         """Shouldn't pass when review_process requires *NO* member_code."""
@@ -151,6 +157,27 @@ class TestTrainingRequestForm(TestBase):
         self.assertContains(
             rv, "Registration code must be empty for open training review process."
         )
+        # test that override field is not visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            HiddenInput,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
+    def test_member_code_validation__not_enforced(self):
+        """Invalid code should pass if enforcement is not enabled."""
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_valid(self):
@@ -168,6 +195,11 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is not visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            HiddenInput,
+        )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_invalid(self):
@@ -184,6 +216,11 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            CheckboxInput,
+        )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_early(self):
@@ -203,6 +240,11 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            CheckboxInput,
+        )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_inactive_late(self):
@@ -222,3 +264,73 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            CheckboxInput,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_invalid_override(self):
+        """Invalid member code should be accepted when the override is ticked."""
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "invalid",
+            "member_code_override": True,
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            CheckboxInput,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid_override(self):
+        """Override should be quietly hidden if a valid code is used."""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+            "member_code_override": True,
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+        # test that override field is not visible
+        self.assertEqual(
+            rv.context["form"].fields["member_code_override"].widget.__class__,
+            HiddenInput,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid_override_full_request(self):
+        """Override should be quietly changed to False if a valid code is used
+        in a successful submission."""
+        # Arrange
+        self.setUpMembership()
+        self.data["member_code"] = "valid123"
+        self.data["member_code_override"] = True
+        self.passCaptcha(self.data)
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=self.data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "training_request_confirm")
+        self.assertFalse(
+            TrainingRequest.objects.get(member_code="valid123").member_code_override
+        )

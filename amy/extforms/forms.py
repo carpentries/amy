@@ -226,6 +226,7 @@ class TrainingRequestForm(forms.ModelForm):
 
         member_code_valid = self.member_code_valid(member_code)
         if member_code_valid and member_code_override:
+            # case where a user corrects their code but ticks the box anyway
             # checkbox doesn't need to be ticked, so correct it quietly and continue
             self.cleaned_data["member_code_override"] = False
             self.set_display_member_code_override(False)
@@ -241,7 +242,6 @@ class TrainingRequestForm(forms.ModelForm):
         """Returns True if the code matches an active Membership,
         including a grace period of 90 days before and after the Membership dates.
         """
-
         try:
             # find relevant membership - may raise Membership.DoesNotExist
             membership = Membership.objects.get(registration_code=code)
