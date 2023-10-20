@@ -110,7 +110,7 @@ class TrainingRequestForm(forms.ModelForm):
         self.set_other_fields(self.helper.layout)
         self.set_fake_required_fields()
         self.set_accordion(self.helper.layout)
-        self.set_display_member_code_override(False)
+        self.set_display_member_code_override(visible=False)
         self.set_hr(self.helper.layout)
 
     def set_other_field(self, field_name: str, layout: Layout) -> None:
@@ -171,7 +171,7 @@ class TrainingRequestForm(forms.ModelForm):
             ),
         )
 
-    def set_display_member_code_override(self, visible: bool) -> None:
+    def set_display_member_code_override(self, *, visible: bool) -> None:
         widget = forms.CheckboxInput() if visible else forms.HiddenInput()
         self.fields["member_code_override"].widget = widget
 
@@ -229,9 +229,9 @@ class TrainingRequestForm(forms.ModelForm):
             # case where a user corrects their code but ticks the box anyway
             # checkbox doesn't need to be ticked, so correct it quietly and continue
             self.cleaned_data["member_code_override"] = False
-            self.set_display_member_code_override(False)
+            self.set_display_member_code_override(visible=False)
         elif not member_code_valid:
-            self.set_display_member_code_override(True)
+            self.set_display_member_code_override(visible=True)
             if not member_code_override:
                 # user must either correct the code or tick the override
                 errors["member_code"] = ValidationError(error_msg)
@@ -245,13 +245,12 @@ class TrainingRequestForm(forms.ModelForm):
         try:
             # find relevant membership - may raise Membership.DoesNotExist
             membership = Membership.objects.get(registration_code=code)
-            # confirm that membership is currently active
-            # grace period: 90 days before and after
-            if not membership.active_on_date(
-                date.today(), grace_before=90, grace_after=90
-            ):
-                return False
         except Membership.DoesNotExist:
+            return False
+
+        # confirm that membership is currently active
+        # grace period: 90 days before and after
+        if not membership.active_on_date(date.today(), grace_before=90, grace_after=90):
             return False
 
         return True
