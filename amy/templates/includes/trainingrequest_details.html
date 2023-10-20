@@ -26,6 +26,8 @@
         <td>{{ object.get_review_process_display|default:"&mdash;" }}</td></tr>
     <tr><th>Registration Code:</th>
         <td>{{ object.member_code|default:"&mdash;" }}</td></tr>
+    <tr><th>Continue with registration code marked as invalid:</th>
+        <td>{{ object.member_code_override|yesno }}</td></tr>
     <tr><th>Personal name:</th>
         <td>{{ object.personal }}</td></tr>
     <tr><th>Middle name:</th>

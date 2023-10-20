@@ -37,6 +37,7 @@ class TrainingRequestForm(forms.ModelForm):
         fields = (
             "review_process",
             "member_code",
+            "member_code_override",
             "personal",
             "family",
             "email",
@@ -109,6 +110,7 @@ class TrainingRequestForm(forms.ModelForm):
         self.set_other_fields(self.helper.layout)
         self.set_fake_required_fields()
         self.set_accordion(self.helper.layout)
+        self.set_display_member_code_override(visible=False)
         self.set_hr(self.helper.layout)
 
     def set_other_field(self, field_name: str, layout: Layout) -> None:
@@ -143,6 +145,7 @@ class TrainingRequestForm(forms.ModelForm):
         self["review_process"].field.widget.subfields = {  # type: ignore
             "preapproved": [
                 self["member_code"],
+                self["member_code_override"],
             ],
             "open": [],  # this option doesn't require any additional fields
         }
@@ -155,6 +158,7 @@ class TrainingRequestForm(forms.ModelForm):
 
         layout.fields.remove("review_process")
         layout.fields.remove("member_code")
+        layout.fields.remove("member_code_override")
 
         # insert div+field at previously saved position
         layout.insert(
@@ -166,6 +170,10 @@ class TrainingRequestForm(forms.ModelForm):
                 css_class="form-group row",
             ),
         )
+
+    def set_display_member_code_override(self, *, visible: bool) -> None:
+        widget = forms.CheckboxInput() if visible else forms.HiddenInput()
+        self.fields["member_code_override"].widget = widget
 
     def set_hr(self, layout: Layout) -> None:
         # add <HR> around "underrepresented*" fields
@@ -202,30 +210,50 @@ class TrainingRequestForm(forms.ModelForm):
     ) -> None | dict[str, ValidationError]:
         errors = dict()
         member_code = self.cleaned_data.get("member_code", "")
+        member_code_override = self.cleaned_data.get("member_code_override", False)
         error_msg = (
             "This code is invalid. "
             "This may be due to a typo, an expired code, "
             "or a code that has not yet been activated. "
             "Please confirm that you have copied the code correctly, "
-            "or confirm the code with the Membership Contact for your group."
+            "or confirm the code with the Membership Contact for your group. "
+            "If the code seems to be correct, tick the checkbox below to ignore "
+            "this message."
         )
 
         if not member_code:
             return None
 
-        try:
-            # find relevant membership - may raise Membership.DoesNotExist
-            membership = Membership.objects.get(registration_code=member_code)
-            # confirm that membership is currently active
-            # grace period: 90 days before and after
-            if not membership.active_on_date(
-                date.today(), grace_before=90, grace_after=90
-            ):
+        member_code_valid = self.member_code_valid(member_code)
+        if member_code_valid and member_code_override:
+            # case where a user corrects their code but ticks the box anyway
+            # checkbox doesn't need to be ticked, so correct it quietly and continue
+            self.cleaned_data["member_code_override"] = False
+            self.set_display_member_code_override(visible=False)
+        elif not member_code_valid:
+            self.set_display_member_code_override(visible=True)
+            if not member_code_override:
+                # user must either correct the code or tick the override
                 errors["member_code"] = ValidationError(error_msg)
-        except Membership.DoesNotExist:
-            errors["member_code"] = ValidationError(error_msg)
 
         return errors
+
+    def member_code_valid(self, code: str) -> bool:
+        """Returns True if the code matches an active Membership,
+        including a grace period of 90 days before and after the Membership dates.
+        """
+        try:
+            # find relevant membership - may raise Membership.DoesNotExist
+            membership = Membership.objects.get(registration_code=code)
+        except Membership.DoesNotExist:
+            return False
+
+        # confirm that membership is currently active
+        # grace period: 90 days before and after
+        if not membership.active_on_date(date.today(), grace_before=90, grace_after=90):
+            return False
+
+        return True
 
     def clean(self):
         super().clean()

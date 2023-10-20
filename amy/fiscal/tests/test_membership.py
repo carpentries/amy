@@ -1129,11 +1129,11 @@ class TestMembershipExtension(TestBase):
         comment = "Everything is awesome."
         data = {"new_agreement_end": date(2021, 3, 31), "comment": comment}
         today = date.today()
-        expected_comment = f"""Extended membership by 30 days on {today} (new end date: 2021-03-31).
-
-----
-
-{comment}"""
+        expected_comment = (
+            f"Extended membership by 30 days on {today} (new end date: 2021-03-31)."
+            "\n\n----\n\n"
+            f"{comment}"
+        )
 
         # Act
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data)
