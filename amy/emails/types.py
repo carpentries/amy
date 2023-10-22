@@ -97,6 +97,16 @@ class InstructorTrainingApproachingContext(TypedDict):
     instructors: list[Person]
 
 
+class InstructorTrainingCompletedNotBadgedKwargs(TypedDict):
+    request: HttpRequest
+    person: Person
+    training_completed_date: date
+
+
+class InstructorTrainingCompletedNotBadgedContext(TypedDict):
+    person: Person
+
+
 class StrategyEnum(StrEnum):
     CREATE = "create"
     UPDATE = "update"
