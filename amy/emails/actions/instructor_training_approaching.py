@@ -95,7 +95,9 @@ def run_instructor_training_approaching_strategy(
 class InstructorTrainingApproachingReceiver(BaseAction):
     signal = instructor_training_approaching_signal.signal_name
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> datetime:
         event_start_date = kwargs["event_start_date"]
         return one_month_before(event_start_date)
 
@@ -113,12 +115,16 @@ class InstructorTrainingApproachingReceiver(BaseAction):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
         return context["event"]
 
     def get_recipients(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> list[str]:
         instructors = context["instructors"]
         return [instructor.email for instructor in instructors if instructor.email]
@@ -127,7 +133,9 @@ class InstructorTrainingApproachingReceiver(BaseAction):
 class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
     signal = instructor_training_approaching_update_signal.signal_name
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> datetime:
         event_start_date = kwargs["event_start_date"]
         return one_month_before(event_start_date)
 
@@ -145,12 +153,16 @@ class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
         return context["event"]
 
     def get_recipients(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> list[str]:
         instructors = context["instructors"]
         return [instructor.email for instructor in instructors if instructor.email]
@@ -173,7 +185,9 @@ class InstructorTrainingApproachingCancelReceiver(BaseActionCancel):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
         return context["event"]
 

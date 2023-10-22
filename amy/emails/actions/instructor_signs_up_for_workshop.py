@@ -13,7 +13,7 @@ from workshops.models import Event, Person
 class InstructorSignsUpForWorkshopReceiver(BaseAction):
     signal = instructor_signs_up_for_workshop_signal.signal_name
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorSignupKwargs]) -> datetime:
         return immediate_action()
 
     def get_context(
@@ -31,11 +31,13 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorSignupContext, **kwargs
+        self, context: InstructorSignupContext, **kwargs: Unpack[InstructorSignupKwargs]
     ) -> InstructorRecruitmentSignup:
         return context["instructor_recruitment_signup"]
 
-    def get_recipients(self, context: InstructorSignupContext, **kwargs) -> list[str]:
+    def get_recipients(
+        self, context: InstructorSignupContext, **kwargs: Unpack[InstructorSignupKwargs]
+    ) -> list[str]:
         person = context["person"]
         return [person.email] if person.email else []
 

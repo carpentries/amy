@@ -12,7 +12,7 @@ from workshops.models import Person
 class PersonsMergedReceiver(BaseAction):
     signal = persons_merged_signal.signal_name
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[PersonsMergedKwargs]) -> datetime:
         return immediate_action()
 
     def get_context(
@@ -24,11 +24,13 @@ class PersonsMergedReceiver(BaseAction):
         }
 
     def get_generic_relation_object(
-        self, context: PersonsMergedContext, **kwargs
+        self, context: PersonsMergedContext, **kwargs: Unpack[PersonsMergedKwargs]
     ) -> Person:
         return context["person"]
 
-    def get_recipients(self, context: PersonsMergedContext, **kwargs) -> list[str]:
+    def get_recipients(
+        self, context: PersonsMergedContext, **kwargs: Unpack[PersonsMergedKwargs]
+    ) -> list[str]:
         person = context["person"]
         return [person.email] if person.email else []
 

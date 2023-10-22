@@ -12,7 +12,9 @@ from workshops.models import Award, Person
 class InstructorBadgeAwardedReceiver(BaseAction):
     signal = instructor_badge_awarded_signal.signal_name
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(
+        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
+    ) -> datetime:
         return immediate_action()
 
     def get_context(
@@ -26,12 +28,16 @@ class InstructorBadgeAwardedReceiver(BaseAction):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorBadgeAwardedContext, **kwargs
+        self,
+        context: InstructorBadgeAwardedContext,
+        **kwargs: Unpack[InstructorBadgeAwardedKwargs],
     ) -> Award:
         return context["award"]
 
     def get_recipients(
-        self, context: InstructorBadgeAwardedContext, **kwargs
+        self,
+        context: InstructorBadgeAwardedContext,
+        **kwargs: Unpack[InstructorBadgeAwardedKwargs],
     ) -> list[str]:
         person = context["person"]
         return [person.email] if person.email else []
