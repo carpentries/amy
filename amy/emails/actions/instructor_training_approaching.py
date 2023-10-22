@@ -26,6 +26,7 @@ from workshops.models import Event, Task
 logger = logging.getLogger("amy")
 
 
+# TODO: move out to a common file
 class EmailStrategyException(Exception):
     pass
 
@@ -65,6 +66,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     return result
 
 
+# TODO: turn into a generic function/class
 def run_instructor_training_approaching_strategy(
     strategy: StrategyEnum, request: HttpRequest, event: Event
 ) -> None:

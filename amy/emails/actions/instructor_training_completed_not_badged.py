@@ -64,6 +64,7 @@ def instructor_training_completed_not_badged_strategy(
     return result
 
 
+# TODO: turn into a generic function/class
 def run_instructor_training_completed_not_badged_strategy(
     strategy: StrategyEnum, request: HttpRequest, person: Person
 ) -> None:

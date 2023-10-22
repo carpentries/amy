@@ -89,6 +89,8 @@ class BaseAction(ABC):
             messages_action_scheduled(request, self.signal, scheduled_email)
 
 
+# TODO: turn into a generic class that combines BaseAction,
+#       BaseActionUpdate and BaseActionCancel for the complex signals.
 class BaseActionUpdate(BaseAction):
     def __call__(self, sender: Any, **kwargs) -> None:
         if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_update", **kwargs):
@@ -147,6 +149,8 @@ class BaseActionUpdate(BaseAction):
             messages_action_updated(request, signal_name, scheduled_email)
 
 
+# TODO: turn into a generic class that combines BaseAction,
+#       BaseActionUpdate and BaseActionCancel for the complex signals.
 class BaseActionCancel(BaseAction):
     # Method is not needed in this action.
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
