@@ -371,11 +371,12 @@ class TestWorkshopRequestCreateView(TestBase):
         self._setUpUsersAndLogin()
 
     def setUpMembership(self):
-        Membership.objects.create(
+        self.membership = Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
             agreement_start=date.today() - timedelta(weeks=26),
             agreement_end=date.today() + timedelta(weeks=26),
+            workshops_without_admin_fee_per_agreement=2,
             contribution_type="financial",
             registration_code="valid123",
         )
@@ -403,6 +404,77 @@ class TestWorkshopRequestCreateView(TestBase):
         data = {
             "member_code": "invalid",
         }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_too_early(self):
+        """code used before the membership is active - error on code"""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_start = date.today() + timedelta(days=61)
+        self.membership.save()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_too_late(self):
+        """code used after the membership ends - error on code"""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_end = date.today() - timedelta(days=1)
+        self.membership.save()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_no_workshops_remaining(self):
+        """code matches a membership with no workshops remaining - error on code"""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "member_code": "valid123",
+        }
+        # create some past events for this membership
+        swc = Organization.objects.create(
+            domain="software-carpentry.org",
+            fullname="Software Carpentry",
+        )
+        Event.objects.create(
+            slug="test-membership-1",
+            host=self.org_alpha,
+            administrator=swc,
+            membership=self.membership,
+            start=date.today() - timedelta(weeks=1),
+        )
+        Event.objects.create(
+            slug="test-membership-2",
+            host=self.org_alpha,
+            administrator=swc,
+            membership=self.membership,
+            start=date.today() - timedelta(weeks=2),
+        )
 
         # Act
         rv = self.client.post(reverse("workshop_request"), data=data)

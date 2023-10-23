@@ -470,6 +470,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             membership = Membership.objects.get(registration_code=code)
         except Membership.DoesNotExist:
             errors["member_code"] = ValidationError(error_msg)
+            return errors
 
         # confirm that membership is active at the time of submission
         # grace period: 60 days before, 0 days after after
