@@ -451,25 +451,16 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self, request: HttpRequest
     ) -> None | dict[str, ValidationError]:
         errors = dict()
-        affiliation = self.cleaned_data.get("member_affiliation")  # yes/no/unsure
         code = self.cleaned_data.get("member_code", "")
-        if affiliation in ["yes", "unsure"] and code:
-            # ensure that code belongs to a membership
-            try:
-                Membership.objects.get(registration_code=code)
-            except Membership.DoesNotExist:
-                errors["member_code"] = ValidationError(
-                    "This code is invalid. "
-                    "Please contact your Member Affiliate to verify your code."
-                )
-        elif affiliation == "yes" and not code:
-            errors["member_code"] = ValidationError(
-                "This field is required if you selected 'Yes' above."
-            )
-        elif affiliation == "no" and code:
-            errors["member_code"] = ValidationError(
-                "This field must be empty if you selected 'No' above."
-            )
+        error_msg = (
+            "This code is invalid. "
+            "Please contact your Member Affiliate to verify your code."
+        )
+        # ensure that code belongs to a membership
+        try:
+            Membership.objects.get(registration_code=code)
+        except Membership.DoesNotExist:
+            errors["member_code"] = ValidationError(error_msg)
 
         return errors
 
