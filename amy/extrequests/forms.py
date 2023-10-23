@@ -302,7 +302,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "member_affiliation",
             "member_code",
             "location",
             "country",
@@ -389,11 +388,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             (self["institution_other_URL"], "Institution URL address"),
         ]
 
-        # move "member_code" field to "member_affiliation" subfield
-        self["member_affiliation"].field.widget.subfields = [
-            (self["member_code"], "Member registration code"),
-        ]
-
         # remove additional fields
         self.helper.layout.fields.remove("travel_expences_management_other")
         self.helper.layout.fields.remove("public_event_other")
@@ -401,7 +395,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove("carpentries_info_source_other")
         self.helper.layout.fields.remove("institution_other_name")
         self.helper.layout.fields.remove("institution_other_URL")
-        self.helper.layout.fields.remove("member_code")
 
         # add warning alert for dates falling within next 2-3 months
         DATES_TOO_SOON_WARNING = (
@@ -429,7 +422,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
-            "member_affiliation",
+            "member_code",
             "country",
             "audience_description",
             "user_notes",
@@ -745,8 +738,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "member_affiliation",
-            "member_code",
             "location",
             "country",
             "online_inperson",
@@ -1165,8 +1156,6 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "member_affiliation",
-            "member_code",
             "online_inperson",
             "workshop_format",
             "workshop_format_other",

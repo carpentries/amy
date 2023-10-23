@@ -535,8 +535,6 @@ class TestWorkshopInquiryViews(TestBase):
             online_inperson="online",
             workshop_listed=False,
             additional_contact="hermione@granger.com",
-            member_affiliation="yes",
-            member_code="hogwarts55",
         )
         curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
         wi.requested_workshop_types.set([curriculum])
