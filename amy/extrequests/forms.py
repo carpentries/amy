@@ -455,12 +455,31 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         code = self.cleaned_data.get("member_code", "")
         error_msg = (
             "This code is invalid. "
-            "Please contact your Member Affiliate to verify your code."
+            "This may be due to a typo, an expired code, "
+            "a code that has not yet been activated, "
+            "or a code that has no workshops remaining. "
+            "Please confirm that you have copied the code correctly, "
+            "or contact your Member Affiliate to verify your code."
         )
+
+        if not code:
+            return None
+
         # ensure that code belongs to a membership
         try:
-            Membership.objects.get(registration_code=code)
+            membership = Membership.objects.get(registration_code=code)
         except Membership.DoesNotExist:
+            errors["member_code"] = ValidationError(error_msg)
+
+        # confirm that membership is active at the time of submission
+        # grace period: 60 days before, 0 days after after
+        if not membership.active_on_date(
+            datetime.date.today(), grace_before=60, grace_after=0
+        ):
+            errors["member_code"] = ValidationError(error_msg)
+
+        # confirm that membership has workshops remaining
+        if membership.workshops_without_admin_fee_remaining <= 0:
             errors["member_code"] = ValidationError(error_msg)
 
         return errors
