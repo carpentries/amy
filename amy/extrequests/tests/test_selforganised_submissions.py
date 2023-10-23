@@ -11,16 +11,7 @@ from extrequests.forms import SelfOrganisedSubmissionBaseForm
 from extrequests.models import SelfOrganisedSubmission
 import extrequests.views
 from workshops.forms import EventCreateForm
-from workshops.models import (
-    Curriculum,
-    Event,
-    Language,
-    Membership,
-    Organization,
-    Role,
-    Tag,
-    Task,
-)
+from workshops.models import Curriculum, Event, Language, Organization, Role, Tag, Task
 from workshops.tests.base import FormTestHelper, TestBase
 
 
@@ -353,12 +344,6 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         """Ensure that fields are autofilled correctly when creating an Event from a
         SelfOrganisedSubmission."""
         # Arrange
-        expected_membership = Membership.objects.create(
-            name="Hogwarts",
-            agreement_start=date.today() - timedelta(weeks=26),
-            agreement_end=date.today() + timedelta(weeks=26),
-            registration_code="hogwarts55",
-        )
         sos = SelfOrganisedSubmission.objects.create(
             # required fields
             state="p",
@@ -397,7 +382,6 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         self.assertEqual(form_initial["host"].pk, sos.institution.pk)
         self.assertEqual(form_initial["start"], sos.start)
         self.assertEqual(form_initial["end"], sos.end)
-        self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(

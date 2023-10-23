@@ -881,7 +881,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
-            "member_code",
             "audience_description",
             "country",
             "user_notes",
@@ -1223,7 +1222,6 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
-            "member_code",
             "additional_contact",
             "language",
             "online_inperson",
