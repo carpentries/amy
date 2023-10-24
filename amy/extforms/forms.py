@@ -215,7 +215,7 @@ class TrainingRequestForm(forms.ModelForm):
             "This code is invalid. "
             "This may be due to a typo, an expired code, "
             "a code that has not yet been activated, "
-            "or a code with no training seats remaining."
+            "or a code with no training seats remaining. "
             "Please confirm that you have copied the code correctly, "
             "or confirm the code with the Membership Contact for your group. "
             "If the code seems to be correct, tick the checkbox below to ignore "
