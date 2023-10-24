@@ -381,6 +381,21 @@ class TestWorkshopRequestCreateView(TestBase):
             registration_code="valid123",
         )
 
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
+    def test_member_code_validation__not_enforced(self):
+        """Invalid code should pass if enforcement is not enabled."""
+        # Arrange
+        data = {
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_valid(self):
         """valid code - no error"""
