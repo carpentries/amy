@@ -62,8 +62,8 @@ class TestTrainingRequestForm(TestBase):
             agreement_end=date.today() + timedelta(weeks=26),
             contribution_type="financial",
             registration_code="valid123",
-            public_instructor_training_seats="1",
-            inhouse_instructor_training_seats="1",
+            public_instructor_training_seats=1,
+            inhouse_instructor_training_seats=1,
         )
 
     def setUpUsedSeats(self):
