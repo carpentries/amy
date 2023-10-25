@@ -363,7 +363,7 @@ class TestWorkshopRequestCreateView(TestBase):
     All other form validation is tested in the TestWorkshopRequestBaseForm class above.
     """
 
-    INVALID_CODE_ERROR = "This code is invalid. "
+    INVALID_CODE_ERROR = "This code is invalid."
 
     def setUp(self):
         super().setUp()
