@@ -56,7 +56,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             body="Hello, {{ name }}! Nice to meet **you**.",
         )
 
-    @patch("workshops.utils.feature_flags.logger")
+    @patch("emails.actions.base_action.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -66,7 +66,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             # Assert
             mock_logger.debug.assert_called_once_with(
                 "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_training_approaching_remove_receiver"
+                "instructor_training_approaching_remove"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -102,7 +102,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.instructor_training_approaching.messages_action_cancelled"
+            "emails.actions.base_action.messages_action_cancelled"
         ) as mock_messages_action_cancelled:
             instructor_training_approaching_remove_signal.send(
                 sender=self.event,
@@ -120,7 +120,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.messages_action_cancelled")
+    @patch("emails.actions.base_action.messages_action_cancelled")
     def test_email_cancelled(
         self,
         mock_messages_action_cancelled: MagicMock,
@@ -140,7 +140,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.persons_merged.EmailController.cancel_email"
+            "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
             instructor_training_approaching_remove_signal.send(
                 sender=self.event,
@@ -156,7 +156,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.messages_action_cancelled")
+    @patch("emails.actions.base_action.messages_action_cancelled")
     def test_multiple_emails_cancelled(
         self,
         mock_messages_action_cancelled: MagicMock,
@@ -185,7 +185,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.persons_merged.EmailController.cancel_email"
+            "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
             instructor_training_approaching_remove_signal.send(
                 sender=self.event,
@@ -281,8 +281,7 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
         request = RequestFactory().get("/")
 
         with patch(
-            "emails.actions.instructor_training_approaching."
-            "messages_action_scheduled"
+            "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
             run_instructor_training_approaching_strategy(
                 instructor_training_approaching_strategy(event),

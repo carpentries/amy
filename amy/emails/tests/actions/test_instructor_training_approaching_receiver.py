@@ -50,7 +50,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
             event=self.event, person=self.instructor2, role=instructor_role
         )
 
-    @patch("workshops.utils.feature_flags.logger")
+    @patch("emails.actions.base_action.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -60,7 +60,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
             # Assert
             mock_logger.debug.assert_called_once_with(
                 "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_training_approaching_receiver"
+                "instructor_training_approaching"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -85,7 +85,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.instructor_training_approaching.messages_action_scheduled"
+            "emails.actions.base_action.messages_action_scheduled"
         ) as mock_messages_action_scheduled:
             instructor_training_approaching_signal.send(
                 sender=self.event,
@@ -103,7 +103,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.messages_action_scheduled")
+    @patch("emails.actions.base_action.messages_action_scheduled")
     @patch("emails.actions.instructor_training_approaching.one_month_before")
     def test_email_scheduled(
         self,
@@ -122,7 +122,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.persons_merged.EmailController.schedule_email"
+            "emails.actions.base_action.EmailController.schedule_email"
         ) as mock_schedule_email:
             instructor_training_approaching_signal.send(
                 sender=self.event,
@@ -142,7 +142,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.messages_missing_recipients")
+    @patch("emails.actions.base_action.messages_missing_recipients")
     def test_missing_recipients(
         self, mock_messages_missing_recipients: MagicMock
     ) -> None:
@@ -166,7 +166,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         mock_messages_missing_recipients.assert_called_once_with(request, signal)
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.messages_missing_template")
+    @patch("emails.actions.base_action.messages_missing_template")
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")

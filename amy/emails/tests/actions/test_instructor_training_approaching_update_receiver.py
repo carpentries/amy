@@ -56,7 +56,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             body="Hello, {{ name }}! Nice to meet **you**.",
         )
 
-    @patch("workshops.utils.feature_flags.logger")
+    @patch("emails.actions.base_action.logger")
     def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -66,7 +66,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             # Assert
             mock_logger.debug.assert_called_once_with(
                 "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_training_approaching_update_receiver"
+                "instructor_training_approaching_update"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -102,7 +102,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.instructor_training_approaching.messages_action_updated"
+            "emails.actions.base_action.messages_action_updated"
         ) as mock_messages_action_updated:
             instructor_training_approaching_update_signal.send(
                 sender=self.event,
@@ -120,7 +120,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.messages_action_updated")
+    @patch("emails.actions.base_action.messages_action_updated")
     @patch("emails.actions.instructor_training_approaching.one_month_before")
     def test_email_updated(
         self,
@@ -148,7 +148,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
 
         # Act
         with patch(
-            "emails.actions.persons_merged.EmailController.update_scheduled_email"
+            "emails.actions.base_action.EmailController.update_scheduled_email"
         ) as mock_update_scheduled_email:
             instructor_training_approaching_update_signal.send(
                 sender=self.event,
@@ -168,8 +168,8 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.logger")
-    @patch("emails.actions.instructor_training_approaching.EmailController")
+    @patch("emails.actions.base_action.logger")
+    @patch("emails.actions.base_action.EmailController")
     def test_previously_scheduled_email_not_existing(
         self, mock_email_controller: MagicMock, mock_logger: MagicMock
     ) -> None:
@@ -189,12 +189,13 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and event {event} does not exist."
+            f"Scheduled email for signal {signal} and generic_relation_obj={event!r} "
+            "does not exist."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.logger")
-    @patch("emails.actions.instructor_training_approaching.EmailController")
+    @patch("emails.actions.base_action.logger")
+    @patch("emails.actions.base_action.EmailController")
     def test_multiple_previously_scheduled_emails(
         self, mock_email_controller: MagicMock, mock_logger: MagicMock
     ) -> None:
@@ -233,12 +234,12 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Too many scheduled emails for signal {signal} and event {event}."
-            " Can't update them."
+            f"Too many scheduled emails for signal {signal} and "
+            f"generic_relation_obj={event!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    @patch("emails.actions.instructor_training_approaching.messages_missing_recipients")
+    @patch("emails.actions.base_action.messages_missing_recipients")
     def test_missing_recipients(
         self, mock_messages_missing_recipients: MagicMock
     ) -> None:
@@ -342,8 +343,7 @@ class TestInstructorTrainingApproachingReceiverUpdateIntegration(TestBase):
         request = RequestFactory().get("/")
 
         with patch(
-            "emails.actions.instructor_training_approaching."
-            "messages_action_scheduled"
+            "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
             run_instructor_training_approaching_strategy(
                 instructor_training_approaching_strategy(event),
