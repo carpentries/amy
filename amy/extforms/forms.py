@@ -214,7 +214,8 @@ class TrainingRequestForm(forms.ModelForm):
         error_msg = (
             "This code is invalid. "
             "This may be due to a typo, an expired code, "
-            "or a code that has not yet been activated. "
+            "a code that has not yet been activated, "
+            "or a code with no training seats remaining. "
             "Please confirm that you have copied the code correctly, "
             "or confirm the code with the Membership Contact for your group. "
             "If the code seems to be correct, tick the checkbox below to ignore "
@@ -239,7 +240,7 @@ class TrainingRequestForm(forms.ModelForm):
         return errors
 
     def member_code_valid(self, code: str) -> bool:
-        """Returns True if the code matches an active Membership,
+        """Returns True if the code matches an active Membership with available seats,
         including a grace period of 90 days before and after the Membership dates.
         """
         try:
@@ -251,6 +252,14 @@ class TrainingRequestForm(forms.ModelForm):
         # confirm that membership is currently active
         # grace period: 90 days before and after
         if not membership.active_on_date(date.today(), grace_before=90, grace_after=90):
+            return False
+
+        # confirm that membership has training seats remaining
+        if (
+            membership.public_instructor_training_seats_remaining
+            + membership.inhouse_instructor_training_seats_remaining
+            <= 0
+        ):
             return False
 
         return True
