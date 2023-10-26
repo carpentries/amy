@@ -27,8 +27,6 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
                 "institution_other_name",
                 "institution_other_URL",
                 "institution_department",
-                "member_affiliation",
-                "member_code",
                 "workshop_format",
                 "workshop_format_other",
                 "start",

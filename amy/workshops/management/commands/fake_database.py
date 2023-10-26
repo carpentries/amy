@@ -625,19 +625,19 @@ class Command(BaseCommand):
             p.save()
 
     def get_or_invent_member_code(self):
-        member_affiliation = choice(WorkshopRequest.MEMBER_AFFILIATION_CHOICES)[0]
-        member_code = ""
-        if member_affiliation != "no":
-            if randbool(0.75):
-                # 75% of time, use an existing member code
-                # may or may not be a valid choice depending on membership dates
-                membership = choice(Membership.objects.all())
-                member_code = membership.registration_code
-            else:
-                # 25% of time, make up an invalid code
-                member_code = self.faker.word()
+        if randbool(0.5):
+            # 50% of time, use an existing member code
+            # may or may not be a valid choice depending on membership dates
+            membership = choice(Membership.objects.all())
+            member_code = membership.registration_code
+        elif randbool(0.5):
+            # 25% of time, make up an invalid code
+            member_code = self.faker.word()
+        else:
+            # 25% of time, don't use any code
+            member_code = ""
 
-        return member_affiliation, member_code
+        return member_code
 
     def fake_workshop_requests(self, count=10):
         self.stdout.write("Generating {} fake " "workshop requests...".format(count))
@@ -682,7 +682,7 @@ class Command(BaseCommand):
                 self.faker.sentence() if institution_restrictions == "" else ""
             )
 
-            member_affiliation, member_code = self.get_or_invent_member_code()
+            member_code = self.get_or_invent_member_code()
             req = WorkshopRequest.objects.create(
                 state=choice(["p", "d", "a"]),
                 data_privacy_agreement=randbool(0.5),
@@ -695,7 +695,6 @@ class Command(BaseCommand):
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
                 institution_department="",
-                member_affiliation=member_affiliation,
                 member_code=member_code,
                 online_inperson=online_inperson,
                 public_event=public_event,
@@ -769,8 +768,6 @@ class Command(BaseCommand):
                 self.faker.sentence() if institution_restrictions == "" else ""
             )
 
-            member_affiliation, member_code = self.get_or_invent_member_code()
-
             req = WorkshopInquiryRequest.objects.create(
                 state=choice(["p", "d", "a"]),
                 data_privacy_agreement=randbool(0.5),
@@ -783,8 +780,6 @@ class Command(BaseCommand):
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
                 institution_department="",
-                member_affiliation=member_affiliation,
-                member_code=member_code,
                 online_inperson=online_inperson,
                 public_event=public_event,
                 public_event_other=public_event_other,
@@ -863,8 +858,6 @@ class Command(BaseCommand):
                 workshop_types = sample(curricula)
                 workshop_types_explain = ""
 
-            member_affiliation, member_code = self.get_or_invent_member_code()
-
             req = SelfOrganisedSubmission.objects.create(
                 state=choice(["p", "d", "a"]),
                 data_privacy_agreement=randbool(0.5),
@@ -877,8 +870,6 @@ class Command(BaseCommand):
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
                 institution_department="",
-                member_affiliation=member_affiliation,
-                member_code=member_code,
                 online_inperson=online_inperson,
                 public_event=public_event,
                 public_event_other=public_event_other,

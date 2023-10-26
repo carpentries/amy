@@ -16,7 +16,6 @@ from workshops.models import (
     Event,
     KnowledgeDomain,
     Language,
-    Membership,
     Organization,
     Role,
     Tag,
@@ -511,12 +510,6 @@ class TestWorkshopInquiryViews(TestBase):
         """Ensure that fields are autofilled correctly when creating an Event from a
         WorkshopInquiryRequest."""
         # Arrange
-        expected_membership = Membership.objects.create(
-            name="Hogwarts",
-            agreement_start=date.today() - timedelta(weeks=26),
-            agreement_end=date.today() + timedelta(weeks=26),
-            registration_code="hogwarts55",
-        )
         wi = WorkshopInquiryRequest.objects.create(
             # required fields
             state="p",
@@ -535,8 +528,6 @@ class TestWorkshopInquiryViews(TestBase):
             online_inperson="online",
             workshop_listed=False,
             additional_contact="hermione@granger.com",
-            member_affiliation="yes",
-            member_code="hogwarts55",
         )
         curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
         wi.requested_workshop_types.set([curriculum])
@@ -558,7 +549,6 @@ class TestWorkshopInquiryViews(TestBase):
         self.assertEqual(form_initial["host"].pk, wi.institution.pk)
         self.assertEqual(form_initial["start"], wi.preferred_dates)
         self.assertEqual(form_initial["end"], wi.preferred_dates + timedelta(days=1))
-        self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(
