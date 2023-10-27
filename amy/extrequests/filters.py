@@ -29,7 +29,7 @@ class TrainingRequestFilter(AMYFilterSet):
         # client-side unless the user deliberately chooses to do so.
         # See https://github.com/carpentries/amy/issues/2314
         if not data:
-            data = QueryDict("state=no_d&matched=u")
+            data = QueryDict("state=pa&matched=u")
 
         super().__init__(data, *args, **kwargs)
 
@@ -44,7 +44,7 @@ class TrainingRequestFilter(AMYFilterSet):
 
     state = django_filters.ChoiceFilter(
         label="State",
-        choices=(("no_d", "Pending or accepted"),) + TrainingRequest.STATE_CHOICES,
+        choices=(("pa", "Pending or accepted"),) + TrainingRequest.STATE_CHOICES,
         method="filter_training_requests_by_state",
     )
 
@@ -146,8 +146,8 @@ class TrainingRequestFilter(AMYFilterSet):
             return queryset.filter(q).distinct()
 
     def filter_training_requests_by_state(self, queryset, name, choice):
-        if choice == "no_d":
-            return queryset.exclude(state="d")
+        if choice == "pa":
+            return queryset.filter(state__in=["p", "a"])
         else:
             return queryset.filter(state=choice)
 
