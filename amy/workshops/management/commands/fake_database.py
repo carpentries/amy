@@ -306,7 +306,18 @@ class Command(BaseCommand):
             state = "a"
             person = person_or_None
 
-        registration_code = self.faker.city() if randbool(0.1) else ""
+        # registration code
+        # default (empty code) is used 25% of the time
+        registration_code = ""
+        override_invalid_code = False
+        if randbool(0.5):
+            # 50% of the time, use an existing code
+            registration_code = choice(Membership.objects.all()).registration_code
+        elif randbool(0.5):
+            # 25% of the time, use an invalid code and the override
+            registration_code = self.faker.city()
+            override_invalid_code = True
+
         occupation = choice(TrainingRequest._meta.get_field("occupation").choices)[0]
         training_completion_agreement = randbool(0.5)
         underrepresented_choices = TrainingRequest._meta.get_field(
@@ -317,6 +328,7 @@ class Command(BaseCommand):
             person=person_or_None,
             review_process="preapproved" if registration_code else "open",
             member_code=registration_code,
+            member_code_override=override_invalid_code,
             personal=person.personal,
             middle="",
             family=person.family,
