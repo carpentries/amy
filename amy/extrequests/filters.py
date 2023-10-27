@@ -39,7 +39,7 @@ class TrainingRequestFilter(AMYFilterSet):
     )
 
     member_code = django_filters.CharFilter(
-        field_name="member_code", lookup_expr="icontains", label="Group"
+        field_name="member_code", lookup_expr="icontains", label="Member code"
     )
 
     state = django_filters.ChoiceFilter(
