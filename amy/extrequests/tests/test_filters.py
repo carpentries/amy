@@ -6,6 +6,8 @@ from workshops.models import (
     Curriculum,
     Event,
     Language,
+    Member,
+    MemberRole,
     Membership,
     Role,
     Tag,
@@ -369,6 +371,11 @@ class TestWorkshopRequestFilter(TestBase):
             agreement_start=datetime.today(),
             agreement_end=datetime.today() + timedelta(weeks=52),
         )
+        Member.objects.create(
+            membership=self.membership,
+            organization=self.org_alpha,
+            role=MemberRole.objects.first(),
+        )
 
         kwargs = dict(
             state="p",
@@ -393,20 +400,42 @@ class TestWorkshopRequestFilter(TestBase):
         )
 
         # add some workshop requests
-        self.request1 = WorkshopRequest.objects.create(**kwargs)
+        # together these cover all test cases
+        # 1. Request for a workshop in GB,
+        # pending
+        self.req_pending_country_gb = WorkshopRequest.objects.create(**kwargs)
+        # 2. Request for a workshop in US,
+        # from a member institution but without the member code,
+        # assigned to an admin,
+        # discarded
         kwargs["institution_other_name"] = ""
         kwargs["institution"] = self.org_alpha
         kwargs["assigned_to"] = self.spiderman
         kwargs["country"] = "US"
         kwargs["state"] = "d"
-        self.request2 = WorkshopRequest.objects.create(**kwargs)
-        self.request2.requested_workshop_types.set(
+        self.req_assigned_discarded_unused_code = WorkshopRequest.objects.create(
+            **kwargs
+        )
+        # 3. Request for a workshop in US,
+        # from a member institution but without the member code,
+        # with a preferred date selected which falls during the membership,
+        # pending
+        kwargs.pop("assigned_to")
+        kwargs["preferred_dates"] = datetime.today() + timedelta(weeks=5)
+        kwargs["state"] = "p"
+        self.req_pending_dates_unused_code = WorkshopRequest.objects.create(**kwargs)
+        # 4. Request for a workshop in the US,
+        # from a member institution with their code,
+        # with a preferred curriculum selected,
+        # accepted
+        kwargs["member_code"] = "valid123"
+        kwargs["state"] = "a"
+        self.req_accepted_valid_code_curriculum_chosen = WorkshopRequest.objects.create(
+            **kwargs
+        )
+        self.req_accepted_valid_code_curriculum_chosen.requested_workshop_types.set(
             Curriculum.objects.filter(slug="dc-ecology-r")
         )
-        kwargs["member_code"] = "valid123"
-        kwargs.pop("assigned_to")
-        kwargs["state"] = "a"
-        self.request3 = WorkshopRequest.objects.create(**kwargs)
 
         # get filterset
         self.filterset = WorkshopRequestFilter({})
@@ -450,7 +479,9 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request1])
+        self.assertQuerysetEqual(
+            result, [self.req_pending_country_gb, self.req_pending_dates_unused_code]
+        )
 
     def test_filter_state__accepted(self):
         # Arrange
@@ -461,7 +492,9 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request3])
+        self.assertQuerysetEqual(
+            result, [self.req_accepted_valid_code_curriculum_chosen]
+        )
 
     def test_filter_state_discarded(self):
         # Arrange
@@ -472,7 +505,7 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request2])
+        self.assertQuerysetEqual(result, [self.req_assigned_discarded_unused_code])
 
     def test_filter_assigned_to(self):
         # Arrange
@@ -483,7 +516,7 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request2])
+        self.assertQuerysetEqual(result, [self.req_assigned_discarded_unused_code])
 
     def test_filter_country(self):
         # Arrange
@@ -494,7 +527,7 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request1])
+        self.assertQuerysetEqual(result, [self.req_pending_country_gb])
 
     def test_filter_continent(self):
         # Arrange
@@ -505,7 +538,7 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request1])
+        self.assertQuerysetEqual(result, [self.req_pending_country_gb])
 
     def test_filter_requested_workshop_types(self):
         # Arrange
@@ -516,7 +549,9 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request2])
+        self.assertQuerysetEqual(
+            result, [self.req_accepted_valid_code_curriculum_chosen]
+        )
 
     def test_filter_unused_member_code(self):
         # Arrange
@@ -527,7 +562,13 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.request2])
+        self.assertQuerysetEqual(
+            result,
+            [
+                self.req_assigned_discarded_unused_code,
+                self.req_pending_dates_unused_code,
+            ],
+        )
 
     def test_filter_order_by(self):
         # Arrange
@@ -537,7 +578,12 @@ class TestWorkshopRequestFilter(TestBase):
 
         # default ordering is ascending
         expected_results = {
-            "created_at": [self.request1, self.request2, self.request3],
+            "created_at": [
+                self.req_pending_country_gb,
+                self.req_assigned_discarded_unused_code,
+                self.req_pending_dates_unused_code,
+                self.req_accepted_valid_code_curriculum_chosen,
+            ],
         }
 
         # Act
