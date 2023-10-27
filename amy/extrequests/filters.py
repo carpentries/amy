@@ -1,6 +1,7 @@
+from datetime import date
 import re
 
-from django.db.models import Q
+from django.db.models import Case, F, Q, QuerySet, When
 from django.forms import widgets
 from django.http import QueryDict
 import django_filters
@@ -171,6 +172,11 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
     )
+    unused_member_code = django_filters.BooleanFilter(
+        label="Institution has an active member code but did not provide it",
+        method="filter_unused_member_code",
+        widget=widgets.CheckboxInput(),
+    )
 
     order_by = django_filters.OrderingFilter(
         fields=("created_at",),
@@ -184,6 +190,29 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
             "requested_workshop_types",
             "country",
         ]
+
+    def filter_unused_member_code(
+        self, queryset: QuerySet, name: str, apply_filter: bool
+    ) -> QuerySet:
+        if apply_filter:
+            # find requests where no member code was provided
+            requests_without_code = queryset.filter(member_code="")
+
+            # find requests where institution has an active membership
+            # ideally compare to workshop dates, but fall back on today
+            return requests_without_code.annotate(
+                date_to_check=Case(
+                    When(
+                        preferred_dates__isnull=False,
+                        then=F("preferred_dates"),
+                    ),
+                    default=date.today(),
+                )
+            ).filter(
+                institution__memberships__agreement_end__gte=F("date_to_check"),
+                institution__memberships__agreement_start__lte=F("date_to_check"),
+            )
+        return queryset
 
 
 # ------------------------------------------------------------
