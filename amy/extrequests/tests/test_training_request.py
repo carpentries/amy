@@ -292,7 +292,7 @@ class TestTrainingRequestsListView(TestBase):
     def test_view_loads(self):
         """
         View should default to settings:
-            state=no_d (Pending or accepted)
+            state=pa (Pending or accepted)
             matched=u (Unmatched)
         """
         # Act
