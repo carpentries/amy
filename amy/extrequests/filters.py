@@ -65,6 +65,12 @@ class TrainingRequestFilter(AMYFilterSet):
         widget=widgets.CheckboxInput,
     )
 
+    invalid_member_code = django_filters.BooleanFilter(
+        label="Member code marked as invalid",
+        field_name="member_code_override",
+        widget=widgets.CheckboxInput,
+    )
+
     affiliation = django_filters.CharFilter(
         method="filter_affiliation",
     )
