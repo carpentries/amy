@@ -39,7 +39,8 @@ def combine_date_with_current_utc_time(date: date) -> datetime:
 
 def shift_date_and_apply_current_utc_time(date: date, offset: timedelta) -> datetime:
     """Return timezone-aware datetime object combining current time in UTC
-    with a given date shifted by offset (timedelta)."""
+    with a given date shifted by offset (timedelta).
+    Time component of the offset is discarded."""
     date_shifted = date + offset
     return combine_date_with_current_utc_time(date_shifted)
 
