@@ -1,11 +1,14 @@
-from datetime import datetime
+from datetime import date, datetime
 import logging
 
+from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
+from emails.models import ScheduledEmail
 from emails.signals import (
+    INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
     Signal,
     instructor_training_completed_not_badged_remove_signal,
     instructor_training_completed_not_badged_signal,
@@ -17,16 +20,14 @@ from emails.types import (
     StrategyEnum,
 )
 from emails.utils import two_months_after
-from workshops.models import Award, Person, TrainingProgress
+from workshops.models import Person, TrainingProgress
 
 from .instructor_training_approaching import EmailStrategyException
 
 logger = logging.getLogger("amy")
 
 
-def instructor_training_completed_not_badged_strategy(
-    person: Person,
-) -> StrategyEnum:
+def instructor_training_completed_not_badged_strategy(person: Person) -> StrategyEnum:
     logger.info(f"Running InstructorTrainingCompletedNotBadged strategy for {person}")
 
     person_annotated = (
@@ -35,27 +36,30 @@ def instructor_training_completed_not_badged_strategy(
         )
     )
 
-    has_instructor_role = Award.objects.filter(
-        role__name="instructor", person=person
-    ).exists()
-
     all_requirements_passed = (
-        person_annotated.passed_training
-        and person_annotated.passed_get_involved
-        and person_annotated.passed_welcome
-        and person_annotated.passed_demo
+        bool(person_annotated.passed_training)
+        and bool(person_annotated.passed_get_involved)
+        and bool(person_annotated.passed_welcome)
+        and bool(person_annotated.passed_demo)
     )
 
-    if has_instructor_role or all_requirements_passed:
-        result = StrategyEnum.REMOVE
-    elif person_annotated.passed_training and not all_requirements_passed:
+    ct = ContentType.objects.get_for_model(person)  # type: ignore
+    has_email_scheduled = ScheduledEmail.objects.filter(
+        generic_relation_content_type=ct,
+        generic_relation_pk=person.pk,
+        template__signal=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
+        state="scheduled",
+    ).exists()
+
+    email_should_exist = (
+        bool(person_annotated.passed_training) and not all_requirements_passed
+    )
+
+    if not has_email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
-    elif (
-        person_annotated.passed_training
-        or person_annotated.passed_get_involved
-        or person_annotated.passed_welcome
-        or person_annotated.passed_demo
-    ):
+    elif has_email_scheduled and not email_should_exist:
+        result = StrategyEnum.REMOVE
+    elif has_email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
         result = StrategyEnum.NOOP
@@ -66,7 +70,10 @@ def instructor_training_completed_not_badged_strategy(
 
 # TODO: turn into a generic function/class
 def run_instructor_training_completed_not_badged_strategy(
-    strategy: StrategyEnum, request: HttpRequest, person: Person
+    strategy: StrategyEnum,
+    request: HttpRequest,
+    person: Person,
+    training_completed_date: date | None,
 ) -> None:
     mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_completed_not_badged_signal,
@@ -88,6 +95,7 @@ def run_instructor_training_completed_not_badged_strategy(
         sender=person,
         request=request,
         person=person,
+        training_completed_date=training_completed_date,
     )
 
 
