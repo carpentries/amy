@@ -17,7 +17,7 @@ from emails.types import (
     StrategyEnum,
 )
 from emails.utils import two_months_after
-from workshops.models import Award, Person
+from workshops.models import Award, Person, TrainingProgress
 
 from .instructor_training_approaching import EmailStrategyException
 
@@ -91,37 +91,83 @@ def run_instructor_training_completed_not_badged_strategy(
     )
 
 
+def get_scheduled_at(
+    **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+) -> datetime:
+    training_completed_date = kwargs["training_completed_date"]
+    return two_months_after(training_completed_date)
+
+
+def get_context(
+    **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+) -> InstructorTrainingCompletedNotBadgedContext:
+    person = kwargs["person"]
+
+    if not (training_completed_date := kwargs["training_completed_date"]):
+        # Note: it's possible that the training_completed_date will be None even after
+        # looking up progress object for the training requirement.
+        training = TrainingProgress.objects.get(
+            trainee=person, state="p", requirement__name="Training"
+        )
+        training_completed_date = (
+            training.event.end if training.event and training.event.end else None
+        )
+
+    passed_requirements = list(
+        TrainingProgress.objects.filter(trainee=person, state="p")
+    )
+    missing_requirements = list(
+        TrainingProgress.objects.filter(trainee=person).exclude(state="p")
+    )
+    return {
+        "person": person,
+        "passed_requirements": passed_requirements,
+        "missing_requirements": missing_requirements,
+        "training_completed_date": training_completed_date,
+    }
+
+
+def get_generic_relation_object(
+    context: InstructorTrainingCompletedNotBadgedContext,
+    **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+) -> Person:
+    return context["person"]
+
+
+def get_recipients(
+    context: InstructorTrainingCompletedNotBadgedContext,
+    **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+) -> list[str]:
+    person = context["person"]
+    return [person.email] if person.email else []
+
+
 class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
     signal = instructor_training_completed_not_badged_signal.signal_name
 
     def get_scheduled_at(
         self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
     ) -> datetime:
-        training_completed_date = kwargs["training_completed_date"]
-        return two_months_after(training_completed_date)
+        return get_scheduled_at(**kwargs)
 
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
     ) -> InstructorTrainingCompletedNotBadgedContext:
-        person = kwargs["person"]
-        return {
-            "person": person,
-        }
+        return get_context(**kwargs)
 
     def get_generic_relation_object(
         self,
         context: InstructorTrainingCompletedNotBadgedContext,
         **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
     ) -> Person:
-        return context["person"]
+        return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
         self,
         context: InstructorTrainingCompletedNotBadgedContext,
         **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
     ) -> list[str]:
-        person = context["person"]
-        return [person.email] if person.email else []
+        return get_recipients(context, **kwargs)
 
 
 class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
@@ -130,31 +176,26 @@ class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
     def get_scheduled_at(
         self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
     ) -> datetime:
-        training_completed_date = kwargs["training_completed_date"]
-        return two_months_after(training_completed_date)
+        return get_scheduled_at(**kwargs)
 
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
     ) -> InstructorTrainingCompletedNotBadgedContext:
-        person = kwargs["person"]
-        return {
-            "person": person,
-        }
+        return get_context(**kwargs)
 
     def get_generic_relation_object(
         self,
         context: InstructorTrainingCompletedNotBadgedContext,
         **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
     ) -> Person:
-        return context["person"]
+        return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
         self,
         context: InstructorTrainingCompletedNotBadgedContext,
         **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
     ) -> list[str]:
-        person = context["person"]
-        return [person.email] if person.email else []
+        return get_recipients(context, **kwargs)
 
 
 class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
@@ -163,17 +204,14 @@ class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
     ) -> InstructorTrainingCompletedNotBadgedContext:
-        person = kwargs["person"]
-        return {
-            "person": person,
-        }
+        return get_context(**kwargs)
 
     def get_generic_relation_object(
         self,
         context: InstructorTrainingCompletedNotBadgedContext,
         **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
     ) -> Person:
-        return context["person"]
+        return get_generic_relation_object(context, **kwargs)
 
 
 # -----------------------------------------------------------------------------
