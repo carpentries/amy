@@ -144,6 +144,24 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
             "Your training is one month away. Please be sure to do the following... "
         ),
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("17234a5e-a15e-4314-a328-783f917d6630"),
+        name="Instructor Training completed but not yet badged",
+        signal=SignalNameEnum.instructor_training_completed_not_badged,
+        from_header="instructor.training@carpentries.org",
+        reply_to_header="",
+        cc_header=["instructor.training@carpentries.org"],
+        bcc_header=[],
+        subject="Carpentries Instructor Training Deadline Approaching",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "Thank you for joining the Carpentries instructor training on (date). "
+            "You have completed the following steps towards certification "
+            "(passed requirements). "
+            "Here's what you have left to do: (missing requirements)."
+        ),
+    ),
 ]
 
 
