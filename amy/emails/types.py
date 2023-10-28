@@ -100,7 +100,7 @@ class InstructorTrainingApproachingContext(TypedDict):
 class InstructorTrainingCompletedNotBadgedKwargs(TypedDict):
     request: HttpRequest
     person: Person
-    training_completed_date: date
+    training_completed_date: date | None
 
 
 class InstructorTrainingCompletedNotBadgedContext(TypedDict):
