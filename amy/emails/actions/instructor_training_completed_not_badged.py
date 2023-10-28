@@ -27,6 +27,31 @@ from .instructor_training_approaching import EmailStrategyException
 logger = logging.getLogger("amy")
 
 
+class TrainingCompletionDateException(Exception):
+    pass
+
+
+def find_training_completion_date(person: Person) -> date:
+    """Given a person, find their passed training and related event.
+    Return event end date."""
+    training = TrainingProgress.objects.get(
+        trainee=person, state="p", requirement__name="Training"
+    )
+    event = training.event
+    if not event:
+        raise TrainingCompletionDateException(
+            "Training progress doesn't have an event."
+        )
+
+    training_completed_date = event.end
+    if not training_completed_date:
+        raise TrainingCompletionDateException(
+            "Training progress event doesn't have an end date."
+        )
+
+    return training_completed_date
+
+
 def instructor_training_completed_not_badged_strategy(person: Person) -> StrategyEnum:
     logger.info(f"Running InstructorTrainingCompletedNotBadged strategy for {person}")
 
@@ -91,6 +116,22 @@ def run_instructor_training_completed_not_badged_strategy(
         return
 
     logger.debug(f"Sending signal for {person} as result of strategy {strategy}")
+
+    if not training_completed_date:
+        try:
+            training_completed_date = find_training_completion_date(person)
+        except TrainingProgress.DoesNotExist as exc:
+            raise EmailStrategyException(
+                "Unable to determine training completion date. Person doesn't have "
+                "a passed training progress."
+            ) from exc
+        except TrainingCompletionDateException as exc:
+            raise EmailStrategyException(
+                "Unable to determine training completion date. Probably the person has "
+                "training progress not linked to an event, or the event doesn't have "
+                "an end date."
+            ) from exc
+
     signal.send(
         sender=person,
         request=request,
@@ -110,23 +151,14 @@ def get_context(
     **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
 ) -> InstructorTrainingCompletedNotBadgedContext:
     person = kwargs["person"]
-
-    if not (training_completed_date := kwargs["training_completed_date"]):
-        # Note: it's possible that the training_completed_date will be None even after
-        # looking up progress object for the training requirement.
-        training = TrainingProgress.objects.get(
-            trainee=person, state="p", requirement__name="Training"
-        )
-        training_completed_date = (
-            training.event.end if training.event and training.event.end else None
-        )
-
     passed_requirements = list(
         TrainingProgress.objects.filter(trainee=person, state="p")
     )
     missing_requirements = list(
         TrainingProgress.objects.filter(trainee=person).exclude(state="p")
     )
+    training_completed_date = kwargs["training_completed_date"]
+
     return {
         "person": person,
         "passed_requirements": passed_requirements,

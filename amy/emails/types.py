@@ -100,14 +100,14 @@ class InstructorTrainingApproachingContext(TypedDict):
 class InstructorTrainingCompletedNotBadgedKwargs(TypedDict):
     request: HttpRequest
     person: Person
-    training_completed_date: date | None
+    training_completed_date: date
 
 
 class InstructorTrainingCompletedNotBadgedContext(TypedDict):
     person: Person
     passed_requirements: list[TrainingProgress]
     missing_requirements: list[TrainingProgress]
-    training_completed_date: date | None
+    training_completed_date: date
 
 
 class StrategyEnum(StrEnum):
