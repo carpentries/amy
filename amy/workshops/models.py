@@ -2255,7 +2255,7 @@ class TrainingRequest(
     nonprofit_teaching_experience = models.CharField(
         max_length=STR_LONGEST,
         blank=True,
-        null=True,
+        default="",
         verbose_name="I have been an active contributor to other volunteer or"
         " non-profit groups with significant teaching or training"
         " components.",
@@ -2285,8 +2285,8 @@ class TrainingRequest(
     )
     previous_training_explanation = models.TextField(
         verbose_name="Description of your previous training in teaching",
-        null=True,
         blank=True,
+        default="",
     )
 
     # this part changed a little bit, mostly wording and choices
@@ -2310,8 +2310,8 @@ class TrainingRequest(
     )
     previous_experience_explanation = models.TextField(
         verbose_name="Description of your previous experience in teaching",
-        null=True,
         blank=True,
+        default="",
     )
 
     PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES = (
