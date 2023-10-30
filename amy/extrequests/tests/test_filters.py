@@ -1,7 +1,20 @@
 from datetime import datetime, timedelta
 
-from extrequests.filters import TrainingRequestFilter
-from workshops.models import Event, Membership, Role, Tag, Task, TrainingRequest
+from dashboard.models import Continent
+from extrequests.filters import TrainingRequestFilter, WorkshopRequestFilter
+from workshops.models import (
+    Curriculum,
+    Event,
+    Language,
+    Member,
+    MemberRole,
+    Membership,
+    Role,
+    Tag,
+    Task,
+    TrainingRequest,
+    WorkshopRequest,
+)
 from workshops.tests.base import TestBase
 
 
@@ -321,6 +334,255 @@ class TestTrainingRequestFilter(TestBase):
                 self.request_hermione,
                 self.request_ironman,
                 self.request_spiderman,
+            ],
+        }
+
+        # Act
+        for field in fields.keys():
+            results[field] = self.filterset.filters[filter_name].filter(
+                self.qs, [field]
+            )
+
+        # Assert
+        # we don't have any unexpected fields
+        self.assertEqual(fields.keys(), expected_results.keys())
+        # each field was filtered correctly
+        for field in fields.keys():
+            self.assertQuerysetEqual(
+                results[field], expected_results[field], ordered=True
+            )
+
+
+class TestWorkshopRequestFilter(TestBase):
+    """
+    A test should exist for each filter listed in test_fields().
+    """
+
+    def setUp(self) -> None:
+        super().setUp()  # create some persons
+        self._setUpTags()
+        self._setUpRoles()
+
+        self.model = WorkshopRequest
+
+        self.membership = Membership.objects.create(
+            name="Alpha Organization",
+            registration_code="valid123",
+            agreement_start=datetime.today(),
+            agreement_end=datetime.today() + timedelta(weeks=52),
+        )
+        Member.objects.create(
+            membership=self.membership,
+            organization=self.org_alpha,
+            role=MemberRole.objects.first(),
+        )
+
+        kwargs = dict(
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@hogwarts.edu",
+            institution_other_name="Hogwarts",
+            location="Scotland",
+            country="GB",
+            preferred_dates=None,
+            other_preferred_dates="soon",
+            language=Language.objects.get(name="English"),
+            audience_description="Students of Hogwarts",
+            administrative_fee="nonprofit",
+            scholarship_circumstances="",
+            travel_expences_management="booked",
+            travel_expences_management_other="",
+            institution_restrictions="no_restrictions",
+            institution_restrictions_other="",
+            carpentries_info_source_other="",
+            user_notes="",
+        )
+
+        # add some workshop requests
+        # together these cover all test cases
+        # 1. Request for a workshop in GB,
+        # pending
+        self.req_pending_country_gb = WorkshopRequest.objects.create(**kwargs)
+        # 2. Request for a workshop in US,
+        # from a member institution but without the member code,
+        # assigned to an admin,
+        # discarded
+        kwargs["institution_other_name"] = ""
+        kwargs["institution"] = self.org_alpha
+        kwargs["assigned_to"] = self.spiderman
+        kwargs["country"] = "US"
+        kwargs["state"] = "d"
+        self.req_assigned_discarded_unused_code = WorkshopRequest.objects.create(
+            **kwargs
+        )
+        # 3. Request for a workshop in US,
+        # from a member institution but without the member code,
+        # with a preferred date selected which falls during the membership,
+        # pending
+        kwargs.pop("assigned_to")
+        kwargs["preferred_dates"] = datetime.today() + timedelta(weeks=5)
+        kwargs["state"] = "p"
+        self.req_pending_dates_unused_code = WorkshopRequest.objects.create(**kwargs)
+        # 4. Request for a workshop in the US,
+        # from a member institution with their code,
+        # with a preferred curriculum selected,
+        # accepted
+        kwargs["member_code"] = "valid123"
+        kwargs["state"] = "a"
+        self.req_accepted_valid_code_curriculum_chosen = WorkshopRequest.objects.create(
+            **kwargs
+        )
+        self.req_accepted_valid_code_curriculum_chosen.requested_workshop_types.set(
+            Curriculum.objects.filter(slug="dc-ecology-r")
+        )
+
+        # get filterset
+        self.filterset = WorkshopRequestFilter({})
+
+        # get queryset
+        self.qs = WorkshopRequest.objects.all()
+
+    def test_fields(self):
+        # Arrange & Act stages happen in setUp()
+        # Assert
+        self.assertEqual(
+            set(self.filterset.filters.keys()),
+            {
+                "state",
+                "assigned_to",
+                "country",
+                "continent",
+                "requested_workshop_types",
+                "unused_member_code",
+                "order_by",
+            },
+        )
+
+    def test_filter_state__any(self):
+        # Arrange
+        filter_name = "state"
+        value = ""
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, self.qs, ordered=False)
+
+    def test_filter_state__pending(self):
+        # Arrange
+        filter_name = "state"
+        value = "p"
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(
+            result, [self.req_pending_country_gb, self.req_pending_dates_unused_code]
+        )
+
+    def test_filter_state__accepted(self):
+        # Arrange
+        filter_name = "state"
+        value = "a"
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(
+            result, [self.req_accepted_valid_code_curriculum_chosen]
+        )
+
+    def test_filter_state_discarded(self):
+        # Arrange
+        filter_name = "state"
+        value = "d"
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.req_assigned_discarded_unused_code])
+
+    def test_filter_assigned_to(self):
+        # Arrange
+        filter_name = "assigned_to"
+        value = self.spiderman
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.req_assigned_discarded_unused_code])
+
+    def test_filter_country(self):
+        # Arrange
+        filter_name = "country"
+        value = "GB"
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.req_pending_country_gb])
+
+    def test_filter_continent(self):
+        # Arrange
+        filter_name = "continent"
+        value = Continent.objects.get(name="Europe").pk
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.req_pending_country_gb])
+
+    def test_filter_requested_workshop_types(self):
+        # Arrange
+        filter_name = "requested_workshop_types"
+        value = Curriculum.objects.filter(slug="dc-ecology-r")
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(
+            result, [self.req_accepted_valid_code_curriculum_chosen]
+        )
+
+    def test_filter_unused_member_code(self):
+        # Arrange
+        filter_name = "unused_member_code"
+        value = True
+
+        # Act
+        result = self.filterset.filters[filter_name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(
+            result,
+            [
+                self.req_assigned_discarded_unused_code,
+                self.req_pending_dates_unused_code,
+            ],
+        )
+
+    def test_filter_order_by(self):
+        # Arrange
+        filter_name = "order_by"
+        fields = self.filterset.filters[filter_name].param_map
+        results = {}
+
+        # default ordering is ascending
+        expected_results = {
+            "created_at": [
+                self.req_pending_country_gb,
+                self.req_assigned_discarded_unused_code,
+                self.req_pending_dates_unused_code,
+                self.req_accepted_valid_code_curriculum_chosen,
             ],
         }
 
