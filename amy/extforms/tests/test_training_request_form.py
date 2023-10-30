@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.core import mail
 from django.forms import CheckboxInput, HiddenInput
 from django.test import override_settings
@@ -13,8 +14,9 @@ from workshops.tests.base import TestBase
 
 class TestTrainingRequestForm(TestBase):
     INVALID_MEMBER_CODE_ERROR = "This code is invalid."
-    MEMBER_CODE_OVERRIDE_EMAIL_TEXT = (
-        "Continue with registration code marked as invalid"
+    MEMBER_CODE_OVERRIDE_LABEL = "Continue with registration code marked as invalid"
+    MEMBER_CODE_OVERRIDE_EMAIL_WARNING = (
+        "A member of our team will check the code and follow up with you"
     )
 
     def setUp(self):
@@ -111,6 +113,8 @@ class TestTrainingRequestForm(TestBase):
         # Arrange
         email = self.data.get("email")
         self.passCaptcha(self.data)
+        # before tests, check if the template invalid string exists
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
 
         # Act
         rv = self.client.post(reverse("training_request"), self.data, follow=True)
@@ -126,7 +130,11 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(msg.to, [email])
         self.assertEqual(msg.subject, TrainingRequestCreate.autoresponder_subject)
         self.assertIn("A copy of your request", msg.body)
-        self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_TEXT, msg.body)
+        self.assertNotIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
+        self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
+        self.assertNotIn(
+            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
+        )
 
     def test_invalid_request_not_added(self):
         # Arrange
@@ -413,6 +421,8 @@ class TestTrainingRequestForm(TestBase):
         self.data["member_code"] = "valid123"
         self.data["member_code_override"] = True
         self.passCaptcha(self.data)
+        # before tests, check if the template invalid string exists
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
 
         # Act
         rv = self.client.post(reverse("training_request"), data=self.data, follow=True)
@@ -427,7 +437,11 @@ class TestTrainingRequestForm(TestBase):
         # Test that the sender was emailed with correct content
         self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
-        self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_TEXT, msg.body)
+        self.assertNotIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
+        self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
+        self.assertNotIn(
+            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
+        )
 
     def test_member_code_validation__code_invalid_override_full_request(self):
         """Sent email should include the member_code_override field if used."""
@@ -436,6 +450,8 @@ class TestTrainingRequestForm(TestBase):
         self.data["member_code"] = "invalid"
         self.data["member_code_override"] = True
         self.passCaptcha(self.data)
+        # before tests, check if the template invalid string exists
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
 
         # Act
         rv = self.client.post(reverse("training_request"), data=self.data, follow=True)
@@ -450,4 +466,8 @@ class TestTrainingRequestForm(TestBase):
         # Test that the sender was emailed with correct content
         self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
-        self.assertIn(self.MEMBER_CODE_OVERRIDE_EMAIL_TEXT, msg.body)
+        self.assertIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
+        self.assertIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
+        self.assertNotIn(
+            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
+        )
