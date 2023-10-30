@@ -92,6 +92,7 @@ class TrainingRequestForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
