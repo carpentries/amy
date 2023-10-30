@@ -1456,7 +1456,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
             # find relevant membership - may raise Membership.DoesNotExist
             membership = Membership.objects.get(registration_code=code)
         except Membership.DoesNotExist:
-            return False, f"No membership found for code {code}."
+            return False, f'No membership found for code "{code}".'
 
         # confirm that membership was active at the time the request was submitted
         # grace period: 90 days before and after
