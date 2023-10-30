@@ -7,7 +7,7 @@ Open Training applications are placed in an application queue to be considered f
 
 If you have a specific need to be trained sooner (e.g. an upcoming workshop) please let us know. Multiple applicants from a single institution generally will not be invited at once, but may be accepted individually over time. To more rapidly build an Instructor community at your institution, consider becoming a Member. For more information see: https://carpentries.org/membership/ or get in touch with memberships@carpentries.org to learn more about how we can help you make the case at your organisation.
 
-We receive hundreds of applications, and we cannot provide no-cost training for every applicant. Please, don't let that discourage you! We'd like to help you bring workshops and instructor training to your organisation. In the meantime, please get involved!
+We receive hundreds of applications, and we cannot provide no-cost training for every applicant. Please, don't let that discourage you! We'd like to help you bring workshops and instructor training to your organisation.
 
 In the meantime, please get involved!
 Join our discussion email list: https://carpentries.topicbox.com/groups/discuss
@@ -30,6 +30,9 @@ A copy of your request is included below for your reference.
 Submission date: {{ object.created_at }}
 Application Type: {{ object.get_review_process_display|default:"---" }}
 Registration Code: {{ object.member_code|default:"&mdash;" }}
+{% if object.member_code_override %}
+Continue with registration code marked as invalid: {{object.member_code_override|yesno}}
+{% endif %}
 Person: {{object.personal}} {{object.middle}} {{object.family}} &lt;{{object.email}}&gt;
 Github: {{ object.github|default:"---" }}
 Occupation: {{ object.get_occupation_display }} {{ object.occupation_other }}
