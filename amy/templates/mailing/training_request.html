@@ -50,5 +50,15 @@ In the meantime, please get involved!
     The Carpentries Instructor Training Team
 </p>
 
+<hr>
+
+A copy of your request is included below for your reference.
+
+{% if object.member_code_override %}
+<p>
+    <strong>Warning:</strong> Your registration code "{object.member_code}" seems to be invalid.
+    A member of our team will check the code and follow up with you if there are any problems that require your attention.
+</p>
+{% endif %}
 
 {% include "includes/trainingrequest_details.html" with admin=False object=object %}
