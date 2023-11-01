@@ -1,5 +1,6 @@
 from smtplib import SMTPException
 from typing import Optional
+import uuid
 
 from anymail.exceptions import AnymailRequestsAPIError
 from django.conf import settings
@@ -47,11 +48,23 @@ class FormInvalidMessageMixin:
         return self.form_invalid_message % cleaned_data
 
 
+class IdempotentMixin:
+    idempotence_redirect = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        token = uuid.uuid4()
+        context["idempotence_token"] = token
+        return context
+
+
 class AMYDetailView(DetailView):
     object: Model
 
 
-class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
+class AMYCreateView(
+    SuccessMessageMixin, FormInvalidMessageMixin, IdempotentMixin, CreateView
+):
     """
     Class-based view for creating objects that extends default template context
     by adding model class used in objects creation.

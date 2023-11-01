@@ -288,6 +288,7 @@ MIDDLEWARE = [
     "workshops.middleware.github_auth.GithubAuthMiddleware",
     "consents.middleware.TermsMiddleware",
     "workshops.middleware.feature_flags.SaveSessionFeatureFlagMiddleware",
+    "workshops.middleware.idempotence.IdempotenceMiddleware",
 ]
 
 # STATIC
