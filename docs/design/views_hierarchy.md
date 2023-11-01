@@ -71,6 +71,12 @@ contain characters requiring unquoting. This is used by 3 organisation-related v
 
 Add an error message on invalid form submission.
 
+### `IdempotentMixin` (`amy/workshops/base_views.py`)
+
+Implements [idempotence](https://medium.com/cache-me-out/understanding-idempotency-68a50a837fc1) primarily for use in `Create*` views.
+In short, this prevents duplicate objects from being created if a user sends the same request multiple times
+(e.g. by double-clicking 'Submit' on a form).
+
 ### `AMYDetailView` (`amy/workshops/base_views.py`)
 
 Almost a direct, not extended descendant of [`DetailView`](https://ccbv.co.uk/DetailView),
