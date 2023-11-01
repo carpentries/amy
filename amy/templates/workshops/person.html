@@ -287,10 +287,12 @@
       method="POST"
     >
       {% csrf_token %}
+      {% idempotence_token %}
       <button type="submit" class="btn btn-danger">Archive person</button>
     </form>
     <form class="btn-group" action="{% url 'person_delete' person.pk %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ person }}\"?")' method="POST">
       {% csrf_token %}
+      {% idempotence_token %}
       <button type="submit" class="btn btn-danger">Delete person</button>
     </form>
     {% else %}

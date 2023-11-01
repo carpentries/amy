@@ -70,6 +70,7 @@
             <p>You expressed interest in this workshop, the confirmation is pending...</p>
             <form action="{% url 'resign-from-recruitment' signup.pk %}" onsubmit='return confirm("Do you want to cancel your teaching request?")' method="POST">
               {% csrf_token %}
+              {% idempotence_token %}
               <button type="submit" class="btn btn-danger">Cancel teaching request</button>
             </form>
           </div>

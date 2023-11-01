@@ -8,12 +8,14 @@
         <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a>
         <input type="hidden" name="person" value="" />
         {% csrf_token %}
+        {% idempotence_token %}
         (<input type="submit" class="btn btn-link border-0 p-0" id="clear-assignment" value="clear" style="margin-top: -4px" />).
       </form>
       {% else %}
       <form method="POST" action="{% url assign_url pk %}" style="display: inline">
         <input type="hidden" name="person" value="{{ user.pk }}" />
         {% csrf_token %}
+        {% idempotence_token %}
         Not assigned (<input type="submit" class="btn btn-link border-0 p-0" id="assign-yourself" value="assign yourself" style="margin-top: -4px" />).
       </form>
       {% endif %}

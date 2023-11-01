@@ -68,6 +68,7 @@
       <td>
         <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to CONFIRM this application?")' method="POST" class="d-inline-block my-1 mr-1">
           {% csrf_token %}
+          {% idempotence_token %}
           <input type="hidden" name="action" value="confirm">
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
           {% if signup.state == "p" %}
@@ -78,6 +79,7 @@
         </form>
         <form action="{% url 'instructorrecruitmentsignup_changestate' signup.pk %}" onsubmit='return confirm("Do you want to DECLINE this application?")' method="POST" class="d-inline-block my-1 mr-1">
           {% csrf_token %}
+          {% idempotence_token %}
           <input type="hidden" name="action" value="decline">
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
           {% if signup.state == "p" %}
@@ -112,6 +114,7 @@
       onsubmit='return confirm("Are you sure you want to close this recruitment?");'
     >
       {% csrf_token %}
+      {% idempotence_token %}
       <input type="hidden" name="next" value="{{ request.get_full_path }}">
       <input type="hidden" name="action" value="close">
       <button type="submit" class="btn btn-warning">Close signups</button>
@@ -128,6 +131,7 @@
       onsubmit='return confirm("Are you sure you want to re-open this recruitment?");'
     >
       {% csrf_token %}
+      {% idempotence_token %}
       <input type="hidden" name="next" value="{{ request.get_full_path }}">
       <input type="hidden" name="action" value="reopen">
       <button type="submit" class="btn btn-info">Re-open signups</button>

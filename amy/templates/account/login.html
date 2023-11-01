@@ -11,6 +11,7 @@
         <h4>For The Carpentries Administrators</h4>
         <form method="post" action="{% url 'login' %}">
           {% csrf_token %}
+          {% idempotence_token %}
           <div class="form-group">
             <label for="id_username">Username or email:</label>
             <input type="text" class="form-control" id="id_username" placeholder="Username or email" name="username">

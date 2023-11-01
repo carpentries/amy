@@ -13,6 +13,7 @@
 
 <form method="POST" class="form-horizontal" role="form">
   {% csrf_token %}
+  {% idempotence_token %}
   <div class="form-group row">
     <div class="col-12 col-lg-5"></div>
     <div class="col-12 col-lg-2">

@@ -94,6 +94,7 @@ class BootstrapHelper(FormHelper):
             <form action="delete?next={{ request.GET.next|urlencode }}" method="POST"
                   id="delete-form">
               {% csrf_token %}
+              {% idempotence_token %}
             </form>
 
         This is necessary, because delete button must be reassigned from the

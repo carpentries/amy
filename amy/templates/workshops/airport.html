@@ -23,6 +23,7 @@
     {% if perms.workshops.delete_airport %}
     <form action="{% url 'airport_delete' airport_iata=airport.iata %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ airport }}\"?")' method="POST">
       {% csrf_token %}
+      {% idempotence_token %}
       <button type="submit" class="btn btn-danger">Delete airport</button>
     </form>
     {% else %}

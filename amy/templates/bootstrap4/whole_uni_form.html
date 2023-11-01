@@ -8,6 +8,7 @@
 
     {% if form_method|lower == 'post' and not disable_csrf %}
         {% csrf_token %}
+        {% idempotence_token %}
     {% endif %}
 
     {% include "bootstrap4/display_form.html" %}

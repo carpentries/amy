@@ -3,6 +3,7 @@
 <div class="col-12">
   <form action="{% comment_form_target %}" method="post" class="commentform">
     {% csrf_token %}
+    {% idempotence_token %}
     <input type="hidden" name="next" value="{{ request.path }}#comments" />
     {{ form.honeypot }}
     {{ form.content_type }}

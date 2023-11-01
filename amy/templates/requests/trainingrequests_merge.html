@@ -7,6 +7,7 @@
 {% block content %}
 <form method="POST">
 {% csrf_token %}
+{% idempotence_token %}
 {{ form.trainingrequest_a }}
 {{ form.trainingrequest_b }}
 <table class="table table-striped table-hover">

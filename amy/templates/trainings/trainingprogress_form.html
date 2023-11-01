@@ -5,6 +5,7 @@
 {% block content %}
 <form action="{% url 'trainingprogress_delete' object.pk %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" method="POST" id="delete-form">
   {% csrf_token %}
+  {% idempotence_token %}
 </form>
 {% crispy form %}
 {% endblock %}

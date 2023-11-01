@@ -197,6 +197,7 @@
     {% if perms.workshops.change_event %}
     <form action="{% url 'event_delete' slug=event.slug %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ event }}\"?")' method="POST">
       {% csrf_token %}
+      {% idempotence_token %}
       <button type="submit" class="btn btn-danger">Delete event</button>
     </form>
     {% else %}

@@ -23,6 +23,7 @@
       accept-charset="{{charset}}"
       id="main-form">
     {% csrf_token %}
+    {% idempotence_token %}
     {{ form.as_p }}
     <input type="submit" value="Submit" />
 </form>

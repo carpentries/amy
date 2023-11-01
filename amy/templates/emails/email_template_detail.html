@@ -13,6 +13,7 @@
     {% if perms.emails.delete_emailtemplate %}
     <form action="{% url 'emailtemplate_delete' email_template.id %}" onsubmit='return confirm("Are you sure you wish to remove email template \"{{ email_template }}\"?")' method="POST">
       {% csrf_token %}
+      {% idempotence_token %}
       <button type="submit" class="btn btn-danger">Delete</button>
     </form>
     {% else %}

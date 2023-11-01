@@ -24,6 +24,7 @@
         {% endif %}
 
           {% csrf_token %}
+          {% idempotence_token %}
           <div class="form-group">
             {% if update %}
             <label for="event_update_url"><strong>Event URL:</strong></label>

@@ -41,6 +41,7 @@
     {% if perms.workshops.delete_task %}
       <form action="{% url 'task_delete' task.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ task }}\"?")' method="POST">
         {% csrf_token %}
+        {% idempotence_token %}
         <button type="submit" class="btn btn-danger">Delete task</button>
       </form>
     {% else %}

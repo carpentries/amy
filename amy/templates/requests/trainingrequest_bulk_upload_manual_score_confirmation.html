@@ -64,5 +64,6 @@
   {% endif %}
   <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary">
   {% csrf_token %}
+  {% idempotence_token %}
 </form>
 {% endblock %}
