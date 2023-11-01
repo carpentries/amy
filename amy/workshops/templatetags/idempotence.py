@@ -6,8 +6,12 @@ register = template.Library()
 
 @register.simple_tag(takes_context=True)
 def idempotence_token(context):
-    token = context["idempotence_token"]
-    html = format_html(
-        '<input type="hidden" name="idempotence_token" value="{token}">', token=token
-    )
+    token = context.get("idempotence_token")
+    if token:
+        html = format_html(
+            '<input type="hidden" name="idempotence_token" value="{token}">',
+            token=token,
+        )
+    else:
+        html = ""
     return html
