@@ -1,4 +1,4 @@
-{% load assignments %}
+{% load assignments idempotence %}
 {% if object.slug %}{% assign object.slug as pk %}{% else %}{% assign object.pk as pk %}{% endif %}
     <div>
       <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
