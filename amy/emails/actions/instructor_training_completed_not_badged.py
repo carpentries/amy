@@ -120,6 +120,11 @@ def run_instructor_training_completed_not_badged_strategy(
     if not training_completed_date:
         try:
             training_completed_date = find_training_completion_date(person)
+        except TrainingProgress.MultipleObjectsReturned as exc:
+            raise EmailStrategyException(
+                "Unable to determine training completion date. Person has "
+                "multiple passed training progresses."
+            ) from exc
         except TrainingProgress.DoesNotExist as exc:
             raise EmailStrategyException(
                 "Unable to determine training completion date. Person doesn't have "
