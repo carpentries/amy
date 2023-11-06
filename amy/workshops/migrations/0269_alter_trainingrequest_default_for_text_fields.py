@@ -5,8 +5,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [('workshops', '0269_alter_trainingrequest_nonprofit_teaching_experience'), ('workshops', '0270_auto_20231030_0919')]
-
     dependencies = [
         ('workshops', '0268_remove_workshoprequest_member_affiliation'),
     ]
