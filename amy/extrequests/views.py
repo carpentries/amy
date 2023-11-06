@@ -825,6 +825,12 @@ class TrainingRequestUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateV
     form_class = TrainingRequestUpdateForm
     template_name = "generic_form_with_comments.html"
 
+    def get_form_kwargs(self):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
 
 @admin_required
 @permission_required(

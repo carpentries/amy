@@ -13,6 +13,7 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
+from extrequests.utils import MemberCodeValidationError, member_code_valid_training
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
@@ -1406,6 +1407,52 @@ class TrainingRequestUpdateForm(forms.ModelForm):
             "max_travelling_frequency": forms.RadioSelect(),
             "state": forms.RadioSelect(),
         }
+
+    def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        errors = self.validate_member_code(request=self.request_http)
+        if errors:
+            raise ValidationError(errors)
+
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+        member_code_override = self.cleaned_data.get("member_code_override", False)
+
+        if not member_code:
+            return None
+
+        try:
+            member_code_is_valid = member_code_valid_training(
+                member_code,
+                self.instance.created_at.date(),
+                grace_before=90,
+                grace_after=90,
+            )
+            if member_code_is_valid and member_code_override:
+                # case where a user corrects their code but ticks the box anyway
+                # checkbox doesn't need to be ticked, so correct it quietly and continue
+                self.cleaned_data["member_code_override"] = False
+        except MemberCodeValidationError as e:
+            if not member_code_override:
+                # user must either correct the code or tick the override
+                error_msg = (
+                    "This code is invalid: "
+                    f"{e.message} "
+                    "Tick the checkbox below to ignore this message."
+                )
+                errors["member_code"] = ValidationError(error_msg)
+
+        return errors
 
 
 class TrainingRequestsSelectionForm(forms.Form):
