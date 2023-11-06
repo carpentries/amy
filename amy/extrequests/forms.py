@@ -13,6 +13,7 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
+from extrequests.utils import MemberCodeValidationError, member_code_valid
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
@@ -1430,55 +1431,28 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         if not member_code:
             return None
 
-        member_code_valid, error_detail = self.member_code_valid(member_code)
-        if member_code_valid and member_code_override:
-            # case where a user corrects their code but ticks the box anyway
-            # checkbox doesn't need to be ticked, so correct it quietly and continue
-            self.cleaned_data["member_code_override"] = False
-        elif not member_code_valid:
+        try:
+            member_code_is_valid = member_code_valid(
+                member_code,
+                self.instance.created_at.date(),
+                grace_before=90,
+                grace_after=90,
+            )
+            if member_code_is_valid and member_code_override:
+                # case where a user corrects their code but ticks the box anyway
+                # checkbox doesn't need to be ticked, so correct it quietly and continue
+                self.cleaned_data["member_code_override"] = False
+        except MemberCodeValidationError as e:
             if not member_code_override:
                 # user must either correct the code or tick the override
                 error_msg = (
                     "This code is invalid: "
-                    f"{error_detail} "
+                    f"{e.message} "
                     "Tick the checkbox below to ignore this message."
                 )
                 errors["member_code"] = ValidationError(error_msg)
 
         return errors
-
-    def member_code_valid(self, code: str) -> tuple[bool, str]:
-        """Returns True if the code matches an active Membership with available seats,
-        including a grace period of 90 days before and after the Membership dates.
-        If there is no match, returns False and a detailed error.
-        """
-        try:
-            # find relevant membership - may raise Membership.DoesNotExist
-            membership = Membership.objects.get(registration_code=code)
-        except Membership.DoesNotExist:
-            return False, f'No membership found for code "{code}".'
-
-        # confirm that membership was active at the time the request was submitted
-        # grace period: 90 days before and after
-        if not membership.active_on_date(
-            self.instance.created_at.date(), grace_before=90, grace_after=90
-        ):
-            return (
-                False,
-                "Membership is inactive "
-                f"(start {membership.agreement_start}, "
-                f"end {membership.agreement_end}).",
-            )
-
-        # confirm that membership has training seats remaining
-        if (
-            membership.public_instructor_training_seats_remaining
-            + membership.inhouse_instructor_training_seats_remaining
-            <= 0
-        ):
-            return False, "Membership has no training seats remaining."
-
-        return True, ""
 
 
 class TrainingRequestsSelectionForm(forms.Form):

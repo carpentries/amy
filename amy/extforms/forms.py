@@ -15,13 +15,14 @@ from extrequests.forms import (
     WorkshopInquiryRequestBaseForm,
     WorkshopRequestBaseForm,
 )
+from extrequests.utils import MemberCodeValidationError, member_code_valid
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     RadioSelectWithOther,
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
-from workshops.models import Membership, TrainingRequest
+from workshops.models import TrainingRequest
 from workshops.utils.feature_flags import feature_flag_enabled
 
 
@@ -226,44 +227,24 @@ class TrainingRequestForm(forms.ModelForm):
         if not member_code:
             return None
 
-        member_code_valid = self.member_code_valid(member_code)
-        if member_code_valid and member_code_override:
-            # case where a user corrects their code but ticks the box anyway
-            # checkbox doesn't need to be ticked, so correct it quietly and continue
-            self.cleaned_data["member_code_override"] = False
-            self.set_display_member_code_override(visible=False)
-        elif not member_code_valid:
+        # check code validity
+        # grace period: 90 days before and after
+        try:
+            member_code_is_valid = member_code_valid(
+                member_code, date.today(), grace_before=90, grace_after=90
+            )
+            if member_code_is_valid and member_code_override:
+                # case where a user corrects their code but ticks the box anyway
+                # checkbox doesn't need to be ticked, so correct it quietly and continue
+                self.cleaned_data["member_code_override"] = False
+                self.set_display_member_code_override(visible=False)
+        except MemberCodeValidationError:
             self.set_display_member_code_override(visible=True)
             if not member_code_override:
                 # user must either correct the code or tick the override
                 errors["member_code"] = ValidationError(error_msg)
 
         return errors
-
-    def member_code_valid(self, code: str) -> bool:
-        """Returns True if the code matches an active Membership with available seats,
-        including a grace period of 90 days before and after the Membership dates.
-        """
-        try:
-            # find relevant membership - may raise Membership.DoesNotExist
-            membership = Membership.objects.get(registration_code=code)
-        except Membership.DoesNotExist:
-            return False
-
-        # confirm that membership is currently active
-        # grace period: 90 days before and after
-        if not membership.active_on_date(date.today(), grace_before=90, grace_after=90):
-            return False
-
-        # confirm that membership has training seats remaining
-        if (
-            membership.public_instructor_training_seats_remaining
-            + membership.inhouse_instructor_training_seats_remaining
-            <= 0
-        ):
-            return False
-
-        return True
 
     def clean(self):
         super().clean()
