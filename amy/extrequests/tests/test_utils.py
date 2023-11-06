@@ -1,6 +1,10 @@
 from datetime import date, timedelta
 
-from extrequests.utils import MemberCodeValidationError, member_code_valid
+from extrequests.utils import (
+    MemberCodeValidationError,
+    member_code_valid,
+    member_code_valid_training,
+)
 from workshops.models import Event, Membership, Role, Tag, Task
 from workshops.tests.base import TestBase
 
@@ -205,7 +209,7 @@ class TestMemberCodeValid(TestBase):
         with self.assertRaises(
             MemberCodeValidationError, msg="Membership has no training seats remaining."
         ):
-            member_code_valid(code=code, date=self.date)
+            member_code_valid_training(code=code, date=self.date)
 
     def test_code_only_public_seats_remaining(self):
         """Code with only public seats remaining should pass."""
@@ -216,7 +220,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = member_code_valid(
+        result = member_code_valid_training(
             code=code,
             date=self.date,
         )
@@ -233,7 +237,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act
-        result = member_code_valid(
+        result = member_code_valid_training(
             code=code,
             date=self.date,
         )

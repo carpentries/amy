@@ -13,7 +13,7 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
-from extrequests.utils import MemberCodeValidationError, member_code_valid
+from extrequests.utils import MemberCodeValidationError, member_code_valid_training
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
@@ -1432,7 +1432,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
             return None
 
         try:
-            member_code_is_valid = member_code_valid(
+            member_code_is_valid = member_code_valid_training(
                 member_code,
                 self.instance.created_at.date(),
                 grace_before=90,

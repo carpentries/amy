@@ -15,7 +15,7 @@ from extrequests.forms import (
     WorkshopInquiryRequestBaseForm,
     WorkshopRequestBaseForm,
 )
-from extrequests.utils import MemberCodeValidationError, member_code_valid
+from extrequests.utils import MemberCodeValidationError, member_code_valid_training
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     RadioSelectWithOther,
@@ -230,7 +230,7 @@ class TrainingRequestForm(forms.ModelForm):
         # check code validity
         # grace period: 90 days before and after
         try:
-            member_code_is_valid = member_code_valid(
+            member_code_is_valid = member_code_valid_training(
                 member_code, date.today(), grace_before=90, grace_after=90
             )
             if member_code_is_valid and member_code_override:
