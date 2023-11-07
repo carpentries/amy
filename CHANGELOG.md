@@ -12,6 +12,10 @@ $ python docs/generate_changelog.py v4.1
 Then paste output from that script here.
 
 -----------------------------------------------------------------
+## v4.2.3 - 2023-11-07
+
+### Bugfixes
+* Escape trainee notes in progress_description tag - [#2567](https://github.com/carpentries/amy/pull/2567) by @elichad
 
 ## v4.2.1 - 2023-08-15
 
