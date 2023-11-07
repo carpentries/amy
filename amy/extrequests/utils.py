@@ -36,14 +36,6 @@ def member_code_valid(
             f"end {membership.agreement_end})."
         )
 
-    # confirm that membership has training seats remaining
-    if (
-        membership.public_instructor_training_seats_remaining
-        + membership.inhouse_instructor_training_seats_remaining
-        <= 0
-    ):
-        raise MemberCodeValidationError("Membership has no training seats remaining.")
-
     return True
 
 

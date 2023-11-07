@@ -13,7 +13,11 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
-from extrequests.utils import MemberCodeValidationError, member_code_valid_training
+from extrequests.utils import (
+    MemberCodeValidationError,
+    member_code_valid,
+    member_code_valid_training,
+)
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
@@ -452,7 +456,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self, request: HttpRequest
     ) -> None | dict[str, ValidationError]:
         errors = dict()
-        code = self.cleaned_data.get("member_code", "")
+        member_code = self.cleaned_data.get("member_code", "")
         error_msg = (
             "This code is invalid. "
             "This may be due to a typo, an expired code, "
@@ -462,26 +466,21 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "or contact your Member Affiliate to verify your code."
         )
 
-        if not code:
+        if not member_code:
             return None
-
-        # ensure that code belongs to a membership
-        try:
-            membership = Membership.objects.get(registration_code=code)
-        except Membership.DoesNotExist:
-            errors["member_code"] = ValidationError(error_msg)
-            return errors
 
         # confirm that membership is active at the time of submission
         # grace period: 60 days before, 0 days after after
-        if not membership.active_on_date(
-            datetime.date.today(), grace_before=60, grace_after=0
-        ):
+        try:
+            member_code_valid(
+                code=member_code,
+                date=datetime.date.today(),
+                grace_before=60,
+                grace_after=0,
+            )
+        except MemberCodeValidationError:
             errors["member_code"] = ValidationError(error_msg)
-
-        # confirm that membership has workshops remaining
-        if membership.workshops_without_admin_fee_remaining <= 0:
-            errors["member_code"] = ValidationError(error_msg)
+            return errors
 
         return errors
 
