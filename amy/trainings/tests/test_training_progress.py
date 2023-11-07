@@ -381,7 +381,8 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Welcome Session"),
             ),
-            expected="Passed Welcome Session<br />on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Welcome Session&lt;br /&gt;"
+            "on Sunday 01 May 2016 at 16:00.",
         )
 
     def test_notes(self):
@@ -393,8 +394,8 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 requirement=TrainingRequirement(name="Welcome Session"),
                 notes="Additional notes",
             ),
-            expected="Passed Welcome Session<br />"
-            "on Sunday 01 May 2016 at 16:00.<br />"
+            expected="Passed Welcome Session&lt;br /&gt;"
+            "on Sunday 01 May 2016 at 16:00.&lt;br /&gt;"
             "Notes: Additional notes",
         )
 
@@ -407,9 +408,9 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 requirement=TrainingRequirement(name="Welcome Session"),
                 notes='Additional "notes"',
             ),
-            expected="Passed Welcome Session<br />"
-            "on Sunday 01 May 2016 at 16:00.<br />"
-            "Notes: Additional &quot;notes&quot;",
+            expected="Passed Welcome Session&lt;br /&gt;"
+            "on Sunday 01 May 2016 at 16:00.&lt;br /&gt;"
+            "Notes: Additional &amp;quot;notes&amp;quot;",
         )
 
     def test_trainee_notes(self):
@@ -422,8 +423,8 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 involvement_type=Involvement(name="Other"),
                 trainee_notes="Additional notes from trainee",
             ),
-            expected="Passed Get Involved<br />"
-            "Other: Additional notes from trainee<br />"
+            expected="Passed Get Involved&lt;br /&gt;"
+            "Other: Additional notes from trainee&lt;br /&gt;"
             "on Sunday 01 May 2016 at 16:00.",
         )
 
@@ -437,8 +438,8 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 involvement_type=Involvement(name="Other"),
                 trainee_notes='Additional "notes" from trainee',
             ),
-            expected="Passed Get Involved<br />"
-            "Other: Additional &quot;notes&quot; from trainee<br />"
+            expected="Passed Get Involved&lt;br /&gt;"
+            "Other: Additional &amp;quot;notes&amp;quot; from trainee&lt;br /&gt;"
             "on Sunday 01 May 2016 at 16:00.",
         )
 
@@ -450,7 +451,8 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Welcome Session"),
             ),
-            expected="Passed Welcome Session<br />on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Welcome Session&lt;br /&gt;"
+            "on Sunday 01 May 2016 at 16:00.",
         )
 
     def _test(self, progress, expected):
