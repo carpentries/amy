@@ -2,8 +2,9 @@ from datetime import timedelta
 
 from django.core.exceptions import ImproperlyConfigured
 
+from extrequests.utils import get_membership_from_code_if_exists
 from workshops.base_views import AMYCreateView
-from workshops.models import Curriculum, Membership, Tag
+from workshops.models import Curriculum, Tag
 
 
 class WRFInitial:
@@ -53,11 +54,7 @@ class WRFInitial:
 
         if hasattr(self.other_object, "member_code"):
             code = self.other_object.member_code
-            try:
-                membership = Membership.objects.get(registration_code=code)
-                initial["membership"] = membership
-            except Membership.DoesNotExist:
-                pass
+            initial["membership"] = get_membership_from_code_if_exists(code)
 
         return initial
 
