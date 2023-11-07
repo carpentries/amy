@@ -55,7 +55,7 @@ def progress_description(progress: TrainingProgress):
         else "",
     )
     text = text[0].upper() + text[1:]
-    return mark_safe(text)
+    return text
 
 
 @register.simple_tag
