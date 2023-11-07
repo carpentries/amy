@@ -12,6 +12,7 @@ from workshops.lookups import (
     EventLookupForAwardsView,
     EventLookupView,
     GenericObjectLookupView,
+    KnowledgeDomainLookupView,
     TTTEventLookupView,
     urlpatterns,
 )
@@ -19,6 +20,7 @@ from workshops.models import (
     Award,
     Badge,
     Event,
+    KnowledgeDomain,
     Lesson,
     Person,
     Role,
@@ -54,6 +56,35 @@ class TestLookups(TestBase):
         for pattern in self.urlpatterns:
             rv = self.client.get(reverse(pattern.name))
             self.assertEqual(rv.status_code, 200, pattern.name)  # OK
+
+
+class TestKnowledgeDomainLookupView(TestBase):
+    def setUpView(self, term: str = "") -> KnowledgeDomainLookupView:
+        # path doesn't matter
+        request = RequestFactory().get("/")
+        view = KnowledgeDomainLookupView(request=request, term=term)
+        return view
+
+    def test_get_queryset_no_term(self):
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, KnowledgeDomain.objects.all(), ordered=False)
+
+    def test_get_queryset_simple_term(self):
+        # Arrange
+        term = "ed"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset,
+            KnowledgeDomain.objects.filter(name__icontains=term),
+            ordered=False,
+        )
 
 
 class TestAwardLookupView(TestBase):
