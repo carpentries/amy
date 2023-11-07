@@ -42,8 +42,8 @@ def member_code_valid(
 def member_code_valid_training(
     code: str, date: date, grace_before: int = 0, grace_after: int = 0
 ) -> tuple[bool, str]:
-    """Returns True if `code` matches an active Membership with training seats remaining.
-    If there is no match, raises an Exception with a detailed error."""
+    """Returns True if `code` matches an active Membership with training seats
+    remaining. If there is no match, raises an Exception with a detailed error."""
     # first ensure the code matches an active membership
     try:
         member_code_valid(
