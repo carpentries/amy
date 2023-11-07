@@ -4,6 +4,7 @@ from django.db.models import Case, Count, F, IntegerField, Prefetch, Sum, When
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
+from emails.actions.instructor_training_approaching import EmailStrategyException
 from emails.actions.instructor_training_completed_not_badged import (
     instructor_training_completed_not_badged_strategy,
     run_instructor_training_completed_not_badged_strategy,
@@ -82,12 +83,18 @@ class TrainingProgressCreate(
         person = form.cleaned_data["trainee"]
         event = form.cleaned_data["event"]
         result = super().form_valid(form)
-        run_instructor_training_completed_not_badged_strategy(
-            instructor_training_completed_not_badged_strategy(person),
-            request=self.request,
-            person=person,
-            training_completed_date=event.end if event else None,
-        )
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor training completed strategy. {exc}",
+            )
         return result
 
 
@@ -99,12 +106,18 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdate
     def form_valid(self, form):
         person = form.cleaned_data["trainee"]
         event = form.cleaned_data["event"]
-        run_instructor_training_completed_not_badged_strategy(
-            instructor_training_completed_not_badged_strategy(person),
-            request=self.request,
-            person=person,
-            training_completed_date=event.end if event else None,
-        )
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor training completed strategy. {exc}",
+            )
         return super().form_valid(form)
 
 
@@ -121,12 +134,18 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin, AMYDelete
     def after_delete(self, *args, **kwargs):
         person = self._person
         event = self._event
-        run_instructor_training_completed_not_badged_strategy(
-            instructor_training_completed_not_badged_strategy(person),
-            request=self.request,
-            person=person,
-            training_completed_date=event.end if event else None,
-        )
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor training completed strategy. {exc}",
+            )
 
 
 def all_trainees_queryset():
@@ -188,12 +207,19 @@ def all_trainees(request):
                     progress.full_clean()
                     progress.save()
 
-                    run_instructor_training_completed_not_badged_strategy(
-                        instructor_training_completed_not_badged_strategy(trainee),
-                        request=request,
-                        person=trainee,
-                        training_completed_date=event.end if event else None,
-                    )
+                    try:
+                        run_instructor_training_completed_not_badged_strategy(
+                            instructor_training_completed_not_badged_strategy(trainee),
+                            request=request,
+                            person=trainee,
+                            training_completed_date=event.end if event else None,
+                        )
+                    except EmailStrategyException as exc:
+                        messages.error(
+                            request,
+                            "Error when running instructor training completed strategy."
+                            f" {exc}",
+                        )
 
                 except ValidationError as e:
                     unique_constraint_message = (
