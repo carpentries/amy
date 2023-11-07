@@ -61,12 +61,7 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
         )
     )
 
-    all_requirements_passed = (
-        bool(person_annotated.passed_training)
-        and bool(person_annotated.passed_get_involved)
-        and bool(person_annotated.passed_welcome)
-        and bool(person_annotated.passed_demo)
-    )
+    all_requirements_passed = bool(person_annotated.instructor_eligible)
 
     ct = ContentType.objects.get_for_model(person)  # type: ignore
     has_email_scheduled = ScheduledEmail.objects.filter(
