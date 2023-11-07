@@ -20,7 +20,7 @@ from emails.types import (
     StrategyEnum,
 )
 from emails.utils import two_months_after
-from workshops.models import Person, TrainingProgress
+from workshops.models import Person, TrainingProgress, TrainingRequirement
 
 from .instructor_training_approaching import EmailStrategyException
 
@@ -154,15 +154,21 @@ def get_context(
     passed_requirements = list(
         TrainingProgress.objects.filter(trainee=person, state="p")
     )
-    missing_requirements = list(
+    not_passed_requirements = list(
         TrainingProgress.objects.filter(trainee=person).exclude(state="p")
+    )
+    not_graded_requirements = list(
+        TrainingRequirement.objects.filter(
+            name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
+        ).exclude(trainingprogress__trainee=person)
     )
     training_completed_date = kwargs["training_completed_date"]
 
     return {
         "person": person,
         "passed_requirements": passed_requirements,
-        "missing_requirements": missing_requirements,
+        "not_passed_requirements": not_passed_requirements,
+        "not_graded_requirements": not_graded_requirements,
         "training_completed_date": training_completed_date,
     }
 

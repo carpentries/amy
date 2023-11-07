@@ -15,12 +15,21 @@ from workshops.models import Person, TrainingProgress, TrainingRequirement
 
 class TestInstructorTrainingCompletedNotBadgedCommonFunctions(TestCase):
     def setUpTrainingProgresses(self, person: Person) -> None:
-        requirements = TrainingRequirement.objects.all()  # should be 4 of them
+        self.requirements = TrainingRequirement.objects.filter(
+            name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
+        )
         self.progresses = [
-            TrainingProgress(state="p", trainee=person, requirement=requirements[0]),
-            TrainingProgress(state="f", trainee=person, requirement=requirements[1]),
-            TrainingProgress(state="f", trainee=person, requirement=requirements[2]),
-            TrainingProgress(state="p", trainee=person, requirement=requirements[3]),
+            TrainingProgress(
+                state="p", trainee=person, requirement=self.requirements[0]
+            ),
+            TrainingProgress(
+                state="f", trainee=person, requirement=self.requirements[1]
+            ),
+            TrainingProgress(
+                state="a", trainee=person, requirement=self.requirements[2]
+            ),
+            # Last requirement is left ungraded.
+            # TrainingProgress(state="p", trainee=person, requirement=requirements[3]),
         ]
         TrainingProgress.objects.bulk_create(self.progresses)
 
@@ -29,8 +38,9 @@ class TestInstructorTrainingCompletedNotBadgedCommonFunctions(TestCase):
     ) -> InstructorTrainingCompletedNotBadgedContext:
         return {
             "person": person,
-            "passed_requirements": [self.progresses[0], self.progresses[3]],
-            "missing_requirements": [self.progresses[1], self.progresses[2]],
+            "passed_requirements": [self.progresses[0]],
+            "not_passed_requirements": [self.progresses[1], self.progresses[2]],
+            "not_graded_requirements": [self.requirements[3]],
             "training_completed_date": training_completed_date,
         }
 
@@ -71,8 +81,9 @@ class TestInstructorTrainingCompletedNotBadgedCommonFunctions(TestCase):
             context,
             {
                 "person": person,
-                "passed_requirements": [self.progresses[0], self.progresses[3]],
-                "missing_requirements": [self.progresses[1], self.progresses[2]],
+                "passed_requirements": [self.progresses[0]],
+                "not_passed_requirements": [self.progresses[1], self.progresses[2]],
+                "not_graded_requirements": [self.requirements[3]],
                 "training_completed_date": training_completed_date,
             },
         )
