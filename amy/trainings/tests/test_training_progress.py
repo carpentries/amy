@@ -398,6 +398,50 @@ class TestProgressDescriptionTemplateTag(TestBase):
             "Notes: Additional notes",
         )
 
+    def test_notes_with_quotes(self):
+        self._test(
+            progress=TrainingProgress(
+                state="p",
+                trainee=self.ironman,
+                created_at=datetime(2016, 5, 1, 16, 00),
+                requirement=TrainingRequirement(name="Welcome Session"),
+                notes='Additional "notes"',
+            ),
+            expected="Passed Welcome Session<br />"
+            "on Sunday 01 May 2016 at 16:00.<br />"
+            "Notes: Additional &quot;notes&quot;",
+        )
+
+    def test_trainee_notes(self):
+        self._test(
+            progress=TrainingProgress(
+                state="p",
+                trainee=self.ironman,
+                created_at=datetime(2016, 5, 1, 16, 00),
+                requirement=TrainingRequirement(name="Get Involved"),
+                involvement_type=Involvement(name="Other"),
+                trainee_notes="Additional notes from trainee",
+            ),
+            expected="Passed Get Involved<br />"
+            "Other: Additional notes from trainee<br />"
+            "on Sunday 01 May 2016 at 16:00.",
+        )
+
+    def test_trainee_notes_with_quotes(self):
+        self._test(
+            progress=TrainingProgress(
+                state="p",
+                trainee=self.ironman,
+                created_at=datetime(2016, 5, 1, 16, 00),
+                requirement=TrainingRequirement(name="Get Involved"),
+                involvement_type=Involvement(name="Other"),
+                trainee_notes='Additional "notes" from trainee',
+            ),
+            expected="Passed Get Involved<br />"
+            "Other: Additional &quot;notes&quot; from trainee<br />"
+            "on Sunday 01 May 2016 at 16:00.",
+        )
+
     def test_no_mentor_or_examiner_assigned(self):
         self._test(
             progress=TrainingProgress(
