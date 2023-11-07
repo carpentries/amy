@@ -465,7 +465,7 @@ class TestWorkshopRequestCreateView(TestBase):
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_no_workshops_remaining(self):
-        """code matches a membership with no workshops remaining - error on code"""
+        """code matches a membership with no workshops remaining - no error"""
         # Arrange
         self.setUpMembership()
         data = {
@@ -496,7 +496,7 @@ class TestWorkshopRequestCreateView(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertContains(rv, self.INVALID_CODE_ERROR)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation_code_empty(self):
