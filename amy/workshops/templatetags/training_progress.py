@@ -33,7 +33,9 @@ def progress_description(progress: TrainingProgress):
         involvement = "<br />"
         involvement += progress.involvement_type.name
         if progress.involvement_type.name == "Other":
-            involvement += f": {progress.trainee_notes or 'No details provided'}"
+            involvement += (
+                f": {escape(progress.trainee_notes) or 'No details provided'}"
+            )
     else:
         involvement = ""
 
@@ -53,7 +55,7 @@ def progress_description(progress: TrainingProgress):
         else "",
     )
     text = text[0].upper() + text[1:]
-    return mark_safe(text)
+    return text
 
 
 @register.simple_tag
