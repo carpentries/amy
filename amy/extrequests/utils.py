@@ -64,3 +64,15 @@ def member_code_valid_training(
         raise MemberCodeValidationError("Membership has no training seats remaining.")
 
     return True
+
+
+def get_membership_from_code_if_exists(code: str) -> Membership | None:
+    """Given a member code, returns the related membership
+    or None if no such membership exists. If provided an empty code, returns None."""
+    if not code:
+        return None
+
+    try:
+        return Membership.objects.get(registration_code=code)
+    except Membership.DoesNotExist:
+        return None

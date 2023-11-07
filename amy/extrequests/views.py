@@ -41,6 +41,7 @@ from extrequests.forms import (
     WorkshopRequestAdminForm,
 )
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
+from extrequests.utils import get_membership_from_code_if_exists
 from workshops.base_views import (
     AMYDetailView,
     AMYListView,
@@ -108,6 +109,9 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
         context = super().get_context_data(**kwargs)
         context["title"] = "Workshop request #{}".format(self.get_object().pk)
 
+        member_code = self.get_object().member_code
+        context["membership"] = get_membership_from_code_if_exists(member_code)
+
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
             person_lookup_form = AdminLookupForm(
@@ -157,8 +161,14 @@ class WorkshopRequestAcceptEvent(
     pk_url_kwarg = "request_id"
 
     def get_context_data(self, **kwargs):
-        kwargs["title"] = "Accept and create a new event"
-        return super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
+
+        context["title"] = "Accept and create a new event"
+
+        member_code = self.get_other_object().member_code
+        context["membership"] = get_membership_from_code_if_exists(member_code)
+
+        return context
 
     def get_success_url(self):
         return reverse("event_details", args=[self.object.slug])
