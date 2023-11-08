@@ -322,12 +322,14 @@ class Command(BaseCommand):
         underrepresented_choices = TrainingRequest._meta.get_field(
             "underrepresented"
         ).choices
+        eventbrite_url = self.faker.url() if registration_code and randbool(0.5) else ""
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
             review_process="preapproved" if registration_code else "open",
             member_code=registration_code,
             member_code_override=override_invalid_code,
+            eventbrite_url=eventbrite_url,
             personal=person.personal,
             middle="",
             family=person.family,
