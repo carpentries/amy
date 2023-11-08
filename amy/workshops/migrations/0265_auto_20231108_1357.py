@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[("yes", "Yes"), ("no", "No"), ("unsure", "Not sure")],
                 default="unsure",
-                help_text="The checkout steps are described at https://carpentries.github.io/instructor-training/checkout.html.",
+                help_text='The checkout process is described on our <a href="https://carpentries.github.io/instructor-training/checkout.html">Checkout Instructions</a> page.',
                 max_length=40,
                 verbose_name="Do you intend to complete The Carpentries checkout process to be certified as a Carpentries Instructor?",
             ),
