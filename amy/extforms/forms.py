@@ -78,6 +78,8 @@ class TrainingRequestForm(forms.ModelForm):
             "previous_training": RadioSelectWithOther("previous_training_other"),
             "previous_experience": RadioSelectWithOther("previous_experience_other"),
             "programming_language_usage_frequency": forms.RadioSelect(),
+            "checkout_intent": forms.RadioSelect(),
+            "teaching_intent": forms.RadioSelect(),
             "teaching_frequency_expectation": RadioSelectWithOther(
                 "teaching_frequency_expectation_other"
             ),
