@@ -32,17 +32,7 @@
     <tr><th>Member registration code:</th>
         <td>
           {{ object.member_code|default:"&mdash;" }}
-          {% if membership %}
-            {% if membership.workshops_without_admin_fee_remaining <= 0 %}
-            <div class="alert alert-warning">
-            {% else %}
-            <div class="alert alert-info">
-            {% endif %}
-            Related membership: <a href="{{ membership.get_absolute_url }}">{{ membership }}</a>.<br>
-            This membership has {{ membership.workshops_without_admin_fee_remaining }} 
-            workshop{{membership.workshops_without_admin_fee_remaining|pluralize}} remaining.
-            </div>
-          {% endif %}
+          {% if admin %}{% include "includes/request_membership.html" with object=object membership=membership %}{% endif %}
         </td></tr>
     <tr><th>Workshop location:</th>
         <td>{{ object.location }}</td></tr>
