@@ -460,8 +460,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         error_msg = (
             "This code is invalid. "
             "This may be due to a typo, an expired code, "
-            "a code that has not yet been activated, "
-            "or a code that has no workshops remaining. "
+            "or a code that has not yet been activated."
             "Please confirm that you have copied the code correctly, "
             "or contact your Member Affiliate to verify your code."
         )
