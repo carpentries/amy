@@ -10,6 +10,9 @@ register = template.Library()
 
 @register.simple_tag
 def membership_description(membership: Membership):
+    if type(membership) != Membership:
+        return ""
+
     workshops_remaining = membership.workshops_without_admin_fee_remaining
     active = membership.active_on_date(date.today())
     if workshops_remaining <= 0 or not active:
