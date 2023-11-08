@@ -1,6 +1,6 @@
 {% load membership_active %}
 {% if membership %}
-    {% build_membership_info membership %}
+    {% membership_description membership %}
 {% elif object.member_code %}
     <div class="alert alert-warning">No membership found for this code.</div>
 {% endif %}

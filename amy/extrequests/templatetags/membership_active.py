@@ -9,7 +9,7 @@ register = template.Library()
 
 
 @register.simple_tag
-def build_membership_info(membership: Membership):
+def membership_description(membership: Membership):
     workshops_remaining = membership.workshops_without_admin_fee_remaining
     active = membership.active_on_date(date.today())
     if workshops_remaining <= 0 or not active:
@@ -18,7 +18,8 @@ def build_membership_info(membership: Membership):
         alert_type = "info"
     info = (
         f'<div class="alert alert-{alert_type}">'
-        f'Related membership: <a href="{membership.get_absolute_url}">{membership}</a>.'
+        "Related membership: "
+        f'<a href="{membership.get_absolute_url()}">{membership}</a>.'
         "<br>"
         f"This membership has <strong>{workshops_remaining}</strong> "
         f'workshop{"s" if workshops_remaining !=1 else ""} remaining.'
