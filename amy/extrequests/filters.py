@@ -43,6 +43,10 @@ class TrainingRequestFilter(AMYFilterSet):
         field_name="member_code", lookup_expr="icontains", label="Member code"
     )
 
+    eventbrite_url = django_filters.CharFilter(
+        field_name="eventbrite_url", lookup_expr="icontains", label="Eventbrite URL"
+    )
+
     state = django_filters.ChoiceFilter(
         label="State",
         choices=(("pa", "Pending or accepted"),) + TrainingRequest.STATE_CHOICES,
