@@ -30,6 +30,8 @@
     <tr><th>Continue with registration code marked as invalid:</th>
         <td>{{ object.member_code_override|yesno }}</td></tr>
 {% endif %}
+    <tr><th>Eventbrite URL:</th>
+        <td>{{ object.eventbrite_url|default:"&mdash;" }}</td></tr>
     <tr><th>Personal name:</th>
         <td>{{ object.personal }}</td></tr>
     <tr><th>Middle name:</th>

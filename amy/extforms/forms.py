@@ -39,6 +39,7 @@ class TrainingRequestForm(forms.ModelForm):
             "review_process",
             "member_code",
             "member_code_override",
+            "eventbrite_url",
             "personal",
             "family",
             "email",
@@ -150,6 +151,7 @@ class TrainingRequestForm(forms.ModelForm):
             "preapproved": [
                 self["member_code"],
                 self["member_code_override"],
+                self["eventbrite_url"],
             ],
             "open": [],  # this option doesn't require any additional fields
         }
@@ -163,6 +165,7 @@ class TrainingRequestForm(forms.ModelForm):
         layout.fields.remove("review_process")
         layout.fields.remove("member_code")
         layout.fields.remove("member_code_override")
+        layout.fields.remove("eventbrite_url")
 
         # insert div+field at previously saved position
         layout.insert(
