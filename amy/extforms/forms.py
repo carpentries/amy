@@ -58,6 +58,8 @@ class TrainingRequestForm(forms.ModelForm):
             "previous_experience_other",
             "previous_experience_explanation",
             "programming_language_usage_frequency",
+            "checkout_intent",
+            "teaching_intent",
             "teaching_frequency_expectation",
             "teaching_frequency_expectation_other",
             "max_travelling_frequency",
@@ -66,8 +68,6 @@ class TrainingRequestForm(forms.ModelForm):
             "user_notes",
             # "data_privacy_agreement",
             "code_of_conduct_agreement",
-            "training_completion_agreement",
-            "workshop_teaching_agreement",
         )
         widgets = {
             "review_process": forms.RadioSelect(),
