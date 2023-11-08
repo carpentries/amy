@@ -2343,6 +2343,10 @@ class TrainingRequest(
             "Yes - I plan to volunteer with The Carpentries "
             "to teach workshops for other communities",
         ),
+        (
+            "yes-both",
+            "Yes - both of the above",
+        ),
         ("no", "No"),
         ("unsure", "Not sure"),
     )
@@ -2351,7 +2355,6 @@ class TrainingRequest(
         choices=TEACHING_INTENT_CHOICES,
         verbose_name=" Do you intend to teach Carpentries workshops "
         "within the next 12 months?",
-        help_text="Check all that apply.",
         null=False,
         blank=False,
     )
