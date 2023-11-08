@@ -2344,8 +2344,8 @@ class TrainingRequest(
             "to teach workshops for other communities",
         ),
         (
-            "yes-both",
-            "Yes - both of the above",
+            "yes-either",
+            "Yes - either or both of the above",
         ),
         ("no", "No"),
         ("unsure", "Not sure"),
@@ -2353,7 +2353,7 @@ class TrainingRequest(
     teaching_intent = models.CharField(
         max_length=STR_MED,
         choices=TEACHING_INTENT_CHOICES,
-        verbose_name=" Do you intend to teach Carpentries workshops "
+        verbose_name="Do you intend to teach Carpentries workshops "
         "within the next 12 months?",
         null=False,
         blank=False,
