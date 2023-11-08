@@ -22,12 +22,11 @@ class Migration(migrations.Migration):
             name="checkout_intent",
             field=models.CharField(
                 choices=[("yes", "Yes"), ("no", "No"), ("unsure", "Not sure")],
-                default="yes",
+                default="unsure",
                 help_text="The checkout steps are described at https://carpentries.github.io/instructor-training/checkout.html.",
                 max_length=40,
                 verbose_name="Do you intend to complete The Carpentries checkout process to be certified as a Carpentries Instructor?",
             ),
-            preserve_default=False,
         ),
         migrations.AddField(
             model_name="trainingrequest",
@@ -46,11 +45,10 @@ class Migration(migrations.Migration):
                     ("no", "No"),
                     ("unsure", "Not sure"),
                 ],
-                default="yes-either",
+                default="unsure",
                 max_length=40,
                 verbose_name="Do you intend to teach Carpentries workshops within the next 12 months?",
             ),
-            preserve_default=False,
         ),
         migrations.AlterField(
             model_name="trainingrequest",

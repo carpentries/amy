@@ -2330,6 +2330,7 @@ class TrainingRequest(
         "https://carpentries.github.io/instructor-training/checkout.html.",
         null=False,
         blank=False,
+        default="unsure",
     )
 
     TEACHING_INTENT_CHOICES = (
@@ -2357,6 +2358,7 @@ class TrainingRequest(
         "within the next 12 months?",
         null=False,
         blank=False,
+        default="unsure",
     )
 
     TEACHING_FREQUENCY_EXPECTATION_CHOICES = (
