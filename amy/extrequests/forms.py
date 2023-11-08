@@ -470,7 +470,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             return None
 
         # confirm that membership is active at the time of submission
-        # grace period: 60 days before, 0 days after after
+        # grace period: 60 days before, 0 days after
         try:
             member_code_valid(
                 code=member_code,
@@ -480,7 +480,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             )
         except MemberCodeValidationError:
             errors["member_code"] = ValidationError(error_msg)
-            return errors
 
         return errors
 
