@@ -10,7 +10,7 @@ register = template.Library()
 
 @register.simple_tag
 def membership_description(membership: Membership):
-    if type(membership) != Membership:
+    if not isinstance(membership, Membership):
         return ""
 
     workshops_remaining = membership.workshops_without_admin_fee_remaining

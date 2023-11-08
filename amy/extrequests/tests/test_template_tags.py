@@ -18,6 +18,16 @@ class TestMembershipDescription(TestCase):
             workshops_without_admin_fee_per_agreement=2,
         )
 
+    def test_not_a_membership(self):
+        # Arrange
+        expected = ""
+
+        # Act
+        result = membership_description("some-string")
+
+        # Assert
+        self.assertEqual(expected, result)
+
     def test_active_and_has_workshops(self):
         # Arrange
         expected = (
