@@ -72,6 +72,8 @@ class TestListingTrainingRequests(APITestCase):
             previous_experience_other="",
             previous_experience_explanation="I taught other Gummies",
             programming_language_usage_frequency="not-much",
+            checkout_intent="yes",
+            teaching_intent="yes-local",
             teaching_frequency_expectation="monthly",
             teaching_frequency_expectation_other="",
             max_travelling_frequency="not-at-all",
@@ -79,8 +81,6 @@ class TestListingTrainingRequests(APITestCase):
             reason="I hope to pass on the Gummi Wisdom one day, and to do that"
             " I must know how to do it efficiently.",
             user_notes="",
-            training_completion_agreement=True,
-            workshop_teaching_agreement=True,
             data_privacy_agreement=True,
             code_of_conduct_agreement=True,
         )
@@ -120,6 +120,8 @@ class TestListingTrainingRequests(APITestCase):
             previous_experience_other="",
             previous_experience_explanation="I taught other Gummies",
             programming_language_usage_frequency="not-much",
+            checkout_intent="yes",
+            teaching_intent="yes-local",
             teaching_frequency_expectation="monthly",
             teaching_frequency_expectation_other="",
             max_travelling_frequency="not-at-all",
@@ -127,8 +129,6 @@ class TestListingTrainingRequests(APITestCase):
             reason="I need to pass on the Gummiberry juice recipe one day, and"
             " to do that I must know how to do it efficiently.",
             user_notes="",
-            training_completion_agreement=True,
-            workshop_teaching_agreement=True,
             data_privacy_agreement=True,
             code_of_conduct_agreement=True,
         )
@@ -203,6 +203,9 @@ class TestListingTrainingRequests(APITestCase):
                 "previous_experience_other": "",
                 "previous_experience_explanation": "I taught other Gummies",
                 "programming_language_usage_frequency": "Never or almost never",
+                "checkout_intent": "Yes",
+                "teaching_intent": "Yes - I plan to teach Carpentries workshops "
+                "in my local community or personal networks",
                 "teaching_frequency_expectation": "Several times a year",
                 "teaching_frequency_expectation_other": "",
                 "max_travelling_frequency": "Not at all",
@@ -210,8 +213,6 @@ class TestListingTrainingRequests(APITestCase):
                 "reason": "I hope to pass on the Gummi Wisdom one day, and to do "
                 "that I must know how to do it efficiently.",
                 "user_notes": "",
-                "training_completion_agreement": True,
-                "workshop_teaching_agreement": True,
                 "data_privacy_agreement": True,
                 "code_of_conduct_agreement": True,
             },
@@ -257,6 +258,9 @@ class TestListingTrainingRequests(APITestCase):
                 "previous_experience_other": "",
                 "previous_experience_explanation": "I taught other Gummies",
                 "programming_language_usage_frequency": "Never or almost never",
+                "checkout_intent": "Yes",
+                "teaching_intent": "Yes - I plan to teach Carpentries workshops "
+                "in my local community or personal networks",
                 "teaching_frequency_expectation": "Several times a year",
                 "teaching_frequency_expectation_other": "",
                 "max_travelling_frequency": "Not at all",
@@ -264,8 +268,6 @@ class TestListingTrainingRequests(APITestCase):
                 "reason": "I need to pass on the Gummiberry juice recipe one day,"
                 " and to do that I must know how to do it efficiently.",
                 "user_notes": "",
-                "training_completion_agreement": True,
-                "workshop_teaching_agreement": True,
                 "data_privacy_agreement": True,
                 "code_of_conduct_agreement": True,
             },
@@ -305,11 +307,11 @@ class TestListingTrainingRequests(APITestCase):
             "Previous Training in Teaching,Previous Training (other),"
             "Previous Training (explanation),Previous Experience in Teaching,"
             "Previous Experience (other),Previous Experience (explanation),"
-            "Programming Language Usage,Teaching Frequency Expectation,"
+            "Programming Language Usage,Intent to complete checkout,"
+            "Intent to teach workshops,Teaching Frequency Expectation,"
             "Teaching Frequency Expectation (other),Max Travelling Frequency,"
             "Max Travelling Frequency (other),Reason for undertaking training,"
-            "User notes,Training completion agreement (yes/no),"
-            "Workshop teaching agreement (yes/no),"
+            "User notes,"
             "Data privacy agreement (yes/no),"
             "Code of Conduct agreement (yes/no)"
         )
