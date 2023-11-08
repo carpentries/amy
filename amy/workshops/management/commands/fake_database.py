@@ -339,8 +339,8 @@ class Command(BaseCommand):
             programming_language_usage_frequency=choice(
                 TrainingRequest.PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES
             )[0],
-            checkout_intent=choice(TrainingRequest.CHECKOUT_INTENT_CHOICES),
-            teaching_intent=choice(TrainingRequest.TEACHING_INTENT_CHOICES),
+            checkout_intent=choice(TrainingRequest.CHECKOUT_INTENT_CHOICES)[0],
+            teaching_intent=choice(TrainingRequest.TEACHING_INTENT_CHOICES)[0],
             teaching_frequency_expectation=choice(
                 TrainingRequest.TEACHING_FREQUENCY_EXPECTATION_CHOICES
             )[0],
