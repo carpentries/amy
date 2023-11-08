@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 
-from extrequests.templatetags.membership_active import membership_description
+from amy.extrequests.templatetags.request_membership import membership_description
 from workshops.models import Membership
 
 

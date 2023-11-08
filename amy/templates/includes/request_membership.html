@@ -1,4 +1,4 @@
-{% load membership_active %}
+{% load request_membership %}
 {% if membership %}
     {% membership_description membership %}
 {% elif object.member_code %}
