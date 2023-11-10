@@ -2,7 +2,7 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 
-from workshops.models import Membership
+from workshops.models import Event, Membership
 
 
 class MemberCodeValidationError(ValidationError):
@@ -76,3 +76,42 @@ def get_membership_or_none_from_code(code: str) -> Membership | None:
         return Membership.objects.get(registration_code=code)
     except Membership.DoesNotExist:
         return None
+
+
+def get_membership_warnings_after_match(
+    membership: Membership, seat_public: bool, event: Event
+) -> list[str]:
+    warnings = []
+
+    today = date.today()
+
+    remaining = (
+        membership.public_instructor_training_seats_remaining
+        if seat_public
+        else membership.inhouse_instructor_training_seats_remaining
+    )
+    if remaining <= 0:
+        warnings.append(
+            f'Membership "{membership}" is using more training seats than '
+            "it's been allowed.",
+        )
+
+    # check if membership is active
+    if not (membership.agreement_start <= today <= membership.agreement_end):
+        warnings.append(
+            f'Membership "{membership}" is not active.',
+        )
+
+    # show warning if training falls out of agreement dates
+    if (
+        event.start
+        and event.start < membership.agreement_start
+        or event.end
+        and event.end > membership.agreement_end
+    ):
+        warnings.append(
+            f'Training "{event}" has start or end date outside '
+            f'membership "{membership}" agreement dates.',
+        )
+
+    return warnings
