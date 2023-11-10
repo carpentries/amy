@@ -11,7 +11,7 @@ from emails.controller import (
     EmailControllerMissingRecipientsException,
     EmailControllerMissingTemplateException,
 )
-from emails.models import EmailTemplate, ScheduledEmail
+from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import SignalNameEnum
 from emails.utils import (
     messages_action_cancelled,
@@ -112,7 +112,7 @@ class BaseActionUpdate(BaseAction):
                     generic_relation_content_type=ct,
                     generic_relation_pk=generic_relation_obj.pk,
                     template__signal=signal_name,
-                    state="scheduled",
+                    state=ScheduledEmailStatus.SCHEDULED,
                 )
             )
 
@@ -174,7 +174,7 @@ class BaseActionCancel(BaseAction):
             generic_relation_content_type=ct,
             generic_relation_pk=generic_relation_obj.pk,
             template__signal=signal_name,
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
         ).select_for_update()
 
         for scheduled_email in scheduled_emails:

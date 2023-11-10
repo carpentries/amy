@@ -10,7 +10,7 @@ from emails.actions.instructor_training_completed_not_badged import (
     instructor_training_completed_not_badged_strategy,
     run_instructor_training_completed_not_badged_strategy,
 )
-from emails.models import EmailTemplate, ScheduledEmail
+from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME
 from emails.types import StrategyEnum
 from workshops.models import (
@@ -136,6 +136,7 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         self,
         person: Person,
         signal: str = INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
+        state: ScheduledEmailStatus = ScheduledEmailStatus.SCHEDULED,
     ) -> ScheduledEmail:
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -152,7 +153,7 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=state,
             generic_relation=person,
         )
 

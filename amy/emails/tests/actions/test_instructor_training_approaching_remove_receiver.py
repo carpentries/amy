@@ -96,7 +96,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
 
@@ -134,7 +134,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
 
@@ -170,7 +170,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
         scheduled_email2 = ScheduledEmail.objects.create(
@@ -179,7 +179,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
 

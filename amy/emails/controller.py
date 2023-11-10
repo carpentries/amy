@@ -46,7 +46,7 @@ class EmailController:
         body = EmailTemplate.render_template(engine, template.body, dict(context))
 
         scheduled_email = ScheduledEmail.objects.create(
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             scheduled_at=scheduled_at,
             to_header=to_header,
             from_header=template.from_header,

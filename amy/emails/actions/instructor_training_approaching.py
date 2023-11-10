@@ -7,7 +7,7 @@ from django.utils import timezone
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
-from emails.models import ScheduledEmail
+from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     Signal,
@@ -49,7 +49,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
         template__signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-        state="scheduled",
+        state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
     logger.debug(f"{has_email_scheduled=}")
 

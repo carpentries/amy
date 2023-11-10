@@ -8,7 +8,7 @@ from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
 )
-from emails.models import EmailTemplate, ScheduledEmail
+from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
 from emails.types import StrategyEnum
 from workshops.models import Event, Organization, Person, Role, Tag, Task
@@ -73,7 +73,7 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
 
@@ -102,7 +102,7 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
 
