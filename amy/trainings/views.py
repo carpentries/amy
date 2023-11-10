@@ -116,7 +116,7 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdate
         except EmailStrategyException as exc:
             messages.error(
                 self.request,
-                f"Error when running instructor training completed strategy. {exc}",
+                f"Error when creating or updating scheduled email. {exc}",
             )
         return super().form_valid(form)
 
