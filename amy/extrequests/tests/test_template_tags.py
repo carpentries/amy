@@ -2,10 +2,12 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 
+from extrequests.templatetags.eventbrite import eventbrite_id_from_url
 from amy.extrequests.templatetags.request_membership import (
     membership_active,
     membership_alert_type,
 )
+
 from workshops.models import Membership
 
 
@@ -98,3 +100,35 @@ class TestMembershipActive(TestCase):
 
         # Assert
         self.assertEqual(expected, result)
+
+
+class TestEventbriteIdFromUrl(TestCase):
+    def test_long_url(self):
+        # Arrange
+        url = "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator"  # noqa: line too long
+
+        # Act
+        result = eventbrite_id_from_url(url)
+
+        # Assert
+        self.assertEqual(result, "711575811407")
+
+    def test_short_url(self):
+        # Arrange
+        url = "https://www.eventbrite.com/e/711575811407"
+
+        # Act
+        result = eventbrite_id_from_url(url)
+
+        # Assert
+        self.assertEqual(result, "711575811407")
+
+    def test_admin_url(self):
+        # Arrange
+        url = "https://www.eventbrite.com/myevent?eid=711575811407"
+
+        # Act
+        result = eventbrite_id_from_url(url)
+
+        # Assert
+        self.assertEqual(result, "711575811407")

@@ -5,6 +5,7 @@
 {% load tags %}
 {% load state %}
 {% load static %}
+{% load eventbrite %}
 
 {% block content %}
   {% if requests %}
@@ -20,6 +21,7 @@
           <th><input type="checkbox" select-all-checkbox /></th>
           <th>Submitter</th>
           <th>Reg. Code</th>
+          <th>Eventbrite ID</th>
           <th>Affiliation
               <i class="fas fa-question-circle"
                  data-toggle="popover" data-html="true" data-trigger="hover"
@@ -62,6 +64,13 @@
             &lt;{{ req.email|urlize }}&gt;
           </td>
           <td>{{ req.member_code|default:"—" }}</td>
+          <td>
+            {% if req.eventbrite_url %}
+              {% eventbrite_id_from_url req.eventbrite_url %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
           <td>
             {{ req.affiliation|default:"—" }}
             {% if req.person %}
