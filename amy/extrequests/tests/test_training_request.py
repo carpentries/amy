@@ -617,6 +617,60 @@ class TestTrainingRequestsListView(TestBase):
         )
         self.assertEqual(task.seat_public, data["seat_public"])
 
+    def test_auto_assign_membership_seats(self):
+        """Test that the bulk form can match multiple trainees to different memberships
+        according to member code."""
+        # Arrange
+        # set up some memberships
+        membership_alpha = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            registration_code="alpha44",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=1,
+        )
+        membership_beta = Membership.objects.create(
+            name="Beta Organization",
+            variant="bronze",
+            registration_code="beta55",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=1,
+        )
+        # create some requests for these codes
+        req1 = create_training_request(
+            "p", self.blackwidow, open_review=False, reg_code="alpha44"
+        )
+        req2 = create_training_request(
+            "p", self.ironman, open_review=False, reg_code="alpha55"
+        )
+        req3 = create_training_request(
+            "p", self.spiderman, open_review=False, reg_code="invalid"
+        )
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "membership_seat_auto_assign": True,
+            "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
+            "seat_public": "False",
+        }
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        msg = "Successfully accepted and matched 2/4 selected people to training."
+        self.assertContains(rv, msg)
+        self.assertEqual(Task.objects.filter(membership=membership_alpha).count(), 1)
+        self.assertEqual(Task.objects.filter(membership=membership_beta).count(), 1)
+        self.assertContains(rv, f"No matching membership for code 'invalid' ({req3})")
+        self.assertContains(
+            rv, f"Cannot match open application to a membership ({self.first_req})"
+        )
+
 
 class TestMatchingTrainingRequestAndDetailedView(TestBase):
     def setUp(self):
