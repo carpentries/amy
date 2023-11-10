@@ -1,7 +1,7 @@
 from datetime import date
+import re
 
 from django.core.exceptions import ValidationError
-import regex
 
 from workshops.models import Event, Membership, Role, Task, TrainingRequest
 
@@ -10,7 +10,7 @@ from workshops.models import Event, Membership, Role, Task, TrainingRequest
 # ----------------------------------------
 
 # Eventbrite IDs are long strings of digits (~12 characters)
-EVENTBRITE_ID_PATTERN = regex.compile(r"\d{10,}")
+EVENTBRITE_ID_PATTERN = re.compile(r"\d{10,}")
 
 
 class MemberCodeValidationError(ValidationError):
@@ -182,5 +182,5 @@ def get_eventbrite_id_from_url(url: str) -> str:
     if not isinstance(url, str):
         return url
 
-    re = regex.search(EVENTBRITE_ID_PATTERN, url)
-    return re.group() if re else url
+    match = re.search(EVENTBRITE_ID_PATTERN, url)
+    return match.group() if match else url
