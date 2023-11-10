@@ -90,6 +90,7 @@ class TrainingRequestFilter(AMYFilterSet):
         fields = [
             "search",
             "member_code",
+            "invalid_member_code",
             "state",
             "matched",
             "affiliation",
