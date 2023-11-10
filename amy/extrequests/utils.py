@@ -1,12 +1,16 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
+import regex
 
 from workshops.models import Event, Membership, Role, Task, TrainingRequest
 
 # ----------------------------------------
 # Utilities for validating member codes
 # ----------------------------------------
+
+# Eventbrite IDs are long strings of digits (~12 characters)
+EVENTBRITE_ID_PATTERN = regex.compile(r"\d{10,}")
 
 
 class MemberCodeValidationError(ValidationError):
@@ -170,3 +174,13 @@ def get_membership_warnings_after_match(
         )
 
     return warnings
+
+
+def get_eventbrite_id_from_url(url: str) -> str:
+    """Given the URL for an Eventbrite event, returns that event's ID.
+    If the ID can't be found, returns the original URL."""
+    if not isinstance(url, str):
+        return url
+
+    re = regex.search(EVENTBRITE_ID_PATTERN, url)
+    return re.group() if re else url

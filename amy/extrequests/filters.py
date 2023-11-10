@@ -7,6 +7,7 @@ from django.http import QueryDict
 import django_filters
 
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
+from extrequests.utils import get_eventbrite_id_from_url
 from workshops.fields import Select2Widget
 from workshops.filters import (
     AllCountriesFilter,
@@ -43,8 +44,9 @@ class TrainingRequestFilter(AMYFilterSet):
         field_name="member_code", lookup_expr="icontains", label="Member code"
     )
 
-    eventbrite_url = django_filters.CharFilter(
-        field_name="eventbrite_url", lookup_expr="icontains", label="Eventbrite URL"
+    eventbrite_id = django_filters.CharFilter(
+        label="Eventbrite ID or URL",
+        method="filter_eventbrite_id",
     )
 
     state = django_filters.ChoiceFilter(
@@ -170,6 +172,19 @@ class TrainingRequestFilter(AMYFilterSet):
         if only_overrides:
             return queryset.filter(member_code_override=True)
         return queryset
+
+    def filter_eventbrite_id(
+        self, queryset: QuerySet, name: str, value: str
+    ) -> QuerySet:
+        # user may input the event's ID or its full URL
+        # events have multiple possible URLs which all contain the ID,
+        # so filter by the ID if possible
+        try:
+            int(value)
+        except ValueError:
+            value = get_eventbrite_id_from_url(value)
+
+        return queryset.filter(eventbrite_url__icontains=value)
 
 
 # ------------------------------------------------------------
