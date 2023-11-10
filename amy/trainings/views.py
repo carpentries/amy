@@ -106,6 +106,7 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdate
     def form_valid(self, form):
         person = form.cleaned_data["trainee"]
         event = form.cleaned_data["event"]
+        result = super().form_valid(form)
         try:
             run_instructor_training_completed_not_badged_strategy(
                 instructor_training_completed_not_badged_strategy(person),
@@ -118,7 +119,7 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdate
                 self.request,
                 f"Error when creating or updating scheduled email. {exc}",
             )
-        return super().form_valid(form)
+        return result
 
 
 class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin, AMYDeleteView):
