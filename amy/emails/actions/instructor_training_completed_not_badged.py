@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
-from emails.models import ScheduledEmail
+from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
     INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
     Signal,
@@ -64,22 +64,35 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
     all_requirements_passed = bool(person_annotated.instructor_eligible)
 
     ct = ContentType.objects.get_for_model(person)  # type: ignore
-    has_email_scheduled = ScheduledEmail.objects.filter(
+    email_scheduled = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=person.pk,
         template__signal=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
-        state="scheduled",
+        state=ScheduledEmailStatus.SCHEDULED,
+    ).exists()
+    email_running_or_succeeded = ScheduledEmail.objects.filter(
+        generic_relation_content_type=ct,
+        generic_relation_pk=person.pk,
+        template__signal=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
+        state__in=[
+            ScheduledEmailStatus.LOCKED,
+            ScheduledEmailStatus.RUNNING,
+            ScheduledEmailStatus.SUCCEEDED,
+        ],
     ).exists()
 
     email_should_exist = (
         bool(person_annotated.passed_training) and not all_requirements_passed
     )
 
-    if not has_email_scheduled and email_should_exist:
+    # Prevents running sending multiple emails.
+    if email_running_or_succeeded:
+        result = StrategyEnum.NOOP
+    elif not email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
-    elif has_email_scheduled and not email_should_exist:
+    elif email_scheduled and not email_should_exist:
         result = StrategyEnum.REMOVE
-    elif has_email_scheduled and email_should_exist:
+    elif email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
         result = StrategyEnum.NOOP

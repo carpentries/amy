@@ -192,6 +192,17 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         # Assert
         self.assertEqual(result, StrategyEnum.NOOP)
 
+    def test_strategy_noop_when_previous_successful_email_exists(self) -> None:
+        # Arrange
+        self.setUpPassedTrainingProgress(
+            self.person, self.training_requirement, self.event
+        )
+        self.setUpScheduledEmail(self.person, state=ScheduledEmailStatus.SUCCEEDED)
+        # Act
+        result = instructor_training_completed_not_badged_strategy(self.person)
+        # Assert
+        self.assertEqual(result, StrategyEnum.NOOP)
+
 
 class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
     @patch(
