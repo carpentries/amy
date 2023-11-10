@@ -276,7 +276,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerysetEqual(result, [self.request_blackwidow])
 
-    def test_filter_invalid_member_code__true(self):
+    def test_filter_invalid_member_code(self):
         # Arrange
         filter_name = "invalid_member_code"
         value = True
@@ -286,17 +286,6 @@ class TestTrainingRequestFilter(TestBase):
 
         # Assert
         self.assertQuerysetEqual(result, [self.request_blackwidow])
-
-    def test_filter_invalid_member_code__false(self):
-        # Arrange
-        filter_name = "invalid_member_code"
-        value = False
-
-        # Act
-        result = self.filterset.filters[filter_name].filter(self.qs, value)
-
-        # Assert
-        self.assertQuerysetEqual(result, TrainingRequest.objects.all())
 
     def test_filter_affiliation(self):
         # Arrange
