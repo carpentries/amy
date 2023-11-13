@@ -461,7 +461,6 @@ class TestExportingPersonData(BaseExportingTest):
             "French",
         ]
         self.assertEqual(data["languages"], expected["languages"])
-        self.maxDiff = None
 
         # test expected TrainingRequests output
         expected["training_requests"] = [
