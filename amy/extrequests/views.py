@@ -627,9 +627,10 @@ def all_trainingrequests(request):
                     messages.error(request, msg)
                 changed_count = len(match_form.cleaned_data["requests"]) - len(errors)
                 info_msg = (
-                    f"Accepted and matched {changed_count} request(s), "
+                    f"Accepted and matched {changed_count} "
+                    f'{"person" if changed_count==1 else "people"} to training, '
                     f"which raised {len(warnings)} warning(s). "
-                    f"{len(errors)} requests(s) were skipped due to errors."
+                    f"{len(errors)} request(s) were skipped due to errors."
                 )
                 messages.info(request, info_msg)
             else:

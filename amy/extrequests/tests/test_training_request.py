@@ -629,7 +629,7 @@ class TestTrainingRequestsListView(TestBase):
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),
             contribution_type="financial",
-            public_instructor_training_seats=1,
+            public_instructor_training_seats=2,
         )
         membership_beta = Membership.objects.create(
             name="Beta Organization",
@@ -638,14 +638,14 @@ class TestTrainingRequestsListView(TestBase):
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),
             contribution_type="financial",
-            public_instructor_training_seats=1,
+            public_instructor_training_seats=0,
         )
         # create some requests for these codes
         req1 = create_training_request(
             "p", self.blackwidow, open_review=False, reg_code="alpha44"
         )
         req2 = create_training_request(
-            "p", self.ironman, open_review=False, reg_code="alpha55"
+            "p", self.ironman, open_review=False, reg_code="beta55"
         )
         req3 = create_training_request(
             "p", self.spiderman, open_review=False, reg_code="invalid"
@@ -654,21 +654,33 @@ class TestTrainingRequestsListView(TestBase):
         data = {
             "match": "",
             "event": self.first_training.pk,
-            "membership_seat_auto_assign": True,
+            "seat_membership_auto_assign": "True",
             "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
-            "seat_public": "False",
+            "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
-        msg = "Successfully accepted and matched 2/4 selected people to training."
-        self.assertContains(rv, msg)
-        self.assertEqual(Task.objects.filter(membership=membership_alpha).count(), 1)
-        self.assertEqual(Task.objects.filter(membership=membership_beta).count(), 1)
-        self.assertContains(rv, f"No matching membership for code 'invalid' ({req3})")
+        self.assertNotContains(
+            rv, "Successfully accepted and matched selected people to training"
+        )
+        self.assertContains(rv, "Accepted and matched 2 people to training")
+        self.assertContains(rv, "raised 1 warning")
+        self.assertContains(rv, "2 request(s) were skipped due to errors")
+        self.assertEqual(
+            Task.objects.filter(seat_membership=membership_alpha).count(), 1
+        )
+        self.assertEqual(
+            Task.objects.filter(seat_membership=membership_beta).count(), 1
+        )
         self.assertContains(
-            rv, f"Cannot match open application to a membership ({self.first_req})"
+            rv, "No membership found for registration code &quot;invalid&quot;"
+        )
+        self.assertContains(
+            rv,
+            "Request does not include a member registration "
+            "code, so cannot be matched to a seat.",
         )
 
 
