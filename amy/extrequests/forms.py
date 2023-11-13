@@ -177,8 +177,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
         super().clean()
 
         event = self.cleaned_data["event"]
-        member_site = self.cleaned_data["seat_membership"]
-        member_site_auto_assign = self.cleaned_data["seat_membership_auto_assign"]
+        seat_membership = self.cleaned_data["seat_membership"]
+        seat_membership_auto_assign = self.cleaned_data["seat_membership_auto_assign"]
         open_training = self.cleaned_data["seat_open_training"]
 
         if any(r.person is None for r in self.cleaned_data.get("requests", [])):
@@ -189,13 +189,13 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "and match with a trainee."
             )
 
-        if (member_site or member_site_auto_assign) and open_training:
+        if (seat_membership or seat_membership_auto_assign) and open_training:
             raise ValidationError(
                 "Cannot simultaneously match as open training and use "
                 "a Membership instructor training seat."
             )
 
-        if member_site and member_site_auto_assign:
+        if seat_membership and seat_membership_auto_assign:
             raise ValidationError(
                 "Cannot simultaneously use seats from selected membership "
                 "and use seats based on registration code."
