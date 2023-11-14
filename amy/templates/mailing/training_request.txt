@@ -60,6 +60,8 @@ Description of your previous experience in teaching:
     ---
     {% endif %}
 How frequently do you work with the tools that The Carpentries teach, such as R, Python, MATLAB, Perl, SQL, Git, OpenRefine, and the Unix Shell: {{ object.get_programming_language_usage_frequency_display }}
+Do you intend to complete The Carpentries checkout process to be certified as a Carpentries Instructor: {{ object.get_checkout_intent_display }}
+Do you intend to teach Carpentries workshops within the next 12 months: {{ object.get_teaching_intent_display }}
 How often would you expect to teach Carpentry Workshops after this training: {{ object.get_teaching_frequency_expectation_display|default:"---" }}
     other: {{ object.teaching_frequency_expectation_other|default:"---" }}
 How frequently would you be able to travel to teach such classes? {{ object.get_max_travelling_frequency_display }}
@@ -79,5 +81,3 @@ Additional notes:
 
 Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
 Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
-Training completion within three months agreement: {{ object.training_completion_agreement|yesno }}
-Teach a workshop within 12 months agreement: {{ object.workshop_teaching_agreement|yesno }}

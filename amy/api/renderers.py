@@ -42,14 +42,14 @@ class TrainingRequestCSVColumns:
         "previous_experience_other": "Previous Experience (other)",
         "previous_experience_explanation": "Previous Experience (explanation)",
         "programming_language_usage_frequency": "Programming Language Usage",
+        "checkout_intent": "Intent to complete checkout",
+        "teaching_intent": "Intent to teach workshops",
         "teaching_frequency_expectation": "Teaching Frequency Expectation",
         "teaching_frequency_expectation_other": "Teaching Frequency Expectation (other)",  # noqa: line too long
         "max_travelling_frequency": "Max Travelling Frequency",
         "max_travelling_frequency_other": "Max Travelling Frequency (other)",
         "reason": "Reason for undertaking training",
         "user_notes": "User notes",
-        "training_completion_agreement": "Training completion agreement (yes/no)",
-        "workshop_teaching_agreement": "Workshop teaching agreement (yes/no)",
         "data_privacy_agreement": "Data privacy agreement (yes/no)",
         "code_of_conduct_agreement": "Code of Conduct agreement (yes/no)",
     }

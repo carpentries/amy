@@ -1526,6 +1526,16 @@ class TrainingRequestsMergeForm(forms.Form):
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )
+    checkout_intent = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
+    teaching_intent = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
     teaching_frequency_expectation = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
@@ -1553,16 +1563,6 @@ class TrainingRequestsMergeForm(forms.Form):
     )
     user_notes = forms.ChoiceField(
         choices=THREE,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    training_completion_agreement = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    workshop_teaching_agreement = forms.ChoiceField(
-        choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )

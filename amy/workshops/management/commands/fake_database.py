@@ -308,7 +308,6 @@ class Command(BaseCommand):
 
         registration_code = self.faker.city() if randbool(0.1) else ""
         occupation = choice(TrainingRequest._meta.get_field("occupation").choices)[0]
-        training_completion_agreement = randbool(0.5)
         underrepresented_choices = TrainingRequest._meta.get_field(
             "underrepresented"
         ).choices
@@ -340,6 +339,8 @@ class Command(BaseCommand):
             programming_language_usage_frequency=choice(
                 TrainingRequest.PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES
             )[0],
+            checkout_intent=choice(TrainingRequest.CHECKOUT_INTENT_CHOICES)[0],
+            teaching_intent=choice(TrainingRequest.TEACHING_INTENT_CHOICES)[0],
             teaching_frequency_expectation=choice(
                 TrainingRequest.TEACHING_FREQUENCY_EXPECTATION_CHOICES
             )[0],
@@ -349,10 +350,6 @@ class Command(BaseCommand):
             )[0],
             max_travelling_frequency_other="",
             reason=self.faker.text(),
-            training_completion_agreement=training_completion_agreement,
-            workshop_teaching_agreement=randbool(0.5)
-            if training_completion_agreement
-            else False,
         )
         req.domains.set(sample(KnowledgeDomain.objects.all()))
         req.previous_involvement.set(sample(Role.objects.all()))

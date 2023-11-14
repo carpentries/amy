@@ -2316,6 +2316,52 @@ class TrainingRequest(
         default="daily",
     )
 
+    CHECKOUT_INTENT_CHOICES = (
+        ("yes", "Yes"),
+        ("no", "No"),
+        ("unsure", "Not sure"),
+    )
+    checkout_intent = models.CharField(
+        max_length=STR_MED,
+        choices=CHECKOUT_INTENT_CHOICES,
+        verbose_name="Do you intend to complete The Carpentries checkout process to be "
+        "certified as a Carpentries Instructor?",
+        help_text="The checkout process is described on our "
+        '<a href="https://carpentries.github.io/instructor-training/checkout.html">'
+        "Checkout Instructions</a> page.",
+        null=False,
+        blank=False,
+        default="unsure",
+    )
+
+    TEACHING_INTENT_CHOICES = (
+        (
+            "yes-local",
+            "Yes - I plan to teach Carpentries workshops "
+            "in my local community or personal networks",
+        ),
+        (
+            "yes-central",
+            "Yes - I plan to volunteer with The Carpentries "
+            "to teach workshops for other communities",
+        ),
+        (
+            "yes-either",
+            "Yes - either or both of the above",
+        ),
+        ("no", "No"),
+        ("unsure", "Not sure"),
+    )
+    teaching_intent = models.CharField(
+        max_length=STR_MED,
+        choices=TEACHING_INTENT_CHOICES,
+        verbose_name="Do you intend to teach Carpentries workshops "
+        "within the next 12 months?",
+        null=False,
+        blank=False,
+        default="unsure",
+    )
+
     TEACHING_FREQUENCY_EXPECTATION_CHOICES = (
         ("not-at-all", "Not at all"),
         ("yearly", "Once a year"),
@@ -2327,8 +2373,8 @@ class TrainingRequest(
         teaching_frequency_expectation_other,
     ) = choice_field_with_other(
         choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
-        verbose_name="How often would you expect to teach Carpentry Workshops"
-        " after this training?",
+        verbose_name="How often would you expect to teach Carpentries workshops "
+        " (of any kind) after this training?",
         default="not-at-all",
     )
 
@@ -2360,25 +2406,6 @@ class TrainingRequest(
         blank=True,
         help_text="What else do you want us to know?",
         verbose_name="Anything else?",
-    )
-
-    # a few agreements
-    training_completion_agreement = models.BooleanField(
-        null=False,
-        blank=False,
-        default=False,  # for 'normal' migration purposes
-        verbose_name="I agree to complete this training within three months of"
-        " the training course. The completion steps are described"
-        ' at <a href="http://carpentries.github.io/instructor-'
-        'training/checkout">http://carpentries.github.io/'
-        "instructor-training/checkout</a>.",
-    )
-    workshop_teaching_agreement = models.BooleanField(
-        null=False,
-        blank=False,
-        default=False,  # for 'normal' migration purposes
-        verbose_name="I agree to teach a Carpentry workshop within 12 months "
-        "of this Training Course.",
     )
 
     score_auto = models.PositiveIntegerField(
