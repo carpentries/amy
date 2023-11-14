@@ -485,10 +485,10 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
 
         # create some training requests
         TrainingRequest.objects.create(
-            person=self.blackwidow, group_name=self.membership_alpha.registration_code
+            person=self.blackwidow, member_code=self.membership_alpha.registration_code
         )
         TrainingRequest.objects.create(
-            person=self.blackwidow, group_name=self.membership_beta.registration_code
+            person=self.blackwidow, member_code=self.membership_beta.registration_code
         )
 
     def setUpView(

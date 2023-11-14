@@ -211,7 +211,7 @@ class MembershipLookupForTasksView(MembershipLookupView):
             and ttt_tag in models.Event.objects.get(id=event).tags.all()
         ):
             training_requests = models.TrainingRequest.objects.filter(person__id=person)
-            member_codes = training_requests.values_list("group_name")
+            member_codes = training_requests.values_list("member_code")
             results = results.filter(registration_code__in=member_codes)
 
         return results
