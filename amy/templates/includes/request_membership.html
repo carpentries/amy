@@ -1,6 +1,17 @@
 {% load request_membership %}
 {% if membership %}
-    {% membership_description membership %}
+    <div class="alert alert-{% membership_alert_type membership %}">
+        Related membership:
+        <a href="{{ membership.get_absolute_url }}">{{ membership }}</a>.
+        <br>
+        This membership has <strong>{{ membership.workshops_without_admin_fee_remaining }}</strong>
+        workshop{{ membership.workshops_without_admin_fee_remaining|pluralize }} remaining.
+    
+        {% membership_active membership as is_active %}
+        {% if not is_active %}
+        <br>This membership is <strong>not currently active</strong>.
+        {% endif %}
+    </div>
 {% elif object.member_code %}
     <div class="alert alert-warning">No membership found for this code.</div>
 {% endif %}
