@@ -187,6 +187,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
     - *online*: Administrative. Identifies workshops taking place on line.
     - *TTT*: Event type. Identifies Instructor Training events.
     - *ITT*: Event type. Identifies Trainer Training events.
+    - *CLDT* Event type.  Identifies Collaborative Lesson Development Training events.
     - *Pilot*: Event type. Identifies workshops teaching pilot curricula.
     - *for-profit*: Administrative. Identifies workshops run by for-profit institutions.
     - *Scholarship*: Administrative. Identifies sponsored workshops. 
