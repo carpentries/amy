@@ -66,7 +66,7 @@ def member_code_valid_training(
     return True
 
 
-def get_membership_from_code_if_exists(code: str) -> Membership | None:
+def get_membership_or_none_from_code(code: str) -> Membership | None:
     """Given a member code, returns the related membership
     or None if no such membership exists. If provided an empty code, returns None."""
     if not code:
