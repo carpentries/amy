@@ -4,27 +4,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
-    replaces = [('workshops', '0265_add_member_affiliation_and_member_code'), ('workshops', '0266_rename_group_name_trainingrequest_member_code'), ('workshops', '0267_trainingrequest_accept_invalid_member_code'), ('workshops', '0268_remove_workshoprequest_member_affiliation')]
-
     dependencies = [
-        ('workshops', '0264_trainingprogress_unique_trainee_at_event'),
+        ("workshops", "0264_trainingprogress_unique_trainee_at_event"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='workshoprequest',
-            name='member_code',
-            field=models.CharField(blank=True, default='', help_text='If you are affiliated with a Carpentries member organization, please enter the registration code associated with the membership. Your Member Affiliate can provide this.', max_length=40, verbose_name='Membership registration code'),
+            model_name="workshoprequest",
+            name="member_code",
+            field=models.CharField(
+                blank=True,
+                default="",
+                help_text="If you are affiliated with a Carpentries member organization, please enter the registration code associated with the membership. Your Member Affiliate can provide this.",
+                max_length=40,
+                verbose_name="Membership registration code",
+            ),
         ),
         migrations.RenameField(
-            model_name='trainingrequest',
-            old_name='group_name',
-            new_name='member_code',
+            model_name="trainingrequest",
+            old_name="group_name",
+            new_name="member_code",
         ),
         migrations.AddField(
-            model_name='trainingrequest',
-            name='member_code_override',
-            field=models.BooleanField(blank=True, default=False, help_text='A member of our team will check the code and follow up with you if there are any problems that require your attention.', verbose_name='Continue with registration code marked as invalid'),
+            model_name="trainingrequest",
+            name="member_code_override",
+            field=models.BooleanField(
+                blank=True,
+                default=False,
+                help_text="A member of our team will check the code and follow up with you if there are any problems that require your attention.",
+                verbose_name="Continue with registration code marked as invalid",
+            ),
         ),
     ]
