@@ -1,6 +1,8 @@
 from django import template
 from django.db.models import Model
 
+from emails.models import ScheduledEmailStatus, ScheduledEmailStatusActions
+
 register = template.Library()
 
 
@@ -21,3 +23,12 @@ def model_documentation_link(model: Model) -> str:
     }
     model_name = model.__class__.__name__
     return mapping.get(model_name, "")
+
+
+@register.simple_tag
+def allowed_actions_for_status(status: ScheduledEmailStatus) -> list[str]:
+    return [
+        key
+        for key, statuses in ScheduledEmailStatusActions.items()
+        if status in statuses
+    ]

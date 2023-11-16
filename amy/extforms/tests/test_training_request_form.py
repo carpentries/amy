@@ -45,6 +45,8 @@ class TestTrainingRequestForm(TestBase):
             "previous_experience_other": "",
             "previous_experience_explanation": "",
             "programming_language_usage_frequency": "daily",
+            "checkout_intent": "yes",
+            "teaching_intent": "yes-central",
             "reason": "Just for fun.",
             "teaching_frequency_expectation": "monthly",
             "teaching_frequency_expectation_other": "",
@@ -52,10 +54,7 @@ class TestTrainingRequestForm(TestBase):
             "max_travelling_frequency_other": "",
             "addition_skills": "",
             "user_notes": "",
-            "agreed_to_code_of_conduct": "on",
-            "agreed_to_complete_training": "on",
-            "agreed_to_teach_workshops": "on",
-            "privacy_consent": True,
+            "code_of_conduct_agreement": "on",
         }
         self.data.update(self.add_terms_to_payload())
 

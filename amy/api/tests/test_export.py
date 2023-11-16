@@ -164,14 +164,14 @@ class TestExportingPersonData(BaseExportingTest):
             previous_experience="ta",
             previous_experience_other="",
             previous_experience_explanation="After the course I became a TA",
+            checkout_intent="yes",
+            teaching_intent="yes-central",
             programming_language_usage_frequency="weekly",
             teaching_frequency_expectation="monthly",
             max_travelling_frequency="not-at-all",
             max_travelling_frequency_other="",
             reason="I want to became an instructor",
             user_notes="I like trains",
-            training_completion_agreement=True,
-            workshop_teaching_agreement=True,
         )
         training_request.domains.set([KnowledgeDomain.objects.first()])
         training_request.previous_involvement.set(
@@ -497,14 +497,15 @@ class TestExportingPersonData(BaseExportingTest):
                 "previous_experience_other": "",
                 "previous_experience_explanation": "After the course I became a TA",
                 "programming_language_usage_frequency": "A few times a week",
+                "checkout_intent": "Yes",
+                "teaching_intent": "Yes - I plan to volunteer with The Carpentries "
+                "to teach workshops for other communities",
                 "teaching_frequency_expectation": "Several times a year",
                 "teaching_frequency_expectation_other": "",
                 "max_travelling_frequency": "Not at all",
                 "max_travelling_frequency_other": "",
                 "reason": "I want to became an instructor",
                 "user_notes": "I like trains",
-                "training_completion_agreement": True,
-                "workshop_teaching_agreement": True,
                 "data_privacy_agreement": True,
                 "code_of_conduct_agreement": True,
             }

@@ -13,6 +13,13 @@
 
 {% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
 
+{% if scheduled_email.state == 'cancelled' %}
+<div class="alert alert-warning" role="alert">
+  <strong>Warning</strong>: if you reschedule a cancelled email, it will become
+  scheduled again and will be sent immediately if the scheduled time is in the past.
+</div>
+{% endif %}
+
 {% crispy form %}
 
 {% endblock %}

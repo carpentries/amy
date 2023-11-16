@@ -171,6 +171,16 @@
       <th>{% include "includes/merge_radio.html" with field=form.programming_language_usage_frequency %}</th>
     </tr>
     <tr>
+      <th>Intent to complete checkout</th>
+      <td>{{ obj_a.get_checkout_intent_display }}</td><td>{{ obj_b.get_checkout_intent_display }}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.checkout_intent %}</th>
+    </tr>
+    <tr>
+      <th>Intent to teach workshops</th>
+      <td>{{ obj_a.get_teaching_intent_display }}</td><td>{{ obj_b.get_teaching_intent_display }}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.teaching_intent %}</th>
+    </tr>
+    <tr>
       <th>Teaching frequency expectation</th>
       <td>{{ obj_a.get_teaching_frequency_expectation_display }}</td><td>{{ obj_b.get_teaching_frequency_expectation_display }}</td>
       <th>{% include "includes/merge_radio.html" with field=form.teaching_frequency_expectation %}</th>
@@ -199,16 +209,6 @@
       <th>Additional comments by submitter</th>
       <td>{% if obj_a.user_notes %}<pre>{{ obj_a.user_notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.user_notes %}<pre>{{ obj_b.user_notes }}</pre>{% else %}—{% endif %}</td>
       <th>{% include "includes/merge_radio.html" with field=form.user_notes %}</th>
-    </tr>
-    <tr>
-      <th>Training completion agreement?</th>
-      <td>{{ obj_a.training_completion_agreement|yesno }}</td><td>{{ obj_b.training_completion_agreement|yesno }}</td>
-      <th>{% include "includes/merge_radio.html" with field=form.training_completion_agreement %}</th>
-    </tr>
-    <tr>
-      <th>Workshop teaching agreement?</th>
-      <td>{{ obj_a.workshop_teaching_agreement|yesno }}</td><td>{{ obj_b.workshop_teaching_agreement|yesno }}</td>
-      <th>{% include "includes/merge_radio.html" with field=form.workshop_teaching_agreement %}</th>
     </tr>
     <tr>
       <th><small>Deprecated old-style consent</small><br> Data privacy agreement?</th>

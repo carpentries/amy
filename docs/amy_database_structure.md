@@ -25,7 +25,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `assigned_to_id` The id of the Regional Coordinator or other Carpentries Core Team member assigned to this event. This is linked to the `workshops_person` table.
 * `language_id` The integer id of the language used at the workshop. This is not typically recorded. This is linked to the `workshops_language` table
 * `open_TTT_applications` Used only for instructor training events
-* `adminstrator_id` An integer representing the event organizer.  This is linked to the `workshops_organization` table. Historically any organization could be listed as an administrator. Recent updates to AMY limit this to Data Carpentry, Library Carpentry, Software Carpentry, The Carpentries, or self-organized. This enforcement is at the AMY app level, not at the database level.
+* `adminstrator_id` An integer representing the event organizer.  This is linked to the `workshops_organization` table. Historically any organization could be listed as an administrator. Recent updates to AMY limit this to Data Carpentry, Library Carpentry, Software Carpentry, Instructor Training, Collaborative Lesson Development Training, or self-organized. This enforcement is at the AMY app level, not at the database level.
 * `reg_key` Eventbrite registration key
 * `instructors_pre` Link to both pre- and post-workshop survey results.
 

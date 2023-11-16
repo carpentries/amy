@@ -332,20 +332,11 @@ class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
 
 
 class KnowledgeDomainLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def dispatch(self, request, *args, **kwargs):
-        self.subtag = "subtag" in request.GET.keys()
-        return super().dispatch(request, *args, **kwargs)
-
     def get_queryset(self):
         results = models.KnowledgeDomain.objects.all()
 
         if self.term:
-            results = results.filter(
-                Q(name__icontains=self.term) | Q(subtag__icontains=self.term)
-            )
-
-            if self.subtag:
-                return results.filter(subtag__iexact=self.term)
+            results = results.filter(Q(name__icontains=self.term))
 
         results = results.annotate(person_count=Count("person")).order_by(
             "-person_count"

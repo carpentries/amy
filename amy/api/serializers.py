@@ -206,6 +206,8 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
     programming_language_usage_frequency = serializers.CharField(
         source="get_programming_language_usage_frequency_display"
     )
+    checkout_intent = serializers.CharField(source="get_checkout_intent_display")
+    teaching_intent = serializers.CharField(source="get_teaching_intent_display")
     teaching_frequency_expectation = serializers.CharField(
         source="get_teaching_frequency_expectation_display"
     )
@@ -246,14 +248,14 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
             "previous_experience_other",
             "previous_experience_explanation",
             "programming_language_usage_frequency",
+            "checkout_intent",
+            "teaching_intent",
             "teaching_frequency_expectation",
             "teaching_frequency_expectation_other",
             "max_travelling_frequency",
             "max_travelling_frequency_other",
             "reason",
             "user_notes",
-            "training_completion_agreement",
-            "workshop_teaching_agreement",
             "data_privacy_agreement",
             "code_of_conduct_agreement",
         )
@@ -333,14 +335,14 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
             "previous_experience_other",
             "previous_experience_explanation",
             "programming_language_usage_frequency",
+            "checkout_intent",
+            "teaching_intent",
             "teaching_frequency_expectation",
             "teaching_frequency_expectation_other",
             "max_travelling_frequency",
             "max_travelling_frequency_other",
             "reason",
             "user_notes",
-            "training_completion_agreement",
-            "workshop_teaching_agreement",
             "data_privacy_agreement",
             "code_of_conduct_agreement",
         )
@@ -368,6 +370,8 @@ class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
             "previous_experience",
             "previous_experience_other",
             "previous_experience_explanation",
+            "checkout_intent",
+            "teaching_intent",
             "teaching_frequency_expectation",
             "teaching_frequency_expectation_other",
             "max_travelling_frequency",

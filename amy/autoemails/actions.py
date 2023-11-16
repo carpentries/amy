@@ -277,6 +277,8 @@ class NewInstructorAction(BaseAction):
             and task.event.administrator
             and task.event.administrator.domain != "self-organized"
             and task.event.administrator.domain != "carpentries.org"
+            # 2023-09-20: also exclude CLDT
+            and task.event.administrator.domain != "carpentries.org/community-lessons/"
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -357,6 +359,7 @@ class NewSupportingInstructorAction(BaseAction):
             and task.event.administrator
             and task.event.administrator.domain != "self-organized"
             and task.event.administrator.domain != "carpentries.org"
+            and task.event.administrator.domain != "carpentries.org/community-lessons/"
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -488,6 +491,8 @@ class PostWorkshopAction(BaseAction):
             #             Instructor Training
             and event.administrator
             and event.administrator.domain != "carpentries.org"
+            # 2023-09-20: also exclude CLDT
+            and event.administrator.domain != "carpentries.org/community-lessons/"
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
