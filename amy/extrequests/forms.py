@@ -13,7 +13,11 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
-from extrequests.utils import MemberCodeValidationError, member_code_valid_training
+from extrequests.utils import (
+    MemberCodeValidationError,
+    member_code_valid,
+    member_code_valid_training,
+)
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
@@ -452,15 +456,28 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self, request: HttpRequest
     ) -> None | dict[str, ValidationError]:
         errors = dict()
-        code = self.cleaned_data.get("member_code", "")
+        member_code = self.cleaned_data.get("member_code", "")
         error_msg = (
             "This code is invalid. "
-            "Please contact your Member Affiliate to verify your code."
+            "This may be due to a typo, an expired code, "
+            "or a code that has not yet been activated."
+            "Please confirm that you have copied the code correctly, "
+            "or contact your Member Affiliate to verify your code."
         )
-        # ensure that code belongs to a membership
+
+        if not member_code:
+            return None
+
+        # confirm that membership is active at the time of submission
+        # grace period: 60 days before, 0 days after
         try:
-            Membership.objects.get(registration_code=code)
-        except Membership.DoesNotExist:
+            member_code_valid(
+                code=member_code,
+                date=datetime.date.today(),
+                grace_before=60,
+                grace_after=0,
+            )
+        except MemberCodeValidationError:
             errors["member_code"] = ValidationError(error_msg)
 
         return errors

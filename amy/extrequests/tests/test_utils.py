@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from extrequests.utils import (
     MemberCodeValidationError,
+    get_membership_or_none_from_code,
     member_code_valid,
     member_code_valid_training,
 )
@@ -244,3 +245,41 @@ class TestMemberCodeValid(TestBase):
 
         # Assert
         self.assertTrue(result)
+
+
+class TestGetMembershipFromCodeIfExists(TestBase):
+    def setUp(self):
+        self.valid_code = "valid123"
+        self.membership = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            contribution_type="financial",
+            registration_code=self.valid_code,
+            public_instructor_training_seats=1,
+            inhouse_instructor_training_seats=1,
+        )
+
+    def test_returns_none_if_code_empty(self):
+        # Act
+        result_empty_string = get_membership_or_none_from_code("")
+        result_none = get_membership_or_none_from_code(None)
+
+        # Assert
+        self.assertIsNone(result_empty_string)
+        self.assertIsNone(result_none)
+
+    def test_returns_none_if_no_match(self):
+        # Act
+        result = get_membership_or_none_from_code("invalid")
+
+        # Assert
+        self.assertIsNone(result)
+
+    def test_returns_matching_membership(self):
+        # Act
+        result = get_membership_or_none_from_code(self.valid_code)
+
+        # Assert
+        self.assertEqual(result, self.membership)

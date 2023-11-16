@@ -9,6 +9,7 @@ Submission date: {{ object.created_at }}
 State: {{ object.get_state_display }}
 Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
 Institution: {% if object.institution %}{{ object.institution }}{% else %}{{ object.institution_other_name }}{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
+Member registration code: {{ object.member_code|default:"---" }}
 Workshop location: {{ object.location }}
 Country: {{ object.country.name }}
 Requested workshop types: {% for type in object.requested_workshop_types.all %}{{ type }}{% if not forloop.last %}, {% endif %}{% endfor %}
