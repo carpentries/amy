@@ -5,12 +5,18 @@ from crispy_forms.layout import HTML, Div, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
+from django.http import HttpRequest
 
 from extrequests.models import (
     DataVariant,
     InfoSource,
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
+)
+from extrequests.utils import (
+    MemberCodeValidationError,
+    member_code_valid,
+    member_code_valid_training,
 )
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
@@ -35,6 +41,7 @@ from workshops.models import (
     TrainingRequest,
     WorkshopRequest,
 )
+from workshops.utils.feature_flags import feature_flag_enabled
 
 
 class BulkChangeTrainingRequestForm(forms.Form):
@@ -300,6 +307,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
+            "member_code",
             "location",
             "country",
             "online_inperson",
@@ -350,6 +358,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # the field isn't required, but we want user to fill it
@@ -417,6 +427,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
+            "member_code",
             "country",
             "audience_description",
             "user_notes",
@@ -439,6 +450,37 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         """Static method that overrides ModelChoiceField choice labels,
         essentially works just like `Model.__str__`."""
         return "{}".format(obj.fullname)
+
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+        error_msg = (
+            "This code is invalid. "
+            "This may be due to a typo, an expired code, "
+            "or a code that has not yet been activated."
+            "Please confirm that you have copied the code correctly, "
+            "or contact your Member Affiliate to verify your code."
+        )
+
+        if not member_code:
+            return None
+
+        # confirm that membership is active at the time of submission
+        # grace period: 60 days before, 0 days after
+        try:
+            member_code_valid(
+                code=member_code,
+                date=datetime.date.today(),
+                grace_before=60,
+                grace_after=0,
+            )
+        except MemberCodeValidationError:
+            errors["member_code"] = ValidationError(error_msg)
+
+        return errors
 
     def clean(self):
         super().clean()
@@ -562,6 +604,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                     'planned for less than 2 months away or "Other" arrangements '
                     "were selected."
                 )
+
+        # 8: enforce membership registration codes
+        membership_errors = self.validate_member_code(request=self.request_http)
+        if membership_errors:
+            errors.update(membership_errors)
 
         # raise errors if any present
         if errors:
@@ -1378,6 +1425,52 @@ class TrainingRequestUpdateForm(forms.ModelForm):
             "state": forms.RadioSelect(),
         }
 
+    def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        errors = self.validate_member_code(request=self.request_http)
+        if errors:
+            raise ValidationError(errors)
+
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+        member_code_override = self.cleaned_data.get("member_code_override", False)
+
+        if not member_code:
+            return None
+
+        try:
+            member_code_is_valid = member_code_valid_training(
+                member_code,
+                self.instance.created_at.date(),
+                grace_before=90,
+                grace_after=90,
+            )
+            if member_code_is_valid and member_code_override:
+                # case where a user corrects their code but ticks the box anyway
+                # checkbox doesn't need to be ticked, so correct it quietly and continue
+                self.cleaned_data["member_code_override"] = False
+        except MemberCodeValidationError as e:
+            if not member_code_override:
+                # user must either correct the code or tick the override
+                error_msg = (
+                    "This code is invalid: "
+                    f"{e.message} "
+                    "Tick the checkbox below to ignore this message."
+                )
+                errors["member_code"] = ValidationError(error_msg)
+
+        return errors
+
 
 class TrainingRequestsSelectionForm(forms.Form):
     trainingrequest_a = forms.ModelChoiceField(
@@ -1416,7 +1509,7 @@ class TrainingRequestsMergeForm(forms.Form):
     id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     state = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     person = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    group_name = forms.ChoiceField(
+    member_code = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,

@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.core.exceptions import ImproperlyConfigured
 
+from extrequests.utils import get_membership_or_none_from_code
 from workshops.base_views import AMYCreateView
 from workshops.models import Curriculum, Tag
 
@@ -50,6 +51,10 @@ class WRFInitial:
             initial["start"] = start
         if end:
             initial["end"] = end
+
+        if hasattr(self.other_object, "member_code"):
+            code = self.other_object.member_code
+            initial["membership"] = get_membership_or_none_from_code(code)
 
         return initial
 

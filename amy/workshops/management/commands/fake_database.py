@@ -306,7 +306,18 @@ class Command(BaseCommand):
             state = "a"
             person = person_or_None
 
-        registration_code = self.faker.city() if randbool(0.1) else ""
+        # registration code
+        # default (empty code) is used 25% of the time
+        registration_code = ""
+        override_invalid_code = False
+        if randbool(0.5):
+            # 50% of the time, use an existing code
+            registration_code = choice(Membership.objects.all()).registration_code
+        elif randbool(0.5):
+            # 25% of the time, use an invalid code and the override
+            registration_code = self.faker.city()
+            override_invalid_code = True
+
         occupation = choice(TrainingRequest._meta.get_field("occupation").choices)[0]
         underrepresented_choices = TrainingRequest._meta.get_field(
             "underrepresented"
@@ -315,7 +326,8 @@ class Command(BaseCommand):
             state=state,
             person=person_or_None,
             review_process="preapproved" if registration_code else "open",
-            group_name=registration_code,
+            member_code=registration_code,
+            member_code_override=override_invalid_code,
             personal=person.personal,
             middle="",
             family=person.family,
@@ -471,13 +483,16 @@ class Command(BaseCommand):
             start = self.faker.date_time_between(start_date="-5y").date()
             organization_count = randint(1, 4)
             organization_generator = iter(Organization.objects.all().order_by("?"))
+            name = self.faker.company()
+            registration_code = name[:5] + str(randint(10, 99))
             membership = Membership.objects.create(
-                name=self.faker.company(),
+                name=name,
                 consortium=organization_count > 1,
                 variant=choice(Membership.MEMBERSHIP_CHOICES)[0],
                 agreement_start=start,
                 agreement_end=start + timedelta(days=365),
                 contribution_type=choice(Membership.CONTRIBUTION_CHOICES)[0],
+                registration_code=registration_code,
                 workshops_without_admin_fee_per_agreement=randint(5, 15),
                 public_instructor_training_seats=randint(5, 15),
                 inhouse_instructor_training_seats=randint(5, 15),
@@ -618,6 +633,21 @@ class Command(BaseCommand):
 
             p.save()
 
+    def get_or_invent_member_code(self):
+        if randbool(0.5):
+            # 50% of time, use an existing member code
+            # may or may not be a valid choice depending on membership dates
+            membership = choice(Membership.objects.all())
+            member_code = membership.registration_code
+        elif randbool(0.5):
+            # 25% of time, make up an invalid code
+            member_code = self.faker.word()
+        else:
+            # 25% of time, don't use any code
+            member_code = ""
+
+        return member_code
+
     def fake_workshop_requests(self, count=10):
         self.stdout.write("Generating {} fake " "workshop requests...".format(count))
 
@@ -661,6 +691,7 @@ class Command(BaseCommand):
                 self.faker.sentence() if institution_restrictions == "" else ""
             )
 
+            member_code = self.get_or_invent_member_code()
             req = WorkshopRequest.objects.create(
                 state=choice(["p", "d", "a"]),
                 data_privacy_agreement=randbool(0.5),
@@ -673,6 +704,7 @@ class Command(BaseCommand):
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
                 institution_department="",
+                member_code=member_code,
                 online_inperson=online_inperson,
                 public_event=public_event,
                 public_event_other=public_event_other,

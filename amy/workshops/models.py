@@ -364,6 +364,17 @@ class Membership(models.Model):
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
+    def active_on_date(
+        self, date: datetime.date, grace_before: int = 0, grace_after: int = 0
+    ) -> bool:
+        """Returns True if the date is within the membership agreement dates,
+        with an optional grace period (in days) at the start and/or end of the
+        agreement.
+        """
+        start_date = self.agreement_start - datetime.timedelta(days=grace_before)
+        end_date = self.agreement_end + datetime.timedelta(days=grace_after)
+        return start_date <= date <= end_date
+
     def _base_queryset(self):
         """Provide universal queryset for looking up workshops for this membership."""
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
@@ -2105,7 +2116,7 @@ class TrainingRequest(
         verbose_name="Application Type",
     )
 
-    group_name = models.CharField(
+    member_code = models.CharField(
         blank=True,
         default="",
         null=False,
@@ -2114,6 +2125,14 @@ class TrainingRequest(
         help_text="If you have been given a registration code through "
         "a Carpentries member site or for a specific scheduled "
         "event, please enter it here:",
+    )
+    member_code_override = models.BooleanField(
+        null=False,
+        default=False,
+        blank=True,
+        verbose_name="Continue with registration code marked as invalid",
+        help_text="A member of our team will check the code and follow up with you if "
+        "there are any problems that require your attention.",
     )
 
     personal = models.CharField(
@@ -2239,7 +2258,7 @@ class TrainingRequest(
     nonprofit_teaching_experience = models.CharField(
         max_length=STR_LONGEST,
         blank=True,
-        null=True,
+        default="",
         verbose_name="I have been an active contributor to other volunteer or"
         " non-profit groups with significant teaching or training"
         " components.",
@@ -2269,8 +2288,8 @@ class TrainingRequest(
     )
     previous_training_explanation = models.TextField(
         verbose_name="Description of your previous training in teaching",
-        null=True,
         blank=True,
+        default="",
     )
 
     # this part changed a little bit, mostly wording and choices
@@ -2294,8 +2313,8 @@ class TrainingRequest(
     )
     previous_experience_explanation = models.TextField(
         verbose_name="Description of your previous experience in teaching",
-        null=True,
         blank=True,
+        default="",
     )
 
     PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES = (
@@ -2904,6 +2923,17 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         null=False,
         default="",
         verbose_name="Department/School/Library affiliation (if applicable)",
+    )
+
+    member_code = models.CharField(
+        max_length=STR_MED,
+        blank=True,
+        null=False,
+        default="",
+        verbose_name="Membership registration code",
+        help_text="If you are affiliated with a Carpentries member organization, "
+        "please enter the registration code associated with the membership. "
+        "Your Member Affiliate can provide this.",
     )
 
     ONLINE_INPERSON_CHOICES = (

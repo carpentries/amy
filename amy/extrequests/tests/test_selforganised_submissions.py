@@ -340,6 +340,49 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         ).selforganisedsubmission
         self.assertEqual(request, self.sos1)
 
+    def test_accept_with_event_autofill(self):
+        """Ensure that fields are autofilled correctly when creating an Event from a
+        SelfOrganisedSubmission."""
+        # Arrange
+        sos = SelfOrganisedSubmission.objects.create(
+            # required fields
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@potter.com",
+            country="GB",
+            language=Language.objects.get(name="English"),
+            # fields that should be autofilled
+            institution=Organization.objects.first(),
+            start=date.today(),
+            end=date.today() + timedelta(days=1),
+            online_inperson="online",
+            workshop_listed=False,
+            additional_contact="hermione@granger.com",
+        )
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        sos.workshop_types.set([curriculum])
+
+        expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
+
+        # Act
+        rv = self.client.get(
+            reverse("selforganisedsubmission_accept_event", args=[sos.pk])
+        )
+        form_initial = rv.context["form"].initial
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertQuerysetEqual(
+            form_initial["curricula"].all(), sos.workshop_types.all()
+        )
+        self.assertQuerysetEqual(form_initial["tags"], expected_tags)
+        self.assertEqual(form_initial["public_status"], "private")
+        self.assertEqual(form_initial["contact"], sos.additional_contact)
+        self.assertEqual(form_initial["host"].pk, sos.institution.pk)
+        self.assertEqual(form_initial["start"], sos.start)
+        self.assertEqual(form_initial["end"], sos.end)
+
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(
             reverse("selforganisedsubmission_accept_event", args=[self.sos2.pk])

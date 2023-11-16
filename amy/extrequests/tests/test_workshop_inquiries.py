@@ -506,6 +506,50 @@ class TestWorkshopInquiryViews(TestBase):
         request = Event.objects.get(slug="2018-10-28-test-event").workshopinquiryrequest
         self.assertEqual(request, self.wi1)
 
+    def test_accept_with_event_autofill(self):
+        """Ensure that fields are autofilled correctly when creating an Event from a
+        WorkshopInquiryRequest."""
+        # Arrange
+        wi = WorkshopInquiryRequest.objects.create(
+            # required fields
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@potter.com",
+            location="Scotland",
+            country="GB",
+            language=Language.objects.get(name="English"),
+            audience_description="Students of Hogwarts",
+            administrative_fee="forprofit",
+            travel_expences_management="reimbursed",
+            # fields that should be autofilled
+            institution=Organization.objects.first(),
+            preferred_dates=date.today(),
+            online_inperson="online",
+            workshop_listed=False,
+            additional_contact="hermione@granger.com",
+        )
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        wi.requested_workshop_types.set([curriculum])
+
+        expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
+
+        # Act
+        rv = self.client.get(reverse("workshopinquiry_accept_event", args=[wi.pk]))
+        form_initial = rv.context["form"].initial
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertQuerysetEqual(
+            form_initial["curricula"].all(), wi.requested_workshop_types.all()
+        )
+        self.assertQuerysetEqual(form_initial["tags"], expected_tags)
+        self.assertEqual(form_initial["public_status"], "private")
+        self.assertEqual(form_initial["contact"], wi.additional_contact)
+        self.assertEqual(form_initial["host"].pk, wi.institution.pk)
+        self.assertEqual(form_initial["start"], wi.preferred_dates)
+        self.assertEqual(form_initial["end"], wi.preferred_dates + timedelta(days=1))
+
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(
             reverse("workshopinquiry_accept_event", args=[self.wi2.pk])

@@ -129,7 +129,7 @@ class TrainingRequestFilterIDs(TrainingRequestFilter):
         fields = [
             "ids",
             "search",
-            "group_name",
+            "member_code",
             "state",
             "matched",
             "affiliation",

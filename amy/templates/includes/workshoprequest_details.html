@@ -29,6 +29,11 @@
         <td>
           {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
+    <tr><th>Member registration code:</th>
+        <td>
+          {{ object.member_code|default:"&mdash;" }}
+          {% if admin %}{% include "includes/request_membership.html" with object=object membership=membership %}{% endif %}
+        </td></tr>
     <tr><th>Workshop location:</th>
         <td>{{ object.location }}</td></tr>
     <tr><th>Country:</th>

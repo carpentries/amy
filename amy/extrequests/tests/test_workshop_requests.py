@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.test import override_settings
 from django.urls import reverse
 
 from autoemails.models import EmailTemplate, RQJob, Trigger
@@ -13,6 +14,7 @@ from workshops.models import (
     Event,
     InfoSource,
     Language,
+    Membership,
     Organization,
     Role,
     Tag,
@@ -25,6 +27,16 @@ from workshops.tests.base import FormTestHelper, TestBase
 class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
 
+    def setUpMembership(self):
+        Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date(2023, 8, 15),
+            agreement_end=date(2024, 8, 14),
+            contribution_type="financial",
+            registration_code="valid123",
+        )
+
     def test_minimal_form(self):
         """Test if minimal form works."""
         data = {
@@ -33,6 +45,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "email": "hpotter@magic.gov",
             "institution_other_name": "Ministry of Magic",
             "institution_other_URL": "magic.gov.uk",
+            "member_code": "",
             "location": "London",
             "country": "GB",
             "requested_workshop_types": [
@@ -344,6 +357,162 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             self.assertNotIn("instructor_availability", form.errors)
 
 
+class TestWorkshopRequestCreateView(TestBase):
+    """
+    Tests membership code validation which relies on the ENFORCE_MEMBER_CODES flag.
+    All other form validation is tested in the TestWorkshopRequestBaseForm class above.
+    """
+
+    INVALID_CODE_ERROR = "This code is invalid."
+
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
+
+    def setUpMembership(self):
+        self.membership = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            workshops_without_admin_fee_per_agreement=2,
+            contribution_type="financial",
+            registration_code="valid123",
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
+    def test_member_code_validation__not_enforced(self):
+        """Invalid code should pass if enforcement is not enabled."""
+        # Arrange
+        data = {
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid(self):
+        """valid code - no error"""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_no_match(self):
+        """code does not match a membership - error on code"""
+        # Arrange
+        data = {
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_too_early(self):
+        """code used before the membership is active - error on code"""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_start = date.today() + timedelta(days=61)
+        self.membership.save()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_too_late(self):
+        """code used after the membership ends - error on code"""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_end = date.today() - timedelta(days=1)
+        self.membership.save()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_no_workshops_remaining(self):
+        """code matches a membership with no workshops remaining - no error"""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "member_code": "valid123",
+        }
+        # create some past events for this membership
+        swc = Organization.objects.create(
+            domain="software-carpentry.org",
+            fullname="Software Carpentry",
+        )
+        Event.objects.create(
+            slug="test-membership-1",
+            host=self.org_alpha,
+            administrator=swc,
+            membership=self.membership,
+            start=date.today() - timedelta(weeks=1),
+        )
+        Event.objects.create(
+            slug="test-membership-2",
+            host=self.org_alpha,
+            administrator=swc,
+            membership=self.membership,
+            start=date.today() - timedelta(weeks=2),
+        )
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation_code_empty(self):
+        """empty code - no error"""
+        # Arrange
+        data = {
+            "member_code": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+
+
 class TestWorkshopRequestViews(TestBase):
     def setUp(self):
         super().setUp()
@@ -441,6 +610,58 @@ class TestWorkshopRequestViews(TestBase):
         self.assertEqual(rv.status_code, 302)
         request = Event.objects.get(slug="2018-10-28-test-event").workshoprequest
         self.assertEqual(request, self.wr1)
+
+    def test_accept_with_event_autofill(self):
+        """Ensure that fields are autofilled correctly when creating an Event from a
+        WorkshopRequest."""
+        # Arrange
+        expected_membership = Membership.objects.create(
+            name="Hogwarts",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            registration_code="hogwarts55",
+        )
+        wr = WorkshopRequest.objects.create(
+            # required fields
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@potter.com",
+            location="Scotland",
+            country="GB",
+            language=Language.objects.get(name="English"),
+            audience_description="Students of Hogwarts",
+            administrative_fee="forprofit",
+            travel_expences_management="reimbursed",
+            # fields that should be autofilled
+            institution=Organization.objects.first(),
+            preferred_dates=date.today(),
+            online_inperson="online",
+            workshop_listed=False,
+            additional_contact="hermione@granger.com",
+            member_code="hogwarts55",
+        )
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        wr.requested_workshop_types.set([curriculum])
+
+        expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
+
+        # Act
+        rv = self.client.get(reverse("workshoprequest_accept_event", args=[wr.pk]))
+        form_initial = rv.context["form"].initial
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertQuerysetEqual(
+            form_initial["curricula"].all(), wr.requested_workshop_types.all()
+        )
+        self.assertQuerysetEqual(form_initial["tags"], expected_tags)
+        self.assertEqual(form_initial["public_status"], "private")
+        self.assertEqual(form_initial["contact"], wr.additional_contact)
+        self.assertEqual(form_initial["host"].pk, wr.institution.pk)
+        self.assertEqual(form_initial["start"], wr.preferred_dates)
+        self.assertEqual(form_initial["end"], wr.preferred_dates + timedelta(days=1))
+        self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(

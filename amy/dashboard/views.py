@@ -659,7 +659,7 @@ def search(request):
             if len(tokens) == 2:
                 name1, name2 = tokens
                 complex_q = (
-                    Q(group_name__icontains=term)
+                    Q(member_code__icontains=term)
                     | (Q(personal__icontains=name1) & Q(family__icontains=name2))
                     | (Q(personal__icontains=name2) & Q(family__icontains=name1))
                     | Q(email__icontains=term)
@@ -676,7 +676,7 @@ def search(request):
             else:
                 training_requests = list(
                     TrainingRequest.objects.filter(
-                        Q(group_name__icontains=term)
+                        Q(member_code__icontains=term)
                         | Q(family__icontains=term)
                         | Q(email__icontains=term)
                         | Q(github__icontains=term)

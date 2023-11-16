@@ -38,8 +38,8 @@
     </tr>
     <tr>
       <th>Registration Code</th>
-      <td>{{ obj_a.group_name|default:"—" }}</td><td>{{ obj_b.group_name|default:"—" }}</td>
-      <th>{% include "includes/merge_radio.html" with field=form.group_name %}</th>
+      <td>{{ obj_a.member_code|default:"—" }}</td><td>{{ obj_b.member_code|default:"—" }}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.member_code %}</th>
     </tr>
     <tr>
       <th>Personal</th>

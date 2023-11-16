@@ -39,7 +39,7 @@ from workshops.tests.base import TestBase
 def create_training_request(state, person, open_review=True, reg_code=""):
     return TrainingRequest.objects.create(
         review_process="open" if open_review else "preapproved",
-        group_name=reg_code,
+        member_code=reg_code,
         personal="John",
         family="Smith",
         email="john@smith.com",
@@ -294,7 +294,7 @@ class TestTrainingRequestsListView(TestBase):
     def test_view_loads(self):
         """
         View should default to settings:
-            state=no_d (Pending or accepted)
+            state=pa (Pending or accepted)
             matched=u (Unmatched)
         """
         # Act
@@ -1042,7 +1042,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "obj_a",
             "state": "obj_b",
             "person": "obj_a",
-            "group_name": "obj_a",
+            "member_code": "obj_a",
             "personal": "obj_a",
             "middle": "obj_a",
             "family": "obj_a",
@@ -1088,7 +1088,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "obj_b",
             "state": "obj_a",
             "person": "obj_a",
-            "group_name": "obj_b",
+            "member_code": "obj_b",
             "personal": "obj_b",
             "middle": "obj_b",
             "family": "obj_b",
@@ -1156,7 +1156,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "combine",
             "state": "combine",
             "person": "combine",
-            "group_name": "combine",
+            "member_code": "combine",
             "personal": "combine",
             "middle": "combine",
             "family": "combine",
@@ -1234,7 +1234,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": self.first_req.id,
             "state": self.second_req.state,
             "person": self.first_req.person,
-            "group_name": self.first_req.group_name,
+            "member_code": self.first_req.member_code,
             "personal": self.first_req.personal,
             "middle": self.first_req.middle,
             "family": self.first_req.family,

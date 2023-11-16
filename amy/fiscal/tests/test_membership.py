@@ -197,6 +197,44 @@ class TestMembership(TestBase):
         self.assertEqual(self.current.public_instructor_training_seats_utilized, 5)
         self.assertEqual(self.current.public_instructor_training_seats_remaining, 23)
 
+    def test_active_on_date(self):
+        self.assertFalse(
+            self.current.active_on_date(self.agreement_start - timedelta(days=1))
+        )
+        self.assertTrue(self.current.active_on_date(self.agreement_start))
+        self.assertTrue(self.current.active_on_date(self.agreement_end))
+        self.assertFalse(
+            self.current.active_on_date(self.agreement_end + timedelta(days=1))
+        )
+
+    def test_active_on_date_with_grace_before(self):
+        self.assertFalse(
+            self.current.active_on_date(
+                self.agreement_start - timedelta(days=91),
+                grace_before=90,
+                grace_after=60,
+            )
+        )
+        self.assertTrue(
+            self.current.active_on_date(
+                self.agreement_start - timedelta(days=90),
+                grace_before=90,
+                grace_after=60,
+            )
+        )
+
+    def test_active_on_date_with_grace_after(self):
+        self.assertTrue(
+            self.current.active_on_date(
+                self.agreement_end + timedelta(days=60), grace_before=90, grace_after=60
+            )
+        )
+        self.assertFalse(
+            self.current.active_on_date(
+                self.agreement_end + timedelta(days=61), grace_before=90, grace_after=60
+            )
+        )
+
 
 class TestMembershipConsortiumCountingBase(TestBase):
     def setUp(self):
@@ -1091,11 +1129,11 @@ class TestMembershipExtension(TestBase):
         comment = "Everything is awesome."
         data = {"new_agreement_end": date(2021, 3, 31), "comment": comment}
         today = date.today()
-        expected_comment = f"""Extended membership by 30 days on {today} (new end date: 2021-03-31).
-
-----
-
-{comment}"""
+        expected_comment = (
+            f"Extended membership by 30 days on {today} (new end date: 2021-03-31)."
+            "\n\n----\n\n"
+            f"{comment}"
+        )
 
         # Act
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data)

@@ -1,0 +1,286 @@
+from datetime import date, timedelta
+
+from django.test import override_settings
+from django.urls import reverse
+
+from extrequests.tests.test_training_request import create_training_request
+from workshops.models import Event, Membership, Role, Tag, Task, TrainingRequest
+from workshops.tests.base import TestBase
+
+
+class TestTrainingRequestUpdateForm(TestBase):
+    INVALID_MEMBER_CODE_ERROR = "This code is invalid."
+
+    def setUp(self):
+        self._setUpUsersAndLogin()
+        self._setUpRoles()
+        self.request = create_training_request(
+            state="p", person=None, open_review=False
+        )
+
+    def setUpMembership(self):
+        self.membership = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            contribution_type="financial",
+            registration_code="valid123",
+            public_instructor_training_seats=1,
+            inhouse_instructor_training_seats=1,
+        )
+
+    def setUpUsedSeats(self):
+        # set up some prior seat usage
+        super().setUp()
+        self._setUpTags()
+        ttt_event = Event.objects.create(slug="ttt-event", host=self.org_alpha)
+        ttt_event.tags.add(Tag.objects.get(name="TTT"))
+        learner = Role.objects.get(name="learner")
+        self.task_public = Task.objects.create(
+            event=ttt_event,
+            person=self.spiderman,
+            role=learner,
+            seat_membership=self.membership,
+            seat_public=True,
+        )
+        self.task_inhouse = Task.objects.create(
+            event=ttt_event,
+            person=self.blackwidow,
+            role=learner,
+            seat_membership=self.membership,
+            seat_public=False,
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
+    def test_member_code_validation__not_enforced(self):
+        """Invalid code should pass if enforcement is not enabled."""
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid(self):
+        """Valid member code should pass."""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_invalid(self):
+        """Invalid member code should not pass."""
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "No membership found for code &quot;invalid&quot;.")
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_inactive_early(self):
+        """Code used >90 days before membership start date should not pass."""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_start = date.today() + timedelta(days=91)
+        self.membership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(
+            rv,
+            f"Membership is inactive (start {self.membership.agreement_start}, "
+            f"end {self.membership.agreement_end}).",
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_inactive_late(self):
+        """Code used >90 days after membership end date should not pass."""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_end = date.today() - timedelta(days=91)
+        self.membership.save()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(
+            rv,
+            f"Membership is inactive (start {self.membership.agreement_start}, "
+            f"end {self.membership.agreement_end}).",
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_no_seats_remaining(self):
+        """Code with no seats remaining should not pass."""
+        # Arrange
+        self.setUpMembership()
+        self.setUpUsedSeats()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "Membership has no training seats remaining.")
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_only_public_seats_remaining(self):
+        """Code with only public seats remaining should pass."""
+        # Arrange
+        self.setUpMembership()
+        self.setUpUsedSeats()
+        self.task_public.delete()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_only_inhouse_seats_remaining(self):
+        """Code with only inhouse seats remaining should pass."""
+        # Arrange
+        self.setUpMembership()
+        self.setUpUsedSeats()
+        self.task_inhouse.delete()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_invalid_override(self):
+        """Invalid member code should be accepted when the override is ticked."""
+        # Arrange
+        data = {
+            "review_process": "preapproved",
+            "member_code": "invalid",
+            "member_code_override": True,
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid_override(self):
+        """Override should be quietly hidden if a valid code is used."""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "review_process": "preapproved",
+            "member_code": "valid123",
+            "member_code_override": True,
+        }
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid_override_full_request(self):
+        """Override should be quietly changed to False if a valid code is used
+        in a successful submission."""
+        # Arrange
+        super().setUp()
+        self.setUpMembership()
+        data = self.request.__dict__
+        data["person_id"] = self.spiderman.pk
+        data["member_code"] = "valid123"
+        data["member_code_override"] = True
+        data.pop("score_manual")  # can't encode None in POST request, so omit
+
+        # Act
+        rv = self.client.post(
+            reverse("trainingrequest_edit", args=[self.request.pk]),
+            data=data,
+            follow=True,
+        )
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "trainingrequest_details")
+        self.assertFalse(
+            TrainingRequest.objects.get(member_code="valid123").member_code_override
+        )
