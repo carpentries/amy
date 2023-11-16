@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("workshops", "0265_add_member_code_and_override"),
+        ("workshops", "0266_add_member_code_and_override"),
     ]
 
     operations = [
