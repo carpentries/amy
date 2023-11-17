@@ -4,6 +4,15 @@ This document tracks steps that must be completed manually before or after the s
 
 ## v4.3
 
+### Before
+
+#### Member docs
+
+1. Check for TrainingProgress with non-unique combinations of `trainee` and `event` (excluding nulls), and remove duplicates.
+This is required for the migration `workshops.0264_trainingprogress_unique_trainee_at_event` to succeed.
+
+#### Automated emails
+
 1. Deploy the worker correctly to PROD environment
 2. Prepare production email worker account only with `knox.add_authtoken` permission and active status
     * put this account credentials in SSM parameters `/{stage}/email-worker/token_username` and `/{stage}/email-worker/token_password`
@@ -11,6 +20,8 @@ This document tracks steps that must be completed manually before or after the s
 ### After
 
 * Update Redash queries about training requests to change `group_name` to `member_code` (in line with changes to the `TrainingRequest` model).
+
+------------------------------------------------------------
 
 ## v4.2
 
