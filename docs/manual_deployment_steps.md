@@ -4,7 +4,10 @@ This document tracks steps that must be completed manually before or after the s
 
 ## v4.3
 
-Nothing yet.
+### Before
+
+* Check for TrainingProgress with non-unique combinations of `trainee` and `event` (excluding nulls), and remove duplicates.
+This is required for the migration `workshops.0264_trainingprogress_unique_trainee_at_event` to succeed.
 
 ### After
 
