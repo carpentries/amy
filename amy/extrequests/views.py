@@ -577,9 +577,7 @@ def all_trainingrequests(request):
                             "code, so cannot be matched to a seat."
                         )
                         continue
-                    membership_to_use = get_membership_from_code_if_exists(
-                        r.member_code
-                    )
+                    membership_to_use = get_membership_or_none_from_code(r.member_code)
                     if not membership_to_use:
                         errors.append(
                             f"{r}: No membership found for registration code "
