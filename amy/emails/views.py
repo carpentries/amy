@@ -63,7 +63,9 @@ class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
         context["body_context_annotations"] = {}
         if signal:
             context["body_context_type"] = signal.context_type
-            context["body_context_annotations"] = signal.context_type.__annotations__
+            context["body_context_annotations"] = {
+                k: repr(v) for k, v in signal.context_type.__annotations__.items()
+            }
         return context
 
 
@@ -96,7 +98,9 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
         context["body_context_annotations"] = {}
         if signal:
             context["body_context_type"] = signal.context_type
-            context["body_context_annotations"] = signal.context_type.__annotations__
+            context["body_context_annotations"] = {
+                k: repr(v) for k, v in signal.context_type.__annotations__.items()
+            }
         return context
 
 
