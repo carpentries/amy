@@ -85,7 +85,7 @@ class TestEmailTemplateDetails(TestBase):
         self.assertEqual(
             rv.context["body_context_annotations"],
             {
-                "person": Person,
+                "person": repr(Person),
             },
         )
 
@@ -147,7 +147,7 @@ class TestEmailTemplateUpdateView(TestBase):
         self.assertEqual(
             rv.context["body_context_annotations"],
             {
-                "person": Person,
+                "person": repr(Person),
             },
         )
 

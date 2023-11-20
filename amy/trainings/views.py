@@ -4,6 +4,11 @@ from django.db.models import Case, Count, F, IntegerField, Prefetch, Sum, When
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
+from emails.actions.instructor_training_approaching import EmailStrategyException
+from emails.actions.instructor_training_completed_not_badged import (
+    instructor_training_completed_not_badged_strategy,
+    run_instructor_training_completed_not_badged_strategy,
+)
 from trainings.filters import TraineeFilter
 from trainings.forms import BulkAddTrainingProgressForm, TrainingProgressForm
 from trainings.utils import raise_validation_error_if_no_learner_task
@@ -74,16 +79,74 @@ class TrainingProgressCreate(
         context["form"].helper = context["form"].create_helper
         return context
 
+    def form_valid(self, form):
+        person = form.cleaned_data["trainee"]
+        event = form.cleaned_data["event"]
+        result = super().form_valid(form)
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor training completed strategy. {exc}",
+            )
+        return result
+
 
 class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
     template_name = "trainings/trainingprogress_form.html"
 
+    def form_valid(self, form):
+        person = form.cleaned_data["trainee"]
+        event = form.cleaned_data["event"]
+        result = super().form_valid(form)
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+        return result
+
 
 class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin, AMYDeleteView):
     model = TrainingProgress
     success_url = reverse_lazy("all_trainees")
+    object: TrainingProgress
+
+    def before_delete(self, *args, **kwargs):
+        """Save for use in `after_delete` method."""
+        self._person = self.object.trainee
+        self._event = self.object.event
+
+    def after_delete(self, *args, **kwargs):
+        person = self._person
+        event = self._event
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor training completed strategy. {exc}",
+            )
 
 
 def all_trainees_queryset():
@@ -144,6 +207,21 @@ def all_trainees(request):
                     )
                     progress.full_clean()
                     progress.save()
+
+                    try:
+                        run_instructor_training_completed_not_badged_strategy(
+                            instructor_training_completed_not_badged_strategy(trainee),
+                            request=request,
+                            person=trainee,
+                            training_completed_date=event.end if event else None,
+                        )
+                    except EmailStrategyException as exc:
+                        messages.error(
+                            request,
+                            "Error when running instructor training completed strategy."
+                            f" {exc}",
+                        )
+
                 except ValidationError as e:
                     unique_constraint_message = (
                         "Training progress with this Trainee "

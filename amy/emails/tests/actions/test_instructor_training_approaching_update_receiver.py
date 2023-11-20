@@ -96,7 +96,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
 
@@ -136,7 +136,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
         context = {
@@ -209,7 +209,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
         ScheduledEmail.objects.create(
@@ -218,7 +218,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
         event = self.event
@@ -252,7 +252,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             to_header=[],
             cc_header=[],
             bcc_header=[],
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             generic_relation=self.event,
         )
         signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME

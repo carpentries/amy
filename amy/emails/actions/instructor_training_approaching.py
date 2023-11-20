@@ -7,7 +7,7 @@ from django.utils import timezone
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
-from emails.models import ScheduledEmail
+from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     Signal,
@@ -26,6 +26,7 @@ from workshops.models import Event, Task
 logger = logging.getLogger("amy")
 
 
+# TODO: move out to a common file
 class EmailStrategyException(Exception):
     pass
 
@@ -48,7 +49,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
         template__signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-        state="scheduled",
+        state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
     logger.debug(f"{has_email_scheduled=}")
 
@@ -65,6 +66,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     return result
 
 
+# TODO: turn into a generic function/class
 def run_instructor_training_approaching_strategy(
     strategy: StrategyEnum, request: HttpRequest, event: Event
 ) -> None:
@@ -95,7 +97,9 @@ def run_instructor_training_approaching_strategy(
 class InstructorTrainingApproachingReceiver(BaseAction):
     signal = instructor_training_approaching_signal.signal_name
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> datetime:
         event_start_date = kwargs["event_start_date"]
         return one_month_before(event_start_date)
 
@@ -113,12 +117,16 @@ class InstructorTrainingApproachingReceiver(BaseAction):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
         return context["event"]
 
     def get_recipients(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> list[str]:
         instructors = context["instructors"]
         return [instructor.email for instructor in instructors if instructor.email]
@@ -127,7 +135,9 @@ class InstructorTrainingApproachingReceiver(BaseAction):
 class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
     signal = instructor_training_approaching_update_signal.signal_name
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> datetime:
         event_start_date = kwargs["event_start_date"]
         return one_month_before(event_start_date)
 
@@ -145,12 +155,16 @@ class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
         return context["event"]
 
     def get_recipients(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> list[str]:
         instructors = context["instructors"]
         return [instructor.email for instructor in instructors if instructor.email]
@@ -173,7 +187,9 @@ class InstructorTrainingApproachingCancelReceiver(BaseActionCancel):
         }
 
     def get_generic_relation_object(
-        self, context: InstructorTrainingApproachingContext, **kwargs
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
         return context["event"]
 

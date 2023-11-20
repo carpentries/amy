@@ -1,5 +1,4 @@
 {% extends "base_nav.html" %}
-{% load emails %}
 
 {% block content %}
 
@@ -102,7 +101,7 @@
     <td colspan="2">
       <ul>
       {% for key, value in body_context_annotations.items %}
-      <li><code>{{ key }}</code>: {{ value|model_documentation_link|urlize }}</li>
+      <li><code>{{ key }}</code>: {{ value }}</li>
       {% endfor %}
       </ul>
     </td>

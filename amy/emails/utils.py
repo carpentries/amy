@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from functools import partial
 import logging
 from typing import Iterable, cast
 
@@ -29,12 +30,27 @@ def immediate_action() -> datetime:
     return timezone.now() + timedelta(hours=1)
 
 
-def one_month_before(date: date) -> datetime:
-    """Timezone-aware datetime object for action scheduled one month before, uses
-    current time in UTC as time component of the returned datetime object."""
+def combine_date_with_current_utc_time(date: date) -> datetime:
+    """Return timezone-aware datetime object combining current time in UTC
+    with a given date."""
     current_time_utc = datetime.now(timezone.utc).timetz()
-    date_shifted = date - timedelta(days=30)
-    return datetime.combine(date_shifted, current_time_utc)
+    return datetime.combine(date, current_time_utc)
+
+
+def shift_date_and_apply_current_utc_time(date: date, offset: timedelta) -> datetime:
+    """Return timezone-aware datetime object combining current time in UTC
+    with a given date shifted by offset (timedelta).
+    Time component of the offset is discarded."""
+    date_shifted = date + offset
+    return combine_date_with_current_utc_time(date_shifted)
+
+
+one_month_before = partial(
+    shift_date_and_apply_current_utc_time, offset=-timedelta(days=30)
+)
+two_months_after = partial(
+    shift_date_and_apply_current_utc_time, offset=timedelta(days=60)
+)
 
 
 def messages_missing_recipients(request: HttpRequest, signal: str) -> None:

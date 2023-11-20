@@ -10,6 +10,7 @@ import pytz
 from emails.models import ScheduledEmail
 from emails.signals import Signal
 from emails.utils import (
+    combine_date_with_current_utc_time,
     find_signal_by_name,
     immediate_action,
     messages_action_cancelled,
@@ -21,6 +22,8 @@ from emails.utils import (
     one_month_before,
     person_from_request,
     session_condition,
+    shift_date_and_apply_current_utc_time,
+    two_months_after,
 )
 from workshops.models import Person
 
@@ -51,6 +54,42 @@ class TestImmediateAction(TestCase):
         self.assertTrue(immediate - timedelta(hours=1) - now < timedelta(seconds=1))
 
 
+class TestCombineDateWithCurrentUtcTime(TestCase):
+    @patch("emails.utils.datetime", wraps=datetime)
+    def test_combine_date_with_current_utc_time(self, mock_datetime) -> None:
+        # Arrange
+        mock_datetime.now.return_value = datetime(
+            2020, 1, 31, 12, 1, 2, tzinfo=pytz.UTC
+        )
+        date_to_combine = date(1999, 12, 31)
+
+        # Act
+        calculated = combine_date_with_current_utc_time(date_to_combine)
+
+        # Assert
+        self.assertEqual(calculated.tzinfo, pytz.UTC)
+        self.assertEqual(calculated.date(), date(1999, 12, 31))
+        self.assertEqual(calculated.timetz(), time(12, 1, 2, tzinfo=pytz.UTC))
+
+
+class TestShiftDateAndApplyCurrentUtcTime(TestCase):
+    @patch("emails.utils.datetime", wraps=datetime)
+    def test_shift_date_and_apply_current_utc_time(self, mock_datetime) -> None:
+        # Arrange
+        mocked_datetime = datetime(2020, 1, 31, 12, 0, 0, tzinfo=pytz.UTC)
+        mock_datetime.now.return_value = mocked_datetime
+        date_to_shift = date(1999, 12, 31)
+        offset = timedelta(days=1, hours=1, minutes=2, seconds=3)
+
+        # Act
+        shifted = shift_date_and_apply_current_utc_time(date_to_shift, offset)
+
+        # Assert
+        self.assertEqual(shifted.tzinfo, pytz.UTC)
+        self.assertEqual(shifted.date(), date(2000, 1, 1))
+        self.assertEqual(shifted.timetz(), time(12, 0, 0, tzinfo=pytz.UTC))
+
+
 class TestOneMonthBefore(TestCase):
     @patch("emails.utils.datetime", wraps=datetime)
     def test_one_month_before(self, mock_datetime) -> None:
@@ -66,6 +105,24 @@ class TestOneMonthBefore(TestCase):
         # Assert
         self.assertEqual(calculated.tzinfo, pytz.UTC)
         self.assertEqual(calculated.date(), date(2020, 1, 1))
+        self.assertEqual(calculated.timetz(), time(12, 0, 0, tzinfo=pytz.UTC))
+
+
+class TestTwoMonthsAfter(TestCase):
+    @patch("emails.utils.datetime", wraps=datetime)
+    def test_two_months_after(self, mock_datetime) -> None:
+        # Arrange
+        mock_datetime.now.return_value = datetime(
+            2020, 1, 31, 12, 0, 0, tzinfo=pytz.UTC
+        )
+        start_date = date(2020, 1, 31)
+
+        # Act
+        calculated = two_months_after(start_date)
+
+        # Assert
+        self.assertEqual(calculated.tzinfo, pytz.UTC)
+        self.assertEqual(calculated.date(), date(2020, 3, 31))
         self.assertEqual(calculated.timetz(), time(12, 0, 0, tzinfo=pytz.UTC))
 
 

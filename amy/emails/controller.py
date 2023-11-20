@@ -46,7 +46,7 @@ class EmailController:
         body = EmailTemplate.render_template(engine, template.body, dict(context))
 
         scheduled_email = ScheduledEmail.objects.create(
-            state="scheduled",
+            state=ScheduledEmailStatus.SCHEDULED,
             scheduled_at=scheduled_at,
             to_header=to_header,
             from_header=template.from_header,
@@ -129,7 +129,6 @@ class EmailController:
 
         signal = template.signal
         engine = EmailTemplate.get_engine()
-        old_state = scheduled_email.state
 
         subject = EmailTemplate.render_template(engine, template.subject, dict(context))
         body = EmailTemplate.render_template(engine, template.body, dict(context))
@@ -143,8 +142,8 @@ class EmailController:
 
         ScheduledEmailLog.objects.create(
             details=f"Updated {signal}",
-            state_before=old_state,
-            state_after=ScheduledEmailStatus.SCHEDULED,
+            state_before=scheduled_email.state,
+            state_after=scheduled_email.state,
             scheduled_email=scheduled_email,
             author=author,
         )

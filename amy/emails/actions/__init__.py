@@ -17,4 +17,9 @@ from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_remove_receiver,
     instructor_training_approaching_update_receiver,
 )
+from emails.actions.instructor_training_completed_not_badged import (
+    instructor_training_completed_not_badged_receiver,
+    instructor_training_completed_not_badged_remove_receiver,
+    instructor_training_completed_not_badged_update_receiver,
+)
 from emails.actions.persons_merged import persons_merged_receiver

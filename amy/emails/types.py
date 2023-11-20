@@ -5,7 +5,7 @@ from typing import TypedDict
 from django.http import HttpRequest
 
 from recruitment.models import InstructorRecruitmentSignup
-from workshops.models import Award, Event, Person
+from workshops.models import Award, Event, Person, TrainingProgress, TrainingRequirement
 
 
 class InstructorBadgeAwardedKwargs(TypedDict):
@@ -95,6 +95,20 @@ class InstructorTrainingApproachingKwargs(TypedDict):
 class InstructorTrainingApproachingContext(TypedDict):
     event: Event
     instructors: list[Person]
+
+
+class InstructorTrainingCompletedNotBadgedKwargs(TypedDict):
+    request: HttpRequest
+    person: Person
+    training_completed_date: date
+
+
+class InstructorTrainingCompletedNotBadgedContext(TypedDict):
+    person: Person
+    passed_requirements: list[TrainingProgress]
+    not_passed_requirements: list[TrainingProgress]
+    not_graded_requirements: list[TrainingRequirement]
+    training_completed_date: date
 
 
 class StrategyEnum(StrEnum):

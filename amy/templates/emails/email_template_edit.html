@@ -1,7 +1,6 @@
 {% extends "base_nav.html" %}
 
 {% load crispy_forms_tags %}
-{% load emails %}
 
 {% block content %}
 
@@ -14,7 +13,7 @@
   <div class="col-12 col-lg-10">
     <ul>
     {% for key, value in body_context_annotations.items %}
-    <li><code>{{ key }}</code>: {{ value|model_documentation_link|urlize }}</li>
+    <li><code>{{ key }}</code>: {{ value }}</li>
     {% endfor %}
     </ul>
   </div>

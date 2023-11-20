@@ -10,6 +10,7 @@ from emails.types import (
     InstructorDeclinedContext,
     InstructorSignupContext,
     InstructorTrainingApproachingContext,
+    InstructorTrainingCompletedNotBadgedContext,
     PersonsMergedContext,
 )
 
@@ -22,6 +23,9 @@ class SignalNameEnum(StrEnum):
     admin_signs_instructor_up_for_workshop = "admin_signs_instructor_up_for_workshop"
     persons_merged = "persons_merged"
     instructor_training_approaching = "instructor_training_approaching"
+    instructor_training_completed_not_badged = (
+        "instructor_training_completed_not_badged"
+    )
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -83,6 +87,27 @@ instructor_training_approaching_update_signal = Signal(
 instructor_training_approaching_remove_signal = Signal(
     signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     context_type=InstructorTrainingApproachingContext,
+)
+
+# Runs 2 months after completing training.
+INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME = (
+    "instructor_training_completed_not_badged"
+)
+instructor_training_completed_not_badged_signal = Signal(
+    signal_name=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
+    context_type=InstructorTrainingCompletedNotBadgedContext,
+)
+# Emitted when conditions for the previous signal may have changed and
+# the email should be re-calculated.
+instructor_training_completed_not_badged_update_signal = Signal(
+    signal_name=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
+    context_type=InstructorTrainingCompletedNotBadgedContext,
+)
+# Emitted when conditions for the previous signal may have changed and
+# the email should be cancelled.
+instructor_training_completed_not_badged_remove_signal = Signal(
+    signal_name=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
+    context_type=InstructorTrainingCompletedNotBadgedContext,
 )
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
