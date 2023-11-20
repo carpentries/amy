@@ -176,11 +176,8 @@ def get_membership_warnings_after_match(
     return warnings
 
 
-def get_eventbrite_id_from_url(url: str) -> str:
+def get_eventbrite_id_from_url_or_return_input(url: str) -> str:
     """Given the URL for an Eventbrite event, returns that event's ID.
-    If the ID can't be found, returns the original URL."""
-    if not isinstance(url, str):
-        return url
-
+    If the ID can't be found, returns the input URL."""
     match = re.search(EVENTBRITE_ID_PATTERN, url)
     return match.group() if match else url

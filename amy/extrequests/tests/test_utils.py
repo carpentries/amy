@@ -6,7 +6,7 @@ from extrequests.tests.test_training_request import create_training_request
 from extrequests.utils import (
     MemberCodeValidationError,
     accept_training_request_and_match_to_event,
-    get_eventbrite_id_from_url,
+    get_eventbrite_id_from_url_or_return_input,
     get_membership_from_training_request_or_raise_error,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
@@ -624,7 +624,7 @@ class TestGetEventbriteIdFromUrl(TestCase):
         url = "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator"  # noqa: line too long
 
         # Act
-        result = get_eventbrite_id_from_url(url)
+        result = get_eventbrite_id_from_url_or_return_input(url)
 
         # Assert
         self.assertEqual(result, "711575811407")
@@ -634,7 +634,7 @@ class TestGetEventbriteIdFromUrl(TestCase):
         url = "https://www.eventbrite.com/e/711575811407"
 
         # Act
-        result = get_eventbrite_id_from_url(url)
+        result = get_eventbrite_id_from_url_or_return_input(url)
 
         # Assert
         self.assertEqual(result, "711575811407")
@@ -644,7 +644,7 @@ class TestGetEventbriteIdFromUrl(TestCase):
         url = "https://www.eventbrite.com/myevent?eid=711575811407"
 
         # Act
-        result = get_eventbrite_id_from_url(url)
+        result = get_eventbrite_id_from_url_or_return_input(url)
 
         # Assert
         self.assertEqual(result, "711575811407")
