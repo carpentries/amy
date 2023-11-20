@@ -579,7 +579,9 @@ def all_trainingrequests(request):
                         )
                         continue
                     try:
-                        Membership.objects.get(registration_code=r.member_code)
+                        membership_to_use = Membership.objects.get(
+                            registration_code=r.member_code
+                        )
                     except Membership.DoesNotExist:
                         errors.append(
                             f"{r}: No membership found for registration code "
