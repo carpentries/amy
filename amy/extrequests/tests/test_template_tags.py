@@ -6,7 +6,6 @@ from amy.extrequests.templatetags.request_membership import (
     membership_active,
     membership_alert_type,
 )
-
 from workshops.models import Membership
 
 
