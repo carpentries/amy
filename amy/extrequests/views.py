@@ -63,6 +63,7 @@ from workshops.forms import (
 from workshops.models import (
     Event,
     Language,
+    Membership,
     Organization,
     Person,
     Role,
@@ -577,8 +578,9 @@ def all_trainingrequests(request):
                             "code, so cannot be matched to a seat."
                         )
                         continue
-                    membership_to_use = get_membership_or_none_from_code(r.member_code)
-                    if not membership_to_use:
+                    try:
+                        Membership.objects.get(registration_code=r.member_code)
+                    except Membership.DoesNotExist:
                         errors.append(
                             f"{r}: No membership found for registration code "
                             f'"{r.member_code}".'
@@ -603,6 +605,8 @@ def all_trainingrequests(request):
                     ),
                 )
 
+                # if membership is different for each request,
+                # collect warnings after each request is processed
                 if membership_auto_assign:
                     warnings += [
                         f"{r}: {w}"
@@ -613,6 +617,8 @@ def all_trainingrequests(request):
                         )
                     ]
 
+            # if membership is the same for all matches,
+            # collect warnings after all requests are processed
             if membership:
                 warnings = get_membership_warnings_after_match(
                     membership=membership, seat_public=seat_public, event=event

@@ -83,8 +83,6 @@ def get_membership_warnings_after_match(
 ) -> list[str]:
     warnings = []
 
-    today = date.today()
-
     remaining = (
         membership.public_instructor_training_seats_remaining
         if seat_public
@@ -97,7 +95,7 @@ def get_membership_warnings_after_match(
         )
 
     # check if membership is active
-    if not (membership.agreement_start <= today <= membership.agreement_end):
+    if not (membership.agreement_start <= date.today() <= membership.agreement_end):
         warnings.append(
             f'Membership "{membership}" is not active.',
         )
