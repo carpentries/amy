@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Iterable, cast
+from urllib.parse import urlparse
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.layout import HTML, Div, Field, Layout
@@ -250,6 +251,12 @@ class TrainingRequestForm(forms.ModelForm):
                 errors["member_code"] = ValidationError(error_msg)
 
         return errors
+
+    def clean_eventbrite_url(self):
+        """Check that entered URL includes 'eventbrite' in the domain."""
+        eventbrite_url = self.cleaned_data.get("eventbrite_url", "")
+        if eventbrite_url and "eventbrite" not in urlparse(eventbrite_url).netloc:
+            raise ValidationError("Must be an Eventbrite URL.")
 
     def clean(self):
         super().clean()
