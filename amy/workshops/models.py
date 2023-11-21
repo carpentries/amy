@@ -2138,8 +2138,11 @@ class TrainingRequest(
         null=False,
         blank=True,
         default="",
-        verbose_name="If you have already registered for an event through Eventbrite, "
-        "enter the URL of that event.",
+        verbose_name="Eventbrite URL",
+        help_text="If you are registering or have registered for a training event "
+        "through Eventbrite, enter the URL of that event. You can find this on the "
+        "registration page or in the confirmation email. "
+        "If you have not yet registered for an event, leave this field blank.",
     )
 
     personal = models.CharField(
