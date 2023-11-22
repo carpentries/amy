@@ -568,14 +568,14 @@ def all_trainingrequests(request):
             role = Role.objects.get(name="learner")
 
             # Perform bulk match using one of two methods
-            requests = match_form.cleaned_data["requests"]
+            training_requests = match_form.cleaned_data["requests"]
             errors = []
             warnings = []
 
             # Method 1: Auto assign membership
             # membership is different for each seat (and may not be None)
             if membership_auto_assign:
-                for r in requests:
+                for r in training_requests:
                     # find which membership to use
                     # if membership can't be determined, skip this request
                     if membership_auto_assign:
@@ -611,7 +611,7 @@ def all_trainingrequests(request):
             # membership is same for all seats (and may be None)
             else:
                 # perform matches
-                for r in request:
+                for r in training_requests:
                     accept_training_request_and_match_to_event(
                         request=r,
                         event=event,
