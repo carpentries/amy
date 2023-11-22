@@ -578,14 +578,13 @@ def all_trainingrequests(request):
                 for r in training_requests:
                     # find which membership to use
                     # if membership can't be determined, skip this request
-                    if membership_auto_assign:
-                        try:
-                            membership_to_use = (
-                                get_membership_from_training_request_or_raise_error(r)
-                            )
-                        except (ValueError, Membership.DoesNotExist) as e:
-                            errors.append(str(e))
-                            continue
+                    try:
+                        membership_to_use = (
+                            get_membership_from_training_request_or_raise_error(r)
+                        )
+                    except (ValueError, Membership.DoesNotExist) as e:
+                        errors.append(str(e))
+                        continue
 
                     # perform match
                     accept_training_request_and_match_to_event(
@@ -627,6 +626,7 @@ def all_trainingrequests(request):
                         membership=membership, seat_public=seat_public, event=event
                     )
 
+            # Matching is complete, display messages
             for msg in warnings:
                 messages.warning(request, msg)
             for msg in errors:
