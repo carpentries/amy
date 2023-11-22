@@ -103,9 +103,9 @@ def get_membership_warnings_after_match(
     # show warning if training falls out of agreement dates
     if (
         event.start
-        and event.start < membership.agreement_start
+        and not (membership.agreement_start <= event.start <= membership.agreement_end)
         or event.end
-        and event.end > membership.agreement_end
+        and not (membership.agreement_start <= event.end <= membership.agreement_end)
     ):
         warnings.append(
             f'Training "{event}" has start or end date outside '

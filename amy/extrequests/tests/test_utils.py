@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from extrequests.utils import (
     MemberCodeValidationError,
     get_membership_or_none_from_code,
+    get_membership_warnings_after_match,
     member_code_valid,
     member_code_valid_training,
 )
@@ -283,3 +284,171 @@ class TestGetMembershipFromCodeIfExists(TestBase):
 
         # Assert
         self.assertEqual(result, self.membership)
+
+
+class TestGetMembershipWarningsAfterMatch(TestBase):
+    def setUp(self):
+        self._setUpOrganizations()
+        self._setUpTags()
+        self.valid_code = "valid123"
+        self.membership = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            contribution_type="financial",
+            registration_code=self.valid_code,
+            public_instructor_training_seats=1,
+            inhouse_instructor_training_seats=1,
+        )
+        # set up an event that happens during the membership
+        self.event = Event.objects.create(
+            start=date.today() + timedelta(weeks=2),
+            slug="event-ttt",
+            host=self.org_beta,
+        )
+        self.event.tags.add(Tag.objects.get(name="TTT"))
+
+    def test_warns_no_seats_remaining__public(self):
+        # Arrange
+        self.membership.public_instructor_training_seats = 0
+        self.membership.save()
+        expected = [
+            f'Membership "{self.membership}" is using more training seats than '
+            "it's been allowed.",
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=True, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
+
+    def test_warns_no_seats_remaining__inhouse(self):
+        # Arrange
+        self.membership.inhouse_instructor_training_seats = 0
+        self.membership.save()
+        expected = [
+            f'Membership "{self.membership}" is using more training seats than '
+            "it's been allowed.",
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=False, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
+
+    def test_warns_membership_not_active(self):
+        # Arrange
+        self.membership.agreement_start = date.today() + timedelta(days=1)
+        self.membership.save()
+        expected = [
+            f'Membership "{self.membership}" is not active.',
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=True, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
+
+    def test_warns_event_outside_membership_dates__early_start(self):
+        # Arrange
+        self.event.start = self.membership.agreement_start - timedelta(days=1)
+        self.event.save()
+        expected = [
+            f'Training "{self.event}" has start or end date outside '
+            f'membership "{self.membership}" agreement dates.',
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=True, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
+
+    def test_warns_event_outside_membership_dates__early_end(self):
+        # Arrange
+        # create a case where the end of the event is before the start
+        # this shouldn't happen in reality but allows us to check the logic
+        self.event.end = self.membership.agreement_start - timedelta(days=1)
+        self.event.save()
+        expected = [
+            f'Training "{self.event}" has start or end date outside '
+            f'membership "{self.membership}" agreement dates.',
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=True, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
+
+    def test_warns_event_outside_membership_dates__late_start(self):
+        # Arrange
+        self.event.start = self.membership.agreement_end + timedelta(days=1)
+        self.event.save()
+        expected = [
+            f'Training "{self.event}" has start or end date outside '
+            f'membership "{self.membership}" agreement dates.',
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=True, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
+
+    def test_warns_event_outside_membership_dates__late_end(self):
+        # Arrange
+        self.event.end = self.membership.agreement_end + timedelta(days=1)
+        self.event.save()
+        expected = [
+            f'Training "{self.event}" has start or end date outside '
+            f'membership "{self.membership}" agreement dates.',
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=True, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
+
+    def test_multiple_warnings(self):
+        # Arrange
+        self.membership.public_instructor_training_seats = 0
+        self.membership.agreement_start = date.today() + timedelta(days=1)
+        self.membership.save()
+        self.event.start = self.membership.agreement_end + timedelta(days=1)
+        self.event.end = self.event.start + timedelta(days=1)
+        self.event.save()
+        expected = [
+            f'Membership "{self.membership}" is using more training seats than '
+            "it's been allowed.",
+            f'Membership "{self.membership}" is not active.',
+            f'Training "{self.event}" has start or end date outside '
+            f'membership "{self.membership}" agreement dates.',
+        ]
+
+        # Act
+        result = get_membership_warnings_after_match(
+            self.membership, seat_public=True, event=self.event
+        )
+
+        # Assert
+        self.assertListEqual(expected, result)
