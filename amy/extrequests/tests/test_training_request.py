@@ -683,7 +683,7 @@ class TestTrainingRequestsListView(TestBase):
         self.assertContains(
             rv,
             "Request does not include a member registration "
-            "code, so cannot be matched to a seat.",
+            "code, so cannot be matched to a membership seat.",
         )
 
 
