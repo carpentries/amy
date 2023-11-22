@@ -658,8 +658,11 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
             "seat_public": "True",
         }
+
+        # Act
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
+        # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
         self.assertNotContains(
