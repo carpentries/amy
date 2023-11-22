@@ -41,6 +41,8 @@ from extrequests.forms import (
 )
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from extrequests.utils import (
+    accept_training_request_and_match_to_event,
+    get_membership_from_training_request_or_raise_error,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
 )
@@ -565,51 +567,37 @@ def all_trainingrequests(request):
             open_seat = match_form.cleaned_data["seat_open_training"]
             role = Role.objects.get(name="learner")
 
-            # Perform bulk match
+            # Perform bulk match using one of two methods
+            requests = match_form.cleaned_data["requests"]
             errors = []
             warnings = []
-            for r in match_form.cleaned_data["requests"]:
-                # find which membership to use
-                # if membership can't be determined, skip this request
-                if membership_auto_assign:
-                    if not r.member_code:
-                        errors.append(
-                            f"{r}: Request does not include a member registration "
-                            "code, so cannot be matched to a seat."
-                        )
-                        continue
-                    try:
-                        membership_to_use = Membership.objects.get(
-                            registration_code=r.member_code
-                        )
-                    except Membership.DoesNotExist:
-                        errors.append(
-                            f"{r}: No membership found for registration code "
-                            f'"{r.member_code}".'
-                        )
-                        continue
-                else:
-                    membership_to_use = membership
 
-                # automatically accept this request
-                r.state = "a"
-                r.save()
+            # Method 1: Auto assign membership
+            # membership is different for each seat (and may not be None)
+            if membership_auto_assign:
+                for r in requests:
+                    # find which membership to use
+                    # if membership can't be determined, skip this request
+                    if membership_auto_assign:
+                        try:
+                            membership_to_use = (
+                                get_membership_from_training_request_or_raise_error(r)
+                            )
+                        except (ValueError, Membership.DoesNotExist) as e:
+                            errors.append(str(e))
+                            continue
 
-                # assign to an event
-                Task.objects.get_or_create(
-                    event=event,
-                    person=r.person,
-                    role=role,
-                    defaults=dict(
-                        seat_membership=membership_to_use,
+                    # perform match
+                    accept_training_request_and_match_to_event(
+                        request=r,
+                        event=event,
+                        role=role,
                         seat_public=seat_public,
                         seat_open_training=open_seat,
-                    ),
-                )
+                        seat_membership=membership_to_use,
+                    )
 
-                # if membership is different for each request,
-                # collect warnings after each request is processed
-                if membership_auto_assign:
+                    # collect warnings after each match
                     warnings += [
                         f"{r}: {w}"
                         for w in get_membership_warnings_after_match(
@@ -619,12 +607,25 @@ def all_trainingrequests(request):
                         )
                     ]
 
-            # if membership is the same for all matches,
-            # collect warnings after all requests are processed
-            if membership:
-                warnings = get_membership_warnings_after_match(
-                    membership=membership, seat_public=seat_public, event=event
-                )
+            # Method 2: Don't auto assign membership
+            # membership is same for all seats (and may be None)
+            else:
+                # perform matches
+                for r in request:
+                    accept_training_request_and_match_to_event(
+                        request=r,
+                        event=event,
+                        role=role,
+                        seat_public=seat_public,
+                        seat_open_training=open_seat,
+                        seat_membership=membership,
+                    )
+
+                # collect warnings after all requests are processed
+                if membership:
+                    warnings = get_membership_warnings_after_match(
+                        membership=membership, seat_public=seat_public, event=event
+                    )
 
             for msg in warnings:
                 messages.warning(request, msg)
