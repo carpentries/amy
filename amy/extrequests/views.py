@@ -628,9 +628,9 @@ def all_trainingrequests(request):
 
             for msg in warnings:
                 messages.warning(request, msg)
+            for msg in errors:
+                messages.error(request, msg)
             if errors:
-                for msg in errors:
-                    messages.error(request, msg)
                 changed_count = len(match_form.cleaned_data["requests"]) - len(errors)
                 info_msg = (
                     f"Accepted and matched {changed_count} "

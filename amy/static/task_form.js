@@ -21,7 +21,6 @@ jQuery(function () {
         person = data.id;
     });
     $("#id_task-role").on("change", (e) => {
-        console.log(e.target.value);
         role = e.target.value
     });
     $("#id_task-event").on("select2:select", (e) => {
