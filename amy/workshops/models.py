@@ -309,7 +309,7 @@ class Membership(models.Model):
     )
 
     agreement_link = models.URLField(
-        blank=True,
+        blank=False,
         default="",
         verbose_name="Link to member agreement",
         help_text="Link to member agreement document or folder in Google Drive",
