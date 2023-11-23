@@ -2,7 +2,8 @@ from datetime import date, timedelta
 
 from django.test import TestCase
 
-from amy.extrequests.templatetags.request_membership import (
+from extrequests.templatetags.eventbrite import url_matches_eventbrite_format
+from extrequests.templatetags.request_membership import (
     membership_active,
     membership_alert_type,
 )
@@ -98,3 +99,78 @@ class TestMembershipActive(TestCase):
 
         # Assert
         self.assertEqual(expected, result)
+
+
+class TestUrlMatchesEventbriteFormat(TestCase):
+    def test_long_url(self):
+        # Arrange
+        url = "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator"  # noqa: line too long
+
+        # Act
+        result = url_matches_eventbrite_format(url)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_short_url(self):
+        # Arrange
+        url = "www.eventbrite.com/e/711575811407"
+
+        # Act
+        result = url_matches_eventbrite_format(url)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_localised_url__couk(self):
+        # Arrange
+        url = "https://www.eventbrite.co.uk/e/711575811407"
+
+        # Act
+        result = url_matches_eventbrite_format(url)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_localised_url__fr(self):
+        # Arrange
+        url = "https://www.eventbrite.fr/e/711575811407"
+
+        # Act
+        result = url_matches_eventbrite_format(url)
+
+        # Assert
+        self.assertTrue(result)
+
+    def test_admin_url(self):
+        """Admin url should fail - we don't expect trainees to provide this format"""
+        # Arrange
+        url = "https://www.eventbrite.com/myevent?eid=711575811407"
+
+        # Act
+        result = url_matches_eventbrite_format(url)
+
+        # Assert
+        self.assertFalse(result)
+
+    def test_non_eventbrite_url(self):
+        """URLs outside the Eventbrite domain should fail."""
+        # Arrange
+        url = "https://carpentries.org/instructor-training/123123123123/"
+
+        # Act
+        result = url_matches_eventbrite_format(url)
+
+        # Assert
+        self.assertFalse(result)
+
+    def test_empty_string(self):
+        """Empty string should fail."""
+        # Arrange
+        url = ""
+
+        # Act
+        result = url_matches_eventbrite_format(url)
+
+        # Assert
+        self.assertFalse(result)

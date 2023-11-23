@@ -63,6 +63,7 @@ class TestTrainingRequestFilter(TestBase):
             person=self.ironman,
             review_process="preapproved",
             member_code=self.membership.registration_code,
+            eventbrite_url="https://www.eventbrite.com/e/711575811407",
             personal="Tony",
             family="Stark",
             email="me@stark.com",
@@ -112,6 +113,7 @@ class TestTrainingRequestFilter(TestBase):
                 "invalid_member_code",
                 "affiliation",
                 "location",
+                "eventbrite_id",
                 "order_by",
             },
         )
@@ -311,6 +313,28 @@ class TestTrainingRequestFilter(TestBase):
         # Arrange
         name = "location"
         value = "new york"
+
+        # Act
+        result = self.filterset.filters[name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.request_ironman])
+
+    def test_filter_eventbrite_id__digits(self):
+        # Arrange
+        name = "eventbrite_id"
+        value = "1407"
+
+        # Act
+        result = self.filterset.filters[name].filter(self.qs, value)
+
+        # Assert
+        self.assertQuerysetEqual(result, [self.request_ironman])
+
+    def test_filter_eventbrite_id__url(self):
+        # Arrange
+        name = "eventbrite_id"
+        value = "https://www.eventbrite.com/myevent?eid=711575811407"
 
         # Act
         result = self.filterset.filters[name].filter(self.qs, value)

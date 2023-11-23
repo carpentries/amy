@@ -1,5 +1,6 @@
 {% load state %}
 {% load utils %}
+{% load eventbrite %}
 <table class="table table-striped">
   <tbody>
     <tr><th>Submission date:</th>
@@ -30,6 +31,15 @@
     <tr><th>Continue with registration code marked as invalid:</th>
         <td>{{ object.member_code_override|yesno }}</td></tr>
 {% endif %}
+    <tr><th>Eventbrite URL:</th>
+        <td>{{ object.eventbrite_url|default:"&mdash;" }}
+        {% url_matches_eventbrite_format object.eventbrite_url as url_format_valid %}
+        {% if object.eventbrite_url and not url_format_valid %}
+        <div class="alert alert-warning">
+            This URL doesn't match known Eventbrite URLs. Please use caution if copying this link.
+        </div>
+        {% endif %}
+        </td></tr>
     <tr><th>Personal name:</th>
         <td>{{ object.personal }}</td></tr>
     <tr><th>Middle name:</th>

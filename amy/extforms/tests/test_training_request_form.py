@@ -18,6 +18,7 @@ class TestTrainingRequestForm(TestBase):
     MEMBER_CODE_OVERRIDE_EMAIL_WARNING = (
         "A member of our team will check the code and follow up with you"
     )
+    INVALID_EVENTBRITE_URL_ERROR = "Must be an Eventbrite URL."
 
     def setUp(self):
         self._setUpUsersAndLogin()
@@ -470,3 +471,42 @@ class TestTrainingRequestForm(TestBase):
         self.assertNotIn(
             settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
         )
+
+    def test_eventbrite_url_validation__none(self):
+        """Should not error if no URL is entered."""
+        # Arrange
+        self.setUpMembership()
+        data = {"eventbrite_url": ""}
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
+
+    def test_eventbrite_url_validation__invalid(self):
+        """Should error if a non-Eventbrite URL is entered."""
+        # Arrange
+        self.setUpMembership()
+        data = {"eventbrite_url": "https://google.com"}
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
+
+    def test_eventbrite_url_validation__valid(self):
+        """Should not error if an Eventbrite URL is entered."""
+        # Arrange
+        self.setUpMembership()
+        data = {"eventbrite_url": "https://www.eventbrite.com/e/711576483417"}
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)

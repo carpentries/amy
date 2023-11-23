@@ -37,6 +37,7 @@ Registration Code: {{ object.member_code|default:"&mdash;" }}
 {% if object.member_code_override %}
 Continue with registration code marked as invalid: {{object.member_code_override|yesno}}
 {% endif %}
+Eventbrite URL: {{ object.eventbrite_url }}
 Person: {{object.personal}} {{object.middle}} {{object.family}} &lt;{{object.email}}&gt;
 Github: {{ object.github|default:"---" }}
 Occupation: {{ object.get_occupation_display }} {{ object.occupation_other }}

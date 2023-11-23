@@ -2134,6 +2134,16 @@ class TrainingRequest(
         help_text="A member of our team will check the code and follow up with you if "
         "there are any problems that require your attention.",
     )
+    eventbrite_url = models.URLField(
+        null=False,
+        blank=True,
+        default="",
+        verbose_name="Eventbrite URL",
+        help_text="If you are registering or have registered for a training event "
+        "through Eventbrite, enter the URL of that event. You can find this on the "
+        "registration page or in the confirmation email. "
+        "If you have not yet registered for an event, leave this field blank.",
+    )
 
     personal = models.CharField(
         max_length=STR_LONG,
