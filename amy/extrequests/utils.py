@@ -12,6 +12,21 @@ from workshops.models import Event, Membership, Role, Task, TrainingRequest
 # Eventbrite IDs are long strings of digits (~12 characters)
 EVENTBRITE_ID_PATTERN = re.compile(r"\d{10,}")
 
+# regex to cover known forms of Eventbrite URL that trainees could provide
+# https://www.eventbrite.com/e/event-name-123456789012
+# https://www.eventbrite.com/e/123456789012
+# plus a possible query at the end e.g. ?aff=oddtdtcreator
+# and considering localised domains such as .co.uk and .fr
+EVENTBRITE_URL_PATTERN = re.compile(
+    r"^(https?:\/\/)?"  # optional https://
+    r"www\.eventbrite\."
+    r"(com|co\.uk|[a-z]{2})"  # possible domains - .com, .co.uk, 2-letter country domain
+    r"\/e\/"  # /e/ should always be present at start of path
+    r"[a-z0-9\-]+"  # optional event-name
+    r"\d{10,}"  # event ID
+    r"($|\?)",  # end of string or beginning of query (?)
+)
+
 
 class MemberCodeValidationError(ValidationError):
     pass
