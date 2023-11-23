@@ -193,6 +193,30 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class MembershipLookupForTasksView(MembershipLookupView):
+    def get_queryset(self):
+        results = super().get_queryset()
+
+        # if this is a TTT learner task,
+        # find the membership from the associated training request
+        person = self.request.GET.get("person")
+        role = self.request.GET.get("role")
+        event = self.request.GET.get("event")
+        ttt_tag = models.Tag.objects.get(name="TTT")
+        if (
+            person
+            and role
+            and event
+            and models.Role.objects.get(id=role).name == "learner"
+            and ttt_tag in models.Event.objects.get(id=event).tags.all()
+        ):
+            training_requests = models.TrainingRequest.objects.filter(person__id=person)
+            member_codes = training_requests.values_list("member_code")
+            results = results.filter(registration_code__in=member_codes)
+
+        return results
+
+
 class MemberRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         q = models.MemberRole.objects.all()
@@ -476,6 +500,11 @@ urlpatterns = [
         name="administrator-org-lookup",
     ),
     path("memberships/", MembershipLookupView.as_view(), name="membership-lookup"),
+    path(
+        "memberships_for_tasks/",
+        MembershipLookupForTasksView.as_view(),
+        name="membership-lookup-for-tasks",
+    ),
     path("member-roles/", MemberRoleLookupView.as_view(), name="memberrole-lookup"),
     path(
         "membership-person-roles/",

@@ -2,7 +2,11 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 
-from workshops.models import Membership
+from workshops.models import Event, Membership, Role, Task, TrainingRequest
+
+# ----------------------------------------
+# Utilities for validating member codes
+# ----------------------------------------
 
 
 class MemberCodeValidationError(ValidationError):
@@ -76,3 +80,93 @@ def get_membership_or_none_from_code(code: str) -> Membership | None:
         return Membership.objects.get(registration_code=code)
     except Membership.DoesNotExist:
         return None
+
+
+# ----------------------------------------
+# Utilities for matching training requests
+# ----------------------------------------
+
+
+def get_membership_from_training_request_or_raise_error(
+    request: TrainingRequest,
+) -> Membership:
+    """Returns the Membership associated with a training request,
+    if such a Membership can be found."""
+    if not request.member_code:
+        raise ValueError(
+            f"{request}: Request does not include a member registration "
+            "code, so cannot be matched to a membership seat."
+        )
+    try:
+        return Membership.objects.get(registration_code=request.member_code)
+    except Membership.DoesNotExist:
+        raise Membership.DoesNotExist(
+            f"{request}: No membership found for registration code "
+            f'"{request.member_code}".'
+        )
+
+
+def accept_training_request_and_match_to_event(
+    request: TrainingRequest,
+    event: Event,
+    role: Role,
+    seat_public: bool,
+    seat_open_training: bool,
+    seat_membership: Membership | None = None,
+) -> Task:
+    # accept the request
+    request.state = "a"
+    request.save()
+
+    # assign to an event
+    task, _ = Task.objects.get_or_create(
+        event=event,
+        person=request.person,
+        role=role,
+        defaults=dict(
+            seat_membership=seat_membership,
+            seat_public=seat_public,
+            seat_open_training=seat_open_training,
+        ),
+    )
+
+    return task
+
+
+def get_membership_warnings_after_match(
+    membership: Membership, seat_public: bool, event: Event
+) -> list[str]:
+    """Returns a list of warnings based on membership remaining seats
+    and start/end dates."""
+    warnings = []
+
+    remaining = (
+        membership.public_instructor_training_seats_remaining
+        if seat_public
+        else membership.inhouse_instructor_training_seats_remaining
+    )
+    if remaining <= 0:
+        warnings.append(
+            f'Membership "{membership}" is using more training seats than '
+            "it's been allowed.",
+        )
+
+    # check if membership is active
+    if not (membership.agreement_start <= date.today() <= membership.agreement_end):
+        warnings.append(
+            f'Membership "{membership}" is not active.',
+        )
+
+    # show warning if training falls out of agreement dates
+    if (
+        event.start
+        and not (membership.agreement_start <= event.start <= membership.agreement_end)
+        or event.end
+        and not (membership.agreement_start <= event.end <= membership.agreement_end)
+    ):
+        warnings.append(
+            f'Training "{event}" has start or end date outside '
+            f'membership "{membership}" agreement dates.',
+        )
+
+    return warnings

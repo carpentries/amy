@@ -1,5 +1,4 @@
 import csv
-import datetime
 import io
 import logging
 
@@ -41,7 +40,12 @@ from extrequests.forms import (
     WorkshopRequestAdminForm,
 )
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
-from extrequests.utils import get_membership_or_none_from_code
+from extrequests.utils import (
+    accept_training_request_and_match_to_event,
+    get_membership_from_training_request_or_raise_error,
+    get_membership_or_none_from_code,
+    get_membership_warnings_after_match,
+)
 from workshops.base_views import (
     AMYDetailView,
     AMYListView,
@@ -61,6 +65,7 @@ from workshops.forms import (
 from workshops.models import (
     Event,
     Language,
+    Membership,
     Organization,
     Person,
     Role,
@@ -555,69 +560,91 @@ def all_trainingrequests(request):
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]
             membership = match_form.cleaned_data["seat_membership"]
+            membership_auto_assign = match_form.cleaned_data[
+                "seat_membership_auto_assign"
+            ]
             seat_public = match_form.cleaned_data["seat_public"]
             open_seat = match_form.cleaned_data["seat_open_training"]
             role = Role.objects.get(name="learner")
 
-            # Perform bulk match
-            for r in match_form.cleaned_data["requests"]:
-                # automatically accept this request
-                r.state = "a"
-                r.save()
+            # Perform bulk match using one of two methods
+            training_requests = match_form.cleaned_data["requests"]
+            errors = []
+            warnings = []
 
-                # assign to an event
-                Task.objects.get_or_create(
-                    event=event,
-                    person=r.person,
-                    role=role,
-                    defaults=dict(
-                        seat_membership=membership,
+            # Method 1: Auto assign membership
+            # membership is different for each seat (and may not be None)
+            if membership_auto_assign:
+                for r in training_requests:
+                    # find which membership to use
+                    # if membership can't be determined, skip this request
+                    try:
+                        membership_to_use = (
+                            get_membership_from_training_request_or_raise_error(r)
+                        )
+                    except (ValueError, Membership.DoesNotExist) as e:
+                        errors.append(str(e))
+                        continue
+
+                    # perform match
+                    accept_training_request_and_match_to_event(
+                        request=r,
+                        event=event,
+                        role=role,
                         seat_public=seat_public,
                         seat_open_training=open_seat,
-                    ),
+                        seat_membership=membership_to_use,
+                    )
+
+                    # collect warnings after each match
+                    warnings += [
+                        f"{r}: {w}"
+                        for w in get_membership_warnings_after_match(
+                            membership=membership_to_use,
+                            seat_public=seat_public,
+                            event=event,
+                        )
+                    ]
+
+            # Method 2: Don't auto assign membership
+            # membership is same for all seats (and may be None)
+            else:
+                # perform matches
+                for r in training_requests:
+                    accept_training_request_and_match_to_event(
+                        request=r,
+                        event=event,
+                        role=role,
+                        seat_public=seat_public,
+                        seat_open_training=open_seat,
+                        seat_membership=membership,
+                    )
+
+                # collect warnings after all requests are processed
+                if membership:
+                    warnings = get_membership_warnings_after_match(
+                        membership=membership, seat_public=seat_public, event=event
+                    )
+
+            # Matching is complete, display messages
+            for msg in warnings:
+                messages.warning(request, msg)
+            for msg in errors:
+                messages.error(request, msg)
+            if errors:
+                changed_count = len(match_form.cleaned_data["requests"]) - len(errors)
+                info_msg = (
+                    f"Accepted and matched {changed_count} "
+                    f'{"person" if changed_count==1 else "people"} to training, '
+                    f"which raised {len(warnings)} warning(s). "
+                    f"{len(errors)} request(s) were skipped due to errors."
                 )
-
-            today = datetime.date.today()
-
-            if membership:
-                remaining = (
-                    membership.public_instructor_training_seats_remaining
-                    if seat_public
-                    else membership.inhouse_instructor_training_seats_remaining
+                messages.info(request, info_msg)
+            else:
+                messages.success(
+                    request,
+                    "Successfully accepted and matched selected people to training.",
                 )
-                if remaining <= 0:
-                    messages.warning(
-                        request,
-                        f'Membership "{membership}" is using more training seats than '
-                        "it's been allowed.",
-                    )
-
-                # check if membership is active
-                if not (
-                    membership.agreement_start <= today <= membership.agreement_end
-                ):
-                    messages.warning(
-                        request,
-                        f'Membership "{membership}" is not active.',
-                    )
-
-                # show warning if training falls out of agreement dates
-                if (
-                    event.start
-                    and event.start < membership.agreement_start
-                    or event.end
-                    and event.end > membership.agreement_end
-                ):
-                    messages.warning(
-                        request,
-                        f'Training "{event}" has start or end date outside '
-                        f'membership "{membership}" agreement dates.',
-                    )
-
-            messages.success(
-                request,
-                "Successfully accepted and matched selected people to training.",
-            )
 
     elif request.method == "POST" and "accept" in request.POST:
         # Bulk discard selected TrainingRequests.

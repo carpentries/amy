@@ -125,6 +125,13 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="membership-lookup"),
     )
 
+    seat_membership_auto_assign = forms.BooleanField(
+        label="Automatically match seats to memberships",
+        help_text="Assigned users will take instructor seats based on the "
+        "registration code they entered.",
+        required=False,
+    )
+
     seat_public = forms.TypedChoiceField(
         coerce=lambda x: x == "True",
         choices=Task.SEAT_PUBLIC_CHOICES,
@@ -147,6 +154,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     helper.layout = Layout(
         "event",
         "seat_membership",
+        "seat_membership_auto_assign",
         "seat_public",
         "seat_open_training",
     )
@@ -169,7 +177,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
         super().clean()
 
         event = self.cleaned_data["event"]
-        member_site = self.cleaned_data["seat_membership"]
+        seat_membership = self.cleaned_data["seat_membership"]
+        seat_membership_auto_assign = self.cleaned_data["seat_membership_auto_assign"]
         open_training = self.cleaned_data["seat_open_training"]
 
         if any(r.person is None for r in self.cleaned_data.get("requests", [])):
@@ -180,10 +189,16 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "and match with a trainee."
             )
 
-        if member_site and open_training:
+        if (seat_membership or seat_membership_auto_assign) and open_training:
             raise ValidationError(
                 "Cannot simultaneously match as open training and use "
                 "a Membership instructor training seat."
+            )
+
+        if seat_membership and seat_membership_auto_assign:
+            raise ValidationError(
+                "Cannot simultaneously use seats from selected membership "
+                "and use seats based on registration code."
             )
 
         if open_training and not event.open_TTT_applications:

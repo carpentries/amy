@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from django.contrib.contenttypes.models import ContentType
@@ -13,6 +14,8 @@ from workshops.lookups import (
     EventLookupView,
     GenericObjectLookupView,
     KnowledgeDomainLookupView,
+    MembershipLookupForTasksView,
+    MembershipLookupView,
     TTTEventLookupView,
     urlpatterns,
 )
@@ -22,10 +25,12 @@ from workshops.models import (
     Event,
     KnowledgeDomain,
     Lesson,
+    Membership,
     Person,
     Role,
     Tag,
     TrainingProgress,
+    TrainingRequest,
     TrainingRequirement,
 )
 from workshops.tests.base import (
@@ -382,6 +387,214 @@ class TestTTTEventLookupView(TestBase):
             queryset,
             [self.event],
         )
+
+
+class TestMembershipLookupView(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.membership_alpha = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date(2023, 8, 15),
+            agreement_end=date(2024, 8, 14),
+            contribution_type="financial",
+            registration_code="alpha44",
+        )
+        self.membership_beta = Membership.objects.create(
+            name="Beta Organization Unique",
+            variant="bronze",
+            agreement_start=date(2023, 9, 15),
+            agreement_end=date(2024, 9, 14),
+            contribution_type="financial",
+            registration_code="beta55",
+        )
+        self.membership_gamma = Membership.objects.create(
+            name="Gamma Organization",
+            variant="silver",
+            agreement_start=date(2023, 10, 15),
+            agreement_end=date(2023, 11, 14),
+            contribution_type="financial",
+            registration_code="gamma66",
+        )
+
+    def setUpView(self, term: str = "") -> MembershipLookupView:
+        # path doesn't matter
+        request = RequestFactory().get("/")
+        view = MembershipLookupView(request=request, term=term)
+        return view
+
+    def test_get_queryset_no_term(self):
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+
+    def test_get_queryset_term__date(self):
+        # Arrange
+        term = "2023-08-30"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.membership_alpha], ordered=False)
+
+    def test_get_queryset_term__organization_name(self):
+        # Arrange
+        term = "alpha"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.membership_alpha], ordered=False)
+
+    def test_get_queryset_term__membership_name(self):
+        # Arrange
+        term = "unique"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.membership_beta], ordered=False)
+
+    def test_get_queryset_term__variant(self):
+        # Arrange
+        term = "bronze"
+        view = self.setUpView(term=term)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset, [self.membership_alpha, self.membership_beta], ordered=False
+        )
+
+
+class TestMembershipLookupForTasksView(TestMembershipLookupView):
+    def setUp(self):
+        super().setUp()
+
+        self.role = Role.objects.get(name="learner")
+
+        self.event = Event.objects.create(slug="test-event", host=self.org_alpha)
+        self.ttt_event = Event.objects.create(slug="test-ttt", host=self.org_alpha)
+        self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
+
+        # create some training requests
+        TrainingRequest.objects.create(
+            person=self.blackwidow, member_code=self.membership_alpha.registration_code
+        )
+        TrainingRequest.objects.create(
+            person=self.blackwidow, member_code=self.membership_beta.registration_code
+        )
+
+    def setUpView(
+        self,
+        term: str = "",
+        person: Optional[int] = None,
+        role: Optional[int] = None,
+        event: Optional[int] = None,
+    ) -> MembershipLookupForTasksView:
+        # path doesn't matter
+        request = RequestFactory().get(
+            f"/?person={person if person else ''}"
+            f"&role={role if role else ''}"
+            f"&event={event if event else ''}"
+        )
+        view = MembershipLookupForTasksView(request=request, term=term)
+        return view
+
+    def test_get_queryset_no_args(self):
+        # Arrange
+        view = self.setUpView()
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+
+    def test_get_queryset_person(self):
+        """Person alone should not change results."""
+        # Arrange
+        view = self.setUpView(person=self.blackwidow.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+
+    def test_get_queryset_role(self):
+        """Role alone should not change results."""
+        # Arrange
+        view = self.setUpView(role=self.role.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+
+    def test_get_queryset_event(self):
+        """Event alone should not change results."""
+        # Arrange
+        view = self.setUpView(event=self.ttt_event.pk)
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+
+    def test_get_queryset_person_and_non_learner_role_and_ttt_event(self):
+        """Any query with a non-learner role should not change results."""
+        # Arrange
+        view = self.setUpView(
+            person=self.blackwidow.pk,
+            role=Role.objects.get(name="instructor").pk,
+            event=self.ttt_event.pk,
+        )
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+
+    def test_get_queryset_person_and_learner_role_and_non_ttt_event(self):
+        """Any query with a non-TTT event should not change results."""
+        # Arrange
+        view = self.setUpView(
+            person=self.blackwidow.pk,
+            role=self.role.pk,
+            event=self.event.pk,
+        )
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+
+    def test_get_queryset_person_and_learner_role_and_ttt_event(self):
+        """Person, role, and event combined should change results."""
+        # Arrange
+        view = self.setUpView(
+            person=self.blackwidow.pk, role=self.role.pk, event=self.ttt_event.pk
+        )
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(
+            queryset, [self.membership_alpha, self.membership_beta], ordered=False
+        )
+
+    def test_get_queryset_person_and_learner_role_and_ttt_event_and_term(self):
+        """Person, role, event, and term combined should change results."""
+        # Arrange
+        term = "alpha"
+        view = self.setUpView(
+            term=term,
+            person=self.blackwidow.pk,
+            role=self.role.pk,
+            event=self.ttt_event.pk,
+        )
+        # Act
+        queryset = view.get_queryset()
+        # Assert
+        self.assertQuerysetEqual(queryset, [self.membership_alpha], ordered=False)
 
 
 class TestGenericObjectLookupView(TestBase):
