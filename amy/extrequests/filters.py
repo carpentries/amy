@@ -74,7 +74,7 @@ class TrainingRequestFilter(AMYFilterSet):
 
     invalid_member_code = django_filters.BooleanFilter(
         label="Member code marked as invalid",
-        field_name="member_code_override",
+        method="filter_member_code_override",
         widget=widgets.CheckboxInput,
     )
 
@@ -162,6 +162,15 @@ class TrainingRequestFilter(AMYFilterSet):
     def filter_non_null_manual_score(self, queryset, name, manual_score):
         if manual_score:
             return queryset.filter(score_manual__isnull=False)
+        return queryset
+
+    def filter_member_code_override(
+        self, queryset: QuerySet, name: str, only_overrides: bool
+    ) -> QuerySet:
+        """If checked, only show requests where the member code has been
+        marked as invalid. Otherwise, show all requests."""
+        if only_overrides:
+            return queryset.filter(member_code_override=True)
         return queryset
 
     def filter_eventbrite_id(
