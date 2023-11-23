@@ -134,7 +134,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
 
     def test_localised_url__fr(self):
         # Arrange
-        url = "https://www.eventbrite.fr/711575811407"
+        url = "https://www.eventbrite.fr/e/711575811407"
 
         # Act
         result = url_matches_eventbrite_format(url)
