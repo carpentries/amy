@@ -9,6 +9,11 @@ from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
+from emails.actions.instructor_training_approaching import EmailStrategyException
+from emails.actions.new_membership_onboarding import (
+    new_membership_onboarding_strategy,
+    run_new_membership_onboarding_strategy,
+)
 from extcomments.utils import add_comment_for_object
 from fiscal.base_views import (
     GetMembershipMixin,
@@ -182,6 +187,7 @@ class MembershipCreate(
         "workshops.change_organization",
     ]
     model = Membership
+    object: Membership
     form_class = MembershipCreateForm
 
     def form_valid(self, form):
@@ -212,6 +218,18 @@ class MembershipCreate(
                 membership=self.object,
             )
 
+        try:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(self.object),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running new membership onboarding strategy. {exc}",
+            )
+
         return return_data
 
     def get_success_url(self):
@@ -224,6 +242,7 @@ class MembershipUpdate(
 ):
     permission_required = "workshops.change_membership"
     model = Membership
+    object: Membership
     form_class = MembershipForm
     pk_url_kwarg = "membership_id"
     template_name = "generic_form_with_comments.html"
@@ -311,13 +330,44 @@ class MembershipUpdate(
         except Membership.DoesNotExist:
             pass
 
+        try:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(self.object),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
         return result
 
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Membership
+    object: Membership
     permission_required = "workshops.delete_membership"
     pk_url_kwarg = "membership_id"
+
+    def before_delete(self, *args, **kwargs):
+        """Save for use in `after_delete` method."""
+        self._membership = self.object
+
+    def after_delete(self, *args, **kwargs):
+        membership = self._membership
+        try:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(membership),
+                request=self.request,
+                membership=membership,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running new membership - onboarding strategy. {exc}",
+            )
 
     def get_success_url(self):
         return reverse("all_memberships")
@@ -415,6 +465,23 @@ class MembershipTasks(
         if "title" not in kwargs:
             kwargs["title"] = "Change person roles for {}".format(self.membership)
         return super().get_context_data(**kwargs)
+
+    def form_valid(self, formset):
+        result = super().form_valid(formset)
+
+        try:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(self.membership),
+                request=self.request,
+                membership=self.membership,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        return result
 
 
 class MembershipExtend(

@@ -41,7 +41,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
 
     # TODO: check how to handle removing membership
     email_should_exist = (
-        membership and getattr(membership, "rolled_from_membership") is None
+        membership and getattr(membership, "rolled_from_membership", None) is None
     )
 
     if not email_scheduled and email_should_exist:
@@ -86,7 +86,7 @@ def run_new_membership_onboarding_strategy(
 
 
 def get_scheduled_at(**kwargs: Unpack[NewMembershipOnboardingKwargs]) -> datetime:
-    return min(
+    return max(
         one_month_before(kwargs["membership"].agreement_start), immediate_action()
     )
 
