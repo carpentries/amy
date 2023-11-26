@@ -22,4 +22,9 @@ from emails.actions.instructor_training_completed_not_badged import (
     instructor_training_completed_not_badged_remove_receiver,
     instructor_training_completed_not_badged_update_receiver,
 )
+from emails.actions.new_membership_onboarding import (
+    new_membership_onboarding_receiver,
+    new_membership_onboarding_remove_receiver,
+    new_membership_onboarding_update_receiver,
+)
 from emails.actions.persons_merged import persons_merged_receiver

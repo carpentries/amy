@@ -11,6 +11,7 @@ from emails.types import (
     InstructorSignupContext,
     InstructorTrainingApproachingContext,
     InstructorTrainingCompletedNotBadgedContext,
+    NewMembershipOnboardingContext,
     PersonsMergedContext,
 )
 
@@ -109,6 +110,20 @@ instructor_training_completed_not_badged_update_signal = Signal(
 instructor_training_completed_not_badged_remove_signal = Signal(
     signal_name=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
     context_type=InstructorTrainingCompletedNotBadgedContext,
+)
+
+NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME = "new_membership_onboarding"
+new_membership_onboarding_signal = Signal(
+    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
+    context_type=NewMembershipOnboardingContext,
+)
+new_membership_onboarding_update_signal = Signal(
+    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
+    context_type=NewMembershipOnboardingContext,
+)
+new_membership_onboarding_remove_signal = Signal(
+    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
+    context_type=NewMembershipOnboardingContext,
 )
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
