@@ -119,6 +119,7 @@ class InstructorTrainingCompletedNotBadgedContext(TypedDict):
 
 
 class NewMembershipOnboardingKwargs(TypedDict):
+    request: HttpRequest
     membership: Membership
 
 

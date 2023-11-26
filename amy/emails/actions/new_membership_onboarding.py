@@ -41,7 +41,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
 
     # TODO: check how to handle removing membership
     email_should_exist = (
-        membership and getattr(membership, "rolled_from_membership", None) is None
+        membership.pk and getattr(membership, "rolled_from_membership", None) is None
     )
 
     if not email_scheduled and email_should_exist:
