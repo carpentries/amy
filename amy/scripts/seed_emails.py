@@ -162,6 +162,22 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
             "Here's what you have left to do: (missing requirements)."
         ),
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("4e737df8-d2ef-4ebd-9a26-087212af233b"),
+        name="New / renewing membership starting (member onboarding)",
+        signal=SignalNameEnum.new_membership_onboarding,
+        from_header="membership@carpentries.org",
+        reply_to_header="",
+        cc_header=["membership@carpentries.org"],
+        bcc_header=[],
+        subject="Carpentries Membership with (member names), (member start-end dates)",
+        body=(
+            "Thank you for joining The Carpentries as a member organization. "
+            "Here is information to get you started: "
+            "https://carpentries.org/membership/"
+        ),
+    ),
 ]
 
 

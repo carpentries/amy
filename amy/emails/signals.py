@@ -26,6 +26,7 @@ class SignalNameEnum(StrEnum):
     instructor_training_completed_not_badged = (
         "instructor_training_completed_not_badged"
     )
+    new_membership_onboarding = "new_membership"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
