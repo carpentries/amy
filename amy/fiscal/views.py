@@ -9,11 +9,13 @@ from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
+from communityroles.models import CommunityRole
 from emails.actions.instructor_training_approaching import EmailStrategyException
 from emails.actions.new_membership_onboarding import (
     new_membership_onboarding_strategy,
     run_new_membership_onboarding_strategy,
 )
+from emails.types import StrategyEnum
 from extcomments.utils import add_comment_for_object
 from fiscal.base_views import (
     GetMembershipMixin,
@@ -341,20 +343,31 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
 
     def before_delete(self, *args, **kwargs):
         """Save for use in `after_delete` method."""
-        self._membership = self.object
+        membership = self.object
 
-    def after_delete(self, *args, **kwargs):
-        membership = self._membership
-        try:
-            run_new_membership_onboarding_strategy(
-                new_membership_onboarding_strategy(membership),
-                request=self.request,
-                membership=membership,
-            )
-        except EmailStrategyException as exc:
-            messages.error(
+        # Check for any remaining objects referencing this membership.
+        if not (
+            Member.objects.filter(membership=membership).count()
+            or MembershipTask.objects.filter(membership=membership).count()
+            or Task.objects.filter(seat_membership=membership).count()
+            or CommunityRole.objects.filter(membership=membership).count()
+        ):
+            try:
+                run_new_membership_onboarding_strategy(
+                    StrategyEnum.REMOVE,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running new membership - onboarding strategy. {exc}",
+                )
+        else:
+            messages.warning(
                 self.request,
-                f"Error when running new membership - onboarding strategy. {exc}",
+                "Not attempting to remove related scheduled emails, because there are "
+                "still related objects in the database.",
             )
 
     def get_success_url(self):
