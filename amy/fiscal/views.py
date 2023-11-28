@@ -218,18 +218,6 @@ class MembershipCreate(
                 membership=self.object,
             )
 
-        try:
-            run_new_membership_onboarding_strategy(
-                new_membership_onboarding_strategy(self.object),
-                request=self.request,
-                membership=self.object,
-            )
-        except EmailStrategyException as exc:
-            messages.error(
-                self.request,
-                f"Error when running new membership onboarding strategy. {exc}",
-            )
-
         return return_data
 
     def get_success_url(self):
