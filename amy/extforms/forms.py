@@ -257,6 +257,7 @@ class TrainingRequestForm(forms.ModelForm):
         eventbrite_url = self.cleaned_data.get("eventbrite_url", "")
         if eventbrite_url and "eventbrite" not in urlparse(eventbrite_url).hostname:
             raise ValidationError("Must be an Eventbrite URL.")
+        return eventbrite_url
 
     def clean(self):
         super().clean()

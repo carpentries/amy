@@ -26,6 +26,7 @@ class TestTrainingRequestForm(TestBase):
         self.data = {
             "review_process": "preapproved",
             "member_code": "coolprogrammers",
+            "eventbrite_url": "https://www.eventbrite.com/e/711576483417",
             "personal": "John",
             "family": "Smith",
             "email": "john@smith.com",
