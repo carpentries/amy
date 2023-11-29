@@ -33,18 +33,35 @@ class TestMemberFormLayout(TestBase):
 
         self.assertEqual(
             list(form.helper.layout),
+            ["membership", "organization", "role", "EDITABLE", "id"],
+        )
+
+    def test_main_helper_deletable_layout(self):
+        form = MemberForm()
+
+        self.assertEqual(
+            list(form.helper_deletable.layout),
             ["membership", "organization", "role", "EDITABLE", "id", "DELETE"],
         )
 
     def test_empty_helper_layout(self):
         form = MemberForm()
 
-        self.assertEqual(len(form.helper_empty_form.layout), 5)
+        self.assertEqual(len(form.helper_empty_form.layout), 4)
         self.assertEqual(
-            list(form.helper_empty_form.layout)[:-1],
+            list(form.helper_empty_form.layout),
             ["membership", "organization", "role", "id"],
         )
-        self.assertEqual(form.helper_empty_form.layout[-1].fields, ["DELETE"])
+
+    def test_empty_helper_deletable_layout(self):
+        form = MemberForm()
+
+        self.assertEqual(len(form.helper_empty_form_deletable.layout), 5)
+        self.assertEqual(
+            list(form.helper_empty_form_deletable.layout)[:-1],
+            ["membership", "organization", "role", "id"],
+        )
+        self.assertEqual(form.helper_empty_form_deletable.layout[-1].fields, ["DELETE"])
 
 
 class TestMembershipMembers(MembershipTestMixin, TestBase):
