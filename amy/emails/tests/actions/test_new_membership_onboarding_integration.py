@@ -90,6 +90,7 @@ class TestNewMembershipOnboardingUpdateReceiverIntegration(TestBase):
 
         membership = Membership.objects.create(
             name="Test Membership",
+            consortium=False,
             variant="partner",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
@@ -138,11 +139,14 @@ class TestNewMembershipOnboardingUpdateReceiverIntegration(TestBase):
         url = reverse("membership_edit", args=[membership.pk])
         data = {
             "name": membership.name,
+            "consortium": membership.consortium,
             "public_status": membership.public_status,
             "variant": membership.variant,
             "agreement_start": membership.agreement_start,
             "agreement_end": membership.agreement_end,
             "contribution_type": membership.contribution_type,
+            "registration_code": "",
+            "agreement_link": "https://example.org",
             "public_instructor_training_seats": 1,
             "additional_public_instructor_training_seats": 2,
             "inhouse_instructor_training_seats": 3,
