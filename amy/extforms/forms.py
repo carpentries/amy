@@ -34,6 +34,11 @@ class TrainingRequestForm(forms.ModelForm):
 
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
+    code_of_conduct_agreement = forms.BooleanField(
+        required=True,
+        label=TrainingRequest._meta.get_field("code_of_conduct_agreement").verbose_name,
+    )
+
     class Meta:
         model = TrainingRequest
         fields = (
@@ -257,6 +262,7 @@ class TrainingRequestForm(forms.ModelForm):
         eventbrite_url = self.cleaned_data.get("eventbrite_url", "")
         if eventbrite_url and "eventbrite" not in urlparse(eventbrite_url).hostname:
             raise ValidationError("Must be an Eventbrite URL.")
+        return eventbrite_url
 
     def clean(self):
         super().clean()

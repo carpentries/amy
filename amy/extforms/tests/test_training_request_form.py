@@ -26,6 +26,7 @@ class TestTrainingRequestForm(TestBase):
         self.data = {
             "review_process": "preapproved",
             "member_code": "coolprogrammers",
+            "eventbrite_url": "https://www.eventbrite.com/e/711576483417",
             "personal": "John",
             "family": "Smith",
             "email": "john@smith.com",
@@ -510,3 +511,20 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
+
+    def test_coc_agreement_required(self):
+        """Should error if CoC checkbox is not ticked."""
+        # Arrange
+        self.setUpMembership()
+        data = {"code_of_conduct_agreement": "false"}
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+        errors = dict(rv.context["form"].errors)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertIn("code_of_conduct_agreement", errors)
+        self.assertListEqual(
+            errors["code_of_conduct_agreement"], ["This field is required."]
+        )
