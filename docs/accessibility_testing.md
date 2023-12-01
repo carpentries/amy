@@ -4,6 +4,16 @@
 
 The automated tests aim to test one page corresponding to each template in `amy/templates` (including base templates and the `includes` subfolder).
 
+### Workflow
+
+The [GitHub Actions workflow](https://github.com/carpentries/amy/blob/develop/.github/workflows/accessibility.yml) includes options for testing with both [pa11y](https://pa11y.org/) and [Google Lighthouse](https://github.com/GoogleChrome/lighthouse). In both cases, the report can be found in the artifacts attached to the workflow run. The report contains one HTML file for each page covered by the tests, plus a summary file (something like `index.html`).
+
+### Local testing
+
+See the [AMY README](https://github.com/carpentries/amy#run-accessibility-tests-locally) for instructions on running the tests on your own machine.
+
+### Limitations
+
 The following pages cannot be effectively tested automatically at the moment. Problems include:
 
 * page inaccessible to logged-in admin (`/terms/action_required``)
