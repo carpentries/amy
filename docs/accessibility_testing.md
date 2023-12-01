@@ -2,7 +2,7 @@
 
 ## Automated Testing
 
-The automated tests aim to test one page corresponding to each template in `amy/templates` (including base templates and the `includes` subfolder).
+The automated tests aim to test one page corresponding to each template in `amy/templates` (including base templates and the `includes` subfolder). New templates should have a corresponding URL added to the [`.pa11yci`](https://github.com/carpentries/amy/blob/develop/.pa11yci) config file. As such, templates added since the last update to `.pa11yci` are not tested.
 
 ### Workflow
 
