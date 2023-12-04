@@ -39,6 +39,14 @@ This document acts as a reference for where certain design patterns can be found
 4. Set the `queryset_other`, `context_other_object_name`, and `pk_url_kwarg` variables in the view according to the original object. These are used by `AMYCreateAndFetchObjectView` to select the correct object to use data from. The object will become available as `self.other_object` in the view
 5. Override [`get_initial()`](https://docs.djangoproject.com/en/4.2/ref/class-based-views/mixins-editing/#django.views.generic.edit.FormMixin.get_initial) to set form fields based on data in `self.other_object`
 
+### Perform "soft validation" to allow possibly invalid data to be submitted with only a warning
+
+**Demo**: On test-amy or a local AMY instance, go to the Instructor Training application form and select "Profile Creation for Pre-approved Trainees." Enter some random letters as the registration code (an invalid input), then fill out the rest of the required form fields. After clicking "Submit", if member code enforcement is [enabled](./projects/2023_member_code_enforcement.md#feature-flag), you should see an error on the registration code starting with "This code is invalid." Underneath the field, a checkbox should be visible with the label "Continue with registration code marked as invalid" - if you check this box, you should now be able to submit the form.
+
+**Method**:
+
+1.
+
 **Reference files**:
 
 * `extrequests/views.py` - all the `...AcceptEvent` classes
