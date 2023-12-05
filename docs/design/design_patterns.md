@@ -45,7 +45,10 @@ This document acts as a reference for where certain design patterns can be found
 
 **Method**:
 
-1.
+1. Add a field `<fieldname>-override` to the relevant model. This should be a `BooleanField` defaulting to `False`.
+2. On `Form`s connected to the model, manipulate the `helper.layout` to show/hide the new field according to the value of the field you're implementing soft validation on (e.g. the `validate_member_code` method of `TrainingRequestForm` in [`/extforms/forms.py`](../../amy/extforms/forms.py) shows and hides the `member_code_override` field according to the validity of the `member_code`).
+3. Build validation carefully for the override and the field it relates to. The override should only be required and `True` if the related field is invalid. In other cases, it should be `False` - this may require updating the value during validation (e.g. the `validate_member_code` method again).
+4. Consider adding a filter to help admins find objects where the override was used. Beware that the default `django_filters.BooleanFilter` is not quite appropriate - typically you will want *all* results to be shown when the filter is `False`, and only results that use the override to be shown when the filter is `True` (e.g. `invalid_member_code` filter in `TrainingRequestFilter` in [/extrequests/filters.py](../../amy/extrequests/filters.py)).
 
 **Reference files**:
 
