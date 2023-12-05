@@ -44,3 +44,4 @@ Other features added as part of this project:
 * Update email autoresponses to include member code information
 * Include a question about the Eventbrite event that a preapproved trainee has signed up for (if applicable) and allow admins to filter applications by Eventbrite event URLs or IDs.
 * Updates to other questions on the instructor training application
+* Utility functions to check if a membership is active on a certain date, find a membership from a member code, and to validate member codes in particular ways.
