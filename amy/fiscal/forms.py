@@ -415,7 +415,16 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
     helper = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
+    helper_deletable = BootstrapHelper(
+        add_cancel_button=False,
+        form_tag=False,
+        add_submit_button=False,
+        include_media=False,
+    )
     helper_empty_form = BootstrapHelper(
+        add_cancel_button=False, form_tag=False, add_submit_button=False
+    )
+    helper_empty_form_deletable = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
 
@@ -445,6 +454,11 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
         self.helper.layout = self.helper.build_default_layout(self)
         self.helper.layout.append("id")
         self.helper.layout.append("DELETE")  # visible; formset adds it
+
+        self.helper_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_deletable.layout.append("id")
+        self.helper_deletable.layout.append("DELETE")  # visible; formset adds it
+
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
@@ -453,6 +467,12 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
+
+        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form_deletable.layout.append("id")
+        self.helper_empty_form_deletable.layout.append(
+            Div("DELETE", css_class="d-none")  # hidden
+        )
 
 
 class MembershipExtensionForm(forms.Form):
