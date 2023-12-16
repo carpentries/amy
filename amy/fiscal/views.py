@@ -9,6 +9,13 @@ from django.forms import modelformset_factory
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
+from communityroles.models import CommunityRole
+from emails.actions.instructor_training_approaching import EmailStrategyException
+from emails.actions.new_membership_onboarding import (
+    new_membership_onboarding_strategy,
+    run_new_membership_onboarding_strategy,
+)
+from emails.types import StrategyEnum
 from extcomments.utils import add_comment_for_object
 from fiscal.base_views import (
     GetMembershipMixin,
@@ -182,6 +189,7 @@ class MembershipCreate(
         "workshops.change_organization",
     ]
     model = Membership
+    object: Membership
     form_class = MembershipCreateForm
 
     def form_valid(self, form):
@@ -224,6 +232,7 @@ class MembershipUpdate(
 ):
     permission_required = "workshops.change_membership"
     model = Membership
+    object: Membership
     form_class = MembershipForm
     pk_url_kwarg = "membership_id"
     template_name = "generic_form_with_comments.html"
@@ -311,13 +320,57 @@ class MembershipUpdate(
         except Membership.DoesNotExist:
             pass
 
+        try:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(self.object),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
         return result
 
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Membership
+    object: Membership
     permission_required = "workshops.delete_membership"
     pk_url_kwarg = "membership_id"
+
+    def before_delete(self, *args, **kwargs):
+        """Save for use in `after_delete` method."""
+        membership = self.object
+
+        # Check for any remaining objects referencing this membership.
+        # Since membership tasks are expected for the scheduled email, then they have
+        # to be removed first, which would de-schedule the email.
+        if not (
+            Member.objects.filter(membership=membership).count()
+            or MembershipTask.objects.filter(membership=membership).count()
+            or Task.objects.filter(seat_membership=membership).count()
+            or CommunityRole.objects.filter(membership=membership).count()
+        ):
+            try:
+                run_new_membership_onboarding_strategy(
+                    StrategyEnum.REMOVE,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running new membership - onboarding strategy. {exc}",
+                )
+        else:
+            messages.warning(
+                self.request,
+                "Not attempting to remove related scheduled emails, because there are "
+                "still related objects in the database.",
+            )
 
     def get_success_url(self):
         return reverse("all_memberships")
@@ -415,6 +468,23 @@ class MembershipTasks(
         if "title" not in kwargs:
             kwargs["title"] = "Change person roles for {}".format(self.membership)
         return super().get_context_data(**kwargs)
+
+    def form_valid(self, formset):
+        result = super().form_valid(formset)
+
+        try:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(self.membership),
+                request=self.request,
+                membership=self.membership,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        return result
 
 
 class MembershipExtend(

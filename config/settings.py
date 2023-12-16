@@ -546,6 +546,10 @@ LOGGING = {
             "handlers": ["console"],
             "level": "DEBUG",
         },
+        "rq.worker": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
     },
 }
 
