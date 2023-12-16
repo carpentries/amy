@@ -27,6 +27,8 @@ from .instructor_training_approaching import EmailStrategyException
 
 logger = logging.getLogger("amy")
 
+MEMBERSHIP_TASK_ROLES_EXPECTED = ["billing_contact", "programmatic_contact"]
+
 
 def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     logger.info(f"Running NewMembershipOnboarding strategy for {membership}")
@@ -39,9 +41,14 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
         state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
 
-    # TODO: check how to handle removing membership
+    # Membership can't be removed without removing the tasks first. This is when the
+    # email would be de-scheduled.
     email_should_exist = (
-        membership.pk and getattr(membership, "rolled_from_membership", None) is None
+        membership.pk
+        and getattr(membership, "rolled_from_membership", None) is None
+        and MembershipTask.objects.filter(
+            membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
+        ).count()
     )
 
     if not email_scheduled and email_should_exist:
@@ -115,7 +122,7 @@ def get_recipients(
     membership = context["membership"]
     tasks = MembershipTask.objects.filter(
         membership=membership,
-        role__name__in=["billing_contact", "programmatic_contact"],
+        role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED,
     ).select_related("person", "role")
     return [task.person.email for task in tasks if task.person.email]
 

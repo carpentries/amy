@@ -346,6 +346,8 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
         membership = self.object
 
         # Check for any remaining objects referencing this membership.
+        # Since membership tasks are expected for the scheduled email, then they have
+        # to be removed first, which would de-schedule the email.
         if not (
             Member.objects.filter(membership=membership).count()
             or MembershipTask.objects.filter(membership=membership).count()

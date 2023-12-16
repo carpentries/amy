@@ -248,6 +248,90 @@ class TestNewMembershipOnboardingRemoveReceiverIntegration(TestBase):
         self.assertEqual(latest_log.details, "Email was cancelled")
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    def test_integration_when_removing_membership_task(self) -> None:
+        # Arrange
+        self._setUpUsersAndLogin()
+
+        membership = Membership.objects.create(
+            name="Test Membership",
+            variant="partner",
+            registration_code="test-beta-code-test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            public_instructor_training_seats=25,
+            additional_public_instructor_training_seats=3,
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=self.org_beta,
+            role=MemberRole.objects.first(),
+        )
+        billing_contact_role = MembershipPersonRole.objects.create(
+            name="billing_contact"
+        )
+        task = MembershipTask.objects.create(
+            person=self.hermione,
+            membership=membership,
+            role=billing_contact_role,
+        )
+
+        signal = NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=signal,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings",
+            body="Hello! Nice to meet **you**.",
+        )
+        request = RequestFactory().get("/")
+
+        with patch(
+            "emails.actions.base_action.messages_action_scheduled"
+        ) as mock_action_scheduled:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(membership),
+                request=request,
+                membership=membership,
+            )
+        scheduled_email = ScheduledEmail.objects.get(template=template)
+
+        url = reverse("membership_tasks", args=[membership.pk])
+
+        # Act
+        data = {
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "1",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-membership": membership.pk,
+            "form-0-person": task.person.pk,
+            "form-0-role": task.role.pk,
+            "form-0-id": task.pk,
+            "form-0-DELETE": "on",
+        }
+        rv = self.client.post(url, data=data)
+
+        # Arrange
+        mock_action_scheduled.assert_called_once()
+        self.assertEqual(rv.status_code, 302)
+        self.assertEqual(
+            MembershipTask.objects.filter(membership=membership).count(), 0
+        )
+        scheduled_email.refresh_from_db()
+        self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
+        latest_log = (
+            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
+            .order_by("-created_at")
+            .first()
+        )
+        assert latest_log
+        self.assertEqual(latest_log.details, "Email was cancelled")
+
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration__not_removed_because_of_related_objects(self) -> None:
         # Arrange
         self._setUpUsersAndLogin()

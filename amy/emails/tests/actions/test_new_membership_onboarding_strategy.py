@@ -11,7 +11,8 @@ from emails.actions.new_membership_onboarding import (
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME
 from emails.types import StrategyEnum
-from workshops.models import Membership
+from fiscal.models import MembershipPersonRole, MembershipTask
+from workshops.models import Membership, Person
 
 
 class TestNewMembershipOnboardingStrategy(TestCase):
@@ -22,6 +23,15 @@ class TestNewMembershipOnboardingStrategy(TestCase):
             agreement_start=date(2022, 1, 1),
             agreement_end=date(2023, 1, 1),
             contribution_type="financial",
+        )
+        billing_contact_role, _ = MembershipPersonRole.objects.get_or_create(
+            name="billing_contact"
+        )
+        person = Person.objects.create()
+        MembershipTask.objects.create(
+            membership=self.membership,
+            person=person,
+            role=billing_contact_role,
         )
 
     def setUpScheduledEmail(
@@ -79,12 +89,21 @@ class TestNewMembershipOnboardingStrategy(TestCase):
         # Assert
         self.assertEqual(result, StrategyEnum.UPDATE)
 
-    def test_strategy_remove(self) -> None:
+    def test_strategy_remove_because_rolled_over(self) -> None:
         # Arrange
         new_membership = self.rollOverMembership(self.membership)
         self.setUpScheduledEmail(new_membership)
         # Act
         result = new_membership_onboarding_strategy(new_membership)
+        # Assert
+        self.assertEqual(result, StrategyEnum.REMOVE)
+
+    def test_strategy_remove_because_no_tasks(self) -> None:
+        # Arrange
+        self.setUpScheduledEmail(self.membership)
+        MembershipTask.objects.all().delete()
+        # Act
+        result = new_membership_onboarding_strategy(self.membership)
         # Assert
         self.assertEqual(result, StrategyEnum.REMOVE)
 
