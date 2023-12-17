@@ -171,6 +171,10 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
     )
 
     to_header = ArrayField(models.EmailField(blank=False), verbose_name="To (header)")
+
+    # contains "[{link: API_uri, property: name}, ...]"
+    to_header_context_json = models.JSONField(blank=True, default=list)
+
     from_header = models.EmailField(blank=False, verbose_name="From (header)")
     reply_to_header = models.EmailField(
         blank=True, default="", verbose_name="Reply-To (header)"
@@ -192,6 +196,9 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         null=False,
         verbose_name="Email body (rendered from template)",
     )
+
+    # contains "{obj_name: API_uri, ...}"
+    context_json = models.JSONField(blank=True, default=dict)
 
     template = models.ForeignKey(
         EmailTemplate,
