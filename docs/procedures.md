@@ -31,9 +31,13 @@ of new features in case they would have to be released to production
 
 3. Follow [Release Procedure](#release-procedure).
 
-4. Follow [Deployment Procedure](#deployment-procedure-using-ansible).
+4. Consider manual steps to do **before** the release: [manual deployment steps](./manual_deployment_steps.md).
 
-5. Write user-friendly release notes and share them in release announcements on Slack - use `#core-team` for admin-only changes and `#general` for community-facing changes.
+5. Follow [Deployment Procedure](#deployment-procedure-using-ansible).
+
+6. Consider manual steps to do **after** the release: [manual deployment steps](./manual_deployment_steps.md).
+
+7. Write user-friendly release notes and share them in release announcements on Slack - use `#core-team` for admin-only changes and `#general` for community-facing changes.
 
 ## Release Procedure
 
