@@ -7,6 +7,7 @@ from django.utils import timezone
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
+from emails.actions.exceptions import EmailStrategyException
 from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
@@ -24,11 +25,6 @@ from emails.utils import one_month_before
 from workshops.models import Event, Task
 
 logger = logging.getLogger("amy")
-
-
-# TODO: move out to a common file
-class EmailStrategyException(Exception):
-    pass
 
 
 def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
