@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any, Mapping
 
 from django.db.models import Model
 
@@ -9,6 +8,7 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
+from emails.schemas import ContextModel, ToHeaderModel
 from workshops.models import Person
 
 
@@ -28,9 +28,10 @@ class EmailController:
     @staticmethod
     def schedule_email(
         signal: str,
-        context: Mapping[str, Any],
+        context_json: ContextModel,
         scheduled_at: datetime,
         to_header: list[str],
+        to_header_context_json: ToHeaderModel,
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
@@ -40,21 +41,30 @@ class EmailController:
             )
 
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
-        engine = EmailTemplate.get_engine()
 
-        subject = EmailTemplate.render_template(engine, template.subject, dict(context))
-        body = EmailTemplate.render_template(engine, template.body, dict(context))
+        # TODO: Remove this code in future [#2527]
+        # No more rendering the template with provided context.
+        # engine = EmailTemplate.get_engine()
+        # subject = EmailTemplate.render_template(
+        #     engine, template.subject, dict(context)
+        # )
+        # body = EmailTemplate.render_template(engine, template.body, dict(context))
+
+        subject = template.subject
+        body = template.body
 
         scheduled_email = ScheduledEmail.objects.create(
             state=ScheduledEmailStatus.SCHEDULED,
             scheduled_at=scheduled_at,
             to_header=to_header,
+            to_header_context_json=to_header_context_json,
             from_header=template.from_header,
             reply_to_header=template.reply_to_header,
             cc_header=template.cc_header,
             bcc_header=template.bcc_header,
             subject=subject,
             body=body,
+            context_json=context_json,
             template=template,
             generic_relation=generic_relation_obj,
         )
@@ -110,9 +120,10 @@ class EmailController:
     @staticmethod
     def update_scheduled_email(
         scheduled_email: ScheduledEmail,
-        context: Mapping[str, Any],
+        context_json: ContextModel,
         scheduled_at: datetime,
         to_header: list[str],
+        to_header_context_json: ToHeaderModel,
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
@@ -128,15 +139,24 @@ class EmailController:
             )
 
         signal = template.signal
-        engine = EmailTemplate.get_engine()
 
-        subject = EmailTemplate.render_template(engine, template.subject, dict(context))
-        body = EmailTemplate.render_template(engine, template.body, dict(context))
+        # TODO: Remove this code in future [#2527]
+        # No more rendering the template with provided context.
+        # engine = EmailTemplate.get_engine()
+        # subject = EmailTemplate.render_template(
+        #     engine, template.subject, dict(context)
+        # )
+        # body = EmailTemplate.render_template(engine, template.body, dict(context))
+
+        subject = template.subject
+        body = template.body
 
         scheduled_email.scheduled_at = scheduled_at
         scheduled_email.subject = subject
         scheduled_email.body = body
         scheduled_email.to_header = to_header
+        scheduled_email.to_header_context_json = to_header_context_json
+        scheduled_email.context_json = context_json
         scheduled_email.generic_relation = generic_relation_obj
         scheduled_email.save()
 
