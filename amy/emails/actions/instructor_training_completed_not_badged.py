@@ -8,6 +8,7 @@ from typing_extensions import Unpack
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.exceptions import EmailStrategyException
 from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
     Signal,
@@ -20,7 +21,7 @@ from emails.types import (
     InstructorTrainingCompletedNotBadgedKwargs,
     StrategyEnum,
 )
-from emails.utils import two_months_after
+from emails.utils import api_model_url, two_months_after
 from workshops.models import Person, TrainingProgress, TrainingRequirement
 
 logger = logging.getLogger("amy")
@@ -185,6 +186,37 @@ def get_context(
     }
 
 
+def get_context_json(
+    **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+) -> ContextModel:
+    person = kwargs["person"]
+    return ContextModel(
+        {
+            "person": api_model_url("event", person.pk),
+            "passed_requirements": [
+                api_model_url("training_progress", progress.pk)
+                for progress in TrainingProgress.objects.filter(
+                    trainee=person, state="p"
+                )
+            ],
+            "not_passed_requirements": [
+                api_model_url("training_progress", progress.pk)
+                for progress in TrainingProgress.objects.filter(trainee=person).exclude(
+                    state="p"
+                )
+            ],
+            "not_graded_requirements": [
+                api_model_url("training_progress", progress.pk)
+                for progress in TrainingProgress.objects.filter(
+                    name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
+                ).exclude(trainingprogress__trainee=person)
+            ],  # TODO: UPDATE PYDANTIC MODEL
+            # TODO: UPDATE PYDANTIC MODEL
+            "training_completed_date": f"value:{kwargs['training_completed_date']}",
+        },  # type: ignore
+    )
+
+
 def get_generic_relation_object(
     context: InstructorTrainingCompletedNotBadgedContext,
     **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
@@ -200,6 +232,20 @@ def get_recipients(
     return [person.email] if person.email else []
 
 
+def get_recipients_context_json(
+    context: InstructorTrainingCompletedNotBadgedContext,
+    **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+) -> ToHeaderModel:
+    return ToHeaderModel(
+        [
+            {
+                "api_uri": api_model_url("person", context["person"].pk),
+                "property": "email",
+            }
+        ],  # type: ignore
+    )
+
+
 class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
     signal = instructor_training_completed_not_badged_signal.signal_name
 
@@ -212,6 +258,11 @@ class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
         self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
     ) -> InstructorTrainingCompletedNotBadgedContext:
         return get_context(**kwargs)
+
+    def get_context_json(
+        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
 
     def get_generic_relation_object(
         self,
@@ -226,6 +277,13 @@ class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
         **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
     ) -> list[str]:
         return get_recipients(context, **kwargs)
+
+    def get_recipients_context_json(
+        self,
+        context: InstructorTrainingCompletedNotBadgedContext,
+        **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
 
 
 class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
@@ -241,6 +299,11 @@ class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
     ) -> InstructorTrainingCompletedNotBadgedContext:
         return get_context(**kwargs)
 
+    def get_context_json(
+        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
+
     def get_generic_relation_object(
         self,
         context: InstructorTrainingCompletedNotBadgedContext,
@@ -255,6 +318,13 @@ class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
     ) -> list[str]:
         return get_recipients(context, **kwargs)
 
+    def get_recipients_context_json(
+        self,
+        context: InstructorTrainingCompletedNotBadgedContext,
+        **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
+
 
 class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
     signal = instructor_training_completed_not_badged_remove_signal.signal_name
@@ -264,12 +334,24 @@ class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
     ) -> InstructorTrainingCompletedNotBadgedContext:
         return get_context(**kwargs)
 
+    def get_context_json(
+        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
+
     def get_generic_relation_object(
         self,
         context: InstructorTrainingCompletedNotBadgedContext,
         **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
     ) -> Person:
         return get_generic_relation_object(context, **kwargs)
+
+    def get_recipients_context_json(
+        self,
+        context: InstructorTrainingCompletedNotBadgedContext,
+        **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
 
 
 # -----------------------------------------------------------------------------

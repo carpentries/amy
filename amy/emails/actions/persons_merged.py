@@ -3,9 +3,10 @@ from datetime import datetime
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import persons_merged_signal
 from emails.types import PersonsMergedContext, PersonsMergedKwargs
-from emails.utils import immediate_action
+from emails.utils import api_model_url, immediate_action
 from workshops.models import Person
 
 
@@ -23,6 +24,13 @@ class PersonsMergedReceiver(BaseAction):
             "person": person,
         }
 
+    def get_context_json(self, **kwargs: Unpack[PersonsMergedKwargs]) -> ContextModel:
+        return ContextModel(
+            {
+                "person": api_model_url("person", kwargs["selected_person_id"]),
+            },  # type: ignore
+        )
+
     def get_generic_relation_object(
         self, context: PersonsMergedContext, **kwargs: Unpack[PersonsMergedKwargs]
     ) -> Person:
@@ -33,6 +41,20 @@ class PersonsMergedReceiver(BaseAction):
     ) -> list[str]:
         person = context["person"]
         return [person.email] if person.email else []
+
+    def get_recipients_context_json(
+        self,
+        context: PersonsMergedContext,
+        **kwargs: Unpack[PersonsMergedKwargs],
+    ) -> ToHeaderModel:
+        return ToHeaderModel(
+            [
+                {
+                    "api_uri": api_model_url("person", context["person"].pk),
+                    "property": "email",
+                },
+            ],  # type: ignore
+        )
 
 
 persons_merged_receiver = PersonsMergedReceiver()

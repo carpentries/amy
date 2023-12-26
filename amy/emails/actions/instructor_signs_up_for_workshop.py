@@ -3,9 +3,10 @@ from datetime import datetime
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_signs_up_for_workshop_signal
 from emails.types import InstructorSignupContext, InstructorSignupKwargs
-from emails.utils import immediate_action
+from emails.utils import api_model_url, immediate_action
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import Event, Person
 
@@ -30,6 +31,20 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
             "instructor_recruitment_signup": instructor_recruitment_signup,
         }
 
+    def get_context_json(
+        self, **kwargs: Unpack[InstructorSignupKwargs]
+    ) -> ContextModel:
+        return ContextModel(
+            {
+                "person": api_model_url("person", kwargs["person_id"]),
+                "event": api_model_url("event", kwargs["event_id"]),
+                "instructor_recruitment_signup": api_model_url(
+                    "instructor_recruitment_signup",
+                    kwargs["instructor_recruitment_signup_id"],
+                ),
+            },  # type: ignore
+        )
+
     def get_generic_relation_object(
         self, context: InstructorSignupContext, **kwargs: Unpack[InstructorSignupKwargs]
     ) -> InstructorRecruitmentSignup:
@@ -40,6 +55,18 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
     ) -> list[str]:
         person = context["person"]
         return [person.email] if person.email else []
+
+    def get_recipients_context_json(
+        self, context: InstructorSignupContext, **kwargs: Unpack[InstructorSignupKwargs]
+    ) -> ToHeaderModel:
+        return ToHeaderModel(
+            [
+                {
+                    "api_uri": api_model_url("person", context["person"].pk),
+                    "property": "email",
+                },
+            ],  # type: ignore
+        )
 
 
 instructor_signs_up_for_workshop_receiver = InstructorSignsUpForWorkshopReceiver()
