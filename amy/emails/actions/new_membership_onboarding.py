@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
+from emails.actions.exceptions import EmailStrategyException
 from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
     NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
@@ -22,8 +23,6 @@ from emails.types import (
 from emails.utils import immediate_action, one_month_before
 from fiscal.models import MembershipTask
 from workshops.models import Membership
-
-from .instructor_training_approaching import EmailStrategyException
 
 logger = logging.getLogger("amy")
 

@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
+from emails.actions.exceptions import EmailStrategyException
 from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
     INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
@@ -21,8 +22,6 @@ from emails.types import (
 )
 from emails.utils import two_months_after
 from workshops.models import Person, TrainingProgress, TrainingRequirement
-
-from .instructor_training_approaching import EmailStrategyException
 
 logger = logging.getLogger("amy")
 

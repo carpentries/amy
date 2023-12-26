@@ -1,0 +1,2 @@
+class EmailStrategyException(Exception):
+    pass
