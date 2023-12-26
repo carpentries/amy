@@ -12,6 +12,7 @@ from emails.controller import (
     EmailControllerMissingTemplateException,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import SignalNameEnum
 from emails.utils import (
     messages_action_cancelled,
@@ -54,11 +55,21 @@ class BaseAction(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def get_context_json(self, **kwargs) -> ContextModel:
+        raise NotImplementedError()
+
+    @abstractmethod
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
         raise NotImplementedError()
 
     @abstractmethod
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_recipients_context_json(
+        self, context: dict[str, Any], **kwargs
+    ) -> ToHeaderModel:
         raise NotImplementedError()
 
     def __call__(self, sender: Any, **kwargs) -> None:
@@ -68,14 +79,18 @@ class BaseAction(ABC):
         request = kwargs.pop("request")
 
         context = self.get_context(**kwargs)
+        context_json = self.get_context_json(**kwargs)
         scheduled_at = self.get_scheduled_at(**kwargs)
 
         try:
             scheduled_email = EmailController.schedule_email(
                 signal=self.signal,
-                context=context,
+                context_json=context_json,
                 scheduled_at=scheduled_at,
                 to_header=self.get_recipients(context, **kwargs),
+                to_header_context_json=self.get_recipients_context_json(
+                    context, **kwargs
+                ),
                 generic_relation_obj=self.get_generic_relation_object(
                     context, **kwargs
                 ),
@@ -99,6 +114,7 @@ class BaseActionUpdate(BaseAction):
         request = kwargs.pop("request")
 
         context = self.get_context(**kwargs)
+        context_json = self.get_context_json(**kwargs)
         scheduled_at = self.get_scheduled_at(**kwargs)
         generic_relation_obj = self.get_generic_relation_object(context, **kwargs)
         signal_name = self.signal
@@ -133,9 +149,12 @@ class BaseActionUpdate(BaseAction):
         try:
             scheduled_email = EmailController.update_scheduled_email(
                 scheduled_email=scheduled_email,
-                context=context,
+                context_json=context_json,
                 scheduled_at=scheduled_at,
                 to_header=self.get_recipients(context, **kwargs),
+                to_header_context_json=self.get_recipients_context_json(
+                    context, **kwargs
+                ),
                 generic_relation_obj=generic_relation_obj,
                 author=person_from_request(request),
             )
