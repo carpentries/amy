@@ -6,10 +6,12 @@ from django.urls import reverse
 
 from emails.actions import instructor_training_approaching_receiver
 from emails.models import EmailTemplate, ScheduledEmail
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     instructor_training_approaching_signal,
 )
+from emails.utils import api_model_url
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
@@ -113,10 +115,6 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         # Arrange
         request = RequestFactory().get("/")
         signal = INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME
-        context = {
-            "event": self.event,
-            "instructors": [self.instructor1, self.instructor2],
-        }
         scheduled_at = datetime(2023, 8, 5, 12, 0, tzinfo=UTC)
         mock_one_month_before.return_value = scheduled_at
 
@@ -134,9 +132,29 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         # Assert
         mock_schedule_email.assert_called_once_with(
             signal=signal,
-            context=context,
+            context_json=ContextModel(
+                {
+                    "event": api_model_url("event", self.event.pk),
+                    "instructors": [
+                        api_model_url("person", self.instructor1.pk),
+                        api_model_url("person", self.instructor2.pk),
+                    ],
+                }
+            ),
             scheduled_at=scheduled_at,
             to_header=[self.instructor1.email, self.instructor2.email],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {
+                        "api_uri": api_model_url("person", self.instructor1.pk),
+                        "property": "email",
+                    },
+                    {
+                        "api_uri": api_model_url("person", self.instructor2.pk),
+                        "property": "email",
+                    },
+                ]  # type: ignore
+            ),
             generic_relation_obj=self.event,
             author=None,
         )
