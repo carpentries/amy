@@ -150,3 +150,7 @@ def find_signal_by_name(
 
 def api_model_url(model: str, pk: int) -> str:
     return f"api:{model}/{pk}"
+
+
+def scalar_value_url(type_: str, value: str) -> str:
+    return f"value:{type_}/{value}"

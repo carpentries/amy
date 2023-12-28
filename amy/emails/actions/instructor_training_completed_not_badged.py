@@ -21,7 +21,7 @@ from emails.types import (
     InstructorTrainingCompletedNotBadgedKwargs,
     StrategyEnum,
 )
-from emails.utils import api_model_url, two_months_after
+from emails.utils import api_model_url, scalar_value_url, two_months_after
 from workshops.models import Person, TrainingProgress, TrainingRequirement
 
 logger = logging.getLogger("amy")
@@ -210,10 +210,11 @@ def get_context_json(
                 for progress in TrainingProgress.objects.filter(
                     name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
                 ).exclude(trainingprogress__trainee=person)
-            ],  # TODO: UPDATE PYDANTIC MODEL
-            # TODO: UPDATE PYDANTIC MODEL
-            "training_completed_date": f"value:{kwargs['training_completed_date']}",
-        },  # type: ignore
+            ],
+            "training_completed_date": scalar_value_url(
+                "date", kwargs["training_completed_date"].isoformat()
+            ),
+        },
     )
 
 

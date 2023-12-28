@@ -121,8 +121,8 @@ def get_context_json(
                 for task in Task.objects.filter(
                     event=kwargs["event"], role__name="instructor"
                 )
-            ],  # TODO: UPDATE PYDANTIC MODEL
-        },  # type: ignore
+            ],
+        },
     )
 
 

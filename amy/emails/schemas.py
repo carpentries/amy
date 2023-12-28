@@ -16,6 +16,9 @@ def uri_validator(uri: str, expected_scheme: str = "https") -> str:
 
 
 ApiUri = Annotated[str, AfterValidator(partial(uri_validator, expected_scheme="api"))]
+ValueUri = Annotated[
+    str, AfterValidator(partial(uri_validator, expected_scheme="value"))
+]
 
 
 class SinglePropertyLinkModel(BaseModel):
@@ -24,9 +27,6 @@ class SinglePropertyLinkModel(BaseModel):
     property: str
 
 
-class ToHeaderModel(RootModel[list[SinglePropertyLinkModel]]):
-    ...
+ToHeaderModel = RootModel[list[SinglePropertyLinkModel]]
 
-
-class ContextModel(RootModel[dict[str, ApiUri]]):
-    ...
+ContextModel = RootModel[dict[str, ApiUri | list[ApiUri] | ValueUri]]

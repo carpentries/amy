@@ -114,7 +114,7 @@ def get_context_json(
     return ContextModel(
         {
             "membership": api_model_url("membership", kwargs["membership"].pk),
-        },  # type: ignore
+        },
     )
 
 

@@ -35,7 +35,7 @@ class InstructorBadgeAwardedReceiver(BaseAction):
             {
                 "person": api_model_url("person", kwargs["person_id"]),
                 "award": api_model_url("award", kwargs["award_id"]),
-            },  # type: ignore
+            },
         )
 
     def get_generic_relation_object(
