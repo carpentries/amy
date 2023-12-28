@@ -37,7 +37,8 @@ class EmailController:
     ) -> ScheduledEmail:
         if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
-                "Email must have at least one recipient, but `to_header` is empty."
+                "Email must have at least one recipient, but `to_header` or "
+                "`to_header_context_json` are empty."
             )
 
         # Try rendering the templates with empty context to see if there are any syntax
@@ -124,9 +125,10 @@ class EmailController:
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
-        if not to_header:
+        if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
-                "Email must have at least one recipient, but `to_header` is empty."
+                "Email must have at least one recipient, but `to_header` or "
+                "`to_header_context_json` are empty."
             )
 
         template = scheduled_email.template

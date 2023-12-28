@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from django.template.exceptions import TemplateSyntaxError
 from django.test import TestCase
@@ -75,9 +75,10 @@ class TestEmailController(TestCase):
         signal = "test_email_template"
 
         # Act & Assert
-        with self.assertRaises(
+        with self.assertRaisesMessage(
             EmailControllerException,
-            msg="Email must have at least one recipient, but `to_header` is empty.",
+            "Email must have at least one recipient, but `to_header` or "
+            "`to_header_context_json` are empty.",
         ):
             EmailController.schedule_email(
                 signal,
@@ -191,7 +192,6 @@ class TestEmailController(TestCase):
     def test_schedule_email__author(self) -> None:
         # Arrange
         now = timezone.now()
-        person = Person.objects.create(personal="Harry", family="Potter")
 
         # Act
         scheduled_email = EmailController.schedule_email(
@@ -207,18 +207,17 @@ class TestEmailController(TestCase):
                     }
                 ]  # type: ignore
             ),
-            author=person,
+            author=self.harry,
         )
         log = ScheduledEmailLog.objects.get(scheduled_email=scheduled_email)
 
         # Assert
-        self.assertEqual(log.author, person)
+        self.assertEqual(log.author, self.harry)
 
     def test_reschedule_email(self) -> None:
         # Arrange
         old_scheduled_date = datetime(2023, 7, 5, 10, 00, tzinfo=UTC)
         new_scheduled_date = datetime(2024, 7, 5, 10, 00, tzinfo=UTC)
-        person = Person.objects.create(personal="Harry", family="Potter")
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
@@ -242,7 +241,7 @@ class TestEmailController(TestCase):
         scheduled_email = EmailController.reschedule_email(
             scheduled_email,
             new_scheduled_date,
-            author=person,
+            author=self.harry,
         )
 
         # Assert
@@ -258,7 +257,7 @@ class TestEmailController(TestCase):
             latest_log.details,
             f"Rescheduled email to run at {new_scheduled_date.isoformat()}",
         )
-        self.assertEqual(latest_log.author, person)
+        self.assertEqual(latest_log.author, self.harry)
 
     def test_reschedule_cancelled_email(self) -> None:
         # Arrange
@@ -294,7 +293,6 @@ class TestEmailController(TestCase):
     def test_cancel_email(self) -> None:
         # Arrange
         now = timezone.now()
-        person = Person.objects.create(personal="Harry", family="Potter")
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
@@ -317,7 +315,7 @@ class TestEmailController(TestCase):
         ).count()
         scheduled_email = EmailController.cancel_email(
             scheduled_email,
-            author=person,
+            author=self.harry,
         )
 
         # Assert
@@ -330,4 +328,153 @@ class TestEmailController(TestCase):
             scheduled_email=scheduled_email
         ).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "Email was cancelled")
-        self.assertEqual(latest_log.author, person)
+        self.assertEqual(latest_log.author, self.harry)
+
+    def test_update_scheduled_email(self) -> None:
+        # Arrange
+        now = timezone.now()
+
+        scheduled_email = EmailController.schedule_email(
+            self.signal,
+            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            scheduled_at=now,
+            to_header=["harry@potter.com"],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {
+                        "api_uri": api_model_url("person", self.harry.pk),
+                        "property": "email",
+                    }
+                ]  # type: ignore
+            ),
+        )
+
+        # Act
+        logs_count = ScheduledEmailLog.objects.filter(
+            scheduled_email=scheduled_email
+        ).count()
+        scheduled_email = EmailController.update_scheduled_email(
+            scheduled_email,
+            context_json=ContextModel({"name": scalar_value_url("string", "James")}),
+            scheduled_at=now + timedelta(hours=1),
+            to_header=["james@potter.com"],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {
+                        "api_uri": api_model_url("person", self.harry.pk),
+                        "property": "secondary_email",
+                    }
+                ]  # type: ignore
+            ),
+            generic_relation_obj=None,
+            author=self.harry,
+        )
+
+        # Assert
+        self.assertEqual(self.template, scheduled_email.template)
+        self.assertEqual(scheduled_email.subject, "Greetings {{ name }}")
+        self.assertEqual(scheduled_email.context_json, {"name": "value:string/James"})
+        self.assertEqual(
+            scheduled_email.body, "Hello, {{ name }}! Nice to meet **you**."
+        )
+        self.assertEqual(scheduled_email.scheduled_at, now + timedelta(hours=1))
+        self.assertEqual(scheduled_email.to_header, ["james@potter.com"])
+        self.assertEqual(
+            scheduled_email.to_header_context_json,
+            [{"api_uri": f"api:person/{self.harry.pk}", "property": "secondary_email"}],
+        )
+
+        self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
+        self.assertEqual(
+            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
+            logs_count + 1,
+        )
+        latest_log = ScheduledEmailLog.objects.filter(
+            scheduled_email=scheduled_email
+        ).order_by("-created_at")[0]
+        self.assertEqual(latest_log.details, f"Updated {self.signal}")
+        self.assertEqual(latest_log.author, self.harry)
+
+    def test_update_scheduled_email__no_recipients(self) -> None:
+        # Arrange
+        now = timezone.now()
+
+        scheduled_email = EmailController.schedule_email(
+            self.signal,
+            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            scheduled_at=now,
+            to_header=["harry@potter.com"],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {
+                        "api_uri": api_model_url("person", self.harry.pk),
+                        "property": "email",
+                    }
+                ]  # type: ignore
+            ),
+        )
+
+        # Act & Assert
+        with self.assertRaisesMessage(
+            EmailControllerException,
+            "Email must have at least one recipient, but `to_header` or "
+            "`to_header_context_json` are empty.",
+        ):
+            EmailController.update_scheduled_email(
+                scheduled_email,
+                context_json=ContextModel(
+                    {"name": scalar_value_url("string", "James")}
+                ),
+                scheduled_at=now + timedelta(hours=1),
+                to_header=[],
+                to_header_context_json=ToHeaderModel([]),
+                generic_relation_obj=None,
+                author=self.harry,
+            )
+
+    def test_update_scheduled_email__missing_template(self) -> None:
+        # Arrange
+        now = timezone.now()
+
+        scheduled_email = EmailController.schedule_email(
+            self.signal,
+            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            scheduled_at=now,
+            to_header=["harry@potter.com"],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {
+                        "api_uri": api_model_url("person", self.harry.pk),
+                        "property": "email",
+                    }
+                ]  # type: ignore
+            ),
+        )
+
+        # Shouldn't occur in real life, but let's test it anyway.
+        scheduled_email.template = None
+        scheduled_email.save()
+
+        # Act & Assert
+        with self.assertRaisesMessage(
+            EmailControllerException,
+            "Scheduled email must be linked to a template.",
+        ):
+            EmailController.update_scheduled_email(
+                scheduled_email,
+                context_json=ContextModel(
+                    {"name": scalar_value_url("string", "James")}
+                ),
+                scheduled_at=now + timedelta(hours=1),
+                to_header=["james@potter.com"],
+                to_header_context_json=ToHeaderModel(
+                    [
+                        {
+                            "api_uri": api_model_url("person", self.harry.pk),
+                            "property": "secondary_email",
+                        }
+                    ]  # type: ignore
+                ),
+                generic_relation_obj=None,
+                author=self.harry,
+            )
