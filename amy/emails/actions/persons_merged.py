@@ -28,7 +28,7 @@ class PersonsMergedReceiver(BaseAction):
         return ContextModel(
             {
                 "person": api_model_url("person", kwargs["selected_person_id"]),
-            },  # type: ignore
+            },
         )
 
     def get_generic_relation_object(

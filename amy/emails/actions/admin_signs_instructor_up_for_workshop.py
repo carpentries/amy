@@ -44,7 +44,7 @@ class AdminSignsInstructorUpForWorkshopReceiver(BaseAction):
                     "instructor_recruitment_signup",
                     kwargs["instructor_recruitment_signup_id"],
                 ),
-            },  # type: ignore
+            },
         )
 
     def get_generic_relation_object(
