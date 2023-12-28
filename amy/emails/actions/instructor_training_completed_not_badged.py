@@ -206,8 +206,8 @@ def get_context_json(
                 )
             ],
             "not_graded_requirements": [
-                api_model_url("training_progress", progress.pk)
-                for progress in TrainingProgress.objects.filter(
+                api_model_url("training_requirement", requirement.pk)
+                for requirement in TrainingRequirement.objects.filter(
                     name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
                 ).exclude(trainingprogress__trainee=person)
             ],
