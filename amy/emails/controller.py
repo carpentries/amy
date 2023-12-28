@@ -35,20 +35,17 @@ class EmailController:
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
-        if not to_header:
+        if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
                 "Email must have at least one recipient, but `to_header` is empty."
             )
 
+        # Try rendering the templates with empty context to see if there are any syntax
+        # errors.
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
-
-        # TODO: Remove this code in future [#2527]
-        # No more rendering the template with provided context.
-        # engine = EmailTemplate.get_engine()
-        # subject = EmailTemplate.render_template(
-        #     engine, template.subject, dict(context)
-        # )
-        # body = EmailTemplate.render_template(engine, template.body, dict(context))
+        engine = EmailTemplate.get_engine()
+        EmailTemplate.render_template(engine, template.subject, {})
+        EmailTemplate.render_template(engine, template.body, {})
 
         subject = template.subject
         body = template.body
@@ -57,14 +54,14 @@ class EmailController:
             state=ScheduledEmailStatus.SCHEDULED,
             scheduled_at=scheduled_at,
             to_header=to_header,
-            to_header_context_json=to_header_context_json,
+            to_header_context_json=to_header_context_json.model_dump(),
             from_header=template.from_header,
             reply_to_header=template.reply_to_header,
             cc_header=template.cc_header,
             bcc_header=template.bcc_header,
             subject=subject,
             body=body,
-            context_json=context_json,
+            context_json=context_json.model_dump(),
             template=template,
             generic_relation=generic_relation_obj,
         )
@@ -140,13 +137,11 @@ class EmailController:
 
         signal = template.signal
 
-        # TODO: Remove this code in future [#2527]
-        # No more rendering the template with provided context.
-        # engine = EmailTemplate.get_engine()
-        # subject = EmailTemplate.render_template(
-        #     engine, template.subject, dict(context)
-        # )
-        # body = EmailTemplate.render_template(engine, template.body, dict(context))
+        # Try rendering the templates with empty context to see if there are any syntax
+        # errors.
+        engine = EmailTemplate.get_engine()
+        EmailTemplate.render_template(engine, template.subject, {})
+        EmailTemplate.render_template(engine, template.body, {})
 
         subject = template.subject
         body = template.body
@@ -155,8 +150,8 @@ class EmailController:
         scheduled_email.subject = subject
         scheduled_email.body = body
         scheduled_email.to_header = to_header
-        scheduled_email.to_header_context_json = to_header_context_json
-        scheduled_email.context_json = context_json
+        scheduled_email.to_header_context_json = to_header_context_json.model_dump()
+        scheduled_email.context_json = context_json.model_dump()
         scheduled_email.generic_relation = generic_relation_obj
         scheduled_email.save()
 
