@@ -62,7 +62,7 @@ Carpentries Instructor trainees can [log in to AMY](#logging-in) to view their c
 
 ![AMY Training Progress Menu](images/training_progress_menu.png)
 
-You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon completion of all three steps.  
+You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon successful completion of the Training and all three checkout steps.  
 
 **Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
