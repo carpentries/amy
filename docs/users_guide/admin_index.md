@@ -126,7 +126,7 @@ Select "New person" and enter in as much information as possible.  At minimum a 
 
 ![AMY bulk add person menu](images/bulk_add_persons.png)
 
-The role must exactly match the [instructions here](https://amy.carpentries.org/workshops/persons/bulk_upload/). The event slug must exactly match the slug for the event recorded in AMY.
+The column for role name must exactly match the [instructions here](https://amy.carpentries.org/workshops/persons/bulk_upload/). The event slug must exactly match the slug for the event recorded in AMY. This may include invisible space characters.
 
 This will take you to a screen where you can verify each record, correct any errors, and submit them for bulk upload.  If a person with the same name and email already exists in the database, you will be able to match the new entry to the existing record.  Otherwise a new person record will be created.
 
