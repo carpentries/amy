@@ -391,6 +391,7 @@ A list of all current trainees and their progress can be seen on the "Trainees" 
 ![All trainees page](images/all_trainees.png)
 
 The colour of each item represents its state:
+
 * Green: Passed
 * Blue: Asked to repeat
 * Yellow: Not evaluated yet
