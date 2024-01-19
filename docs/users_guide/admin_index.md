@@ -162,15 +162,52 @@ Enter in the airport's IATA code, full name, country, and latitude and longitude
 
 New events can be created one of several ways:
 
-* By manually entering all information on the [new event page](#creating-a-new-event-manually)
-* By importing from URL on the [new event page](#creating-a-new-event-from-url)
-* By accepting a [workshop request](#creating-a-new-event-from-a-workshop-request)
+* [Create a new event manually](#creating-a-new-event-manually)
+* [Create a new event from URL](#creating-a-new-event-from-url)
+* [Create a new event from workshop request](#creating-a-new-event-from-a-workshop-request)
+
+Regardless of how an event is created, roles such as Instructor, Host, and helper can be [assigned](#assigning-people-to-events) after the event is created and saved.
 
 #### Creating a New Event Manually
 
 Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).
 
 ![AMY new event](images/new_event.png)
+
+[All fields](#event-fields) will need to be manually entered in.  
+
+
+#### Creating a New Event from URL
+
+If you already have the event's URL with properly formatted metadata using [The Carpentries workshop template](https://github.com/carpentries/workshop-template), some information can automatically be imported.  Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).  Click on the "Import from URL" button and enter the link to the workshop website OR GitHub URL.
+
+![AMY new event from URL](images/new_event_from_url.png)
+
+If the website repo contained properly formatted data, the slug, start/end dates, and location may automatically be populated. [All other fields](#event-fields) will need to be manually entered in.  
+
+Instructor and helper names will be in the notes field but not assigned in the database.  
+
+#### Creating a New Event from a Workshop Request
+
+A workshop can be requested from a host site, and this information can be used to create an event in AMY. In the "Requests" menu, select one of the following options:
+
+* Workshop requests
+* Workshop inquiries
+* Self-Organised submissions
+
+![AMY workshop requests](images/workshop_requests_menu.png)
+
+This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
+
+![AMY workshop request list](images/workshop_requests.png)
+
+At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request. 
+
+This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above. 
+
+![AMY workshop accept request](images/event_from_request.png)
+
+#### Event fields
 
 * **Slug** Create the workshop slug. This must be in the form `YYYY-MM-DD-sitename` (for example, `2018-01-01-hawkins`.  The same slug should be used for the workshop's GitHub page and any other place the workshop is identified. If the exact date is not known, `XX` can replace the month and/or day (for example, `2018-01-xx-starfleet`).
 
@@ -235,45 +272,6 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 * **Location details**  Add in the location including the country, venue name, address, and latitude/longitude coordinates.
 
 * **Comment**  Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
-
-**Click "Submit" to save this event.**  Roles such as Instructor, Host, and helper can be [assigned](#assigning-people-to-events) after the event is created and saved.
-
-#### Creating a New Event from URL
-
-If you already have the event's URL with properly formatted metadata using [The Carpentries workshop template](https://github.com/carpentries/workshop-template), some information can automatically be imported.  Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).  Click on the "Import from URL" button and enter the link to the workshop website OR GitHub URL.
-
-![AMY new event from URL](images/new_event_from_url.png)
-
-This will automatically populate the following fields:
-
-* Slug (created from GitHub repo name)
-* Start and end dates
-* Location details
-
-Instructor and helper names will be in the notes field but not assigned in the database.  All people will need to be [assigned to the event](#assigning-people-to-events).
-
-All other information will need to be [entered in as above](#creating-a-new-event-manually).
-
-#### Creating a New Event from a Workshop Request
-
-A workshop can be requested from a host site, and this information can be used to create an event in AMY. In the "Requests" menu, select one of the following options:
-
-* Workshop requests
-* Workshop inquiries
-* Self-Organised submissions
-
-![AMY workshop requests](images/workshop_requests_menu.png)
-
-This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
-
-![AMY workshop request list](images/workshop_requests.png)
-
-At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request. 
-
-This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above.
-
-![AMY workshop accept request](images/event_from_request.png)
-
 
 
 ### Recruiting Instructors for Workshops
