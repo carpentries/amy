@@ -16,7 +16,7 @@ The Carpentries can maintain the following information about individuals in our 
 * Secondary email address (This is an optional, secondary email address we can use to contact you.)
 * Gender (options include *Prefer not to say*, *Female*, *Gender variant*, *Male*, *Other*)
 * Country
-* Airport *If your aiport is not in the drop down, please contact team@carpentries.org so we can add it in.*
+* Airport *If your aiport is not in the drop down, please contact <team@carpentries.org> so we can add it in.*
 * Affiliation
 * GitHub username 
 * Twitter username
@@ -44,7 +44,7 @@ In addition to the following information, The Carpentries also maintains data on
 * other roles the individual may have or have had, such as Core Team member, Executive Team member, etc.
 * whether the individual is actively serving in a role
 
-Individuals can view this information but can not edit it directly.  Please contact team@carpentries.org with questions about this information.
+Individuals can view this information but can not edit it directly.  Please contact <team@carpentries.org> with questions about this information.
 
 ## Instructor Training
 
@@ -113,4 +113,4 @@ A workshop administrator will follow up shortly to confirm or decline each instr
 ### Notes about signing up 
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
-* Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact workshops@carpentries.org if they are interested in teaching concurrent workshops to discuss scheduling options.
+* Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact <workshops@carpentries.org> if they are interested in teaching concurrent workshops to discuss scheduling options.
