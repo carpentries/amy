@@ -430,7 +430,7 @@ Each activity, when selected, requires some or all of the **URL**, **Date**, and
 
 #### Adding checkout progress in bulk
 
-Go to the "Trainees" page under the "More" menu.
+Checkout progress can only be added in bulk if **all selected Trainees** have the exact same information for that checkout step (i.e., the same status for the same event). ["Get Involved" submissions](#evaluating-get-involved-submissions) can not be accepted in bulk. Go to the "Trainees" page under the "More" menu.
 
 To add the same step to many trainees, select the relevant trainees using the checkboxes on the left of each row, then complete the form at the bottom of the page. This form has the same fields as the [individual progress form](#adding-checkout-progress-one-by-one), minus the **Trainee** field. When the form is submitted, an identical item will be added to each selected trainee.
 
