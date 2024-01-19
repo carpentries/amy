@@ -382,7 +382,7 @@ Click "Accept & match selected trainees to chosen training." The search screen w
 
 #### Tracking Checkout Progress
 
-The above steps note that a trainee was accepted in to a training event. Completion of the training event and three steps towards trainee checkout can be tracked in AMY.
+The above steps note that a trainee was accepted in to a training event. Completion of the training event and [three steps towards trainee checkout](https://carpentries.github.io/instructor-training/checkout.html) can be tracked in AMY.
 
 A list of all current trainees and their progress can be seen on the "Trainees" page under the "More" menu.
 
