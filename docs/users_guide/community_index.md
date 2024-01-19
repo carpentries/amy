@@ -25,7 +25,7 @@ The Carpentries can maintain the following information about individuals in our 
 * ORCID ID
 * Personal notes
 * Topics and lessons you're comfortable teaching (a non-exhaustive list of lessons taught by The Carpentries)
-* Areas of expertise 
+* Areas of expertise  (List of academic/scientific/professional domains)
 * Languages (human languages)
 * Comments (additional notes or comments from individual)
 * Consents (*Note consents can be changed by the individual at any time*)
