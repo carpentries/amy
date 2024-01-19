@@ -614,7 +614,7 @@ If only one result is found across all fields, AMY will automatically redirect t
 
 #### Searching for Qualified Instructors
 
-Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the following criteria:
+Under the "More" menu, select "[Find Workshop Staff](https://amy.carpentries.org/workshops/workshop_staff/)."  Here you can filter by the following criteria:
 
 * **Airport**: This returns a list of all Instructors beginning with those who list that airport as their closest airport, and then continues reaching farther out.
 * **Country**: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.
