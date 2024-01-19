@@ -95,7 +95,7 @@ The Trainer leading your Teaching Demonstration will inform the Instructor Train
 
 ### Welcome Session
 
-If you signed in on the welcome session Etherpad, your participation will be recorded by our Instructor Training team. 
+If you signed in on the [Welcome Session Etherpad](https://pad.carpentries.org/welcome-sessions-2024), your participation will be recorded by our Instructor Training team. 
 
 ### Certificate
 
