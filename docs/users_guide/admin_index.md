@@ -132,12 +132,19 @@ This will take you to a screen where you can verify each record, correct any err
 
 #### Consents
 
-AMY asks all users to consent or agree to the following:
+AMY asks all users for the following consents:
 
-* **I have read and agree to the data privacy policy of The Carpentries.**
-* **Can we contact you for volunteering opportunities, surveys, feedback, etc.?**
-* **Do you consent to publish your profile on The Carpentries website?**
-* **Do you consent to have your name or identity associated with lesson publications?**
+**Mandatory consents:**
+
+* I have read and agree to the [privacy policy of The Carpentries](https://docs.carpentries.org/topic_folders/policies/privacy.html).
+* I acknowledge that I am at least 16 years old.
+* Do you agree to the transfer of your data outside of the European Economic Area/United Kingdom?
+
+**Optional consents:**
+
+* Can we contact you for volunteering opportunities, surveys, feedback, etc.?
+* Do you consent to publish your profile on The Carpentries website?
+* Do you consent to have your name or identity associated with lesson publications?
 
 By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.
 
