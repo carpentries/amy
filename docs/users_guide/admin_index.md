@@ -448,7 +448,7 @@ Trainees may submit a contribution for the Get Involved checkout step through th
 
 Submissions must be evaluated by an administrator to ensure that the contribution is valid.
 
-In the "Trainees" page (under the "More" menu), select the filter "Only trainees with unevaluated Get Involved submission" in the left sidebar, then click "Submit" at the bottom of the sidebar. This will update the page to show only trainees awaiting evaluation. 
+In the "Trainees" page (under the "More" menu), select the filter "Only trainees with unevaluated Get Involved submission" in the left sidebar, then click "Submit" at the bottom of the sidebar. This will [update the page to show only trainees awaiting evaluation](https://amy.carpentries.org/trainings/trainees/?search=&get_involved=on&is_instructor=&training=&training_request=unknown&order_by=). 
 
 ![Trainees with unevaluated submissions](images/trainees_with_unevaluated_submissions.png)
 
