@@ -624,7 +624,7 @@ Under the "More" menu, select "[Find Workshop Staff](https://amy.carpentries.org
 
 #### Searching for Events
 
-Clicking "Events" on the top menu bar will take you to a list of *all* recorded events - past, present, and future, including those that were stalled or cancelled. Here you can filter by the following criteria:
+Clicking "[Events](https://amy.carpentries.org/workshops/events/)" on the top menu bar will take you to a list of *all* recorded events - past, present, and future, including those that were stalled or cancelled. Here you can filter by the following criteria:
 
 * **Assigned to**: The admin user the event is assigned to
 * **Tags**: Any tags applied to that event
@@ -638,7 +638,7 @@ Clicking "Events" on the top menu bar will take you to a list of *all* recorded 
 
 #### Searching for Organisations
 
-Clicking "Organisations" on the top menu bar will take you to a list of *all* recorded organisations, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
+Clicking "[Organisations](https://amy.carpentries.org/fiscal/organizations/)" on the top menu bar will take you to a list of *all* recorded organisations, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
 
 * **Country**: Country the organisation is based in
 * **Memberships (current or past)**: Whether the organisation has had any current or past membership, by selected membership variant
@@ -646,7 +646,7 @@ Clicking "Organisations" on the top menu bar will take you to a list of *all* re
 
 #### Searching for Memberships
 
-Clicking "Memberships" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:
+Clicking "[Memberships](https://amy.carpentries.org/fiscal/memberships/)" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:
 
 * **Organisation Name**: For most memberships, this will be the name of the main organisation. For consortium memberships, this will be the name of the consortium.
 * **Consortium**:  Whether the membership is listed as a consortium
@@ -660,7 +660,7 @@ Clicking "Memberships" on the top menu bar will take you to a list of all Carpen
 
 #### Searching for Persons
 
-Clicking "Persons" on the top menu bar will take you to a list of *all* recorded persons, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
+Clicking "[Persons](https://amy.carpentries.org/workshops/persons/)" on the top menu bar will take you to a list of *all* recorded persons, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
 
 * **Badges** This will return Persons who have any of the selected badges
 * **Taught at workshops of type** This will list Persons who have taught at workshops with any of the selected tags
