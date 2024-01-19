@@ -575,7 +575,7 @@ If duplicate Person, Training Request, or Event records exist, they can be merge
 
 ![AMY merge duplicates menu](images/merge_menu.png)
 
-Once you select "Merge Persons" or "Merge Events" you will be taken to a screen to select the two Persons or Events you would like to merge. Start typing in the Person's name or the Event's slug, and AMY will autocomplete with possible options.
+Once you select [Merge Persons](https://amy.carpentries.org/workshops/persons/merge/), [Merge Events](https://amy.carpentries.org/workshops/events/merge/), or [Merge Training Requests](https://amy.carpentries.org/requests/training_requests/merge) you will be taken to a screen to select the two Persons, Events, or Training Requests you would like to merge. Start typing in the name or slug, and AMY will autocomplete with possible options.
 
 ![AMY select Persons to merge](images/select_merge_persons.png)
 
