@@ -310,7 +310,7 @@ Once at least two Instructors have been confirmed, the admin may close signups f
 
 Regardless of how events are created, adding the people associated with each event can not easily be automated. [Name matching is hard](http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/).
 
-People can be associated with events one by one or as a bulk upload.  The person must already [be in AMY](#adding-a-new-person) before assigning them to a role at an event.
+People can be associated with events one by one or as a bulk upload.  The person must already [be in AMY](#adding-a-new-person) before assigning them to a role at an event.  If an Instructor is assigned via the Instructor Recruitment process, the Instructor role is automatically assigned.
 
 #### Assigning People to Events, One by One
 
