@@ -148,7 +148,7 @@ AMY asks all users for the following consents:
 
 By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.
 
-Some of the questions above are also asked during the [instructor training application](https://amy.carpentries.org/forms/request_training/). If a Person record is created from a training request, the consents from that training request will be carried across to the Person.
+Some of the questions above are also asked during the [instructor training application](https://amy.carpentries.org/forms/request_training/). If a [Person record is created from a training request](#accepting-trainee-applications), the consents from that training request will be carried across to the Person.
 
 ### Adding a New Airport
 
