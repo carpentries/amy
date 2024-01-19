@@ -214,7 +214,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
     - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.  
     <br>  
 
-* **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
+* **TTT Open applications** For instructor training events only, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
 
 
 * **Curricula taught at the workshop** Select the curricula taught at this workshop.
