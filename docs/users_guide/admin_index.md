@@ -487,9 +487,9 @@ An individual badge can be issued by going to a person's record and clicking the
 
 AMY comes with several built in reporting features that can be accessed by clicking `Reports` in the top menu.
 
-* **Membership training statistics** Lists all memberships by variant, agreement dates, contribution type, and total/used/remaining instructor training seats (inhouse and public)
-* **Workshop issues** and **Instructor issues** identify specific workshops and instructors with gaps in data.
-* **Find duplicate persons** and **Find duplicate training requests** identifies Persons or Training Requests that may be listed as duplicates due to having the same name or email address, and allows the user to merge them. [Read more on how to merge duplicates](#merging-duplicate-persons-training-requests-or-events)
+* **[Membership training statistics](https://amy.carpentries.org/reports/membership_trainings_stats/)** Lists all memberships by variant, agreement dates, contribution type, and total/used/remaining instructor training seats (inhouse and public)
+* **[Workshop issues](https://amy.carpentries.org/reports/workshop_issues/)** and **[Instructor issues](https://amy.carpentries.org/reports/instructor_issues/)** identify specific workshops and instructors with gaps in data.
+* **[Find duplicate persons](https://amy.carpentries.org/reports/duplicate_persons/)** and **[Find duplicate training requests](https://amy.carpentries.org/reports/duplicate_training_requests/)** identifies Persons or Training Requests that may be listed as duplicates due to having the same name or email address, and allows the user to merge them. [Read more on how to merge duplicates](#merging-duplicate-persons-training-requests-or-events)
 
 ### User and Administrator Roles
 
