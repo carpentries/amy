@@ -403,6 +403,8 @@ Click on the plus sign next to a trainee's progress to track a new step for that
 
 Each person's individual record also has a line for Instructor Training Progress, where these steps can be tracked and edited in the same way.
 
+Individuals may have multiple entries for any step, especially if they were asked to repeat.  Do not edit the previous step; create a new entry if they repeat a step. 
+
 ![AMY checkout progress in instructor profile](images/instructor_training_progress.png)
 
 Again, hover over any item to see more information, or click the plus sign to add another item.
