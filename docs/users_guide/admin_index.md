@@ -497,7 +497,7 @@ What you are able to edit or view depends on your assigned role as a user or adm
 
 #### Instructor Login
 
-Instructors can log in to AMY to view and update their own information. To do so, they must have a valid GitHub username in their profile. Instructors should visit the [AMY login page](https://amy.carpentries.org/account/login/) and click on `Log in with your GitHub account`.
+Instructors can log in to AMY to view and update their own information. To do so, they must have a valid GitHub username in their profile. Instructors should visit the [AMY login page](https://amy.carpentries.org/account/login/) and click on `Log in with your GitHub account`.  More information for the user can be found in the [community users guide](../community_index/).
 
 If an instructor is having trouble logging in, an administrator can verify the following information.
 
