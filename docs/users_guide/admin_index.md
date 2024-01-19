@@ -122,7 +122,7 @@ Select "New person" and enter in as much information as possible.  At minimum a 
 
 #### Adding Bulk Person Records
 
-`Person` records can also be added in bulk from a `.csv` file using the `Bulk add persons` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.
+`Person` records can also be added in bulk from a `.csv` file using the `Bulk add persons` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.  Because the *learner* role at an Instructor Training event requires a membership or open application affiliation, Instructor Training learner roles can not be bulk added.
 
 ![AMY bulk add person menu](images/bulk_add_persons.png)
 
