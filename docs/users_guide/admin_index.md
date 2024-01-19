@@ -174,7 +174,9 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Slug** Create the workshop slug. This must be in the form `YYYY-MM-DD-sitename` (for example, `2018-01-01-hawkins`.  The same slug should be used for the workshop's GitHub page and any other place the workshop is identified. If the exact date is not known, `XX` can replace the month and/or day (for example, `2018-01-xx-starfleet`).
 
-* **Workshop Dates** If known, enter in the workshop start and dates.  Do not check the "Completed" box -- this will be checked after the workshop is over and all associated wrap up work is finished.
+* **Workshop Dates** If known, enter in the workshop start and dates.
+
+* **Completed** Do not check the "Completed" box yet -- this will be checked after the workshop is over to indicate all associated wrap up work is finished.
 
 * **Host** Select the Host name from the drop down menu. The Host is the institution where the workshop is actually being held (or would be held for online workshops). If the Host does not appear on the list, [create a new organisation](#adding-a-new-organization).
 
