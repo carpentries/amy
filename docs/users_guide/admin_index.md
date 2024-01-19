@@ -111,7 +111,7 @@ The number of workshops or instructor training seats rolled over from the previo
 
 ### Adding a New Person
 
-If a person's record does not exist in the database, it can be added individually or as part of a bulk upload.
+A Person record can be created by [accepting an Instructor Training application](#accepting-trainee-applications) or a [Workshop Request form](#creating-a-new-event-from-a-workshop-request).  A Person record can also be created independent of this activity.  If a person's record does not exist in the database, it can be added individually or as part of a bulk upload.
 
 #### Adding an Individual Person Record
 
