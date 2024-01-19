@@ -460,11 +460,15 @@ The relevant items are shown with a yellow background, which represents the "Not
 
 The Instructor badge can be issued through a person's record (see [Issuing Badges](#issuing-badges)) or through the Trainees page.
 
-On the Trainees page, the **Eligible** column shows whether the trainee has passed all checkout steps and is eligible for an instructor badge. If the trainee is eligible, the "instructor badge" button will appear green and can be clicked to award the badge. If the trainee is not eligible, the button appears grey and the text is struck through.
+On the Trainees page, the **Eligible** column shows whether the trainee has passed all checkout steps and is eligible for an instructor badge. If the trainee is eligible, the "instructor badge" button will appear green and can be clicked to award the badge. If the trainee is not eligible, the button appears grey and the text is struck through. 
 
 ![Trainees page with instructor eligibility highlighted](images/trainees_eligible_instructor.png)
 
-If eligible, clicking the "instructor badge" button takes you to a screen where the details of the badge can be added. See [Issuing Badges](#issuing-badges) for guidance on completing this form. The **Person** and **Event** fields will be pre-filled.
+This list can also be filtered to only display trainees eligible to be certified using the left side menu.
+
+![Traainees page with instructor eligibility filter](images/filter_eligible_certification.png)
+
+If eligible, clicking the green "instructor badge" button on that person's row takes you to a screen where the details of the badge can be added. See [Issuing Badges](#issuing-badges) for guidance on completing this form. The **Person** and **Event** fields will be pre-filled.
 
 ### Issuing Badges
 
