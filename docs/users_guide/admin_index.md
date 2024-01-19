@@ -509,7 +509,7 @@ If an instructor is having trouble logging in, an administrator can verify the f
 
 Admin users will have rights to view and edit many other parts of the AMY database.  The Django admin panel can be accessed from the top right menu, under the user's name, generating a unique URL for the session.
 
-An admin user can view their profile as if they were an ordinary user on [this dashboard page](https://amy.carpentries.org/dashboard/trainee/).
+An admin user can view their profile as if they were an ordinary user on [this dashboard page](https://amy.carpentries.org/dashboard/instructor/).
 
 
 ### Automated emails
