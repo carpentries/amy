@@ -401,7 +401,7 @@ Hover over any item to see more information about it, including its state, date,
 
 Click on the plus sign next to a trainee's progress to track a new step for that trainee. Click on the "information" or "pencil" icon at the right of each row to view or edit the trainee's profile.
 
-Each person's individual record also has a line for Instructor Training Progress. 
+Each person's individual record also has a line for Instructor Training Progress, where these steps can be tracked and edited in the same way.
 
 ![AMY checkout progress in instructor profile](images/instructor_training_progress.png)
 
