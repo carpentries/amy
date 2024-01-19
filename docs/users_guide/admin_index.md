@@ -516,49 +516,49 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 AMY sends automated emails for workshop administration.  The following seven email automations are currently enabled.  The content of each email can be viewed by authorized users only. View by selecting `Django Admin` in the top right menu, and select `Email Templates` from the admin page.
 
-**Email description:** Introduction of instructors and host. See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L703)  
+**Email description:** Introduction of instructors and host. 
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Instructors for {{ workshop_main_type }} workshop organized by {{ workshop_host.fullname }} {% if dates %} on {{ dates }}{% endif %}  
 **Date sent:** One hour from when conditions are met.  
 **Conditions:**  Start date more than seven days in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least two instructors and at least one host. Has at least one supporting instructor if online.  Centrally organized only.  
 
-**Email description:** Recruit Helpers.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L973)  
+**Email description:** Recruit Helpers.  
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:** Regional coordinator email (admin-xx@carpentries.org)  
 **Subject:** Time to Recruit Helpers for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}  
 **Date sent:** 21 days before start date.  
 **Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least one instructor or at least one host.  Has no helpers.  Centrally organized only.  
 
-**Email description:** Website URL is missing.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L839)  
+**Email description:** Website URL is missing.  
 **Sent to:**  All Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Workshop Website needed for  {DC, SWC, LC} workshop at {site} on {dates}  
 **Date sent:**  30 days before start date.  
 **Conditions:** Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  No workshop URL. At least one instructor. Centrally organized or Self organized.  
  
-**Email description:**  Supporting Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L348)  
+**Email description:**  Supporting Instructor is added to the workshop.  
 **Sent to:**  Single new supporting instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}  
 **Date sent:**  One hour after conditions are met.  
 **Conditions:**  New role of supporting instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Online workshop. Centrally organized only.  
 
-**Email description:** Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L256)	 
+**Email description:** Instructor is added to the workshop.  
 **Sent to:**  Single new instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as an instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %} ({{ dates }}){% endif %}  
 **Date sent:** One hour after conditions are met.  
 **Conditions:** New role of instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Centrally organized only.  
 
-**Email description:** A new event is created from Self-Organised Request Form.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L594)	 
+**Email description:** A new event is created from Self-Organised Request Form.  
 **Sent to:**  Form submitter and additional contacts  
 **Sent from:**  Regional coordinator email  
 **Subject:**  {{ workshop.host.fullname }} ({{ workshop.slug }}) Workshop  
 **Date sent:** One hour after conditions are met.  
 **Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive.  Event created from SO form.  Self organized only.  
 
-**Email description:** 7 days past the end date of an active workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L430)  
+**Email description:** 7 days past the end date of an active workshop.  
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Completed {% if workshop_main_type %}{{ workshop_main_type }}{% else %}Carpentries{% endif %} workshop at {{ workshop.venue }} on {{ dates }} ({{ workshop.slug }})  
