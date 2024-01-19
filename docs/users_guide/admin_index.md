@@ -30,11 +30,13 @@ The "Affiliated Organization" field is not being used; always leave this blank.
 ![AMY add new organisation](images/amy_new_organisation.png)
 
 
-### Adding a New Membership
+### Memberships
 
 AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organisation) in AMY.
 
 Select "Memberships" from the top menu bar to view a [list of all Memberships](https://amy.carpentries.org/fiscal/memberships/). Memberships can be searched by Organisation name, Consortium status, Public/Private listing, Variant, Contribution type, Active status, and allowed or remaining training seats.
+
+#### Creating memberships
 
 New Memberships can be created one of two ways, based on whether it is an entirely new membership or a renewing membership:
 
@@ -45,6 +47,8 @@ New Memberships can be created one of two ways, based on whether it is an entire
 *  **Renewing memberships:** If this is a [renewal of a current membership](#renewing-memberships), select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
 
 ![AMY membership rollover](images/membership_rollover.png)
+
+#### Membership fields
 
 The following fields are included in the Member view:
 
