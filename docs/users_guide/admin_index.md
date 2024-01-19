@@ -479,7 +479,7 @@ An individual badge can be issued by going to a person's record and clicking the
 * **Badge** The specific badge that is being awarded
 * **Awarded** The date the badge is being awarded on
 * **Event** Used only if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding
-* **Awarded by** The admin user awarding the badge
+* **Awarded by** The admin user awarding the badge.  Not required.
 
 ![AMY issue badge](images/issuing_badges.png)
 
