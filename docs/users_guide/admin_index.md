@@ -452,7 +452,7 @@ In the "Trainees" page (under the "More" menu), select the filter "Only trainees
 
 ![Trainees with unevaluated submissions](images/trainees_with_unevaluated_submissions.png)
 
-The relevant items are shown with a yellow background, which represents the "Not evaluated yet" state. Clicking on any of these items takes you to view the details of the submission and update its state. Notice there is an extra non-editable field: **Trainee notes**, which contains information provided by the trainee as part of their submission.
+The relevant items are shown with a yellow background, which represents the "Not evaluated yet" state. Clicking on any of these items takes you to view the details of the submission and update its state. Notice there is an extra non-editable field: **Trainee notes**, which contains information provided by the trainee as part of their submission. Change this selection to "Passed" if this is a valid contribution.  Otherwise, change this to "Asked to repeat" and contact the individual to inform them.
 
 ![Progress edit page](images/evaluate_get_involved_submission.png)
 
