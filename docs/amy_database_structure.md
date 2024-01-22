@@ -148,6 +148,48 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related.
    For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".
 
+### Consents
+
+#### Consent Terms 
+
+`consents_term` - Stores all types of consent terms in AMY (e.g. privacy policy, permission to contact).
+
+* `slug` slug of the term. Used to uniquely identify the term.
+* `content` content of the term. This text is shown to users when they consent.
+* `training_request_content` if set, the regular `content` is replaced with this text when displaying this term on the instructor training request form.
+* `required_type` determines whether or not a term is considered required for the user or not. If required it is presented to the user when they first log in.
+* `help_text` additional text shown to the user in order to give more context on the term.
+* `short_description` a short description of the consent, shown in the admin view of a profile
+* `archived_at` if this term is archived, a timestamp of when it was archived
+
+#### Consent Term Options
+
+`consents_termoption` - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term. Options are considered answer choices for the term.
+
+* `term_id` id of the term this option belongs to. This is linked to the `consents_term` table. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
+* `option_type` determines whether or not a term option is considered as an agreement or a decline for that term.
+* `content` the text displayed to the user when the term is rendered.
+* `archived_at` a timestamp of when the option was archived or `NULL` if it wasn't
+
+#### Individual Consent
+
+`consents_consent` - Stores all consents for all users in AMY.
+
+* `person_id` id of the person providing the consent. This is linked to the `workshops_person` table.
+* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
+* `archived_at` if this consent is archived, a timestamp of when it was archived.
+
+#### Training Request Consent
+
+`consents_trainingrequestconsent` Stores all consents for all instructor training requests in AMY.
+
+* `training_request_id` id of the training request this consent option belongs to. This is linked to the `workshops_trainingrequest` table.
+* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
+* `archived_at` a timestamp of when the consent was archived or `NULL` if it wasn't.
+
+
 ## Additional Tables in AMY
 
 ### Badges
@@ -232,65 +274,3 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `notes` Notes written by an administrator
     
 
-### Term
-
-`consents_term` - Stores all consent terms in AMY (e.g. privacy policy, permission to contact).
-
-#### Archive Behavior
-
-When a term is archived, that term's associated options and consents are archived as well. If the term was required, once archived it is no longer required in AMY.
-
-#### Commonly used fields
-
-* `slug` slug of the term. Used to uniquely identify the term.
-* `content` content of the term. This text is shown to users when they consent.
-* `training_request_content` if set, the regular `content` is replaced with this text when displaying this term on the instructor training request form.
-* `required_type` determines whether or not a term is considered required for the user or not. If required it is presented to the user when they first log in.
-* `help_text` additional text shown to the user in order to give more context on the term.
-* `short_description` a short description of the consent, shown in the admin view of a profile
-* `archived_at` if this term is archived, a timestamp of when it was archived
-
-### TermOption
-
-`consents_termoption` - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term. Options are considered answer choices for the term.
-
-#### Archive Behavior
-
-When an option is archived, any consents that rely on that option are archived and a new unset consent is created by AMY for the user. If the term the option was attached to is required, archiving the option may result in an email sent to any users who answered with this option.
-
-#### Commonly used fields
-
-* `term_id` id of the term this option belongs to. This is linked to the `consents_term` table. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
-* `option_type` determines whether or not a term option is considered as an agreement or a decline for that term.
-* `content` the text displayed to the user when the term is rendered.
-* `archived_at` a timestamp of when the option was archived or `NULL` if it wasn't
-
-### Consent
-
-`consents_consent` - Stores all consents for all users in AMY.
-
-#### Archive Behavior
-
-When consents are archived, a new unset consent is created by AMY for each term involved.
-
-#### Commonly used fields
-
-* `person_id` id of the person providing the consent. This is linked to the `workshops_person` table.
-* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
-* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
-* `archived_at` if this consent is archived, a timestamp of when it was archived.
-
-### TrainingRequestConsent
-
-`consents_trainingrequestconsent` Stores all consents for all instructor training requests in AMY.
-
-#### Archive Behavior
-
-When training request consents are archived, a new unset consent is created by AMY for each term involved.
-
-#### Commonly used fields
-
-* `training_request_id` id of the training request this consent option belongs to. This is linked to the `workshops_trainingrequest` table.
-* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
-* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
-* `archived_at` a timestamp of when the consent was archived or `NULL` if it wasn't.
