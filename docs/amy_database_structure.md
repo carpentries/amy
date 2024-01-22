@@ -19,7 +19,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `venue` The venue name of the event
     * `address` The street address of the event
     * `latitude` and `longitude` Stored as floating point (decimal) numbers
-    * `country` Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+    * `country` Stored as the [two character country code]
 * `contact` A list of email addresses listed as contacts for that workshop
 * `completed` A Boolean field to note that all work (including workshop coordination and data entry) is complete.
 * `assigned_to_id` The id of the Regional Coordinator or other Carpentries Core Team member assigned to this event. This is linked to the `workshops_person` table.
@@ -58,7 +58,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `occupation` A free text field representing the person's self identified occupation
 * `user_notes` Free text field with notes from the individual
 * `publish_profile` A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the [Instructors](https://carpentries.org/instructors/), [Trainers](https://carpentries.org/trainers/), or [Maintainers](https://carpentries.org/maintainers/) pages. This field has been replaced by new-style consents.
-* `country` Self identified country of residence. Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
+* `country` Self identified country of residence. Stored as the [two character country code]
 * `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity. This field has been replaced by new-style consents.
 
 #### Less commonly used fields
@@ -143,7 +143,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `id` Sequential, automatically assigned integer.  This is used by the `host_id` and `administrator_id` fields in the `workshops_event` table, and the `organization_id` field in the `workshops_membership` table.
 * `domain` Website of the organization
 * `fullname` Human friendly name of the organization
-* `country` Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+* `country` Stored as the [two character country code]
 * `latitude` and `longitude` Stored as floating point (decimal) numbers
 * `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related. For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".  **This field is not being used.**
 
@@ -157,7 +157,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `email` Individual's primary email address. Used for user log in
 * `secondary_email` Alternate email address. Optional.
 * `affiliation` A free text field representing the person's self identified institutional affliation. This is **not** linked to the `workshops_organization` table.
-* `country` Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+* `country` Stored as the [two character country code]
 * `location` Free text field to share location within country (city, province, state, etc.)
 * `underresourced` Boolean field whether individual is from an underresourced area
 * `underrepresented` Boolean field whether individual is from an underrepresented demographic
@@ -314,4 +314,4 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `event_id` An integer representing the event that got that tag.  This is linked to the `workshops_event` table
     * `tag_id` An integer representing the tag that was assigned to that event.  This is linked to the `workshops_tag` table.
 
-
+[two character country code]: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
