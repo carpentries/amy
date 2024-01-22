@@ -9,6 +9,9 @@ theme:
     name: material
     collapse_navigation: true
     logo: assets/TheCarpentries.svg
+    features:
+      - navigation.top
+
 
 nav:
     - "Home": "index.md"
