@@ -688,9 +688,8 @@ FLAGS = {
         {"condition": "parameter", "value": "enable_email_module=true"},
         {"condition": "session", "value": "enable_email_module"},
     ],
+    # Always enabled.
     "ENFORCE_MEMBER_CODES": [
-        {"condition": "anonymous", "value": False, "required": True},
-        {"condition": "parameter", "value": "enforce_member_codes=true"},
-        {"condition": "session", "value": "enforce_member_codes"},
+        {"condition": "boolean", "value": True},
     ],
 }
