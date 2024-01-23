@@ -37,7 +37,7 @@ class TestEmailController(TestCase):
         # Act
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=now,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -54,7 +54,7 @@ class TestEmailController(TestCase):
         # Assert
         self.assertEqual(self.template, scheduled_email.template)
         self.assertEqual(scheduled_email.subject, "Greetings {{ name }}")
-        self.assertEqual(scheduled_email.context_json, {"name": "value:string/Harry"})
+        self.assertEqual(scheduled_email.context_json, {"name": "value:str#Harry"})
         self.assertEqual(
             scheduled_email.body, "Hello, {{ name }}! Nice to meet **you**."
         )
@@ -62,7 +62,7 @@ class TestEmailController(TestCase):
         self.assertEqual(scheduled_email.to_header, ["harry@potter.com"])
         self.assertEqual(
             scheduled_email.to_header_context_json,
-            [{"api_uri": f"api:person/{self.harry.pk}", "property": "email"}],
+            [{"api_uri": f"api:person#{self.harry.pk}", "property": "email"}],
         )
         self.assertEqual(log.scheduled_email, scheduled_email)
         self.assertEqual(
@@ -82,9 +82,7 @@ class TestEmailController(TestCase):
         ):
             EmailController.schedule_email(
                 signal,
-                context_json=ContextModel(
-                    {"name": scalar_value_url("string", "Harry")}
-                ),
+                context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
                 scheduled_at=now,
                 to_header=[],
                 to_header_context_json=ToHeaderModel([]),
@@ -99,9 +97,7 @@ class TestEmailController(TestCase):
         with self.assertRaises(EmailTemplate.DoesNotExist):
             EmailController.schedule_email(
                 self.signal,
-                context_json=ContextModel(
-                    {"name": scalar_value_url("string", "Harry")}
-                ),
+                context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
                 scheduled_at=now,
                 to_header=["harry@potter.com"],
                 to_header_context_json=ToHeaderModel(
@@ -124,9 +120,7 @@ class TestEmailController(TestCase):
         with self.assertRaises(EmailTemplate.DoesNotExist):
             EmailController.schedule_email(
                 self.signal,
-                context_json=ContextModel(
-                    {"name": scalar_value_url("string", "Harry")}
-                ),
+                context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
                 scheduled_at=now,
                 to_header=["harry@potter.com"],
                 to_header_context_json=ToHeaderModel(
@@ -149,9 +143,7 @@ class TestEmailController(TestCase):
         with self.assertRaises(TemplateSyntaxError):
             EmailController.schedule_email(
                 self.signal,
-                context_json=ContextModel(
-                    {"name": scalar_value_url("string", "James")}
-                ),
+                context_json=ContextModel({"name": scalar_value_url("str", "James")}),
                 scheduled_at=now,
                 to_header=["harry@potter.com"],
                 to_header_context_json=ToHeaderModel(
@@ -172,7 +164,7 @@ class TestEmailController(TestCase):
         # Act
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=now,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -196,7 +188,7 @@ class TestEmailController(TestCase):
         # Act
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=now,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -221,7 +213,7 @@ class TestEmailController(TestCase):
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=old_scheduled_date,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -266,7 +258,7 @@ class TestEmailController(TestCase):
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=old_scheduled_date,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -296,7 +288,7 @@ class TestEmailController(TestCase):
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=now,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -336,7 +328,7 @@ class TestEmailController(TestCase):
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=now,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -355,7 +347,7 @@ class TestEmailController(TestCase):
         ).count()
         scheduled_email = EmailController.update_scheduled_email(
             scheduled_email,
-            context_json=ContextModel({"name": scalar_value_url("string", "James")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "James")}),
             scheduled_at=now + timedelta(hours=1),
             to_header=["james@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -373,7 +365,7 @@ class TestEmailController(TestCase):
         # Assert
         self.assertEqual(self.template, scheduled_email.template)
         self.assertEqual(scheduled_email.subject, "Greetings {{ name }}")
-        self.assertEqual(scheduled_email.context_json, {"name": "value:string/James"})
+        self.assertEqual(scheduled_email.context_json, {"name": "value:str#James"})
         self.assertEqual(
             scheduled_email.body, "Hello, {{ name }}! Nice to meet **you**."
         )
@@ -381,7 +373,7 @@ class TestEmailController(TestCase):
         self.assertEqual(scheduled_email.to_header, ["james@potter.com"])
         self.assertEqual(
             scheduled_email.to_header_context_json,
-            [{"api_uri": f"api:person/{self.harry.pk}", "property": "secondary_email"}],
+            [{"api_uri": f"api:person#{self.harry.pk}", "property": "secondary_email"}],
         )
 
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
@@ -401,7 +393,7 @@ class TestEmailController(TestCase):
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=now,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -422,9 +414,7 @@ class TestEmailController(TestCase):
         ):
             EmailController.update_scheduled_email(
                 scheduled_email,
-                context_json=ContextModel(
-                    {"name": scalar_value_url("string", "James")}
-                ),
+                context_json=ContextModel({"name": scalar_value_url("str", "James")}),
                 scheduled_at=now + timedelta(hours=1),
                 to_header=[],
                 to_header_context_json=ToHeaderModel([]),
@@ -438,7 +428,7 @@ class TestEmailController(TestCase):
 
         scheduled_email = EmailController.schedule_email(
             self.signal,
-            context_json=ContextModel({"name": scalar_value_url("string", "Harry")}),
+            context_json=ContextModel({"name": scalar_value_url("str", "Harry")}),
             scheduled_at=now,
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
@@ -462,9 +452,7 @@ class TestEmailController(TestCase):
         ):
             EmailController.update_scheduled_email(
                 scheduled_email,
-                context_json=ContextModel(
-                    {"name": scalar_value_url("string", "James")}
-                ),
+                context_json=ContextModel({"name": scalar_value_url("str", "James")}),
                 scheduled_at=now + timedelta(hours=1),
                 to_header=["james@potter.com"],
                 to_header_context_json=ToHeaderModel(
