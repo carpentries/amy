@@ -110,6 +110,7 @@ class TestTrainingRequestForm(TestBase):
             data[term.slug] = option.pk
         return data
 
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
     def test_request_added(self):
         # Arrange
         email = self.data.get("email")
@@ -178,6 +179,7 @@ class TestTrainingRequestForm(TestBase):
             HiddenInput,
         )
 
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
     def test_review_process_validation__open_code_nonempty(self):
         """Shouldn't pass when review_process requires *NO* member_code."""
         # Arrange
