@@ -491,7 +491,7 @@ class Membership(models.Model):
         return self._base_queryset().filter(self_organized)
 
     @cached_property
-    def self_organized_workshops_completed(self):
+    def self_organized_workshops_completed(self) -> int:
         """Count self-organized workshops hosted the year agreement started (completed,
         ie. in past)."""
         return (
@@ -501,7 +501,7 @@ class Membership(models.Model):
         )
 
     @cached_property
-    def self_organized_workshops_planned(self):
+    def self_organized_workshops_planned(self) -> int:
         """Count self-organized workshops hosted the year agreement started (planned,
         ie. in future)."""
         return (
@@ -511,7 +511,7 @@ class Membership(models.Model):
         )
 
     @property
-    def public_instructor_training_seats_total(self):
+    def public_instructor_training_seats_total(self) -> int:
         """Calculate combined public instructor training seats total.
 
         Unlike workshops w/o admin fee, instructor training seats have two numbers
@@ -523,12 +523,12 @@ class Membership(models.Model):
         return a + b + c
 
     @cached_property
-    def public_instructor_training_seats_utilized(self):
+    def public_instructor_training_seats_utilized(self) -> int:
         """Count number of learner tasks that point to this membership."""
         return self.task_set.filter(role__name="learner", seat_public=True).count()
 
     @property
-    def public_instructor_training_seats_remaining(self):
+    def public_instructor_training_seats_remaining(self) -> int:
         """Count remaining public seats for instructor training."""
         a = self.public_instructor_training_seats_total
         b = self.public_instructor_training_seats_utilized
@@ -536,7 +536,7 @@ class Membership(models.Model):
         return a - b - c
 
     @property
-    def inhouse_instructor_training_seats_total(self):
+    def inhouse_instructor_training_seats_total(self) -> int:
         """Calculate combined in-house instructor training seats total.
 
         Unlike workshops w/o admin fee, instructor training seats have two numbers
@@ -548,12 +548,12 @@ class Membership(models.Model):
         return a + b + c
 
     @cached_property
-    def inhouse_instructor_training_seats_utilized(self):
+    def inhouse_instructor_training_seats_utilized(self) -> int:
         """Count number of learner tasks that point to this membership."""
         return self.task_set.filter(role__name="learner", seat_public=False).count()
 
     @property
-    def inhouse_instructor_training_seats_remaining(self):
+    def inhouse_instructor_training_seats_remaining(self) -> int:
         """Count remaining in-house seats for instructor training."""
         a = self.inhouse_instructor_training_seats_total
         b = self.inhouse_instructor_training_seats_utilized
