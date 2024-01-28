@@ -67,27 +67,27 @@ class TestAPIStructure(APITestCase):
         # → organizations
         # → airports
         # → reports
-        index = self.client.get(reverse("api:root"))
+        index = self.client.get(reverse("api-v1:root"))
         index_links = {
-            "person-list": reverse("api:person-list"),
-            "term-list": reverse("api:term-list"),
-            "event-list": reverse("api:event-list"),
-            "organization-list": reverse("api:organization-list"),
-            "airport-list": reverse("api:airport-list"),
+            "person-list": reverse("api-v1:person-list"),
+            "term-list": reverse("api-v1:term-list"),
+            "event-list": reverse("api-v1:event-list"),
+            "organization-list": reverse("api-v1:organization-list"),
+            "airport-list": reverse("api-v1:airport-list"),
         }
         for endpoint, link in index_links.items():
             self.assertIn(link, index.data[endpoint])
 
-        person = self.client.get(reverse("api:person-detail", args=[self.admin.pk]))
+        person = self.client.get(reverse("api-v1:person-detail", args=[self.admin.pk]))
         person_links = {
-            "awards": reverse("api:person-awards-list", args=[self.admin.pk]),
+            "awards": reverse("api-v1:person-awards-list", args=[self.admin.pk]),
         }
         for endpoint, link in person_links.items():
             self.assertIn(link, person.data[endpoint])
 
-        event = self.client.get(reverse("api:event-detail", args=[self.event.slug]))
+        event = self.client.get(reverse("api-v1:event-detail", args=[self.event.slug]))
         event_links = {
-            "tasks": reverse("api:event-tasks-list", args=[self.event.slug]),
+            "tasks": reverse("api-v1:event-tasks-list", args=[self.event.slug]),
         }
         for endpoint, link in event_links.items():
             self.assertIn(link, event.data[endpoint])
@@ -110,44 +110,46 @@ class TestAPIStructure(APITestCase):
         # airport (no links)
         # award
         #   → event-detail
-        event = self.client.get(reverse("api:event-detail", args=[self.event.slug]))
+        event = self.client.get(reverse("api-v1:event-detail", args=[self.event.slug]))
         event_links = {
-            "host": reverse("api:organization-detail", args=[self.event.host.domain]),
-            "administrator": reverse(
-                "api:organization-detail", args=[self.event.administrator.domain]
+            "host": reverse(
+                "api-v1:organization-detail", args=[self.event.host.domain]
             ),
-            "tasks": reverse("api:event-tasks-list", args=[self.event.slug]),
+            "administrator": reverse(
+                "api-v1:organization-detail", args=[self.event.administrator.domain]
+            ),
+            "tasks": reverse("api-v1:event-tasks-list", args=[self.event.slug]),
             "assigned_to": reverse(
-                "api:person-detail", args=[self.event.assigned_to.pk]
+                "api-v1:person-detail", args=[self.event.assigned_to.pk]
             ),
         }
         for attr, link in event_links.items():
             self.assertIn(link, event.data[attr])
 
         task = self.client.get(
-            reverse("api:event-tasks-detail", args=[self.event.slug, self.task.pk])
+            reverse("api-v1:event-tasks-detail", args=[self.event.slug, self.task.pk])
         )
         task_links = {
-            "person": reverse("api:person-detail", args=[self.admin.pk]),
+            "person": reverse("api-v1:person-detail", args=[self.admin.pk]),
         }
         for attr, link in task_links.items():
             self.assertIn(link, task.data[attr])
 
-        person = self.client.get(reverse("api:person-detail", args=[self.admin.pk]))
+        person = self.client.get(reverse("api-v1:person-detail", args=[self.admin.pk]))
         person_links = {
-            "airport": reverse("api:airport-detail", args=[self.admin.airport.iata]),
-            "awards": reverse("api:person-awards-list", args=[self.admin.pk]),
-            "tasks": reverse("api:person-tasks-list", args=[self.admin.pk]),
-            "consents": reverse("api:person-consents-list", args=[self.admin.pk]),
+            "airport": reverse("api-v1:airport-detail", args=[self.admin.airport.iata]),
+            "awards": reverse("api-v1:person-awards-list", args=[self.admin.pk]),
+            "tasks": reverse("api-v1:person-tasks-list", args=[self.admin.pk]),
+            "consents": reverse("api-v1:person-consents-list", args=[self.admin.pk]),
         }
         for attr, link in person_links.items():
             self.assertIn(link, person.data[attr])
 
         award = self.client.get(
-            reverse("api:person-awards-detail", args=[self.admin.pk, self.award.pk])
+            reverse("api-v1:person-awards-detail", args=[self.admin.pk, self.award.pk])
         )
         award_links = {
-            "event": reverse("api:event-detail", args=[self.award.event.slug]),
+            "event": reverse("api-v1:event-detail", args=[self.award.event.slug]),
         }
         for attr, link in award_links.items():
             self.assertIn(link, award.data[attr])
