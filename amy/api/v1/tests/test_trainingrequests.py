@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.views import TrainingRequests
+from api.v1.views import TrainingRequests
 from workshops.models import (
     Badge,
     Event,
@@ -23,7 +23,7 @@ from workshops.tests.base import consent_to_all_required_consents
 
 class TestListingTrainingRequests(APITestCase):
     view = TrainingRequests
-    url = "api:training-requests"
+    url = "api-v1:training-requests"
     maxDiff = None
 
     def setUp(self):

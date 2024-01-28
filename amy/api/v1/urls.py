@@ -2,9 +2,9 @@ from django.urls import include, path
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework_nested import routers
 
-from api import views
+from api.v1 import views
 
-app_name = "api"
+app_name = "api-v1"
 
 # routers generate URLs for methods like `.list` or `.retrieve`
 router = routers.SimpleRouter(trailing_slash=False)

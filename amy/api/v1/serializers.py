@@ -57,7 +57,7 @@ class AirportSerializer(serializers.ModelSerializer):
 class AwardSerializer(serializers.ModelSerializer):
     badge = serializers.SlugRelatedField(many=False, read_only=True, slug_field="name")
     event = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:event-detail", lookup_field="slug"
+        read_only=True, view_name="api-v1:event-detail", lookup_field="slug"
     )
 
     class Meta:
@@ -82,24 +82,24 @@ class ConsentSerializer(serializers.ModelSerializer):
 
 class PersonSerializer(serializers.ModelSerializer):
     airport = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:airport-detail", lookup_field="iata"
+        read_only=True, view_name="api-v1:airport-detail", lookup_field="iata"
     )
     country = serializers.CharField()
     lessons = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     domains = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     badges = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     awards = serializers.HyperlinkedIdentityField(
-        view_name="api:person-awards-list",
+        view_name="api-v1:person-awards-list",
         lookup_field="pk",
         lookup_url_kwarg="person_pk",
     )
     tasks = serializers.HyperlinkedIdentityField(
-        view_name="api:person-tasks-list",
+        view_name="api-v1:person-tasks-list",
         lookup_field="pk",
         lookup_url_kwarg="person_pk",
     )
     consents = serializers.HyperlinkedIdentityField(
-        view_name="api:person-consents-list",
+        view_name="api-v1:person-consents-list",
         lookup_field="pk",
         lookup_url_kwarg="person_pk",
     )
@@ -135,10 +135,10 @@ class PersonSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     event = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:event-detail", lookup_field="slug"
+        read_only=True, view_name="api-v1:event-detail", lookup_field="slug"
     )
     person = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:person-detail"
+        read_only=True, view_name="api-v1:person-detail"
     )
     role = serializers.SlugRelatedField(many=False, read_only=True, slug_field="name")
 
@@ -153,19 +153,19 @@ class EventSerializer(serializers.ModelSerializer):
     end = serializers.DateField(format=None)
 
     host = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:organization-detail", lookup_field="domain"
+        read_only=True, view_name="api-v1:organization-detail", lookup_field="domain"
     )
     administrator = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:organization-detail", lookup_field="domain"
+        read_only=True, view_name="api-v1:organization-detail", lookup_field="domain"
     )
     tags = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     tasks = serializers.HyperlinkedIdentityField(
-        view_name="api:event-tasks-list",
+        view_name="api-v1:event-tasks-list",
         lookup_field="slug",
         lookup_url_kwarg="event_slug",
     )
     assigned_to = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:person-detail"
+        read_only=True, view_name="api-v1:person-detail"
     )
     attendance = serializers.IntegerField()
 
