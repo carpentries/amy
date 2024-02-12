@@ -16,7 +16,7 @@ The Carpentries can maintain the following information about individuals in our 
 * Secondary email address (This is an optional, secondary email address we can use to contact you.)
 * Gender (options include *Prefer not to say*, *Female*, *Gender variant*, *Male*, *Other*)
 * Country
-* Airport *If your aiport is not in the drop down, please contact team@carpentries.org so we can add it in.*
+* Airport (Airports are used as approximate geographic identifiers for our instructors. Instructors can self-select the airport closest to them or the airport they most frequently use. If your aiport is not in the drop down, please contact <team@carpentries.org> so we can add it in.)
 * Affiliation
 * GitHub username 
 * Twitter username
@@ -25,13 +25,23 @@ The Carpentries can maintain the following information about individuals in our 
 * ORCID ID
 * Personal notes
 * Topics and lessons you're comfortable teaching (a non-exhaustive list of lessons taught by The Carpentries)
-* Areas of expertise 
+* Areas of expertise  (List of academic/scientific/professional domains)
 * Languages (human languages)
 * Comments (additional notes or comments from individual)
 * Consents (*Note consents can be changed by the individual at any time*)
-    * Do you consent to have your name or identity associated with lesson publications?
+
+    **Mandatory consents:**
+
+    * I have read and agree to the [privacy policy of The Carpentries](https://docs.carpentries.org/topic_folders/policies/privacy.html).
+    * I acknowledge that I am at least 16 years old.
+    * Do you agree to the transfer of your data outside of the European Economic Area/United Kingdom?
+
+    **Optional consents:**
+
     * Can we contact you for volunteering opportunities, surveys, feedback, etc.?
     * Do you consent to publish your profile on The Carpentries website?
+    * Do you consent to have your name or identity associated with lesson publications?
+
 
 
 ## Additional user information
@@ -44,7 +54,7 @@ In addition to the following information, The Carpentries also maintains data on
 * other roles the individual may have or have had, such as Core Team member, Executive Team member, etc.
 * whether the individual is actively serving in a role
 
-Individuals can view this information but can not edit it directly.  Please contact team@carpentries.org with questions about this information.
+Individuals can view this information but can not edit it directly.  Please contact <team@carpentries.org> with questions about this information.
 
 ## Instructor Training
 
@@ -52,7 +62,7 @@ Carpentries Instructor trainees can [log in to AMY](#logging-in) to view their c
 
 ![AMY Training Progress Menu](images/training_progress_menu.png)
 
-You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon completion of all three steps.  
+You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon successful completion of the Training and all three checkout steps.  
 
 **Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
@@ -85,7 +95,7 @@ The Trainer leading your Teaching Demonstration will inform the Instructor Train
 
 ### Welcome Session
 
-If you signed in on the welcome session Etherpad, your participation will be recorded by our Instructor Training team. 
+If you signed in on the [Welcome Session Etherpad](https://pad.carpentries.org/welcome-sessions-2024), your participation will be recorded by our Instructor Training team. 
 
 ### Certificate
 
@@ -113,4 +123,4 @@ A workshop administrator will follow up shortly to confirm or decline each instr
 ### Notes about signing up 
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
-* Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact workshops@carpentries.org if they are interested in teaching concurrent workshops to discuss scheduling options.
+* Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact <workshops@carpentries.org> if they are interested in teaching concurrent workshops to discuss scheduling options.

@@ -1,6 +1,6 @@
 # AMY Database structure
 
-The primary tables used in AMY (that will appear in most queries) are those that store information on events, persons, memberships, and organizations.  Additional tables provide more information about events, persons, memberships, and organizations.  This information can be useful in writing [SQL queries in redash](https://redash.carpentries.org/queries).
+The primary tables used in AMY (that will appear in most queries) are those that store information on events, persons, memberships, organizations, and instructor training.  Additional tables provide more information about events, persons, memberships, and organizations.  This information can be useful in writing [SQL queries in redash](https://redash.carpentries.org/queries).
 
 ## Primary Tables in AMY
 
@@ -19,7 +19,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `venue` The venue name of the event
     * `address` The street address of the event
     * `latitude` and `longitude` Stored as floating point (decimal) numbers
-    * `country` Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+    * `country` Stored as the [two character country code]
 * `contact` A list of email addresses listed as contacts for that workshop
 * `completed` A Boolean field to note that all work (including workshop coordination and data entry) is complete.
 * `assigned_to_id` The id of the Regional Coordinator or other Carpentries Core Team member assigned to this event. This is linked to the `workshops_person` table.
@@ -46,7 +46,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `personal` `middle` `family` Three fields to hold the individual's name.  Only `personal` is required.
 * `email` Individual's primary email address. Used for user log in
 * `secondary_email` Alternate email address. Optional.
-* `gender` Options are `Prefer not to say (undisclosed)` `Female` `Gender variant / non-conforming` `Male` `Other`.
+* `gender` Options are `Prefer not to say (undisclosed)`, `Female`, `Gender variant / non-conforming`, `Male`, `Other`.
     * `gender_other` Text if individual selected `Other`
 * `may_contact` A boolean field. We may not contact people if this field is false. This field has been replaced by [new-style consents](#consent) (see also [2021 Consents Project](./design/projects/2021_consents.md)).
 * `github` Individual's GitHub user id
@@ -58,7 +58,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `occupation` A free text field representing the person's self identified occupation
 * `user_notes` Free text field with notes from the individual
 * `publish_profile` A boolean field that acknowledges permission to publish the individual's profile on our website pages such as the [Instructors](https://carpentries.org/instructors/), [Trainers](https://carpentries.org/trainers/), or [Maintainers](https://carpentries.org/maintainers/) pages. This field has been replaced by new-style consents.
-* `country` Self identified country of residence. Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
+* `country` Self identified country of residence. Stored as the [two character country code]
 * `lesson_publication_consent` Allows individual to consent to publishing their name associated with lesson contributions. Individual can select publication by name, ORCID iD, or GitHub id, or not consent to publishing their name or identity. This field has been replaced by new-style consents.
 
 #### Less commonly used fields
@@ -143,10 +143,128 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `id` Sequential, automatically assigned integer.  This is used by the `host_id` and `administrator_id` fields in the `workshops_event` table, and the `organization_id` field in the `workshops_membership` table.
 * `domain` Website of the organization
 * `fullname` Human friendly name of the organization
-* `country` Stored as the [two character country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+* `country` Stored as the [two character country code]
 * `latitude` and `longitude` Stored as floating point (decimal) numbers
-* `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related.
-   For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".
+* `affiliated_organizations` Many-to-many relationship between organizations; the purpose of this field is to "link together" organisations that in some way are related. For example, "University of California" organisation can be linked to "University of California, Berkeley", "University of California, Davis", and "University of California, Los Angeles".  **This field is not being used.**
+
+### Training applications
+
+`workshops_trainingrequest` - Primary table for all Instructor Training applications
+
+* `personal`, `middle`, `family` Three fields to hold the individual's name. 
+* `person_id` This is linked to the `workshops_person` table after the trainee is matched to a Person
+* `state` State of the individual's application. Options are `a` (accepted), `p` (pending), `w` (withdrawn), `d` (discarded)
+* `email` Individual's primary email address. Used for user log in
+* `secondary_email` Alternate email address. Optional.
+* `affiliation` A free text field representing the person's self identified institutional affliation. This is **not** linked to the `workshops_organization` table.
+* `country` Stored as the [two character country code]
+* `location` Free text field to share location within country (city, province, state, etc.)
+* `underresourced` Boolean field whether individual is from an underresourced area
+* `underrepresented` Boolean field whether individual is from an underrepresented demographic
+    * `underrepresented_details` Details on the individual's underrepresented status 
+* `github` Individual's GitHub user id
+* `review_process` Whether this is an open or pre-approved (usually member) Training application
+* `group_name` Registration code used for pre-approved requests
+* `score_auto` Automatically generated score from application review
+* `score_manual` Manually adjusted score from application review
+* `score_notes` Notes about the individual's score
+* `workshop_teaching_agreement` Agreement that applicant agrees to teach a Carpentries workshop
+* `max_travelling_frequency` Frequency individual may travel to teach. Select one of given options.
+* `teaching_frequency_expectation` Frequency individual may teach. Select one of given options.
+* `occupation` Applicant's current occupation/career stage. Select one of given options.
+    * `occupation_other` Text if individual selected `Other`
+* `previous_training` Level of previous training as a teacher/instructor.  Select one of given options.
+    * `previous_training_other`  Text if individual selected `Other`
+* `programming_language_usage_frequency` Frequency in using programming languages.  Select one of given options.
+* `previous_experience` Applicant's previous experience teaching. Select one of given options.
+* `previous_experience_other` Text if individual selected `Other`
+* `previous_experience_explanation` Free text field to describe teaching experience
+* `nonprofit_teaching_experience` Free text field to describe nonprofit teaching experience
+* `reason` Free text field to describe why individual wants to attend Instructor Training
+* `data_privacy_agreement` Consent agreeing to The Carpentries' data privacy policy
+* `code_of_conduct_agreement` Consent agreeing to The Carpentries' Code of Conduct
+* `user_notes` Free text field with notes from the individual
+* `created_at` and `last_updated_at`  Dates the record was created and last updated. Automatically generated by database.
+
+### Training progress
+
+`workshops_trainingrequirement` - Lists all available steps towards Instructor certification (Training Event, Welcome Session, etc.)
+
+* `id`  Sequential, automatically assigned integer.
+* `name` Name of requirement (*Demo*, *Welcome Session*, etc.)
+* `url_required` Notes whether a URL is required for this type of training requirement. Currently, no requirements require a URL, but some *Get Involved* activities do (see below).
+* `event_required` Notes whether an event is required for this type of training requirement.  This only applies to the *Training* (the actual event they attended).
+* `involvement_required` Notes whether an activity must be provided for this type of training requirement. This only applies to the *Get Involved* requirement where multiple different activities are acceptable.
+
+`trainings_involvement` - Lists all activities that are accepted as part of the *Get Involved* training requirement (GitHub contribution, Workshop Instructor/helper, etc.) Note that this table uses the `trainings_` prefix, rather than `workshops_`.
+
+* `id`  Sequential, automatically assigned integer.
+* `name` A short name for the activity (*GitHub Contribution*, *Community Meeting*, etc.)
+* `display_name` A fully descriptive name for the activity (e.g. *Attended an Instructor meeting, regional meetup, or other community meeting*)
+* `url_required` Notes whether a URL must be provided for this type of activity.
+* `date_required` Notes whether a date must be provided for this type of activity. Currently, all activities require a date.
+* `notes_required` Notes whether text notes must be provided for this type of activity (such as when tracking an activity that is not covered by the existing options). These notes can come from either the trainee or an administrator.
+
+`workshops_trainingprogress` - Connects `workshops_trainingrequirement`, `trainings_involvement`, and `workshops_person` to show what Persons have completed what steps of the checkout process.
+
+* `id`  Sequential, automatically assigned integer.
+* `created_at` and `last_updated_at`  Dates the record was created and last updated. Automatically generated by database.
+* `state` State of the trainee's progress.
+    * `p`: pass
+    * `a`: ask to repeat
+    * `f`: fail
+    * `n`: not evaluated yet
+* `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table
+* `involvement_type_id` only for *Get Involved* requirement, id of the activity that is being recorded. This is linked to the `trainings_involvement` table
+* `trainee_id` id of the trainee being evaluated.  This is linked to the `workshops_person` table
+* `url` Link to a GitHub contribution, workshop website, etc.
+* `event_id` id of the event this trainee was at.  This is linked to the `workshops_event` table
+* `date` only for *Get Involved* requirement, the date of the activity (first day if the activity covered multiple days)
+* `trainee_notes` only for *Get Involved* requirement, notes submitted by the trainee
+* `notes` Notes written by an administrator
+
+
+### Consents
+
+#### Consent Terms 
+
+`consents_term` - Stores all types of consent terms in AMY (e.g. privacy policy, permission to contact).
+
+* `slug` slug of the term. Used to uniquely identify the term.
+* `content` content of the term. This text is shown to users when they consent.
+* `training_request_content` if set, the regular `content` is replaced with this text when displaying this term on the instructor training request form.
+* `required_type` determines whether or not a term is considered required for the user or not. If required it is presented to the user when they first log in.
+* `help_text` additional text shown to the user in order to give more context on the term.
+* `short_description` a short description of the consent, shown in the admin view of a profile
+* `archived_at` if this term is archived, a timestamp of when it was archived
+
+#### Consent Term Options
+
+`consents_termoption` - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term. Options are considered answer choices for the term.
+
+* `term_id` id of the term this option belongs to. This is linked to the `consents_term` table. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
+* `option_type` determines whether or not a term option is considered as an agreement or a decline for that term.
+* `content` the text displayed to the user when the term is rendered.
+* `archived_at` a timestamp of when the option was archived or `NULL` if it wasn't
+
+#### Individual Consent
+
+`consents_consent` - Stores all consents for all users in AMY.
+
+* `person_id` id of the person providing the consent. This is linked to the `workshops_person` table.
+* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
+* `archived_at` if this consent is archived, a timestamp of when it was archived.
+
+#### Training Request Consent
+
+`consents_trainingrequestconsent` Stores all consents for all instructor training requests in AMY.
+
+* `training_request_id` id of the training request this consent option belongs to. This is linked to the `workshops_trainingrequest` table.
+* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
+* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
+* `archived_at` a timestamp of when the consent was archived or `NULL` if it wasn't.
+
 
 ## Additional Tables in AMY
 
@@ -196,101 +314,4 @@ The primary tables used in AMY (that will appear in most queries) are those that
     * `event_id` An integer representing the event that got that tag.  This is linked to the `workshops_event` table
     * `tag_id` An integer representing the tag that was assigned to that event.  This is linked to the `workshops_tag` table.
 
-
-### Training progress
-
-* `workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Welcome Session, etc.)
-    * `id`  Sequential, automatically assigned integer.
-    * `name` Name of requirement (*Demo*, *Welcome Session*, etc.)
-    * `url_required` Notes whether a URL is required for this type of training requirement. Currently, no requirements require a URL, but some *Get Involved* activities do (see below).
-    * `event_required` Notes whether an event is required for this type of training requirement.  This only applies to the *Training* (the actual event they attended).
-    * `involvement_required` Notes whether an activity must be provided for this type of training requirement. This only applies to the *Get Involved* requirement where multiple different activities are acceptable.
-
-* `trainings_involvement` Lists all activities that are accepted as part of the *Get Involved* training requirement (GitHub contribution, Workshop Instructor/helper, etc.) Note that this table uses the `trainings_` prefix, rather than `workshops_`.
-    * `id`  Sequential, automatically assigned integer.
-    * `name` A short name for the activity (*GitHub Contribution*, *Community Meeting*, etc.)
-    * `display_name` A fully descriptive name for the activity (e.g. *Attended an Instructor meeting, regional meetup, or other community meeting*)
-    * `url_required` Notes whether a URL must be provided for this type of activity.
-    * `date_required` Notes whether a date must be provided for this type of activity. Currently, all activities require a date.
-    * `notes_required` Notes whether text notes must be provided for this type of activity (such as when tracking an activity that is not covered by the existing options). These notes can come from either the trainee or an administrator.
-
-* `workshops_trainingprogress` Connects `workshops_trainingrequirement`, `trainings_involvement`, and `workshops_person` to show what Persons have completed what steps of the checkout process.
-    * `id`  Sequential, automatically assigned integer.
-    * `created_at` and `last_updated_at`  Dates the record was created and last updated. Automatically generated by database.
-    * `state` State of the trainee's progress.
-        * `p`: pass
-        * `a`: ask to repeat
-        * `f`: fail
-        * `n`: not evaluated yet
-    * `requirement_id` id of the requirement that is being recorded. This is linked to the `workshops_trainingrequirement` table
-    * `involvement_type_id` only for *Get Involved* requirement, id of the activity that is being recorded. This is linked to the `trainings_involvement` table
-    * `trainee_id` id of the trainee being evaluated.  This is linked to the `workshops_person` table
-    * `url` Link to a GitHub contribution, workshop website, etc.
-    * `event_id` id of the event this trainee was at.  This is linked to the `workshops_event` table
-    * `date` only for *Get Involved* requirement, the date of the activity (first day if the activity covered multiple days)
-    * `trainee_notes` only for *Get Involved* requirement, notes submitted by the trainee
-    * `notes` Notes written by an administrator
-    
-
-### Term
-
-`consents_term` - Stores all consent terms in AMY (e.g. privacy policy, permission to contact).
-
-#### Archive Behavior
-
-When a term is archived, that term's associated options and consents are archived as well. If the term was required, once archived it is no longer required in AMY.
-
-#### Commonly used fields
-
-* `slug` slug of the term. Used to uniquely identify the term.
-* `content` content of the term. This text is shown to users when they consent.
-* `training_request_content` if set, the regular `content` is replaced with this text when displaying this term on the instructor training request form.
-* `required_type` determines whether or not a term is considered required for the user or not. If required it is presented to the user when they first log in.
-* `help_text` additional text shown to the user in order to give more context on the term.
-* `short_description` a short description of the consent, shown in the admin view of a profile
-* `archived_at` if this term is archived, a timestamp of when it was archived
-
-### TermOption
-
-`consents_termoption` - Stores all options for all terms in AMY. Options are displayed when the user is asked to consent to a particular term. Options are considered answer choices for the term.
-
-#### Archive Behavior
-
-When an option is archived, any consents that rely on that option are archived and a new unset consent is created by AMY for the user. If the term the option was attached to is required, archiving the option may result in an email sent to any users who answered with this option.
-
-#### Commonly used fields
-
-* `term_id` id of the term this option belongs to. This is linked to the `consents_term` table. Unarchived term options attached to a term will be displayed to the user when the term is rendered.
-* `option_type` determines whether or not a term option is considered as an agreement or a decline for that term.
-* `content` the text displayed to the user when the term is rendered.
-* `archived_at` a timestamp of when the option was archived or `NULL` if it wasn't
-
-### Consent
-
-`consents_consent` - Stores all consents for all users in AMY.
-
-#### Archive Behavior
-
-When consents are archived, a new unset consent is created by AMY for each term involved.
-
-#### Commonly used fields
-
-* `person_id` id of the person providing the consent. This is linked to the `workshops_person` table.
-* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
-* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
-* `archived_at` if this consent is archived, a timestamp of when it was archived.
-
-### TrainingRequestConsent
-
-`consents_trainingrequestconsent` Stores all consents for all instructor training requests in AMY.
-
-#### Archive Behavior
-
-When training request consents are archived, a new unset consent is created by AMY for each term involved.
-
-#### Commonly used fields
-
-* `training_request_id` id of the training request this consent option belongs to. This is linked to the `workshops_trainingrequest` table.
-* `term_id` id of the term this consent applies to. This is linked to the `consents_term` table. There is a check on the Consent model to ensure the given TermOption belongs to the Term.
-* `term_option_id` id of the term option chosen in this consent. This is linked to the `consents_termoption` table. When this field is null, the consent has not been set by the user.
-* `archived_at` a timestamp of when the consent was archived or `NULL` if it wasn't.
+[two character country code]: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2

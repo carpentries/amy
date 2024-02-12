@@ -8,6 +8,10 @@ extra_javascript:
 theme:
     name: material
     collapse_navigation: true
+    logo: assets/TheCarpentries.svg
+    features:
+      - navigation.top
+
 
 nav:
     - "Home": "index.md"
@@ -52,5 +56,12 @@ nav:
 markdown_extensions:
     - toc:
           permalink: True
+    - pymdownx.superfences:
+          custom_fences:
+            - name: mermaid
+              class: mermaid
+              format: !!python/name:pymdownx.superfences.fence_code_format 
+
+
 
 extra_css: [extra.css]
