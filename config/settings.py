@@ -84,6 +84,7 @@ SITE_ID = env("AMY_SITE_ID")
 ALLOWED_HOSTS = env("AMY_ALLOWED_HOSTS")
 if DEBUG:
     ALLOWED_HOSTS.append("127.0.0.1")
+    ALLOWED_HOSTS.append("localhost")
 
 # DATABASES
 # -----------------------------------------------------------------------------
