@@ -32,6 +32,7 @@ urlpatterns = [
     path("autoemails/", include("autoemails.urls")),
     path("api/v1/", include("api.v1.urls")),  # REST API v1
     path("api/v2/", include("api.v2.urls")),  # REST API v2
+    path("api/auth/", include("knox.urls")),
     path("dashboard/", include("dashboard.urls")),
     path("requests/", include("extrequests.urls")),
     path(

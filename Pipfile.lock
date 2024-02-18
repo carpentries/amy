@@ -440,6 +440,14 @@
             "index": "pypi",
             "version": "==5.0.0"
         },
+        "django-rest-knox": {
+            "hashes": [
+                "sha256:4595f1dc23d6e41af7939e5f2d8fdaf6ade0a74a656218e7b56683db5566fcc9",
+                "sha256:62b8e374a44cd4e9617eaefe27c915b301bf224fa6550633d3013d3f9f415113"
+            ],
+            "index": "pypi",
+            "version": "==4.2.0"
+        },
         "django-reversion": {
             "hashes": [
                 "sha256:095ec684626a07b48a1a32640e30cae93eb2acd3c452a9111f77ac934c2efb91",

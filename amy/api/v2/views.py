@@ -1,8 +1,10 @@
-# from knox.auth import TokenAuthentication
+from knox.auth import TokenAuthentication
 from rest_framework import viewsets
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
+from api.v2.permissions import ApiAccessPermission
 from api.v2.serializers import (
     AwardSerializer,
     EventSerializer,
@@ -32,8 +34,14 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class AwardViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = (
         Award.objects.select_related("person", "badge", "event", "awarded_by")
         .order_by("pk")
@@ -44,8 +52,14 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EventViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = (
         Event.objects.select_related(
             "host", "sponsor", "membership", "administrator", "language", "assigned_to"
@@ -59,8 +73,14 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = (
         InstructorRecruitmentSignup.objects.select_related(
             "recruitment", "recruitment__event", "person"
@@ -73,8 +93,14 @@ class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MembershipViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = (
         Membership.objects.prefetch_related("organizations", "persons")
         .order_by("pk")
@@ -85,16 +111,28 @@ class MembershipViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PersonViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = Person.objects.select_related("airport").all()
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
 
 
 class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = (
         ScheduledEmail.objects.select_related(
             "template", "generic_relation_content_type"
@@ -107,8 +145,14 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = (
         TrainingProgress.objects.select_related(
             "trainee", "requirement", "involvement_type", "event"
@@ -121,8 +165,14 @@ class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet):
-    # authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
     queryset = TrainingRequirement.objects.order_by("pk").all()
     serializer_class = TrainingRequirementSerializer
     pagination_class = StandardResultsSetPagination
