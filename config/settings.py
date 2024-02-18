@@ -147,6 +147,7 @@ THIRD_PARTY_APPS = [
     "reversion",
     "reversion_compare",
     "rest_framework",
+    "knox",
     "captcha",
     "social_django",
     "debug_toolbar",
