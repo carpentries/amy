@@ -139,8 +139,6 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
     pipenv run make dev_database
     ~~~
 
-    **Note**:  this command requires removing (by hand) the old database file.
-
 1. Run database migrations:
 
     ~~~~
