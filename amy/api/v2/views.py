@@ -1,8 +1,11 @@
+from django.utils import timezone
 from knox.auth import TokenAuthentication
 from rest_framework import viewsets
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from api.v2.permissions import ApiAccessPermission
 from api.v2.serializers import (
@@ -11,11 +14,13 @@ from api.v2.serializers import (
     InstructorRecruitmentSignupSerializer,
     MembershipSerializer,
     PersonSerializer,
+    ScheduledEmailLogDetailsSerializer,
     ScheduledEmailSerializer,
     TrainingProgressSerializer,
     TrainingRequirementSerializer,
 )
-from emails.models import ScheduledEmail
+from emails.controller import EmailController
+from emails.models import ScheduledEmail, ScheduledEmailStatus
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
     Award,
@@ -142,6 +147,56 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
     )
     serializer_class = ScheduledEmailSerializer
     pagination_class = StandardResultsSetPagination
+
+    @action(detail=False)
+    def scheduled_to_run(self, request):
+        now = timezone.now()
+        scheduled_emails = ScheduledEmail.objects.filter(
+            state__in=[ScheduledEmailStatus.SCHEDULED, ScheduledEmailStatus.FAILED],
+            scheduled_at__lte=now,
+        ).order_by("-created_at")
+
+        page = self.paginate_queryset(scheduled_emails)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(scheduled_emails, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def lock(self, request, pk=None):
+        email = self.get_object()
+        locked_email = EmailController.lock_email(
+            email, "State changed by worker", request.user
+        )
+        return Response(self.get_serializer(locked_email).data)
+
+    @action(detail=True, methods=["post"])
+    def fail(self, request, pk=None):
+        email = self.get_object()
+        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        locked_email = EmailController.fail_email(
+            email, serializer.validated_data["details"], request.user
+        )
+        return Response(self.get_serializer(locked_email).data)
+
+    @action(detail=True, methods=["post"])
+    def succeed(self, request, pk=None):
+        email = self.get_object()
+        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        locked_email = EmailController.succeed_email(
+            email, serializer.validated_data["details"], request.user
+        )
+        return Response(self.get_serializer(locked_email).data)
 
 
 class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):

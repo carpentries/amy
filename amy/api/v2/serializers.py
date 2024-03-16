@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from emails.models import ScheduledEmail
+from emails.models import MAX_LENGTH, ScheduledEmail
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
     Award,
@@ -248,6 +248,10 @@ class ScheduledEmailSerializer(serializers.ModelSerializer):
             "created_at",
             "last_updated_at",
         )
+
+
+class ScheduledEmailLogDetailsSerializer(serializers.Serializer):
+    details = serializers.CharField(max_length=MAX_LENGTH)
 
 
 class TrainingProgressSerializer(serializers.ModelSerializer):
