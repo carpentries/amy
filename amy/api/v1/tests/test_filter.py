@@ -100,7 +100,7 @@ class TestFilter(APITestCase):
                 usernames, [person.username for person in expected_people]
             )
 
-        person_api_url = reverse("api:person-list")
+        person_api_url = reverse("api-v1:person-list")
 
         # no filter
         people_response = self.client.get(person_api_url)

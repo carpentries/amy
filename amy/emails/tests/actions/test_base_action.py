@@ -16,6 +16,7 @@ from emails.controller import (
     EmailControllerMissingTemplateException,
 )
 from emails.models import EmailTemplate, ScheduledEmail
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import SignalNameEnum
 from workshops.models import Event, Organization
 
@@ -80,11 +81,19 @@ class BaseActionForTesting(BaseAction):
     def get_context(self, **kwargs) -> dict[str, Any]:
         return {}
 
+    def get_context_json(self, **kwargs) -> ContextModel:
+        return ContextModel({})
+
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
         return 0
 
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
         return []
+
+    def get_recipients_context_json(
+        self, context: dict[str, Any], **kwargs
+    ) -> ToHeaderModel:
+        return ToHeaderModel([])
 
 
 class BaseActionUpdateForTesting(BaseActionUpdate):
@@ -96,6 +105,9 @@ class BaseActionUpdateForTesting(BaseActionUpdate):
     def get_context(self, **kwargs) -> dict[str, Any]:
         return {}
 
+    def get_context_json(self, **kwargs) -> ContextModel:
+        return ContextModel({})
+
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
         return Event.objects.get_or_create(
             defaults=dict(
@@ -107,6 +119,11 @@ class BaseActionUpdateForTesting(BaseActionUpdate):
 
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
         return []
+
+    def get_recipients_context_json(
+        self, context: dict[str, Any], **kwargs
+    ) -> ToHeaderModel:
+        return ToHeaderModel([])
 
 
 class BaseActionCancelForTesting(BaseActionCancel):
@@ -118,6 +135,9 @@ class BaseActionCancelForTesting(BaseActionCancel):
     def get_context(self, **kwargs) -> dict[str, Any]:
         return {}
 
+    def get_context_json(self, **kwargs) -> ContextModel:
+        return ContextModel({})
+
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
         return Event.objects.get_or_create(
             defaults=dict(
@@ -129,6 +149,11 @@ class BaseActionCancelForTesting(BaseActionCancel):
 
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
         return []
+
+    def get_recipients_context_json(
+        self, context: dict[str, Any], **kwargs
+    ) -> ToHeaderModel:
+        return ToHeaderModel([])
 
 
 class TestBaseAction(TestCase):
@@ -163,9 +188,10 @@ class TestBaseAction(TestCase):
         mock_person_from_request.assert_called_once_with(request)
         mock_schedule_email.assert_called_once_with(
             signal=instance.signal,
-            context=context,
+            context_json=ContextModel({}),
             scheduled_at=instance.get_scheduled_at(),
             to_header=instance.get_recipients(context),
+            to_header_context_json=ToHeaderModel([]),
             generic_relation_obj=instance.get_generic_relation_object(context),
             author=mock_person_from_request.return_value,
         )
@@ -309,9 +335,10 @@ class TestBaseActionUpdate(TestCase):
         mock_person_from_request.assert_called_once_with(request)
         mock_update_scheduled_email.assert_called_once_with(
             scheduled_email=scheduled_email,
-            context=context,
+            context_json=ContextModel({}),
             scheduled_at=instance.get_scheduled_at(),
             to_header=instance.get_recipients(context),
+            to_header_context_json=ToHeaderModel([]),
             generic_relation_obj=instance.get_generic_relation_object(context),
             author=mock_person_from_request.return_value,
         )

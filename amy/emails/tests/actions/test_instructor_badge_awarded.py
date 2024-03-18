@@ -6,7 +6,9 @@ from django.urls import reverse
 
 from emails.actions import instructor_badge_awarded_receiver
 from emails.models import EmailTemplate, ScheduledEmail
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_badge_awarded_signal
+from emails.utils import api_model_url
 from workshops.models import Award, Badge, Person
 from workshops.tests.base import TestBase
 
@@ -89,10 +91,6 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         award = Award.objects.create(badge=badge, person=person)
         request = RequestFactory().get("/")
         signal = instructor_badge_awarded_signal.signal_name
-        context = {
-            "person": person,
-            "award": award,
-        }
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
@@ -109,9 +107,19 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         # Assert
         mock_schedule_email.assert_called_once_with(
             signal=signal,
-            context=context,
+            context_json=ContextModel(
+                {
+                    "person": api_model_url("person", person.pk),
+                    "award": api_model_url("award", award.pk),
+                }
+            ),
             scheduled_at=scheduled_at,
             to_header=[person.email],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {"api_uri": api_model_url("person", person.pk), "property": "email"}
+                ]  # type: ignore
+            ),
             generic_relation_obj=award,
             author=None,
         )

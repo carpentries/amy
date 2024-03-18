@@ -11,13 +11,18 @@ from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from api.filters import EventFilter, PersonFilter, TaskFilter, TrainingRequestFilterIDs
-from api.permissions import DjangoModelPermissionsWithView
-from api.renderers import (
+from api.v1.filters import (
+    EventFilter,
+    PersonFilter,
+    TaskFilter,
+    TrainingRequestFilterIDs,
+)
+from api.v1.permissions import DjangoModelPermissionsWithView
+from api.v1.renderers import (
     TrainingRequestCSVRenderer,
     TrainingRequestManualScoreCSVRenderer,
 )
-from api.serializers import (
+from api.v1.serializers import (
     AirportSerializer,
     AwardSerializer,
     CommunityRoleConfigSerializer,
@@ -99,48 +104,48 @@ class ApiRoot(APIView):
                     (
                         "export-person-data",
                         reverse(
-                            "api:export-person-data", request=request, format=format
+                            "api-v1:export-person-data", request=request, format=format
                         ),
                     ),
                     (
                         "training-requests",
                         reverse(
-                            "api:training-requests", request=request, format=format
+                            "api-v1:training-requests", request=request, format=format
                         ),
                     ),
                     # "new" API list-type endpoints below
                     (
                         "airport-list",
-                        reverse("api:airport-list", request=request, format=format),
+                        reverse("api-v1:airport-list", request=request, format=format),
                     ),
                     (
                         "person-list",
-                        reverse("api:person-list", request=request, format=format),
+                        reverse("api-v1:person-list", request=request, format=format),
                     ),
                     (
                         "event-list",
-                        reverse("api:event-list", request=request, format=format),
+                        reverse("api-v1:event-list", request=request, format=format),
                     ),
                     (
                         "organization-list",
                         reverse(
-                            "api:organization-list", request=request, format=format
+                            "api-v1:organization-list", request=request, format=format
                         ),
                     ),
                     (
                         "emailtemplate-list",
                         reverse(
-                            "api:emailtemplate-list", request=request, format=format
+                            "api-v1:emailtemplate-list", request=request, format=format
                         ),
                     ),
                     (
                         "term-list",
-                        reverse("api:term-list", request=request, format=format),
+                        reverse("api-v1:term-list", request=request, format=format),
                     ),
                     (
                         "communityroleconfig-list",
                         reverse(
-                            "api:communityroleconfig-list",
+                            "api-v1:communityroleconfig-list",
                             request=request,
                             format=format,
                         ),
@@ -148,7 +153,7 @@ class ApiRoot(APIView):
                     (
                         "instructorrecruitment-list",
                         reverse(
-                            "api:instructorrecruitment-list",
+                            "api-v1:instructorrecruitment-list",
                             request=request,
                             format=format,
                         ),

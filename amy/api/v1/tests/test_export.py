@@ -64,7 +64,7 @@ class TestExportingPersonData(BaseExportingTest):
         consent_to_all_required_consents(self.user)
 
         # save API endpoint URL
-        self.url = reverse("api:export-person-data")
+        self.url = reverse("api-v1:export-person-data")
 
     def login(self):
         """Overwrite BaseExportingTest's login method: instead of loggin in

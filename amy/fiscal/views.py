@@ -10,7 +10,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
 from communityroles.models import CommunityRole
-from emails.actions.instructor_training_approaching import EmailStrategyException
+from emails.actions.exceptions import EmailStrategyException
 from emails.actions.new_membership_onboarding import (
     new_membership_onboarding_strategy,
     run_new_membership_onboarding_strategy,

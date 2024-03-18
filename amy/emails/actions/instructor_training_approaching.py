@@ -7,7 +7,9 @@ from django.utils import timezone
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
+from emails.actions.exceptions import EmailStrategyException
 from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     Signal,
@@ -20,15 +22,10 @@ from emails.types import (
     InstructorTrainingApproachingKwargs,
     StrategyEnum,
 )
-from emails.utils import one_month_before
+from emails.utils import api_model_url, one_month_before
 from workshops.models import Event, Task
 
 logger = logging.getLogger("amy")
-
-
-# TODO: move out to a common file
-class EmailStrategyException(Exception):
-    pass
 
 
 def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
@@ -94,42 +91,109 @@ def run_instructor_training_approaching_strategy(
     )
 
 
+def get_scheduled_at(**kwargs: Unpack[InstructorTrainingApproachingKwargs]) -> datetime:
+    event_start_date = kwargs["event_start_date"]
+    return one_month_before(event_start_date)
+
+
+def get_context(
+    **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+) -> InstructorTrainingApproachingContext:
+    event = kwargs["event"]
+    instructors = [
+        task.person
+        for task in Task.objects.filter(event=event, role__name="instructor")
+    ]
+    return {
+        "event": event,
+        "instructors": instructors,
+    }
+
+
+def get_context_json(
+    **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+) -> ContextModel:
+    return ContextModel(
+        {
+            "event": api_model_url("event", kwargs["event"].pk),
+            "instructors": [
+                api_model_url("person", task.person.pk)
+                for task in Task.objects.filter(
+                    event=kwargs["event"], role__name="instructor"
+                )
+            ],
+        },
+    )
+
+
+def get_generic_relation_object(
+    context: InstructorTrainingApproachingContext,
+    **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+) -> Event:
+    return context["event"]
+
+
+def get_recipients(
+    context: InstructorTrainingApproachingContext,
+    **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+) -> list[str]:
+    instructors = context["instructors"]
+    return [instructor.email for instructor in instructors if instructor.email]
+
+
+def get_recipients_context_json(
+    context: InstructorTrainingApproachingContext,
+    **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+) -> ToHeaderModel:
+    return ToHeaderModel(
+        [
+            {
+                "api_uri": api_model_url("person", instructor.pk),
+                "property": "email",
+            }
+            for instructor in context["instructors"]
+        ],  # type: ignore
+    )
+
+
 class InstructorTrainingApproachingReceiver(BaseAction):
     signal = instructor_training_approaching_signal.signal_name
 
     def get_scheduled_at(
         self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
     ) -> datetime:
-        event_start_date = kwargs["event_start_date"]
-        return one_month_before(event_start_date)
+        return get_scheduled_at(**kwargs)
 
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
     ) -> InstructorTrainingApproachingContext:
-        event = kwargs["event"]
-        instructors = [
-            task.person
-            for task in Task.objects.filter(event=event, role__name="instructor")
-        ]
-        return {
-            "event": event,
-            "instructors": instructors,
-        }
+        return get_context(**kwargs)
+
+    def get_context_json(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
 
     def get_generic_relation_object(
         self,
         context: InstructorTrainingApproachingContext,
         **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
-        return context["event"]
+        return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
         self,
         context: InstructorTrainingApproachingContext,
         **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> list[str]:
-        instructors = context["instructors"]
-        return [instructor.email for instructor in instructors if instructor.email]
+        return get_recipients(context, **kwargs)
+
+    def get_recipients_context_json(
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
 
 
 class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
@@ -138,36 +202,38 @@ class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
     def get_scheduled_at(
         self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
     ) -> datetime:
-        event_start_date = kwargs["event_start_date"]
-        return one_month_before(event_start_date)
+        return get_scheduled_at(**kwargs)
 
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
     ) -> InstructorTrainingApproachingContext:
-        event = kwargs["event"]
-        instructors = [
-            task.person
-            for task in Task.objects.filter(event=event, role__name="instructor")
-        ]
-        return {
-            "event": event,
-            "instructors": instructors,
-        }
+        return get_context(**kwargs)
+
+    def get_context_json(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
 
     def get_generic_relation_object(
         self,
         context: InstructorTrainingApproachingContext,
         **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
-        return context["event"]
+        return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
         self,
         context: InstructorTrainingApproachingContext,
         **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> list[str]:
-        instructors = context["instructors"]
-        return [instructor.email for instructor in instructors if instructor.email]
+        return get_recipients(context, **kwargs)
+
+    def get_recipients_context_json(
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
 
 
 class InstructorTrainingApproachingCancelReceiver(BaseActionCancel):
@@ -176,22 +242,26 @@ class InstructorTrainingApproachingCancelReceiver(BaseActionCancel):
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
     ) -> InstructorTrainingApproachingContext:
-        event = kwargs["event"]
-        instructors = [
-            task.person
-            for task in Task.objects.filter(event=event, role__name="instructor")
-        ]
-        return {
-            "event": event,
-            "instructors": instructors,
-        }
+        return get_context(**kwargs)
+
+    def get_context_json(
+        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
 
     def get_generic_relation_object(
         self,
         context: InstructorTrainingApproachingContext,
         **kwargs: Unpack[InstructorTrainingApproachingKwargs],
     ) -> Event:
-        return context["event"]
+        return get_generic_relation_object(context, **kwargs)
+
+    def get_recipients_context_json(
+        self,
+        context: InstructorTrainingApproachingContext,
+        **kwargs: Unpack[InstructorTrainingApproachingKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
 
 
 # -----------------------------------------------------------------------------

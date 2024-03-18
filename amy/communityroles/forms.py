@@ -32,7 +32,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         )
         widgets = {
             "config": HeavySelect2Widget(
-                data_view="api:communityroleconfig-list", attrs=SELECT2_SIDEBAR
+                data_view="api-v1:communityroleconfig-list", attrs=SELECT2_SIDEBAR
             ),
             "person": ModelSelect2Widget(
                 data_view="person-lookup", attrs=SELECT2_SIDEBAR

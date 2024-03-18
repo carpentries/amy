@@ -7,7 +7,9 @@ from django.urls import reverse
 
 from emails.actions import persons_merged_receiver
 from emails.models import EmailTemplate, ScheduledEmail
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import persons_merged_signal
+from emails.utils import api_model_url
 from workshops.models import Person
 from workshops.tests.base import TestBase
 
@@ -87,7 +89,6 @@ class TestPersonsMergedReceiver(TestCase):
         person = Person.objects.create(email="test@example.org")
         request = RequestFactory().get("/")
         signal = persons_merged_signal.signal_name
-        context = {"person": person}
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
@@ -105,9 +106,14 @@ class TestPersonsMergedReceiver(TestCase):
         # Assert
         mock_schedule_email.assert_called_once_with(
             signal=signal,
-            context=context,
+            context_json=ContextModel({"person": api_model_url("person", person.pk)}),
             scheduled_at=scheduled_at,
             to_header=[person.email],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {"api_uri": api_model_url("person", person.pk), "property": "email"}
+                ]  # type: ignore
+            ),
             generic_relation_obj=person,
             author=None,
         )
