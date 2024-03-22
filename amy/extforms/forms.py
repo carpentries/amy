@@ -35,7 +35,6 @@ class TrainingRequestForm(forms.ModelForm):
             "personal",
             "family",
             "group_name",
-            "eventbrite_url",
             "email",
             "secondary_email",
             "github",

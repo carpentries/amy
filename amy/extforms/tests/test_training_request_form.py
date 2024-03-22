@@ -96,12 +96,12 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
 
         # 2: shouldn't pass when review_process requires *NO* group_name
-        self.data["review_process"] = "open"
+        self.data["review_process"] = "open"  # Unsupported since 2024-03-19 (#2617)
         self.data["group_name"] = "some_code"
         self.passCaptcha(self.data)
 
         rv = self.client.post(reverse("training_request"), self.data, follow=True)
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode("utf-8")
-        self.assertIn("fix errors in the form below", content)
-        self.assertEqual(TrainingRequest.objects.all().count(), 0)
+        self.assertNotIn("fix errors in the form below", content)
+        self.assertEqual(TrainingRequest.objects.all().count(), 1)
