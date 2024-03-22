@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest import skip
 
 from django.conf import settings
 from django.core import mail
@@ -160,7 +161,7 @@ class TestTrainingRequestForm(TestBase):
         """Shouldn't pass when review_process requires member_code."""
         # Arrange
         data = {
-            "review_process": "preapproved",
+            # "review_process": "preapproved",
             "member_code": "",
         }
 
@@ -179,6 +180,7 @@ class TestTrainingRequestForm(TestBase):
             HiddenInput,
         )
 
+    @skip("Since 2024-03-19 (#2617) we don't allow open training requests.")
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
     def test_review_process_validation__open_code_nonempty(self):
         """Shouldn't pass when review_process requires *NO* member_code."""
