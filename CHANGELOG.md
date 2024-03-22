@@ -13,6 +13,12 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.2.4 - 2024-03-22
+
+### Features
+* [#2617] Default training requests to preapproved only - [#2621](https://github.com/carpentries/amy/pull/2621) by @pbanaszkiewicz
+* Remove references to open training - [#2618](https://github.com/carpentries/amy/pull/2618) by @maneesha
+
 ## v4.2.2 - 2023-09-27
 
 ### Features

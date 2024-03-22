@@ -32,10 +32,9 @@ class TrainingRequestForm(forms.ModelForm):
     class Meta:
         model = TrainingRequest
         fields = (
-            "review_process",
-            "group_name",
             "personal",
             "family",
+            "group_name",
             "email",
             "secondary_email",
             "github",
@@ -70,7 +69,6 @@ class TrainingRequestForm(forms.ModelForm):
             "workshop_teaching_agreement",
         )
         widgets = {
-            "review_process": forms.RadioSelect(),
             "occupation": RadioSelectWithOther("occupation_other"),
             "domains": CheckboxSelectMultipleWithOthers("domains_other"),
             "underrepresented": forms.RadioSelect(),
@@ -104,7 +102,6 @@ class TrainingRequestForm(forms.ModelForm):
 
         self.set_other_fields(self.helper.layout)
         self.set_fake_required_fields()
-        self.set_accordion(self.helper.layout)
         self.set_hr(self.helper.layout)
 
     def set_other_field(self, field_name: str, layout: Layout) -> None:
@@ -135,6 +132,8 @@ class TrainingRequestForm(forms.ModelForm):
         self["group_name"].field.widget.fake_required = True  # type: ignore
 
     def set_accordion(self, layout: Layout) -> None:
+        # Note: not used since 2024-03-19 (#2617).
+
         # special accordion display for the review process
         self["review_process"].field.widget.subfields = {  # type: ignore
             "preapproved": [
@@ -196,22 +195,26 @@ class TrainingRequestForm(forms.ModelForm):
         super().clean()
         errors = dict()
 
+        # Since 2024-03-19 (#2617) we don't allow open training applications. All
+        # applications are by default pre-approved.
+        review_process = self.cleaned_data.get("review_process", "preapproved")
+        self.instance.review_process = review_process
+
         # 1: validate registration code / group name
-        review_process = self.cleaned_data.get("review_process", "")
         group_name = self.cleaned_data.get("group_name", "").split()
 
         # it's required when review_process is 'preapproved', but not when
         # 'open'
         if review_process == "preapproved" and not group_name:
-            errors["review_process"] = ValidationError(
+            errors["group_name"] = ValidationError(
                 "Registration code is required for pre-approved training "
                 "review process."
             )
 
         # it's required to be empty when review_process is 'open'
         if review_process == "open" and group_name:
-            errors["review_process"] = ValidationError(
-                "Registration code must be empty for open training review " "process."
+            errors["member_code"] = ValidationError(
+                "Registration code must be empty for open training review process."
             )
 
         if errors:
