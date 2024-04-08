@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from django.test import RequestFactory, TestCase
 from django.views import View
 
-from api.permissions import DjangoModelPermissionsWithView
+from api.v1.permissions import DjangoModelPermissionsWithView
 from recruitment.models import InstructorRecruitment
 from workshops.models import Person
 

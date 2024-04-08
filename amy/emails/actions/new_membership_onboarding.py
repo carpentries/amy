@@ -6,7 +6,9 @@ from django.http import HttpRequest
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
+from emails.actions.exceptions import EmailStrategyException
 from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
     Signal,
@@ -19,11 +21,9 @@ from emails.types import (
     NewMembershipOnboardingKwargs,
     StrategyEnum,
 )
-from emails.utils import immediate_action, one_month_before
+from emails.utils import api_model_url, immediate_action, one_month_before
 from fiscal.models import MembershipTask
 from workshops.models import Membership
-
-from .instructor_training_approaching import EmailStrategyException
 
 logger = logging.getLogger("amy")
 
@@ -108,6 +108,16 @@ def get_context(
     }
 
 
+def get_context_json(
+    **kwargs: Unpack[NewMembershipOnboardingKwargs],
+) -> ContextModel:
+    return ContextModel(
+        {
+            "membership": api_model_url("membership", kwargs["membership"].pk),
+        },
+    )
+
+
 def get_generic_relation_object(
     context: NewMembershipOnboardingContext,
     **kwargs: Unpack[NewMembershipOnboardingKwargs],
@@ -127,6 +137,27 @@ def get_recipients(
     return [task.person.email for task in tasks if task.person.email]
 
 
+def get_recipients_context_json(
+    context: NewMembershipOnboardingContext,
+    **kwargs: Unpack[NewMembershipOnboardingKwargs],
+) -> ToHeaderModel:
+    membership = context["membership"]
+    tasks = MembershipTask.objects.filter(
+        membership=membership,
+        role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED,
+    ).select_related("person")
+
+    return ToHeaderModel(
+        [
+            {
+                "api_uri": api_model_url("person", task.person.pk),
+                "property": "email",
+            }
+            for task in tasks
+        ],  # type: ignore
+    )
+
+
 class NewMembershipOnboardingReceiver(BaseAction):
     signal = new_membership_onboarding_signal.signal_name
 
@@ -139,6 +170,11 @@ class NewMembershipOnboardingReceiver(BaseAction):
         self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
     ) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
+
+    def get_context_json(
+        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
 
     def get_generic_relation_object(
         self,
@@ -153,6 +189,13 @@ class NewMembershipOnboardingReceiver(BaseAction):
         **kwargs: Unpack[NewMembershipOnboardingKwargs],
     ) -> list[str]:
         return get_recipients(context, **kwargs)
+
+    def get_recipients_context_json(
+        self,
+        context: NewMembershipOnboardingContext,
+        **kwargs: Unpack[NewMembershipOnboardingKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
 
 
 class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
@@ -168,6 +211,11 @@ class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
     ) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
+    def get_context_json(
+        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
+
     def get_generic_relation_object(
         self,
         context: NewMembershipOnboardingContext,
@@ -182,6 +230,13 @@ class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
     ) -> list[str]:
         return get_recipients(context, **kwargs)
 
+    def get_recipients_context_json(
+        self,
+        context: NewMembershipOnboardingContext,
+        **kwargs: Unpack[NewMembershipOnboardingKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
+
 
 class NewMembershipOnboardingCancelReceiver(BaseActionCancel):
     signal = new_membership_onboarding_remove_signal.signal_name
@@ -191,12 +246,24 @@ class NewMembershipOnboardingCancelReceiver(BaseActionCancel):
     ) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
+    def get_context_json(
+        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
+    ) -> ContextModel:
+        return get_context_json(**kwargs)
+
     def get_generic_relation_object(
         self,
         context: NewMembershipOnboardingContext,
         **kwargs: Unpack[NewMembershipOnboardingKwargs],
     ) -> Membership:
         return get_generic_relation_object(context, **kwargs)
+
+    def get_recipients_context_json(
+        self,
+        context: NewMembershipOnboardingContext,
+        **kwargs: Unpack[NewMembershipOnboardingKwargs],
+    ) -> ToHeaderModel:
+        return get_recipients_context_json(context, **kwargs)
 
 
 # -----------------------------------------------------------------------------

@@ -111,7 +111,7 @@ class TestTermsMiddleware(ConsentTestBase):
         """Ensure anonymous user is not redirected by the Terms middleware."""
         urls = [
             reverse("login"),
-            reverse("api:root"),
+            reverse("api-v1:root"),
             reverse("training_request"),
             reverse("training_request_confirm"),
             reverse("workshop_request"),

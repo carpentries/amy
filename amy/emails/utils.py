@@ -146,3 +146,11 @@ def find_signal_by_name(
         (signal for signal in all_signals if signal.signal_name == signal_name),
         None,
     )
+
+
+def api_model_url(model: str, pk: int) -> str:
+    return f"api:{model}#{pk}"
+
+
+def scalar_value_url(type_: str, value: str) -> str:
+    return f"value:{type_}#{value}"

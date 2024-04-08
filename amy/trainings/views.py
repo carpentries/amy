@@ -4,7 +4,7 @@ from django.db.models import Case, Count, F, IntegerField, Prefetch, Sum, When
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
-from emails.actions.instructor_training_approaching import EmailStrategyException
+from emails.actions.exceptions import EmailStrategyException
 from emails.actions.instructor_training_completed_not_badged import (
     instructor_training_completed_not_badged_strategy,
     run_instructor_training_completed_not_badged_strategy,

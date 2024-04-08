@@ -4,7 +4,9 @@ This document tracks steps that must be completed manually before or after the s
 
 ## v4.3
 
-Nothing yet.
+1. Deploy the worker correctly to PROD environment
+2. Prepare production email worker account only with `knox.add_authtoken` permission and active status
+    * put this account credentials in SSM parameters `/{stage}/email-worker/token_username` and `/{stage}/email-worker/token_password`
 
 ### After
 

@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any, Mapping
 
 from django.db.models import Model
 
@@ -9,6 +8,7 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
+from emails.schemas import ContextModel, ToHeaderModel
 from workshops.models import Person
 
 
@@ -28,33 +28,41 @@ class EmailController:
     @staticmethod
     def schedule_email(
         signal: str,
-        context: Mapping[str, Any],
+        context_json: ContextModel,
         scheduled_at: datetime,
         to_header: list[str],
+        to_header_context_json: ToHeaderModel,
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
-        if not to_header:
+        if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
-                "Email must have at least one recipient, but `to_header` is empty."
+                "Email must have at least one recipient, but `to_header` or "
+                "`to_header_context_json` are empty."
             )
 
+        # Try rendering the templates with empty context to see if there are any syntax
+        # errors.
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
         engine = EmailTemplate.get_engine()
+        EmailTemplate.render_template(engine, template.subject, {})
+        EmailTemplate.render_template(engine, template.body, {})
 
-        subject = EmailTemplate.render_template(engine, template.subject, dict(context))
-        body = EmailTemplate.render_template(engine, template.body, dict(context))
+        subject = template.subject
+        body = template.body
 
         scheduled_email = ScheduledEmail.objects.create(
             state=ScheduledEmailStatus.SCHEDULED,
             scheduled_at=scheduled_at,
             to_header=to_header,
+            to_header_context_json=to_header_context_json.model_dump(),
             from_header=template.from_header,
             reply_to_header=template.reply_to_header,
             cc_header=template.cc_header,
             bcc_header=template.bcc_header,
             subject=subject,
             body=body,
+            context_json=context_json.model_dump(),
             template=template,
             generic_relation=generic_relation_obj,
         )
@@ -91,34 +99,19 @@ class EmailController:
         return scheduled_email
 
     @staticmethod
-    def cancel_email(
-        scheduled_email: ScheduledEmail,
-        author: Person | None = None,
-    ) -> ScheduledEmail:
-        old_state = scheduled_email.state
-        scheduled_email.state = ScheduledEmailStatus.CANCELLED
-        scheduled_email.save()
-        ScheduledEmailLog.objects.create(
-            details="Email was cancelled",
-            state_before=old_state,
-            state_after=scheduled_email.state,
-            scheduled_email=scheduled_email,
-            author=author,
-        )
-        return scheduled_email
-
-    @staticmethod
     def update_scheduled_email(
         scheduled_email: ScheduledEmail,
-        context: Mapping[str, Any],
+        context_json: ContextModel,
         scheduled_at: datetime,
         to_header: list[str],
+        to_header_context_json: ToHeaderModel,
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
-        if not to_header:
+        if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
-                "Email must have at least one recipient, but `to_header` is empty."
+                "Email must have at least one recipient, but `to_header` or "
+                "`to_header_context_json` are empty."
             )
 
         template = scheduled_email.template
@@ -128,15 +121,22 @@ class EmailController:
             )
 
         signal = template.signal
-        engine = EmailTemplate.get_engine()
 
-        subject = EmailTemplate.render_template(engine, template.subject, dict(context))
-        body = EmailTemplate.render_template(engine, template.body, dict(context))
+        # Try rendering the templates with empty context to see if there are any syntax
+        # errors.
+        engine = EmailTemplate.get_engine()
+        EmailTemplate.render_template(engine, template.subject, {})
+        EmailTemplate.render_template(engine, template.body, {})
+
+        subject = template.subject
+        body = template.body
 
         scheduled_email.scheduled_at = scheduled_at
         scheduled_email.subject = subject
         scheduled_email.body = body
         scheduled_email.to_header = to_header
+        scheduled_email.to_header_context_json = to_header_context_json.model_dump()
+        scheduled_email.context_json = context_json.model_dump()
         scheduled_email.generic_relation = generic_relation_obj
         scheduled_email.save()
 
@@ -148,3 +148,55 @@ class EmailController:
             author=author,
         )
         return scheduled_email
+
+    @staticmethod
+    def change_state_with_log(
+        scheduled_email: ScheduledEmail,
+        new_state: ScheduledEmailStatus,
+        details: str,
+        author: Person | None = None,
+    ) -> ScheduledEmail:
+        old_state = scheduled_email.state
+        scheduled_email.state = new_state
+        scheduled_email.save()
+        ScheduledEmailLog.objects.create(
+            details=details,
+            state_before=old_state,
+            state_after=scheduled_email.state,
+            scheduled_email=scheduled_email,
+            author=author,
+        )
+        return scheduled_email
+
+    @staticmethod
+    def cancel_email(
+        scheduled_email: ScheduledEmail, author: Person | None = None
+    ) -> ScheduledEmail:
+        details = "Email was cancelled"
+        return EmailController.change_state_with_log(
+            scheduled_email, ScheduledEmailStatus.CANCELLED, details, author
+        )
+
+    @staticmethod
+    def lock_email(
+        scheduled_email: ScheduledEmail, details: str, author: Person | None = None
+    ) -> ScheduledEmail:
+        return EmailController.change_state_with_log(
+            scheduled_email, ScheduledEmailStatus.LOCKED, details, author
+        )
+
+    @staticmethod
+    def fail_email(
+        scheduled_email: ScheduledEmail, details: str, author: Person | None = None
+    ) -> ScheduledEmail:
+        return EmailController.change_state_with_log(
+            scheduled_email, ScheduledEmailStatus.FAILED, details, author
+        )
+
+    @staticmethod
+    def succeed_email(
+        scheduled_email: ScheduledEmail, details: str, author: Person | None = None
+    ) -> ScheduledEmail:
+        return EmailController.change_state_with_log(
+            scheduled_email, ScheduledEmailStatus.SUCCEEDED, details, author
+        )

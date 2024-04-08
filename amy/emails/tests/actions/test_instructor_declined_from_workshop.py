@@ -7,7 +7,9 @@ from django.urls import reverse
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from emails.actions import instructor_declined_from_workshop_receiver
 from emails.models import EmailTemplate, ScheduledEmail
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_declined_from_workshop_signal
+from emails.utils import api_model_url
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.models import Event, Organization, Person
 from workshops.tests.base import TestBase
@@ -113,11 +115,6 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
         mock_immediate_action.return_value = NOW + timedelta(hours=1)
         signal = instructor_declined_from_workshop_signal.signal_name
-        context = {
-            "person": person,
-            "event": event,
-            "instructor_recruitment_signup": signup,
-        }
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
@@ -136,9 +133,22 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         # Assert
         mock_schedule_email.assert_called_once_with(
             signal=signal,
-            context=context,
+            context_json=ContextModel(
+                {
+                    "person": api_model_url("person", person.pk),
+                    "event": api_model_url("event", event.pk),
+                    "instructor_recruitment_signup": api_model_url(
+                        "instructor_recruitment_signup", signup.pk
+                    ),
+                }
+            ),
             scheduled_at=scheduled_at,
             to_header=[person.email],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {"api_uri": api_model_url("person", person.pk), "property": "email"}
+                ]  # type: ignore
+            ),
             generic_relation_obj=signup,
             author=None,
         )
