@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from functools import partial
 import logging
 from typing import Iterable, cast
@@ -33,7 +33,7 @@ def immediate_action() -> datetime:
 def combine_date_with_current_utc_time(date: date) -> datetime:
     """Return timezone-aware datetime object combining current time in UTC
     with a given date."""
-    current_time_utc = datetime.now(timezone.utc).timetz()
+    current_time_utc = datetime.now(UTC).timetz()
     return datetime.combine(date, current_time_utc)
 
 

@@ -1,6 +1,4 @@
-from datetime import datetime, timedelta
-
-from django.utils import timezone
+from datetime import UTC, datetime, timedelta
 
 from trainings.filters import TraineeFilter
 from trainings.models import Involvement
@@ -241,9 +239,9 @@ class TestTraineeFilter(TestBase):
         qs = self.qs.filter(pk__in=[self.spiderman.pk, self.ironman.pk])
         results = {}
         # none of these users have logged in, so manually set
-        self.spiderman.last_login = datetime(2023, 4, 1, 0, 0, 0, tzinfo=timezone.utc)
+        self.spiderman.last_login = datetime(2023, 4, 1, 0, 0, 0, tzinfo=UTC)
         self.spiderman.save()
-        self.ironman.last_login = datetime(2023, 5, 1, 0, 0, 0, tzinfo=timezone.utc)
+        self.ironman.last_login = datetime(2023, 5, 1, 0, 0, 0, tzinfo=UTC)
         self.ironman.save()
 
         # default ordering is ascending

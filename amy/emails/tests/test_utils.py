@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from unittest.mock import patch
 
 from django.conf import settings
@@ -48,7 +48,7 @@ class TestImmediateAction(TestCase):
         immediate = immediate_action()
 
         # Assert
-        self.assertEqual(immediate.tzinfo, pytz.UTC)
+        self.assertEqual(immediate.tzinfo, UTC)
         # Assert that the immediate action is scheduled for 1 hour from now,
         # with a 1 second tolerance
         self.assertTrue(immediate - timedelta(hours=1) - now < timedelta(seconds=1))
