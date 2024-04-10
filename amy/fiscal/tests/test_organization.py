@@ -146,4 +146,4 @@ class TestOrganization(TestBase):
         )
         self.assertEqual(organizations_with_admin_domain.count(), len(expected_domains))
         # check that administrators() returns what we expect
-        self.assertQuerysetEqual(organizations_with_admin_domain, administrators)
+        self.assertQuerySetEqual(organizations_with_admin_domain, administrators)

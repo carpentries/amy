@@ -430,19 +430,19 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         # result should be the same as original queryset
         rv = self.filter(choice="")
         self.assertEqual(rv, self.queryset)
-        self.assertQuerysetEqual(rv, list(self.queryset), transform=lambda x: x)
+        self.assertQuerySetEqual(rv, list(self.queryset), transform=lambda x: x)
 
     def test_instructors(self):
         # only instructors who have all 3 badges should be returned
         rv = self.filter(choice="yes")
         values = [self.instructor1, self.instructor2, self.instructor3]
-        self.assertQuerysetEqual(rv, values, transform=lambda x: x)
+        self.assertQuerySetEqual(rv, values, transform=lambda x: x)
 
     def test_eligible_trainees(self):
         # only 1 eligible trainee should be returned
         rv = self.filter(choice="eligible")
         values = [self.trainee1]
-        self.assertQuerysetEqual(rv, values, transform=lambda x: x)
+        self.assertQuerySetEqual(rv, values, transform=lambda x: x)
 
     def test_eligibility_query(self):
         # check if eligibility query works correctly
@@ -510,4 +510,4 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         # only non-instructors should be returned
         rv = self.filter(choice="no")
         values = [self.trainee1, self.trainee3]
-        self.assertQuerysetEqual(rv, values, transform=lambda x: x)
+        self.assertQuerySetEqual(rv, values, transform=lambda x: x)

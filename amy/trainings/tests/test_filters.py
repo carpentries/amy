@@ -148,7 +148,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_search_email(self):
         # Arrange
@@ -159,7 +159,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_all_persons(self):
         # Arrange
@@ -170,7 +170,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, Person.objects.all())
+        self.assertQuerySetEqual(result, Person.objects.all())
 
     def test_filter_get_involved(self):
         # Arrange
@@ -181,7 +181,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.ironman])
+        self.assertQuerySetEqual(result, [self.ironman])
 
     def test_filter_training_request_true(self):
         # Arrange
@@ -194,7 +194,7 @@ class TestTraineeFilter(TestBase):
         # Assert
         self.assertIn(self.spiderman, result)
         self.assertNotIn(self.ironman, result)
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_training_request_false(self):
         # Arrange
@@ -230,7 +230,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_order_by(self):
         # Arrange
@@ -259,4 +259,4 @@ class TestTraineeFilter(TestBase):
         self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
-            self.assertQuerysetEqual(results[field], expected_results[field])
+            self.assertQuerySetEqual(results[field], expected_results[field])

@@ -116,7 +116,7 @@ class TestMembershipFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.membership])
+        self.assertQuerySetEqual(result, [self.membership])
 
     def test_filter_consortium(self):
         # Arrange
@@ -127,7 +127,7 @@ class TestMembershipFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.membership])
+        self.assertQuerySetEqual(result, [self.membership])
 
     def test_filter_public_status(self):
         # Arrange
@@ -138,7 +138,7 @@ class TestMembershipFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.membership])
+        self.assertQuerySetEqual(result, [self.membership])
 
     def test_filter_variant(self):
         # Arrange
@@ -223,7 +223,7 @@ class TestMembershipFilter(TestBase):
         self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
-            self.assertQuerysetEqual(results[field], expected_results[field])
+            self.assertQuerySetEqual(results[field], expected_results[field])
 
 
 class TestMembershipTrainingsFilter(TestBase):
@@ -330,7 +330,7 @@ class TestMembershipTrainingsFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.membership])
+        self.assertQuerySetEqual(result, [self.membership])
 
     def test_filter_active_only(self):
         # Arrange
@@ -394,4 +394,4 @@ class TestMembershipTrainingsFilter(TestBase):
         self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
-            self.assertQuerysetEqual(results[field], expected_results[field])
+            self.assertQuerySetEqual(results[field], expected_results[field])
