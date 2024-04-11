@@ -176,7 +176,7 @@ class TestEmailController(TestCase):
     def test_schedule_email__generic_object_link(self) -> None:
         # Arrange
         now = timezone.now()
-        person = Person(personal="Harry", family="Potter")
+        person = Person.objects.create(personal="Harry", family="Potter")
 
         # Act
         scheduled_email = self.create_scheduled_email(now, generic_relation_obj=person)

@@ -26,7 +26,9 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().get("/")
-        request.user = Person(personal="Test", family="User", email="test@user.com")
+        request.user = Person.objects.create(
+            personal="Test", family="User", email="test@user.com"
+        )
         # Act
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
@@ -203,7 +205,9 @@ class TestSignupForRecruitment(TestCase):
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().get("/")
-        request.user = Person(personal="Test", family="User", email="test@user.com")
+        request.user = Person.objects.create(
+            personal="Test", family="User", email="test@user.com"
+        )
         # Act
         view = SignupForRecruitment(request=request)
         # Assert
@@ -505,7 +509,9 @@ class TestResignFromRecruitment(TestCase):
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().post("/")
-        request.user = Person(personal="Test", family="User", email="test@user.com")
+        request.user = Person.objects.create(
+            personal="Test", family="User", email="test@user.com"
+        )
         # Act
         view = ResignFromRecruitment(request=request)
         # Assert
