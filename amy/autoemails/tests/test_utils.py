@@ -1,7 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from django.test import TestCase
-import pytz
 from rq.queue import Queue
 from rq.worker import SimpleWorker
 from rq_scheduler.utils import to_unix
@@ -63,7 +62,7 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
         self.assertEqual(rv.tzinfo, None)
 
         rv = scheduled_execution_time(job_id, self.scheduler, naive=False)
-        self.assertEqual(rv.tzinfo, pytz.UTC)
+        self.assertEqual(rv.tzinfo, UTC)
 
 
 class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):

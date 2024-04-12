@@ -1,8 +1,8 @@
+from datetime import UTC
 from typing import Optional, Union
 
 from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
-import pytz
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
@@ -21,7 +21,7 @@ def scheduled_execution_time(job_id, scheduler, naive=True):
         if not naive:
             # By default, RQ-Scheduler uses UTC naive (TZ-unaware) objects,
             # which we can "convert" to TZ-aware UTC.
-            time = time.replace(tzinfo=pytz.UTC)
+            time = time.replace(tzinfo=UTC)
     return time
 
 
