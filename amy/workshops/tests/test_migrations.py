@@ -287,7 +287,7 @@ class TestWorkshops0261(BaseMigrationTestCase):
         self.assertEqual(
             TrainingProgress.objects.filter(requirement__name="Get Involved").count(), 1
         )
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             TrainingProgress.objects.filter(requirement__name="Get Involved"),
             TrainingProgress.objects.filter(
                 involvement_type__name="GitHub Contribution"

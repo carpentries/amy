@@ -157,7 +157,7 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         # Arrange
         request = RequestFactory().get("/")
         membership_start_date = date(2023, 1, 1)
-        membership = Membership(
+        membership = Membership.objects.create(
             name="Test Membership",
             variant="gold",
             agreement_start=membership_start_date,

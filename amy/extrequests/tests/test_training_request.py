@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
+from unittest.mock import MagicMock
 from urllib.parse import urlencode
 
 from django.contrib.messages import WARNING
@@ -886,12 +887,12 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         factory = RequestFactory()
         request = factory.get("/")  # doesn't really matter where
         # adding session middleware, because it's required by messages
-        session_middleware = SessionMiddleware()
+        session_middleware = SessionMiddleware(MagicMock())
         session_middleware.process_request(request)
         request.session.save()
         # adding messages because they're used in
         # _match_training_request_to_person
-        messages_middleware = MessageMiddleware()
+        messages_middleware = MessageMiddleware(MagicMock())
         messages_middleware.process_request(request)
 
         create = False

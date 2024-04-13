@@ -540,10 +540,10 @@ class TestWorkshopInquiryViews(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             form_initial["curricula"].all(), wi.requested_workshop_types.all()
         )
-        self.assertQuerysetEqual(form_initial["tags"], expected_tags)
+        self.assertQuerySetEqual(form_initial["tags"], expected_tags)
         self.assertEqual(form_initial["public_status"], "private")
         self.assertEqual(form_initial["contact"], wi.additional_contact)
         self.assertEqual(form_initial["host"].pk, wi.institution.pk)
@@ -782,7 +782,7 @@ class TestAcceptWorkshopInquiryAddsEmailAction(FakeRedisTestCaseMixin, TestBase)
 
         # no jobs scheduled
         rqjobs_pre = RQJob.objects.all()
-        self.assertQuerysetEqual(rqjobs_pre, [])
+        self.assertQuerySetEqual(rqjobs_pre, [])
 
         # send data in
         rv = self.client.post(self.url, data, follow=True)

@@ -667,9 +667,9 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
             ),
             event__slug="test-event",
         )
-        self.assertQuerysetEqual(tasks_pre, [])
+        self.assertQuerySetEqual(tasks_pre, [])
         rqjobs_pre = RQJob.objects.all()
-        self.assertQuerysetEqual(rqjobs_pre, [])
+        self.assertQuerySetEqual(rqjobs_pre, [])
 
         # send data in
         rv = self.client.post(

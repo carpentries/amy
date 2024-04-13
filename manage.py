@@ -2,6 +2,11 @@
 import os
 import sys
 
+# import warnings
+# from django.utils.deprecation import RemovedInDjango50Warning
+
+# warnings.filterwarnings('always', category=RemovedInDjango50Warning)
+
 if __name__ == "__main__":
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     try:

@@ -30,7 +30,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
-import pytz
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
@@ -2757,7 +2756,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         # if other checks passed, verify that date is no later than today
         # (considering timezones ahead of UTC)
         if self.date and self.date > timezone.localdate(
-            timezone=pytz.timezone("Etc/GMT-14")
+            timezone=datetime.timezone(datetime.timedelta(hours=14))
         ):
             msg = "Date must be in the past."
             return ValidationError(msg)

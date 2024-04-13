@@ -252,7 +252,7 @@ def all_trainees(request):
                     request, "Successfully changed progress of all selected trainees."
                 )
 
-            return redirect(request.get_raw_uri())
+            return redirect(request.build_absolute_uri())
 
     else:  # GET request
         # If the user filters by training, we want to set initial values for

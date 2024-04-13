@@ -76,7 +76,7 @@ class TestKnowledgeDomainLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, KnowledgeDomain.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, KnowledgeDomain.objects.all(), ordered=False)
 
     def test_get_queryset_simple_term(self):
         # Arrange
@@ -85,7 +85,7 @@ class TestKnowledgeDomainLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset,
             KnowledgeDomain.objects.filter(name__icontains=term),
             ordered=False,
@@ -187,7 +187,7 @@ class TestEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Event.objects.all())
+        self.assertQuerySetEqual(queryset, Event.objects.all())
 
     def test_get_queryset_term(self):
         # Arrange
@@ -196,7 +196,7 @@ class TestEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event], ordered=False)
+        self.assertQuerySetEqual(queryset, [self.event, self.ttt_event], ordered=False)
 
 
 class TestEventLookupForAwardsView(TestBase):
@@ -249,7 +249,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Event.objects.all())
+        self.assertQuerySetEqual(queryset, Event.objects.all())
 
     def test_get_queryset_term(self):
         # Arrange
@@ -258,7 +258,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.event, self.ttt_event], ordered=False)
+        self.assertQuerySetEqual(queryset, [self.event, self.ttt_event], ordered=False)
 
     def test_get_queryset_person(self):
         """Person alone should not change results."""
@@ -267,7 +267,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset,
             Event.objects.all(),
         )
@@ -279,7 +279,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset,
             Event.objects.all(),
         )
@@ -291,7 +291,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset, [self.ttt_event, self.ttt_event_2], ordered=False
         )
 
@@ -304,7 +304,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset,
             Event.objects.all(),
         )
@@ -318,7 +318,7 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset,
             [self.ttt_event],
         )
@@ -357,7 +357,7 @@ class TestTTTEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Event.objects.ttt())
+        self.assertQuerySetEqual(queryset, Event.objects.ttt())
 
     def test_get_queryset_term(self):
         # Arrange
@@ -366,7 +366,7 @@ class TestTTTEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.event])
+        self.assertQuerySetEqual(queryset, [self.event])
 
     def test_get_queryset_trainee(self):
         # Arrange
@@ -374,7 +374,7 @@ class TestTTTEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.event, self.event2], ordered=False)
+        self.assertQuerySetEqual(queryset, [self.event, self.event2], ordered=False)
 
     def test_get_queryset_trainee_and_term(self):
         # Arrange
@@ -383,7 +383,7 @@ class TestTTTEventLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset,
             [self.event],
         )
@@ -432,7 +432,7 @@ class TestMembershipLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, Membership.objects.all(), ordered=False)
 
     def test_get_queryset_term__date(self):
         # Arrange
@@ -441,7 +441,7 @@ class TestMembershipLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.membership_alpha], ordered=False)
+        self.assertQuerySetEqual(queryset, [self.membership_alpha], ordered=False)
 
     def test_get_queryset_term__organization_name(self):
         # Arrange
@@ -450,7 +450,7 @@ class TestMembershipLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.membership_alpha], ordered=False)
+        self.assertQuerySetEqual(queryset, [self.membership_alpha], ordered=False)
 
     def test_get_queryset_term__membership_name(self):
         # Arrange
@@ -459,7 +459,7 @@ class TestMembershipLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.membership_beta], ordered=False)
+        self.assertQuerySetEqual(queryset, [self.membership_beta], ordered=False)
 
     def test_get_queryset_term__variant(self):
         # Arrange
@@ -468,7 +468,7 @@ class TestMembershipLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset, [self.membership_alpha, self.membership_beta], ordered=False
         )
 
@@ -513,7 +513,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, Membership.objects.all(), ordered=False)
 
     def test_get_queryset_person(self):
         """Person alone should not change results."""
@@ -522,7 +522,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, Membership.objects.all(), ordered=False)
 
     def test_get_queryset_role(self):
         """Role alone should not change results."""
@@ -531,7 +531,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, Membership.objects.all(), ordered=False)
 
     def test_get_queryset_event(self):
         """Event alone should not change results."""
@@ -540,7 +540,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, Membership.objects.all(), ordered=False)
 
     def test_get_queryset_person_and_non_learner_role_and_ttt_event(self):
         """Any query with a non-learner role should not change results."""
@@ -553,7 +553,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, Membership.objects.all(), ordered=False)
 
     def test_get_queryset_person_and_learner_role_and_non_ttt_event(self):
         """Any query with a non-TTT event should not change results."""
@@ -566,7 +566,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, Membership.objects.all(), ordered=False)
+        self.assertQuerySetEqual(queryset, Membership.objects.all(), ordered=False)
 
     def test_get_queryset_person_and_learner_role_and_ttt_event(self):
         """Person, role, and event combined should change results."""
@@ -577,7 +577,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             queryset, [self.membership_alpha, self.membership_beta], ordered=False
         )
 
@@ -594,7 +594,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerysetEqual(queryset, [self.membership_alpha], ordered=False)
+        self.assertQuerySetEqual(queryset, [self.membership_alpha], ordered=False)
 
 
 class TestGenericObjectLookupView(TestBase):

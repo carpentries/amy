@@ -9,7 +9,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
@@ -146,7 +146,7 @@ class AMYDeleteView(DeleteView):
     def back_address(self) -> Optional[str]:
         return None
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form) -> HttpResponse:
         # Workaround for https://code.djangoproject.com/ticket/21926
         # Replicates the `delete` method of DeleteMixin
         self.object = self.get_object()
