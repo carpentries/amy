@@ -18,6 +18,7 @@ env = environ.Env(
     AMY_DEBUG=(bool, True),
     AMY_SITE_ID=(int, 2),
     AMY_ALLOWED_HOSTS=(list, ["amy.carpentries.org"]),
+    AMY_CSRF_TRUSTED_ORIGINS=(list, []),
     AMY_DATABASE_HOST=(str, "localhost"),
     AMY_DATABASE_PORT=(int, 5432),
     AMY_DATABASE_NAME=(str, "amy"),
@@ -79,10 +80,15 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = env("AMY_SITE_ID")
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = env("AMY_ALLOWED_HOSTS")
 if DEBUG:
     ALLOWED_HOSTS.append("127.0.0.1")
     ALLOWED_HOSTS.append("localhost")
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#csrf-trusted-origins
+CSRF_TRUSTED_ORIGINS = env("AMY_CSRF_TRUSTED_ORIGINS")
 
 # DATABASES
 # -----------------------------------------------------------------------------
