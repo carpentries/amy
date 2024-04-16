@@ -89,4 +89,10 @@
         {% endif %}
       {% endwith %}
     </td></tr>
+  <tr>
+    <th>Related scheduled emails:</th>
+    <td>
+      {% include "includes/related_scheduled_emails.html" with object=event %}
+    </td>
+  </tr>
 </table>

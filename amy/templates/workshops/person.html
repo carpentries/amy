@@ -256,6 +256,12 @@
       {% endwith %}
     </td>
   </tr>
+  <tr>
+    <th>Related scheduled emails:</th>
+    <td>
+      {% include "includes/related_scheduled_emails.html" with object=person %}
+    </td>
+  </tr>
 </table>
 
 <div class="edit-object">
