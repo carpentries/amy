@@ -21,6 +21,7 @@
         ></i>
       </th>
       <th>Action</th>
+      <th>Related scheduled emails</th>
     </tr>
   </thead>
   <tbody>
@@ -88,10 +89,13 @@
         </form>
         <a href="{% url 'instructorrecruitmentsignup_edit' signup.pk %}" class="btn btn-sm btn-primary">Edit</a>
       </td>
+      <td>
+        {% include "includes/related_scheduled_emails.html" with object=signup %}
+      </td>
     </tr>
     {% empty %}
     <tr>
-      <td colspan=9><em>No applications yet.</em></td>
+      <td colspan=11><em>No applications yet.</em></td>
     </tr>
     {% endfor %}
   </tbody>
