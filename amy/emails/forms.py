@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from django import forms
 from markdownx.fields import MarkdownxFormField
 
@@ -86,6 +88,14 @@ class ScheduledEmailRescheduleForm(forms.Form):
     )
 
     helper = BootstrapHelper(submit_label="Update")
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data["scheduled_at"]
+
+        if scheduled_at < datetime.now(tz=UTC):
+            raise forms.ValidationError("Scheduled time cannot be in the past.")
+
+        return scheduled_at
 
 
 class ScheduledEmailCancelForm(forms.Form):
