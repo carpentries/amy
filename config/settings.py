@@ -46,7 +46,7 @@ env = environ.Env(
     ),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
     # Feature flags
-    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
+    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, True),
 )
 
 # OS environment variables take precedence over variables from .env

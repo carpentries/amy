@@ -200,6 +200,12 @@
   </tr>
   <tr><th>Emergency contact:</th>
       <td colspan="2">{% if membership.emergency_contact %}<pre>{{ membership.emergency_contact }}</pre>{% else %}&mdash;{% endif %}</td></tr>
+  <tr>
+    <th>Related scheduled emails:</th>
+    <td>
+      {% include "includes/related_scheduled_emails.html" with object=membership %}
+    </td>
+  </tr>
 </table>
 
 <div class="clearfix">
