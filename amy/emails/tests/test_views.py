@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, override_settings
 from django.urls import reverse
@@ -504,8 +505,9 @@ class TestScheduledEmailUpdate(TestBase):
 
 
 class TestScheduledEmailReschedule(TestBase):
+    @patch("emails.forms.datetime", wraps=datetime)
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    def test_view(self) -> None:
+    def test_view(self, mock_datetime: MagicMock) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
         template = EmailTemplate.objects.create(
@@ -531,6 +533,7 @@ class TestScheduledEmailReschedule(TestBase):
             template=template,
         )
         url = reverse("scheduledemail_reschedule", kwargs={"pk": scheduled_email.pk})
+        mock_datetime.now.return_value = datetime(2022, 12, 31, 23, 59, 59, tzinfo=UTC)
         new_scheduled_date = datetime(2023, 1, 1, 0, 0, tzinfo=UTC)
         data = {
             "scheduled_at_0": f"{new_scheduled_date:%Y-%m-%d}",
