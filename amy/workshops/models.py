@@ -1869,6 +1869,9 @@ class Award(models.Model):
             self.person, self.badge, self.awarded, self.event
         )
 
+    def get_absolute_url(self) -> str:
+        return reverse("person_details", args=[self.person.pk])
+
 
 # ------------------------------------------------------------
 
