@@ -138,7 +138,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
                     "person": api_model_url("person", person.pk),
                     "event": api_model_url("event", event.pk),
                     "instructor_recruitment_signup": api_model_url(
-                        "instructor_recruitment_signup", signup.pk
+                        "instructorrecruitmentsignup", signup.pk
                     ),
                 }
             ),

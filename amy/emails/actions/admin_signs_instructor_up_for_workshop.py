@@ -41,7 +41,7 @@ class AdminSignsInstructorUpForWorkshopReceiver(BaseAction):
                 "person": api_model_url("person", kwargs["person_id"]),
                 "event": api_model_url("event", kwargs["event_id"]),
                 "instructor_recruitment_signup": api_model_url(
-                    "instructor_recruitment_signup",
+                    "instructorrecruitmentsignup",
                     kwargs["instructor_recruitment_signup_id"],
                 ),
             },
