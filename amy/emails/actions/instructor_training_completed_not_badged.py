@@ -194,19 +194,19 @@ def get_context_json(
         {
             "person": api_model_url("event", person.pk),
             "passed_requirements": [
-                api_model_url("training_progress", progress.pk)
+                api_model_url("trainingprogress", progress.pk)
                 for progress in TrainingProgress.objects.filter(
                     trainee=person, state="p"
                 )
             ],
             "not_passed_requirements": [
-                api_model_url("training_progress", progress.pk)
+                api_model_url("trainingprogress", progress.pk)
                 for progress in TrainingProgress.objects.filter(trainee=person).exclude(
                     state="p"
                 )
             ],
             "not_graded_requirements": [
-                api_model_url("training_requirement", requirement.pk)
+                api_model_url("trainingrequirement", requirement.pk)
                 for requirement in TrainingRequirement.objects.filter(
                     name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
                 ).exclude(trainingprogress__trainee=person)
