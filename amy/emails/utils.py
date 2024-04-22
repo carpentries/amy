@@ -85,16 +85,16 @@ def messages_missing_template_link(
 def messages_action_scheduled(
     request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
 ) -> None:
+    name = scheduled_email.template.name if scheduled_email.template else signal_name
     messages.info(
         request,
         format_html(
-            "New email action ({}) was scheduled to run "
+            "New email action was scheduled to run "
             '<relative-time datetime="{}"></relative-time>: '
             '<a href="{}"><code>{}</code></a>.',
-            signal_name,
             scheduled_email.scheduled_at,
             scheduled_email.get_absolute_url(),
-            scheduled_email.pk,
+            name,
         ),
         extra_tags=settings.ONLY_FOR_ADMINS_TAG,
     )
@@ -103,12 +103,13 @@ def messages_action_scheduled(
 def messages_action_updated(
     request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
 ) -> None:
+    name = scheduled_email.template.name if scheduled_email.template else signal_name
     messages.info(
         request,
         format_html(
             'Existing <a href="{}">email action ({})</a> was updated.',
             scheduled_email.get_absolute_url(),
-            signal_name,
+            name,
         ),
         extra_tags=settings.ONLY_FOR_ADMINS_TAG,
     )
@@ -117,12 +118,13 @@ def messages_action_updated(
 def messages_action_cancelled(
     request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
 ) -> None:
+    name = scheduled_email.template.name if scheduled_email.template else signal_name
     messages.warning(
         request,
         format_html(
             'Existing <a href="{}">email action ({})</a> was cancelled.',
             scheduled_email.get_absolute_url(),
-            signal_name,
+            name,
         ),
         extra_tags=settings.ONLY_FOR_ADMINS_TAG,
     )

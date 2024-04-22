@@ -186,6 +186,9 @@ class TestMessagesActionScheduled(TestCase):
         signal_name = "test_signal"
         scheduled_at = timezone.now()
         scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
+        name = (
+            scheduled_email.template.name if scheduled_email.template else signal_name
+        )
 
         # Act
         messages_action_scheduled(request, signal_name, scheduled_email)
@@ -193,10 +196,10 @@ class TestMessagesActionScheduled(TestCase):
         # Assert
         mock_messages_info.assert_called_once_with(
             request,
-            f"New email action ({signal_name}) was scheduled to run "
+            f"New email action was scheduled to run "
             f'<relative-time datetime="{scheduled_at}"></relative-time>: '
             f'<a href="{scheduled_email.get_absolute_url()}"><code>'
-            f"{scheduled_email.pk}</code></a>.",
+            f"{name}</code></a>.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
@@ -209,6 +212,9 @@ class TestMessagesActionUpdated(TestCase):
         signal_name = "test_signal"
         scheduled_at = timezone.now()
         scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
+        name = (
+            scheduled_email.template.name if scheduled_email.template else signal_name
+        )
 
         # Act
         messages_action_updated(request, signal_name, scheduled_email)
@@ -217,7 +223,7 @@ class TestMessagesActionUpdated(TestCase):
         mock_messages_info.assert_called_once_with(
             request,
             f'Existing <a href="{scheduled_email.get_absolute_url()}">email action '
-            f"({signal_name})</a> was updated.",
+            f"({name})</a> was updated.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
@@ -230,6 +236,9 @@ class TestMessagesActionCancelled(TestCase):
         signal_name = "test_signal"
         scheduled_at = timezone.now()
         scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
+        name = (
+            scheduled_email.template.name if scheduled_email.template else signal_name
+        )
 
         # Act
         messages_action_cancelled(request, signal_name, scheduled_email)
@@ -238,7 +247,7 @@ class TestMessagesActionCancelled(TestCase):
         mock_messages_warning.assert_called_once_with(
             request,
             f'Existing <a href="{scheduled_email.get_absolute_url()}">email action '
-            f"({signal_name})</a> was cancelled.",
+            f"({name})</a> was cancelled.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
