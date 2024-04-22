@@ -127,6 +127,16 @@ class NewMembershipOnboardingContext(TypedDict):
     membership: Membership
 
 
+class HostInstructorsIntroductionContext(TypedDict):
+    event: Event
+    host: Person
+    instructors: list[Person]
+
+
+class HostInstructorsIntroductionKwargs(TypedDict):
+    event: Event
+
+
 class StrategyEnum(StrEnum):
     CREATE = "create"
     UPDATE = "update"

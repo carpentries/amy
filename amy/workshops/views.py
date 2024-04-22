@@ -60,6 +60,10 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
+from emails.actions.host_instructors_introduction import (
+    host_instructors_introduction_strategy,
+    run_host_instructors_introduction_strategy,
+)
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
@@ -1328,6 +1332,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             self.object,
         )
 
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
         return res
 
 
@@ -1390,6 +1400,12 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object),
             self.request,
             self.object,
         )
@@ -1886,6 +1902,12 @@ class TaskCreate(
             event,
         )
 
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(event),
+            self.request,
+            event,
+        )
+
         # return remembered results
         return res
 
@@ -2089,6 +2111,12 @@ class TaskUpdate(
             self.object.event,
         )
 
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
         return res
 
 
@@ -2196,6 +2224,12 @@ class TaskDelete(
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object.event),
             self.request,
             self.object.event,
         )

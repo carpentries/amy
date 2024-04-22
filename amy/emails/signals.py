@@ -5,6 +5,7 @@ from django.dispatch import Signal as DjangoSignal
 
 from emails.types import (
     AdminSignsInstructorUpContext,
+    HostInstructorsIntroductionContext,
     InstructorBadgeAwardedContext,
     InstructorConfirmedContext,
     InstructorDeclinedContext,
@@ -28,6 +29,7 @@ class SignalNameEnum(StrEnum):
         "instructor_training_completed_not_badged"
     )
     new_membership_onboarding = "new_membership_onboarding"
+    host_instructors_introduction = "host_instructors_introduction"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -122,6 +124,20 @@ new_membership_onboarding_update_signal = Signal(
     context_type=NewMembershipOnboardingContext,
 )
 new_membership_onboarding_remove_signal = Signal(
+    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
+    context_type=NewMembershipOnboardingContext,
+)
+
+HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME = "host_instructors_introduction"
+host_instructors_introduction_signal = Signal(
+    signal_name=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
+    context_type=HostInstructorsIntroductionContext,
+)
+host_instructors_introduction_update_signal = Signal(
+    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
+    context_type=NewMembershipOnboardingContext,
+)
+host_instructors_introduction_remove_signal = Signal(
     signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
     context_type=NewMembershipOnboardingContext,
 )
