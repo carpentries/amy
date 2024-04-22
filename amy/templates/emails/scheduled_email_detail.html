@@ -61,10 +61,6 @@
     <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
   </tr>
   <tr>
-    <th width="20%">ID:</th>
-    <td colspan="2">{{ scheduled_email.id }}</td>
-  </tr>
-  <tr>
     <th>Related object:</th>
     <td colspan="2">
       {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
@@ -155,6 +151,10 @@
       <strong>Rendered:</strong>
       {{ rendered_body|safe }}
     </td>
+  </tr>
+  <tr>
+    <th width="20%">ID:</th>
+    <td colspan="2">{{ scheduled_email.id }}</td>
   </tr>
 </table>
 
