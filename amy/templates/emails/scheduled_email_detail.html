@@ -57,8 +57,20 @@
 
 <table class="table table-striped">
   <tr>
-    <th width="20%">ID:</th>
-    <td colspan="2">{{ scheduled_email.id }}</td>
+    <th>Email template:</th>
+    <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
+  </tr>
+  <tr>
+    <th>Related object:</th>
+    <td colspan="2">
+      {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
+      <a href="{{ scheduled_email.generic_relation.get_absolute_url }}">{{ scheduled_email.generic_relation }}</a>
+      {% elif scheduled_email.generic_relation %}
+      {{ scheduled_email.generic_relation }}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
   </tr>
   <tr>
     <th>State:</th>
@@ -141,20 +153,8 @@
     </td>
   </tr>
   <tr>
-    <th>Email template:</th>
-    <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
-  </tr>
-  <tr>
-    <th>Related object:</th>
-    <td colspan="2">
-      {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
-      <a href="{{ scheduled_email.generic_relation.get_absolute_url }}">{{ scheduled_email.generic_relation }}</a>
-      {% elif scheduled_email.generic_relation %}
-      {{ scheduled_email.generic_relation }}
-      {% else %}
-      &mdash;
-      {% endif %}
-    </td>
+    <th width="20%">ID:</th>
+    <td colspan="2">{{ scheduled_email.id }}</td>
   </tr>
 </table>
 

@@ -50,7 +50,7 @@ node_modules : package.json
 ## serve        : run a server
 serve :
 	gunicorn \
-		--workers=4 \
+		--workers=1 \
 		--bind=127.0.0.1:8000 \
 		--access-logfile - \
 		--capture-output \
