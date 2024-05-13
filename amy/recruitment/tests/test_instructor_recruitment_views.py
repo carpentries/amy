@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from unittest import mock
+from unittest import mock, skip
 from urllib.parse import quote
 
 from django.http import Http404
@@ -974,19 +974,20 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
             action=DeclinedInstructorsAction.trigger_name, template=template1
         )
 
-        template2 = EmailTemplate.objects.create(
-            slug="sample-template2",
-            subject="Welcome!",
-            to_header="",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="",
-            body_template="# Welcome",
-        )
-        Trigger.objects.create(
-            action="instructors-host-introduction", template=template2
-        )
+        # Disabled because HostIntroductionAction is disabled:
+        # template2 = EmailTemplate.objects.create(
+        #     slug="sample-template2",
+        #     subject="Welcome!",
+        #     to_header="",
+        #     from_header="test@address.com",
+        #     cc_header="copy@example.org",
+        #     bcc_header="bcc@example.org",
+        #     reply_to_header="",
+        #     body_template="# Welcome",
+        # )
+        # Trigger.objects.create(
+        #     action="instructors-host-introduction", template=template2
+        # )
 
     def test_class_fields(self) -> None:
         # Arrange
@@ -1107,7 +1108,7 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         view = InstructorRecruitmentChangeState(request=request)
         view._validate_for_closing = mock.MagicMock(return_value=True)
         view.object = mock.MagicMock()
-        view.send_introduction_email = mock.MagicMock()
+        # view.send_introduction_email = mock.MagicMock()
         view.send_thank_you_to_declined = mock.MagicMock()
         view.get_success_url = mock.MagicMock(return_value="")
 
@@ -1121,13 +1122,14 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         mock_messages.success.assert_called_once_with(
             request, f"Successfully closed recruitment {view.object}."
         )
-        view.send_introduction_email.assert_called_once_with(
-            view.object.event, view.object
-        )
+        # view.send_introduction_email.assert_called_once_with(
+        #     view.object.event, view.object
+        # )
         view.send_thank_you_to_declined.assert_called_once_with(view.object)
         view.get_success_url.assert_called_once_with()
         self.assertEqual(result.status_code, 302)
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_send_introduction_email__failure(self) -> None:
         # Arrange
         self._prepare_email_automation_data()
@@ -1150,6 +1152,7 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         )
         mock_action_manage.add.assert_not_called()
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_send_introduction_email__success(self) -> None:
         # Arrange
         self._prepare_email_automation_data()
@@ -1274,9 +1277,9 @@ class TestInstructorRecruitmentChangeState(FakeRedisTestCaseMixin, TestBase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
         self.assertEqual(self.recruitment.status, "c")
-        self.assertTrue(
-            self.event.rq_jobs.get(trigger__action="instructors-host-introduction")
-        )
+        # self.assertTrue(
+        #     self.event.rq_jobs.get(trigger__action="instructors-host-introduction")
+        # )
         self.assertTrue(
             RQJob.objects.get(trigger__action=DeclinedInstructorsAction.trigger_name)
         )

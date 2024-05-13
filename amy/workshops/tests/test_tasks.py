@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from itertools import product
+from unittest import skip
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -1477,6 +1478,7 @@ class TestTaskDeleteNewSupportingInstructor(
         self.assertEqual(RQJob.objects.count(), 0)
 
 
+# Disabled because HostIntroductionAction is disabled
 class TestTaskCreateInstructorsHostIntroduction(
     FakeRedisTestCaseMixin, SuperuserMixin, TestCase
 ):
@@ -1539,20 +1541,22 @@ class TestTaskCreateInstructorsHostIntroduction(
             Tag.objects.filter(name__in=["SWC", "automated-email"])
         )
 
-        template = EmailTemplate.objects.create(
-            slug="sample-template",
-            subject="Welcome!",
-            to_header="",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="",
-            body_template="# Welcome",
-        )
-        Trigger.objects.create(
-            action="instructors-host-introduction", template=template
-        )
+        # Disabled because HostIntroductionAction is disabled:
+        # template = EmailTemplate.objects.create(
+        #     slug="sample-template",
+        #     subject="Welcome!",
+        #     to_header="",
+        #     from_header="test@address.com",
+        #     cc_header="copy@example.org",
+        #     bcc_header="bcc@example.org",
+        #     reply_to_header="",
+        #     body_template="# Welcome",
+        # )
+        # Trigger.objects.create(
+        #     action="instructors-host-introduction", template=template
+        # )
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -1613,6 +1617,7 @@ class TestTaskCreateInstructorsHostIntroduction(
         self.assertEqual(job.get_id(), rqjob.job_id)
 
 
+# Disabled because HostIntroductionAction is disabled
 class TestTaskUpdateInstructorsHostIntroduction(
     FakeRedisTestCaseMixin, SuperuserMixin, TestCase
 ):
@@ -1676,19 +1681,20 @@ class TestTaskUpdateInstructorsHostIntroduction(
             Tag.objects.filter(name__in=["SWC", "automated-email"])
         )
 
-        template = EmailTemplate.objects.create(
-            slug="sample-template",
-            subject="Welcome!",
-            to_header="",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="",
-            body_template="# Welcome",
-        )
-        Trigger.objects.create(
-            action="instructors-host-introduction", template=template
-        )
+        # Disabled because HostIntroductionAction is disabled:
+        # template = EmailTemplate.objects.create(
+        #     slug="sample-template",
+        #     subject="Welcome!",
+        #     to_header="",
+        #     from_header="test@address.com",
+        #     cc_header="copy@example.org",
+        #     bcc_header="bcc@example.org",
+        #     reply_to_header="",
+        #     body_template="# Welcome",
+        # )
+        # Trigger.objects.create(
+        #     action="instructors-host-introduction", template=template
+        # )
 
         self.instructor1_task = Task.objects.create(
             event=self.test_event,
@@ -1706,6 +1712,7 @@ class TestTaskUpdateInstructorsHostIntroduction(
             role=self.helper,  # intentionally
         )
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -1751,6 +1758,7 @@ class TestTaskUpdateInstructorsHostIntroduction(
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -1808,6 +1816,7 @@ class TestTaskUpdateInstructorsHostIntroduction(
         self.assertEqual(RQJob.objects.count(), 0)
 
 
+# Disabled because HostIntroductionAction is disabled
 class TestTaskDeleteInstructorsHostIntroduction(
     FakeRedisTestCaseMixin, SuperuserMixin, TestCase
 ):
@@ -1871,19 +1880,20 @@ class TestTaskDeleteInstructorsHostIntroduction(
             Tag.objects.filter(name__in=["SWC", "automated-email"])
         )
 
-        template = EmailTemplate.objects.create(
-            slug="sample-template",
-            subject="Welcome!",
-            to_header="",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="",
-            body_template="# Welcome",
-        )
-        Trigger.objects.create(
-            action="instructors-host-introduction", template=template
-        )
+        # Disabled because HostIntroductionAction is disabled:
+        # template = EmailTemplate.objects.create(
+        #     slug="sample-template",
+        #     subject="Welcome!",
+        #     to_header="",
+        #     from_header="test@address.com",
+        #     cc_header="copy@example.org",
+        #     bcc_header="bcc@example.org",
+        #     reply_to_header="",
+        #     body_template="# Welcome",
+        # )
+        # Trigger.objects.create(
+        #     action="instructors-host-introduction", template=template
+        # )
 
         self.instructor1_task = Task.objects.create(
             event=self.test_event,
@@ -1901,6 +1911,7 @@ class TestTaskDeleteInstructorsHostIntroduction(
             role=self.helper,  # intentionally
         )
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
