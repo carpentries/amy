@@ -129,7 +129,7 @@ class NewMembershipOnboardingContext(TypedDict):
 
 class HostInstructorsIntroductionContext(TypedDict):
     event: Event
-    host: Person
+    host: Person | None
     instructors: list[Person]
 
 

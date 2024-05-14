@@ -122,8 +122,10 @@ def get_context(
 ) -> HostInstructorsIntroductionContext:
     event = kwargs["event"]
 
-    # TODO: watch out for this
-    host = Task.objects.filter(role__name="host", event=event)[0]
+    try:
+        host = Task.objects.filter(role__name="host", event=event)[0]
+    except IndexError:
+        host = None
 
     instructors = [
         task.person
@@ -131,7 +133,7 @@ def get_context(
     ]
     return {
         "event": event,
-        "host": host.person,
+        "host": host.person if host else None,
         "instructors": instructors,
     }
 
@@ -165,7 +167,8 @@ def get_recipients(
     context: HostInstructorsIntroductionContext,
     **kwargs: Unpack[HostInstructorsIntroductionKwargs],
 ) -> list[str]:
-    host_part = [context["host"].email] if context["host"].email else []
+    host = context["host"]
+    host_part = [host.email] if host and host.email else []
     instructors_part = [
         instructor.email for instructor in context["instructors"] if instructor.email
     ]
@@ -176,13 +179,18 @@ def get_recipients_context_json(
     context: HostInstructorsIntroductionContext,
     **kwargs: Unpack[HostInstructorsIntroductionKwargs],
 ) -> ToHeaderModel:
+    host = context["host"]
     return ToHeaderModel(
-        [
-            {
-                "api_uri": api_model_url("person", context["host"].pk),
-                "property": "email",
-            }
-        ]
+        (
+            [
+                {
+                    "api_uri": api_model_url("person", host.pk),
+                    "property": "email",
+                }
+            ]
+            if host and host.email
+            else []
+        )
         + [
             {
                 "api_uri": api_model_url("person", instructor.pk),
