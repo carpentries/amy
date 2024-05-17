@@ -8,6 +8,7 @@ from typing import cast
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 import environ
+import jinja2
 
 ROOT_DIR = Path(__file__).parent.parent  # amy/
 APPS_DIR = ROOT_DIR / "amy"
@@ -394,20 +395,13 @@ TEMPLATES = [
     },
     # backend used for reading templates from the database
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "NAME": "db_backend",
+        "BACKEND": "django.template.backends.jinja2.Jinja2",
+        "NAME": "email_jinja2_backend",
         # not-allowed to fetch from disk
         "DIRS": [],
         "APP_DIRS": False,
         "OPTIONS": {
-            "debug": False,
-            "loaders": [],
-            "context_processors": [
-                "django.template.context_processors.i18n",
-                "django.template.context_processors.tz",
-            ],
-            # Warn about invalid template variables
-            "string_if_invalid": "XXX-unset-variable-XXX",
+            "undefined": jinja2.Undefined,
         },
     },
 ]
@@ -638,7 +632,7 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRE
 # Email module
 # -----------------------------------------------------------------------------
 # This module is the next version of Autoemails.
-EMAIL_TEMPLATE_ENGINE_BACKEND = "db_backend"
+EMAIL_TEMPLATE_ENGINE_BACKEND = "email_jinja2_backend"
 
 # Reports
 # -----------------------------------------------------------------------------

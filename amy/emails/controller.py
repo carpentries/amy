@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.db.models import Model
+import jinja2
 
 from emails.models import (
     EmailTemplate,
@@ -45,8 +46,14 @@ class EmailController:
         # errors.
         template = EmailTemplate.objects.filter(active=True).get(signal=signal)
         engine = EmailTemplate.get_engine()
-        EmailTemplate.render_template(engine, template.subject, {})
-        EmailTemplate.render_template(engine, template.body, {})
+        try:
+            EmailTemplate.render_template(engine, template.subject, {})
+        except jinja2.exceptions.UndefinedError:
+            pass
+        try:
+            EmailTemplate.render_template(engine, template.body, {})
+        except jinja2.exceptions.UndefinedError:
+            pass
 
         subject = template.subject
         body = template.body
