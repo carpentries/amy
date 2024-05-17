@@ -156,3 +156,6 @@ def api_model_url(model: str, pk: int) -> str:
 
 def scalar_value_url(type_: str, value: str) -> str:
     return f"value:{type_}#{value}"
+
+
+scalar_value_none = partial(scalar_value_url, "none", "")

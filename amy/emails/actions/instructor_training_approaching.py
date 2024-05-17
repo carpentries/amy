@@ -110,17 +110,12 @@ def get_context(
     }
 
 
-def get_context_json(
-    **kwargs: Unpack[InstructorTrainingApproachingKwargs],
-) -> ContextModel:
+def get_context_json(context: InstructorTrainingApproachingContext) -> ContextModel:
     return ContextModel(
         {
-            "event": api_model_url("event", kwargs["event"].pk),
+            "event": api_model_url("event", context["event"].pk),
             "instructors": [
-                api_model_url("person", task.person.pk)
-                for task in Task.objects.filter(
-                    event=kwargs["event"], role__name="instructor"
-                )
+                api_model_url("person", person.pk) for person in context["instructors"]
             ],
         },
     )
@@ -170,9 +165,9 @@ class InstructorTrainingApproachingReceiver(BaseAction):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+        self, context: InstructorTrainingApproachingContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -210,9 +205,9 @@ class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+        self, context: InstructorTrainingApproachingContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -245,9 +240,9 @@ class InstructorTrainingApproachingCancelReceiver(BaseActionCancel):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
+        self, context: InstructorTrainingApproachingContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,

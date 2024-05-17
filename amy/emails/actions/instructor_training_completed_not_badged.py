@@ -187,32 +187,26 @@ def get_context(
 
 
 def get_context_json(
-    **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
+    context: InstructorTrainingCompletedNotBadgedContext,
 ) -> ContextModel:
-    person = kwargs["person"]
+    person = context["person"]
     return ContextModel(
         {
             "person": api_model_url("event", person.pk),
             "passed_requirements": [
                 api_model_url("trainingprogress", progress.pk)
-                for progress in TrainingProgress.objects.filter(
-                    trainee=person, state="p"
-                )
+                for progress in context["passed_requirements"]
             ],
             "not_passed_requirements": [
                 api_model_url("trainingprogress", progress.pk)
-                for progress in TrainingProgress.objects.filter(trainee=person).exclude(
-                    state="p"
-                )
+                for progress in context["not_passed_requirements"]
             ],
             "not_graded_requirements": [
                 api_model_url("trainingrequirement", requirement.pk)
-                for requirement in TrainingRequirement.objects.filter(
-                    name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
-                ).exclude(trainingprogress__trainee=person)
+                for requirement in context["not_graded_requirements"]
             ],
             "training_completed_date": scalar_value_url(
-                "date", kwargs["training_completed_date"].isoformat()
+                "date", context["training_completed_date"].isoformat()
             ),
         },
     )
@@ -261,9 +255,9 @@ class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
+        self, context: InstructorTrainingCompletedNotBadgedContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -301,9 +295,9 @@ class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
+        self, context: InstructorTrainingCompletedNotBadgedContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -336,9 +330,9 @@ class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
+        self, context: InstructorTrainingCompletedNotBadgedContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,

@@ -31,16 +31,14 @@ class InstructorConfirmedForWorkshopReceiver(BaseAction):
             "instructor_recruitment_signup": instructor_recruitment_signup,
         }
 
-    def get_context_json(
-        self, **kwargs: Unpack[InstructorConfirmedKwargs]
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorConfirmedContext) -> ContextModel:
         return ContextModel(
             {
-                "person": api_model_url("person", kwargs["person_id"]),
-                "event": api_model_url("event", kwargs["event_id"]),
+                "person": api_model_url("person", context["person"].pk),
+                "event": api_model_url("event", context["event"].pk),
                 "instructor_recruitment_signup": api_model_url(
                     "instructorrecruitmentsignup",
-                    kwargs["instructor_recruitment_signup_id"],
+                    context["instructor_recruitment_signup"].pk,
                 ),
             },
         )

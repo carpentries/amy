@@ -108,12 +108,10 @@ def get_context(
     }
 
 
-def get_context_json(
-    **kwargs: Unpack[NewMembershipOnboardingKwargs],
-) -> ContextModel:
+def get_context_json(context: NewMembershipOnboardingContext) -> ContextModel:
     return ContextModel(
         {
-            "membership": api_model_url("membership", kwargs["membership"].pk),
+            "membership": api_model_url("membership", context["membership"].pk),
         },
     )
 
@@ -171,10 +169,8 @@ class NewMembershipOnboardingReceiver(BaseAction):
     ) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> ContextModel:
-        return get_context_json(**kwargs)
+    def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -211,10 +207,8 @@ class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
     ) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> ContextModel:
-        return get_context_json(**kwargs)
+    def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -246,10 +240,8 @@ class NewMembershipOnboardingCancelReceiver(BaseActionCancel):
     ) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> ContextModel:
-        return get_context_json(**kwargs)
+    def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,

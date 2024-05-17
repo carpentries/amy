@@ -22,7 +22,7 @@ from emails.types import (
     HostInstructorsIntroductionKwargs,
     StrategyEnum,
 )
-from emails.utils import api_model_url, immediate_action
+from emails.utils import api_model_url, immediate_action, scalar_value_none
 from recruitment.models import InstructorRecruitment
 from workshops.models import Event, Task
 
@@ -131,27 +131,38 @@ def get_context(
         for task in Task.objects.filter(role__name="instructor", event=event)
     ]
     return {
+        "assignee": event.assigned_to if event.assigned_to else None,
         "event": event,
+        "workshop_host": event.host if event.host else None,
         "host": host.person if host else None,
         "instructors": instructors,
     }
 
 
-def get_context_json(
-    **kwargs: Unpack[HostInstructorsIntroductionKwargs],
-) -> ContextModel:
-    host = Task.objects.filter(role__name="host", event=kwargs["event"])[0]
+def get_context_json(context: HostInstructorsIntroductionContext) -> ContextModel:
+    event = context["event"]
     return ContextModel(
         {
-            "event": api_model_url("event", kwargs["event"].pk),
-            "host": api_model_url("person", host.person.pk),
+            "assignee": (
+                api_model_url("person", context["assignee"].pk)
+                if context["assignee"]
+                else scalar_value_none()
+            ),
+            "event": api_model_url("event", event.pk),
+            "workshop_host": (
+                api_model_url("organization", context["workshop_host"].pk)
+                if context["workshop_host"]
+                else scalar_value_none()
+            ),
+            "host": (
+                api_model_url("person", context["host"].pk)
+                if context["host"]
+                else scalar_value_none()
+            ),
             "instructors": [
-                api_model_url("person", task.person.pk)
-                for task in Task.objects.filter(
-                    role__name="instructor", event=kwargs["event"]
-                )
+                api_model_url("person", person.pk) for person in context["instructors"]
             ],
-        }
+        },
     )
 
 
@@ -214,9 +225,9 @@ class HostInstructorsIntroductionReceiver(BaseAction):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
+        self, context: HostInstructorsIntroductionContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -254,9 +265,9 @@ class HostInstructorsIntroductionUpdateReceiver(BaseActionUpdate):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
+        self, context: HostInstructorsIntroductionContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,
@@ -289,9 +300,9 @@ class HostInstructorsIntroductionCancelReceiver(BaseActionCancel):
         return get_context(**kwargs)
 
     def get_context_json(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
+        self, context: HostInstructorsIntroductionContext
     ) -> ContextModel:
-        return get_context_json(**kwargs)
+        return get_context_json(context)
 
     def get_generic_relation_object(
         self,

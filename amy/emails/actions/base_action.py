@@ -55,7 +55,7 @@ class BaseAction(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_context_json(self, **kwargs) -> ContextModel:
+    def get_context_json(self, context: dict[str, Any]) -> ContextModel:
         raise NotImplementedError()
 
     @abstractmethod
@@ -79,7 +79,7 @@ class BaseAction(ABC):
         request = kwargs.pop("request")
 
         context = self.get_context(**kwargs)
-        context_json = self.get_context_json(**kwargs)
+        context_json = self.get_context_json(context)
         scheduled_at = self.get_scheduled_at(**kwargs)
 
         try:
@@ -114,7 +114,7 @@ class BaseActionUpdate(BaseAction):
         request = kwargs.pop("request")
 
         context = self.get_context(**kwargs)
-        context_json = self.get_context_json(**kwargs)
+        context_json = self.get_context_json(context)
         scheduled_at = self.get_scheduled_at(**kwargs)
         generic_relation_obj = self.get_generic_relation_object(context, **kwargs)
         signal_name = self.signal
