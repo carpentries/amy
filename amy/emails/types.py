@@ -9,6 +9,7 @@ from workshops.models import (
     Award,
     Event,
     Membership,
+    Organization,
     Person,
     TrainingProgress,
     TrainingRequirement,
@@ -128,7 +129,9 @@ class NewMembershipOnboardingContext(TypedDict):
 
 
 class HostInstructorsIntroductionContext(TypedDict):
+    assignee: Person | None
     event: Event
+    workshop_host: Organization | None
     host: Person | None
     instructors: list[Person]
 
