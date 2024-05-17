@@ -119,7 +119,6 @@ class TestHostInstructorsIntroductionUpdateReceiver(TestCase):
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
@@ -161,7 +160,6 @@ class TestHostInstructorsIntroductionUpdateReceiver(TestCase):
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
@@ -215,7 +213,6 @@ class TestHostInstructorsIntroductionUpdateReceiver(TestCase):
             sender=self.event,
             request=request,
             event=self.event,
-            event_start_date=self.event.start,
         )
 
         # Assert
@@ -260,7 +257,6 @@ class TestHostInstructorsIntroductionUpdateReceiver(TestCase):
             sender=self.event,
             request=request,
             event=self.event,
-            event_start_date=self.event.start,
         )
 
         # Assert
@@ -300,7 +296,6 @@ class TestHostInstructorsIntroductionUpdateReceiver(TestCase):
             sender=self.event,
             request=request,
             event=self.event,
-            event_start_date=self.event.start,
         )
 
         # Assert

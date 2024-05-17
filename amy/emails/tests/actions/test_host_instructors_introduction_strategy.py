@@ -156,7 +156,6 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
             sender=event,
             request=request,
             event=event,
-            event_start_date=event.start,
         )
 
     @patch(
@@ -180,7 +179,6 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
             sender=event,
             request=request,
             event=event,
-            event_start_date=event.start,
         )
 
     @patch(
@@ -204,7 +202,6 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
             sender=event,
             request=request,
             event=event,
-            event_start_date=event.start,
         )
 
     @patch(

@@ -109,7 +109,6 @@ def run_host_instructors_introduction_strategy(
         sender=event,
         request=request,
         event=event,
-        event_start_date=event.start,
     )
 
 

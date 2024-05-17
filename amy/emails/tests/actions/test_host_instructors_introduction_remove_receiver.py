@@ -117,7 +117,6 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
@@ -155,7 +154,6 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
@@ -200,7 +198,6 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
