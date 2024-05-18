@@ -140,6 +140,18 @@ class HostInstructorsIntroductionKwargs(TypedDict):
     event: Event
 
 
+class RecruitHelpersContext(TypedDict):
+    event: Event
+    assignee: Person | None
+    instructors: list[Person]
+    hosts: list[Person]
+
+
+class RecruitHelpersKwargs(TypedDict):
+    event: Event
+    event_start_date: date
+
+
 class StrategyEnum(StrEnum):
     CREATE = "create"
     UPDATE = "update"

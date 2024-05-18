@@ -14,6 +14,7 @@ from emails.types import (
     InstructorTrainingCompletedNotBadgedContext,
     NewMembershipOnboardingContext,
     PersonsMergedContext,
+    RecruitHelpersContext,
 )
 
 
@@ -30,6 +31,7 @@ class SignalNameEnum(StrEnum):
     )
     new_membership_onboarding = "new_membership_onboarding"
     host_instructors_introduction = "host_instructors_introduction"
+    recruit_helpers = "recruit_helpers"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -140,6 +142,17 @@ host_instructors_introduction_update_signal = Signal(
 host_instructors_introduction_remove_signal = Signal(
     signal_name=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
     context_type=HostInstructorsIntroductionContext,
+)
+
+RECRUIT_HELPERS_SIGNAL_NAME = "recruit_helpers"
+recruit_helpers_signal = Signal(
+    signal_name=RECRUIT_HELPERS_SIGNAL_NAME, context_type=RecruitHelpersContext
+)
+recruit_helpers_update_signal = Signal(
+    signal_name=RECRUIT_HELPERS_SIGNAL_NAME, context_type=RecruitHelpersContext
+)
+recruit_helpers_remove_signal = Signal(
+    signal_name=RECRUIT_HELPERS_SIGNAL_NAME, context_type=RecruitHelpersContext
 )
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]

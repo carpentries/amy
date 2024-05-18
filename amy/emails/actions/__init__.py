@@ -33,3 +33,8 @@ from emails.actions.new_membership_onboarding import (
     new_membership_onboarding_update_receiver,
 )
 from emails.actions.persons_merged import persons_merged_receiver
+from emails.actions.recruit_helpers import (
+    recruit_helpers_receiver,
+    recruit_helpers_remove_receiver,
+    recruit_helpers_update_receiver,
+)
