@@ -134,12 +134,12 @@ host_instructors_introduction_signal = Signal(
     context_type=HostInstructorsIntroductionContext,
 )
 host_instructors_introduction_update_signal = Signal(
-    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
-    context_type=NewMembershipOnboardingContext,
+    signal_name=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
+    context_type=HostInstructorsIntroductionContext,
 )
 host_instructors_introduction_remove_signal = Signal(
-    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
-    context_type=NewMembershipOnboardingContext,
+    signal_name=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
+    context_type=HostInstructorsIntroductionContext,
 )
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
