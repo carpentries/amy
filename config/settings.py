@@ -393,7 +393,25 @@ TEMPLATES = [
             "string_if_invalid": "XXX-unset-variable-XXX",
         },
     },
-    # backend used for reading templates from the database
+    # `autoemails` app backend used for reading templates from the database
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "NAME": "db_backend",
+        # not-allowed to fetch from disk
+        "DIRS": [],
+        "APP_DIRS": False,
+        "OPTIONS": {
+            "debug": False,
+            "loaders": [],
+            "context_processors": [
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.tz",
+            ],
+            # Warn about invalid template variables
+            "string_if_invalid": "XXX-unset-variable-XXX",
+        },
+    },
+    # `emails` app backend used for reading templates from the database
     {
         "BACKEND": "django.template.backends.jinja2.Jinja2",
         "NAME": "email_jinja2_backend",
