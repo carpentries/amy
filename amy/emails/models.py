@@ -6,18 +6,18 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.template import TemplateSyntaxError, engines
+from django.template import TemplateSyntaxError as DjangoTemplateSyntaxError
+from django.template import engines
 from django.template.backends.base import BaseEngine
 from django.urls import reverse
+import jinja2
+from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 from reversion import revisions as reversion
 
 from workshops.mixins import ActiveMixin, CreatedMixin, CreatedUpdatedMixin
 from workshops.models import Person
 
-DJANGO_TEMPLATE_DOCS = (
-    "https://docs.djangoproject.com/en/dev/topics/"
-    "templates/#the-django-template-language"
-)
+JINJA2_TEMPLATE_DOCS = "https://jinja.palletsprojects.com/en/3.1.x/templates/"
 
 MAX_LENGTH = 255
 
@@ -62,7 +62,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name="Email subject",
         help_text="Enter text for email subject. If you need to use loops, "
         "conditions, etc., use "
-        f"<a href='{DJANGO_TEMPLATE_DOCS}'>Django templates language</a>.",
+        f"<a href='{JINJA2_TEMPLATE_DOCS}'>Jinja2 templates language</a>.",
     )
     body = models.TextField(
         blank=False,
@@ -70,7 +70,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name="Email body (markdown)",
         help_text="Enter Markdown for email body. If you need to use loops, "
         "conditions, etc., use "
-        f"<a href='{DJANGO_TEMPLATE_DOCS}'>Django templates language</a>.",
+        f"<a href='{JINJA2_TEMPLATE_DOCS}'>Jinja2 templates language</a>.",
     )
 
     @staticmethod
@@ -87,8 +87,11 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     ) -> bool:
         try:
             self.render_template(engine, template, context or dict())
-        except TemplateSyntaxError as exp:
+        except (DjangoTemplateSyntaxError, JinjaTemplateSyntaxError) as exp:
             raise ValidationError(f"Invalid syntax: {exp}") from exp
+        except jinja2.exceptions.UndefinedError:
+            # ignore undefined variables
+            pass
         return True
 
     def clean(self) -> None:

@@ -178,6 +178,21 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
             "https://carpentries.org/membership/"
         ),
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("e368058b-7e3b-4717-b9e9-0b8765bd0d0d"),
+        name="Host-instructors introduction",
+        signal=SignalNameEnum.host_instructors_introduction,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[""],
+        bcc_header=[],
+        subject="Instructors for workshop at {{ event.venue }} on {{ event.start }}",
+        body=(
+            "Hey {{ host }}, this is {{ instructors.0 }} and {{ instructors.1 }} for "
+            "event {{ event }}."
+        ),
+    ),
 ]
 
 

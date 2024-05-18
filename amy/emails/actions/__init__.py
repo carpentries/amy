@@ -2,6 +2,11 @@
 from emails.actions.admin_signs_instructor_up_for_workshop import (
     admin_signs_instructor_up_for_workshop_receiver,
 )
+from emails.actions.host_instructors_introduction import (
+    host_instructors_introduction_receiver,
+    host_instructors_introduction_remove_receiver,
+    host_instructors_introduction_update_receiver,
+)
 from emails.actions.instructor_badge_awarded import instructor_badge_awarded_receiver
 from emails.actions.instructor_confirmed_for_workshop import (
     instructor_confirmed_for_workshop_receiver,

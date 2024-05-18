@@ -81,7 +81,7 @@ class BaseActionForTesting(BaseAction):
     def get_context(self, **kwargs) -> dict[str, Any]:
         return {}
 
-    def get_context_json(self, **kwargs) -> ContextModel:
+    def get_context_json(self, context: dict[str, Any]) -> ContextModel:
         return ContextModel({})
 
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
@@ -105,7 +105,7 @@ class BaseActionUpdateForTesting(BaseActionUpdate):
     def get_context(self, **kwargs) -> dict[str, Any]:
         return {}
 
-    def get_context_json(self, **kwargs) -> ContextModel:
+    def get_context_json(self, context: dict[str, Any]) -> ContextModel:
         return ContextModel({})
 
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
@@ -135,7 +135,7 @@ class BaseActionCancelForTesting(BaseActionCancel):
     def get_context(self, **kwargs) -> dict[str, Any]:
         return {}
 
-    def get_context_json(self, **kwargs) -> ContextModel:
+    def get_context_json(self, context: dict[str, Any]) -> ContextModel:
         return ContextModel({})
 
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:

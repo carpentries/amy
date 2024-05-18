@@ -24,10 +24,10 @@ class PersonsMergedReceiver(BaseAction):
             "person": person,
         }
 
-    def get_context_json(self, **kwargs: Unpack[PersonsMergedKwargs]) -> ContextModel:
+    def get_context_json(self, context: PersonsMergedContext) -> ContextModel:
         return ContextModel(
             {
-                "person": api_model_url("person", kwargs["selected_person_id"]),
+                "person": api_model_url("person", context["person"].pk),
             },
         )
 

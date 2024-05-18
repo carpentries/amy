@@ -156,6 +156,14 @@
     <th width="20%">ID:</th>
     <td colspan="2">{{ scheduled_email.id }}</td>
   </tr>
+  <tr>
+    <th>Context JSON:</th>
+    <td colspan="2">{{ scheduled_email.context_json }}</td>
+  </tr>
+  <tr>
+    <th>"To" header context JSON:</th>
+    <td colspan="2">{{ scheduled_email.to_header_context_json }}</td>
+  </tr>
 </table>
 
 <table class="table table-striped">

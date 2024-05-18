@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
+from unittest import skip
 from urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
@@ -1814,6 +1815,7 @@ class TestEventCreateInstructorsHostIntroduction(TestCase):
     pass
 
 
+# Disabled because HostIntroductionAction is disabled
 class TestEventUpdateInstructorsHostIntroduction(
     FakeRedisTestCaseMixin, SuperuserMixin, TestCase
 ):
@@ -1850,20 +1852,21 @@ class TestEventUpdateInstructorsHostIntroduction(
         self.instructor = Role.objects.create(name="instructor")
         self.host = Role.objects.create(name="host")
 
-        template = EmailTemplate.objects.create(
-            slug="sample-template",
-            subject="Welcome!",
-            to_header="",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="",
-            body_template="# Welcome",
-        )
-        Trigger.objects.create(
-            action="instructors-host-introduction",
-            template=template,
-        )
+        # Disabled because HostIntroductionAction is disabled:
+        # template = EmailTemplate.objects.create(
+        #     slug="sample-template",
+        #     subject="Welcome!",
+        #     to_header="",
+        #     from_header="test@address.com",
+        #     cc_header="copy@example.org",
+        #     bcc_header="bcc@example.org",
+        #     reply_to_header="",
+        #     body_template="# Welcome",
+        # )
+        # Trigger.objects.create(
+        #     action="instructors-host-introduction",
+        #     template=template,
+        # )
 
         self.instructor1 = Person.objects.create(
             personal="Hermione",
@@ -1884,6 +1887,7 @@ class TestEventUpdateInstructorsHostIntroduction(
             username="potter_harry",
         )
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -1951,6 +1955,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2049,6 +2054,7 @@ class TestEventUpdateInstructorsHostIntroduction(
         self.assertEqual(RQJob.objects.count(), 0)
 
 
+# Disabled because HostIntroductionAction is disabled
 class TestEventDeleteInstructorsHostIntroduction(
     FakeRedisTestCaseMixin, SuperuserMixin, TestCase
 ):
@@ -2085,20 +2091,20 @@ class TestEventDeleteInstructorsHostIntroduction(
         self.instructor = Role.objects.create(name="instructor")
         self.host = Role.objects.create(name="host")
 
-        template = EmailTemplate.objects.create(
-            slug="sample-template",
-            subject="Welcome!",
-            to_header="",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="",
-            body_template="# Welcome",
-        )
-        Trigger.objects.create(
-            action="instructors-host-introduction",
-            template=template,
-        )
+        # template = EmailTemplate.objects.create(
+        #     slug="sample-template",
+        #     subject="Welcome!",
+        #     to_header="",
+        #     from_header="test@address.com",
+        #     cc_header="copy@example.org",
+        #     bcc_header="bcc@example.org",
+        #     reply_to_header="",
+        #     body_template="# Welcome",
+        # )
+        # Trigger.objects.create(
+        #     action="instructors-host-introduction",
+        #     template=template,
+        # )
 
         self.instructor1 = Person.objects.create(
             personal="Hermione",
@@ -2119,6 +2125,7 @@ class TestEventDeleteInstructorsHostIntroduction(
             username="potter_harry",
         )
 
+    @skip("Test disabled because HostIntroductionAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()

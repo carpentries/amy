@@ -28,13 +28,11 @@ class InstructorBadgeAwardedReceiver(BaseAction):
             "award": award,
         }
 
-    def get_context_json(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorBadgeAwardedContext) -> ContextModel:
         return ContextModel(
             {
-                "person": api_model_url("person", kwargs["person_id"]),
-                "award": api_model_url("award", kwargs["award_id"]),
+                "person": api_model_url("person", context["person"].pk),
+                "award": api_model_url("award", context["award"].pk),
             },
         )
 

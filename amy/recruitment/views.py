@@ -17,11 +17,7 @@ from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
 import django_rq
 
-from autoemails.actions import (
-    DeclinedInstructorsAction,
-    InstructorsHostIntroductionAction,
-    NewInstructorAction,
-)
+from autoemails.actions import DeclinedInstructorsAction, NewInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.job import Job
 from autoemails.models import RQJob, Trigger
@@ -564,33 +560,34 @@ class InstructorRecruitmentChangeState(
                 self.request,
                 f"Successfully closed recruitment {self.object}.",
             )
-            self.send_introduction_email(self.object.event, self.object)
+            # self.send_introduction_email(self.object.event, self.object)
             self.send_thank_you_to_declined(self.object)
 
         return HttpResponseRedirect(self.get_success_url())
 
-    def send_introduction_email(
-        self, event: Event, recruitment: InstructorRecruitment
-    ) -> None:
-        if InstructorsHostIntroductionAction.check(event):
-            triggers = Trigger.objects.filter(
-                active=True, action="instructors-host-introduction"
-            )
-            ActionManageMixin.add(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=event, recruitment=recruitment),
-                object_=event,
-                request=self.request,
-            )
-        else:
-            messages.warning(
-                self.request,
-                "Instructors-Host introduction email was not sent due to "
-                "unmet conditions.",
-            )
+    # Disabled because HostIntroductionAction is disabled:
+    # def send_introduction_email(
+    #     self, event: Event, recruitment: InstructorRecruitment
+    # ) -> None:
+    #     if InstructorsHostIntroductionAction.check(event):
+    #         triggers = Trigger.objects.filter(
+    #             active=True, action="instructors-host-introduction"
+    #         )
+    #         ActionManageMixin.add(
+    #             action_class=InstructorsHostIntroductionAction,
+    #             logger=logger,
+    #             scheduler=scheduler,
+    #             triggers=triggers,
+    #             context_objects=dict(event=event, recruitment=recruitment),
+    #             object_=event,
+    #             request=self.request,
+    #         )
+    #     else:
+    #         messages.warning(
+    #             self.request,
+    #             "Instructors-Host introduction email was not sent due to "
+    #             "unmet conditions.",
+    #         )
 
     def send_thank_you_to_declined(self, recruitment: InstructorRecruitment) -> None:
         declined_instructor_signups = recruitment.signups.filter(state="d")
