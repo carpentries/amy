@@ -11,7 +11,7 @@ from emails.signals import (
     HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
     host_instructors_introduction_signal,
 )
-from emails.utils import api_model_url
+from emails.utils import api_model_url, scalar_value_none
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
@@ -137,7 +137,9 @@ class TestHostInstructorsIntroductionReceiver(TestCase):
             signal=signal,
             context_json=ContextModel(
                 {
+                    "assignee": scalar_value_none(),
                     "event": api_model_url("event", self.event.pk),
+                    "workshop_host": api_model_url("organization", self.event.host.pk),
                     "host": api_model_url("person", self.host.pk),
                     "instructors": [
                         api_model_url("person", self.instructor1.pk),

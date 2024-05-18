@@ -6,10 +6,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.template import TemplateSyntaxError, engines
+from django.template import TemplateSyntaxError as DjangoTemplateSyntaxError
+from django.template import engines
 from django.template.backends.base import BaseEngine
 from django.urls import reverse
 import jinja2
+from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 from reversion import revisions as reversion
 
 from workshops.mixins import ActiveMixin, CreatedMixin, CreatedUpdatedMixin
@@ -85,7 +87,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     ) -> bool:
         try:
             self.render_template(engine, template, context or dict())
-        except TemplateSyntaxError as exp:
+        except (DjangoTemplateSyntaxError, JinjaTemplateSyntaxError) as exp:
             raise ValidationError(f"Invalid syntax: {exp}") from exp
         except jinja2.exceptions.UndefinedError:
             # ignore undefined variables

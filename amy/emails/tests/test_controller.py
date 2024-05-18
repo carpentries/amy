@@ -2,9 +2,10 @@ from datetime import UTC, datetime, timedelta
 import random
 
 from django.db.models import Model
-from django.template.exceptions import TemplateSyntaxError
+from django.template.exceptions import TemplateSyntaxError as DjangoTemplateSyntaxError
 from django.test import TestCase
 from django.utils import timezone
+from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 
 from emails.controller import EmailController, EmailControllerException
 from emails.models import (
@@ -157,7 +158,7 @@ class TestEmailController(TestCase):
         self.template.save()
 
         # Act & Assert
-        with self.assertRaises(TemplateSyntaxError):
+        with self.assertRaises((DjangoTemplateSyntaxError, JinjaTemplateSyntaxError)):
             EmailController.schedule_email(
                 self.signal,
                 context_json=ContextModel({"name": scalar_value_url("str", "James")}),
