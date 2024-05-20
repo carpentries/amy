@@ -102,7 +102,7 @@ def get_scheduled_at(**kwargs: Unpack[RecruitHelpersKwargs]) -> datetime:
     # Should run 21 days before the event start date.
     event_start_date = kwargs["event_start_date"]
     return shift_date_and_apply_current_utc_time(
-        event_start_date, offset=timedelta(days=21)
+        event_start_date, offset=-timedelta(days=21)
     )
 
 
