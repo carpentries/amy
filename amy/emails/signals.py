@@ -50,6 +50,14 @@ class Signal(DjangoSignal):
         super().__init__(*args, **kwargs)
 
 
+def triple_signals(name: str, context_type: Any) -> tuple[Signal, Signal, Signal]:
+    return (
+        Signal(signal_name=name, context_type=context_type),
+        Signal(signal_name=name, context_type=context_type),
+        Signal(signal_name=name, context_type=context_type),
+    )
+
+
 # Scheduled to run immediately after action (so roughly up to 1 hour later).
 instructor_badge_awarded_signal = Signal(
     signal_name=SignalNameEnum.instructor_badge_awarded,
@@ -78,81 +86,50 @@ persons_merged_signal = Signal(
 
 # Runs 1 month before the event.
 INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME = "instructor_training_approaching"
-instructor_training_approaching_signal = Signal(
-    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-    context_type=InstructorTrainingApproachingContext,
-)
-# Emitted when conditions for the previous signal may have changed and
-# the email should be re-calculated.
-instructor_training_approaching_update_signal = Signal(
-    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-    context_type=InstructorTrainingApproachingContext,
-)
-# Emitted when conditions for the previous signal may have changed and
-# the email should be cancelled.
-instructor_training_approaching_remove_signal = Signal(
-    signal_name=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-    context_type=InstructorTrainingApproachingContext,
+(
+    instructor_training_approaching_signal,
+    instructor_training_approaching_update_signal,
+    instructor_training_approaching_remove_signal,
+) = triple_signals(
+    INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME, InstructorTrainingApproachingContext
 )
 
 # Runs 2 months after completing training.
 INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME = (
     "instructor_training_completed_not_badged"
 )
-instructor_training_completed_not_badged_signal = Signal(
-    signal_name=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
-    context_type=InstructorTrainingCompletedNotBadgedContext,
-)
-# Emitted when conditions for the previous signal may have changed and
-# the email should be re-calculated.
-instructor_training_completed_not_badged_update_signal = Signal(
-    signal_name=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
-    context_type=InstructorTrainingCompletedNotBadgedContext,
-)
-# Emitted when conditions for the previous signal may have changed and
-# the email should be cancelled.
-instructor_training_completed_not_badged_remove_signal = Signal(
-    signal_name=INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
-    context_type=InstructorTrainingCompletedNotBadgedContext,
+(
+    instructor_training_completed_not_badged_signal,
+    instructor_training_completed_not_badged_update_signal,
+    instructor_training_completed_not_badged_remove_signal,
+) = triple_signals(
+    INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
+    InstructorTrainingCompletedNotBadgedContext,
 )
 
 NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME = "new_membership_onboarding"
-new_membership_onboarding_signal = Signal(
-    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
-    context_type=NewMembershipOnboardingContext,
-)
-new_membership_onboarding_update_signal = Signal(
-    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
-    context_type=NewMembershipOnboardingContext,
-)
-new_membership_onboarding_remove_signal = Signal(
-    signal_name=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
-    context_type=NewMembershipOnboardingContext,
+(
+    new_membership_onboarding_signal,
+    new_membership_onboarding_update_signal,
+    new_membership_onboarding_remove_signal,
+) = triple_signals(
+    NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME, NewMembershipOnboardingContext
 )
 
 HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME = "host_instructors_introduction"
-host_instructors_introduction_signal = Signal(
-    signal_name=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
-    context_type=HostInstructorsIntroductionContext,
-)
-host_instructors_introduction_update_signal = Signal(
-    signal_name=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
-    context_type=HostInstructorsIntroductionContext,
-)
-host_instructors_introduction_remove_signal = Signal(
-    signal_name=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
-    context_type=HostInstructorsIntroductionContext,
+(
+    host_instructors_introduction_signal,
+    host_instructors_introduction_update_signal,
+    host_instructors_introduction_remove_signal,
+) = triple_signals(
+    HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME, HostInstructorsIntroductionContext
 )
 
 RECRUIT_HELPERS_SIGNAL_NAME = "recruit_helpers"
-recruit_helpers_signal = Signal(
-    signal_name=RECRUIT_HELPERS_SIGNAL_NAME, context_type=RecruitHelpersContext
-)
-recruit_helpers_update_signal = Signal(
-    signal_name=RECRUIT_HELPERS_SIGNAL_NAME, context_type=RecruitHelpersContext
-)
-recruit_helpers_remove_signal = Signal(
-    signal_name=RECRUIT_HELPERS_SIGNAL_NAME, context_type=RecruitHelpersContext
-)
+(
+    recruit_helpers_signal,
+    recruit_helpers_update_signal,
+    recruit_helpers_remove_signal,
+) = triple_signals(RECRUIT_HELPERS_SIGNAL_NAME, RecruitHelpersContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
