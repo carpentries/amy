@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
 
+from emails.actions.exceptions import EmailStrategyException
 from emails.actions.instructor_training_approaching import (
-    EmailStrategyException,
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
 )
@@ -191,9 +191,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
             event_start_date=event.start,
         )
 
-    @patch(
-        "emails.actions.instructor_training_approaching.logger",
-    )
+    @patch("emails.actions.base_strategy.logger")
     @patch(
         "emails.actions.instructor_training_approaching."
         "instructor_training_approaching_signal",

@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
 
+from emails.actions.exceptions import EmailStrategyException
 from emails.actions.instructor_training_completed_not_badged import (
-    EmailStrategyException,
     TrainingCompletionDateException,
     find_training_completion_date,
     instructor_training_completed_not_badged_strategy,
@@ -302,9 +302,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
             training_completed_date=mock_find_training_completion_date.return_value,
         )
 
-    @patch(
-        "emails.actions.instructor_training_completed_not_badged.logger",
-    )
+    @patch("emails.actions.base_strategy.logger")
     @patch(
         "emails.actions.instructor_training_completed_not_badged."
         "instructor_training_completed_not_badged_signal",
