@@ -2401,6 +2401,7 @@ class TestTaskCreateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         )
         Trigger.objects.create(action="recruit-helpers", template=template)
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2447,6 +2448,7 @@ class TestTaskCreateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2597,6 +2599,7 @@ class TestTaskUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
             role=self.helper_role,
         )
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2641,6 +2644,7 @@ class TestTaskUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2779,6 +2783,7 @@ class TestTaskDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
             role=self.helper_role,
         )
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2823,6 +2828,7 @@ class TestTaskDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()

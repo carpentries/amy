@@ -2605,6 +2605,7 @@ class TestEventUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, Test
         )
         Trigger.objects.create(action="recruit-helpers", template=template)
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2670,6 +2671,7 @@ class TestEventUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, Test
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -2813,6 +2815,7 @@ class TestEventDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, Test
         )
         Trigger.objects.create(action="recruit-helpers", template=template)
 
+    @skip("Test disabled because RecruitHelpersAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
