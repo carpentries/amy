@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
 
+from emails.actions.exceptions import EmailStrategyException
 from emails.actions.new_membership_onboarding import (
-    EmailStrategyException,
     new_membership_onboarding_strategy,
     run_new_membership_onboarding_strategy,
 )
@@ -202,7 +202,7 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
             membership=membership,
         )
 
-    @patch("emails.actions.new_membership_onboarding.logger")
+    @patch("emails.actions.base_strategy.logger")
     @patch("emails.actions.new_membership_onboarding.new_membership_onboarding_signal")
     @patch(
         "emails.actions.new_membership_onboarding."

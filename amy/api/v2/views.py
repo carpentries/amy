@@ -13,6 +13,7 @@ from api.v2.serializers import (
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
     MembershipSerializer,
+    OrganizationSerializer,
     PersonSerializer,
     ScheduledEmailLogDetailsSerializer,
     ScheduledEmailSerializer,
@@ -26,6 +27,7 @@ from workshops.models import (
     Award,
     Event,
     Membership,
+    Organization,
     Person,
     TrainingProgress,
     TrainingRequirement,
@@ -53,6 +55,24 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet):
         .all()
     )
     serializer_class = AwardSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = (
+        Organization.objects.prefetch_related("affiliated_organizations")
+        .order_by("pk")
+        .all()
+    )
+    serializer_class = OrganizationSerializer
     pagination_class = StandardResultsSetPagination
 
 

@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
-from emails.actions.exceptions import EmailStrategyException
+from emails.actions.base_strategy import run_strategy
 from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
@@ -64,30 +64,20 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     return result
 
 
-# TODO: turn into a generic function/class
 def run_new_membership_onboarding_strategy(
     strategy: StrategyEnum, request: HttpRequest, membership: Membership
 ) -> None:
-    mapping: dict[StrategyEnum, Signal | None] = {
+    signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: new_membership_onboarding_signal,
         StrategyEnum.UPDATE: new_membership_onboarding_update_signal,
         StrategyEnum.REMOVE: new_membership_onboarding_remove_signal,
         StrategyEnum.NOOP: None,
     }
-    if strategy not in mapping:
-        raise EmailStrategyException(f"Unknown strategy {strategy}")
-
-    signal = mapping[strategy]
-
-    if not signal:
-        logger.debug(f"Strategy {strategy} for {membership} is a no-op")
-        return
-
-    logger.debug(f"Sending signal for {membership} as result of strategy {strategy}")
-
-    signal.send(
+    return run_strategy(
+        strategy,
+        signal_mapping,
+        request,
         sender=membership,
-        request=request,
         membership=membership,
     )
 

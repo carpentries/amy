@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
+from emails.actions.base_strategy import run_strategy
 from emails.actions.exceptions import EmailStrategyException
 from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, ToHeaderModel
@@ -101,30 +102,18 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
     return result
 
 
-# TODO: turn into a generic function/class
 def run_instructor_training_completed_not_badged_strategy(
     strategy: StrategyEnum,
     request: HttpRequest,
     person: Person,
     training_completed_date: date | None,
 ) -> None:
-    mapping: dict[StrategyEnum, Signal | None] = {
+    signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_completed_not_badged_signal,
         StrategyEnum.UPDATE: instructor_training_completed_not_badged_update_signal,
         StrategyEnum.REMOVE: instructor_training_completed_not_badged_remove_signal,
         StrategyEnum.NOOP: None,
     }
-    if strategy not in mapping:
-        raise EmailStrategyException(f"Unknown strategy {strategy}")
-
-    signal = mapping[strategy]
-
-    if not signal:
-        logger.debug(f"Strategy {strategy} for {person} is a no-op")
-        return
-
-    logger.debug(f"Sending signal for {person} as result of strategy {strategy}")
-
     if not training_completed_date:
         try:
             training_completed_date = find_training_completion_date(person)
@@ -145,9 +134,11 @@ def run_instructor_training_completed_not_badged_strategy(
                 "an end date."
             ) from exc
 
-    signal.send(
+    return run_strategy(
+        strategy,
+        signal_mapping,
+        request,
         sender=person,
-        request=request,
         person=person,
         training_completed_date=training_completed_date,
     )

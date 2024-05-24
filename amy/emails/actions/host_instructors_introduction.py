@@ -7,7 +7,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
-from emails.actions.exceptions import EmailStrategyException
+from emails.actions.base_strategy import run_strategy
 from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
@@ -85,29 +85,20 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
     return result
 
 
-# TODO: turn into a generic function/class
 def run_host_instructors_introduction_strategy(
     strategy: StrategyEnum, request: HttpRequest, event: Event
 ) -> None:
-    mapping: dict[StrategyEnum, Signal | None] = {
+    signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: host_instructors_introduction_signal,
         StrategyEnum.UPDATE: host_instructors_introduction_update_signal,
         StrategyEnum.REMOVE: host_instructors_introduction_remove_signal,
         StrategyEnum.NOOP: None,
     }
-    if strategy not in mapping:
-        raise EmailStrategyException(f"Unknown strategy {strategy}")
-
-    signal = mapping[strategy]
-
-    if not signal:
-        logger.debug(f"Strategy {strategy} for {event} is a no-op")
-        return
-
-    logger.debug(f"Sending signal for {event} as result of strategy {strategy}")
-    signal.send(
+    return run_strategy(
+        strategy,
+        signal_mapping,
+        request,
         sender=event,
-        request=request,
         event=event,
     )
 

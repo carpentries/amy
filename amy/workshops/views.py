@@ -50,7 +50,6 @@ from autoemails.actions import (
     NewInstructorAction,
     NewSupportingInstructorAction,
     PostWorkshopAction,
-    RecruitHelpersAction,
 )
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
@@ -66,6 +65,10 @@ from emails.actions.host_instructors_introduction import (
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
+)
+from emails.actions.recruit_helpers import (
+    recruit_helpers_strategy,
+    run_recruit_helpers_strategy,
 )
 from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
 from fiscal.models import MembershipTask
@@ -1204,14 +1207,14 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
         check_pwa_old = PostWorkshopAction.check(old)
         # check_ihia_old = InstructorsHostIntroductionAction.check(old)
         check_afwa_old = AskForWebsiteAction.check(old)
-        check_rha_old = RecruitHelpersAction.check(old)
+        # check_rha_old = RecruitHelpersAction.check(old)
 
         res = super().form_valid(form)
         new = self.object  # refreshed by `super().form_valid()`
         check_pwa_new = PostWorkshopAction.check(new)
         # check_ihia_new = InstructorsHostIntroductionAction.check(new)
         check_afwa_new = AskForWebsiteAction.check(new)
-        check_rha_new = RecruitHelpersAction.check(new)
+        # check_rha_new = RecruitHelpersAction.check(new)
 
         # PostWorkshopAction conditions are not met, but weren't before
         if not check_pwa_old and check_pwa_new:
@@ -1299,31 +1302,31 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
                 request=self.request,
             )
 
-        # RecruitHelpersAction conditions are met, but weren't before
-        if not check_rha_old and check_rha_new:
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
+        # # RecruitHelpersAction conditions are met, but weren't before
+        # if not check_rha_old and check_rha_new:
+        #     triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
+        #     ActionManageMixin.add(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=triggers,
+        #         context_objects=dict(event=self.object),
+        #         object_=self.object,
+        #         request=self.request,
+        #     )
 
-        # RecruitHelpersAction conditions were met, but aren't anymore
-        elif check_rha_old and not check_rha_new:
-            jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
+        # # RecruitHelpersAction conditions were met, but aren't anymore
+        # elif check_rha_old and not check_rha_new:
+        #     jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
+        #     ActionManageMixin.remove(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         connection=redis_connection,
+        #         jobs=jobs.values_list("job_id", flat=True),
+        #         object_=self.object,
+        #         request=self.request,
+        #     )
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object),
@@ -1333,6 +1336,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
 
         run_host_instructors_introduction_strategy(
             host_instructors_introduction_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object),
             self.request,
             self.object,
         )
@@ -1386,16 +1395,16 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
             request=self.request,
         )
 
-        jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
-        ActionManageMixin.remove(
-            action_class=RecruitHelpersAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
-        )
+        # jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
+        # ActionManageMixin.remove(
+        #     action_class=RecruitHelpersAction,
+        #     logger=logger,
+        #     scheduler=scheduler,
+        #     connection=redis_connection,
+        #     jobs=jobs.values_list("job_id", flat=True),
+        #     object_=self.object,
+        #     request=self.request,
+        # )
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object),
@@ -1405,6 +1414,12 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
 
         run_host_instructors_introduction_strategy(
             host_instructors_introduction_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object),
             self.request,
             self.object,
         )
@@ -1757,7 +1772,7 @@ class TaskCreate(
         event = form.cleaned_data["event"]
         # check_ihia_old = InstructorsHostIntroductionAction.check(event)
         check_afwa_old = AskForWebsiteAction.check(event)
-        check_rha_old = RecruitHelpersAction.check(event)
+        # check_rha_old = RecruitHelpersAction.check(event)
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
@@ -1868,32 +1883,32 @@ class TaskCreate(
                 request=self.request,
             )
 
-        # check conditions for running a RecruitHelpersAction
-        if not check_rha_old and RecruitHelpersAction.check(self.object.event):
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
+        # # check conditions for running a RecruitHelpersAction
+        # if not check_rha_old and RecruitHelpersAction.check(self.object.event):
+        #     triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
+        #     ActionManageMixin.add(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=triggers,
+        #         context_objects=dict(event=self.object.event),
+        #         object_=self.object.event,
+        #         request=self.request,
+        #     )
 
-        # When someone adds a helper, then the condition will no longer be met and we
-        # have to remove the job.
-        elif check_rha_old and not RecruitHelpersAction.check(self.object.event):
-            jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
+        # # When someone adds a helper, then the condition will no longer be met and we
+        # # have to remove the job.
+        # elif check_rha_old and not RecruitHelpersAction.check(self.object.event):
+        #     jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
+        #     ActionManageMixin.remove(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         connection=redis_connection,
+        #         jobs=jobs.values_list("job_id", flat=True),
+        #         object_=self.object.event,
+        #         request=self.request,
+        #     )
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(event),
@@ -1903,6 +1918,12 @@ class TaskCreate(
 
         run_host_instructors_introduction_strategy(
             host_instructors_introduction_strategy(event),
+            self.request,
+            event,
+        )
+
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(event),
             self.request,
             event,
         )
@@ -1931,7 +1952,7 @@ class TaskUpdate(
         check_nsia_old = NewSupportingInstructorAction.check(old)
         # check_ihia_old = InstructorsHostIntroductionAction.check(old.event)
         check_afwa_old = AskForWebsiteAction.check(old.event)
-        check_rha_old = RecruitHelpersAction.check(old.event)
+        # check_rha_old = RecruitHelpersAction.check(old.event)
 
         res = super().form_valid(form)
         new = self.object  # refreshed by `super().form_valid()`
@@ -1939,7 +1960,7 @@ class TaskUpdate(
         check_nsia_new = NewSupportingInstructorAction.check(new)
         # check_ihia_new = InstructorsHostIntroductionAction.check(new.event)
         check_afwa_new = AskForWebsiteAction.check(new.event)
-        check_rha_new = RecruitHelpersAction.check(new.event)
+        # check_rha_new = RecruitHelpersAction.check(new.event)
 
         seat_membership = form.cleaned_data["seat_membership"]
         seat_public = form.cleaned_data["seat_public"]
@@ -2078,31 +2099,31 @@ class TaskUpdate(
                 request=self.request,
             )
 
-        # RecruitHelpersAction conditions are met, but weren't before
-        if not check_rha_old and check_rha_new:
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
+        # # RecruitHelpersAction conditions are met, but weren't before
+        # if not check_rha_old and check_rha_new:
+        #     triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
+        #     ActionManageMixin.add(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=triggers,
+        #         context_objects=dict(event=self.object.event),
+        #         object_=self.object.event,
+        #         request=self.request,
+        #     )
 
-        # RecruitHelpersAction conditions were met, but aren't anymore
-        elif check_rha_old and not check_rha_new:
-            jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
+        # # RecruitHelpersAction conditions were met, but aren't anymore
+        # elif check_rha_old and not check_rha_new:
+        #     jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
+        #     ActionManageMixin.remove(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         connection=redis_connection,
+        #         jobs=jobs.values_list("job_id", flat=True),
+        #         object_=self.object.event,
+        #         request=self.request,
+        #     )
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object.event),
@@ -2112,6 +2133,12 @@ class TaskUpdate(
 
         run_host_instructors_introduction_strategy(
             host_instructors_introduction_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object.event),
             self.request,
             self.object.event,
         )
@@ -2160,12 +2187,12 @@ class TaskDelete(
         self.event = old.event
         # self.check_ihia_old = InstructorsHostIntroductionAction.check(self.event)
         self.check_afwa_old = AskForWebsiteAction.check(self.event)
-        self.check_rha_old = RecruitHelpersAction.check(self.event)
+        # self.check_rha_old = RecruitHelpersAction.check(self.event)
 
     def after_delete(self, *args, **kwargs):
         # self.check_ihia_new = InstructorsHostIntroductionAction.check(self.event)
         self.check_afwa_new = AskForWebsiteAction.check(self.event)
-        self.check_rha_new = RecruitHelpersAction.check(self.event)
+        # self.check_rha_new = RecruitHelpersAction.check(self.event)
 
         # # InstructorsHostIntroductionAction conditions were met, but aren't anymore
         # if self.check_ihia_old and not self.check_ihia_new:
@@ -2195,31 +2222,31 @@ class TaskDelete(
                 request=self.request,
             )
 
-        # RecruitHelpersAction conditions are met, but weren't before
-        if not self.check_rha_old and self.check_rha_new:
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.event),
-                object_=self.event,
-                request=self.request,
-            )
+        # # RecruitHelpersAction conditions are met, but weren't before
+        # if not self.check_rha_old and self.check_rha_new:
+        #     triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
+        #     ActionManageMixin.add(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=triggers,
+        #         context_objects=dict(event=self.event),
+        #         object_=self.event,
+        #         request=self.request,
+        #     )
 
-        # RecruitHelpersAction conditions were met, but aren't anymore
-        elif self.check_rha_old and not self.check_rha_new:
-            jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.event,
-                request=self.request,
-            )
+        # # RecruitHelpersAction conditions were met, but aren't anymore
+        # elif self.check_rha_old and not self.check_rha_new:
+        #     jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
+        #     ActionManageMixin.remove(
+        #         action_class=RecruitHelpersAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         connection=redis_connection,
+        #         jobs=jobs.values_list("job_id", flat=True),
+        #         object_=self.event,
+        #         request=self.request,
+        #     )
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object.event),
@@ -2229,6 +2256,12 @@ class TaskDelete(
 
         run_host_instructors_introduction_strategy(
             host_instructors_introduction_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object.event),
             self.request,
             self.object.event,
         )

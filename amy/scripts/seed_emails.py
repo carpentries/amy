@@ -193,6 +193,21 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
             "event {{ event }}."
         ),
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("b5a3a298-c0aa-4153-8d72-a02b997ba0ee"),
+        name="Recruit helpers",
+        signal=SignalNameEnum.recruit_helpers,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[""],
+        bcc_header=[],
+        subject="Time to Recruit Helpers for workshop at {{ workshop.venue }}",
+        body=(
+            "Hey everyone, please remember to seek helpers for the workshop "
+            "{{ event.slug }} -Best, {{ assignee.full_name }}."
+        ),
+    ),
 ]
 
 

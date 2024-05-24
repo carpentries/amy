@@ -6,6 +6,7 @@ from workshops.models import (
     Award,
     Event,
     Membership,
+    Organization,
     Person,
     TrainingProgress,
     TrainingRequirement,
@@ -27,6 +28,25 @@ class AwardSerializer(serializers.ModelSerializer):
             "awarded",
             "event",
             "awarded_by",
+        )
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+    country = serializers.CharField()
+    affiliated_organizations = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="domain"
+    )
+
+    class Meta:
+        model = Organization
+        fields = (
+            "pk",
+            "domain",
+            "fullname",
+            "country",
+            "latitude",
+            "longitude",
+            "affiliated_organizations",
         )
 
 
