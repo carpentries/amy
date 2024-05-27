@@ -14,6 +14,7 @@ from emails.types import (
     InstructorTrainingCompletedNotBadgedContext,
     NewMembershipOnboardingContext,
     PersonsMergedContext,
+    PostWorkshop7DaysContext,
     RecruitHelpersContext,
 )
 
@@ -32,6 +33,7 @@ class SignalNameEnum(StrEnum):
     new_membership_onboarding = "new_membership_onboarding"
     host_instructors_introduction = "host_instructors_introduction"
     recruit_helpers = "recruit_helpers"
+    post_workshop_7days = "post_workshop_7days"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -131,5 +133,14 @@ RECRUIT_HELPERS_SIGNAL_NAME = "recruit_helpers"
     recruit_helpers_update_signal,
     recruit_helpers_remove_signal,
 ) = triple_signals(RECRUIT_HELPERS_SIGNAL_NAME, RecruitHelpersContext)
+
+ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
+
+POST_WORKSHOP_7DAYS_SIGNAL_NAME = "post_workshop_7days"
+(
+    post_workshop_7days_signal,
+    post_workshop_7days_update_signal,
+    post_workshop_7days_remove_signal,
+) = triple_signals(POST_WORKSHOP_7DAYS_SIGNAL_NAME, PostWorkshop7DaysContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
