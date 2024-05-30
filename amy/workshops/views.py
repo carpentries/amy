@@ -49,7 +49,6 @@ from autoemails.actions import (
     AskForWebsiteAction,
     NewInstructorAction,
     NewSupportingInstructorAction,
-    PostWorkshopAction,
 )
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
@@ -65,6 +64,10 @@ from emails.actions.host_instructors_introduction import (
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
+)
+from emails.actions.post_workshop_7days import (
+    post_workshop_7days_strategy,
+    run_post_workshop_7days_strategy,
 )
 from emails.actions.recruit_helpers import (
     recruit_helpers_strategy,
@@ -1122,20 +1125,26 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
         # save the object
         res = super().form_valid(form)
 
-        # check conditions for running a PostWorkshopAction
-        if PostWorkshopAction.check(self.object):
-            triggers = Trigger.objects.filter(
-                active=True, action="week-after-workshop-completion"
-            )
-            ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
+        # # check conditions for running a PostWorkshopAction
+        # if PostWorkshopAction.check(self.object):
+        #     triggers = Trigger.objects.filter(
+        #         active=True, action="week-after-workshop-completion"
+        #     )
+        #     ActionManageMixin.add(
+        #         action_class=PostWorkshopAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=triggers,
+        #         context_objects=dict(event=self.object),
+        #         object_=self.object,
+        #         request=self.request,
+        #     )
+
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object),
+            self.request,
+            self.object,
+        )
 
         # # check conditions for running a InstructorsHostIntroductionAction
         # if InstructorsHostIntroductionAction.check(self.object):
@@ -1204,47 +1213,47 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
         """Check if RQ job conditions changed, and add/delete jobs if
         necessary."""
         old = self.get_object()
-        check_pwa_old = PostWorkshopAction.check(old)
+        # check_pwa_old = PostWorkshopAction.check(old)
         # check_ihia_old = InstructorsHostIntroductionAction.check(old)
         check_afwa_old = AskForWebsiteAction.check(old)
         # check_rha_old = RecruitHelpersAction.check(old)
 
         res = super().form_valid(form)
         new = self.object  # refreshed by `super().form_valid()`
-        check_pwa_new = PostWorkshopAction.check(new)
+        # check_pwa_new = PostWorkshopAction.check(new)
         # check_ihia_new = InstructorsHostIntroductionAction.check(new)
         check_afwa_new = AskForWebsiteAction.check(new)
         # check_rha_new = RecruitHelpersAction.check(new)
 
-        # PostWorkshopAction conditions are not met, but weren't before
-        if not check_pwa_old and check_pwa_new:
-            triggers = Trigger.objects.filter(
-                active=True, action="week-after-workshop-completion"
-            )
-            ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
+        # # PostWorkshopAction conditions are not met, but weren't before
+        # if not check_pwa_old and check_pwa_new:
+        #     triggers = Trigger.objects.filter(
+        #         active=True, action="week-after-workshop-completion"
+        #     )
+        #     ActionManageMixin.add(
+        #         action_class=PostWorkshopAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=triggers,
+        #         context_objects=dict(event=self.object),
+        #         object_=self.object,
+        #         request=self.request,
+        #     )
 
-        # PostWorkshopAction conditions were met, but aren't anymore
-        elif check_pwa_old and not check_pwa_new:
-            jobs = self.object.rq_jobs.filter(
-                trigger__action="week-after-workshop-completion"
-            )
-            ActionManageMixin.remove(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
+        # # PostWorkshopAction conditions were met, but aren't anymore
+        # elif check_pwa_old and not check_pwa_new:
+        #     jobs = self.object.rq_jobs.filter(
+        #         trigger__action="week-after-workshop-completion"
+        #     )
+        #     ActionManageMixin.remove(
+        #         action_class=PostWorkshopAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         connection=redis_connection,
+        #         jobs=jobs.values_list("job_id", flat=True),
+        #         object_=self.object,
+        #         request=self.request,
+        #     )
 
         # # InstructorsHostIntroductionAction conditions are not met, but weren't before
         # if not check_ihia_old and check_ihia_new:
@@ -1346,6 +1355,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             self.object,
         )
 
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
         return res
 
 
@@ -1356,18 +1371,18 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     object: Event
 
     def before_delete(self, *args, **kwargs):
-        jobs = self.object.rq_jobs.filter(
-            trigger__action="week-after-workshop-completion"
-        )
-        ActionManageMixin.remove(
-            action_class=PostWorkshopAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
-        )
+        # jobs = self.object.rq_jobs.filter(
+        #     trigger__action="week-after-workshop-completion"
+        # )
+        # ActionManageMixin.remove(
+        #     action_class=PostWorkshopAction,
+        #     logger=logger,
+        #     scheduler=scheduler,
+        #     connection=redis_connection,
+        #     jobs=jobs.values_list("job_id", flat=True),
+        #     object_=self.object,
+        #     request=self.request,
+        # )
 
         # jobs = self.object.rq_jobs.filter(
         #     trigger__action="instructors-host-introduction"
@@ -1420,6 +1435,12 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
 
         run_recruit_helpers_strategy(
             recruit_helpers_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object),
             self.request,
             self.object,
         )
@@ -1928,6 +1949,12 @@ class TaskCreate(
             event,
         )
 
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
+
         # return remembered results
         return res
 
@@ -2143,6 +2170,12 @@ class TaskUpdate(
             self.object.event,
         )
 
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
         return res
 
 
@@ -2262,6 +2295,12 @@ class TaskDelete(
 
         run_recruit_helpers_strategy(
             recruit_helpers_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object.event),
             self.request,
             self.object.event,
         )

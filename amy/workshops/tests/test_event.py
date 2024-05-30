@@ -1445,6 +1445,7 @@ class TestEventCreatePostWorkshopAction(
             template=template,
         )
 
+    @skip("Test disabled because PostWorkshopAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -1544,6 +1545,7 @@ class TestEventUpdatePostWorkshopAction(
             template=template,
         )
 
+    @skip("Test disabled because PostWorkshopAction is disabled")
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -1603,6 +1605,7 @@ class TestEventUpdatePostWorkshopAction(
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)
 
+    @skip("Test disabled because PostWorkshopAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -1741,6 +1744,7 @@ class TestEventDeletePostWorkshopAction(
             template=template,
         )
 
+    @skip("Test disabled because PostWorkshopAction is disabled")
     def test_job_unscheduled(self):
         self._setUpSuperuser()
         self._prepare_data()

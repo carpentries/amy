@@ -745,23 +745,9 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailActions(
             reply_to_header="{{ reply_to }}",
             body_template="Sample text.",
         )
-        template2 = EmailTemplate.objects.create(
-            slug="sample-template2",
-            subject="Welcome to {{ site.name }}",
-            to_header="recipient@address.com",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="{{ reply_to }}",
-            body_template="Sample text.",
-        )
         self.trigger1 = Trigger.objects.create(
             action="self-organised-request-form",
             template=template1,
-        )
-        self.trigger2 = Trigger.objects.create(
-            action="week-after-workshop-completion",
-            template=template2,
         )
 
         self.url = reverse("selforganisedsubmission_accept_event", args=[self.sos.pk])
@@ -802,16 +788,14 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailActions(
         request = event.selforganisedsubmission
         self.assertEqual(request, self.sos)
 
-        # 2 jobs created
+        # 1 job created
         rqjobs_post = RQJob.objects.all()
-        self.assertEqual(len(rqjobs_post), 2)
+        self.assertEqual(len(rqjobs_post), 1)
 
         # ensure the job ids are mentioned in the page output
         content = rv.content.decode("utf-8")
         for job in rqjobs_post:
             self.assertIn(job.job_id, content)
 
-        # ensure 1 job is for SelfOrganisedRequestAction,
-        # and 1 for PostWorkshopAction
+        # ensure 1 job is for SelfOrganisedRequestAction
         rqjobs_post[0].trigger = self.trigger1
-        rqjobs_post[1].trigger = self.trigger2
