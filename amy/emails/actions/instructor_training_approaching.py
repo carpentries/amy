@@ -13,7 +13,7 @@ from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     Signal,
-    instructor_training_approaching_remove_signal,
+    instructor_training_approaching_cancel_signal,
     instructor_training_approaching_signal,
     instructor_training_approaching_update_signal,
 )
@@ -53,7 +53,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     if not has_email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
     elif has_email_scheduled and not email_should_exist:
-        result = StrategyEnum.REMOVE
+        result = StrategyEnum.CANCEL
     elif has_email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
@@ -69,7 +69,7 @@ def run_instructor_training_approaching_strategy(
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_approaching_signal,
         StrategyEnum.UPDATE: instructor_training_approaching_update_signal,
-        StrategyEnum.REMOVE: instructor_training_approaching_remove_signal,
+        StrategyEnum.CANCEL: instructor_training_approaching_cancel_signal,
         StrategyEnum.NOOP: None,
     }
     return run_strategy(
@@ -223,7 +223,7 @@ class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
 
 
 class InstructorTrainingApproachingCancelReceiver(BaseActionCancel):
-    signal = instructor_training_approaching_remove_signal.signal_name
+    signal = instructor_training_approaching_cancel_signal.signal_name
 
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
@@ -265,9 +265,9 @@ instructor_training_approaching_update_signal.connect(
 )
 
 
-instructor_training_approaching_remove_receiver = (
+instructor_training_approaching_cancel_receiver = (
     InstructorTrainingApproachingCancelReceiver()
 )
-instructor_training_approaching_remove_signal.connect(
-    instructor_training_approaching_remove_receiver
+instructor_training_approaching_cancel_signal.connect(
+    instructor_training_approaching_cancel_receiver
 )

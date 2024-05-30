@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest import skip
 
 from django.conf import settings
 from django.test import override_settings
@@ -870,6 +871,7 @@ class TestAcceptWorkshopRequestAddsEmailAction(FakeRedisTestCaseMixin, TestBase)
         extrequests.views.scheduler = self._saved_scheduler
         extrequests.views.redis_connection = self._saved_redis_connection
 
+    @skip("Test disabled because PostWorkshopAction is disabled")
     def test_jobs_created(self):
         data = {
             "slug": "xxxx-xx-xx-test-event",

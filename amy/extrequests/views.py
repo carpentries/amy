@@ -15,12 +15,16 @@ from django.urls import reverse
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
+from autoemails.actions import SelfOrganisedRequestAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import EmailTemplate, Trigger
 from consents.models import Term, TermOption, TrainingRequestConsent
 from consents.util import reconsent_for_term_option_type
+from emails.actions.post_workshop_7days import (
+    post_workshop_7days_strategy,
+    run_post_workshop_7days_strategy,
+)
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
     SelfOrganisedSubmissionFilter,
@@ -190,20 +194,26 @@ class WorkshopRequestAcceptEvent(
                 event=event, person=person, role=Role.objects.get(name="host")
             )
 
-        if PostWorkshopAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True,
-                    action="week-after-workshop-completion",
-                ),
-                context_objects=objs,
-                object_=event,
-                request=self.request,
-            )
+        # if PostWorkshopAction.check(event):
+        #     objs = dict(event=event, request=wr)
+        #     jobs, rqjobs = ActionManageMixin.add(
+        #         action_class=PostWorkshopAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=Trigger.objects.filter(
+        #             active=True,
+        #             action="week-after-workshop-completion",
+        #         ),
+        #         context_objects=objs,
+        #         object_=event,
+        #         request=self.request,
+        #     )
+
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
 
         wr.state = "a"
         wr.event = event
@@ -308,20 +318,26 @@ class WorkshopInquiryAcceptEvent(
                 event=event, person=person, role=Role.objects.get(name="host")
             )
 
-        if PostWorkshopAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True,
-                    action="week-after-workshop-completion",
-                ),
-                context_objects=objs,
-                object_=event,
-                request=self.request,
-            )
+        # if PostWorkshopAction.check(event):
+        #     objs = dict(event=event, request=wr)
+        #     jobs, rqjobs = ActionManageMixin.add(
+        #         action_class=PostWorkshopAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=Trigger.objects.filter(
+        #             active=True,
+        #             action="week-after-workshop-completion",
+        #         ),
+        #         context_objects=objs,
+        #         object_=event,
+        #         request=self.request,
+        #     )
+
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
 
         wr.state = "a"
         wr.event = event
@@ -504,20 +520,26 @@ class SelfOrganisedSubmissionAcceptEvent(
                 request=self.request,
             )
 
-        if PostWorkshopAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True,
-                    action="week-after-workshop-completion",
-                ),
-                context_objects=objs,
-                object_=event,
-                request=self.request,
-            )
+        # if PostWorkshopAction.check(event):
+        #     objs = dict(event=event, request=wr)
+        #     jobs, rqjobs = ActionManageMixin.add(
+        #         action_class=PostWorkshopAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=Trigger.objects.filter(
+        #             active=True,
+        #             action="week-after-workshop-completion",
+        #         ),
+        #         context_objects=objs,
+        #         object_=event,
+        #         request=self.request,
+        #     )
+
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
 
         return super().form_valid(form)
 

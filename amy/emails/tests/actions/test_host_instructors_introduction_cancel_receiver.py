@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import host_instructors_introduction_remove_receiver
+from emails.actions import host_instructors_introduction_cancel_receiver
 from emails.actions.host_instructors_introduction import (
     host_instructors_introduction_strategy,
     run_host_instructors_introduction_strategy,
@@ -12,7 +12,7 @@ from emails.actions.host_instructors_introduction import (
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
     HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
-    host_instructors_introduction_remove_signal,
+    host_instructors_introduction_cancel_signal,
 )
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
@@ -71,7 +71,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            host_instructors_introduction_remove_receiver(None, request=request)
+            host_instructors_introduction_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
                 "EMAIL_MODULE feature flag not set, skipping "
@@ -80,14 +80,14 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = host_instructors_introduction_remove_signal.receivers[:]
+        original_receivers = host_instructors_introduction_cancel_signal.receivers[:]
 
         # Act
         # attempt to connect the receiver
-        host_instructors_introduction_remove_signal.connect(
-            host_instructors_introduction_remove_receiver
+        host_instructors_introduction_cancel_signal.connect(
+            host_instructors_introduction_cancel_receiver
         )
-        new_receivers = host_instructors_introduction_remove_signal.receivers[:]
+        new_receivers = host_instructors_introduction_cancel_signal.receivers[:]
 
         # Assert
         # the same receiver list means this receiver has already been connected
@@ -113,7 +113,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.messages_action_cancelled"
         ) as mock_messages_action_cancelled:
-            host_instructors_introduction_remove_signal.send(
+            host_instructors_introduction_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
@@ -150,7 +150,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            host_instructors_introduction_remove_signal.send(
+            host_instructors_introduction_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
@@ -194,7 +194,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            host_instructors_introduction_remove_signal.send(
+            host_instructors_introduction_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
@@ -215,7 +215,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         )
 
 
-class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
+class TestHostInstructorsIntroductionRemoveIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange

@@ -152,8 +152,21 @@ class RecruitHelpersKwargs(TypedDict):
     event_start_date: date
 
 
+class PostWorkshop7DaysContext(TypedDict):
+    event: Event
+    hosts: list[Person]
+    instructors: list[Person]
+    helpers: list[Person]
+    assignee: Person | None
+
+
+class PostWorkshop7DaysKwargs(TypedDict):
+    event: Event
+    event_end_date: date
+
+
 class StrategyEnum(StrEnum):
     CREATE = "create"
     UPDATE = "update"
-    REMOVE = "remove"
+    CANCEL = "cancel"
     NOOP = "noop"

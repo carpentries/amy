@@ -185,7 +185,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal=SignalNameEnum.host_instructors_introduction,
         from_header="workshops@carpentries.org",
         reply_to_header="",
-        cc_header=[""],
+        cc_header=[],
         bcc_header=[],
         subject="Instructors for workshop at {{ event.venue }} on {{ event.start }}",
         body=(
@@ -200,12 +200,30 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         signal=SignalNameEnum.recruit_helpers,
         from_header="workshops@carpentries.org",
         reply_to_header="",
-        cc_header=[""],
+        cc_header=[],
         bcc_header=[],
         subject="Time to Recruit Helpers for workshop at {{ workshop.venue }}",
         body=(
             "Hey everyone, please remember to seek helpers for the workshop "
             "{{ event.slug }} -Best, {{ assignee.full_name }}."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("e4a39483-590b-44e0-93cb-e3d403d15d8f"),
+        name="Post Workshop 7 days",
+        signal=SignalNameEnum.post_workshop_7days,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject=(
+            "Completed workshop at {{ event.venue }} on {{ event.human_dates }} "
+            "({{ event.slug }})"
+        ),
+        body=(
+            "Thank you for hosting and teaching the workshop at {{ event.venue }} "
+            "(({{ event.slug }})!"
         ),
     ),
 ]

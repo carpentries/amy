@@ -4,17 +4,17 @@ from unittest.mock import MagicMock, patch
 from django.test import RequestFactory, TestCase
 
 from emails.actions.exceptions import EmailStrategyException
-from emails.actions.recruit_helpers import (
-    recruit_helpers_strategy,
-    run_recruit_helpers_strategy,
+from emails.actions.post_workshop_7days import (
+    post_workshop_7days_strategy,
+    run_post_workshop_7days_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
-from emails.signals import RECRUIT_HELPERS_SIGNAL_NAME
+from emails.signals import POST_WORKSHOP_7DAYS_SIGNAL_NAME
 from emails.types import StrategyEnum
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
-class TestRecruitHelpersStrategy(TestCase):
+class TestPostWorkshop7DaysStrategy(TestCase):
     def setUp(self) -> None:
         self.ttt_organization = Organization.objects.create(
             domain="carpentries.org", fullname="Instructor Training"
@@ -24,9 +24,10 @@ class TestRecruitHelpersStrategy(TestCase):
             host=Organization.objects.create(domain="example.com", fullname="Example"),
             administrator=self.ttt_organization,
             start=date.today() + timedelta(days=30),
+            end=date.today() + timedelta(days=31),
         )
-        self.ttt_tag = Tag.objects.create(name="TTT")
-        self.event.tags.add(self.ttt_tag)
+        self.swc_tag = Tag.objects.create(name="SWC")
+        self.event.tags.add(self.swc_tag)
 
         self.instructor_role = Role.objects.create(name="instructor")
         self.instructor = Person.objects.create(
@@ -35,10 +36,6 @@ class TestRecruitHelpersStrategy(TestCase):
         self.host_role = Role.objects.create(name="host")
         self.host = Person.objects.create(
             personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
-        self.helper_role = Role.objects.create(name="helper")
-        self.helper = Person.objects.create(
-            personal="Test", family="Test", email="test3@example.org", username="test3"
         )
 
     def test_strategy_create(self) -> None:
@@ -49,7 +46,7 @@ class TestRecruitHelpersStrategy(TestCase):
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
 
         # Act
-        result = recruit_helpers_strategy(self.event)
+        result = post_workshop_7days_strategy(self.event)
 
         # Assert
         self.assertEqual(result, StrategyEnum.CREATE)
@@ -62,7 +59,7 @@ class TestRecruitHelpersStrategy(TestCase):
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=RECRUIT_HELPERS_SIGNAL_NAME,
+            signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -80,7 +77,7 @@ class TestRecruitHelpersStrategy(TestCase):
         )
 
         # Act
-        result = recruit_helpers_strategy(self.event)
+        result = post_workshop_7days_strategy(self.event)
 
         # Assert
         self.assertEqual(result, StrategyEnum.UPDATE)
@@ -90,14 +87,13 @@ class TestRecruitHelpersStrategy(TestCase):
         Task.objects.create(
             event=self.event, person=self.instructor, role=self.instructor_role
         )
-        Task.objects.create(event=self.event, person=self.host, role=self.host_role)
-
-        # Helper Task purposedly created
-        Task.objects.create(event=self.event, person=self.helper, role=self.helper_role)
-
+        # Host Task intentionally not created
+        # Task.objects.create(
+        #     event=self.event, person=self.host, role=self.host_role
+        # )
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=RECRUIT_HELPERS_SIGNAL_NAME,
+            signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -115,105 +111,105 @@ class TestRecruitHelpersStrategy(TestCase):
         )
 
         # Act
-        result = recruit_helpers_strategy(self.event)
+        result = post_workshop_7days_strategy(self.event)
 
         # Assert
         self.assertEqual(result, StrategyEnum.CANCEL)
 
     def test_strategy_noop(self) -> None:
         # Act
-        result = recruit_helpers_strategy(self.event)
+        result = post_workshop_7days_strategy(self.event)
         # Assert
         self.assertEqual(result, StrategyEnum.NOOP)
 
 
-class TestRunRecruitHelpersStrategy(TestCase):
-    @patch("emails.actions.recruit_helpers.recruit_helpers_signal")
+class TestRunPostWorkshop7DaysStrategy(TestCase):
+    @patch("emails.actions.post_workshop_7days.post_workshop_7days_signal")
     def test_strategy_calls_create_signal(
         self,
-        mock_recruit_helpers_signal,
+        mock_post_workshop_7days_signal,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
         request = RequestFactory().get("/")
-        event = Event(start=datetime.today())
+        event = Event(end=date.today())
 
         # Act
-        run_recruit_helpers_strategy(strategy, request, event)
+        run_post_workshop_7days_strategy(strategy, request, event)
 
         # Assert
-        mock_recruit_helpers_signal.send.assert_called_once_with(
+        mock_post_workshop_7days_signal.send.assert_called_once_with(
             sender=event,
             request=request,
             event=event,
-            event_start_date=event.start,
+            event_end_date=date.today(),
         )
 
-    @patch("emails.actions.recruit_helpers.recruit_helpers_update_signal")
+    @patch("emails.actions.post_workshop_7days.post_workshop_7days_update_signal")
     def test_strategy_calls_update_signal(
         self,
-        mock_recruit_helpers_update_signal,
+        mock_post_workshop_7days_update_signal,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
         request = RequestFactory().get("/")
-        event = Event(start=datetime.today())
+        event = Event(end=date.today())
 
         # Act
-        run_recruit_helpers_strategy(strategy, request, event)
+        run_post_workshop_7days_strategy(strategy, request, event)
 
         # Assert
-        mock_recruit_helpers_update_signal.send.assert_called_once_with(
+        mock_post_workshop_7days_update_signal.send.assert_called_once_with(
             sender=event,
             request=request,
             event=event,
-            event_start_date=event.start,
+            event_end_date=date.today(),
         )
 
-    @patch("emails.actions.recruit_helpers.recruit_helpers_cancel_signal")
+    @patch("emails.actions.post_workshop_7days.post_workshop_7days_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
-        mock_recruit_helpers_cancel_signal,
+        mock_post_workshop_7days_cancel_signal,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
         request = RequestFactory().get("/")
-        event = Event(start=datetime.today())
+        event = Event(end=date.today())
 
         # Act
-        run_recruit_helpers_strategy(strategy, request, event)
+        run_post_workshop_7days_strategy(strategy, request, event)
 
         # Assert
-        mock_recruit_helpers_cancel_signal.send.assert_called_once_with(
+        mock_post_workshop_7days_cancel_signal.send.assert_called_once_with(
             sender=event,
             request=request,
             event=event,
-            event_start_date=event.start,
+            event_end_date=date.today(),
         )
 
     @patch("emails.actions.base_strategy.logger")
-    @patch("emails.actions.recruit_helpers.recruit_helpers_signal")
-    @patch("emails.actions.recruit_helpers.recruit_helpers_update_signal")
-    @patch("emails.actions.recruit_helpers.recruit_helpers_cancel_signal")
+    @patch("emails.actions.post_workshop_7days.post_workshop_7days_signal")
+    @patch("emails.actions.post_workshop_7days.post_workshop_7days_update_signal")
+    @patch("emails.actions.post_workshop_7days.post_workshop_7days_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_recruit_helpers_cancel_signal,
-        mock_recruit_helpers_update_signal,
-        mock_recruit_helpers_signal,
+        mock_post_workshop_7days_cancel_signal,
+        mock_post_workshop_7days_update_signal,
+        mock_post_workshop_7days_signal,
         mock_logger,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP
         request = RequestFactory().get("/")
-        event = Event(start=datetime.today())
+        event = Event(end=date.today())
 
         # Act
-        run_recruit_helpers_strategy(strategy, request, event)
+        run_post_workshop_7days_strategy(strategy, request, event)
 
         # Assert
-        mock_recruit_helpers_signal.send.assert_not_called()
-        mock_recruit_helpers_update_signal.send.assert_not_called()
-        mock_recruit_helpers_cancel_signal.send.assert_not_called()
+        mock_post_workshop_7days_signal.send.assert_not_called()
+        mock_post_workshop_7days_update_signal.send.assert_not_called()
+        mock_post_workshop_7days_cancel_signal.send.assert_not_called()
         mock_logger.debug.assert_called_once_with(
             f"Strategy {strategy} for {event} is a no-op"
         )
@@ -222,10 +218,10 @@ class TestRunRecruitHelpersStrategy(TestCase):
         # Arrange
         strategy = MagicMock()
         request = RequestFactory().get("/")
-        event = Event(start=datetime.today())
+        event = Event(end=date.today())
 
         # Act & Assert
         with self.assertRaises(
             EmailStrategyException, msg=f"Unknown strategy {strategy}"
         ):
-            run_recruit_helpers_strategy(strategy, request, event)
+            run_post_workshop_7days_strategy(strategy, request, event)

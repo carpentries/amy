@@ -13,7 +13,7 @@ from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
     Signal,
-    instructor_training_completed_not_badged_remove_signal,
+    instructor_training_completed_not_badged_cancel_signal,
     instructor_training_completed_not_badged_signal,
     instructor_training_completed_not_badged_update_signal,
 )
@@ -92,7 +92,7 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
     elif not email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
     elif email_scheduled and not email_should_exist:
-        result = StrategyEnum.REMOVE
+        result = StrategyEnum.CANCEL
     elif email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
@@ -111,7 +111,7 @@ def run_instructor_training_completed_not_badged_strategy(
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_completed_not_badged_signal,
         StrategyEnum.UPDATE: instructor_training_completed_not_badged_update_signal,
-        StrategyEnum.REMOVE: instructor_training_completed_not_badged_remove_signal,
+        StrategyEnum.CANCEL: instructor_training_completed_not_badged_cancel_signal,
         StrategyEnum.NOOP: None,
     }
     if not training_completed_date:
@@ -313,7 +313,7 @@ class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
 
 
 class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
-    signal = instructor_training_completed_not_badged_remove_signal.signal_name
+    signal = instructor_training_completed_not_badged_cancel_signal.signal_name
 
     def get_context(
         self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
@@ -359,9 +359,9 @@ instructor_training_completed_not_badged_update_signal.connect(
 )
 
 
-instructor_training_completed_not_badged_remove_receiver = (
+instructor_training_completed_not_badged_cancel_receiver = (
     InstructorTrainingCompletedNotBadgedCancelReceiver()
 )
-instructor_training_completed_not_badged_remove_signal.connect(
-    instructor_training_completed_not_badged_remove_receiver
+instructor_training_completed_not_badged_cancel_signal.connect(
+    instructor_training_completed_not_badged_cancel_receiver
 )

@@ -13,7 +13,7 @@ from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     RECRUIT_HELPERS_SIGNAL_NAME,
     Signal,
-    recruit_helpers_remove_signal,
+    recruit_helpers_cancel_signal,
     recruit_helpers_signal,
     recruit_helpers_update_signal,
 )
@@ -69,7 +69,7 @@ def recruit_helpers_strategy(event: Event) -> StrategyEnum:
     if not has_email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
     elif has_email_scheduled and not email_should_exist:
-        result = StrategyEnum.REMOVE
+        result = StrategyEnum.CANCEL
     elif has_email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
@@ -85,7 +85,7 @@ def run_recruit_helpers_strategy(
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: recruit_helpers_signal,
         StrategyEnum.UPDATE: recruit_helpers_update_signal,
-        StrategyEnum.REMOVE: recruit_helpers_remove_signal,
+        StrategyEnum.CANCEL: recruit_helpers_cancel_signal,
         StrategyEnum.NOOP: None,
     }
     return run_strategy(
@@ -282,5 +282,5 @@ recruit_helpers_signal.connect(recruit_helpers_receiver)
 recruit_helpers_update_receiver = RecruitHelpersUpdateReceiver()
 recruit_helpers_update_signal.connect(recruit_helpers_update_receiver)
 
-recruit_helpers_remove_receiver = RecruitHelpersCancelReceiver()
-recruit_helpers_remove_signal.connect(recruit_helpers_remove_receiver)
+recruit_helpers_cancel_receiver = RecruitHelpersCancelReceiver()
+recruit_helpers_cancel_signal.connect(recruit_helpers_cancel_receiver)

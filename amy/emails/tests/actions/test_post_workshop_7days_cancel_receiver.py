@@ -4,37 +4,42 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import recruit_helpers_remove_receiver
-from emails.actions.recruit_helpers import (
-    recruit_helpers_strategy,
-    run_recruit_helpers_strategy,
+from emails.actions import post_workshop_7days_cancel_receiver
+from emails.actions.post_workshop_7days import (
+    post_workshop_7days_strategy,
+    run_post_workshop_7days_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
-from emails.signals import RECRUIT_HELPERS_SIGNAL_NAME, recruit_helpers_remove_signal
+from emails.signals import (
+    POST_WORKSHOP_7DAYS_SIGNAL_NAME,
+    post_workshop_7days_cancel_signal,
+)
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
-class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
+class TestPostWorkshop7DaysRemoveReceiver(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
+        ttt_organization = Organization.objects.create(
             domain="carpentries.org", fullname="Instructor Training"
         )
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
-            administrator=self.ttt_organization,
+            administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
+            end=date.today() + timedelta(days=31),
         )
-        ttt_tag = Tag.objects.create(name="TTT")
-        self.event.tags.add(ttt_tag)
+        swc_tag = Tag.objects.create(name="SWC")
+        self.event.tags.add(swc_tag)
+
         instructor_role = Role.objects.create(name="instructor")
         self.instructor = Person.objects.create(
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
         host_role = Role.objects.create(name="host")
         self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test3"
+            personal="Test", family="Test", email="test2@example.org", username="test2"
         )
         Task.objects.create(
             event=self.event, person=self.instructor, role=instructor_role
@@ -44,7 +49,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=RECRUIT_HELPERS_SIGNAL_NAME,
+            signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -58,20 +63,20 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            recruit_helpers_remove_receiver(None, request=request)
+            post_workshop_7days_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping recruit_helpers_remove"
+                "EMAIL_MODULE feature flag not set, skipping post_workshop_7days_remove"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = recruit_helpers_remove_signal.receivers[:]
+        original_receivers = post_workshop_7days_cancel_signal.receivers[:]
 
         # Act
         # attempt to connect the receiver
-        recruit_helpers_remove_signal.connect(recruit_helpers_remove_receiver)
-        new_receivers = recruit_helpers_remove_signal.receivers[:]
+        post_workshop_7days_cancel_signal.connect(post_workshop_7days_cancel_receiver)
+        new_receivers = post_workshop_7days_cancel_signal.receivers[:]
 
         # Assert
         # the same receiver list means this receiver has already been connected
@@ -97,18 +102,17 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.messages_action_cancelled"
         ) as mock_messages_action_cancelled:
-            recruit_helpers_remove_signal.send(
+            post_workshop_7days_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_cancelled.assert_called_once_with(
             request,
-            RECRUIT_HELPERS_SIGNAL_NAME,
+            POST_WORKSHOP_7DAYS_SIGNAL_NAME,
             scheduled_email,
         )
 
@@ -135,11 +139,10 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            recruit_helpers_remove_signal.send(
+            post_workshop_7days_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
@@ -180,11 +183,10 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            recruit_helpers_remove_signal.send(
+            post_workshop_7days_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
-                event_start_date=self.event.start,
             )
 
         # Assert
@@ -202,7 +204,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         )
 
 
-class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
+class TestPostWorkshop7DaysRemoveIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
@@ -212,7 +214,7 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=RECRUIT_HELPERS_SIGNAL_NAME,
+            signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -228,9 +230,10 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
             host=Organization.objects.create(domain="example.com", fullname="Example"),
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
+            end=date.today() + timedelta(days=31),
         )
-        ttt_tag = Tag.objects.get(name="TTT")
-        event.tags.add(ttt_tag)
+        swc_tag = Tag.objects.get(name="SWC")
+        event.tags.add(swc_tag)
 
         instructor = Person.objects.create(
             personal="Kelsi",
@@ -267,8 +270,8 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
             is_active=True,
         )
         instructor_role = Role.objects.get(name="instructor")
-        Task.objects.create(event=event, person=instructor, role=instructor_role)
         host_role = Role.objects.get(name="host")
+        Task.objects.create(event=event, person=instructor, role=instructor_role)
         task = Task.objects.create(event=event, person=host, role=host_role)
 
         request = RequestFactory().get("/")
@@ -276,8 +279,8 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
         with patch(
             "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
-            run_recruit_helpers_strategy(
-                recruit_helpers_strategy(event),
+            run_post_workshop_7days_strategy(
+                post_workshop_7days_strategy(event),
                 request,
                 event,
             )
