@@ -42,8 +42,8 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     logger.debug(f"{not_self_organised=}, {not_cldt=}, {end_date_in_future=}")
 
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
-    carpentries = event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
-    logger.debug(f"{active=}, {carpentries=}")
+    carpentries_tag = event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
+    logger.debug(f"{active=}, {carpentries_tag=}")
 
     at_least_1_host = Task.objects.filter(role__name="host", event=event).count() >= 1
     at_least_1_instructor = (
@@ -56,7 +56,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         and not_cldt
         and end_date_in_future
         and active
-        and carpentries
+        and carpentries_tag
         and at_least_1_host
         and at_least_1_instructor
     )

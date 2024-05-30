@@ -215,7 +215,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
         )
 
 
-class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
+class TestHostInstructorsIntroductionRemoveIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
