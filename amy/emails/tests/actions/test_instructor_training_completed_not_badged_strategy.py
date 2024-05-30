@@ -184,7 +184,7 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         # Act
         result = instructor_training_completed_not_badged_strategy(self.person)
         # Assert
-        self.assertEqual(result, StrategyEnum.REMOVE)
+        self.assertEqual(result, StrategyEnum.CANCEL)
 
     def test_strategy_noop(self) -> None:
         # Act
@@ -269,19 +269,19 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
 
     @patch(
         "emails.actions.instructor_training_completed_not_badged."
-        "instructor_training_completed_not_badged_remove_signal",
+        "instructor_training_completed_not_badged_cancel_signal",
     )
     @patch(
         "emails.actions.instructor_training_completed_not_badged."
         "find_training_completion_date",
     )
-    def test_strategy_calls_remove_signal(
+    def test_strategy_calls_cancel_signal(
         self,
         mock_find_training_completion_date: MagicMock,
-        mock_instructor_training_completed_not_badged_remove_signal: MagicMock,
+        mock_instructor_training_completed_not_badged_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
-        strategy = StrategyEnum.REMOVE
+        strategy = StrategyEnum.CANCEL
         request = RequestFactory().get("/")
         person = Person()
         training_completed_date = None
@@ -295,7 +295,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         )
 
         # Assert
-        mock_instructor_training_completed_not_badged_remove_signal.send.assert_called_once_with(  # noqa: E501
+        mock_instructor_training_completed_not_badged_cancel_signal.send.assert_called_once_with(  # noqa: E501
             sender=person,
             request=request,
             person=person,
@@ -313,11 +313,11 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
     )
     @patch(
         "emails.actions.instructor_training_completed_not_badged."
-        "instructor_training_completed_not_badged_remove_signal",
+        "instructor_training_completed_not_badged_cancel_signal",
     )
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_instructor_training_completed_not_badged_remove_signal: MagicMock,
+        mock_instructor_training_completed_not_badged_cancel_signal: MagicMock,
         mock_instructor_training_completed_not_badged_update_signal: MagicMock,
         mock_instructor_training_completed_not_badged_signal: MagicMock,
         mock_logger: MagicMock,
@@ -336,7 +336,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         # Assert
         mock_instructor_training_completed_not_badged_signal.send.assert_not_called()
         mock_instructor_training_completed_not_badged_update_signal.send.assert_not_called()  # noqa: E501
-        mock_instructor_training_completed_not_badged_remove_signal.send.assert_not_called()  # noqa: E501
+        mock_instructor_training_completed_not_badged_cancel_signal.send.assert_not_called()  # noqa: E501
         mock_logger.debug.assert_called_once_with(
             f"Strategy {strategy} for {person} is a no-op"
         )

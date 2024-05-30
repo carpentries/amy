@@ -356,7 +356,7 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
         ):
             try:
                 run_new_membership_onboarding_strategy(
-                    StrategyEnum.REMOVE,  # choosing the strategy manually
+                    StrategyEnum.CANCEL,  # choosing the strategy manually
                     request=self.request,
                     membership=membership,
                 )

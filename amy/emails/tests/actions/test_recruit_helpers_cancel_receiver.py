@@ -4,21 +4,18 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import instructor_training_approaching_remove_receiver
-from emails.actions.instructor_training_approaching import (
-    instructor_training_approaching_strategy,
-    run_instructor_training_approaching_strategy,
+from emails.actions import recruit_helpers_cancel_receiver
+from emails.actions.recruit_helpers import (
+    recruit_helpers_strategy,
+    run_recruit_helpers_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
-from emails.signals import (
-    INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
-    instructor_training_approaching_remove_signal,
-)
+from emails.signals import RECRUIT_HELPERS_SIGNAL_NAME, recruit_helpers_cancel_signal
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
-class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
+class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
     def setUp(self) -> None:
         self.ttt_organization = Organization.objects.create(
             domain="carpentries.org", fullname="Instructor Training"
@@ -32,23 +29,22 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         ttt_tag = Tag.objects.create(name="TTT")
         self.event.tags.add(ttt_tag)
         instructor_role = Role.objects.create(name="instructor")
-        self.instructor1 = Person.objects.create(
+        self.instructor = Person.objects.create(
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
-        self.instructor2 = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
+        host_role = Role.objects.create(name="host")
+        self.host = Person.objects.create(
+            personal="Test", family="Test", email="test2@example.org", username="test3"
         )
         Task.objects.create(
-            event=self.event, person=self.instructor1, role=instructor_role
+            event=self.event, person=self.instructor, role=instructor_role
         )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.host, role=host_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+            signal=RECRUIT_HELPERS_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -62,23 +58,20 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            instructor_training_approaching_remove_receiver(None, request=request)
+            recruit_helpers_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_training_approaching_remove"
+                "EMAIL_MODULE feature flag not set, skipping recruit_helpers_remove"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = instructor_training_approaching_remove_signal.receivers[:]
+        original_receivers = recruit_helpers_cancel_signal.receivers[:]
 
         # Act
         # attempt to connect the receiver
-        instructor_training_approaching_remove_signal.connect(
-            instructor_training_approaching_remove_receiver
-        )
-        new_receivers = instructor_training_approaching_remove_signal.receivers[:]
+        recruit_helpers_cancel_signal.connect(recruit_helpers_cancel_receiver)
+        new_receivers = recruit_helpers_cancel_signal.receivers[:]
 
         # Assert
         # the same receiver list means this receiver has already been connected
@@ -104,7 +97,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.messages_action_cancelled"
         ) as mock_messages_action_cancelled:
-            instructor_training_approaching_remove_signal.send(
+            recruit_helpers_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
@@ -115,7 +108,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_cancelled.assert_called_once_with(
             request,
-            INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+            RECRUIT_HELPERS_SIGNAL_NAME,
             scheduled_email,
         )
 
@@ -142,7 +135,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            instructor_training_approaching_remove_signal.send(
+            recruit_helpers_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
@@ -187,7 +180,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            instructor_training_approaching_remove_signal.send(
+            recruit_helpers_cancel_signal.send(
                 sender=self.event,
                 request=request,
                 event=self.event,
@@ -219,7 +212,7 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
+            signal=RECRUIT_HELPERS_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -239,7 +232,7 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
         ttt_tag = Tag.objects.get(name="TTT")
         event.tags.add(ttt_tag)
 
-        instructor1 = Person.objects.create(
+        instructor = Person.objects.create(
             personal="Kelsi",
             middle="",
             family="Purdy",
@@ -256,7 +249,7 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
             orcid="0000-0000-0000",
             is_active=True,
         )
-        instructor2 = Person.objects.create(
+        host = Person.objects.create(
             personal="Jayden",
             middle="",
             family="Deckow",
@@ -274,17 +267,17 @@ class TestInstructorTrainingApproachingReceiverRemoveIntegration(TestBase):
             is_active=True,
         )
         instructor_role = Role.objects.get(name="instructor")
-        Task.objects.create(event=event, person=instructor1, role=instructor_role)
-        task = Task.objects.create(
-            event=event, person=instructor2, role=instructor_role
-        )
+        Task.objects.create(event=event, person=instructor, role=instructor_role)
+        host_role = Role.objects.get(name="host")
+        task = Task.objects.create(event=event, person=host, role=host_role)
+
         request = RequestFactory().get("/")
 
         with patch(
             "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
-            run_instructor_training_approaching_strategy(
-                instructor_training_approaching_strategy(event),
+            run_recruit_helpers_strategy(
+                recruit_helpers_strategy(event),
                 request,
                 event,
             )

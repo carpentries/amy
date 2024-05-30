@@ -125,7 +125,7 @@ class TestHostInstructorsIntroductionStrategy(TestCase):
         result = host_instructors_introduction_strategy(self.event)
 
         # Assert
-        self.assertEqual(result, StrategyEnum.REMOVE)
+        self.assertEqual(result, StrategyEnum.CANCEL)
 
     def test_strategy_noop(self) -> None:
         # Act
@@ -183,14 +183,14 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
 
     @patch(
         "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_remove_signal",
+        "host_instructors_introduction_cancel_signal",
     )
-    def test_strategy_calls_remove_signal(
+    def test_strategy_calls_cancel_signal(
         self,
-        mock_host_instructors_introduction_remove_signal,
+        mock_host_instructors_introduction_cancel_signal,
     ) -> None:
         # Arrange
-        strategy = StrategyEnum.REMOVE
+        strategy = StrategyEnum.CANCEL
         request = RequestFactory().get("/")
         event = Event(start=datetime.today())
 
@@ -198,7 +198,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
         run_host_instructors_introduction_strategy(strategy, request, event)
 
         # Assert
-        mock_host_instructors_introduction_remove_signal.send.assert_called_once_with(
+        mock_host_instructors_introduction_cancel_signal.send.assert_called_once_with(
             sender=event,
             request=request,
             event=event,
@@ -215,11 +215,11 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
     )
     @patch(
         "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_remove_signal",
+        "host_instructors_introduction_cancel_signal",
     )
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_host_instructors_introduction_remove_signal,
+        mock_host_instructors_introduction_cancel_signal,
         mock_host_instructors_introduction_update_signal,
         mock_host_instructors_introduction_signal,
         mock_logger,
@@ -235,7 +235,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
         # Assert
         mock_host_instructors_introduction_signal.send.assert_not_called()
         mock_host_instructors_introduction_update_signal.send.assert_not_called()
-        mock_host_instructors_introduction_remove_signal.send.assert_not_called()
+        mock_host_instructors_introduction_cancel_signal.send.assert_not_called()
         mock_logger.debug.assert_called_once_with(
             f"Strategy {strategy} for {event} is a no-op"
         )

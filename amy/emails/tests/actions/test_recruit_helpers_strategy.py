@@ -118,7 +118,7 @@ class TestRecruitHelpersStrategy(TestCase):
         result = recruit_helpers_strategy(self.event)
 
         # Assert
-        self.assertEqual(result, StrategyEnum.REMOVE)
+        self.assertEqual(result, StrategyEnum.CANCEL)
 
     def test_strategy_noop(self) -> None:
         # Act
@@ -170,13 +170,13 @@ class TestRunRecruitHelpersStrategy(TestCase):
             event_start_date=event.start,
         )
 
-    @patch("emails.actions.recruit_helpers.recruit_helpers_remove_signal")
-    def test_strategy_calls_remove_signal(
+    @patch("emails.actions.recruit_helpers.recruit_helpers_cancel_signal")
+    def test_strategy_calls_cancel_signal(
         self,
-        mock_recruit_helpers_remove_signal,
+        mock_recruit_helpers_cancel_signal,
     ) -> None:
         # Arrange
-        strategy = StrategyEnum.REMOVE
+        strategy = StrategyEnum.CANCEL
         request = RequestFactory().get("/")
         event = Event(start=datetime.today())
 
@@ -184,7 +184,7 @@ class TestRunRecruitHelpersStrategy(TestCase):
         run_recruit_helpers_strategy(strategy, request, event)
 
         # Assert
-        mock_recruit_helpers_remove_signal.send.assert_called_once_with(
+        mock_recruit_helpers_cancel_signal.send.assert_called_once_with(
             sender=event,
             request=request,
             event=event,
@@ -194,10 +194,10 @@ class TestRunRecruitHelpersStrategy(TestCase):
     @patch("emails.actions.base_strategy.logger")
     @patch("emails.actions.recruit_helpers.recruit_helpers_signal")
     @patch("emails.actions.recruit_helpers.recruit_helpers_update_signal")
-    @patch("emails.actions.recruit_helpers.recruit_helpers_remove_signal")
+    @patch("emails.actions.recruit_helpers.recruit_helpers_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_recruit_helpers_remove_signal,
+        mock_recruit_helpers_cancel_signal,
         mock_recruit_helpers_update_signal,
         mock_recruit_helpers_signal,
         mock_logger,
@@ -213,7 +213,7 @@ class TestRunRecruitHelpersStrategy(TestCase):
         # Assert
         mock_recruit_helpers_signal.send.assert_not_called()
         mock_recruit_helpers_update_signal.send.assert_not_called()
-        mock_recruit_helpers_remove_signal.send.assert_not_called()
+        mock_recruit_helpers_cancel_signal.send.assert_not_called()
         mock_logger.debug.assert_called_once_with(
             f"Strategy {strategy} for {event} is a no-op"
         )

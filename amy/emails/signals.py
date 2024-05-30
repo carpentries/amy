@@ -91,7 +91,7 @@ INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME = "instructor_training_approaching"
 (
     instructor_training_approaching_signal,
     instructor_training_approaching_update_signal,
-    instructor_training_approaching_remove_signal,
+    instructor_training_approaching_cancel_signal,
 ) = triple_signals(
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME, InstructorTrainingApproachingContext
 )
@@ -103,7 +103,7 @@ INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME = (
 (
     instructor_training_completed_not_badged_signal,
     instructor_training_completed_not_badged_update_signal,
-    instructor_training_completed_not_badged_remove_signal,
+    instructor_training_completed_not_badged_cancel_signal,
 ) = triple_signals(
     INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME,
     InstructorTrainingCompletedNotBadgedContext,
@@ -113,7 +113,7 @@ NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME = "new_membership_onboarding"
 (
     new_membership_onboarding_signal,
     new_membership_onboarding_update_signal,
-    new_membership_onboarding_remove_signal,
+    new_membership_onboarding_cancel_signal,
 ) = triple_signals(
     NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME, NewMembershipOnboardingContext
 )
@@ -122,7 +122,7 @@ HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME = "host_instructors_introduction"
 (
     host_instructors_introduction_signal,
     host_instructors_introduction_update_signal,
-    host_instructors_introduction_remove_signal,
+    host_instructors_introduction_cancel_signal,
 ) = triple_signals(
     HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME, HostInstructorsIntroductionContext
 )
@@ -131,7 +131,7 @@ RECRUIT_HELPERS_SIGNAL_NAME = "recruit_helpers"
 (
     recruit_helpers_signal,
     recruit_helpers_update_signal,
-    recruit_helpers_remove_signal,
+    recruit_helpers_cancel_signal,
 ) = triple_signals(RECRUIT_HELPERS_SIGNAL_NAME, RecruitHelpersContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
@@ -140,7 +140,7 @@ POST_WORKSHOP_7DAYS_SIGNAL_NAME = "post_workshop_7days"
 (
     post_workshop_7days_signal,
     post_workshop_7days_update_signal,
-    post_workshop_7days_remove_signal,
+    post_workshop_7days_cancel_signal,
 ) = triple_signals(POST_WORKSHOP_7DAYS_SIGNAL_NAME, PostWorkshop7DaysContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]

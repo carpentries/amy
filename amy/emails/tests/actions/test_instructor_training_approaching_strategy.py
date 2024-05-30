@@ -109,7 +109,7 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
         # Act
         result = instructor_training_approaching_strategy(self.event)
         # Assert
-        self.assertEqual(result, StrategyEnum.REMOVE)
+        self.assertEqual(result, StrategyEnum.CANCEL)
 
     def test_strategy_noop(self) -> None:
         # Act
@@ -169,14 +169,14 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
 
     @patch(
         "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_remove_signal",
+        "instructor_training_approaching_cancel_signal",
     )
-    def test_strategy_calls_remove_signal(
+    def test_strategy_calls_cancel_signal(
         self,
-        mock_instructor_training_approaching_remove_signal,
+        mock_instructor_training_approaching_cancel_signal,
     ) -> None:
         # Arrange
-        strategy = StrategyEnum.REMOVE
+        strategy = StrategyEnum.CANCEL
         request = RequestFactory().get("/")
         event = Event(start=datetime.today())
 
@@ -184,7 +184,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         run_instructor_training_approaching_strategy(strategy, request, event)
 
         # Assert
-        mock_instructor_training_approaching_remove_signal.send.assert_called_once_with(
+        mock_instructor_training_approaching_cancel_signal.send.assert_called_once_with(
             sender=event,
             request=request,
             event=event,
@@ -202,11 +202,11 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
     )
     @patch(
         "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_remove_signal",
+        "instructor_training_approaching_cancel_signal",
     )
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_instructor_training_approaching_remove_signal,
+        mock_instructor_training_approaching_cancel_signal,
         mock_instructor_training_approaching_update_signal,
         mock_instructor_training_approaching_signal,
         mock_logger,
@@ -222,7 +222,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         # Assert
         mock_instructor_training_approaching_signal.send.assert_not_called()
         mock_instructor_training_approaching_update_signal.send.assert_not_called()
-        mock_instructor_training_approaching_remove_signal.send.assert_not_called()
+        mock_instructor_training_approaching_cancel_signal.send.assert_not_called()
         mock_logger.debug.assert_called_once_with(
             f"Strategy {strategy} for {event} is a no-op"
         )

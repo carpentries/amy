@@ -12,7 +12,7 @@ from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
     Signal,
-    new_membership_onboarding_remove_signal,
+    new_membership_onboarding_cancel_signal,
     new_membership_onboarding_signal,
     new_membership_onboarding_update_signal,
 )
@@ -54,7 +54,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     if not email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
     elif email_scheduled and not email_should_exist:
-        result = StrategyEnum.REMOVE
+        result = StrategyEnum.CANCEL
     elif email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
@@ -70,7 +70,7 @@ def run_new_membership_onboarding_strategy(
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: new_membership_onboarding_signal,
         StrategyEnum.UPDATE: new_membership_onboarding_update_signal,
-        StrategyEnum.REMOVE: new_membership_onboarding_remove_signal,
+        StrategyEnum.CANCEL: new_membership_onboarding_cancel_signal,
         StrategyEnum.NOOP: None,
     }
     return run_strategy(
@@ -223,7 +223,7 @@ class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
 
 
 class NewMembershipOnboardingCancelReceiver(BaseActionCancel):
-    signal = new_membership_onboarding_remove_signal.signal_name
+    signal = new_membership_onboarding_cancel_signal.signal_name
 
     def get_context(
         self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
@@ -261,7 +261,7 @@ new_membership_onboarding_update_signal.connect(
 )
 
 
-new_membership_onboarding_remove_receiver = NewMembershipOnboardingCancelReceiver()
-new_membership_onboarding_remove_signal.connect(
-    new_membership_onboarding_remove_receiver
+new_membership_onboarding_cancel_receiver = NewMembershipOnboardingCancelReceiver()
+new_membership_onboarding_cancel_signal.connect(
+    new_membership_onboarding_cancel_receiver
 )

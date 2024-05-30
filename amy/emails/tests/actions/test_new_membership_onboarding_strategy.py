@@ -96,7 +96,7 @@ class TestNewMembershipOnboardingStrategy(TestCase):
         # Act
         result = new_membership_onboarding_strategy(new_membership)
         # Assert
-        self.assertEqual(result, StrategyEnum.REMOVE)
+        self.assertEqual(result, StrategyEnum.CANCEL)
 
     def test_strategy_remove_because_no_tasks(self) -> None:
         # Arrange
@@ -105,7 +105,7 @@ class TestNewMembershipOnboardingStrategy(TestCase):
         # Act
         result = new_membership_onboarding_strategy(self.membership)
         # Assert
-        self.assertEqual(result, StrategyEnum.REMOVE)
+        self.assertEqual(result, StrategyEnum.CANCEL)
 
     def test_strategy_noop__membership_not_saved(self) -> None:
         # Act
@@ -175,14 +175,14 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
 
     @patch(
         "emails.actions.new_membership_onboarding."
-        "new_membership_onboarding_remove_signal"
+        "new_membership_onboarding_cancel_signal"
     )
-    def test_strategy_calls_remove_signal(
+    def test_strategy_calls_cancel_signal(
         self,
-        mock_new_membership_onboarding_remove_signal: MagicMock,
+        mock_new_membership_onboarding_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
-        strategy = StrategyEnum.REMOVE
+        strategy = StrategyEnum.CANCEL
         request = RequestFactory().get("/")
         membership = Membership.objects.create(
             name="Test Membership",
@@ -196,7 +196,7 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
         run_new_membership_onboarding_strategy(strategy, request, membership)
 
         # Assert
-        mock_new_membership_onboarding_remove_signal.send.assert_called_once_with(
+        mock_new_membership_onboarding_cancel_signal.send.assert_called_once_with(
             sender=membership,
             request=request,
             membership=membership,
@@ -210,11 +210,11 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
     )
     @patch(
         "emails.actions.new_membership_onboarding."
-        "new_membership_onboarding_remove_signal"
+        "new_membership_onboarding_cancel_signal"
     )
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_new_membership_onboarding_remove_signal: MagicMock,
+        mock_new_membership_onboarding_cancel_signal: MagicMock,
         mock_new_membership_onboarding_update_signal: MagicMock,
         mock_new_membership_onboarding_signal: MagicMock,
         mock_logger: MagicMock,
@@ -230,7 +230,7 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
         # Assert
         mock_new_membership_onboarding_signal.send.assert_not_called()
         mock_new_membership_onboarding_update_signal.send.assert_not_called()
-        mock_new_membership_onboarding_remove_signal.send.assert_not_called()
+        mock_new_membership_onboarding_cancel_signal.send.assert_not_called()
         mock_logger.debug.assert_called_once_with(
             f"Strategy {strategy} for {membership} is a no-op"
         )

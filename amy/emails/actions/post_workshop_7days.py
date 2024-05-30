@@ -13,7 +13,7 @@ from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     POST_WORKSHOP_7DAYS_SIGNAL_NAME,
     Signal,
-    post_workshop_7days_remove_signal,
+    post_workshop_7days_cancel_signal,
     post_workshop_7days_signal,
     post_workshop_7days_update_signal,
 )
@@ -74,7 +74,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     if not has_email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
     elif has_email_scheduled and not email_should_exist:
-        result = StrategyEnum.REMOVE
+        result = StrategyEnum.CANCEL
     elif has_email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
@@ -90,7 +90,7 @@ def run_post_workshop_7days_strategy(
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: post_workshop_7days_signal,
         StrategyEnum.UPDATE: post_workshop_7days_update_signal,
-        StrategyEnum.REMOVE: post_workshop_7days_remove_signal,
+        StrategyEnum.CANCEL: post_workshop_7days_cancel_signal,
         StrategyEnum.NOOP: None,
     }
     return run_strategy(
@@ -296,5 +296,5 @@ post_workshop_7days_signal.connect(post_workshop_7days_receiver)
 post_workshop_7days_update_receiver = PostWorkshop7DaysUpdateReceiver()
 post_workshop_7days_update_signal.connect(post_workshop_7days_update_receiver)
 
-post_workshop_7days_remove_receiver = PostWorkshop7DaysCancelReceiver()
-post_workshop_7days_remove_signal.connect(post_workshop_7days_remove_receiver)
+post_workshop_7days_cancel_receiver = PostWorkshop7DaysCancelReceiver()
+post_workshop_7days_cancel_signal.connect(post_workshop_7days_cancel_receiver)

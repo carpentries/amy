@@ -168,5 +168,5 @@ class PostWorkshop7DaysKwargs(TypedDict):
 class StrategyEnum(StrEnum):
     CREATE = "create"
     UPDATE = "update"
-    REMOVE = "remove"
+    CANCEL = "cancel"
     NOOP = "noop"

@@ -13,7 +13,7 @@ from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
     Signal,
-    host_instructors_introduction_remove_signal,
+    host_instructors_introduction_cancel_signal,
     host_instructors_introduction_signal,
     host_instructors_introduction_update_signal,
 )
@@ -75,7 +75,7 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
     if not has_email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
     elif has_email_scheduled and not email_should_exist:
-        result = StrategyEnum.REMOVE
+        result = StrategyEnum.CANCEL
     elif has_email_scheduled and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
@@ -91,7 +91,7 @@ def run_host_instructors_introduction_strategy(
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: host_instructors_introduction_signal,
         StrategyEnum.UPDATE: host_instructors_introduction_update_signal,
-        StrategyEnum.REMOVE: host_instructors_introduction_remove_signal,
+        StrategyEnum.CANCEL: host_instructors_introduction_cancel_signal,
         StrategyEnum.NOOP: None,
     }
     return run_strategy(
@@ -320,9 +320,9 @@ host_instructors_introduction_update_signal.connect(
     host_instructors_introduction_update_receiver
 )
 
-host_instructors_introduction_remove_receiver = (
+host_instructors_introduction_cancel_receiver = (
     HostInstructorsIntroductionCancelReceiver()
 )
-host_instructors_introduction_remove_signal.connect(
-    host_instructors_introduction_remove_receiver
+host_instructors_introduction_cancel_signal.connect(
+    host_instructors_introduction_cancel_receiver
 )
