@@ -20,6 +20,7 @@ from emails.signals import (
 from emails.types import PostWorkshop7DaysContext, PostWorkshop7DaysKwargs, StrategyEnum
 from emails.utils import (
     api_model_url,
+    log_condition_elements,
     scalar_value_none,
     shift_date_and_apply_current_utc_time,
 )
@@ -39,17 +40,22 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         and event.administrator.domain != "carpentries.org/community-lessons/"
     )
     end_date_in_future = event.end and event.end >= timezone.now().date()
-    logger.debug(f"{not_self_organised=}, {not_cldt=}, {end_date_in_future=}")
-
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
     carpentries_tag = event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
-    logger.debug(f"{active=}, {carpentries_tag=}")
-
     at_least_1_host = Task.objects.filter(role__name="host", event=event).count() >= 1
     at_least_1_instructor = (
         Task.objects.filter(role__name="instructor", event=event).count() >= 1
     )
-    logger.debug(f"{at_least_1_host=}, {at_least_1_instructor=}")
+
+    log_condition_elements(
+        not_self_organised=not_self_organised,
+        not_cldt=not_cldt,
+        end_date_in_future=end_date_in_future,
+        active=active,
+        carpentries_tag=carpentries_tag,
+        at_least_1_host=at_least_1_host,
+        at_least_1_instructor=at_least_1_instructor,
+    )
 
     email_should_exist = (
         not_self_organised

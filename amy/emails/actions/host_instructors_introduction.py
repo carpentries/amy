@@ -22,7 +22,12 @@ from emails.types import (
     HostInstructorsIntroductionKwargs,
     StrategyEnum,
 )
-from emails.utils import api_model_url, immediate_action, scalar_value_none
+from emails.utils import (
+    api_model_url,
+    immediate_action,
+    log_condition_elements,
+    scalar_value_none,
+)
 from recruitment.models import InstructorRecruitment
 from workshops.models import Event, Task
 
@@ -41,17 +46,20 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
     start_date_in_at_least_7days = event.start and event.start >= (
         timezone.now().date() + timedelta(days=7)
     )
-    logger.debug(
-        f"{no_open_recruitment=}, {not_self_organised=}, "
-        f"{start_date_in_at_least_7days=}"
-    )
-
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
     host = Task.objects.filter(role__name="host", event=event).first()
     at_least_2_instructors = (
         Task.objects.filter(role__name="instructor", event=event).count() >= 2
     )
-    logger.debug(f"{active=}, {host=}, {at_least_2_instructors=}")
+
+    log_condition_elements(
+        not_self_organised=not_self_organised,
+        no_open_recruitment=no_open_recruitment,
+        start_date_in_at_least_7days=start_date_in_at_least_7days,
+        active=active,
+        host=host,
+        at_least_2_instructors=at_least_2_instructors,
+    )
 
     email_should_exist = (
         not_self_organised

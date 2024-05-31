@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime, timedelta
 from functools import partial
 import logging
-from typing import Iterable, cast
+from typing import Any, Iterable, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -159,3 +159,7 @@ def scalar_value_url(type_: str, value: str) -> str:
 
 
 scalar_value_none = partial(scalar_value_url, "none", "")
+
+
+def log_condition_elements(**condition_elements: Any) -> None:
+    logger.debug(f"{condition_elements=}")

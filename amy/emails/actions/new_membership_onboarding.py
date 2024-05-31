@@ -21,7 +21,12 @@ from emails.types import (
     NewMembershipOnboardingKwargs,
     StrategyEnum,
 )
-from emails.utils import api_model_url, immediate_action, one_month_before
+from emails.utils import (
+    api_model_url,
+    immediate_action,
+    log_condition_elements,
+    one_month_before,
+)
 from fiscal.models import MembershipTask
 from workshops.models import Membership
 
@@ -40,15 +45,26 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
         template__signal=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
         state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
+    task_count = MembershipTask.objects.filter(
+        membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
+    ).count()
+
+    log_condition_elements(
+        **{
+            "membership.pk": membership.pk,
+            "membership.rolled_from_membership": getattr(
+                membership, "rolled_from_membership", None
+            ),
+            "task_count": task_count,
+        }
+    )
 
     # Membership can't be removed without removing the tasks first. This is when the
     # email would be de-scheduled.
     email_should_exist = (
         membership.pk
         and getattr(membership, "rolled_from_membership", None) is None
-        and MembershipTask.objects.filter(
-            membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
-        ).count()
+        and task_count
     )
 
     if not email_scheduled and email_should_exist:
