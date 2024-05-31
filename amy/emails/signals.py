@@ -35,6 +35,7 @@ class SignalNameEnum(StrEnum):
     host_instructors_introduction = "host_instructors_introduction"
     recruit_helpers = "recruit_helpers"
     post_workshop_7days = "post_workshop_7days"
+    new_self_organised_workshop = "new_self_organised_workshop"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -142,13 +143,9 @@ POST_WORKSHOP_7DAYS_SIGNAL_NAME = "post_workshop_7days"
     post_workshop_7days_cancel_signal,
 ) = triple_signals(POST_WORKSHOP_7DAYS_SIGNAL_NAME, PostWorkshop7DaysContext)
 
-NEW_SELF_ORGANISED_WORKSHOP_SIGNAL_NAME = "new_self_organised_workshop"
-(
-    new_self_organised_workshop_signal,
-    new_self_organised_workshop_update_signal,
-    new_self_organised_workshop_cancel_signal,
-) = triple_signals(
-    NEW_SELF_ORGANISED_WORKSHOP_SIGNAL_NAME, NewSelfOrganisedWorkshopContext
+new_self_organised_workshop_signal = Signal(
+    signal_name=SignalNameEnum.new_self_organised_workshop,
+    context_type=NewSelfOrganisedWorkshopContext,
 )
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
