@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime, timedelta
 from functools import partial
 import logging
-from typing import Any, Iterable, cast
+from typing import Any, Iterable, Literal, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -154,7 +154,9 @@ def api_model_url(model: str, pk: int) -> str:
     return f"api:{model}#{pk}"
 
 
-def scalar_value_url(type_: str, value: str) -> str:
+def scalar_value_url(
+    type_: Literal["str", "int", "float", "bool", "date", "none"], value: str
+) -> str:
     return f"value:{type_}#{value}"
 
 
