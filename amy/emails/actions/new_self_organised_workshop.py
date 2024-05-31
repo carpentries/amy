@@ -100,9 +100,13 @@ class NewSelfOrganisedWorkshopReceiver(BaseAction):
         **kwargs: Unpack[NewSelfOrganisedWorkshopKwargs],
     ) -> list[str]:
         self_organised_submission = context["self_organised_submission"]
-        return [
-            self_organised_submission.email
-        ] + self_organised_submission.additional_contact.split(TAG_SEPARATOR)
+        return list(
+            filter(
+                bool,
+                [self_organised_submission.email]
+                + self_organised_submission.additional_contact.split(TAG_SEPARATOR),
+            )
+        )
 
     def get_recipients_context_json(
         self,
@@ -111,20 +115,25 @@ class NewSelfOrganisedWorkshopReceiver(BaseAction):
     ) -> ToHeaderModel:
         self_organised_submission = context["self_organised_submission"]
         return ToHeaderModel(
-            [
-                {
-                    "api_uri": api_model_url(
-                        "selforganisedsubmission", self_organised_submission.pk
-                    ),
-                    "property": "email",
-                }
-            ]
+            (
+                [
+                    {
+                        "api_uri": api_model_url(
+                            "selforganisedsubmission", self_organised_submission.pk
+                        ),
+                        "property": "email",
+                    }
+                ]
+                if self_organised_submission.email
+                else []
+            )
             + [
                 # Note: this won't update automatically
                 {"value_uri": scalar_value_url("str", email)}
                 for email in self_organised_submission.additional_contact.split(
                     TAG_SEPARATOR
                 )
+                if email
             ],  # type: ignore
         )
 
