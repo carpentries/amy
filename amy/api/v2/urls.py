@@ -15,6 +15,7 @@ router.register("person", views.PersonViewSet)
 router.register("scheduledemail", views.ScheduledEmailViewSet)
 router.register("trainingprogress", views.TrainingProgressViewSet)
 router.register("trainingrequirement", views.TrainingRequirementViewSet)
+router.register("selforganisedsubmission", views.SelfOrganisedSubmissionViewSet)
 
 
 urlpatterns = [

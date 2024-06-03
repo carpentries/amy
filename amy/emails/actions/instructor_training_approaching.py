@@ -22,7 +22,7 @@ from emails.types import (
     InstructorTrainingApproachingKwargs,
     StrategyEnum,
 )
-from emails.utils import api_model_url, one_month_before
+from emails.utils import api_model_url, log_condition_elements, one_month_before
 from workshops.models import Event, Task
 
 logger = logging.getLogger("amy")
@@ -36,7 +36,12 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
         Task.objects.filter(event=event, role__name="instructor").count() >= 2
     )
     start_date_in_future = event.start and event.start >= timezone.now().date()
-    logger.debug(f"{has_TTT=}, {has_at_least_2_instructors=}, {start_date_in_future=}")
+
+    log_condition_elements(
+        has_TTT=has_TTT,
+        has_at_least_2_instructors=has_at_least_2_instructors,
+        start_date_in_future=start_date_in_future,
+    )
 
     email_should_exist = has_TTT and has_at_least_2_instructors and start_date_in_future
     logger.debug(f"{email_should_exist=}")

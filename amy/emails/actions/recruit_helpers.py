@@ -20,6 +20,7 @@ from emails.signals import (
 from emails.types import RecruitHelpersContext, RecruitHelpersKwargs, StrategyEnum
 from emails.utils import (
     api_model_url,
+    log_condition_elements,
     scalar_value_none,
     shift_date_and_apply_current_utc_time,
 )
@@ -38,14 +39,20 @@ def recruit_helpers_strategy(event: Event) -> StrategyEnum:
         timezone.now().date() + timedelta(days=14)
     )
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
-    logger.debug(f"{not_self_organised=}, {start_date_in_at_least_14days=}, {active=}")
-
     at_least_1_host = Task.objects.filter(role__name="host", event=event).count() >= 1
     at_least_1_instructor = (
         Task.objects.filter(role__name="instructor", event=event).count() >= 1
     )
     no_helpers = Task.objects.filter(role__name="helper", event=event).count() == 0
-    logger.debug(f"{at_least_1_host=}, {at_least_1_instructor=}, {no_helpers=}")
+
+    log_condition_elements(
+        not_self_organised=not_self_organised,
+        start_date_in_at_least_14days=start_date_in_at_least_14days,
+        active=active,
+        at_least_1_host=at_least_1_host,
+        at_least_1_instructor=at_least_1_instructor,
+        no_helpers=no_helpers,
+    )
 
     email_should_exist = (
         not_self_organised

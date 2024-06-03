@@ -4,6 +4,7 @@ from typing import TypedDict
 
 from django.http import HttpRequest
 
+from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
     Award,
@@ -163,6 +164,17 @@ class PostWorkshop7DaysContext(TypedDict):
 class PostWorkshop7DaysKwargs(TypedDict):
     event: Event
     event_end_date: date
+
+
+class NewSelfOrganisedWorkshopContext(TypedDict):
+    event: Event
+    self_organised_submission: SelfOrganisedSubmission
+    assignee: Person | None
+
+
+class NewSelfOrganisedWorkshopKwargs(TypedDict):
+    event: Event
+    self_organised_submission: SelfOrganisedSubmission
 
 
 class StrategyEnum(StrEnum):

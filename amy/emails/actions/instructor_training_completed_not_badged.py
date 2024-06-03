@@ -22,7 +22,12 @@ from emails.types import (
     InstructorTrainingCompletedNotBadgedKwargs,
     StrategyEnum,
 )
-from emails.utils import api_model_url, scalar_value_url, two_months_after
+from emails.utils import (
+    api_model_url,
+    log_condition_elements,
+    scalar_value_url,
+    two_months_after,
+)
 from workshops.models import Person, TrainingProgress, TrainingRequirement
 
 logger = logging.getLogger("amy")
@@ -81,6 +86,13 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
             ScheduledEmailStatus.SUCCEEDED,
         ],
     ).exists()
+
+    log_condition_elements(
+        **{
+            "person_annotated.passed_training": person_annotated.passed_training,
+            "all_requirements_passed": all_requirements_passed,
+        }
+    )
 
     email_should_exist = (
         bool(person_annotated.passed_training) and not all_requirements_passed
@@ -227,8 +239,8 @@ def get_recipients_context_json(
             {
                 "api_uri": api_model_url("person", context["person"].pk),
                 "property": "email",
-            }
-        ],  # type: ignore
+            }  # type: ignore
+        ],
     )
 
 

@@ -146,8 +146,11 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
             to_header=[person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {"api_uri": api_model_url("person", person.pk), "property": "email"}
-                ]  # type: ignore
+                    {
+                        "api_uri": api_model_url("person", person.pk),
+                        "property": "email",
+                    }  # type: ignore
+                ]
             ),
             generic_relation_obj=signup,
             author=None,

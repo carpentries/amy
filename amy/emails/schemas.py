@@ -15,18 +15,23 @@ def uri_validator(uri: str, expected_scheme: str = "https") -> str:
         raise ValueError("Invalid URI2")
 
 
+# custom URI for links to individual models in API, e.g. "api:person/1234"
 ApiUri = Annotated[str, AfterValidator(partial(uri_validator, expected_scheme="api"))]
+
 ValueUri = Annotated[
     str, AfterValidator(partial(uri_validator, expected_scheme="value"))
 ]
 
 
 class SinglePropertyLinkModel(BaseModel):
-    # custom URI for links to individual models in API, e.g. "api:person/1234"
     api_uri: ApiUri
     property: str
 
 
-ToHeaderModel = RootModel[list[SinglePropertyLinkModel]]
+class SingleValueLinkModel(BaseModel):
+    value_uri: ValueUri
+
+
+ToHeaderModel = RootModel[list[SinglePropertyLinkModel | SingleValueLinkModel]]
 
 ContextModel = RootModel[dict[str, ApiUri | list[ApiUri] | ValueUri]]

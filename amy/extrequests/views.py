@@ -1,6 +1,7 @@
 import csv
 import io
 import logging
+from typing import cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -15,16 +16,16 @@ from django.urls import reverse
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.actions import SelfOrganisedRequestAction
-from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
-from autoemails.models import EmailTemplate, Trigger
+from autoemails.models import EmailTemplate
 from consents.models import Term, TermOption, TrainingRequestConsent
 from consents.util import reconsent_for_term_option_type
+from emails.actions.new_self_organised_workshop import new_self_organised_workshop_check
 from emails.actions.post_workshop_7days import (
     post_workshop_7days_strategy,
     run_post_workshop_7days_strategy,
 )
+from emails.signals import new_self_organised_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
     SelfOrganisedSubmissionFilter,
@@ -113,12 +114,13 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "object"
     template_name = "requests/workshoprequest.html"
     pk_url_kwarg = "request_id"
+    object: WorkshopRequest
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Workshop request #{}".format(self.get_object().pk)
 
-        member_code = self.get_object().member_code
+        member_code = cast(WorkshopRequest, self.get_object()).member_code
         context["membership"] = get_membership_or_none_from_code(member_code)
 
         person_lookup_form = AdminLookupForm()
@@ -174,7 +176,7 @@ class WorkshopRequestAcceptEvent(
 
         context["title"] = "Accept and create a new event"
 
-        member_code = self.get_other_object().member_code
+        member_code = cast(WorkshopRequest, self.get_other_object()).member_code
         context["membership"] = get_membership_or_none_from_code(member_code)
 
         return context
@@ -186,9 +188,9 @@ class WorkshopRequestAcceptEvent(
         self.object = form.save()
 
         event = self.object
-        wr = self.other_object
+        workshop_request = cast(WorkshopRequest, self.other_object)
 
-        person = wr.host()
+        person = workshop_request.host()
         if person:
             Task.objects.create(
                 event=event, person=person, role=Role.objects.get(name="host")
@@ -215,9 +217,9 @@ class WorkshopRequestAcceptEvent(
             event,
         )
 
-        wr.state = "a"
-        wr.event = event
-        wr.save()
+        workshop_request.state = "a"
+        workshop_request.event = event
+        workshop_request.save()
         return super().form_valid(form)
 
 
@@ -248,6 +250,7 @@ class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "object"
     template_name = "requests/workshopinquiry.html"
     pk_url_kwarg = "inquiry_id"
+    object: WorkshopInquiryRequest
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -310,9 +313,9 @@ class WorkshopInquiryAcceptEvent(
         self.object = form.save()
 
         event = self.object
-        wr = self.other_object
+        inquiry = cast(WorkshopInquiryRequest, self.other_object)
 
-        person = wr.host()
+        person = inquiry.host()
         if person:
             Task.objects.create(
                 event=event, person=person, role=Role.objects.get(name="host")
@@ -339,9 +342,9 @@ class WorkshopInquiryAcceptEvent(
             event,
         )
 
-        wr.state = "a"
-        wr.event = event
-        wr.save()
+        inquiry.state = "a"
+        inquiry.event = event
+        inquiry.save()
         return super().form_valid(form)
 
 
@@ -372,6 +375,7 @@ class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "object"
     template_name = "requests/selforganisedsubmission.html"
     pk_url_kwarg = "submission_id"
+    object: SelfOrganisedSubmission
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -426,6 +430,7 @@ class SelfOrganisedSubmissionAcceptEvent(
     queryset_other = SelfOrganisedSubmission.objects.filter(state="p")
     context_other_object_name = "object"
     pk_url_kwarg = "submission_id"
+    other_object: SelfOrganisedSubmission
 
     def get_form_kwargs(self):
         """Extend form kwargs with `initial` values.
@@ -494,31 +499,31 @@ class SelfOrganisedSubmissionAcceptEvent(
         self.object = form.save()
 
         event = self.object
-        wr = self.other_object
+        submission = cast(SelfOrganisedSubmission, self.other_object)
 
-        person = wr.host()
+        person = submission.host()
         if person:
             Task.objects.create(
                 event=event, person=person, role=Role.objects.get(name="host")
             )
 
-        wr.state = "a"
-        wr.event = event
-        wr.save()
+        submission.state = "a"
+        submission.event = event
+        submission.save()
 
-        if SelfOrganisedRequestAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=SelfOrganisedRequestAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True, action="self-organised-request-form"
-                ),
-                context_objects=objs,
-                object_=event,
-                request=self.request,
-            )
+        # if SelfOrganisedRequestAction.check(event):
+        #     objs = dict(event=event, request=wr)
+        #     jobs, rqjobs = ActionManageMixin.add(
+        #         action_class=SelfOrganisedRequestAction,
+        #         logger=logger,
+        #         scheduler=scheduler,
+        #         triggers=Trigger.objects.filter(
+        #             active=True, action="self-organised-request-form"
+        #         ),
+        #         context_objects=objs,
+        #         object_=event,
+        #         request=self.request,
+        #     )
 
         # if PostWorkshopAction.check(event):
         #     objs = dict(event=event, request=wr)
@@ -540,6 +545,14 @@ class SelfOrganisedSubmissionAcceptEvent(
             self.request,
             event,
         )
+
+        if new_self_organised_workshop_check(event):
+            new_self_organised_workshop_signal.send(
+                sender=event,
+                request=self.request,
+                event=event,
+                self_organised_submission=submission,
+            )
 
         return super().form_valid(form)
 

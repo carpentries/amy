@@ -62,8 +62,8 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
                 {
                     "api_uri": api_model_url("person", context["person"].pk),
                     "property": "email",
-                },
-            ],  # type: ignore
+                },  # type: ignore
+            ],
         )
 
 

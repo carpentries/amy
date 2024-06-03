@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from emails.models import MAX_LENGTH, ScheduledEmail
+from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
     Award,
@@ -307,4 +308,50 @@ class TrainingRequirementSerializer(serializers.ModelSerializer):
             "url_required",
             "event_required",
             "involvement_required",
+        )
+
+
+class SelfOrganisedSubmissionSerializer(serializers.ModelSerializer):
+    event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
+    additional_contact = serializers.CharField()
+    country = serializers.CharField()
+    workshop_types = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="name"
+    )
+
+    class Meta:
+        model = SelfOrganisedSubmission
+        fields = (
+            "pk",
+            "assigned_to",
+            "state",
+            "created_at",
+            "last_updated_at",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+            "event",
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_other_name",
+            "institution_other_URL",
+            "institution_department",
+            "member_code",
+            "online_inperson",
+            "workshop_listed",
+            "public_event",
+            "public_event_other",
+            "additional_contact",
+            "start",
+            "end",
+            "workshop_url",
+            "workshop_format",
+            "workshop_format_other",
+            "workshop_types",
+            "workshop_types_other",
+            "workshop_types_other_explain",
+            "country",
+            "language",
         )

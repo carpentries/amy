@@ -17,11 +17,13 @@ from api.v2.serializers import (
     PersonSerializer,
     ScheduledEmailLogDetailsSerializer,
     ScheduledEmailSerializer,
+    SelfOrganisedSubmissionSerializer,
     TrainingProgressSerializer,
     TrainingRequirementSerializer,
 )
 from emails.controller import EmailController
 from emails.models import ScheduledEmail, ScheduledEmailStatus
+from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
     Award,
@@ -250,4 +252,19 @@ class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet):
     )
     queryset = TrainingRequirement.objects.order_by("pk").all()
     serializer_class = TrainingRequirementSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class SelfOrganisedSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+
+    queryset = SelfOrganisedSubmission.objects.order_by("pk").all()
+    serializer_class = SelfOrganisedSubmissionSerializer
     pagination_class = StandardResultsSetPagination
