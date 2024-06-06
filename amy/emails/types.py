@@ -177,6 +177,17 @@ class NewSelfOrganisedWorkshopKwargs(TypedDict):
     self_organised_submission: SelfOrganisedSubmission
 
 
+class AskForWebsiteContext(TypedDict):
+    event: Event
+    instructors: list[Person]
+    assignee: Person | None
+
+
+class AskForWebsiteKwargs(TypedDict):
+    event: Event
+    event_start_date: date
+
+
 class StrategyEnum(StrEnum):
     CREATE = "create"
     UPDATE = "update"
