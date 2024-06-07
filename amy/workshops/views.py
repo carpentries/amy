@@ -57,6 +57,10 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
+from emails.actions.ask_for_website import (
+    ask_for_website_strategy,
+    run_ask_for_website_strategy,
+)
 from emails.actions.host_instructors_introduction import (
     host_instructors_introduction_strategy,
     run_host_instructors_introduction_strategy,
@@ -1361,6 +1365,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             self.object,
         )
 
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
         return res
 
 
@@ -1441,6 +1451,12 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
 
         run_post_workshop_7days_strategy(
             post_workshop_7days_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object),
             self.request,
             self.object,
         )
@@ -1955,6 +1971,12 @@ class TaskCreate(
             event,
         )
 
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(event),
+            self.request,
+            event,
+        )
+
         # return remembered results
         return res
 
@@ -2176,6 +2198,12 @@ class TaskUpdate(
             self.object.event,
         )
 
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
         return res
 
 
@@ -2301,6 +2329,12 @@ class TaskDelete(
 
         run_post_workshop_7days_strategy(
             post_workshop_7days_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object.event),
             self.request,
             self.object.event,
         )
