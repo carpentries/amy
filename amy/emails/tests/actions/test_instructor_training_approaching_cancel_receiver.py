@@ -66,7 +66,7 @@ class TestInstructorTrainingApproachingRemoveReceiver(TestCase):
             # Assert
             mock_logger.debug.assert_called_once_with(
                 "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_training_approaching_remove"
+                "instructor_training_approaching_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:

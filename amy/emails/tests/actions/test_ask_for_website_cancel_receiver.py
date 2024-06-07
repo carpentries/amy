@@ -54,7 +54,7 @@ class TestAskForWebsiteRemoveReceiver(TestCase):
             ask_for_website_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping ask_for_website_remove"
+                "EMAIL_MODULE feature flag not set, skipping ask_for_website_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:

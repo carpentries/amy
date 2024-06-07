@@ -66,7 +66,7 @@ class TestPostWorkshop7DaysRemoveReceiver(TestCase):
             post_workshop_7days_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping post_workshop_7days_remove"
+                "EMAIL_MODULE feature flag not set, skipping post_workshop_7days_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:

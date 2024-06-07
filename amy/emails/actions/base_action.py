@@ -180,7 +180,7 @@ class BaseActionCancel(BaseAction):
         raise NotImplementedError()
 
     def __call__(self, sender: Any, **kwargs) -> None:
-        if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_remove", **kwargs):
+        if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_cancel", **kwargs):
             return
 
         request = kwargs["request"]
