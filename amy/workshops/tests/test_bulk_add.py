@@ -1,4 +1,3 @@
-# coding: utf-8
 import cgi
 from datetime import date, timedelta
 from io import StringIO
@@ -6,16 +5,12 @@ from io import StringIO
 from django.contrib.sessions.serializers import JSONSerializer
 from django.urls import reverse
 
-from autoemails.models import EmailTemplate, RQJob, Trigger
-from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
-import workshops.utils.person_upload
 from workshops.utils.person_upload import (
     upload_person_task_csv,
     verify_upload_person_task,
 )
-import workshops.views
 
 
 class UploadPersonTaskCSVTestCase(TestBase):
@@ -557,7 +552,7 @@ Ron,Weasley,ron@hogwarts.edu,foobar,learner
 """
 
 
-class TestBulkUploadAddsEmailAction(FakeRedisTestCaseMixin, CSVBulkUploadTestBase):
+class TestBulkUploadAddsEmailAction(CSVBulkUploadTestBase):
     def setUp(self):
         super().setUp()
         Role.objects.create(name="host")
@@ -594,38 +589,12 @@ class TestBulkUploadAddsEmailAction(FakeRedisTestCaseMixin, CSVBulkUploadTestBas
         test_event_1.tags.set(
             Tag.objects.filter(name__in=["SWC", "DC", "LC", "automated-email"])
         )
-        template = EmailTemplate.objects.create(
-            slug="sample-template",
-            subject="Welcome!",
-            to_header="",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="",
-            body_template="# Welcome",
-        )
-        Trigger.objects.create(action="new-instructor", template=template)
-
-        # save scheduler and connection data
-        self._saved_scheduler1 = workshops.views.scheduler
-        self._saved_scheduler2 = workshops.utils.person_upload.scheduler
-        self._saved_redis_connection = workshops.views.redis_connection
-        # overwrite them
-        workshops.views.scheduler = self.scheduler
-        workshops.utils.person_upload.scheduler = self.scheduler
-        workshops.views.redis_connection = self.connection
 
         self.csv = """personal,family,email,event,role
 Harry,Potter,harry@hogwarts.edu,test-event,host
 Hermione,Granger,hermione@hogwarts.edu,test-event,instructor
 Ron,Weasley,ron@hogwarts.edu,test-event,instructor
 """
-
-    def tearDown(self):
-        super().tearDown()
-        workshops.views.scheduler = self._saved_scheduler1
-        workshops.utils.person_upload.scheduler = self._saved_scheduler2
-        workshops.views.redis_connection = self._saved_redis_connection
 
     def test_jobs_created(self):
         data, _ = upload_person_task_csv(StringIO(self.csv))
@@ -668,8 +637,6 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
             event__slug="test-event",
         )
         self.assertQuerySetEqual(tasks_pre, [])
-        rqjobs_pre = RQJob.objects.all()
-        self.assertQuerySetEqual(rqjobs_pre, [])
 
         # send data in
         rv = self.client.post(
@@ -689,11 +656,3 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
             event__slug="test-event",
         )
         self.assertEqual(len(tasks_post), 3)
-        # 2 jobs created (because only 2 entries have right role='instructor')
-        rqjobs_post = RQJob.objects.all()
-        self.assertEqual(len(rqjobs_post), 2)
-
-        # ensure the job ids are mentioned in the page output
-        content = rv.content.decode("utf-8")  # type: ignore
-        for job in rqjobs_post:
-            self.assertIn(job.job_id, content)

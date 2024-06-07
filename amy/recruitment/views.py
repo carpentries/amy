@@ -17,10 +17,6 @@ from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
 import django_rq
 
-from autoemails.actions import DeclinedInstructorsAction, NewInstructorAction
-from autoemails.base_views import ActionManageMixin
-from autoemails.job import Job
-from autoemails.models import RQJob, Trigger
 from emails.signals import (
     admin_signs_instructor_up_for_workshop_signal,
     instructor_confirmed_for_workshop_signal,
@@ -430,7 +426,6 @@ class InstructorRecruitmentSignupChangeState(
             person=person,
             role=role,
         )
-        self.add_automated_email(task)
 
         instructor_confirmed_for_workshop_signal.send(
             sender=signup,
@@ -457,7 +452,6 @@ class InstructorRecruitmentSignupChangeState(
         except Task.DoesNotExist:
             pass
         else:
-            self.remove_automated_email(task)
             task.delete()
 
         instructor_declined_from_workshop_signal.send(
@@ -467,34 +461,6 @@ class InstructorRecruitmentSignupChangeState(
             event_id=event.pk,
             instructor_recruitment_id=signup.recruitment.pk,
             instructor_recruitment_signup_id=signup.pk,
-        )
-
-    def add_automated_email(self, task: Task) -> tuple[list[Job], list[RQJob]]:
-        trigger_name = "new-instructor"
-        triggers = Trigger.objects.filter(active=True, action=trigger_name)
-        return ActionManageMixin.add(
-            action_class=NewInstructorAction,
-            logger=logger,
-            scheduler=scheduler,
-            triggers=triggers,
-            context_objects=dict(task=task, event=task.event),
-            object_=task,
-            request=self.request,
-        )
-
-    def remove_automated_email(self, task: Task) -> None:
-        trigger_name = "new-instructor"
-        jobs = task.rq_jobs.filter(trigger__action=trigger_name).values_list(
-            "job_id", flat=True
-        )
-        return ActionManageMixin.remove(
-            action_class=NewInstructorAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs,
-            object_=task,
-            request=self.request,
         )
 
     def post(self, request, *args, **kwargs):
@@ -560,56 +526,8 @@ class InstructorRecruitmentChangeState(
                 self.request,
                 f"Successfully closed recruitment {self.object}.",
             )
-            # self.send_introduction_email(self.object.event, self.object)
-            self.send_thank_you_to_declined(self.object)
 
         return HttpResponseRedirect(self.get_success_url())
-
-    # Disabled because HostIntroductionAction is disabled:
-    # def send_introduction_email(
-    #     self, event: Event, recruitment: InstructorRecruitment
-    # ) -> None:
-    #     if InstructorsHostIntroductionAction.check(event):
-    #         triggers = Trigger.objects.filter(
-    #             active=True, action="instructors-host-introduction"
-    #         )
-    #         ActionManageMixin.add(
-    #             action_class=InstructorsHostIntroductionAction,
-    #             logger=logger,
-    #             scheduler=scheduler,
-    #             triggers=triggers,
-    #             context_objects=dict(event=event, recruitment=recruitment),
-    #             object_=event,
-    #             request=self.request,
-    #         )
-    #     else:
-    #         messages.warning(
-    #             self.request,
-    #             "Instructors-Host introduction email was not sent due to "
-    #             "unmet conditions.",
-    #         )
-
-    def send_thank_you_to_declined(self, recruitment: InstructorRecruitment) -> None:
-        declined_instructor_signups = recruitment.signups.filter(state="d")
-        triggers = Trigger.objects.filter(
-            active=True, action=DeclinedInstructorsAction.trigger_name
-        )
-
-        for signup in declined_instructor_signups:
-            if DeclinedInstructorsAction.check(signup):
-                ActionManageMixin.add(
-                    action_class=DeclinedInstructorsAction,
-                    logger=logger,
-                    scheduler=scheduler,
-                    triggers=triggers,
-                    context_objects=dict(
-                        recruitment=recruitment,
-                        event=recruitment.event,
-                        person=signup.person,
-                    ),
-                    object_=signup,
-                    request=self.request,
-                )
 
     @staticmethod
     def _validate_for_reopening(recruitment: InstructorRecruitment) -> bool:

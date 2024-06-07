@@ -8,9 +8,6 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 import django_rq
 
-from autoemails.actions import NewInstructorAction, NewSupportingInstructorAction
-from autoemails.base_views import ActionManageMixin
-from autoemails.models import Trigger
 from workshops.exceptions import InternalError
 from workshops.models import Event, Person, Role, Task
 from workshops.utils.usernames import create_username
@@ -274,47 +271,5 @@ def create_uploaded_persons_tasks(data, request=None):
 
             except ObjectDoesNotExist as e:
                 raise ObjectDoesNotExist('{0} (for "{1}")'.format(str(e), row_repr))
-
-    jobs_created = []
-    rqjobs_created = []
-
-    # for each created task, try to add a new-(supporting)-instructor action
-    with transaction.atomic():
-        for task in tasks_created:
-            # conditions check out
-            if NewInstructorAction.check(task):
-                objs = dict(task=task, event=task.event)
-                # prepare context and everything and create corresponding RQJob
-                jobs, rqjobs = ActionManageMixin.add(
-                    action_class=NewInstructorAction,
-                    logger=logger,
-                    scheduler=scheduler,
-                    triggers=Trigger.objects.filter(
-                        active=True, action="new-instructor"
-                    ),
-                    context_objects=objs,
-                    object_=task,
-                    request=request,
-                )
-                jobs_created += jobs
-                rqjobs_created += rqjobs
-
-            # conditions check out
-            if NewSupportingInstructorAction.check(task):
-                objs = dict(task=task, event=task.event)
-                # prepare context and everything and create corresponding RQJob
-                jobs, rqjobs = ActionManageMixin.add(
-                    action_class=NewSupportingInstructorAction,
-                    logger=logger,
-                    scheduler=scheduler,
-                    triggers=Trigger.objects.filter(
-                        active=True, action="new-supporting-instructor"
-                    ),
-                    context_objects=objs,
-                    object_=task,
-                    request=request,
-                )
-                jobs_created += jobs
-                rqjobs_created += rqjobs
 
     return persons_created, tasks_created
