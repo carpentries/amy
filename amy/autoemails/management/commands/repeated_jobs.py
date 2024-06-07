@@ -82,5 +82,6 @@ class Command(BaseCommand):
     """
 
     def handle(self, *args, **kwargs):
-        clear_scheduled_jobs()  # This is necessary to prevent dupes
-        register_scheduled_jobs()
+        print("Management command disabled because the old email system is disabled.")
+        # clear_scheduled_jobs()  # This is necessary to prevent dupes
+        # register_scheduled_jobs()
