@@ -21,7 +21,6 @@ from autoemails.actions import DeclinedInstructorsAction, NewInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.job import Job
 from autoemails.models import RQJob, Trigger
-from autoemails.utils import safe_next_or_default_url
 from emails.signals import (
     admin_signs_instructor_up_for_workshop_signal,
     instructor_confirmed_for_workshop_signal,
@@ -45,6 +44,7 @@ from workshops.base_views import (
 )
 from workshops.models import Event, Person, Role, Task
 from workshops.utils.access import OnlyForAdminsMixin
+from workshops.utils.urls import safe_next_or_default_url
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 

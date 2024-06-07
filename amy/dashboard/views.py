@@ -25,7 +25,6 @@ from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 from flags.sources import get_flags
 
-from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, Term, TermEnum
@@ -65,6 +64,7 @@ from workshops.models import (
     TrainingRequirement,
 )
 from workshops.utils.access import admin_required, login_required
+from workshops.utils.urls import safe_next_or_default_url
 
 # Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = [TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE, TermEnum.MAY_PUBLISH_NAME]
