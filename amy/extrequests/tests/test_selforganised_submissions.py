@@ -1,16 +1,12 @@
 from datetime import date, timedelta
-from unittest import skip
 
 from django.conf import settings
 from django.db.models import QuerySet
 from django.urls import reverse
 from requests_mock import Mocker
 
-from autoemails.models import EmailTemplate, RQJob, Trigger
-from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import SelfOrganisedSubmissionBaseForm
 from extrequests.models import SelfOrganisedSubmission
-import extrequests.views
 from workshops.forms import EventCreateForm
 from workshops.models import Curriculum, Event, Language, Organization, Role, Tag, Task
 from workshops.tests.base import FormTestHelper, TestBase
@@ -701,103 +697,3 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
                 init = list(init)
                 value = list(value)
             self.assertEqual(init, value, f"Issue with {key}")
-
-
-class TestAcceptSelfOrganisedSubmissionAddsEmailActions(
-    FakeRedisTestCaseMixin, TestBase
-):
-    def setUp(self):
-        super().setUp()
-        self._setUpRoles()
-        self._setUpUsersAndLogin()
-        # we're missing some tags
-        Tag.objects.bulk_create(
-            [
-                Tag(name="automated-email", priority=0),
-                Tag(name="SWC", priority=10),
-                Tag(name="DC", priority=20),
-                Tag(name="LC", priority=30),
-                Tag(name="TTT", priority=40),
-            ]
-        )
-
-        self.sos = SelfOrganisedSubmission.objects.create(
-            state="p",
-            personal="Harry",
-            family="Potter",
-            email="harry@hogwarts.edu",
-            institution_other_name="Hogwarts",
-            workshop_url="",
-            workshop_format="",
-            workshop_format_other="",
-            workshop_types_other_explain="",
-            language=Language.objects.get(name="English"),
-            additional_contact="hg@magic.uk",
-        )
-        self.sos.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
-
-        template1 = EmailTemplate.objects.create(
-            slug="sample-template1",
-            subject="Welcome to {{ site.name }}",
-            to_header="recipient@address.com",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="{{ reply_to }}",
-            body_template="Sample text.",
-        )
-        self.trigger1 = Trigger.objects.create(
-            action="self-organised-request-form",
-            template=template1,
-        )
-
-        self.url = reverse("selforganisedsubmission_accept_event", args=[self.sos.pk])
-
-        # save scheduler and connection data
-        self._saved_scheduler = extrequests.views.scheduler
-        self._saved_redis_connection = extrequests.views.redis_connection
-        # overwrite them
-        extrequests.views.scheduler = self.scheduler
-        extrequests.views.redis_connection = self.connection
-
-    def tearDown(self):
-        super().tearDown()
-        extrequests.views.scheduler = self._saved_scheduler
-        extrequests.views.redis_connection = self._saved_redis_connection
-
-    @skip("Test disabled because SelfOrganisedRequestAction is disabled")
-    def test_jobs_created(self):
-        data = {
-            "slug": "xxxx-xx-xx-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.get(domain="self-organized").pk,
-            "start": date.today() + timedelta(days=7),
-            "end": date.today() + timedelta(days=8),
-            "tags": Tag.objects.filter(name__in=["automated-email", "LC"]).values_list(
-                "pk", flat=True
-            ),
-        }
-
-        # no jobs scheduled
-        rqjobs_pre = RQJob.objects.all()
-        self.assertQuerySetEqual(rqjobs_pre, [])
-
-        # send data in
-        rv = self.client.post(self.url, data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        event = Event.objects.get(slug="xxxx-xx-xx-test-event")
-        request = event.selforganisedsubmission
-        self.assertEqual(request, self.sos)
-
-        # 1 job created
-        rqjobs_post = RQJob.objects.all()
-        self.assertEqual(len(rqjobs_post), 1)
-
-        # ensure the job ids are mentioned in the page output
-        content = rv.content.decode("utf-8")
-        for job in rqjobs_post:
-            self.assertIn(job.job_id, content)
-
-        # ensure 1 job is for SelfOrganisedRequestAction
-        rqjobs_post[0].trigger = self.trigger1

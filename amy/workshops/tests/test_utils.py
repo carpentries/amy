@@ -28,6 +28,7 @@ from workshops.utils.metadata import (
 )
 from workshops.utils.pagination import Paginator
 from workshops.utils.reports import reports_link, reports_link_hash
+from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.usernames import create_username
 from workshops.utils.views import assign
 
@@ -1287,3 +1288,41 @@ class TestFeatureFlagEnabled(TestCase):
 
             self.assertEqual(test_func(), None)
             mock_logger.debug.assert_called_once_with(DEBUG_MSG)
+
+
+class TestSafeNextOrDefaultURL(TestCase):
+    def test_default_url_if_next_empty(self):
+        # Arrange
+        next_url = None
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, default_url)
+
+    def test_default_url_if_next_not_provided(self):
+        # Arrange
+        next_url = ""
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, default_url)
+
+    def test_default_url_if_next_not_safe(self):
+        # Arrange
+        next_url = "https://google.com"
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, default_url)
+
+    def test_next_url_if_next_safe(self):
+        # Arrange
+        next_url = "/admin/"
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, next_url)

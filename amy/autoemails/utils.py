@@ -1,8 +1,6 @@
 from datetime import UTC
-from typing import Optional, Union
+from typing import Union
 
-from django.conf import settings
-from django.utils.http import url_has_allowed_host_and_scheme
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
@@ -59,11 +57,3 @@ def check_status(job: Union[str, Job], scheduler):
         return job.get_status() or "scheduled"
     else:
         return job.get_status() or "cancelled"
-
-
-def safe_next_or_default_url(next_url: Optional[str], default: str) -> str:
-    if next_url is not None and url_has_allowed_host_and_scheme(
-        next_url, settings.ALLOWED_HOSTS
-    ):
-        return next_url
-    return default

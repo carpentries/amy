@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Iterable
+from typing import Any
 from urllib.parse import unquote
 
 from django.contrib import admin, messages
@@ -8,9 +8,7 @@ from django.core.exceptions import ValidationError
 from django.http.response import HttpResponseRedirect
 import django_rq
 
-from autoemails.actions import NewConsentRequiredAction
 from consents.models import Consent, Term, TermOption
-from consents.util import send_consent_email
 
 logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")
@@ -127,27 +125,38 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
     readonly_fields = ("rq_jobs", "archived_at")
 
     def email_users_missing_consent(self, request, queryset):
-        if not self.check_terms_for_consent_email(request, queryset):
-            return
-        for term in queryset:
-            send_consent_email(request, term)
+        messages.error(
+            request,
+            "Error: action disabled because old email system is disabled.",
+        )
+        return
+        # if not self.check_terms_for_consent_email(request, queryset):
+        #     return
+        # for term in queryset:
+        #     send_consent_email(request, term)
 
     def email_users_to_reconsent(self, request, queryset):
-        if not self.check_terms_for_consent_email(request, queryset):
-            return
-        Consent.archive_all_for_term(queryset)
-        for term in queryset:
-            send_consent_email(request, term)
+        messages.error(
+            request,
+            "Error: action disabled because old email system is disabled.",
+        )
+        return
+        # if not self.check_terms_for_consent_email(request, queryset):
+        #     return
+        # Consent.archive_all_for_term(queryset)
+        # for term in queryset:
+        #     send_consent_email(request, term)
 
-    def check_terms_for_consent_email(self, request, terms: Iterable[Term]) -> bool:
-        for term in terms:
-            if not NewConsentRequiredAction.check(term):
-                messages.error(
-                    request,
-                    f"Error: Selected term {term.slug} is not valid for emailing users",
-                )
-                return False
-        return True
+    # def check_terms_for_consent_email(self, request, terms: Iterable[Term]) -> bool:
+    #     for term in terms:
+    #         if not NewConsentRequiredAction.check(term):
+    #             messages.error(
+    #                 request,
+    #                 f"Error: Selected term {term.slug} is not valid for emailing "
+    #                 "users",
+    #             )
+    #             return False
+    #     return True
 
     def warning_message(self, obj: Any) -> str:
         message = super().warning_message(obj)

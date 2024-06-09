@@ -5,6 +5,7 @@ from django.dispatch import Signal as DjangoSignal
 
 from emails.types import (
     AdminSignsInstructorUpContext,
+    AskForWebsiteContext,
     HostInstructorsIntroductionContext,
     InstructorBadgeAwardedContext,
     InstructorConfirmedContext,
@@ -36,6 +37,7 @@ class SignalNameEnum(StrEnum):
     recruit_helpers = "recruit_helpers"
     post_workshop_7days = "post_workshop_7days"
     new_self_organised_workshop = "new_self_organised_workshop"
+    ask_for_website = "ask_for_website"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -147,5 +149,12 @@ new_self_organised_workshop_signal = Signal(
     signal_name=SignalNameEnum.new_self_organised_workshop,
     context_type=NewSelfOrganisedWorkshopContext,
 )
+
+ASK_FOR_WEBSITE_SIGNAL_NAME = "ask_for_website"
+(
+    ask_for_website_signal,
+    ask_for_website_update_signal,
+    ask_for_website_cancel_signal,
+) = triple_signals(ASK_FOR_WEBSITE_SIGNAL_NAME, AskForWebsiteContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]

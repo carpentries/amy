@@ -9,11 +9,12 @@ import django_rq
 
 from workshops.models import WorkshopRequest
 from workshops.utils.access import admin_required
+from workshops.utils.urls import safe_next_or_default_url
 
 from .actions import GenericAction
 from .forms import GenericEmailScheduleForm
 from .models import EmailTemplate, Trigger
-from .utils import check_status, safe_next_or_default_url, scheduled_execution_time
+from .utils import check_status, scheduled_execution_time
 
 logger = logging.getLogger("amy")
 scheduler = django_rq.get_scheduler("default")

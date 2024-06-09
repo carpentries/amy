@@ -61,7 +61,7 @@ class TestHostInstructorsIntroductionRemoveReceiver(TestCase):
             recruit_helpers_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping recruit_helpers_remove"
+                "EMAIL_MODULE feature flag not set, skipping recruit_helpers_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:

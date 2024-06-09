@@ -548,7 +548,7 @@ class TestBaseActionCancel(TestCase):
 
         # Assert
         mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_remove", **kwargs
+            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
         )
         mock_person_from_request.assert_called_once_with(request)
         mock_cancel_email.assert_called_once_with(
@@ -586,7 +586,7 @@ class TestBaseActionCancel(TestCase):
 
         # Assert
         mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_remove", **kwargs
+            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
         )
         self.assertEqual(mock_person_from_request.call_count, 2)
         self.assertEqual(mock_cancel_email.call_count, 2)
@@ -610,7 +610,7 @@ class TestBaseActionCancel(TestCase):
 
         # Assert
         mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_remove", **kwargs
+            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
         )
         mock_cancel_email.assert_not_called()
         self.assertIsNone(result)
@@ -635,7 +635,7 @@ class TestBaseActionCancel(TestCase):
 
         # Assert
         mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_remove", **kwargs
+            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
         )
         mock_cancel_email.assert_not_called()
         mock_action_cancelled.assert_not_called()
