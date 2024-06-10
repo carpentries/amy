@@ -226,6 +226,40 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
             "(({{ event.slug }})!"
         ),
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("2f0058b5-cfc6-420c-90e5-2b8160eab7ec"),
+        name="New Self-Organised Workshop",
+        signal=SignalNameEnum.new_self_organised_workshop,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="{{ workshop_host.fullname }} ({{ event.slug }}) Workshop",
+        body=(
+            "Thanks for your Self-Organised workshop submission at {{ event.venue }} on"
+            " {{ event.human_readable_date }}. Your workshop has been added to our "
+            "database."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("1b7cff0e-5102-4c88-9bd5-efba57078580"),
+        name="Ask for website",
+        signal=SignalNameEnum.ask_for_website,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject=(
+            "Workshop Website needed for workshop at {{ event.venue }} on "
+            "{{ event.human_readable_date }}"
+        ),
+        body=(
+            "This is a friendly reminder to please share with me the workshop "
+            "website once it has been completed."
+        ),
+    ),
 ]
 
 
