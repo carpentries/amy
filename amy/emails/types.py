@@ -170,6 +170,8 @@ class NewSelfOrganisedWorkshopContext(TypedDict):
     event: Event
     self_organised_submission: SelfOrganisedSubmission
     assignee: Person | None
+    workshop_host: Organization
+    short_notice: bool
 
 
 class NewSelfOrganisedWorkshopKwargs(TypedDict):

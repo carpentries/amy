@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from typing import Unpack
 
@@ -66,7 +66,10 @@ class NewSelfOrganisedWorkshopReceiver(BaseAction):
             "assignee": self_organised_submission.assigned_to
             or event.assigned_to
             or None,
+            "workshop_host": event.host,
             "event": event,
+            "short_notice": bool(event.start)
+            and event.start <= (timezone.now().date() + timedelta(days=10)),
             "self_organised_submission": self_organised_submission,
         }
 
@@ -80,7 +83,11 @@ class NewSelfOrganisedWorkshopReceiver(BaseAction):
                     if context["assignee"]
                     else scalar_value_none()
                 ),
+                "workshop_host": api_model_url(
+                    "organization", context["workshop_host"].pk
+                ),
                 "event": api_model_url("event", context["event"].pk),
+                "short_notice": scalar_value_url("bool", str(context["short_notice"])),
                 "self_organised_submission": api_model_url(
                     "selforganisedsubmission", context["self_organised_submission"].pk
                 ),
