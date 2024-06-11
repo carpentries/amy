@@ -54,7 +54,7 @@
             {% endif %}
         </td>
         <td>{{ template.subject }}</td>
-        <td>{{ template.body }}</td>
+        <td>{{ template.body|truncatechars:150 }}</td>
       </tr>
     {% endfor %}
     </table>

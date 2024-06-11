@@ -9,7 +9,7 @@ from emails.actions.new_self_organised_workshop import new_self_organised_worksh
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import new_self_organised_workshop_signal
-from emails.utils import api_model_url, scalar_value_none
+from emails.utils import api_model_url, scalar_value_none, scalar_value_url
 from extrequests.models import SelfOrganisedSubmission
 from workshops.models import Event, Language, Organization, Tag
 from workshops.tests.base import TestBase
@@ -203,7 +203,12 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
             context_json=ContextModel(
                 {
                     "assignee": scalar_value_none(),
+                    "workshop_host": api_model_url(
+                        "organization",
+                        organization.pk,  # type: ignore
+                    ),
                     "event": api_model_url("event", event.pk),
+                    "short_notice": scalar_value_url("bool", "False"),
                     "self_organised_submission": api_model_url(
                         "selforganisedsubmission", submission.pk
                     ),
