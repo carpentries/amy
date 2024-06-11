@@ -202,7 +202,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         reply_to_header="",
         cc_header=[],
         bcc_header=[],
-        subject="Time to Recruit Helpers for workshop at {{ workshop.venue }}",
+        subject="Time to Recruit Helpers for workshop at {{ event.venue }}",
         body=(
             "Hey everyone, please remember to seek helpers for the workshop "
             "{{ event.slug }} -Best, {{ assignee.full_name }}."
