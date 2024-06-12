@@ -132,8 +132,14 @@ class EmailController:
         # Try rendering the templates with empty context to see if there are any syntax
         # errors.
         engine = EmailTemplate.get_engine()
-        EmailTemplate.render_template(engine, template.subject, {})
-        EmailTemplate.render_template(engine, template.body, {})
+        try:
+            EmailTemplate.render_template(engine, template.subject, {})
+        except jinja2.exceptions.UndefinedError:
+            pass
+        try:
+            EmailTemplate.render_template(engine, template.body, {})
+        except jinja2.exceptions.UndefinedError:
+            pass
 
         subject = template.subject
         body = template.body
