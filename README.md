@@ -23,6 +23,17 @@ other things thrown in.  If you would like to help, please read:
 Please [check with us][contact-address] or open an [issue][issues]
 before starting work on new features.
 
+## Prerequisites
+
+You will need the python3 and libpq development header libraries installed
+on your system. For an example with Debian-based (Ubuntu, etc) distributions
+of Linux, you can install them with:
+
+```shell
+sudo apt-get update
+sudo apt-get install python3-dev libpq-dev
+```
+
 ## Getting Started
 
 1. Clone the repository:
