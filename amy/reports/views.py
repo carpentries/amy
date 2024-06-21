@@ -143,12 +143,13 @@ def instructor_issues(request):
         airport__isnull=True
     )
 
-    # Everyone who's been in instructor training but doesn't yet have a badge.
+    # Everyone who's been in instructor training or CLDT but doesn't yet have a badge.
     learner = Role.objects.get(name="learner")
     ttt = Tag.objects.get(name="TTT")
+    cldt = Tag.objects.get(name="CLDT")
     stalled = Tag.objects.get(name="stalled")
     trainees = (
-        Task.objects.filter(event__tags__in=[ttt], role=learner)
+        Task.objects.filter(event__tags__in=[ttt,cldt], role=learner)
         .exclude(person__badges__in=instructor_badges)
         .order_by("person__family", "person__personal", "event__start")
         .select_related("person", "event")

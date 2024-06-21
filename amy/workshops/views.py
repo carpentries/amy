@@ -1622,6 +1622,25 @@ class TaskCreate(
                     "it's been allowed.",
                 )
 
+            # CLDT
+            cldt_remaining = (
+                seat_membership.cldt_seats_remaining
+            )
+            # check number of available seats
+            if cldt_remaining == 1:
+                messages.warning(
+                    self.request,
+                    # after the form is saved there will be 0 remaining seats
+                    f'Membership "{seat_membership}" has no CLDT '
+                    "seats remaining.",
+                )
+            if cldt_remaining <= 0:
+                messages.warning(
+                    self.request,
+                    f'Membership "{seat_membership}" is using more CLDT '
+                    "seats than it's been allowed.",
+                )
+
             today = datetime.date.today()
             # check if membership is active
             if not (
@@ -1725,6 +1744,25 @@ class TaskUpdate(
                     f'Membership "{seat_membership}" is using more '
                     f'{"public" if seat_public else "in-house"} training seats than '
                     "it's been allowed.",
+                )
+
+            # CLDT
+            cldt_remaining = (
+                seat_membership.cldt_seats_remaining
+            )
+            # check number of available seats
+            if cldt_remaining == 0:
+                messages.warning(
+                    self.request,
+                    # after the form is saved there will be 0 remaining seats
+                    f'Membership "{seat_membership}" has no CLDT '
+                    "seats remaining.",
+                )
+            if cldt_remaining < 0:
+                messages.warning(
+                    self.request,
+                    f'Membership "{seat_membership}" is using more CLDT '
+                    "seats than it's been allowed.",
                 )
 
         run_instructor_training_approaching_strategy(

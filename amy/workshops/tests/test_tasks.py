@@ -104,6 +104,20 @@ class TestTask(TestBase):
         )
         self.ttt_event_non_open.tags.set(Tag.objects.filter(name__in=["DC", "TTT"]))
 
+        # CLDT
+        self.cldt_event = Event.objects.create(
+            start=datetime.now(),
+            slug="cldt-event",
+            host=test_host,
+        )
+        self.cldt_event.tags.set(Tag.objects.filter(name__in=["CLDT"]))
+        self.cldt_event_open = Event.objects.create(
+            start=datetime.now(),
+            slug="cldt-event-open-app",
+            host=test_host,
+            open_CLDT_applications=True,
+        )
+
         # create a membership
         self.membership = Membership.objects.create(
             variant="partner",
@@ -112,6 +126,7 @@ class TestTask(TestBase):
             contribution_type="financial",
             public_instructor_training_seats=1,
             inhouse_instructor_training_seats=1,
+            cldt_seats=1,
         )
         Member.objects.create(
             membership=self.membership,
@@ -285,14 +300,23 @@ class TestTask(TestBase):
             "task-seat_membership": self.membership.pk,
             "task-seat_public": False,
         }
+        data3 = {
+            "task-event": self.cldt_event_open.pk,
+            "task-person": self.test_person_1.pk,
+            "task-role": self.learner.pk,
+            "task-seat_membership": self.membership.pk,
+            "task-seat_public": True,
+        }
 
         # Act
         response1 = self.client.post(reverse("task_add"), data1, follow=True)
         response2 = self.client.post(reverse("task_add"), data2, follow=True)
+        response3 = self.client.post(reverse("task_add"), data3, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)
         self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response3.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; has no public instructor "
@@ -303,6 +327,11 @@ class TestTask(TestBase):
             f"Membership &quot;{self.membership}&quot; has no in-house instructor "
             "training seats remaining.",
         )
+        self.assertContains(
+            response3,
+            f"Membership &quot;{self.membership}&quot; has no CLDT "
+            "seats remaining.",
+        )
 
     def test_exceeded_seats_warnings_when_adding(self):
         """Ensure warnings about memberships with exceeded instructor training
@@ -310,6 +339,7 @@ class TestTask(TestBase):
         # Arrange
         self.membership.public_instructor_training_seats = 0
         self.membership.inhouse_instructor_training_seats = 0
+        self.membership.cldt_seats = 0
         self.membership.save()
 
         data1 = {
@@ -326,14 +356,23 @@ class TestTask(TestBase):
             "task-seat_membership": self.membership.pk,
             "task-seat_public": False,
         }
+        data3 = {
+            "task-event": self.cldt_event_open.pk,
+            "task-person": self.test_person_1.pk,
+            "task-role": self.learner.pk,
+            "task-seat_membership": self.membership.pk,
+            "task-seat_public": True,
+        }
 
         # Act
         response1 = self.client.post(reverse("task_add"), data1, follow=True)
         response2 = self.client.post(reverse("task_add"), data2, follow=True)
+        response3 = self.client.post(reverse("task_add"), data3, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)
         self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response3.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; is using more public "
@@ -344,13 +383,19 @@ class TestTask(TestBase):
             f"Membership &quot;{self.membership}&quot; is using more in-house "
             "training seats than it&#x27;s been allowed.",
         )
+        self.assertContains(
+            response3,
+            f"Membership &quot;{self.membership}&quot; is using more CLDT "
+            "seats than it&#x27;s been allowed.",
+        )
 
     def test_no_remaining_seats_warnings_when_updating(self):
         """Ensure warnings about memberships with no remaining instructor training
         seats appear when existing tasks are edited."""
         # Arrange
-        # `self.membership` is set up with only 1 seat for both public
-        # and in-house instructor training seats
+        # `self.membership` is set up with only 1 seat for
+        # public and in-house instructor training seats,
+        # and 1 seat for CLDT
 
         task1 = Task.objects.create(
             event=self.ttt_event_open,
@@ -365,6 +410,13 @@ class TestTask(TestBase):
             role=self.learner,
             seat_membership=self.membership,
             seat_public=False,
+        )
+        task3 = Task.objects.create(
+            event=self.cldt_event_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=True,
         )
 
         data1 = {
@@ -381,6 +433,13 @@ class TestTask(TestBase):
             "seat_membership": task2.seat_membership.pk,
             "seat_public": task2.seat_public,
         }
+        data3 = {
+            "event": task3.event.pk,
+            "person": task3.person.pk,
+            "role": task3.role.pk,
+            "seat_membership": task3.seat_membership.pk,
+            "seat_public": task3.seat_public,
+        }
 
         # Act
         response1 = self.client.post(
@@ -389,10 +448,14 @@ class TestTask(TestBase):
         response2 = self.client.post(
             reverse("task_edit", args=[task2.pk]), data2, follow=True
         )
+        response3 = self.client.post(
+            reverse("task_edit", args=[task3.pk]), data3, follow=True
+        )
 
         # Assert
         self.assertEqual(response1.status_code, 200)
         self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response3.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; has no public instructor "
@@ -403,6 +466,11 @@ class TestTask(TestBase):
             f"Membership &quot;{self.membership}&quot; has no in-house instructor "
             "training seats remaining.",
         )
+        self.assertContains(
+            response3,
+            f"Membership &quot;{self.membership}&quot; has no CLDT "
+            "seats remaining.",
+        )
 
     def test_exceeded_seats_warnings_when_updating(self):
         """Ensure warnings about memberships with exceeded instructor training
@@ -410,6 +478,7 @@ class TestTask(TestBase):
         # Arrange
         self.membership.public_instructor_training_seats = 0
         self.membership.inhouse_instructor_training_seats = 0
+        self.membership.cldt_seats = 0
         self.membership.save()
 
         task1 = Task.objects.create(
@@ -426,6 +495,13 @@ class TestTask(TestBase):
             seat_membership=self.membership,
             seat_public=False,
         )
+        task3 = Task.objects.create(
+            event=self.cldt_event_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_public=True,
+        )
 
         data1 = {
             "event": task1.event.pk,
@@ -441,6 +517,13 @@ class TestTask(TestBase):
             "seat_membership": task2.seat_membership.pk,
             "seat_public": task2.seat_public,
         }
+        data3 = {
+            "event": task3.event.pk,
+            "person": task3.person.pk,
+            "role": task3.role.pk,
+            "seat_membership": task3.seat_membership.pk,
+            "seat_public": task3.seat_public,
+        }
 
         # Act
         response1 = self.client.post(
@@ -449,10 +532,14 @@ class TestTask(TestBase):
         response2 = self.client.post(
             reverse("task_edit", args=[task2.pk]), data2, follow=True
         )
+        response3 = self.client.post(
+            reverse("task_edit", args=[task3.pk]), data3, follow=True
+        )
 
         # Assert
         self.assertEqual(response1.status_code, 200)
         self.assertEqual(response2.status_code, 200)
+        self.assertEqual(response3.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; is using more public "
@@ -462,6 +549,11 @@ class TestTask(TestBase):
             response2,
             f"Membership &quot;{self.membership}&quot; is using more in-house "
             "training seats than it&#x27;s been allowed.",
+        )
+        self.assertContains(
+            response3,
+            f"Membership &quot;{self.membership}&quot; is using more CLDT "
+            "seats than it&#x27;s been allowed.",
         )
 
     def test_open_applications_TTT(self):
@@ -529,6 +621,14 @@ class TestTask(TestBase):
             seat_membership=None,
             seat_open_training=True,
         )
+        # third wrong task
+        task3 = Task(
+            event=self.cldt_event_open,
+            person=self.test_person_2,
+            role=self.helper,
+            seat_membership=None,
+            seat_open_training=True,
+        )
 
         with self.assertRaises(ValidationError) as cm:
             task1.full_clean()
@@ -540,8 +640,13 @@ class TestTask(TestBase):
         exception = cm.exception
         self.assertEqual({"role"}, exception.error_dict.keys())
 
+        with self.assertRaises(ValidationError) as cm:
+            task3.full_clean()
+        exception = cm.exception
+        self.assertEqual({"role"}, exception.error_dict.keys())
+
         # first good task
-        task3 = Task(
+        task4 = Task(
             event=self.ttt_event_open,
             person=self.test_person_2,
             role=self.learner,
@@ -549,12 +654,28 @@ class TestTask(TestBase):
             seat_open_training=False,
         )
         # second good task
-        task4 = Task(
+        task5 = Task(
             event=self.ttt_event_open,
             person=self.test_person_2,
             role=self.learner,
             seat_membership=None,
             seat_open_training=True,
         )
-        task3.full_clean()
+        task6 = Task(
+            event=self.cldt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_open_training=False,
+        )
+        task7 = Task(
+            event=self.cldt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=None,
+            seat_open_training=True,
+        )
         task4.full_clean()
+        task5.full_clean()
+        task6.full_clean()
+        task7.full_clean()

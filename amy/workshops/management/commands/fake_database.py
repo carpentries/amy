@@ -182,6 +182,7 @@ class Command(BaseCommand):
             ("LSO", 170, "Lesson Specific Onboarding"),
             ("hackathon", 180, "Event is a hackathon"),
             ("WiSE", 190, "Women in Science and Engineering"),
+            ("CLDT", 200, "Collaborative Lesson Development Training"),
         ]
 
         self.stdout.write("Generating {} fake tags...".format(len(tags)))

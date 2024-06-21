@@ -139,6 +139,9 @@ class Member(models.Model):
 
 class MembershipManager(models.Manager):
     def annotate_with_seat_usage(self):
+        cldt_tag = Tag.objects.get(name="CLDT")
+        no_cldt_tags = Tag.objects.filter(name__in=["SWC", "DC", "LC", "TTT", "ITT", "WiSE"])
+
         return self.get_queryset().annotate(
             instructor_training_seats_total=(
                 # Public
@@ -152,7 +155,10 @@ class MembershipManager(models.Manager):
                 + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
             ),
             instructor_training_seats_utilized=(
-                Count("task", filter=Q(task__role__name="learner"))
+                Count("task", filter=Q(
+                    task__role__name="learner",
+                    task__event__tags=[no_cldt_tags]
+                ))
             ),
             instructor_training_seats_remaining=(
                 # Public
@@ -161,7 +167,11 @@ class MembershipManager(models.Manager):
                 # Coalesce returns first non-NULL value
                 + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
                 - Count(
-                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
+                    "task", filter=Q(
+                        task__role__name="learner",
+                        task__seat_public=True,
+                        task__event__tags=[no_cldt_tags]
+                    )
                 )
                 - Coalesce("public_instructor_training_seats_rolled_over", 0)
                 # Inhouse
@@ -170,9 +180,41 @@ class MembershipManager(models.Manager):
                 + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
                 - Count(
                     "task",
-                    filter=Q(task__role__name="learner", task__seat_public=False),
+                    filter=Q(
+                        task__role__name="learner",
+                        task__seat_public=False,
+                        task__event__tags=[no_cldt_tags]
+                    ),
                 )
                 - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
+            ),
+
+            # CLDT
+            cldt_seats_total=(
+                F("cldt_seats")
+                + F("additional_cldt_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("cldt_seats_rolled_from_previous", 0)
+            ),
+            cldt_seats_utilized=(
+                Count("task", filter=Q(
+                    task__role__name="learner",
+                    task__event__tags=[cldt_tag]
+                ))
+            ),
+            cldt_seats_remaining=(
+                F("cldt_seats")
+                + F("additional_cldt_seats")
+                # Coalesce returns first non-NULL value
+                + Coalesce("cldt_seats_rolled_from_previous", 0)
+                - Count(
+                    "task", filter=Q(
+                        task__role__name="learner",
+                        task__seat_public=True,
+                        task__event__tags=[cldt_tag]
+                    )
+                )
+                - Coalesce("cldt_seats_rolled_over", 0)
             ),
         )
 
@@ -290,6 +332,34 @@ class Membership(models.Model):
         blank=True,
         help_text="In-house instructor training seats rolled over into next membership.",  # noqa
     )
+
+    #CLDT
+    cldt_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="Collaborative Lesson Development Training seats",
+        help_text="Number of CLDT seats",
+    )
+    additional_cldt_seats = models.PositiveIntegerField(
+        null=False,
+        blank=False,
+        default=0,
+        verbose_name="Additional CLDT seats",
+        help_text="Use this field if you want to grant more CLDT seats than "
+        "the agreement provides for.",
+    )
+    cldt_seats_rolled_from_previous = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="CLDT seats rolled over from previous membership.",
+    )
+    cldt_seats_rolled_over = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="CLDT seats rolled over into next membership.",
+    )
+
     organizations = models.ManyToManyField(
         Organization,
         blank=False,
@@ -322,7 +392,7 @@ class Membership(models.Model):
         max_length=20,
         choices=PUBLIC_STATUS_CHOICES,
         default=PUBLIC_STATUS_CHOICES[1][0],
-        verbose_name="Can this membership be publicized on The carpentries websites?",
+        verbose_name="Can this membership be publicized on The Carpentries websites?",
         help_text="Public memberships may be listed on any of The Carpentries "
         "websites.",
     )
@@ -559,6 +629,30 @@ class Membership(models.Model):
         c = self.inhouse_instructor_training_seats_rolled_over or 0
         return a - b - c
 
+    @property
+    def cldt_seats_total(self) -> int:
+        """Calculate combined CLDT seats total.
+
+        Unlike workshops w/o admin fee, CLDT seats have two numbers
+        combined to calculate total of allowed seats in CLDT events.
+        """
+        a = self.cldt_seats
+        b = self.additional_cldt_seats
+        c = self.cldt_seats_rolled_from_previous or 0
+        return a + b + c
+
+    @cached_property
+    def cldt_seats_utilized(self) -> int:
+        """Count number of learner tasks that point to this membership."""
+        return self.task_set.filter(role__name="learner", seat_public=False).count()
+
+    @property
+    def cldt_seats_remaining(self) -> int:
+        """Count remaining seats for CLDT."""
+        a = self.cldt_seats_total
+        b = self.cldt_seats_utilized
+        c = self.cldt_seats_rolled_over or 0
+        return a - b - c
 
 # ------------------------------------------------------------
 
@@ -1075,11 +1169,11 @@ class Person(
 
 class TagQuerySet(QuerySet):
     def main_tags(self):
-        names = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
+        names = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE", "CLDT"]
         return self.filter(name__in=names)
 
     def carpentries(self):
-        return self.filter(name__in=["SWC", "DC", "LC"])
+        return self.filter(name__in=["SWC", "DC", "LC", "CLDT"])
 
     def strings(self):
         return self.values_list("name", flat=True)
@@ -1477,6 +1571,16 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         default=False,
         verbose_name="TTT Open applications",
         help_text="If this event is <b>TTT</b>, you can mark it as 'open "
+        "applications' which means that people not associated with "
+        "this event's member sites can also take part in this event.",
+    )
+
+    open_CLDT_applications = models.BooleanField(
+        null=False,
+        blank=True,
+        default=False,
+        verbose_name="CLDT Open applications",
+        help_text="If this event is <b>CLDT</b>, you can mark it as 'open "
         "applications' which means that people not associated with "
         "this event's member sites can also take part in this event.",
     )
