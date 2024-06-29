@@ -1,4 +1,4 @@
-# Automated emails
+# Automated emails v1 (2019)
 
 GitHub project link unavailable.
 
