@@ -209,7 +209,7 @@ Represents a requirement that a prospect future instructor need to pass.
 This model also falls into `trainings` domain.
 
 ### `TrainingProgress`
-Intermediate table for M2M between `Person`, `TrainingRequirement`, and optionally 
+Intermediate table for M2M between `Person`, `TrainingRequirement`, and optionally
 `Involvement`. Indicates "pass",
 "fail", or "asked to repeat" progress of a person over a particular requirement.
 Once all required requirements are passed, person can become an instructor.
@@ -335,7 +335,7 @@ events, it works for The Carpentries' community.
 
 ----------------------------------------------------------------------------------------
 
-## Automated Emails application - `autoemails/models.py`
+## Automated Emails (v1, 2019) application - `autoemails/models.py`
 
 ### `EmailTemplate`
 Represents email template to be used by a triggered email action.
@@ -354,5 +354,22 @@ and links to Redis entry maintained by RQ library.
 
 ### `Involvement`
 
-Represents an activity that can be completed as part of the Get Involved step of 
+Represents an activity that can be completed as part of the Get Involved step of
 Instructor Training checkout. Referenced by [`TrainingProgress`](#trainingprogress).
+
+----------------------------------------------------------------------------------------
+
+## Emails (v2, 2023) application - `emails/models.py`
+
+### `EmailTemplate`
+Represents email template to be used by a scheduled email.
+
+### `ScheduledEmail`
+Model containing details of a scheduled email. This is used for queueing emails to be
+sent, as well as capturing any failed, locked, or cancelled emails.
+When accessed from AMY API, it can return a list of emails that should be attempted to
+be sent by the email worker.
+
+### `ScheduledEmailLog`
+Represents a log entry for a scheduled email. This is used to track the status changes
+of an email.
