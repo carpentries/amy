@@ -80,7 +80,7 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
 
 
 def run_ask_for_website_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event
+    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: ask_for_website_signal,
@@ -95,6 +95,7 @@ def run_ask_for_website_strategy(
         sender=event,
         event=event,
         event_start_date=event.start,
+        **kwargs,
     )
 
 

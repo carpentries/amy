@@ -87,7 +87,7 @@ def recruit_helpers_strategy(event: Event) -> StrategyEnum:
 
 
 def run_recruit_helpers_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event
+    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: recruit_helpers_signal,
@@ -102,6 +102,7 @@ def run_recruit_helpers_strategy(
         sender=event,
         event=event,
         event_start_date=event.start,
+        **kwargs,
     )
 
 
