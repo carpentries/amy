@@ -436,7 +436,7 @@ class TestScheduledEmailUpdate(TestBase):
         self.assertEqual(email_log.state_before, email_log.state_after)
         self.assertEqual(email_log.state_after, ScheduledEmailStatus.SCHEDULED)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_allowed_email_statuses(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -469,7 +469,7 @@ class TestScheduledEmailUpdate(TestBase):
         # Assert - all of the defined scheduled emails can be retrieved with this query
         self.assertEqual(results.count(), 2)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_disallowed_email_statuses(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -548,7 +548,7 @@ class TestScheduledEmailReschedule(TestBase):
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.scheduled_at, new_scheduled_date)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_allowed_email_statuses(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -582,7 +582,7 @@ class TestScheduledEmailReschedule(TestBase):
         # Assert - all of the defined scheduled emails can be retrieved with this query
         self.assertEqual(results.count(), 3)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_disallowed_email_statuses(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -654,7 +654,7 @@ class TestScheduledEmailCancel(TestBase):
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_allowed_email_statuses(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
@@ -687,7 +687,7 @@ class TestScheduledEmailCancel(TestBase):
         # Assert - all of the defined scheduled emails can be retrieved with this query
         self.assertEqual(results.count(), 2)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_disallowed_email_statuses(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
