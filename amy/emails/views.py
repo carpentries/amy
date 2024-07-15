@@ -140,7 +140,7 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
             ScheduledEmailLog.objects.select_related("author")
             .filter(scheduled_email=self.object)
             .order_by("-created_at")
-        )
+        )[0:500]
         context["rendered_body"] = markdownify(self.object.body)
 
         context["status_explanation"] = ScheduledEmailStatusExplanation[
