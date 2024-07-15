@@ -183,9 +183,10 @@ class EmailController:
 
     @staticmethod
     def cancel_email(
-        scheduled_email: ScheduledEmail, author: Person | None = None
+        scheduled_email: ScheduledEmail,
+        details: str = "Email was cancelled",
+        author: Person | None = None,
     ) -> ScheduledEmail:
-        details = "Email was cancelled"
         return EmailController.change_state_with_log(
             scheduled_email, ScheduledEmailStatus.CANCELLED, details, author
         )
