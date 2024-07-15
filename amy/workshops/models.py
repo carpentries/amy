@@ -64,6 +64,7 @@ from workshops.mixins import (
 from workshops.signals import person_archived_signal
 from workshops.utils.dates import human_daterange
 from workshops.utils.emails import find_emails
+from workshops.utils.reports import reports_link
 
 # ------------------------------------------------------------
 
@@ -1074,12 +1075,14 @@ class Person(
 
 
 class TagQuerySet(QuerySet):
+    CARPENTRIES_TAG_NAMES = ["SWC", "DC", "LC"]
+    MAIN_TAG_NAMES = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
+
     def main_tags(self):
-        names = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
-        return self.filter(name__in=names)
+        return self.filter(name__in=self.MAIN_TAG_NAMES)
 
     def carpentries(self):
-        return self.filter(name__in=["SWC", "DC", "LC"])
+        return self.filter(name__in=self.CARPENTRIES_TAG_NAMES)
 
     def strings(self):
         return self.values_list("name", flat=True)
@@ -1592,6 +1595,9 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
                 or "online" in self.tags.strings()
             )
         )
+
+    def workshop_reports_link(self) -> str:
+        return reports_link(str(self.slug))
 
     def clean(self):
         """Additional model validation."""
