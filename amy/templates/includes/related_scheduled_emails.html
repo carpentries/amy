@@ -4,7 +4,7 @@
 {% if related_scheduled_emails %}
 <ul>
   {% for email in related_scheduled_emails %}
-  <li><a href="{{ email.get_absolute_url }}">{{ email.subject }} | {{ email.pk }} | {{ email.get_state_display }}</a></li>
+  <li><a href="{{ email.get_absolute_url }}">{{ email.template.name }}</a></li>
   {% endfor %}
 </ul>
 {% else %}
