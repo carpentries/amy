@@ -7,6 +7,7 @@ from flags.views import FlaggedViewMixin
 from markdownx.utils import markdownify
 
 from emails.controller import EmailController
+from emails.filters import EmailTemplateFilter, ScheduledEmailFilter
 from emails.forms import (
     EmailTemplateCreateForm,
     EmailTemplateUpdateForm,
@@ -42,6 +43,7 @@ class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
     template_name = "emails/email_template_list.html"
     queryset = EmailTemplate.objects.order_by("name")
     title = "Email templates"
+    filter_class = EmailTemplateFilter
 
 
 class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
@@ -123,6 +125,7 @@ class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
     template_name = "emails/scheduled_email_list.html"
     queryset = ScheduledEmail.objects.select_related("template").order_by("-created_at")
     title = "Scheduled emails"
+    filter_class = ScheduledEmailFilter
 
 
 class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
