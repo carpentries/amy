@@ -55,8 +55,8 @@ class TestEmailController(TestCase):
                     {
                         "api_uri": api_model_url("person", self.harry.pk),
                         "property": "email",
-                    }
-                ]  # type: ignore
+                    }  # type: ignore
+                ]
             ),
             generic_relation_obj=generic_relation_obj,
             author=author,
@@ -124,8 +124,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
             )
 
@@ -147,8 +147,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
             )
 
@@ -170,8 +170,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
             )
 
@@ -266,8 +266,8 @@ class TestEmailController(TestCase):
                     {
                         "api_uri": api_model_url("person", self.harry.pk),
                         "property": "secondary_email",
-                    }
-                ]  # type: ignore
+                    }  # type: ignore
+                ]
             ),
             generic_relation_obj=None,
             author=self.harry,
@@ -343,8 +343,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "secondary_email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
                 generic_relation_obj=None,
                 author=self.harry,
