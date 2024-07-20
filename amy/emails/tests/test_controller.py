@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 import random
 
+from django.conf import settings
 from django.db.models import Model
 from django.template.exceptions import TemplateSyntaxError as DjangoTemplateSyntaxError
 from django.test import TestCase
@@ -54,8 +55,8 @@ class TestEmailController(TestCase):
                     {
                         "api_uri": api_model_url("person", self.harry.pk),
                         "property": "email",
-                    }
-                ]  # type: ignore
+                    }  # type: ignore
+                ]
             ),
             generic_relation_obj=generic_relation_obj,
             author=author,
@@ -123,8 +124,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
             )
 
@@ -146,8 +147,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
             )
 
@@ -169,8 +170,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
             )
 
@@ -265,8 +266,8 @@ class TestEmailController(TestCase):
                     {
                         "api_uri": api_model_url("person", self.harry.pk),
                         "property": "secondary_email",
-                    }
-                ]  # type: ignore
+                    }  # type: ignore
+                ]
             ),
             generic_relation_obj=None,
             author=self.harry,
@@ -342,8 +343,8 @@ class TestEmailController(TestCase):
                         {
                             "api_uri": api_model_url("person", self.harry.pk),
                             "property": "secondary_email",
-                        }
-                    ]  # type: ignore
+                        }  # type: ignore
+                    ]
                 ),
                 generic_relation_obj=None,
                 author=self.harry,
@@ -465,6 +466,59 @@ class TestEmailController(TestCase):
         ).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "Email was failed 123")
         self.assertEqual(latest_log.author, self.harry)
+
+    def test_fail_email_so_many_times_it_gets_cancelled(self) -> None:
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+
+        # Act
+        for _ in range(settings.EMAIL_MAX_FAILED_ATTEMPTS):
+            scheduled_email = EmailController.fail_email(
+                scheduled_email,
+                details="Email was failed",
+                author=self.harry,
+            )
+
+        # Assert
+        self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
+        self.assertEqual(
+            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
+            settings.EMAIL_MAX_FAILED_ATTEMPTS + 2,
+            # +2 because of the initial log and the last log when the email
+            # gets cancelled.
+        )
+
+    def test_lock_and_fail_email_so_many_times_it_gets_cancelled(self) -> None:
+        """Similar test to `test_fail_email_so_many_times_it_gets_cancelled`,
+        but here the email is locked before failing. This is similar behavior as in
+        the actual email worker."""
+
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+
+        # Act
+        for _ in range(settings.EMAIL_MAX_FAILED_ATTEMPTS):
+            scheduled_email = EmailController.lock_email(
+                scheduled_email,
+                details="Email was locked for sending",
+                author=self.harry,
+            )
+            scheduled_email = EmailController.fail_email(
+                scheduled_email,
+                details="Email was failed",
+                author=self.harry,
+            )
+
+        # Assert
+        self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
+        self.assertEqual(
+            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
+            2 * settings.EMAIL_MAX_FAILED_ATTEMPTS + 2,
+            # +2 because of the initial log and the last log when the email
+            # gets cancelled.
+        )
 
     def test_succeed_email(self) -> None:
         # Arrange
