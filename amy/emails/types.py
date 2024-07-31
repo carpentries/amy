@@ -32,14 +32,14 @@ class InstructorConfirmedKwargs(TypedDict):
     request: HttpRequest
     person_id: int
     event_id: int
-    instructor_recruitment_id: int
-    instructor_recruitment_signup_id: int
+    instructor_recruitment_id: int | None
+    instructor_recruitment_signup_id: int | None
 
 
 class InstructorConfirmedContext(TypedDict):
     person: Person
     event: Event
-    instructor_recruitment_signup: InstructorRecruitmentSignup
+    instructor_recruitment_signup: InstructorRecruitmentSignup | None
 
 
 class InstructorDeclinedKwargs(TypedDict):

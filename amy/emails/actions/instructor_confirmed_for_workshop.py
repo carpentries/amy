@@ -6,7 +6,7 @@ from emails.actions.base_action import BaseAction
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_confirmed_for_workshop_signal
 from emails.types import InstructorConfirmedContext, InstructorConfirmedKwargs
-from emails.utils import api_model_url, immediate_action
+from emails.utils import api_model_url, immediate_action, scalar_value_none
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import Event, Person
 
@@ -22,9 +22,9 @@ class InstructorConfirmedForWorkshopReceiver(BaseAction):
     ) -> InstructorConfirmedContext:
         person = Person.objects.get(pk=kwargs["person_id"])
         event = Event.objects.get(pk=kwargs["event_id"])
-        instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
+        instructor_recruitment_signup = InstructorRecruitmentSignup.objects.filter(
             pk=kwargs["instructor_recruitment_signup_id"]
-        )
+        ).first()
         return {
             "person": person,
             "event": event,
@@ -32,13 +32,18 @@ class InstructorConfirmedForWorkshopReceiver(BaseAction):
         }
 
     def get_context_json(self, context: InstructorConfirmedContext) -> ContextModel:
+        signup = context["instructor_recruitment_signup"]
         return ContextModel(
             {
                 "person": api_model_url("person", context["person"].pk),
                 "event": api_model_url("event", context["event"].pk),
-                "instructor_recruitment_signup": api_model_url(
-                    "instructorrecruitmentsignup",
-                    context["instructor_recruitment_signup"].pk,
+                "instructor_recruitment_signup": (
+                    api_model_url(
+                        "instructorrecruitmentsignup",
+                        signup.pk,
+                    )
+                    if signup
+                    else scalar_value_none()
                 ),
             },
         )
@@ -47,8 +52,8 @@ class InstructorConfirmedForWorkshopReceiver(BaseAction):
         self,
         context: InstructorConfirmedContext,
         **kwargs: Unpack[InstructorConfirmedKwargs],
-    ) -> InstructorRecruitmentSignup:
-        return context["instructor_recruitment_signup"]
+    ) -> Person:
+        return context["person"]
 
     def get_recipients(
         self,
