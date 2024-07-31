@@ -63,6 +63,10 @@ from emails.actions.instructor_badge_awarded import (
     instructor_badge_awarded_strategy,
     run_instructor_badge_awarded_strategy,
 )
+from emails.actions.instructor_confirmed_for_workshop import (
+    instructor_confirmed_for_workshop_strategy,
+    run_instructor_confirmed_for_workshop_strategy,
+)
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
@@ -75,10 +79,7 @@ from emails.actions.recruit_helpers import (
     recruit_helpers_strategy,
     run_recruit_helpers_strategy,
 )
-from emails.signals import (
-    instructor_confirmed_for_workshop_signal,
-    persons_merged_signal,
-)
+from emails.signals import persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
@@ -1689,15 +1690,15 @@ class TaskCreate(
             event,
         )
 
-        if self.object.role.name == "instructor":
-            instructor_confirmed_for_workshop_signal.send(
-                sender=self.object,
-                request=self.request,
-                person_id=self.object.person.pk,
-                event_id=event.pk,
-                instructor_recruitment_id=None,
-                instructor_recruitment_signup_id=None,
-            )
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.object,
+            person_id=self.object.person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
+        )
 
         # return remembered results
         return res

@@ -427,6 +427,8 @@ class InstructorRecruitmentSignupChangeState(
             role=role,
         )
 
+        # Note: there's a strategy for this email, but this case may be simple enough
+        # that we don't need to use it.
         instructor_confirmed_for_workshop_signal.send(
             sender=signup,
             request=request,

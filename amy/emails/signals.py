@@ -73,9 +73,14 @@ INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME = "instructor_badge_awarded"
 ) = triple_signals(
     SignalNameEnum.instructor_badge_awarded, InstructorBadgeAwardedContext
 )
-instructor_confirmed_for_workshop_signal = Signal(
-    signal_name=SignalNameEnum.instructor_confirmed_for_workshop,
-    context_type=InstructorConfirmedContext,
+INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME = "instructor_confirmed_for_workshop"
+(
+    instructor_confirmed_for_workshop_signal,
+    instructor_confirmed_for_workshop_update_signal,
+    instructor_confirmed_for_workshop_cancel_signal,
+) = triple_signals(
+    SignalNameEnum.instructor_confirmed_for_workshop,
+    InstructorConfirmedContext,
 )
 instructor_declined_from_workshop_signal = Signal(
     signal_name=SignalNameEnum.instructor_declined_from_workshop,
