@@ -54,9 +54,14 @@ from emails.actions.ask_for_website import (
     ask_for_website_strategy,
     run_ask_for_website_strategy,
 )
+from emails.actions.exceptions import EmailStrategyException
 from emails.actions.host_instructors_introduction import (
     host_instructors_introduction_strategy,
     run_host_instructors_introduction_strategy,
+)
+from emails.actions.instructor_badge_awarded import (
+    instructor_badge_awarded_strategy,
+    run_instructor_badge_awarded_strategy,
 )
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
@@ -70,7 +75,7 @@ from emails.actions.recruit_helpers import (
     recruit_helpers_strategy,
     run_recruit_helpers_strategy,
 )
-from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
+from emails.signals import persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
@@ -1889,13 +1894,13 @@ class MockAwardCreate(
                 f"person {person}"
             )
 
-        if badge.name == "instructor":
-            instructor_badge_awarded_signal.send(
-                sender=self.object,
-                request=self.request,
-                person_id=person.pk,
-                award_id=self.object.pk,
-            )
+        run_instructor_badge_awarded_strategy(
+            instructor_badge_awarded_strategy(self.object, self.object.person),
+            self.request,
+            self.object.person,
+            award_id=self.object.pk,
+            person_id=person.pk,
+        )
 
         return result
 
@@ -1907,6 +1912,7 @@ class AwardCreate(RedirectSupportMixin, MockAwardCreate):
 class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Award
     permission_required = "workshops.delete_award"
+    object: Award
 
     def back_address(self) -> Optional[str]:
         fallback_url = reverse(
@@ -1918,6 +1924,30 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
             if url_has_allowed_host_and_scheme(referrer, settings.ALLOWED_HOSTS)
             else fallback_url
         )
+
+    def before_delete(self, *args, **kwargs):
+        """Save for use in `after_delete` method."""
+        self._award = self.object
+        self._award_pk = self.object.pk
+        self._person = self.object.person
+
+    def after_delete(self, *args, **kwargs):
+        award = self._award
+        award_pk = self._award_pk
+        person = self._person
+        try:
+            run_instructor_badge_awarded_strategy(
+                instructor_badge_awarded_strategy(award, person),
+                request=self.request,
+                person=person,
+                award_id=award_pk,
+                person_id=person.pk,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor badge awarded strategy. {exc}",
+            )
 
     def get_success_url(self):
         return reverse("badge_details", args=[self.get_object().badge.name])

@@ -25,7 +25,7 @@ class InstructorBadgeAwardedKwargs(TypedDict):
 
 class InstructorBadgeAwardedContext(TypedDict):
     person: Person
-    award: Award
+    award: Award | None
 
 
 class InstructorConfirmedKwargs(TypedDict):
