@@ -681,7 +681,48 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
         # add new Qualifications
         for lesson in form.cleaned_data.pop("lessons"):
             Qualification.objects.create(person=self.object, lesson=lesson)
-        return super().form_valid(form)
+        result = super().form_valid(form)
+
+        user_tasks = Task.objects.filter(
+            person=self.object, event__isnull=False
+        ).select_related("event")
+        for task in user_tasks:
+            run_ask_for_website_strategy(
+                ask_for_website_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_instructor_training_approaching_strategy(
+                instructor_training_approaching_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_host_instructors_introduction_strategy(
+                host_instructors_introduction_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_recruit_helpers_strategy(
+                recruit_helpers_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_post_workshop_7days_strategy(
+                post_workshop_7days_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_instructor_confirmed_for_workshop_strategy(
+                instructor_confirmed_for_workshop_strategy(task),
+                self.request,
+                task=task,
+                person_id=self.object.pk,
+                event_id=task.event.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
+            )
+
+        return result
 
 
 class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
