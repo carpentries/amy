@@ -152,7 +152,7 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
                     }  # type: ignore
                 ]
             ),
-            generic_relation_obj=signup,
+            generic_relation_obj=signup.person,
             author=None,
         )
 
