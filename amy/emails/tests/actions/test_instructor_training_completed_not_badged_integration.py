@@ -197,7 +197,7 @@ class TestInstructorTrainingCompletedNotBadgedUpdateReceiverIntegration(TestBase
         self.assertEqual(latest_log.details, f"Updated {signal}")
 
 
-class TestInstructorTrainingCompletedNotBadgedRemoveReceiverIntegration(TestBase):
+class TestInstructorTrainingCompletedNotBadgedCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange

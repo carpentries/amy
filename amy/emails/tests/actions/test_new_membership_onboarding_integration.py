@@ -173,7 +173,7 @@ class TestNewMembershipOnboardingUpdateReceiverIntegration(TestBase):
         self.assertEqual(latest_log.details, f"Updated {signal}")
 
 
-class TestNewMembershipOnboardingRemoveReceiverIntegration(TestBase):
+class TestNewMembershipOnboardingCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange

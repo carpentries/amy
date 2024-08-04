@@ -15,7 +15,7 @@ from workshops.models import Event, Organization, Person, Role, Task
 from workshops.tests.base import TestBase
 
 
-class TestAskForWebsiteRemoveReceiver(TestCase):
+class TestAskForWebsiteCancelReceiver(TestCase):
     def setUp(self) -> None:
         self.ttt_organization = Organization.objects.create(
             domain="carpentries.org", fullname="Instructor Training"
@@ -195,7 +195,7 @@ class TestAskForWebsiteRemoveReceiver(TestCase):
         )
 
 
-class TestAskForWebsiteRemoveIntegration(TestBase):
+class TestAskForWebsiteCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
