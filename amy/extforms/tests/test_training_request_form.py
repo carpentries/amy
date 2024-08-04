@@ -4,7 +4,7 @@ from unittest import skip
 from django.conf import settings
 from django.core import mail
 from django.forms import CheckboxInput, HiddenInput
-from django.test import override_settings
+from django.test import override_settings, tag
 from django.urls import reverse
 
 from consents.models import Term, TermOptionChoices
@@ -111,6 +111,7 @@ class TestTrainingRequestForm(TestBase):
             data[term.slug] = option.pk
         return data
 
+    @tag("captcha")
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
     def test_request_added(self):
         # Arrange
@@ -139,6 +140,7 @@ class TestTrainingRequestForm(TestBase):
             settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
         )
 
+    @tag("captcha")
     def test_invalid_request_not_added(self):
         # Arrange
         self.data.pop("personal")  # remove a required field
@@ -417,6 +419,7 @@ class TestTrainingRequestForm(TestBase):
             HiddenInput,
         )
 
+    @tag("captcha")
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
     def test_member_code_validation__code_valid_override_full_request(self):
         """Override should be quietly changed to False if a valid code is used
@@ -448,6 +451,7 @@ class TestTrainingRequestForm(TestBase):
             settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
         )
 
+    @tag("captcha")
     def test_member_code_validation__code_invalid_override_full_request(self):
         """Sent email should include the member_code_override field if used."""
         # Arrange
