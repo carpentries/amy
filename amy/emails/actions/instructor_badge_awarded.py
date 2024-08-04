@@ -32,7 +32,9 @@ from workshops.models import Award, Person
 logger = logging.getLogger("amy")
 
 
-def instructor_badge_awarded_strategy(award: Award, person: Person) -> StrategyEnum:
+def instructor_badge_awarded_strategy(
+    award: Award | None, person: Person
+) -> StrategyEnum:
     logger.info(f"Running InstructorBadgeAwarded strategy for {award=}")
 
     award_pk = getattr(award, "pk", None)
