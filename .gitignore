@@ -1,3 +1,6 @@
+# system files
+.DS_Store
+
 # editor files
 *~
 .idea/*
