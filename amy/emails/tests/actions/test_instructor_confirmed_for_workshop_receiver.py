@@ -5,7 +5,9 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
-from emails.actions import instructor_confirmed_for_workshop_receiver
+from emails.actions.instructor_confirmed_for_workshop import (
+    instructor_confirmed_for_workshop_receiver,
+)
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_confirmed_for_workshop_signal

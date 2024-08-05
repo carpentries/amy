@@ -3,7 +3,7 @@ import datetime
 from functools import partial
 import io
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -1817,6 +1817,16 @@ class TaskUpdate(
             self.object.event,
         )
 
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.object,
+            person_id=self.object.person.pk,
+            event_id=self.object.event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
+        )
+
         return res
 
 
@@ -1833,8 +1843,8 @@ class TaskDelete(
     object: Task
 
     def before_delete(self, *args, **kwargs):
-        old = self.get_object()
-        self.event = old.event
+        self.old: Task = cast(Task, self.get_object())
+        self.event = self.old.event
 
     def after_delete(self, *args, **kwargs):
         run_instructor_training_approaching_strategy(
@@ -1865,6 +1875,16 @@ class TaskDelete(
             ask_for_website_strategy(self.object.event),
             self.request,
             self.object.event,
+        )
+
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.old,
+            person_id=self.object.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
         )
 
 

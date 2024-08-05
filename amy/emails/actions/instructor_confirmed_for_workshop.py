@@ -44,7 +44,7 @@ def instructor_confirmed_for_workshop_strategy(task: Task) -> StrategyEnum:
         person_email_exists=person_email_exists,
     )
 
-    email_should_exist = instructor_role and person_email_exists
+    email_should_exist = task.pk and instructor_role and person_email_exists
     logger.debug(f"{email_should_exist=}")
 
     ct = ContentType.objects.get_for_model(task.person)  # type: ignore
