@@ -123,7 +123,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
                     }  # type: ignore
                 ]
             ),
-            generic_relation_obj=award,
+            generic_relation_obj=person,
             author=None,
         )
 

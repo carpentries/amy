@@ -2,6 +2,7 @@ from datetime import date
 
 from django.conf import settings
 from django.core import mail
+from django.test import tag
 from django.urls import reverse
 
 from extforms.forms import SelfOrganisedSubmissionExternalForm
@@ -49,6 +50,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
         )
         self.assertEqual(fields_left, fields_right)
 
+    @tag("captcha")
     def test_request_added(self):
         """Ensure the request is successfully added to the pool, and
         notification email is sent."""

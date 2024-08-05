@@ -3,7 +3,7 @@ import datetime
 from functools import partial
 import io
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -54,9 +54,18 @@ from emails.actions.ask_for_website import (
     ask_for_website_strategy,
     run_ask_for_website_strategy,
 )
+from emails.actions.exceptions import EmailStrategyException
 from emails.actions.host_instructors_introduction import (
     host_instructors_introduction_strategy,
     run_host_instructors_introduction_strategy,
+)
+from emails.actions.instructor_badge_awarded import (
+    instructor_badge_awarded_strategy,
+    run_instructor_badge_awarded_strategy,
+)
+from emails.actions.instructor_confirmed_for_workshop import (
+    instructor_confirmed_for_workshop_strategy,
+    run_instructor_confirmed_for_workshop_strategy,
 )
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
@@ -70,7 +79,7 @@ from emails.actions.recruit_helpers import (
     recruit_helpers_strategy,
     run_recruit_helpers_strategy,
 )
-from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
+from emails.signals import persons_merged_signal
 from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
@@ -672,7 +681,48 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
         # add new Qualifications
         for lesson in form.cleaned_data.pop("lessons"):
             Qualification.objects.create(person=self.object, lesson=lesson)
-        return super().form_valid(form)
+        result = super().form_valid(form)
+
+        user_tasks = Task.objects.filter(
+            person=self.object, event__isnull=False
+        ).select_related("event")
+        for task in user_tasks:
+            run_ask_for_website_strategy(
+                ask_for_website_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_instructor_training_approaching_strategy(
+                instructor_training_approaching_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_host_instructors_introduction_strategy(
+                host_instructors_introduction_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_recruit_helpers_strategy(
+                recruit_helpers_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_post_workshop_7days_strategy(
+                post_workshop_7days_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_instructor_confirmed_for_workshop_strategy(
+                instructor_confirmed_for_workshop_strategy(task),
+                self.request,
+                task=task,
+                person_id=self.object.pk,
+                event_id=task.event.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
+            )
+
+        return result
 
 
 class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
@@ -1681,6 +1731,16 @@ class TaskCreate(
             event,
         )
 
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.object,
+            person_id=self.object.person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
+        )
+
         # return remembered results
         return res
 
@@ -1757,6 +1817,16 @@ class TaskUpdate(
             self.object.event,
         )
 
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.object,
+            person_id=self.object.person.pk,
+            event_id=self.object.event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
+        )
+
         return res
 
 
@@ -1773,8 +1843,8 @@ class TaskDelete(
     object: Task
 
     def before_delete(self, *args, **kwargs):
-        old = self.get_object()
-        self.event = old.event
+        self.old: Task = cast(Task, self.get_object())
+        self.event = self.old.event
 
     def after_delete(self, *args, **kwargs):
         run_instructor_training_approaching_strategy(
@@ -1805,6 +1875,16 @@ class TaskDelete(
             ask_for_website_strategy(self.object.event),
             self.request,
             self.object.event,
+        )
+
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.old,
+            person_id=self.object.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
         )
 
 
@@ -1889,13 +1969,13 @@ class MockAwardCreate(
                 f"person {person}"
             )
 
-        if badge.name == "instructor":
-            instructor_badge_awarded_signal.send(
-                sender=self.object,
-                request=self.request,
-                person_id=person.pk,
-                award_id=self.object.pk,
-            )
+        run_instructor_badge_awarded_strategy(
+            instructor_badge_awarded_strategy(self.object, self.object.person),
+            self.request,
+            self.object.person,
+            award_id=self.object.pk,
+            person_id=person.pk,
+        )
 
         return result
 
@@ -1907,6 +1987,7 @@ class AwardCreate(RedirectSupportMixin, MockAwardCreate):
 class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Award
     permission_required = "workshops.delete_award"
+    object: Award
 
     def back_address(self) -> Optional[str]:
         fallback_url = reverse(
@@ -1918,6 +1999,30 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
             if url_has_allowed_host_and_scheme(referrer, settings.ALLOWED_HOSTS)
             else fallback_url
         )
+
+    def before_delete(self, *args, **kwargs):
+        """Save for use in `after_delete` method."""
+        self._award = self.object
+        self._award_pk = self.object.pk
+        self._person = self.object.person
+
+    def after_delete(self, *args, **kwargs):
+        award = self._award
+        award_pk = self._award_pk
+        person = self._person
+        try:
+            run_instructor_badge_awarded_strategy(
+                instructor_badge_awarded_strategy(award, person),
+                request=self.request,
+                person=person,
+                award_id=award_pk,
+                person_id=person.pk,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor badge awarded strategy. {exc}",
+            )
 
     def get_success_url(self):
         return reverse("badge_details", args=[self.get_object().badge.name])

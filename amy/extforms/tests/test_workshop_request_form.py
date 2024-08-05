@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core import mail
+from django.test import tag
 from django.urls import reverse
 
 from extforms.forms import WorkshopRequestExternalForm
@@ -56,6 +57,7 @@ class TestWorkshopRequestExternalForm(TestBase):
         )
         self.assertEqual(fields_left, fields_right)
 
+    @tag("captcha")
     def test_request_added(self):
         """Ensure the request is successfully added to the pool, and
         notification email is sent."""

@@ -4,60 +4,36 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import host_instructors_introduction_cancel_receiver
-from emails.actions.host_instructors_introduction import (
-    host_instructors_introduction_strategy,
-    run_host_instructors_introduction_strategy,
+from emails.actions.instructor_confirmed_for_workshop import (
+    instructor_confirmed_for_workshop_cancel_receiver,
+    instructor_confirmed_for_workshop_strategy,
+    run_instructor_confirmed_for_workshop_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
-    HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
-    host_instructors_introduction_cancel_signal,
+    INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
+    instructor_confirmed_for_workshop_cancel_signal,
 )
-from workshops.models import Event, Organization, Person, Role, Tag, Task
+from workshops.models import Event, Organization, Person, Role, Task
 from workshops.tests.base import TestBase
 
 
-class TestHostInstructorsIntroductionCancelReceiver(TestCase):
+class TestInstructorBadgeAwardedCancelReceiver(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        host = Organization.objects.create(domain="test.com", fullname="Test")
         self.event = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.create(domain="example.com", fullname="Example"),
-            administrator=self.ttt_organization,
-            start=date.today() + timedelta(days=30),
+            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
         )
-        ttt_tag = Tag.objects.create(name="TTT")
-        self.event.tags.add(ttt_tag)
-        instructor_role = Role.objects.create(name="instructor")
-        self.instructor1 = Person.objects.create(
-            personal="Test", family="Test", email="test1@example.org", username="test1"
+        self.person = Person.objects.create(email="test@example.org")
+        instructor = Role.objects.create(name="instructor")
+        self.task = Task.objects.create(
+            role=instructor, person=self.person, event=self.event
         )
-        self.instructor2 = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=instructor_role
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=instructor_role
-        )
-        self.host = Person.objects.create(
-            personal="Harold",
-            middle="",
-            family="Harrison",
-            email="harrison.harold@example.com",
-            is_active=True,
-        )
-        host_role = Role.objects.create(name="host")
-        Task.objects.create(event=self.event, person=self.host, role=host_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
+            signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -71,23 +47,25 @@ class TestHostInstructorsIntroductionCancelReceiver(TestCase):
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            host_instructors_introduction_cancel_receiver(None, request=request)
+            instructor_confirmed_for_workshop_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
                 "EMAIL_MODULE feature flag not set, skipping "
-                "host_instructors_introduction_cancel"
+                "instructor_confirmed_for_workshop_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = host_instructors_introduction_cancel_signal.receivers[:]
+        original_receivers = instructor_confirmed_for_workshop_cancel_signal.receivers[
+            :
+        ]
 
         # Act
         # attempt to connect the receiver
-        host_instructors_introduction_cancel_signal.connect(
-            host_instructors_introduction_cancel_receiver
+        instructor_confirmed_for_workshop_cancel_signal.connect(
+            instructor_confirmed_for_workshop_cancel_receiver
         )
-        new_receivers = host_instructors_introduction_cancel_signal.receivers[:]
+        new_receivers = instructor_confirmed_for_workshop_cancel_signal.receivers[:]
 
         # Assert
         # the same receiver list means this receiver has already been connected
@@ -106,24 +84,28 @@ class TestHostInstructorsIntroductionCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=self.person,
         )
 
         # Act
         with patch(
             "emails.actions.base_action.messages_action_cancelled"
         ) as mock_messages_action_cancelled:
-            host_instructors_introduction_cancel_signal.send(
-                sender=self.event,
+            instructor_confirmed_for_workshop_cancel_signal.send(
+                sender=self.task,
                 request=request,
-                event=self.event,
+                task=self.task,
+                person_id=self.person.pk,
+                event_id=self.event.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
             )
 
         # Assert
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_cancelled.assert_called_once_with(
             request,
-            HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
+            INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
             scheduled_email,
         )
 
@@ -143,17 +125,21 @@ class TestHostInstructorsIntroductionCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=self.person,
         )
 
         # Act
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            host_instructors_introduction_cancel_signal.send(
-                sender=self.event,
+            instructor_confirmed_for_workshop_cancel_signal.send(
+                sender=self.task,
                 request=request,
-                event=self.event,
+                task=self.task,
+                person_id=self.person.pk,
+                event_id=self.event.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
             )
 
         # Assert
@@ -178,7 +164,7 @@ class TestHostInstructorsIntroductionCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=self.person,
         )
         scheduled_email2 = ScheduledEmail.objects.create(
             template=template,
@@ -187,17 +173,21 @@ class TestHostInstructorsIntroductionCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=self.person,
         )
 
         # Act
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            host_instructors_introduction_cancel_signal.send(
-                sender=self.event,
+            instructor_confirmed_for_workshop_cancel_signal.send(
+                sender=self.task,
                 request=request,
-                event=self.event,
+                task=self.task,
+                person_id=self.person.pk,
+                event_id=self.event.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
             )
 
         # Assert
@@ -215,7 +205,7 @@ class TestHostInstructorsIntroductionCancelReceiver(TestCase):
         )
 
 
-class TestHostInstructorsIntroductionCancelIntegration(TestBase):
+class TestInstructorBadgeAwardedCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
@@ -225,7 +215,7 @@ class TestHostInstructorsIntroductionCancelIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
+            signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -236,16 +226,17 @@ class TestHostInstructorsIntroductionCancelIntegration(TestBase):
         ttt_organization = Organization.objects.create(
             domain="carpentries.org", fullname="Instructor Training"
         )
+        host_organization = Organization.objects.create(
+            domain="example.com", fullname="Example"
+        )
         event = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.create(domain="example.com", fullname="Example"),
+            slug="2024-08-05-test-event",
+            host=host_organization,
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
         )
-        ttt_tag = Tag.objects.get(name="TTT")
-        event.tags.add(ttt_tag)
 
-        instructor1 = Person.objects.create(
+        instructor = Person.objects.create(
             personal="Kelsi",
             middle="",
             family="Purdy",
@@ -254,53 +245,29 @@ class TestHostInstructorsIntroductionCancelIntegration(TestBase):
             secondary_email="notused@amy.org",
             gender="F",
             airport=self.airport_0_0,
-            github="purdy_kelsi",
-            twitter="purdy_kelsi",
+            github="",
+            twitter="",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",
             orcid="0000-0000-0000",
             is_active=True,
         )
-        instructor2 = Person.objects.create(
-            personal="Jayden",
-            middle="",
-            family="Deckow",
-            username="deckow_jayden",
-            email="deckow.jayden@example.com",
-            secondary_email="notused@example.org",
-            gender="M",
-            airport=self.airport_0_50,
-            github="deckow_jayden",
-            twitter="deckow_jayden",
-            url="http://jaydendeckow.com/",
-            affiliation="UFlo",
-            occupation="Staff",
-            orcid="0000-0000-0001",
-            is_active=True,
-        )
         instructor_role = Role.objects.get(name="instructor")
-        Task.objects.create(event=event, person=instructor1, role=instructor_role)
-        Task.objects.create(event=event, person=instructor2, role=instructor_role)
-        host = Person.objects.create(
-            personal="Harold",
-            middle="",
-            family="Harrison",
-            email="harrison.harold@example.com",
-            is_active=True,
-        )
-        host_role = Role.objects.get(name="host")
-        task = Task.objects.create(event=event, person=host, role=host_role)
+        task = Task.objects.create(event=event, person=instructor, role=instructor_role)
 
         request = RequestFactory().get("/")
-
         with patch(
             "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
-            run_host_instructors_introduction_strategy(
-                host_instructors_introduction_strategy(event),
+            run_instructor_confirmed_for_workshop_strategy(
+                instructor_confirmed_for_workshop_strategy(task),
                 request,
-                event,
+                task=task,
+                person_id=task.person.pk,
+                event_id=task.event.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
             )
         scheduled_email = ScheduledEmail.objects.get(template=template)
 
