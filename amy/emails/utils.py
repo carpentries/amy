@@ -1,20 +1,26 @@
 from datetime import UTC, date, datetime, timedelta
 from functools import partial
 import logging
-from typing import Any, Iterable, Literal, cast
+from typing import Any, Callable, Iterable, Literal, cast
+from urllib.parse import ParseResult, urlparse
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
+from django.db.models import Model
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
 from flags import conditions
+from jinja2 import Environment
 
 from emails.models import ScheduledEmail
 from emails.signals import Signal
 from workshops.models import Person
 
 logger = logging.getLogger("amy")
+
+BasicTypes = str | int | float | bool | datetime | None
 
 
 @conditions.register("session")  # type: ignore
@@ -165,3 +171,90 @@ scalar_value_none = partial(scalar_value_url, "none", "")
 
 def log_condition_elements(**condition_elements: Any) -> None:
     logger.debug(f"{condition_elements=}")
+
+
+def jinjanify(engine: Environment, template: str, context: dict[str, Any]) -> str:
+    return engine.from_string(template).render(context)
+
+
+def scalar_value_from_type(type_: str, value: Any) -> BasicTypes:
+    mapping: dict[str, Callable[[Any], Any]] = {
+        "str": str,
+        "int": int,
+        "float": float,
+        "bool": lambda x: x.lower() == "true",
+        "date": datetime.fromisoformat,
+        "none": lambda _: None,
+    }
+
+    try:
+        return cast(BasicTypes, mapping[type_](value))
+    except KeyError as exc:
+        raise ValueError(f"Unsupported scalar type {type_!r}.") from exc
+    except ValueError as exc:
+        raise ValueError(f"Failed to parse {value!r}.") from exc
+
+
+def find_model_instance(model_name: str, model_pk: int) -> Model:
+    model = next(
+        (model for model in apps.get_models() if model._meta.model_name == model_name),
+        None,
+    )
+    if model is None:
+        raise ValueError(f"Model {model_name!r} not found.")
+
+    try:
+        return model.objects.get(pk=model_pk)
+    except model.DoesNotExist as exc:
+        raise ValueError(
+            f"Model {model_name!r} with pk {model_pk!r} not found."
+        ) from exc
+
+
+def map_single_api_uri_to_model_or_value(uri: str) -> Model | BasicTypes:
+    match urlparse(uri):
+        case ParseResult(
+            scheme="value", netloc="", path=type_, params="", query="", fragment=value
+        ):
+            return scalar_value_from_type(type_, value)
+
+        case ParseResult(
+            scheme="api", netloc="", path=model_name, params="", query="", fragment=id_
+        ):
+            return find_model_instance(model_name, int(id_))
+
+        case _:
+            raise ValueError(f"Unsupported URI {uri!r}.")
+
+
+def map_api_uri_to_model_or_value(
+    uri: str | list[str],
+) -> BasicTypes | Model | list[Model | BasicTypes]:
+    if isinstance(uri, list):
+        return [map_single_api_uri_to_model_or_value(single_uri) for single_uri in uri]
+    return map_single_api_uri_to_model_or_value(uri)
+
+
+def build_context_from_dict(
+    context_json: dict[str, str]
+) -> dict[str, BasicTypes | Model | list[Model | BasicTypes]]:
+    return {
+        key: map_api_uri_to_model_or_value(uri) for key, uri in context_json.items()
+    }
+
+
+def build_context_from_list(
+    context_json: list[dict[str, str]],
+) -> list[BasicTypes | Model | list[Model | BasicTypes]]:
+    return [
+        (
+            getattr(
+                map_api_uri_to_model_or_value(item["api_uri"]),
+                item["property"],
+                "invalid",
+            )
+            if "api_uri" in item
+            else map_api_uri_to_model_or_value(item["value_uri"])
+        )
+        for item in context_json
+    ]
