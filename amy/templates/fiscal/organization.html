@@ -115,6 +115,7 @@
     <th colspan="2">Self-organised workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
     <th colspan="3">Public instructor training seats</th>
     <th colspan="3">In-house instructor training seats</th>
+    <th colspan="3">CLDT seats</th>
     <th rowspan="2" class="additional-links"></th>
   </tr>
   <tr>
@@ -134,6 +135,10 @@
     <th><small>Utilized</small></th>
     <th><small>Remaining</small></th>
     <!-- in-house instructor training seats -->
+    <th><small>Allowed</small></th>
+    <th><small>Utilized</small></th>
+    <th><small>Remaining</small></th>
+    <!-- CLDT seats -->
     <th><small>Allowed</small></th>
     <th><small>Utilized</small></th>
     <th><small>Remaining</small></th>
@@ -203,6 +208,24 @@
         Inc. {{ membership.inhouse_instructor_training_seats_rolled_over|default:0 }} rolled over
       </p>
     </td>
+    <!-- CLDT seats -->
+    <td>
+        {{ membership.cldt_seats_total|default_if_none:"&mdash;" }}
+        <p class="small">
+          Inc.
+          {{ membership.additional_cldt_seats|default:0 }} additional,
+          {{ membership.cldt_seats_rolled_from_previous|default:0 }} rolled from prev.
+        </p>
+      </td>
+      <td>{{ membership.cldt_seats_utilized|default_if_none:"&mdash;" }}</td>
+      <td
+        {% if membership.cldt_seats_remaining <= 0 and membership.cldt_seats_total > 0 or membership.cldt_seats_remaining < 0 and membership.cldt_seats_total == 0 %}class="table-danger"{% endif %}
+      >
+        {{ membership.cldt_seats_remaining }}
+        <p class="small">
+          Inc. {{ membership.cldt_seats_rolled_over|default:0 }} rolled over
+        </p>
+      </td>
     <!-- link -->
     <td>
       <a href="{% url 'membership_details' membership.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
