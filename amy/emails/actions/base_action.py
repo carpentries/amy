@@ -77,12 +77,22 @@ class BaseAction(ABC):
             return
 
         request = kwargs.pop("request")
+        supress_messages = kwargs.pop("supress_messages", False)
+        dry_run = kwargs.pop("dry_run", False)
 
         context = self.get_context(**kwargs)
         context_json = self.get_context_json(context)
         scheduled_at = self.get_scheduled_at(**kwargs)
+        generic_relation_obj = self.get_generic_relation_object(context, **kwargs)
 
         try:
+            if dry_run:
+                logger.debug(
+                    f"Dry-run mode: email action for signal {self.signal}, "
+                    f"{generic_relation_obj}"
+                )
+                return
+
             scheduled_email = EmailController.schedule_email(
                 signal=self.signal,
                 context_json=context_json,
@@ -91,17 +101,21 @@ class BaseAction(ABC):
                 to_header_context_json=self.get_recipients_context_json(
                     context, **kwargs
                 ),
-                generic_relation_obj=self.get_generic_relation_object(
-                    context, **kwargs
-                ),
+                generic_relation_obj=generic_relation_obj,
                 author=person_from_request(request),
             )
         except EmailControllerMissingRecipientsException:
-            messages_missing_recipients(request, self.signal)
+            logger.warning(f"Missing recipients for signal {self.signal}")
+            if not supress_messages:
+                messages_missing_recipients(request, self.signal)
         except EmailTemplate.DoesNotExist:
-            messages_missing_template(request, self.signal)
+            logger.warning(f"Missing template for signal {self.signal}")
+            if not supress_messages:
+                messages_missing_template(request, self.signal)
         else:
-            messages_action_scheduled(request, self.signal, scheduled_email)
+            logger.info(f"Action scheduled for signal {self.signal}")
+            if not supress_messages:
+                messages_action_scheduled(request, self.signal, scheduled_email)
 
 
 # TODO: turn into a generic class that combines BaseAction,
@@ -112,6 +126,8 @@ class BaseActionUpdate(BaseAction):
             return
 
         request = kwargs.pop("request")
+        supress_messages = kwargs.pop("supress_messages", False)
+        dry_run = kwargs.pop("dry_run", False)
 
         context = self.get_context(**kwargs)
         context_json = self.get_context_json(context)
@@ -147,6 +163,13 @@ class BaseActionUpdate(BaseAction):
             return
 
         try:
+            if dry_run:
+                logger.debug(
+                    f"Dry-run mode: email update action for signal {self.signal}, "
+                    f"{generic_relation_obj}"
+                )
+                return
+
             scheduled_email = EmailController.update_scheduled_email(
                 scheduled_email=scheduled_email,
                 context_json=context_json,
@@ -159,13 +182,19 @@ class BaseActionUpdate(BaseAction):
                 author=person_from_request(request),
             )
         except EmailControllerMissingRecipientsException:
-            messages_missing_recipients(request, signal_name)
+            logger.warning(f"Missing recipients for signal {self.signal}")
+            if not supress_messages:
+                messages_missing_recipients(request, signal_name)
         except EmailControllerMissingTemplateException:
             # Note: this is not realistically possible because the scheduled email
             # is looked up using a specific template signal.
-            messages_missing_template_link(request, scheduled_email)
+            logger.warning(f"Template not linked to signal {self.signal}")
+            if not supress_messages:
+                messages_missing_template_link(request, scheduled_email)
         else:
-            messages_action_updated(request, signal_name, scheduled_email)
+            logger.info(f"Action updated for signal {self.signal}")
+            if not supress_messages:
+                messages_action_updated(request, signal_name, scheduled_email)
 
 
 # TODO: turn into a generic class that combines BaseAction,
@@ -184,6 +213,9 @@ class BaseActionCancel(BaseAction):
             return
 
         request = kwargs["request"]
+        supress_messages = kwargs.pop("supress_messages", False)
+        dry_run = kwargs.pop("dry_run", False)
+
         context = self.get_context(**kwargs)
         generic_relation_obj = self.get_generic_relation_object(context, **kwargs)
         signal_name = self.signal
@@ -197,8 +229,17 @@ class BaseActionCancel(BaseAction):
         ).select_for_update()
 
         for scheduled_email in scheduled_emails:
+            if dry_run:
+                logger.debug(
+                    f"Dry-run mode: email cancel action for signal {self.signal}, "
+                    f"{generic_relation_obj}"
+                )
+                continue
+
             scheduled_email = EmailController.cancel_email(
                 scheduled_email=scheduled_email,
                 author=person_from_request(request),
             )
-            messages_action_cancelled(request, signal_name, scheduled_email)
+            logger.info(f"Action cancelled for signal {self.signal}")
+            if not supress_messages:
+                messages_action_cancelled(request, signal_name, scheduled_email)

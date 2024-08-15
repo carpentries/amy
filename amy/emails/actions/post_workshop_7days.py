@@ -91,7 +91,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
 
 
 def run_post_workshop_7days_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event
+    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: post_workshop_7days_signal,
@@ -106,6 +106,7 @@ def run_post_workshop_7days_strategy(
         sender=event,
         event=event,
         event_end_date=event.end,
+        **kwargs,
     )
 
 

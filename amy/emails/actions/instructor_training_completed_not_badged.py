@@ -119,6 +119,7 @@ def run_instructor_training_completed_not_badged_strategy(
     request: HttpRequest,
     person: Person,
     training_completed_date: date | None,
+    **kwargs,
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_completed_not_badged_signal,
@@ -153,6 +154,7 @@ def run_instructor_training_completed_not_badged_strategy(
         sender=person,
         person=person,
         training_completed_date=training_completed_date,
+        **kwargs,
     )
 
 

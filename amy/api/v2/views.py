@@ -220,6 +220,19 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         )
         return Response(self.get_serializer(locked_email).data)
 
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        email = self.get_object()
+        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        locked_email = EmailController.cancel_email(
+            email, serializer.validated_data["details"], request.user
+        )
+        return Response(self.get_serializer(locked_email).data)
+
 
 class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (

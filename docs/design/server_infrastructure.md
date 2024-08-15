@@ -187,6 +187,11 @@ automated emails feature.
 > **Note March 2023:** this was not achieved, and is required for migrating production
 > to containerized (cloud native) solution.
 
+> **Note June 2024:** this is part of a work related to Emails project (v2, 2023),
+> scheduled to be completed by the end of 2024. Production will definitely be de-coupled
+> from RQ worker and scheduler, but it's not clear yet when will the production be
+> containerized.
+
 ### Containerize the application to make it immutable
 
 AMY should be containerized. It's already possible to build a Docker image with AMY,

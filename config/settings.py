@@ -651,6 +651,7 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRE
 # -----------------------------------------------------------------------------
 # This module is the next version of Autoemails.
 EMAIL_TEMPLATE_ENGINE_BACKEND = "email_jinja2_backend"
+EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed attempts
 
 # Reports
 # -----------------------------------------------------------------------------

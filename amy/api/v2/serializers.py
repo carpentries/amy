@@ -9,6 +9,7 @@ from workshops.models import (
     Membership,
     Organization,
     Person,
+    TagQuerySet,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -52,9 +53,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    # start = serializers.DateField()
-    # end = serializers.DateField()
-
     host = serializers.SlugRelatedField(read_only=True, slug_field="domain")
     sponsor = serializers.SlugRelatedField(read_only=True, slug_field="domain")
     membership = serializers.SlugRelatedField(read_only=True, slug_field="name")
@@ -74,6 +72,8 @@ class EventSerializer(serializers.ModelSerializer):
 
     human_readable_date = serializers.CharField(read_only=True)
     eligible_for_instructor_recruitment = serializers.BooleanField(read_only=True)
+    workshop_reports_link = serializers.CharField(read_only=True)
+    main_tag = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
@@ -107,7 +107,21 @@ class EventSerializer(serializers.ModelSerializer):
             "public_status",
             "human_readable_date",
             "eligible_for_instructor_recruitment",
+            "workshop_reports_link",
+            "main_tag",
         )
+
+    def get_main_tag(self, obj: Event) -> str | None:
+        try:
+            # Iterating like that is faster than using qs.filter(name__in=[...]).first()
+            # because it doesn't introduce new queries.
+            return next(
+                tag.name
+                for tag in obj.tags.all()
+                if tag.name in TagQuerySet.CARPENTRIES_TAG_NAMES
+            )
+        except (IndexError, AttributeError, StopIteration):
+            return None
 
 
 class InstructorRecruitmentSignupSerializer(serializers.ModelSerializer):

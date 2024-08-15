@@ -81,7 +81,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
 
 
 def run_new_membership_onboarding_strategy(
-    strategy: StrategyEnum, request: HttpRequest, membership: Membership
+    strategy: StrategyEnum, request: HttpRequest, membership: Membership, **kwargs
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: new_membership_onboarding_signal,
@@ -95,6 +95,7 @@ def run_new_membership_onboarding_strategy(
         request,
         sender=membership,
         membership=membership,
+        **kwargs,
     )
 
 

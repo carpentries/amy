@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.db.models import Model
 import jinja2
 
@@ -183,9 +184,10 @@ class EmailController:
 
     @staticmethod
     def cancel_email(
-        scheduled_email: ScheduledEmail, author: Person | None = None
+        scheduled_email: ScheduledEmail,
+        details: str = "Email was cancelled",
+        author: Person | None = None,
     ) -> ScheduledEmail:
-        details = "Email was cancelled"
         return EmailController.change_state_with_log(
             scheduled_email, ScheduledEmailStatus.CANCELLED, details, author
         )
@@ -202,9 +204,34 @@ class EmailController:
     def fail_email(
         scheduled_email: ScheduledEmail, details: str, author: Person | None = None
     ) -> ScheduledEmail:
-        return EmailController.change_state_with_log(
+        email = EmailController.change_state_with_log(
             scheduled_email, ScheduledEmailStatus.FAILED, details, author
         )
+
+        # Count the number of failures. If it's >= MAX_FAILED_ATTEMPTS, then cancel
+        # the email.
+        latest_status_changes = ScheduledEmailLog.objects.filter(
+            scheduled_email=email
+        ).order_by("-created_at")[: 2 * settings.EMAIL_MAX_FAILED_ATTEMPTS]
+        # 2* because the worker first locks the email, then it fails it.
+        # We don't want to cancel an email which was cancelled, and then the user
+        # decided to reschedule it.
+
+        failed_attempts_count = len(
+            [
+                log
+                for log in latest_status_changes
+                if log.state_after == ScheduledEmailStatus.FAILED
+            ]
+        )
+        if failed_attempts_count >= settings.EMAIL_MAX_FAILED_ATTEMPTS:
+            email = EmailController.cancel_email(
+                email,
+                f"Email failed {failed_attempts_count} times, cancelling.",
+                author,
+            )
+
+        return email
 
     @staticmethod
     def succeed_email(

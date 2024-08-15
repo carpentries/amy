@@ -94,7 +94,7 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
 
 
 def run_host_instructors_introduction_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event
+    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: host_instructors_introduction_signal,
@@ -108,6 +108,7 @@ def run_host_instructors_introduction_strategy(
         request,
         sender=event,
         event=event,
+        **kwargs,
     )
 
 

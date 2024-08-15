@@ -69,7 +69,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
 
 
 def run_instructor_training_approaching_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event
+    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_approaching_signal,
@@ -84,6 +84,7 @@ def run_instructor_training_approaching_strategy(
         sender=event,
         event=event,
         event_start_date=event.start,
+        **kwargs,
     )
 
 
