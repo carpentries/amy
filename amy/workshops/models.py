@@ -141,7 +141,8 @@ class Member(models.Model):
 class MembershipManager(models.Manager):
     def annotate_with_seat_usage(self):
         cldt_tag = Tag.objects.get(name="CLDT")
-        no_cldt_tags = Tag.objects.filter(name__in=["SWC", "DC", "LC", "TTT", "ITT", "WiSE"])
+        # TTT/ITT included
+        ttt_tags = Tag.objects.exclude(name__in=["SWC", "DC", "LC", "WiSE", "CLDT"])
 
         return self.get_queryset().annotate(
             instructor_training_seats_total=(
@@ -156,10 +157,10 @@ class MembershipManager(models.Manager):
                 + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
             ),
             instructor_training_seats_utilized=(
-                Count("task", filter=Q(
-                    task__role__name="learner",
-                    task__event__tags=[no_cldt_tags]
-                ))
+                Count(
+                    "task",
+                    filter=Q(task__role__name="learner", task__event__tags=[ttt_tags]),
+                )
             ),
             instructor_training_seats_remaining=(
                 # Public
@@ -168,11 +169,12 @@ class MembershipManager(models.Manager):
                 # Coalesce returns first non-NULL value
                 + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
                 - Count(
-                    "task", filter=Q(
+                    "task",
+                    filter=Q(
                         task__role__name="learner",
                         task__seat_public=True,
-                        task__event__tags=[no_cldt_tags]
-                    )
+                        task__event__tags=[ttt_tags],
+                    ),
                 )
                 - Coalesce("public_instructor_training_seats_rolled_over", 0)
                 # Inhouse
@@ -184,12 +186,11 @@ class MembershipManager(models.Manager):
                     filter=Q(
                         task__role__name="learner",
                         task__seat_public=False,
-                        task__event__tags=[no_cldt_tags]
+                        task__event__tags=[ttt_tags],
                     ),
                 )
                 - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
             ),
-
             # CLDT
             cldt_seats_total=(
                 F("cldt_seats")
@@ -198,10 +199,10 @@ class MembershipManager(models.Manager):
                 + Coalesce("cldt_seats_rolled_from_previous", 0)
             ),
             cldt_seats_utilized=(
-                Count("task", filter=Q(
-                    task__role__name="learner",
-                    task__event__tags=[cldt_tag]
-                ))
+                Count(
+                    "task",
+                    filter=Q(task__role__name="learner", task__event__tags=[cldt_tag]),
+                )
             ),
             cldt_seats_remaining=(
                 F("cldt_seats")
@@ -209,11 +210,12 @@ class MembershipManager(models.Manager):
                 # Coalesce returns first non-NULL value
                 + Coalesce("cldt_seats_rolled_from_previous", 0)
                 - Count(
-                    "task", filter=Q(
+                    "task",
+                    filter=Q(
                         task__role__name="learner",
                         task__seat_public=True,
-                        task__event__tags=[cldt_tag]
-                    )
+                        task__event__tags=[cldt_tag],
+                    ),
                 )
                 - Coalesce("cldt_seats_rolled_over", 0)
             ),
@@ -334,7 +336,7 @@ class Membership(models.Model):
         help_text="In-house instructor training seats rolled over into next membership.",  # noqa
     )
 
-    #CLDT
+    # CLDT
     cldt_seats = models.PositiveIntegerField(
         null=False,
         blank=False,
@@ -654,6 +656,7 @@ class Membership(models.Model):
         b = self.cldt_seats_utilized
         c = self.cldt_seats_rolled_over or 0
         return a - b - c
+
 
 # ------------------------------------------------------------
 
@@ -1169,8 +1172,8 @@ class Person(
 
 
 class TagQuerySet(QuerySet):
-    CARPENTRIES_TAG_NAMES = ["SWC", "DC", "LC"]
-    MAIN_TAG_NAMES = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
+    CARPENTRIES_TAG_NAMES = ["SWC", "DC", "LC", "CLDT"]
+    MAIN_TAG_NAMES = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE", "CLDT"]
 
     def main_tags(self):
         return self.filter(name__in=self.MAIN_TAG_NAMES)
@@ -1713,9 +1716,9 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             has_TTT = self.tags.filter(name="TTT")
 
             if self.open_TTT_applications and not has_TTT:
-                errors[
-                    "open_TTT_applications"
-                ] = "You cannot open applications on non-TTT event."
+                errors["open_TTT_applications"] = (
+                    "You cannot open applications on non-TTT event."
+                )
 
             if errors:
                 raise ValidationError(errors)

@@ -588,8 +588,8 @@ class MembershipCreateRollOver(
             "inhouse_instructor_training_seats": self.membership.inhouse_instructor_training_seats,  # noqa
             "additional_inhouse_instructor_training_seats": self.membership.additional_inhouse_instructor_training_seats,  # noqa
             "inhouse_instructor_training_seats_rolled_from_previous": 0,
-            "cldt_seats": self.membership.inhouse_instructor_training_seats,  # noqa
-            "additional_cldt_seats": self.membership.additional_inhouse_instructor_training_seats,  # noqa
+            "cldt_seats": self.membership.cldt_seats,  # noqa
+            "additional_cldt_seats": self.membership.additional_cldt_seats,  # noqa
             "cldt_seats_rolled_from_previous": 0,
             "emergency_contact": self.membership.emergency_contact,
         }

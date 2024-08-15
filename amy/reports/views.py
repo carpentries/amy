@@ -149,7 +149,7 @@ def instructor_issues(request):
     cldt = Tag.objects.get(name="CLDT")
     stalled = Tag.objects.get(name="stalled")
     trainees = (
-        Task.objects.filter(event__tags__in=[ttt,cldt], role=learner)
+        Task.objects.filter(event__tags__in=[ttt, cldt], role=learner)
         .exclude(person__badges__in=instructor_badges)
         .order_by("person__family", "person__personal", "event__start")
         .select_related("person", "event")

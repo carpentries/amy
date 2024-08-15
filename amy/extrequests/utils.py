@@ -64,7 +64,6 @@ def member_code_valid_training(
     if (
         membership.public_instructor_training_seats_remaining
         + membership.inhouse_instructor_training_seats_remaining
-        + membership.cldt_seats_remaining
         <= 0
     ):
         raise MemberCodeValidationError("Membership has no training seats remaining.")
@@ -153,9 +152,7 @@ def get_membership_warnings_after_match(
             "it's been allowed.",
         )
 
-    cldt_remaining = (
-        membership.cldt_seats_remaining
-    )
+    cldt_remaining = membership.cldt_seats_remaining
     if cldt_remaining <= 0:
         warnings.append(
             f'Membership "{membership}" is using more CLDT seats than '
