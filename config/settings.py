@@ -685,13 +685,13 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
 # Disabling the feature flag should be done by setting the URL parameter to `=false`.
 # There should also be included a session condition. For example:
 #
-#     FLAGS = {
-#         "EMAIL_MODULE": [
-#             {"condition": "anonymous", "value": False, "required": True},
-#             {"condition": "parameter", "value": "enable_email_module=true"},
-#             {"condition": "session", "value": "enable_email_module"},
-#         ],
-#     }
+#  FLAGS = {
+#      "SOME_MODULE": [
+#          {"condition": "anonymous", "value": False, "required": True},
+#          {"condition": "parameter", "value": "enable_some_module=true"},  # CHANGE ME
+#          {"condition": "session", "value": "enable_some_module"},  # CHANGE ME
+#      ],
+#  }
 # ------------
 FLAGS = {
     # Enables instructor recruitment views; this should be enabled in all environments.

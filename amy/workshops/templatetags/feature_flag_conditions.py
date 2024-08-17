@@ -9,6 +9,11 @@ def first_parameter_condition(flag: Flag) -> Condition | None:
     return next((c for c in flag.conditions if c.condition == "parameter"), None)
 
 
+@register.simple_tag
+def can_change_state(flag: Flag) -> bool:
+    return any(c.condition == "parameter" for c in flag.conditions)
+
+
 @register.filter
 def parameter_strip_value(url: str) -> str:
     try:
