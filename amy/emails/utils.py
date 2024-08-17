@@ -182,7 +182,7 @@ def scalar_value_from_type(type_: str, value: Any) -> BasicTypes:
         "str": str,
         "int": int,
         "float": float,
-        "bool": lambda x: x.lower() == "true",
+        "bool": lambda x: x.lower() in ("true", "t", "1"),
         "date": datetime.fromisoformat,
         "none": lambda _: None,
     }
@@ -190,12 +190,14 @@ def scalar_value_from_type(type_: str, value: Any) -> BasicTypes:
     try:
         return cast(BasicTypes, mapping[type_](value))
     except KeyError as exc:
-        raise ValueError(f"Unsupported scalar type {type_!r}.") from exc
+        raise ValueError(
+            f"Unsupported scalar type {type_!r} (value {value!r})."
+        ) from exc
     except ValueError as exc:
-        raise ValueError(f"Failed to parse {value!r}.") from exc
+        raise ValueError(f"Failed to parse {value!r} for type {type_!r}.") from exc
 
 
-def find_model_instance(model_name: str, model_pk: int) -> Model:
+def find_model_instance(model_name: str, model_pk: Any) -> Model:
     model = next(
         (model for model in apps.get_models() if model._meta.model_name == model_name),
         None,
@@ -205,6 +207,10 @@ def find_model_instance(model_name: str, model_pk: int) -> Model:
 
     try:
         return model.objects.get(pk=model_pk)
+    except ValueError as exc:
+        raise ValueError(
+            f"Failed to parse pk {model_pk!r} for model {model_name!r}: {exc}"
+        ) from exc
     except model.DoesNotExist as exc:
         raise ValueError(
             f"Model {model_name!r} with pk {model_pk!r} not found."
@@ -221,7 +227,10 @@ def map_single_api_uri_to_model_or_value(uri: str) -> Model | BasicTypes:
         case ParseResult(
             scheme="api", netloc="", path=model_name, params="", query="", fragment=id_
         ):
-            return find_model_instance(model_name, int(id_))
+            try:
+                return find_model_instance(model_name, int(id_))
+            except ValueError as exc:
+                raise ValueError(f"Failed to parse URI {uri!r}.") from exc
 
         case _:
             raise ValueError(f"Unsupported URI {uri!r}.")
@@ -236,15 +245,13 @@ def map_api_uri_to_model_or_value(
 
 
 def build_context_from_dict(
-    context_json: dict[str, str]
+    context: dict[str, str | list[str]]
 ) -> dict[str, BasicTypes | Model | list[Model | BasicTypes]]:
-    return {
-        key: map_api_uri_to_model_or_value(uri) for key, uri in context_json.items()
-    }
+    return {key: map_api_uri_to_model_or_value(uri) for key, uri in context.items()}
 
 
 def build_context_from_list(
-    context_json: list[dict[str, str]],
+    context: list[dict[str, str]],
 ) -> list[BasicTypes | Model | list[Model | BasicTypes]]:
     return [
         (
@@ -256,5 +263,5 @@ def build_context_from_list(
             if "api_uri" in item
             else map_api_uri_to_model_or_value(item["value_uri"])
         )
-        for item in context_json
+        for item in context
     ]
