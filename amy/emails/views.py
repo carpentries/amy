@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 from django.views.generic.detail import SingleObjectMixin
 from flags.views import FlaggedViewMixin
+from jinja2 import DebugUndefined, Environment, TemplateError
 from markdownx.utils import markdownify
 
 from emails.controller import EmailController
@@ -24,7 +25,13 @@ from emails.models import (
     ScheduledEmailStatusExplanation,
 )
 from emails.signals import ALL_SIGNALS
-from emails.utils import find_signal_by_name, person_from_request
+from emails.utils import (
+    build_context_from_dict,
+    build_context_from_list,
+    find_signal_by_name,
+    jinjanify,
+    person_from_request,
+)
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -144,7 +151,37 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
             .filter(scheduled_email=self.object)
             .order_by("-created_at")
         )[0:500]
-        context["rendered_body"] = markdownify(self.object.body)
+
+        engine = Environment(autoescape=True, undefined=DebugUndefined)
+        try:
+            body_context = build_context_from_dict(self.object.context_json)
+            context["rendered_context"] = body_context
+        except ValueError as exc:
+            body_context = {}
+            context["rendered_context"] = f"Unable to render context: {exc}"
+
+        try:
+            context["rendered_body"] = markdownify(
+                jinjanify(engine, self.object.body, body_context)
+            )
+        except TemplateError as exc:
+            context["rendered_body"] = markdownify(f"Unable to render template: {exc}")
+
+        try:
+            context["rendered_subject"] = jinjanify(
+                engine, self.object.subject, body_context
+            )
+        except TemplateError as exc:
+            context["rendered_subject"] = f"Unable to render template: {exc}"
+
+        try:
+            to_header_context = build_context_from_list(
+                self.object.to_header_context_json
+            )
+            context["rendered_to_header_context"] = to_header_context
+        except ValueError as exc:
+            to_header_context = {}
+            context["rendered_to_header_context"] = f"Unable to render context: {exc}"
 
         context["status_explanation"] = ScheduledEmailStatusExplanation[
             ScheduledEmailStatus(self.object.state)

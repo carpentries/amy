@@ -138,8 +138,15 @@
     </td>
   </tr>
   <tr>
-    <th>Subject:</th>
-    <td colspan="2"><code>{{ scheduled_email.subject }}</code></td>
+    <th>Subject: <br><small>(Markdown; converts to plain text when sent)</small></th>
+    <td>
+      <strong>Raw:</strong>
+      <pre>{{ scheduled_email.subject }}</pre>
+    </td>
+    <td>
+      <strong>Rendered:</strong>
+      <p>{{ rendered_subject }}</p>
+    </td>
   </tr>
   <tr>
     <th>Body: <br><small>(Markdown; converts to HTML when sent)</small></th>
@@ -161,8 +168,16 @@
     <td colspan="2">{{ scheduled_email.context_json }}</td>
   </tr>
   <tr>
+    <th>Rendered context JSON:</th>
+    <td colspan="2">{{ rendered_context }}</td>
+  </tr>
+  <tr>
     <th>"To" header context JSON:</th>
     <td colspan="2">{{ scheduled_email.to_header_context_json }}</td>
+  </tr>
+  <tr>
+    <th>Rendered "To" header context JSON:</th>
+    <td colspan="2">{{ rendered_to_header_context }}</td>
   </tr>
 </table>
 

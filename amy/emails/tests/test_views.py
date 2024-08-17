@@ -290,20 +290,29 @@ class TestScheduledEmailDetails(TestBase):
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
-            subject="Greetings {{ name }}",
-            body="Hello, {{ name }}! Nice to meet **you**.",
+            subject="Greetings {{ personal }} {{ family }}",
+            body="Hello, {{ hermione.full_name }}! Nice to meet **you**. Here's a "
+            "list of what you can do: {{ a_list }}.",
         )
-        engine = EmailTemplate.get_engine()
-        context = {"name": "Harry"}
         scheduled_email = ScheduledEmail.objects.create(
             scheduled_at=timezone.now() + timedelta(hours=1),
             to_header=["peter@spiderman.net"],
+            to_header_context_json=[
+                {"api_uri": f"api:person#{self.hermione.pk}", "property": "email"},
+                {"value_uri": "value:str#test2@example.org"},
+            ],
             from_header=template.from_header,
             reply_to_header=template.reply_to_header,
             cc_header=template.cc_header,
             bcc_header=template.bcc_header,
-            subject=template.render_template(engine, template.subject, context),
-            body=template.render_template(engine, template.body, context),
+            subject=template.subject,
+            body=template.body,
+            context_json={
+                "hermione": f"api:person#{self.hermione.pk}",
+                "personal": "value:str#Harry",
+                "family": "value:str#Potter",
+                "a_list": ["value:int#1", "value:int#2"],
+            },
             template=template,
         )
         url = reverse("scheduledemail_details", kwargs={"pk": scheduled_email.pk})
@@ -328,10 +337,6 @@ class TestScheduledEmailDetails(TestBase):
             ),
         )
         self.assertEqual(
-            rv.context["rendered_body"],
-            "<p>Hello, Harry! Nice to meet <strong>you</strong>.</p>",
-        )
-        self.assertEqual(
             rv.context["status_explanation"],
             ScheduledEmailStatusExplanation[
                 ScheduledEmailStatus(scheduled_email.state)
@@ -339,6 +344,25 @@ class TestScheduledEmailDetails(TestBase):
         )
         self.assertEqual(
             rv.context["ScheduledEmailStatusActions"], ScheduledEmailStatusActions
+        )
+        self.assertEqual(
+            rv.context["rendered_context"],
+            {
+                "a_list": [1, 2],
+                "hermione": self.hermione,
+                "personal": "Harry",
+                "family": "Potter",
+            },
+        )
+        self.assertEqual(
+            rv.context["rendered_body"],
+            "<p>Hello, Hermione Granger! Nice to meet <strong>you</strong>. "
+            "Here's a list of what you can do: [1, 2].</p>",
+        )
+        self.assertEqual(rv.context["rendered_subject"], "Greetings Harry Potter")
+        self.assertEqual(
+            rv.context["rendered_to_header_context"],
+            [self.hermione.email, "test2@example.org"],
         )
 
 
