@@ -46,8 +46,6 @@ env = environ.Env(
         "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
     ),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
-    # Feature flags
-    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, True),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -666,11 +664,6 @@ if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
 
 REPORTS_LINK = env("AMY_REPORTS_LINK")
 
-# Instructor Recruitment Process
-# -----------------------------------------------------------------------------
-# Settings for Instructor Recruitment project
-INSTRUCTOR_RECRUITMENT_ENABLED = env("AMY_INSTRUCTOR_RECRUITMENT_ENABLED")
-
 # Site banner style
 # -----------------------------------------------------------------------------
 # This should show a special banner on all sites so that users are aware of
@@ -702,8 +695,9 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
 # ------------
 FLAGS = {
     # Enables instructor recruitment views; this should be enabled in all environments.
-    # The flag itself was not migrated from envvar to django-flags mechanism.
-    # "INSTRUCTOR_RECRUITMENT": [{"condition": "boolean", "value": True}],
+    "INSTRUCTOR_RECRUITMENT": [
+        {"condition": "boolean", "value": True},
+    ],
     # ------------
     # Enables the new email module. It's only for logged-in users and it has to be
     # enabled through `?enable_email_module` GET parameter or the same parameter stored

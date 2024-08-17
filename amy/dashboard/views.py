@@ -24,6 +24,7 @@ from django.views.generic import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 from flags.sources import get_flags
+from flags.views import FlaggedViewMixin
 
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
@@ -41,13 +42,11 @@ from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from recruitment.views import RecruitmentEnabledMixin
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
     AMYListView,
     AMYUpdateView,
-    ConditionallyEnabledMixin,
 )
 from workshops.models import (
     Airport,
@@ -335,8 +334,9 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
 
 
 class UpcomingTeachingOpportunitiesList(
-    LoginRequiredMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+    LoginRequiredMixin, FlaggedViewMixin, AMYListView
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
     template_name = "dashboard/upcoming_teaching_opportunities.html"
@@ -411,10 +411,10 @@ class UpcomingTeachingOpportunitiesList(
 
 class SignupForRecruitment(
     LoginRequiredMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     AMYCreateAndFetchObjectView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitment",
         "recruitment.add_instructorrecruitmentsignup",
@@ -527,11 +527,11 @@ class SignupForRecruitment(
 
 class ResignFromRecruitment(
     LoginRequiredMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     SingleObjectMixin,
     View,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitmentsignup",
         "recruitment.delete_instructorrecruitmentsignup",

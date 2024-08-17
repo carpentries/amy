@@ -1,6 +1,6 @@
 {% load navigation %}
 {% load communityroles %}
-{% load instructorrecruitment %}
+{% load feature_flags %}
 {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand" href="{% url 'admin-dashboard' %}">AMY</a>
@@ -17,7 +17,7 @@
           {% navbar_element "Update data" "autoupdate_profile" %}
           {% navbar_element "Training progress" "training-progress" %}
 
-          {% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
+          {% flag_enabled 'INSTRUCTOR_RECRUITMENT' as INSTRUCTOR_RECRUITMENT_ENABLED %}
           {% get_community_role user role_name="instructor" as INSTRUCTOR_COMMUNITY_ROLE %}
           {% if INSTRUCTOR_RECRUITMENT_ENABLED and INSTRUCTOR_COMMUNITY_ROLE.is_active %}
             {% navbar_element "Upcoming Teaching Opportunities" "upcoming-teaching-opportunities" %}
