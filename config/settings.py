@@ -674,6 +674,8 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
         "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
     )
 
+PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
+
 # Feature Flags
 # -----------------------------------------------------------------------------
 # These flags are used to enable/disable features in AMY.

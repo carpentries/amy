@@ -450,11 +450,11 @@ class ConditionallyEnabledMixin:
 
     view_enabled: Optional[bool] = None
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         return self.view_enabled is True
 
     def dispatch(self, request, *args, **kwargs):
-        if self.get_view_enabled() is not True:
+        if self.get_view_enabled(request) is not True:
             raise Http404("Page not found")
 
         return super().dispatch(request, *args, **kwargs)

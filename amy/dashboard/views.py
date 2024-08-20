@@ -2,6 +2,7 @@ from datetime import date, timedelta
 import re
 from urllib.parse import unquote
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import (
@@ -47,6 +48,7 @@ from workshops.base_views import (
     AMYDeleteView,
     AMYListView,
     AMYUpdateView,
+    ConditionallyEnabledMixin,
 )
 from workshops.models import (
     Airport,
@@ -744,8 +746,13 @@ def search(request):
 # ------------------------------------------------------------
 
 
-class AllFeatureFlags(LoginRequiredMixin, TemplateView):
+class AllFeatureFlags(ConditionallyEnabledMixin, LoginRequiredMixin, TemplateView):
     template_name = "dashboard/all_feature_flags.html"
+
+    def get_view_enabled(self, request) -> bool:
+        return bool(
+            settings.PROD_ENVIRONMENT and request.user.is_superuser
+        ) or not bool(settings.PROD_ENVIRONMENT)
 
     def get(self, request: HttpRequest, *args, **kwargs):
         self.request = request
