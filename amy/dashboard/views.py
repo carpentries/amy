@@ -336,7 +336,7 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
 
 
 class UpcomingTeachingOpportunitiesList(
-    LoginRequiredMixin, FlaggedViewMixin, AMYListView
+    LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
@@ -375,12 +375,12 @@ class UpcomingTeachingOpportunitiesList(
         )
         return super().get_queryset()
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -414,6 +414,7 @@ class UpcomingTeachingOpportunitiesList(
 class SignupForRecruitment(
     LoginRequiredMixin,
     FlaggedViewMixin,
+    ConditionallyEnabledMixin,
     AMYCreateAndFetchObjectView,
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
@@ -432,12 +433,12 @@ class SignupForRecruitment(
     form_class = SignupForRecruitmentForm
     template_name = "dashboard/signup_for_recruitment.html"
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -530,6 +531,7 @@ class SignupForRecruitment(
 class ResignFromRecruitment(
     LoginRequiredMixin,
     FlaggedViewMixin,
+    ConditionallyEnabledMixin,
     SingleObjectMixin,
     View,
 ):
@@ -556,12 +558,12 @@ class ResignFromRecruitment(
         redirect_url = self.get_redirect_url()
         return redirect(redirect_url)
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 

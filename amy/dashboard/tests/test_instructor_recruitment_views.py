@@ -22,7 +22,7 @@ from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestUpcomingTeachingOpportunitiesList(TestCase):
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().get("/")
@@ -32,9 +32,9 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         # Act
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(), False)
+        self.assertEqual(view.get_view_enabled(request), False)
 
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__community_role_inactive(self):
         # Arrange
         request = RequestFactory().get("/")
@@ -59,9 +59,9 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
         self.assertEqual(role.is_active(), False)
-        self.assertEqual(view.get_view_enabled(), False)
+        self.assertEqual(view.get_view_enabled(request), False)
 
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__community_role_active(self):
         # Arrange
         request = RequestFactory().get("/")
@@ -84,7 +84,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
-        self.assertEqual(view.get_view_enabled(), True)
+        self.assertEqual(view.get_view_enabled(request), True)
 
     def test_get_queryset(self):
         # Arrange
@@ -201,7 +201,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
 
 
 class TestSignupForRecruitment(TestCase):
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().get("/")
@@ -211,9 +211,9 @@ class TestSignupForRecruitment(TestCase):
         # Act
         view = SignupForRecruitment(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(), False)
+        self.assertEqual(view.get_view_enabled(request), False)
 
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__community_role_inactive(self):
         # Arrange
         request = RequestFactory().get("/")
@@ -238,9 +238,9 @@ class TestSignupForRecruitment(TestCase):
         view = SignupForRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), False)
-        self.assertEqual(view.get_view_enabled(), False)
+        self.assertEqual(view.get_view_enabled(request), False)
 
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__community_role_active(self):
         # Arrange
         request = RequestFactory().get("/")
@@ -263,7 +263,7 @@ class TestSignupForRecruitment(TestCase):
         view = SignupForRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
-        self.assertEqual(view.get_view_enabled(), True)
+        self.assertEqual(view.get_view_enabled(request), True)
 
     def test_get_context_data(self):
         # Arrange
@@ -505,7 +505,7 @@ class TestSignupForRecruitment(TestCase):
 
 
 class TestResignFromRecruitment(TestCase):
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().post("/")
@@ -515,9 +515,9 @@ class TestResignFromRecruitment(TestCase):
         # Act
         view = ResignFromRecruitment(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(), False)
+        self.assertEqual(view.get_view_enabled(request), False)
 
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__community_role_inactive(self):
         # Arrange
         request = RequestFactory().post("/")
@@ -542,9 +542,9 @@ class TestResignFromRecruitment(TestCase):
         view = ResignFromRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), False)
-        self.assertEqual(view.get_view_enabled(), False)
+        self.assertEqual(view.get_view_enabled(request), False)
 
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
     def test_view_enabled__community_role_active(self):
         # Arrange
         request = RequestFactory().post("/")
@@ -567,7 +567,7 @@ class TestResignFromRecruitment(TestCase):
         view = ResignFromRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
-        self.assertEqual(view.get_view_enabled(), True)
+        self.assertEqual(view.get_view_enabled(request), True)
 
     def test_get_queryset(self):
         # Arrange
