@@ -696,18 +696,14 @@ PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
 #  }
 # ------------
 FLAGS = {
-    # Enables instructor recruitment views; this should be enabled in all environments.
+    # Enable instructor recruitment views.
     "INSTRUCTOR_RECRUITMENT": [
         {"condition": "boolean", "value": True},
     ],
     # ------------
-    # Enables the new email module. It's only for logged-in users and it has to be
-    # enabled through `?enable_email_module` GET parameter or the same parameter stored
-    # in request session.
+    # Enable the new email module.
     "EMAIL_MODULE": [
-        {"condition": "anonymous", "value": False, "required": True},
-        {"condition": "parameter", "value": "enable_email_module=true"},
-        {"condition": "session", "value": "enable_email_module"},
+        {"condition": "boolean", "value": True},
     ],
     # Always enabled.
     "ENFORCE_MEMBER_CODES": [
