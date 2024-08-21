@@ -2,6 +2,7 @@ from datetime import date, timedelta
 import re
 from urllib.parse import unquote
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import (
@@ -24,6 +25,7 @@ from django.views.generic import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 from flags.sources import get_flags
+from flags.views import FlaggedViewMixin
 
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
@@ -41,7 +43,6 @@ from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from recruitment.views import RecruitmentEnabledMixin
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -335,8 +336,9 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
 
 
 class UpcomingTeachingOpportunitiesList(
-    LoginRequiredMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+    LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
     template_name = "dashboard/upcoming_teaching_opportunities.html"
@@ -373,12 +375,12 @@ class UpcomingTeachingOpportunitiesList(
         )
         return super().get_queryset()
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -411,10 +413,11 @@ class UpcomingTeachingOpportunitiesList(
 
 class SignupForRecruitment(
     LoginRequiredMixin,
-    RecruitmentEnabledMixin,
+    FlaggedViewMixin,
     ConditionallyEnabledMixin,
     AMYCreateAndFetchObjectView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitment",
         "recruitment.add_instructorrecruitmentsignup",
@@ -430,12 +433,12 @@ class SignupForRecruitment(
     form_class = SignupForRecruitmentForm
     template_name = "dashboard/signup_for_recruitment.html"
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -527,11 +530,12 @@ class SignupForRecruitment(
 
 class ResignFromRecruitment(
     LoginRequiredMixin,
-    RecruitmentEnabledMixin,
+    FlaggedViewMixin,
     ConditionallyEnabledMixin,
     SingleObjectMixin,
     View,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitmentsignup",
         "recruitment.delete_instructorrecruitmentsignup",
@@ -554,12 +558,12 @@ class ResignFromRecruitment(
         redirect_url = self.get_redirect_url()
         return redirect(redirect_url)
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -744,8 +748,13 @@ def search(request):
 # ------------------------------------------------------------
 
 
-class AllFeatureFlags(LoginRequiredMixin, TemplateView):
+class AllFeatureFlags(ConditionallyEnabledMixin, LoginRequiredMixin, TemplateView):
     template_name = "dashboard/all_feature_flags.html"
+
+    def get_view_enabled(self, request) -> bool:
+        return bool(
+            settings.PROD_ENVIRONMENT and request.user.is_superuser
+        ) or not bool(settings.PROD_ENVIRONMENT)
 
     def get(self, request: HttpRequest, *args, **kwargs):
         self.request = request

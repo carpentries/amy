@@ -1,7 +1,6 @@
 from datetime import date
 
-from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from recruitment.models import (
     InstructorRecruitment,
@@ -12,25 +11,12 @@ from recruitment.templatetags.instructorrecruitment import (
     get_event_conflicts,
     get_events_nearby,
     get_signup_conflicts,
-    is_instructor_recruitment_enabled,
     priority_label,
 )
 from workshops.models import Event
 
 
 class TestInstructorRecruitmentTemplateTags(TestCase):
-    def test_feature_flag_enabled(self) -> None:
-        with self.settings(INSTRUCTOR_RECRUITMENT_ENABLED=False):
-            self.assertEqual(is_instructor_recruitment_enabled(), False)
-        with self.settings(INSTRUCTOR_RECRUITMENT_ENABLED=True):
-            self.assertEqual(is_instructor_recruitment_enabled(), True)
-
-    @override_settings()
-    def test_feature_flag_removed(self) -> None:
-        del settings.INSTRUCTOR_RECRUITMENT_ENABLED
-
-        self.assertEqual(is_instructor_recruitment_enabled(), False)
-
     def test_get_event_conflicts(self) -> None:
         # Arrange
         event1 = Event(

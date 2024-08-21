@@ -5,7 +5,7 @@
 {% load revisions %}
 {% load tags %}
 {% load dates %}
-{% load instructorrecruitment %}
+{% load feature_flags %}
 {% load consents %}
 
 {% block title %}
@@ -26,7 +26,7 @@
     </div>
     <div class="col-lg-6">
       {% comment %} Only show Instructor Selection summary in centrally-organised events. Exclude TTT events, too. {% endcomment %}
-      {% is_instructor_recruitment_enabled as INSTRUCTOR_RECRUITMENT_ENABLED %}
+      {% flag_enabled 'INSTRUCTOR_RECRUITMENT' as INSTRUCTOR_RECRUITMENT_ENABLED %}
       {% if INSTRUCTOR_RECRUITMENT_ENABLED %}
         {% if "TTT" not in event.tags.strings and event.administrator.domain != "self-organized" %}
           {% include "includes/instructor_selection_summary.html" with event=event stats=recruitment_stats %}

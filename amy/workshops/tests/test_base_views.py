@@ -31,7 +31,7 @@ class TestConditionallyEnabledView(TestCase):
     def test_disabled_view_through_method(self):
         # Arrange
         class View(ConditionallyEnabledMixin, FakeView):
-            def get_view_enabled(self) -> bool:
+            def get_view_enabled(self, request) -> bool:
                 return False
 
         view = View()
@@ -60,7 +60,7 @@ class TestConditionallyEnabledView(TestCase):
     def test_enabled_view_through_method(self):
         # Arrange
         class View(ConditionallyEnabledMixin, FakeView):
-            def get_view_enabled(self) -> bool:
+            def get_view_enabled(self, request) -> bool:
                 return True
 
         view = View()

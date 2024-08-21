@@ -224,8 +224,12 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
 
 
 class TestInstructorConfirmedForWorkshopReceiverIntegration(TestBase):
-    @override_settings(INSTRUCTOR_RECRUITMENT_ENABLED=True)
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @override_settings(
+        FLAGS={
+            "INSTRUCTOR_RECRUITMENT": [("boolean", True)],
+            "EMAIL_MODULE": [("boolean", True)],
+        }
+    )
     @patch("django.contrib.messages.views.messages")
     @patch("emails.actions.base_action.messages_action_scheduled")
     def test_integration(

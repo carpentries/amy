@@ -3,7 +3,6 @@ import logging
 from typing import Callable
 from urllib.parse import unquote
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -16,6 +15,7 @@ from django.urls import reverse
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
 import django_rq
+from flags.views import FlaggedViewMixin
 
 from emails.signals import (
     admin_signs_instructor_up_for_workshop_signal,
@@ -35,7 +35,6 @@ from workshops.base_views import (
     AMYDetailView,
     AMYListView,
     AMYUpdateView,
-    ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
 from workshops.models import Event, Person, Role, Task
@@ -53,14 +52,8 @@ redis_connection = django_rq.get_connection("default")
 # InstructorRecruitment related views
 
 
-class RecruitmentEnabledMixin:
-    def get_view_enabled(self) -> bool:
-        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
-
-
-class InstructorRecruitmentList(
-    OnlyForAdminsMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
-):
+class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Recruitment processes"
     filter_class = InstructorRecruitmentFilter
@@ -154,10 +147,10 @@ class InstructorRecruitmentCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     AMYCreateView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.add_instructorrecruitment"
     model = InstructorRecruitment
     template_name = "recruitment/instructorrecruitment_add.html"
@@ -233,10 +226,10 @@ class InstructorRecruitmentCreate(
 
 class InstructorRecruitmentDetails(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     AMYDetailView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = (
         InstructorRecruitment.objects.annotate_with_priority()
@@ -296,14 +289,14 @@ class InstructorRecruitmentDetails(
 
 class InstructorRecruitmentAddSignup(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     SuccessMessageMixin,
     PermissionRequiredMixin,
     FormView,
 ):
     """POST requests for adding new signup for an existing recruitment."""
 
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.change_instructorrecruitment",
         "recruitment.view_instructorrecruitmentsignup",
@@ -358,14 +351,14 @@ class InstructorRecruitmentAddSignup(
 
 class InstructorRecruitmentSignupChangeState(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     FormMixin,
     PermissionRequiredMixin,
     View,
 ):
     """POST requests for editing (confirming or declining) the instructor signup."""
 
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.change_instructorrecruitmentsignup"
     form_class = InstructorRecruitmentSignupChangeStateForm
 
@@ -477,14 +470,14 @@ class InstructorRecruitmentSignupChangeState(
 
 class InstructorRecruitmentChangeState(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     FormMixin,
     PermissionRequiredMixin,
     View,
 ):
     """POST requests for editing (e.g. closing) the instructor recruitment."""
 
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     form_class = InstructorRecruitmentChangeStateForm
     permission_required = "recruitment.change_instructorrecruitment"
 
@@ -585,10 +578,10 @@ class InstructorRecruitmentSignupUpdate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     AMYUpdateView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.change_instructorrecruitmentsignup"
     form_class = InstructorRecruitmentSignupUpdateForm
     model = InstructorRecruitmentSignup
