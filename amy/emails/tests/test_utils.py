@@ -8,18 +8,20 @@ from django.test import RequestFactory, TestCase
 from django.utils import timezone
 from jinja2 import DebugUndefined, Environment
 
+from api.v2.serializers import PersonSerializer
 from emails.models import ScheduledEmail
 from emails.signals import Signal
 from emails.utils import (
     build_context_from_dict,
     build_context_from_list,
     combine_date_with_current_utc_time,
+    find_model_class,
     find_model_instance,
     find_signal_by_name,
     immediate_action,
     jinjanify,
-    map_api_uri_to_model_or_value,
-    map_single_api_uri_to_model_or_value,
+    map_api_uri_to_serialized_model_or_value,
+    map_single_api_uri_to_serialized_model_or_value,
     messages_action_cancelled,
     messages_action_scheduled,
     messages_action_updated,
@@ -408,84 +410,97 @@ class TestScalarValueFromType(TestCase):
                 )
 
 
-class TestFindModelInstance(TestCase):
-    def test_find_model_instance(self) -> None:
+class TestFindModelClass(TestCase):
+    def test_find_model_class(self) -> None:
         # Arrange
-        person = Person.objects.create()
         model_name = "person"
-        model_pk = person.pk
 
         # Act
-        result = find_model_instance(model_name, model_pk)
+        result = find_model_class(model_name)
 
         # Assert
-        self.assertEqual(result, person)
+        self.assertEqual(result, Person)
 
-    def test_find_model_instance__model_doesnt_exist(self) -> None:
+    def test_find_model_class__model_doesnt_exist(self) -> None:
         # Arrange
         model_name = "fake_model"
-        model_pk = 1
 
         # Act & Assert
         with self.assertRaises(ValueError) as cm:
-            find_model_instance(model_name, model_pk)
+            find_model_class(model_name)
         self.assertEqual(
             str(cm.exception),
             f"Model {model_name!r} not found.",
         )
 
+
+class TestFindModelInstance(TestCase):
+    def test_find_model_instance(self) -> None:
+        # Arrange
+        person = Person.objects.create()
+        model_class = Person
+        model_pk = person.pk
+
+        # Act
+        result = find_model_instance(model_class, model_pk)
+
+        # Assert
+        self.assertEqual(result, person)
+
     def test_find_model_instance__invalid_model_pk(self) -> None:
         # Arrange
-        model_name = "person"
+        model_class = Person
         model_pk = "invalid_pk"
 
         # Act & Assert
         with self.assertRaises(ValueError) as cm:
-            find_model_instance(model_name, model_pk)
+            find_model_instance(model_class, model_pk)
         self.assertEqual(
             str(cm.exception),
-            f"Failed to parse pk {model_pk!r} for model {model_name!r}: Field "
+            f"Failed to parse pk {model_pk!r} for model {model_class!r}: Field "
             f"'id' expected a number but got '{model_pk}'.",
         )
 
     def test_find_model_instance__model_instance_doesnt_exist(self) -> None:
         # Arrange
-        model_name = "person"
+        model_class = Person
         model_pk = 1
 
         # Act & Assert
         with self.assertRaises(ValueError) as cm:
-            find_model_instance(model_name, model_pk)
+            find_model_instance(model_class, model_pk)
         self.assertEqual(
             str(cm.exception),
-            f"Model {model_name!r} with pk {model_pk!r} not found.",
+            f"Model {model_class!r} with pk {model_pk!r} not found.",
         )
 
 
-class TestMapSingleApiUriToModelOrValue(TestCase):
+class TestMapSingleApiUriToSerializedModelOrValue(TestCase):
     @patch("emails.utils.scalar_value_from_type")
-    def test_map_single_api_uri_to_model_or_value__scalar(
+    def test_map_single_api_uri_to_serialized_model_or_value__scalar(
         self, mock_scalar_value_from_type: MagicMock
     ) -> None:
         # Arrange
         uri = "value:str#test"
         # Act
-        map_single_api_uri_to_model_or_value(uri)
+        map_single_api_uri_to_serialized_model_or_value(uri)
         # Assert
         mock_scalar_value_from_type.assert_called_once_with("str", "test")
 
     @patch("emails.utils.find_model_instance")
-    def test_map_single_api_uri_to_model_or_value__model(
+    def test_map_single_api_uri_to_serialized_model_or_value__model(
         self, mock_find_model_instance: MagicMock
     ) -> None:
         # Arrange
         uri = "api:person#1"
         # Act
-        map_single_api_uri_to_model_or_value(uri)
+        map_single_api_uri_to_serialized_model_or_value(uri)
         # Assert
-        mock_find_model_instance.assert_called_once_with("person", 1)
+        mock_find_model_instance.assert_called_once_with(Person, 1)
 
-    def test_map_single_api_uri_to_model_or_value__unsupported_uri(self) -> None:
+    def test_map_single_api_uri_to_serialized_model_or_value__unsupported_uri(
+        self,
+    ) -> None:
         # Arrange
         uris = [
             "invalid_uri",
@@ -496,10 +511,12 @@ class TestMapSingleApiUriToModelOrValue(TestCase):
         for uri in uris:
             with self.subTest(uri=uri):
                 with self.assertRaises(ValueError) as cm:
-                    map_single_api_uri_to_model_or_value(uri)
+                    map_single_api_uri_to_serialized_model_or_value(uri)
                 self.assertEqual(str(cm.exception), f"Unsupported URI {uri!r}.")
 
-    def test_map_single_api_uri_to_model_or_value__unparsable_uri(self) -> None:
+    def test_map_single_api_uri_to_serialized_model_or_value__unparsable_uri(
+        self,
+    ) -> None:
         # Arrange
         uris = [
             "api://",
@@ -510,40 +527,40 @@ class TestMapSingleApiUriToModelOrValue(TestCase):
         for uri in uris:
             with self.subTest(uri=uri):
                 with self.assertRaises(ValueError) as cm:
-                    map_single_api_uri_to_model_or_value(uri)
+                    map_single_api_uri_to_serialized_model_or_value(uri)
                 self.assertEqual(str(cm.exception), f"Failed to parse URI {uri!r}.")
 
 
-class TestMapApiUriToModelOrValue(TestCase):
-    @patch("emails.utils.map_single_api_uri_to_model_or_value")
-    def test_map_api_uri_to_model_or_value(
-        self, mock_map_single_api_uri_to_model_or_value: MagicMock
+class TestMapApiUriToSerializedModelOrValue(TestCase):
+    @patch("emails.utils.map_single_api_uri_to_serialized_model_or_value")
+    def test_map_api_uri_to_serialized_model_or_value(
+        self, mock_map_single_api_uri_to_serialized_model_or_value: MagicMock
     ) -> None:
         # Arrange
         single_uri_arg = "fake_uri"
         multiple_uris_arg = ["fake_uri1", "fake_uri2"]
 
         # Act
-        map_api_uri_to_model_or_value(single_uri_arg)
-        map_api_uri_to_model_or_value(multiple_uris_arg)
+        map_api_uri_to_serialized_model_or_value(single_uri_arg)
+        map_api_uri_to_serialized_model_or_value(multiple_uris_arg)
 
         # Assert
-        mock_map_single_api_uri_to_model_or_value.assert_has_calls(
+        mock_map_single_api_uri_to_serialized_model_or_value.assert_has_calls(
             [call("fake_uri"), call("fake_uri1"), call("fake_uri2")]
         )
 
 
 class TestBuildContextFromDict(TestCase):
-    @patch("emails.utils.map_api_uri_to_model_or_value")
+    @patch("emails.utils.map_api_uri_to_serialized_model_or_value")
     def test_build_context_from_dict(
-        self, mock_map_api_uri_to_model_or_value: MagicMock
+        self, mock_map_api_uri_to_serialized_model_or_value: MagicMock
     ) -> None:
         # Arrange
         context = {"key1": "uri1", "key2": "uri2", "key3": ["uri3", "uri4"]}
         # Act
         build_context_from_dict(context)
         # Assert
-        mock_map_api_uri_to_model_or_value.assert_has_calls(
+        mock_map_api_uri_to_serialized_model_or_value.assert_has_calls(
             [call("uri1"), call("uri2"), call(["uri3", "uri4"])]
         )
 
@@ -551,6 +568,8 @@ class TestBuildContextFromDict(TestCase):
         # Arrange
         person1 = Person.objects.create(username="test1", email="test1@example.org")
         person2 = Person.objects.create(username="test2", email="test2@example.org")
+        person1_serialized = PersonSerializer(person1).data
+        person2_serialized = PersonSerializer(person2).data
         context = {
             "person1": f"api:person#{person1.pk}",
             "list": [f"api:person#{person2.pk}", "value:str#test"],
@@ -560,22 +579,27 @@ class TestBuildContextFromDict(TestCase):
         result = build_context_from_dict(context)
 
         # Assert
-        self.assertEqual(result, {"person1": person1, "list": [person2, "test"]})
+        self.assertEqual(
+            result,
+            {"person1": person1_serialized, "list": [person2_serialized, "test"]},
+        )
 
 
 class TestBuildContextFromList(TestCase):
-    @patch("emails.utils.map_api_uri_to_model_or_value")
+    @patch("emails.utils.map_single_api_uri_to_serialized_model")
+    @patch("emails.utils.map_single_api_uri_to_value")
     def test_build_context_from_list(
-        self, mock_map_api_uri_to_model_or_value: MagicMock
+        self,
+        mock_map_single_api_uri_to_value: MagicMock,
+        mock_map_single_api_uri_to_serialized_model: MagicMock,
     ) -> None:
         # Arrange
         context = [{"api_uri": "uri1", "property": "email"}, {"value_uri": "uri2"}]
         # Act
         build_context_from_list(context)
         # Assert
-        mock_map_api_uri_to_model_or_value.assert_has_calls(
-            [call("uri1"), call("uri2")]
-        )
+        mock_map_single_api_uri_to_serialized_model.assert_called_once_with("uri1")
+        mock_map_single_api_uri_to_value.assert_called_once_with("uri2")
 
     def test_integration(self) -> None:
         # Arrange
