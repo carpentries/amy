@@ -74,8 +74,8 @@ class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
                     {
                         "api_uri": api_model_url("person", self.harry.pk),
                         "property": "email",
-                    }
-                ]  # type: ignore
+                    }  # type: ignore
+                ]
             ),
             generic_relation_obj=generic_relation_obj,
             author=author,

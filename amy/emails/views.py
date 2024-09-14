@@ -180,7 +180,6 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
             )
             context["rendered_to_header_context"] = to_header_context
         except ValueError as exc:
-            to_header_context = {}
             context["rendered_to_header_context"] = f"Unable to render context: {exc}"
 
         context["status_explanation"] = ScheduledEmailStatusExplanation[
