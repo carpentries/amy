@@ -5,6 +5,7 @@ from django.test import RequestFactory, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from api.v2.serializers import PersonSerializer
 from emails.models import (
     EmailTemplate,
     ScheduledEmail,
@@ -349,7 +350,7 @@ class TestScheduledEmailDetails(TestBase):
             rv.context["rendered_context"],
             {
                 "a_list": [1, 2],
-                "hermione": self.hermione,
+                "hermione": PersonSerializer(self.hermione).data,
                 "personal": "Harry",
                 "family": "Potter",
             },

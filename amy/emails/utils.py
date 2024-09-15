@@ -13,14 +13,37 @@ from django.utils import timezone
 from django.utils.html import format_html
 from flags import conditions
 from jinja2 import Environment
+from rest_framework.serializers import ModelSerializer
 
+from api.v2.serializers import (
+    AwardSerializer,
+    EventSerializer,
+    InstructorRecruitmentSignupSerializer,
+    MembershipSerializer,
+    OrganizationSerializer,
+    PersonSerializer,
+    SelfOrganisedSubmissionSerializer,
+    TrainingProgressSerializer,
+    TrainingRequirementSerializer,
+)
 from emails.models import ScheduledEmail
 from emails.signals import Signal
-from workshops.models import Person
+from extrequests.models import SelfOrganisedSubmission
+from recruitment.models import InstructorRecruitmentSignup
+from workshops.models import (
+    Award,
+    Event,
+    Membership,
+    Organization,
+    Person,
+    TrainingProgress,
+    TrainingRequirement,
+)
 
 logger = logging.getLogger("amy")
 
 BasicTypes = str | int | float | bool | datetime | None
+SerializedData = dict[str, Any] | BasicTypes
 
 
 @conditions.register("session")  # type: ignore
@@ -197,38 +220,65 @@ def scalar_value_from_type(type_: str, value: Any) -> BasicTypes:
         raise ValueError(f"Failed to parse {value!r} for type {type_!r}.") from exc
 
 
-def find_model_instance(model_name: str, model_pk: Any) -> Model:
-    model = next(
+def find_model_class(model_name: str) -> type[Model]:
+    model_class = next(
         (model for model in apps.get_models() if model._meta.model_name == model_name),
         None,
     )
-    if model is None:
+    if model_class is None:
         raise ValueError(f"Model {model_name!r} not found.")
+    return model_class
 
+
+def find_model_instance(model_class: type[Model], model_pk: Any) -> Model:
     try:
-        return model.objects.get(pk=model_pk)
+        return model_class.objects.get(pk=model_pk)
     except ValueError as exc:
         raise ValueError(
-            f"Failed to parse pk {model_pk!r} for model {model_name!r}: {exc}"
+            f"Failed to parse pk {model_pk!r} for model {model_class!r}: {exc}"
         ) from exc
-    except model.DoesNotExist as exc:
+    except model_class.DoesNotExist as exc:
         raise ValueError(
-            f"Model {model_name!r} with pk {model_pk!r} not found."
+            f"Model {model_class!r} with pk {model_pk!r} not found."
         ) from exc
 
 
-def map_single_api_uri_to_model_or_value(uri: str) -> Model | BasicTypes:
+def map_single_api_uri_to_value(uri: str) -> BasicTypes:
     match urlparse(uri):
         case ParseResult(
             scheme="value", netloc="", path=type_, params="", query="", fragment=value
         ):
             return scalar_value_from_type(type_, value)
+        case _:
+            raise ValueError(f"Unsupported URI {uri!r}.")
 
+
+def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
+    # to prevent circular import:
+    from api.v2.serializers import ScheduledEmailSerializer
+
+    ModelToSerializerMapper: dict[type[Model], type[ModelSerializer]] = {
+        Award: AwardSerializer,
+        Organization: OrganizationSerializer,
+        Event: EventSerializer,
+        InstructorRecruitmentSignup: InstructorRecruitmentSignupSerializer,
+        Membership: MembershipSerializer,
+        Person: PersonSerializer,
+        ScheduledEmail: ScheduledEmailSerializer,
+        TrainingProgress: TrainingProgressSerializer,
+        TrainingRequirement: TrainingRequirementSerializer,
+        SelfOrganisedSubmission: SelfOrganisedSubmissionSerializer,
+    }
+
+    match urlparse(uri):
         case ParseResult(
             scheme="api", netloc="", path=model_name, params="", query="", fragment=id_
         ):
             try:
-                return find_model_instance(model_name, int(id_))
+                model_class = find_model_class(model_name)
+                model_instance = find_model_instance(model_class, int(id_))
+                serializer = ModelToSerializerMapper[model_class]
+                return serializer(model_instance).data
             except ValueError as exc:
                 raise ValueError(f"Failed to parse URI {uri!r}.") from exc
 
@@ -236,32 +286,53 @@ def map_single_api_uri_to_model_or_value(uri: str) -> Model | BasicTypes:
             raise ValueError(f"Unsupported URI {uri!r}.")
 
 
-def map_api_uri_to_model_or_value(
+def map_single_api_uri_to_serialized_model_or_value(uri: str) -> SerializedData:
+    match urlparse(uri):
+        case ParseResult(
+            scheme="value", netloc="", path=_, params="", query="", fragment=_
+        ):
+            return map_single_api_uri_to_value(uri)
+
+        case ParseResult(
+            scheme="api", netloc="", path=_, params="", query="", fragment=_
+        ):
+            return map_single_api_uri_to_serialized_model(uri)
+
+        case _:
+            raise ValueError(f"Unsupported URI {uri!r}.")
+
+
+def map_api_uri_to_serialized_model_or_value(
     uri: str | list[str],
-) -> BasicTypes | Model | list[Model | BasicTypes]:
+) -> SerializedData | list[SerializedData]:
     if isinstance(uri, list):
-        return [map_single_api_uri_to_model_or_value(single_uri) for single_uri in uri]
-    return map_single_api_uri_to_model_or_value(uri)
+        return [
+            map_single_api_uri_to_serialized_model_or_value(single_uri)
+            for single_uri in uri
+        ]
+    return map_single_api_uri_to_serialized_model_or_value(uri)
 
 
 def build_context_from_dict(
     context: dict[str, str | list[str]]
-) -> dict[str, BasicTypes | Model | list[Model | BasicTypes]]:
-    return {key: map_api_uri_to_model_or_value(uri) for key, uri in context.items()}
+) -> dict[str, SerializedData | list[SerializedData]]:
+    return {
+        key: map_api_uri_to_serialized_model_or_value(uri)
+        for key, uri in context.items()
+    }
 
 
 def build_context_from_list(
-    context: list[dict[str, str]],
-) -> list[BasicTypes | Model | list[Model | BasicTypes]]:
+    context: list[dict[str, str]]
+) -> list[SerializedData | list[SerializedData]]:
     return [
         (
-            getattr(
-                map_api_uri_to_model_or_value(item["api_uri"]),
+            map_single_api_uri_to_serialized_model(item["api_uri"]).get(
                 item["property"],
                 "invalid",
             )
             if "api_uri" in item
-            else map_api_uri_to_model_or_value(item["value_uri"])
+            else map_single_api_uri_to_value(item["value_uri"])
         )
         for item in context
     ]
