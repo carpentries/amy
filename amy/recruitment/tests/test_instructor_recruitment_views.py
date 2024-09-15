@@ -12,6 +12,7 @@ from communityroles.models import (
     CommunityRoleConfig,
     CommunityRoleInactivation,
 )
+from emails.types import StrategyEnum
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
     InstructorRecruitmentAddSignupForm,
@@ -983,8 +984,12 @@ class TestInstructorRecruitmentChangeState(TestBase):
         )
         self.assertEqual(result.status_code, 302)
 
-    def test_close_recruitment__success(self) -> None:
+    @mock.patch("recruitment.views.host_instructors_introduction_strategy")
+    def test_close_recruitment__success(
+        self, mock_host_instructors_introduction_strategy: mock.MagicMock
+    ) -> None:
         # Arrange
+        mock_host_instructors_introduction_strategy.return_value = StrategyEnum.NOOP
         request = RequestFactory().post("/")
         view = InstructorRecruitmentChangeState(request=request)
         view._validate_for_closing = mock.MagicMock(return_value=True)
@@ -1039,8 +1044,12 @@ class TestInstructorRecruitmentChangeState(TestBase):
         )
         self.assertEqual(result.status_code, 302)
 
-    def test_reopen_recruitment__success(self) -> None:
+    @mock.patch("recruitment.views.host_instructors_introduction_strategy")
+    def test_reopen_recruitment__success(
+        self, mock_host_instructors_introduction_strategy: mock.MagicMock
+    ) -> None:
         # Arrange
+        mock_host_instructors_introduction_strategy.return_value = StrategyEnum.NOOP
         request = RequestFactory().post("/")
         view = InstructorRecruitmentChangeState(request=request)
         view._validate_for_reopening = mock.MagicMock(return_value=True)
