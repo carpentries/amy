@@ -164,14 +164,14 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
             context["rendered_body"] = markdownify(
                 jinjanify(engine, self.object.body, body_context)
             )
-        except TemplateError as exc:
+        except (TemplateError, AttributeError, ValueError, TypeError) as exc:
             context["rendered_body"] = markdownify(f"Unable to render template: {exc}")
 
         try:
             context["rendered_subject"] = jinjanify(
                 engine, self.object.subject, body_context
             )
-        except TemplateError as exc:
+        except (TemplateError, AttributeError, ValueError, TypeError) as exc:
             context["rendered_subject"] = f"Unable to render template: {exc}"
 
         try:
