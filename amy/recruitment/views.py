@@ -17,6 +17,10 @@ from django.views.generic.edit import FormMixin, FormView
 import django_rq
 from flags.views import FlaggedViewMixin
 
+from emails.actions.host_instructors_introduction import (
+    host_instructors_introduction_strategy,
+    run_host_instructors_introduction_strategy,
+)
 from emails.signals import (
     admin_signs_instructor_up_for_workshop_signal,
     instructor_confirmed_for_workshop_signal,
@@ -522,6 +526,12 @@ class InstructorRecruitmentChangeState(
                 f"Successfully closed recruitment {self.object}.",
             )
 
+            run_host_instructors_introduction_strategy(
+                host_instructors_introduction_strategy(self.object.event),
+                self.request,
+                self.object.event,
+            )
+
         return HttpResponseRedirect(self.get_success_url())
 
     @staticmethod
@@ -542,6 +552,12 @@ class InstructorRecruitmentChangeState(
             self.object.save()
             messages.success(
                 self.request, f"Successfully re-opened recruitment {self.object}."
+            )
+
+            run_host_instructors_introduction_strategy(
+                host_instructors_introduction_strategy(self.object.event),
+                self.request,
+                self.object.event,
             )
 
         return HttpResponseRedirect(self.get_success_url())
