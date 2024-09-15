@@ -91,8 +91,20 @@
     </td></tr>
   <tr>
     <th>Related scheduled emails:</th>
-    <td>
+    <td colspan="2">
       {% include "includes/related_scheduled_emails.html" with object=event %}
+    </td>
+  </tr>
+  <tr>
+    <th>Related scheduled emails for recruitments:</th>
+    <td colspan="2">
+      {% with signups=related_instructor_recruitment_signups %}
+      {% for signup in signups %}
+      {% include "includes/related_scheduled_emails_no_empty_msg.html" with object=signup %}
+      {% empty %}
+      &mdash;
+      {% endfor %}
+      {% endwith %}
     </td>
   </tr>
 </table>

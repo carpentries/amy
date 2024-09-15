@@ -12,7 +12,6 @@
 {% if email_templates %}
     <table class="table table-striped">
       <tr>
-        <th>ID</th>
         <th>Name</th>
         <th>Active</th>
         <th>Signal</th>
@@ -25,8 +24,7 @@
       </tr>
     {% for template in email_templates %}
       <tr>
-        <td><a href="{{ template.get_absolute_url }}">{{ template.id }}</a></td>
-        <td>{{ template.name }}</td>
+        <td><a href="{{ template.get_absolute_url }}">{{ template.name }}</a></td>
         <td>{{ template.active|yesno }}</td>
         <td><code>{{ template.signal }}</code></td>
         <td>{{ template.from_header }}</td>
