@@ -81,6 +81,7 @@ from emails.actions.recruit_helpers import (
 )
 from emails.signals import persons_merged_signal
 from fiscal.models import MembershipTask
+from recruitment.models import InstructorRecruitmentSignup
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -1087,6 +1088,12 @@ def event_details(request, slug):
     admin_lookup_form.helper = BootstrapHelper(
         form_action=reverse("event_assign", args=[slug]), add_cancel_button=False
     )
+    if hasattr(event, "instructorrecruitment"):
+        instructor_recruitment_signups = InstructorRecruitmentSignup.objects.filter(
+            recruitment=event.instructorrecruitment
+        )
+    else:
+        instructor_recruitment_signups = []
 
     context = {
         "title": "Event {0}".format(event),
@@ -1109,6 +1116,7 @@ def event_details(request, slug):
             "longitude": event.longitude,
         },
         "recruitment_stats": recruitment_stats,
+        "related_instructor_recruitment_signups": instructor_recruitment_signups,
     }
     return render(request, "workshops/event.html", context)
 
