@@ -120,6 +120,8 @@ class MembershipForm(forms.ModelForm):
             "additional_public_instructor_training_seats",
             "inhouse_instructor_training_seats",
             "additional_inhouse_instructor_training_seats",
+            "cldt_seats",
+            "additional_cldt_seats",
             "emergency_contact",
             "workshops_without_admin_fee_rolled_over",
             "workshops_without_admin_fee_rolled_from_previous",
@@ -127,6 +129,8 @@ class MembershipForm(forms.ModelForm):
             "public_instructor_training_seats_rolled_from_previous",
             "inhouse_instructor_training_seats_rolled_over",
             "inhouse_instructor_training_seats_rolled_from_previous",
+            "cldt_seats_rolled_over",
+            "cldt_seats_rolled_from_previous",
         ]
 
     def __init__(
@@ -145,10 +149,12 @@ class MembershipForm(forms.ModelForm):
             del self.fields["workshops_without_admin_fee_rolled_over"]
             del self.fields["public_instructor_training_seats_rolled_over"]
             del self.fields["inhouse_instructor_training_seats_rolled_over"]
+            del self.fields["cldt_seats_rolled_over"]
         if not show_rolled_from_previous:
             del self.fields["workshops_without_admin_fee_rolled_from_previous"]
             del self.fields["public_instructor_training_seats_rolled_from_previous"]
             del self.fields["inhouse_instructor_training_seats_rolled_from_previous"]
+            del self.fields["cldt_seats_rolled_from_previous"]
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -288,6 +294,9 @@ class MembershipRollOverForm(MembershipCreateForm):
             "inhouse_instructor_training_seats",
             "additional_inhouse_instructor_training_seats",
             "inhouse_instructor_training_seats_rolled_from_previous",
+            "cldt_seats",
+            "additional_cldt_seats",
+            "cldt_seats_rolled_from_previous",
             "emergency_contact",
             "comment",
         ]
@@ -303,6 +312,7 @@ class MembershipRollOverForm(MembershipCreateForm):
             "workshops_without_admin_fee_rolled_from_previous",
             "public_instructor_training_seats_rolled_from_previous",
             "inhouse_instructor_training_seats_rolled_from_previous",
+            "cldt_seats_rolled_from_previous",
         ]
         for field in fields:
             self[field].field.min_value = 0

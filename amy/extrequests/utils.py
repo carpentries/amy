@@ -152,6 +152,13 @@ def get_membership_warnings_after_match(
             "it's been allowed.",
         )
 
+    cldt_remaining = membership.cldt_seats_remaining
+    if cldt_remaining <= 0:
+        warnings.append(
+            f'Membership "{membership}" is using more CLDT seats than '
+            "it's been allowed.",
+        )
+
     # check if membership is active
     if not (membership.agreement_start <= date.today() <= membership.agreement_end):
         warnings.append(

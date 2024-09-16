@@ -287,6 +287,10 @@ class MembershipUpdate(
                 "inhouse_instructor_training_seats_rolled_over",
                 "inhouse_instructor_training_seats_rolled_from_previous",
             ),
+            (
+                "cldt_seats_rolled_over",
+                "cldt_seats_rolled_from_previous",
+            ),
         )
         save_rolled_to = False
         try:
@@ -584,6 +588,9 @@ class MembershipCreateRollOver(
             "inhouse_instructor_training_seats": self.membership.inhouse_instructor_training_seats,  # noqa
             "additional_inhouse_instructor_training_seats": self.membership.additional_inhouse_instructor_training_seats,  # noqa
             "inhouse_instructor_training_seats_rolled_from_previous": 0,
+            "cldt_seats": self.membership.cldt_seats,  # noqa
+            "additional_cldt_seats": self.membership.additional_cldt_seats,  # noqa
+            "cldt_seats_rolled_from_previous": 0,
             "emergency_contact": self.membership.emergency_contact,
         }
 
@@ -598,6 +605,9 @@ class MembershipCreateRollOver(
             ),
             "inhouse_instructor_training_seats_rolled_from_previous": max(
                 self.membership.inhouse_instructor_training_seats_remaining, 0
+            ),
+            "cldt_seats_rolled_from_previous": max(
+                self.membership.cldt_seats_remaining, 0
             ),
         }
         return {
@@ -622,6 +632,9 @@ class MembershipCreateRollOver(
         )
         self.membership.inhouse_instructor_training_seats_rolled_over = (
             form.instance.inhouse_instructor_training_seats_rolled_from_previous
+        )
+        self.membership.cldt_seats_rolled_over = (
+            form.instance.cldt_seats_rolled_from_previous
         )
         self.membership.rolled_to_membership = self.object
         self.membership.save()

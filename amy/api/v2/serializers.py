@@ -174,6 +174,9 @@ class MembershipSerializer(serializers.ModelSerializer):
     inhouse_instructor_training_seats_total = serializers.IntegerField()
     inhouse_instructor_training_seats_utilized = serializers.IntegerField()
     inhouse_instructor_training_seats_remaining = serializers.IntegerField()
+    cldt_seats_total = serializers.IntegerField()
+    cldt_seats_utilized = serializers.IntegerField()
+    cldt_seats_remaining = serializers.IntegerField()
 
     class Meta:
         model = Membership
@@ -220,6 +223,9 @@ class MembershipSerializer(serializers.ModelSerializer):
             "inhouse_instructor_training_seats_total",
             "inhouse_instructor_training_seats_utilized",
             "inhouse_instructor_training_seats_remaining",
+            "cldt_seats_total",
+            "cldt_seats_utilized",
+            "cldt_seats_remaining",
         )
 
 

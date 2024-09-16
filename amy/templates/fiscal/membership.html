@@ -169,6 +169,30 @@
     </td>
   </tr>
   <tr>
+    <th rowspan="3" width="30%">CLDT seats</th>
+    <th>Allowed:</th>
+    <td>
+      {{ membership.cldt_seats_total }}
+      <p class="small">
+        Includes {{ membership.additional_cldt_seats }} additional seats.<br>
+        Includes {{ membership.cldt_seats_rolled_from_previous|default_if_none:0 }} seats rolled from previous membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <th>Utilized:</th>
+    <td>{{ membership.cldt_seats_utilized }}</td>
+  </tr>
+  <tr {% if membership.cldt_seats_remaining <= 0 and membership.cldt_seats_total > 0 or membership.cldt_seats_remaining < 0 and membership.cldt_seats_total == 0 %}class="table-danger"{% endif %}>
+    <th>Remaining:</th>
+    <td>
+      {{ membership.cldt_seats_remaining }}
+      <p class="small">
+        {{ membership.cldt_seats_rolled_over|default:"None" }} were rolled over to following membership.
+      </p>
+    </td>
+  </tr>
+  <tr>
     <th>Instructor training seats:</th>
     <td colspan="2">
       {% if membership.task_set.all %}
