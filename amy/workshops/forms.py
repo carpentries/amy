@@ -408,6 +408,15 @@ class EventForm(forms.ModelForm):
         required=False,
     )
 
+    instructors_pre = forms.URLField(
+        label="Assessment survey for instructors:",
+        help_text=(
+            "Auto-generated as long as the event is NOT marked as complete and "
+            "it has a slug."
+        ),
+        required=False,
+    )
+
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta:
@@ -438,7 +447,6 @@ class EventForm(forms.ModelForm):
             "lessons",
             "public_status",
             "instructors_pre",
-            "instructors_post",
             "comment",
         ]
         widgets = {
@@ -486,7 +494,6 @@ class EventForm(forms.ModelForm):
             "manual_attendance",
             "contact",
             "instructors_pre",
-            "instructors_post",
             Div(
                 Div(HTML("Location details"), css_class="card-header"),
                 Div(
