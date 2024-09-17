@@ -72,7 +72,9 @@ class EventSerializer(serializers.ModelSerializer):
 
     human_readable_date = serializers.CharField(read_only=True)
     eligible_for_instructor_recruitment = serializers.BooleanField(read_only=True)
-    workshop_reports_link = serializers.CharField(read_only=True)
+    workshop_reports_link = serializers.CharField(
+        read_only=True, source="instructors_pre"
+    )
     main_tag = serializers.SerializerMethodField()
 
     class Meta:
