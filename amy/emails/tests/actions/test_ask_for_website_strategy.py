@@ -11,7 +11,7 @@ from emails.actions.exceptions import EmailStrategyException
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import ASK_FOR_WEBSITE_SIGNAL_NAME
 from emails.types import StrategyEnum
-from workshops.models import Event, Organization, Person, Role, Task
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestAskForWebsiteStrategy(TestCase):
@@ -19,12 +19,14 @@ class TestAskForWebsiteStrategy(TestCase):
         self.ttt_organization = Organization.objects.create(
             domain="carpentries.org", fullname="Instructor Training"
         )
+        swc_tag = Tag.objects.create(name="SWC")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
             administrator=self.ttt_organization,
             start=date.today() + timedelta(days=30),
         )
+        self.event.tags.set([swc_tag])
 
         self.instructor_role = Role.objects.create(name="instructor")
         self.instructor1 = Person.objects.create(

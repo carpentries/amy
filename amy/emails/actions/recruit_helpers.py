@@ -24,7 +24,7 @@ from emails.utils import (
     scalar_value_none,
     shift_date_and_apply_current_utc_time,
 )
-from workshops.models import Event, Task
+from workshops.models import Event, TagQuerySet, Task
 
 logger = logging.getLogger("amy")
 
@@ -44,6 +44,9 @@ def recruit_helpers_strategy(event: Event) -> StrategyEnum:
         Task.objects.filter(role__name="instructor", event=event).count() >= 1
     )
     no_helpers = Task.objects.filter(role__name="helper", event=event).count() == 0
+    carpentries_tags = event.tags.filter(
+        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
+    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
 
     log_condition_elements(
         not_self_organised=not_self_organised,
@@ -52,6 +55,7 @@ def recruit_helpers_strategy(event: Event) -> StrategyEnum:
         at_least_1_host=at_least_1_host,
         at_least_1_instructor=at_least_1_instructor,
         no_helpers=no_helpers,
+        carpentries_tags=carpentries_tags,
     )
 
     email_should_exist = (
@@ -61,6 +65,7 @@ def recruit_helpers_strategy(event: Event) -> StrategyEnum:
         and at_least_1_host
         and at_least_1_instructor
         and no_helpers
+        and carpentries_tags
     )
     logger.debug(f"{email_should_exist=}")
 

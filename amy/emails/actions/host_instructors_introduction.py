@@ -29,7 +29,7 @@ from emails.utils import (
     scalar_value_none,
 )
 from recruitment.models import InstructorRecruitment
-from workshops.models import Event, Task
+from workshops.models import Event, TagQuerySet, Task
 
 logger = logging.getLogger("amy")
 
@@ -51,6 +51,9 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
     at_least_2_instructors = (
         Task.objects.filter(role__name="instructor", event=event).count() >= 2
     )
+    carpentries_tags = event.tags.filter(
+        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
+    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
 
     log_condition_elements(
         not_self_organised=not_self_organised,
@@ -59,6 +62,7 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
         active=active,
         host=host,
         at_least_2_instructors=at_least_2_instructors,
+        carpentries_tags=carpentries_tags,
     )
 
     email_should_exist = (
@@ -68,6 +72,7 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
         and host
         and at_least_2_instructors
         and no_open_recruitment
+        and carpentries_tags
     )
     logger.debug(f"{email_should_exist=}")
 

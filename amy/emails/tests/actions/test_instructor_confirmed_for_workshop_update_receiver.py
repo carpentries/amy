@@ -17,7 +17,7 @@ from emails.signals import (
 )
 from emails.utils import api_model_url, scalar_value_none
 from workshops.forms import PersonForm
-from workshops.models import Event, Organization, Person, Role, Task
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
@@ -316,6 +316,7 @@ class TestInstructorConfirmedForWorkshopUpdateIntegration(TestBase):
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
         )
+        event.tags.set([Tag.objects.get(name="SWC")])
 
         instructor = Person.objects.create(
             personal="Kelsi",

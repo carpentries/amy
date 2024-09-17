@@ -210,8 +210,7 @@ class TestAskForWebsiteReceiverIntegration(TestBase):
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
         )
-        ttt_tag = Tag.objects.get(name="TTT")
-        event.tags.add(ttt_tag)
+        event.tags.set([Tag.objects.get(name="SWC")])
 
         instructor1 = Person.objects.create(
             personal="Kelsi",

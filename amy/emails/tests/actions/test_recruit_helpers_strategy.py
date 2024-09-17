@@ -25,8 +25,8 @@ class TestRecruitHelpersStrategy(TestCase):
             administrator=self.ttt_organization,
             start=date.today() + timedelta(days=30),
         )
-        self.ttt_tag = Tag.objects.create(name="TTT")
-        self.event.tags.add(self.ttt_tag)
+        swc_tag = Tag.objects.create(name="SWC")
+        self.event.tags.add(swc_tag)
 
         self.instructor_role = Role.objects.create(name="instructor")
         self.instructor = Person.objects.create(

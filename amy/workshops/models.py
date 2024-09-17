@@ -1076,6 +1076,7 @@ class Person(
 
 class TagQuerySet(QuerySet):
     CARPENTRIES_TAG_NAMES = ["SWC", "DC", "LC"]
+    NON_CARPENTRIES_TAG_NAMES = ["TTT", "Circuits", "CLDT"]
     MAIN_TAG_NAMES = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
 
     def main_tags(self):

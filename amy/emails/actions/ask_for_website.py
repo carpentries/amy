@@ -24,7 +24,7 @@ from emails.utils import (
     one_month_before,
     scalar_value_none,
 )
-from workshops.models import Event, Task
+from workshops.models import Event, TagQuerySet, Task
 
 logger = logging.getLogger("amy")
 
@@ -39,6 +39,9 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
     has_instructors = (
         Task.objects.filter(event=event, role__name="instructor").count() >= 1
     )
+    carpentries_tags = event.tags.filter(
+        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
+    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
 
     log_condition_elements(
         start_date_in_future=start_date_in_future,
@@ -46,6 +49,7 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
         has_administrator=has_administrator,
         no_url=no_url,
         has_instructors=has_instructors,
+        carpentries_tags=carpentries_tags,
     )
 
     email_should_exist = (
@@ -54,6 +58,7 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
         and has_administrator
         and no_url
         and has_instructors
+        and carpentries_tags
     )
     logger.debug(f"{email_should_exist=}")
 
