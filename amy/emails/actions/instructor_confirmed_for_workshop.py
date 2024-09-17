@@ -28,7 +28,7 @@ from emails.utils import (
     scalar_value_none,
 )
 from recruitment.models import InstructorRecruitmentSignup
-from workshops.models import Event, Person, Task
+from workshops.models import Event, Person, TagQuerySet, Task
 
 logger = logging.getLogger("amy")
 
@@ -38,13 +38,19 @@ def instructor_confirmed_for_workshop_strategy(task: Task) -> StrategyEnum:
 
     instructor_role = task.role.name == "instructor"
     person_email_exists = bool(task.person.email)
+    carpentries_tags = task.event.tags.filter(
+        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
+    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
 
     log_condition_elements(
         instructor_role=instructor_role,
         person_email_exists=person_email_exists,
+        carpentries_tags=carpentries_tags,
     )
 
-    email_should_exist = task.pk and instructor_role and person_email_exists
+    email_should_exist = (
+        task.pk and instructor_role and person_email_exists and carpentries_tags
+    )
     logger.debug(f"{email_should_exist=}")
 
     ct = ContentType.objects.get_for_model(task.person)  # type: ignore

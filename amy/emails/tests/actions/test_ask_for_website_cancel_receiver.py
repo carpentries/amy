@@ -11,7 +11,7 @@ from emails.actions.ask_for_website import (
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import ASK_FOR_WEBSITE_SIGNAL_NAME, ask_for_website_cancel_signal
-from workshops.models import Event, Organization, Person, Role, Task
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
@@ -222,6 +222,7 @@ class TestAskForWebsiteCancelIntegration(TestBase):
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
         )
+        event.tags.set([Tag.objects.get(name="SWC")])
 
         instructor1 = Person.objects.create(
             personal="Kelsi",

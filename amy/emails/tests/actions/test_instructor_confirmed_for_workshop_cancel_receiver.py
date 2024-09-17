@@ -14,11 +14,11 @@ from emails.signals import (
     INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
     instructor_confirmed_for_workshop_cancel_signal,
 )
-from workshops.models import Event, Organization, Person, Role, Task
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
-class TestInstructorBadgeAwardedCancelReceiver(TestCase):
+class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
         self.event = Event.objects.create(
@@ -205,7 +205,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         )
 
 
-class TestInstructorBadgeAwardedCancelIntegration(TestBase):
+class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
@@ -235,6 +235,7 @@ class TestInstructorBadgeAwardedCancelIntegration(TestBase):
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
         )
+        event.tags.set([Tag.objects.get(name="SWC")])
 
         instructor = Person.objects.create(
             personal="Kelsi",

@@ -11,7 +11,7 @@ from emails.actions.instructor_confirmed_for_workshop import (
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME
 from emails.types import StrategyEnum
-from workshops.models import Event, Organization, Person, Role, Task
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
 class TestInstructorConfirmedForWorkshopStrategy(TestCase):
@@ -20,6 +20,8 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
         self.event = Event.objects.create(
             slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
         )
+        swc_tag = Tag.objects.create(name="SWC")
+        self.event.tags.set([swc_tag])
         self.person = Person.objects.create(email="test@example.org")
         instructor = Role.objects.create(name="instructor")
         self.task = Task.objects.create(

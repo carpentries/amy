@@ -301,8 +301,8 @@ class TestAskForWebsiteUpdateIntegration(TestBase):
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
         )
-        ttt_tag = Tag.objects.get(name="TTT")
-        event.tags.add(ttt_tag)
+        swc_tag = Tag.objects.get(name="SWC")
+        event.tags.add(swc_tag)
 
         instructor1 = Person.objects.create(
             personal="Kelsi",
@@ -342,7 +342,7 @@ class TestAskForWebsiteUpdateIntegration(TestBase):
             "sponsor": event.host.pk,
             "administrator": event.administrator.pk,  # type: ignore
             "start": date.today() + timedelta(days=60),
-            "tags": [ttt_tag.pk],
+            "tags": [swc_tag.pk],
         }
 
         # Act
