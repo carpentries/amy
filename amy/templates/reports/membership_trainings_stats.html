@@ -16,6 +16,7 @@
         <th rowspan="2">Agreement</th>
         <th rowspan="2">Contribution</th>
         <th colspan="3" class="text-center">Instructor training seats (combined public and in-house)</th>
+        <th colspan="3" class="text-center">CLDT seats</th>
         <th rowspan="2" class="additional-links"></th>
       </tr>
       <tr>
@@ -35,6 +36,9 @@
         <td>{{ result.instructor_training_seats_total }}</td>
         <td>{{ result.instructor_training_seats_utilized }}</td>
         <td>{{ result.instructor_training_seats_remaining }}</td>
+        <td>{{ result._cldt_training_seats_total }}</td>
+        <td>{{ result._cldt_training_seats_utilized }}</td>
+        <td>{{ result._cldt_training_seats_remaining }}</td>
         <td>
           <a href="{% url 'membership_details' result.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
         </td>

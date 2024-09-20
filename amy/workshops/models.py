@@ -140,9 +140,11 @@ class Member(models.Model):
 
 class MembershipManager(models.Manager):
     def annotate_with_seat_usage(self):
-        cldt_tag = Tag.objects.get(name="CLDT")
-        # TTT/ITT included
-        ttt_tags = Tag.objects.exclude(name__in=["SWC", "DC", "LC", "WiSE", "CLDT"])
+        # cldt_tag = Tag.objects.get(name="CLDT")
+        # # TTT/ITT included
+        # ttt_tags = Tag.objects.exclude(name__in=["SWC", "DC", "LC", "WiSE", "CLDT"])
+        cldt_tag_name = "CLDT"
+        ttt_tag_names = ["TTT", "ITT"]
 
         return self.get_queryset().annotate(
             instructor_training_seats_total=(
@@ -159,7 +161,7 @@ class MembershipManager(models.Manager):
             instructor_training_seats_utilized=(
                 Count(
                     "task",
-                    filter=Q(task__role__name="learner", task__event__tags=[ttt_tags]),
+                    filter=Q(task__role__name="learner", task__event__tags__name__in=ttt_tag_names),
                 )
             ),
             instructor_training_seats_remaining=(
@@ -173,7 +175,7 @@ class MembershipManager(models.Manager):
                     filter=Q(
                         task__role__name="learner",
                         task__seat_public=True,
-                        task__event__tags=[ttt_tags],
+                        task__event__tags__name__in=ttt_tag_names,
                     ),
                 )
                 - Coalesce("public_instructor_training_seats_rolled_over", 0)
@@ -186,25 +188,25 @@ class MembershipManager(models.Manager):
                     filter=Q(
                         task__role__name="learner",
                         task__seat_public=False,
-                        task__event__tags=[ttt_tags],
+                        task__event__tags__name__in=ttt_tag_names,
                     ),
                 )
                 - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
             ),
             # CLDT
-            cldt_seats_total=(
+            _cldt_seats_total=(
                 F("cldt_seats")
                 + F("additional_cldt_seats")
                 # Coalesce returns first non-NULL value
                 + Coalesce("cldt_seats_rolled_from_previous", 0)
             ),
-            cldt_seats_utilized=(
+            _cldt_seats_utilized=(
                 Count(
                     "task",
-                    filter=Q(task__role__name="learner", task__event__tags=[cldt_tag]),
+                    filter=Q(task__role__name="learner", task__event__tags__name__in=[cldt_tag_name]),
                 )
             ),
-            cldt_seats_remaining=(
+            _cldt_seats_remaining=(
                 F("cldt_seats")
                 + F("additional_cldt_seats")
                 # Coalesce returns first non-NULL value
@@ -214,7 +216,7 @@ class MembershipManager(models.Manager):
                     filter=Q(
                         task__role__name="learner",
                         task__seat_public=True,
-                        task__event__tags=[cldt_tag],
+                        task__event__tags__name__in=[cldt_tag_name],
                     ),
                 )
                 - Coalesce("cldt_seats_rolled_over", 0)

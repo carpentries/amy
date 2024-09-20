@@ -44,8 +44,8 @@
           <td {% if membership.instructor_training_seats_remaining <= 0 and membership.instructor_training_seats_total > 0 or membership.instructor_training_seats_remaining < 0 and membership.instructor_training_seats_total == 0 %}class="table-danger"{% endif %}>
             {{ membership.instructor_training_seats_remaining }} / {{ membership.instructor_training_seats_total }}
           </td>
-          <td {% if membership.cldt_seats_remaining <= 0 and membership.cldt_seats_total > 0 or membership.cldt_seats_remaining < 0 and membership.cldt_seats_total == 0 %}class="table-danger"{% endif %}>
-            {{ membership.cldt_seats_remaining }} / {{ membership.cldt_seats_total }}
+          <td {% if membership._cldt_seats_remaining <= 0 and membership._cldt_seats_total > 0 or membership._cldt_seats_remaining < 0 and membership._cldt_seats_total == 0 %}class="table-danger"{% endif %}>
+            {{ membership._cldt_seats_remaining }} / {{ membership._cldt_seats_total }}
           </td>
           <td>
             <a href="{% url 'membership_details' membership.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
