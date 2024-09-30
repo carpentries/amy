@@ -23,6 +23,9 @@
         <th>Total</th>
         <th>Utilized</th>
         <th>Remaining</th>
+        <th>Total</th>
+        <th>Utilized</th>
+        <th>Remaining</th>
       </tr>
       {% for result in data %}
       <tr>
@@ -36,9 +39,9 @@
         <td>{{ result.instructor_training_seats_total }}</td>
         <td>{{ result.instructor_training_seats_utilized }}</td>
         <td>{{ result.instructor_training_seats_remaining }}</td>
-        <td>{{ result._cldt_training_seats_total }}</td>
-        <td>{{ result._cldt_training_seats_utilized }}</td>
-        <td>{{ result._cldt_training_seats_remaining }}</td>
+        <td>{{ result.cldt_seats_total_annotation }}</td>
+        <td>{{ result.cldt_seats_utilized_annotation }}</td>
+        <td>{{ result.cldt_seats_remaining_annotation }}</td>
         <td>
           <a href="{% url 'membership_details' result.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
         </td>

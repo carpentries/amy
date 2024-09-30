@@ -44,6 +44,8 @@ from workshops.consts import (
     STR_MED,
     STR_REG_KEY,
     STR_SHORT,
+    CLDT_TAG_NAME,
+    TTT_TAG_NAMES
 )
 from workshops.fields import NullableGithubUsernameField, choice_field_with_other
 from workshops.mixins import (
@@ -143,8 +145,8 @@ class MembershipManager(models.Manager):
         # cldt_tag = Tag.objects.get(name="CLDT")
         # # TTT/ITT included
         # ttt_tags = Tag.objects.exclude(name__in=["SWC", "DC", "LC", "WiSE", "CLDT"])
-        cldt_tag_name = "CLDT"
-        ttt_tag_names = ["TTT", "ITT"]
+        # cldt_tag_name = "CLDT"
+        # ttt_tag_names = ["TTT", "ITT"]
 
         return self.get_queryset().annotate(
             instructor_training_seats_total=(
@@ -161,7 +163,9 @@ class MembershipManager(models.Manager):
             instructor_training_seats_utilized=(
                 Count(
                     "task",
-                    filter=Q(task__role__name="learner", task__event__tags__name__in=ttt_tag_names),
+                    filter=Q(
+                        task__role__name="learner",
+                        task__event__tags__name__in=TTT_TAG_NAMES),
                 )
             ),
             instructor_training_seats_remaining=(
@@ -175,7 +179,7 @@ class MembershipManager(models.Manager):
                     filter=Q(
                         task__role__name="learner",
                         task__seat_public=True,
-                        task__event__tags__name__in=ttt_tag_names,
+                        task__event__tags__name__in=TTT_TAG_NAMES,
                     ),
                 )
                 - Coalesce("public_instructor_training_seats_rolled_over", 0)
@@ -188,25 +192,28 @@ class MembershipManager(models.Manager):
                     filter=Q(
                         task__role__name="learner",
                         task__seat_public=False,
-                        task__event__tags__name__in=ttt_tag_names,
+                        task__event__tags__name__in=TTT_TAG_NAMES,
                     ),
                 )
                 - Coalesce("inhouse_instructor_training_seats_rolled_over", 0)
             ),
             # CLDT
-            _cldt_seats_total=(
+            cldt_seats_total_annotation=(
                 F("cldt_seats")
                 + F("additional_cldt_seats")
                 # Coalesce returns first non-NULL value
                 + Coalesce("cldt_seats_rolled_from_previous", 0)
             ),
-            _cldt_seats_utilized=(
+            cldt_seats_utilized_annotation=(
                 Count(
                     "task",
-                    filter=Q(task__role__name="learner", task__event__tags__name__in=[cldt_tag_name]),
+                    filter=Q(
+                        task__role__name="learner",
+                        task__seat_public=False,
+                        task__event__tags__name__in=CLDT_TAG_NAME),
                 )
             ),
-            _cldt_seats_remaining=(
+            cldt_seats_remaining_annotation=(
                 F("cldt_seats")
                 + F("additional_cldt_seats")
                 # Coalesce returns first non-NULL value
@@ -215,8 +222,8 @@ class MembershipManager(models.Manager):
                     "task",
                     filter=Q(
                         task__role__name="learner",
-                        task__seat_public=True,
-                        task__event__tags__name__in=[cldt_tag_name],
+                        task__seat_public=False,
+                        task__event__tags__name__in=CLDT_TAG_NAME,
                     ),
                 )
                 - Coalesce("cldt_seats_rolled_over", 0)
@@ -599,7 +606,10 @@ class Membership(models.Model):
     @cached_property
     def public_instructor_training_seats_utilized(self) -> int:
         """Count number of learner tasks that point to this membership."""
-        return self.task_set.filter(role__name="learner", seat_public=True).count()
+        return self.task_set.filter(
+            role__name="learner",
+            event__tags__name__in=TTT_TAG_NAMES,
+            seat_public=True).count()
 
     @property
     def public_instructor_training_seats_remaining(self) -> int:
@@ -624,7 +634,10 @@ class Membership(models.Model):
     @cached_property
     def inhouse_instructor_training_seats_utilized(self) -> int:
         """Count number of learner tasks that point to this membership."""
-        return self.task_set.filter(role__name="learner", seat_public=False).count()
+        return self.task_set.filter(
+            role__name="learner",
+            event__tags__name__in=TTT_TAG_NAMES,
+            seat_public=False).count()
 
     @property
     def inhouse_instructor_training_seats_remaining(self) -> int:
@@ -649,7 +662,10 @@ class Membership(models.Model):
     @cached_property
     def cldt_seats_utilized(self) -> int:
         """Count number of learner tasks that point to this membership."""
-        return self.task_set.filter(role__name="learner", seat_public=False).count()
+        return self.task_set.filter(
+            role__name="learner",
+            event__tags__name__in=CLDT_TAG_NAME,
+            seat_public=False).count()
 
     @property
     def cldt_seats_remaining(self) -> int:
