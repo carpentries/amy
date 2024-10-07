@@ -3217,8 +3217,8 @@ class WorkshopRequest(
         (
             "forprofit",
             "I am with a corporate or for-profit site. I understand the costs for "
-            "for-profit organisations are four times the price for not-for-profit "
-            "organisations.",
+            "for-profit organisations are higher than the price for not-for-profit "
+            "organisations, as listed on The Carpentries website.",
         ),
         (
             "member",
@@ -3240,8 +3240,10 @@ class WorkshopRequest(
         verbose_name="Which of the following applies to your payment for the "
         "administrative fee?",
         help_text=(
-            "<a href='{}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a>".format(FEE_DETAILS_URL)
+            "<b><a href='{}' target='_blank' rel='noreferrer nofollow'>"
+            "The Carpentries website workshop fee listing.</a></b>".format(
+                FEE_DETAILS_URL
+            )
         ),
     )
     scholarship_circumstances = models.TextField(
