@@ -49,10 +49,16 @@
     <th>{% include "includes/merge_radio.html" with field=form.end %}</th>
   </tr>
   <tr>
-    <th scope="row">Host</th>
+    <th scope="row">Host Site</th>
     <td><a href="{{ obj_a.host.get_absolute_url }}">{{ obj_a.host }}</a></td>
     <td><a href="{{ obj_b.host.get_absolute_url }}">{{ obj_b.host }}</a></td>
     <th>{% include "includes/merge_radio.html" with field=form.host %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Organiser</th>
+    <td><a href="{{ obj_a.sponsor.get_absolute_url }}">{{ obj_a.sponsor }}</a></td>
+    <td><a href="{{ obj_b.sponsor.get_absolute_url }}">{{ obj_b.sponsor }}</a></td>
+    <th>{% include "includes/merge_radio.html" with field=form.sponsor %}</th>
   </tr>
   <tr>
     <th scope="row">Administrator</th>

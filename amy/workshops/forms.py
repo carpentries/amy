@@ -372,6 +372,23 @@ class BulkUploadCSVForm(forms.Form):
 
 
 class EventForm(forms.ModelForm):
+    host = forms.ModelChoiceField(
+        label="Host Site",
+        required=True,
+        help_text=Event._meta.get_field("host").help_text,
+        queryset=Organization.objects.all(),
+        widget=ModelSelect2Widget(data_view="organization-lookup"),
+    )
+
+    sponsor = forms.ModelChoiceField(
+        label="Organiser",
+        required=True,
+        help_text=Event._meta.get_field("sponsor").help_text
+        + " Previously called 'Sponsor'.",
+        queryset=Organization.objects.all(),
+        widget=ModelSelect2Widget(data_view="organization-lookup"),
+    )
+
     administrator = forms.ModelChoiceField(
         label="Administrator",
         required=True,
@@ -450,8 +467,6 @@ class EventForm(forms.ModelForm):
             "comment",
         ]
         widgets = {
-            "host": ModelSelect2Widget(data_view="organization-lookup"),
-            "sponsor": ModelSelect2Widget(data_view="organization-lookup"),
             "membership": ModelSelect2Widget(data_view="membership-lookup"),
             "manual_attendance": TextInput,
             "latitude": TextInput,
@@ -1146,8 +1161,12 @@ class EventsMergeForm(forms.Form):
     )
     start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    sponsor = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    host = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Host Site"
+    )
+    sponsor = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Organiser"
+    )
     administrator = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
