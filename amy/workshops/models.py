@@ -1629,6 +1629,9 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             self.latitude = None
             self.longitude = None
 
+        if self.slug and not self.completed:
+            self.instructors_pre = reports_link(self.slug)
+
         super().save(*args, **kwargs)
 
 
