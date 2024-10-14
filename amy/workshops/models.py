@@ -2276,7 +2276,7 @@ class TrainingRequest(
         "application's ranking.",
     )
 
-    # new field for teaching-related experience in non-profit or volunteer org.
+    # teaching-related experience in non-profit or volunteer org
     nonprofit_teaching_experience = models.CharField(
         max_length=STR_LONGEST,
         blank=True,
