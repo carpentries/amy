@@ -20,6 +20,8 @@ This is required for the migration `workshops.0264_trainingprogress_unique_train
 ### After
 
 * Update Redash queries about training requests to change `group_name` to `member_code` (in line with changes to the `TrainingRequest` model).
+* Update new email templates in production before running the script to migrate emails from the old system - see https://github.com/carpentries/amy/issues/2707 for details.
+* Run email migration script on the server: `./manage.py create_emails_for_existing_events`.
 
 ------------------------------------------------------------
 
