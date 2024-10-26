@@ -64,7 +64,11 @@ class Command(BaseCommand):
         logger.info(f"RQJob for {event=}, {trigger_action=}: {rqjob}")
 
         strategy_result = strategy(event)
-        return strategy_result == StrategyEnum.CREATE and not rqjob
+        return bool(
+            strategy_result == StrategyEnum.CREATE
+            and rqjob
+            and rqjob.status == "scheduled"
+        ) or bool(strategy_result == StrategyEnum.CREATE and not rqjob)
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @transaction.atomic
