@@ -12,6 +12,112 @@ $ python docs/generate_changelog.py v4.1
 Then paste output from that script here.
 
 -----------------------------------------------------------------
+## v4.3 - 2024-10-26
+
+### Bugfixes
+* [Emails] Update trigger for the host-instructor introduction - [#2699](https://github.com/carpentries/amy/pull/2699) by @pbanaszkiewicz
+* [Emails] Extend REST API for events, scheduled emails, and fix too many logs - [#2674](https://github.com/carpentries/amy/pull/2674) by @pbanaszkiewicz
+* [Emails] Fix template render issue with email update actions - [#2659](https://github.com/carpentries/amy/pull/2659) by @pbanaszkiewicz
+* [Emails] Correct URLs in context for scheduled emails - [#2642](https://github.com/carpentries/amy/pull/2642) by @pbanaszkiewicz
+* Never hide training requests with invalid code when filtering - [#2571](https://github.com/carpentries/amy/pull/2571) by @elichad
+* Remove nonexistent field from knowledge domain lookup - [#2565](https://github.com/carpentries/amy/pull/2565) by @elichad
+
+### Features
+* chore: Update manual deployment steps - [#2708](https://github.com/carpentries/amy/pull/2708) by @pbanaszkiewicz
+* Bump django from 4.2.15 to 4.2.16 - [#2706](https://github.com/carpentries/amy/pull/2706) by @dependabot[bot]
+* [#1992] Rename Host->Host Site, Sponsor->Organiser - [#2705](https://github.com/carpentries/amy/pull/2705) by @pbanaszkiewicz
+* Automatically generate and update survey link - [#2704](https://github.com/carpentries/amy/pull/2704) by @pbanaszkiewicz
+* [Emails] Update Tag condition for some email actions - [#2702](https://github.com/carpentries/amy/pull/2702) by @pbanaszkiewicz
+* [Emails] Link to other related scheduled emails - [#2701](https://github.com/carpentries/amy/pull/2701) by @pbanaszkiewicz
+* [Emails] Rendering emails - switch to API serializers to fix error - [#2698](https://github.com/carpentries/amy/pull/2698) by @pbanaszkiewicz
+* Bump cryptography from 42.0.7 to 43.0.1 - [#2692](https://github.com/carpentries/amy/pull/2692) by @dependabot[bot]
+* [Emails] Cleanup feature flags - [#2690](https://github.com/carpentries/amy/pull/2690) by @pbanaszkiewicz
+* Bump webob from 1.8.7 to 1.8.8 - [#2686](https://github.com/carpentries/amy/pull/2686) by @dependabot[bot]
+* [Emails] Preview rendered jinja2+markdown email templates - [#2685](https://github.com/carpentries/amy/pull/2685) by @pbanaszkiewicz
+* Bump django from 4.2.14 to 4.2.15 - [#2684](https://github.com/carpentries/amy/pull/2684) by @dependabot[bot]
+* [Emails] Bunch of updates aimed at running email actions in new situations - [#2683](https://github.com/carpentries/amy/pull/2683) by @pbanaszkiewicz
+* [Emails] Failed emails circuit breaker - [#2680](https://github.com/carpentries/amy/pull/2680) by @pbanaszkiewicz
+* [Emails] Add missing email state - [#2677](https://github.com/carpentries/amy/pull/2677) by @pbanaszkiewicz
+* [Emails] UI improvements for emails - [#2676](https://github.com/carpentries/amy/pull/2676) by @pbanaszkiewicz
+* Bump setuptools from 69.5.1 to 70.0.0 - [#2672](https://github.com/carpentries/amy/pull/2672) by @dependabot[bot]
+* [Emails] Management command to enable new emails for existing events - [#2671](https://github.com/carpentries/amy/pull/2671) by @pbanaszkiewicz
+* Bump django from 4.2.13 to 4.2.14 - [#2670](https://github.com/carpentries/amy/pull/2670) by @dependabot[bot]
+* Bump certifi from 2024.2.2 to 2024.7.4 - [#2669](https://github.com/carpentries/amy/pull/2669) by @dependabot[bot]
+* [Emails] Updated technical documentation - [#2667](https://github.com/carpentries/amy/pull/2667) by @pbanaszkiewicz
+* Bump djangorestframework from 3.15.1 to 3.15.2 - [#2666](https://github.com/carpentries/amy/pull/2666) by @dependabot[bot]
+* Bump braces from 3.0.2 to 3.0.3 - [#2665](https://github.com/carpentries/amy/pull/2665) by @dependabot[bot]
+* Bump urllib3 from 2.2.1 to 2.2.2 - [#2664](https://github.com/carpentries/amy/pull/2664) by @dependabot[bot]
+* Update README.md - [#2663](https://github.com/carpentries/amy/pull/2663) by @froggleston
+* [Emails] Add missing context variables - [#2658](https://github.com/carpentries/amy/pull/2658) by @pbanaszkiewicz
+* [Emails] Add missing email template seeds for New Self-Organised Workshop and Ask For Website - [#2656](https://github.com/carpentries/amy/pull/2656) by @pbanaszkiewicz
+* [Emails] New email Ask For Website - [#2655](https://github.com/carpentries/amy/pull/2655) by @pbanaszkiewicz
+* [Emails] New self organised workshop - [#2654](https://github.com/carpentries/amy/pull/2654) by @pbanaszkiewicz
+* [Emails] New email: PostWorkshop7Days - [#2653](https://github.com/carpentries/amy/pull/2653) by @pbanaszkiewicz
+* Bump requests from 2.31.0 to 2.32.2 - [#2652](https://github.com/carpentries/amy/pull/2652) by @dependabot[bot]
+* [Emails] New email: recruit helpers - [#2651](https://github.com/carpentries/amy/pull/2651) by @pbanaszkiewicz
+* [Emails] New email host intructors introduction - [#2645](https://github.com/carpentries/amy/pull/2645) by @pbanaszkiewicz
+* [Emails] Improvements to scheduled emails list and details - [#2640](https://github.com/carpentries/amy/pull/2640) by @pbanaszkiewicz
+* [Emails] Validate rescheduled date/time to not be in past - [#2639](https://github.com/carpentries/amy/pull/2639) by @pbanaszkiewicz
+* Bump gunicorn from 20.1.0 to 22.0.0 - [#2637](https://github.com/carpentries/amy/pull/2637) by @dependabot[bot]
+* [Emails] List related scheduled emails - [#2636](https://github.com/carpentries/amy/pull/2636) by @pbanaszkiewicz
+* Update datetime and time formats to include a timezone - [#2635](https://github.com/carpentries/amy/pull/2635) by @pbanaszkiewicz
+* Bump sqlparse from 0.4.4 to 0.5.0 - [#2634](https://github.com/carpentries/amy/pull/2634) by @dependabot[bot]
+* [#2624] Add CSRF_TRUSTED_ORIGINS because it was missing - [#2632](https://github.com/carpentries/amy/pull/2632) by @pbanaszkiewicz
+* [#2624] Upgrade Django to v4.2 - [#2630](https://github.com/carpentries/amy/pull/2630) by @pbanaszkiewicz
+* Fix2582 corporate workshop costs - [#2626](https://github.com/carpentries/amy/pull/2626) by @maneesha
+* Bump pillow from 10.2.0 to 10.3.0 - [#2625](https://github.com/carpentries/amy/pull/2625) by @dependabot[bot]
+* Bump black from 23.7.0 to 24.3.0 - [#2620](https://github.com/carpentries/amy/pull/2620) by @dependabot[bot]
+* Bump django from 3.2.24 to 3.2.25 - [#2619](https://github.com/carpentries/amy/pull/2619) by @dependabot[bot]
+* Bump django from 3.2.23 to 3.2.24 - [#2610](https://github.com/carpentries/amy/pull/2610) by @dependabot[bot]
+* Bump cryptography from 41.0.6 to 42.0.0 - [#2609](https://github.com/carpentries/amy/pull/2609) by @dependabot[bot]
+* [Chore] Unconditionally enable "ENFORCE_MEMBER_CODES" feature flag - [#2606](https://github.com/carpentries/amy/pull/2606) by @pbanaszkiewicz
+* Bump pillow from 10.1.0 to 10.2.0 - [#2604](https://github.com/carpentries/amy/pull/2604) by @dependabot[bot]
+* Bump jinja2 from 3.1.2 to 3.1.3 - [#2600](https://github.com/carpentries/amy/pull/2600) by @dependabot[bot]
+* [Emails] Context JSON for email worker - [#2598](https://github.com/carpentries/amy/pull/2598) by @pbanaszkiewicz
+* Member codes docs - [#2595](https://github.com/carpentries/amy/pull/2595) by @elichad
+* Miscellaneous docs updates - [#2594](https://github.com/carpentries/amy/pull/2594) by @elichad
+* Fix IntegrityError and make CoC agreement required - [#2593](https://github.com/carpentries/amy/pull/2593) by @elichad
+* Bump cryptography from 41.0.4 to 41.0.6 - [#2592](https://github.com/carpentries/amy/pull/2592) by @dependabot[bot]
+* [Emails] New membership onboarding email - [#2580](https://github.com/carpentries/amy/pull/2580) by @pbanaszkiewicz
+* Make agreement_link required field in Membership model - [#2579](https://github.com/carpentries/amy/pull/2579) by @elichad
+* Member codes feature - [#2575](https://github.com/carpentries/amy/pull/2575) by @elichad
+* add CLDT tag - [#2573](https://github.com/carpentries/amy/pull/2573) by @maneesha
+* Automatically assign learner TTT task membership based on code in training application - [#2572](https://github.com/carpentries/amy/pull/2572) by @elichad
+* Instructor Training application - add question about Eventbrite URL and associated filter - [#2570](https://github.com/carpentries/amy/pull/2570) by @elichad
+* Instructor Training applicaton - change checkboxes to questions about intent - [#2569](https://github.com/carpentries/amy/pull/2569) by @elichad
+* Bump django from 3.2.20 to 3.2.23 - [#2563](https://github.com/carpentries/amy/pull/2563) by @dependabot[bot]
+* Update autoresponses with member codes - [#2561](https://github.com/carpentries/amy/pull/2561) by @elichad
+* Add soft validation of member codes to training request update form - [#2560](https://github.com/carpentries/amy/pull/2560) by @elichad
+* Add a filter to the workshop request view for requests where an active member did not use their code - [#2559](https://github.com/carpentries/amy/pull/2559) by @elichad
+* Add filter to training requests view for invalid codes - [#2558](https://github.com/carpentries/amy/pull/2558) by @elichad
+* Add code seat availability check to IT application - [#2554](https://github.com/carpentries/amy/pull/2554) by @elichad
+* Add further checks for invalid code to workshop request forms - [#2553](https://github.com/carpentries/amy/pull/2553) by @elichad
+* Remove member affiliation question; remove code question from SO and WI forms - [#2552](https://github.com/carpentries/amy/pull/2552) by @elichad
+* [Emails] Completed instructor training not yet badged - [#2551](https://github.com/carpentries/amy/pull/2551) by @pbanaszkiewicz
+* Implement soft validation for member codes in training requests - [#2549](https://github.com/carpentries/amy/pull/2549) by @elichad
+* Override link colours in banner to improve contrast - [#2548](https://github.com/carpentries/amy/pull/2548) by @elichad
+* Enforce membership code on instructor training application - [#2544](https://github.com/carpentries/amy/pull/2544) by @elichad
+* [Emails] Refactor receivers into class-based actions - [#2541](https://github.com/carpentries/amy/pull/2541) by @pbanaszkiewicz
+* Bump urllib3 from 2.0.5 to 2.0.6 - [#2539](https://github.com/carpentries/amy/pull/2539) by @dependabot[bot]
+* Autofill membership when accepting workshop requests - [#2538](https://github.com/carpentries/amy/pull/2538) by @elichad
+* Bump cryptography from 41.0.3 to 41.0.4 - [#2537](https://github.com/carpentries/amy/pull/2537) by @dependabot[bot]
+* Add membership code & validation to workshop requests - [#2532](https://github.com/carpentries/amy/pull/2532) by @elichad
+* [Emails] Instructor training event approaching email - [#2529](https://github.com/carpentries/amy/pull/2529) by @pbanaszkiewicz
+* Remove question about learner count from WRF - [#2523](https://github.com/carpentries/amy/pull/2523) by @elichad
+* [Emails] Enable field `active` on EmailTemplates - [#2522](https://github.com/carpentries/amy/pull/2522) by @pbanaszkiewicz
+* [Emails] Disable some notifications for non-admin users - [#2521](https://github.com/carpentries/amy/pull/2521) by @pbanaszkiewicz
+* Update release procedure documentation - [#2519](https://github.com/carpentries/amy/pull/2519) by @elichad
+* Make explicit where Instructors can include accommodations they need when signing up for workshop - [#2517](https://github.com/carpentries/amy/pull/2517) by @elichad
+* [Emails] Use django-flags for feature flag management - [#2516](https://github.com/carpentries/amy/pull/2516) by @pbanaszkiewicz
+* Update admin documentation for checkout - [#2514](https://github.com/carpentries/amy/pull/2514) by @elichad
+* New checkout docs - [#2509](https://github.com/carpentries/amy/pull/2509) by @maneesha
+* [Emails] Scheduled email log author - [#2506](https://github.com/carpentries/amy/pull/2506) by @pbanaszkiewicz
+* [Emails] Prevent changes to emails in specific states - [#2494](https://github.com/carpentries/amy/pull/2494) by @pbanaszkiewicz
+* [Emails] Template context variables documentation links - [#2491](https://github.com/carpentries/amy/pull/2491) by @pbanaszkiewicz
+* Improve event validation and option filtering for training progress and instructor badge awarding - [#2471](https://github.com/carpentries/amy/pull/2471) by @elichad
+* Add documentation for checkout project and DB changes - [#2464](https://github.com/carpentries/amy/pull/2464) by @elichad
+
+
 ## v4.2.3 - 2023-11-07
 
 ### Bugfixes
