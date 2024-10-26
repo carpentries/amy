@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core import mail
+from django.test import tag
 from django.urls import reverse
 
 from extforms.forms import WorkshopInquiryRequestExternalForm
@@ -38,7 +39,6 @@ class TestWorkshopInquiryExternalForm(TestBase):
                 "preferred_dates",
                 "other_preferred_dates",
                 "language",
-                "number_attendees",
                 "administrative_fee",
                 "travel_expences_management",
                 "travel_expences_management_other",
@@ -62,6 +62,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
         )
         self.assertEqual(fields_left, fields_right)
 
+    @tag("captcha")
     def test_request_added(self):
         """Ensure the request is successfully added to the pool, and
         notification email is sent."""
@@ -80,7 +81,6 @@ class TestWorkshopInquiryExternalForm(TestBase):
             "preferred_dates": "",
             "other_preferred_dates": "03-04 November, 2018",
             "language": Language.objects.get(name="English").pk,
-            "number_attendees": "10-40",
             "audience_description": "Students of Hogwarts",
             "administrative_fee": "waiver",
             "scholarship_circumstances": "Bugdet cuts in Ministry of Magic",

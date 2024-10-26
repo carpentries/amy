@@ -29,6 +29,11 @@
         <td>
           {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
+    <tr><th>Member registration code:</th>
+        <td>
+          {{ object.member_code|default:"&mdash;" }}
+          {% if admin %}{% include "includes/request_membership.html" with object=object membership=membership %}{% endif %}
+        </td></tr>
     <tr><th>Workshop location:</th>
         <td>{{ object.location }}</td></tr>
     <tr><th>Country:</th>
@@ -54,8 +59,6 @@
 {% endif %}
     <tr><th>Language the workshop will be conducted in:</th>
         <td>{{ object.language }}</td></tr>
-    <tr><th>Anticipated number of attendees:</th>
-        <td>{{ object.get_number_attendees_display }}</td></tr>
     <tr><th>Audience description:</th>
         <td><pre>{{ object.audience_description }}</pre></td></tr>
     <tr><th>Administrative fee payment:</th>

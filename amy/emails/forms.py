@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from django import forms
 from markdownx.fields import MarkdownxFormField
 
@@ -21,6 +23,7 @@ class EmailTemplateCreateForm(forms.ModelForm):
         model = EmailTemplate
         fields = [
             "name",
+            "active",
             "signal",
             "from_header",
             "reply_to_header",
@@ -38,7 +41,16 @@ class EmailTemplateCreateForm(forms.ModelForm):
         self.fields["bcc_header"].help_text = array_email_field_help_text
 
 
-EmailTemplateUpdateForm = EmailTemplateCreateForm
+class EmailTemplateUpdateForm(EmailTemplateCreateForm):
+    signal = forms.CharField(
+        required=False,
+        disabled=True,
+        help_text=EmailTemplate._meta.get_field("signal").help_text,
+        widget=forms.Select(choices=SignalNameEnum.choices()),
+    )
+
+    class Meta(EmailTemplateCreateForm.Meta):
+        pass
 
 
 class ScheduledEmailUpdateForm(forms.ModelForm):
@@ -76,6 +88,14 @@ class ScheduledEmailRescheduleForm(forms.Form):
     )
 
     helper = BootstrapHelper(submit_label="Update")
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data["scheduled_at"]
+
+        if scheduled_at < datetime.now(tz=UTC):
+            raise forms.ValidationError("Scheduled time cannot be in the past.")
+
+        return scheduled_at
 
 
 class ScheduledEmailCancelForm(forms.Form):

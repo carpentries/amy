@@ -2,6 +2,7 @@ from datetime import date, timedelta
 import re
 from urllib.parse import unquote
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import (
@@ -15,15 +16,17 @@ from django.db.models import (
     When,
 )
 from django.forms.widgets import HiddenInput
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
 from django.views.decorators.http import require_GET
-from django.views.generic import View
+from django.views.generic import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
+from flags.sources import get_flags
+from flags.views import FlaggedViewMixin
 
-from autoemails.utils import safe_next_or_default_url
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
 from consents.models import Consent, Term, TermEnum
@@ -40,7 +43,6 @@ from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from recruitment.views import RecruitmentEnabledMixin
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -63,6 +65,7 @@ from workshops.models import (
     TrainingRequirement,
 )
 from workshops.utils.access import admin_required, login_required
+from workshops.utils.urls import safe_next_or_default_url
 
 # Terms shown on the instructor dashboard and can be updated by the user.
 TERM_SLUGS = [TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE, TermEnum.MAY_PUBLISH_NAME]
@@ -333,8 +336,9 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
 
 
 class UpcomingTeachingOpportunitiesList(
-    LoginRequiredMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
+    LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
     template_name = "dashboard/upcoming_teaching_opportunities.html"
@@ -371,12 +375,12 @@ class UpcomingTeachingOpportunitiesList(
         )
         return super().get_queryset()
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -409,10 +413,11 @@ class UpcomingTeachingOpportunitiesList(
 
 class SignupForRecruitment(
     LoginRequiredMixin,
-    RecruitmentEnabledMixin,
+    FlaggedViewMixin,
     ConditionallyEnabledMixin,
     AMYCreateAndFetchObjectView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitment",
         "recruitment.add_instructorrecruitmentsignup",
@@ -428,12 +433,12 @@ class SignupForRecruitment(
     form_class = SignupForRecruitmentForm
     template_name = "dashboard/signup_for_recruitment.html"
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -525,11 +530,12 @@ class SignupForRecruitment(
 
 class ResignFromRecruitment(
     LoginRequiredMixin,
-    RecruitmentEnabledMixin,
+    FlaggedViewMixin,
     ConditionallyEnabledMixin,
     SingleObjectMixin,
     View,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitmentsignup",
         "recruitment.delete_instructorrecruitmentsignup",
@@ -552,12 +558,12 @@ class ResignFromRecruitment(
         redirect_url = self.get_redirect_url()
         return redirect(redirect_url)
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
             )
-            return role.is_active() and super().get_view_enabled()
+            return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
@@ -657,7 +663,7 @@ def search(request):
             if len(tokens) == 2:
                 name1, name2 = tokens
                 complex_q = (
-                    Q(group_name__icontains=term)
+                    Q(member_code__icontains=term)
                     | (Q(personal__icontains=name1) & Q(family__icontains=name2))
                     | (Q(personal__icontains=name2) & Q(family__icontains=name1))
                     | Q(email__icontains=term)
@@ -674,7 +680,7 @@ def search(request):
             else:
                 training_requests = list(
                     TrainingRequest.objects.filter(
-                        Q(group_name__icontains=term)
+                        Q(member_code__icontains=term)
                         | Q(family__icontains=term)
                         | Q(email__icontains=term)
                         | Q(github__icontains=term)
@@ -737,3 +743,26 @@ def search(request):
         "training_requests": training_requests,
     }
     return render(request, "dashboard/search.html", context)
+
+
+# ------------------------------------------------------------
+
+
+class AllFeatureFlags(ConditionallyEnabledMixin, LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/all_feature_flags.html"
+
+    def get_view_enabled(self, request) -> bool:
+        return bool(
+            settings.PROD_ENVIRONMENT and request.user.is_superuser
+        ) or not bool(settings.PROD_ENVIRONMENT)
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        self.request = request
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        flags = get_flags(request=self.request)
+        context["feature_flags"] = sorted(flags.values(), key=lambda x: x.name)
+        context["title"] = "Feature flags"
+        return context

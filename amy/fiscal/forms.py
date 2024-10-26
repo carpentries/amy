@@ -188,12 +188,13 @@ class MembershipForm(forms.ModelForm):
         # check if multiple members are assigned - then disallow changing to
         # non-consortium
         new_consortium = self.cleaned_data.get("consortium")
-        members_count = self.instance.member_set.count()
-        if not new_consortium and members_count > 1:
-            errors["consortium"] = ValidationError(
-                "Cannot change to non-consortium when there are multiple members "
-                "assigned. Remove the members so that at most 1 is left."
-            )
+        if not new_consortium and self.instance.pk:
+            members_count = self.instance.member_set.count()
+            if members_count > 1:
+                errors["consortium"] = ValidationError(
+                    "Cannot change to non-consortium when there are multiple members "
+                    "assigned. Remove the members so that at most 1 is left."
+                )
 
         if errors:
             raise ValidationError(errors)
@@ -347,7 +348,16 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
         # attached to the same element)
         include_media=False,
     )
+    helper_deletable = BootstrapHelper(
+        add_cancel_button=False,
+        form_tag=False,
+        add_submit_button=False,
+        include_media=False,
+    )
     helper_empty_form = BootstrapHelper(
+        add_cancel_button=False, form_tag=False, add_submit_button=False
+    )
+    helper_empty_form_deletable = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
 
@@ -379,15 +389,25 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
         # visibility of the delete checkbox
         self.helper.layout = self.helper.build_default_layout(self)
         self.helper.layout.append("id")
-        self.helper.layout.append("DELETE")  # visible; formset adds it
+
+        self.helper_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_deletable.layout.append("id")
+        self.helper_deletable.layout.append("DELETE")  # visible; formset adds it
+
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper_empty_form.layout.append("id")
-        self.helper_empty_form.layout.append(
-            Div("DELETE", css_class="d-none")  # hidden
-        )
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
+
+        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form_deletable.layout.append("id")
+        self.helper_empty_form_deletable.layout.append(
+            Div("DELETE", css_class="d-none")  # hidden
+        )
+        # remove EDITABLE checkbox from empty helper deletable form
+        pos_index = self.helper_empty_form_deletable.layout.fields.index("EDITABLE")
+        self.helper_empty_form_deletable.layout.pop(pos_index)
 
 
 class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
@@ -396,7 +416,16 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
     helper = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
+    helper_deletable = BootstrapHelper(
+        add_cancel_button=False,
+        form_tag=False,
+        add_submit_button=False,
+        include_media=False,
+    )
     helper_empty_form = BootstrapHelper(
+        add_cancel_button=False, form_tag=False, add_submit_button=False
+    )
+    helper_empty_form_deletable = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
 
@@ -426,6 +455,11 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
         self.helper.layout = self.helper.build_default_layout(self)
         self.helper.layout.append("id")
         self.helper.layout.append("DELETE")  # visible; formset adds it
+
+        self.helper_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_deletable.layout.append("id")
+        self.helper_deletable.layout.append("DELETE")  # visible; formset adds it
+
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper_empty_form.layout.append("id")
         self.helper_empty_form.layout.append(
@@ -434,6 +468,12 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
+
+        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form_deletable.layout.append("id")
+        self.helper_empty_form_deletable.layout.append(
+            Div("DELETE", css_class="d-none")  # hidden
+        )
 
 
 class MembershipExtensionForm(forms.Form):

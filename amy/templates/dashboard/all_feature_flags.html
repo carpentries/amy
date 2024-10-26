@@ -1,0 +1,47 @@
+{% extends "base_nav.html" %}
+{% load feature_flags feature_flag_conditions %}
+
+{% block content %}
+
+<p class="lead">
+  Feature flags, also known as feature toggles, are a development technique used in web
+  applications to enable or disable specific features or functionalities without the need
+  for code changes. This allows developers to control the release of new features,
+  experiment with different options, and manage user experiences dynamically.
+</p>
+<p class="lead">
+  If you have enabled a feature flag, remember that it's active only for you and not for
+  others, unless they also enable the same feature flag.
+</p>
+
+{% if feature_flags %}
+  <table class="table table-striped">
+    <thead>
+      <th>Name</th>
+      <th>Active?</th>
+    </thead>
+    {% for flag in feature_flags %}
+    <tr>
+      <td>{{ flag.name }}</td>
+      <td>
+        {% flag_enabled flag.name as state %}{{ state|yesno|title }}.
+        {% first_parameter_condition flag as parameter %}
+        {% can_change_state flag as can_change_flag_state %}
+
+        {% if state is False and can_change_flag_state %}
+          <a href="?{{ parameter.value|parameter_strip_value }}=true">Enable.</a>
+        {% elif state is True and can_change_flag_state %}
+          <a href="?{{ parameter.value|parameter_strip_value }}=false">Disable.</a>
+        {% elif state is False and not can_change_flag_state %}
+          Cannot enable.
+        {% elif state is True and not can_change_flag_state %}
+          Cannot disable.
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+{% else %}
+<p>No feature flags found.</p>
+{% endif %}
+{% endblock %}

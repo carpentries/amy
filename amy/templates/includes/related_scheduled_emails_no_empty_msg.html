@@ -1,0 +1,10 @@
+{% load emails %}
+
+{% get_related_scheduled_emails object as related_scheduled_emails %}
+{% if related_scheduled_emails %}
+<ul>
+  {% for email in related_scheduled_emails %}
+  <li><a href="{{ email.get_absolute_url }}">{{ email.template.name }} - {{ email.state }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}

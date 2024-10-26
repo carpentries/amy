@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from unittest import mock
+from unittest.mock import MagicMock, patch
 from urllib.parse import urlencode
 
 from django.test import RequestFactory, TestCase, override_settings
@@ -7,22 +7,24 @@ from django.urls import reverse
 
 from emails.actions import persons_merged_receiver
 from emails.models import EmailTemplate, ScheduledEmail
+from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import persons_merged_signal
+from emails.utils import api_model_url
 from workshops.models import Person
 from workshops.tests.base import TestBase
 
 
 class TestPersonsMergedReceiver(TestCase):
-    @mock.patch("emails.utils.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    @patch("emails.actions.base_action.logger")
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
-        with self.settings(EMAIL_MODULE_ENABLED=False):
+        request = RequestFactory().get("/")
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            persons_merged_receiver(None)
+            persons_merged_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE_ENABLED not set, skipping receiver "
-                "persons_merged_receiver"
+                "EMAIL_MODULE feature flag not set, skipping persons_merged"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -38,10 +40,10 @@ class TestPersonsMergedReceiver(TestCase):
         # the same receiver list means this receiver has already been connected
         self.assertEqual(original_receivers, new_receivers)
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         template = EmailTemplate.objects.create(
             name="Test Email Template",
             signal=persons_merged_signal.signal_name,
@@ -54,15 +56,15 @@ class TestPersonsMergedReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with mock.patch(
-            "emails.actions.messages_action_scheduled"
+        with patch(
+            "emails.actions.base_action.messages_action_scheduled"
         ) as mock_messages_action_scheduled:
             persons_merged_signal.send(
                 sender=person,
                 request=request,
-                person_a_id=person.id,
-                person_b_id=person.id,
-                selected_person_id=person.id,
+                person_a_id=person.pk,
+                person_b_id=person.pk,
+                selected_person_id=person.pk,
             )
 
         # Assert
@@ -73,51 +75,59 @@ class TestPersonsMergedReceiver(TestCase):
             scheduled_email,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
-    @mock.patch("emails.actions.messages_action_scheduled")
-    @mock.patch("emails.actions.immediate_action")
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @patch("emails.actions.base_action.messages_action_scheduled")
+    @patch("emails.actions.persons_merged.immediate_action")
     def test_email_scheduled(
         self,
-        mock_immediate_action: mock.MagicMock,
-        mock_messages_action_scheduled: mock.MagicMock,
+        mock_immediate_action: MagicMock,
+        mock_messages_action_scheduled: MagicMock,
     ) -> None:
         # Arrange
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
         mock_immediate_action.return_value = NOW + timedelta(hours=1)
-        person = Person.objects.create()
+        person = Person.objects.create(email="test@example.org")
         request = RequestFactory().get("/")
         signal = persons_merged_signal.signal_name
-        context = {"person": person}
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with mock.patch(
-            "emails.actions.EmailController.schedule_email"
+        with patch(
+            "emails.actions.base_action.EmailController.schedule_email"
         ) as mock_schedule_email:
             persons_merged_signal.send(
                 sender=person,
                 request=request,
-                person_a_id=person.id,
-                person_b_id=person.id,
-                selected_person_id=person.id,
+                person_a_id=person.pk,
+                person_b_id=person.pk,
+                selected_person_id=person.pk,
             )
 
         # Assert
         mock_schedule_email.assert_called_once_with(
             signal=signal,
-            context=context,
+            context_json=ContextModel({"person": api_model_url("person", person.pk)}),
             scheduled_at=scheduled_at,
             to_header=[person.email],
+            to_header_context_json=ToHeaderModel(
+                [
+                    {
+                        "api_uri": api_model_url("person", person.pk),
+                        "property": "email",
+                    }  # type: ignore
+                ]
+            ),
             generic_relation_obj=person,
+            author=None,
         )
 
-    @override_settings(EMAIL_MODULE_ENABLED=True)
-    @mock.patch("emails.actions.messages_missing_template")
-    def test_missing_template(
-        self, mock_messages_missing_template: mock.MagicMock
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @patch("emails.actions.base_action.messages_missing_recipients")
+    def test_missing_recipients(
+        self, mock_messages_missing_recipients: MagicMock
     ) -> None:
         # Arrange
-        person = Person.objects.create()
+        person = Person.objects.create()  # no email will cause missing recipients error
         request = RequestFactory().get("/")
         signal = persons_merged_signal.signal_name
 
@@ -125,9 +135,29 @@ class TestPersonsMergedReceiver(TestCase):
         persons_merged_signal.send(
             sender=person,
             request=request,
-            person_a_id=person.id,
-            person_b_id=person.id,
-            selected_person_id=person.id,
+            person_a_id=person.pk,
+            person_b_id=person.pk,
+            selected_person_id=person.pk,
+        )
+
+        # Assert
+        mock_messages_missing_recipients.assert_called_once_with(request, signal)
+
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @patch("emails.actions.base_action.messages_missing_template")
+    def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
+        # Arrange
+        person = Person.objects.create(email="test@example.org")
+        request = RequestFactory().get("/")
+        signal = persons_merged_signal.signal_name
+
+        # Act
+        persons_merged_signal.send(
+            sender=person,
+            request=request,
+            person_a_id=person.pk,
+            person_b_id=person.pk,
+            selected_person_id=person.pk,
         )
 
         # Assert
@@ -135,7 +165,7 @@ class TestPersonsMergedReceiver(TestCase):
 
 
 class TestPersonsMergedSignalReceiverIntegration(TestBase):
-    @override_settings(EMAIL_MODULE_ENABLED=True)
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
         self._setUpUsersAndLogin()

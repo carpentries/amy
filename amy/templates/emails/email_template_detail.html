@@ -96,6 +96,16 @@
       {{ rendered_body|safe }}
     </td>
   </tr>
+  <tr>
+    <th>Variables available in the email template body</th>
+    <td colspan="2">
+      <ul>
+      {% for key, value in body_context_annotations.items %}
+      <li><code>{{ key }}</code>: {{ value }}</li>
+      {% endfor %}
+      </ul>
+    </td>
+  </tr>
 </table>
 
 {% endblock %}

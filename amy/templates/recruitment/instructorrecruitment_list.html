@@ -39,6 +39,10 @@
         <td><i class="fas fa-user-cog"></i></td>
         <td>{% if object.assigned_to %}Assigned to: <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a>{% else %}Unassigned{% endif %}</td>
       </tr>
+      <tr>
+        <td></td>
+        <td><a href="{{ object.get_absolute_url }}">See details</a></td>
+      </tr>
     </table>
   </p>
   <div class="card recruitment-notes">

@@ -369,7 +369,6 @@ $(document).ready(function () {
     const fieldsets = document.querySelectorAll('#formset [data-formset-body] fieldset');
     fieldsets.forEach(fieldset => {
       const change_allowed = fieldset.querySelector('input[type=checkbox][data-form-editable-check]:checked');
-      console.log(change_allowed);
       // set readonly on every select inside fieldset
       readonly_selects(fieldset, change_allowed === null);
     });

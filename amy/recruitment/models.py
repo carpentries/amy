@@ -161,3 +161,8 @@ class InstructorRecruitmentSignup(
             f"Instructor Signup applicant {self.person.full_name} "
             f"for {self.recruitment.event}"
         )
+
+    def get_absolute_url(self) -> str:
+        return reverse(
+            "instructorrecruitment_details", kwargs={"pk": self.recruitment.pk}
+        )

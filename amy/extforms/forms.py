@@ -1,10 +1,13 @@
+from datetime import date
 from typing import Iterable, cast
+from urllib.parse import urlparse
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.layout import HTML, Div, Field, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.http import HttpRequest
 
 from consents.forms import option_display_value
 from consents.models import Term, TrainingRequestConsent
@@ -13,6 +16,7 @@ from extrequests.forms import (
     WorkshopInquiryRequestBaseForm,
     WorkshopRequestBaseForm,
 )
+from extrequests.utils import MemberCodeValidationError, member_code_valid_training
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     RadioSelectWithOther,
@@ -20,6 +24,7 @@ from workshops.fields import (
 )
 from workshops.forms import BootstrapHelper
 from workshops.models import TrainingRequest
+from workshops.utils.feature_flags import feature_flag_enabled
 
 
 class TrainingRequestForm(forms.ModelForm):
@@ -29,12 +34,19 @@ class TrainingRequestForm(forms.ModelForm):
 
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
+    code_of_conduct_agreement = forms.BooleanField(
+        required=True,
+        label=TrainingRequest._meta.get_field("code_of_conduct_agreement").verbose_name,
+    )
+
     class Meta:
         model = TrainingRequest
         fields = (
             "personal",
             "family",
-            "group_name",
+            "member_code",
+            "member_code_override",
+            "eventbrite_url",
             "email",
             "secondary_email",
             "github",
@@ -57,6 +69,8 @@ class TrainingRequestForm(forms.ModelForm):
             "previous_experience_other",
             "previous_experience_explanation",
             "programming_language_usage_frequency",
+            "checkout_intent",
+            "teaching_intent",
             "teaching_frequency_expectation",
             "teaching_frequency_expectation_other",
             "max_travelling_frequency",
@@ -65,8 +79,6 @@ class TrainingRequestForm(forms.ModelForm):
             "user_notes",
             # "data_privacy_agreement",
             "code_of_conduct_agreement",
-            "training_completion_agreement",
-            "workshop_teaching_agreement",
         )
         widgets = {
             "occupation": RadioSelectWithOther("occupation_other"),
@@ -76,6 +88,8 @@ class TrainingRequestForm(forms.ModelForm):
             "previous_training": RadioSelectWithOther("previous_training_other"),
             "previous_experience": RadioSelectWithOther("previous_experience_other"),
             "programming_language_usage_frequency": forms.RadioSelect(),
+            "checkout_intent": forms.RadioSelect(),
+            "teaching_intent": forms.RadioSelect(),
             "teaching_frequency_expectation": RadioSelectWithOther(
                 "teaching_frequency_expectation_other"
             ),
@@ -86,6 +100,8 @@ class TrainingRequestForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # Only active and required terms.
@@ -102,6 +118,7 @@ class TrainingRequestForm(forms.ModelForm):
 
         self.set_other_fields(self.helper.layout)
         self.set_fake_required_fields()
+        self.set_display_member_code_override(visible=False)
         self.set_hr(self.helper.layout)
 
     def set_other_field(self, field_name: str, layout: Layout) -> None:
@@ -129,7 +146,7 @@ class TrainingRequestForm(forms.ModelForm):
 
     def set_fake_required_fields(self) -> None:
         # fake requiredness of the registration code / group name
-        self["group_name"].field.widget.fake_required = True  # type: ignore
+        self["member_code"].field.widget.fake_required = True  # type: ignore
 
     def set_accordion(self, layout: Layout) -> None:
         # Note: not used since 2024-03-19 (#2617).
@@ -137,7 +154,9 @@ class TrainingRequestForm(forms.ModelForm):
         # special accordion display for the review process
         self["review_process"].field.widget.subfields = {  # type: ignore
             "preapproved": [
-                self["group_name"],
+                self["member_code"],
+                self["member_code_override"],
+                self["eventbrite_url"],
             ],
             "open": [],  # this option doesn't require any additional fields
         }
@@ -149,7 +168,9 @@ class TrainingRequestForm(forms.ModelForm):
         pos_index = layout.fields.index("review_process")
 
         layout.fields.remove("review_process")
-        layout.fields.remove("group_name")
+        layout.fields.remove("member_code")
+        layout.fields.remove("member_code_override")
+        layout.fields.remove("eventbrite_url")
 
         # insert div+field at previously saved position
         layout.insert(
@@ -161,6 +182,10 @@ class TrainingRequestForm(forms.ModelForm):
                 css_class="form-group row",
             ),
         )
+
+    def set_display_member_code_override(self, *, visible: bool) -> None:
+        widget = forms.CheckboxInput() if visible else forms.HiddenInput()
+        self.fields["member_code_override"].widget = widget
 
     def set_hr(self, layout: Layout) -> None:
         # add <HR> around "underrepresented*" fields
@@ -191,6 +216,53 @@ class TrainingRequestForm(forms.ModelForm):
         )
         return field
 
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+        member_code_override = self.cleaned_data.get("member_code_override", False)
+        error_msg = (
+            "This code is invalid. "
+            "This may be due to a typo, an expired code, "
+            "a code that has not yet been activated, "
+            "or a code with no training seats remaining. "
+            "Please confirm that you have copied the code correctly, "
+            "or confirm the code with the Membership Contact for your group. "
+            "If the code seems to be correct, tick the checkbox below to ignore "
+            "this message."
+        )
+
+        if not member_code:
+            return None
+
+        # check code validity
+        # grace period: 90 days before and after
+        try:
+            member_code_is_valid = member_code_valid_training(
+                member_code, date.today(), grace_before=90, grace_after=90
+            )
+            if member_code_is_valid and member_code_override:
+                # case where a user corrects their code but ticks the box anyway
+                # checkbox doesn't need to be ticked, so correct it quietly and continue
+                self.cleaned_data["member_code_override"] = False
+                self.set_display_member_code_override(visible=False)
+        except MemberCodeValidationError:
+            self.set_display_member_code_override(visible=True)
+            if not member_code_override:
+                # user must either correct the code or tick the override
+                errors["member_code"] = ValidationError(error_msg)
+
+        return errors
+
+    def clean_eventbrite_url(self):
+        """Check that entered URL includes 'eventbrite' in the domain."""
+        eventbrite_url = self.cleaned_data.get("eventbrite_url", "")
+        if eventbrite_url and "eventbrite" not in urlparse(eventbrite_url).hostname:
+            raise ValidationError("Must be an Eventbrite URL.")
+        return eventbrite_url
+
     def clean(self):
         super().clean()
         errors = dict()
@@ -200,22 +272,27 @@ class TrainingRequestForm(forms.ModelForm):
         review_process = self.cleaned_data.get("review_process", "preapproved")
         self.instance.review_process = review_process
 
-        # 1: validate registration code / group name
-        group_name = self.cleaned_data.get("group_name", "").split()
+        # 1: validate registration code
+        member_code = self.cleaned_data.get("member_code", "").split()
 
         # it's required when review_process is 'preapproved', but not when
         # 'open'
-        if review_process == "preapproved" and not group_name:
-            errors["group_name"] = ValidationError(
+        if review_process == "preapproved" and not member_code:
+            errors["member_code"] = ValidationError(
                 "Registration code is required for pre-approved training "
                 "review process."
             )
 
         # it's required to be empty when review_process is 'open'
-        if review_process == "open" and group_name:
+        if review_process == "open" and member_code:
             errors["member_code"] = ValidationError(
                 "Registration code must be empty for open training review process."
             )
+
+        # confirm that code is valid
+        membership_errors = self.validate_member_code(request=self.request_http)
+        if membership_errors:
+            errors.update(membership_errors)
 
         if errors:
             raise ValidationError(errors)

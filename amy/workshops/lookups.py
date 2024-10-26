@@ -77,9 +77,44 @@ class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class EventLookupForAwardsView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        results = models.Event.objects.all()
+
+        # if awarding an Instructor badge, find relevant events this person attended
+        person = self.request.GET.get("person")
+        badge = self.request.GET.get("badge")
+        if (
+            person
+            and badge
+            and int(badge) == models.Badge.objects.get(name="instructor").pk
+        ):
+            learner_progresses = models.TrainingProgress.objects.filter(
+                trainee__id=person,
+                requirement__in=models.TrainingRequirement.objects.filter(
+                    event_required=True
+                ),
+                state="p",
+            )
+            results = results.filter(trainingprogress__in=learner_progresses)
+
+        if self.term:
+            results = results.filter(slug__icontains=self.term)
+
+        return results
+
+
 class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
-        results = models.Event.objects.filter(tags__name="TTT")
+        results = models.Event.objects.ttt()
+
+        # trainee is provided through the TrainingProgress creation views
+        # for which learner tasks are relevant
+        if trainee := self.request.GET.get("trainee"):
+            learner_tasks = models.Task.objects.filter(
+                role__name="learner", person__id=trainee
+            )
+            results = results.filter(task__in=learner_tasks)
 
         if self.term:
             results = results.filter(slug__icontains=self.term)
@@ -154,6 +189,30 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
                 ).distinct()
             else:
                 results = results.filter(name | org_q | variant_q).distinct()
+
+        return results
+
+
+class MembershipLookupForTasksView(MembershipLookupView):
+    def get_queryset(self):
+        results = super().get_queryset()
+
+        # if this is a TTT learner task,
+        # find the membership from the associated training request
+        person = self.request.GET.get("person")
+        role = self.request.GET.get("role")
+        event = self.request.GET.get("event")
+        ttt_tag = models.Tag.objects.get(name="TTT")
+        if (
+            person
+            and role
+            and event
+            and models.Role.objects.get(id=role).name == "learner"
+            and ttt_tag in models.Event.objects.get(id=event).tags.all()
+        ):
+            training_requests = models.TrainingRequest.objects.filter(person__id=person)
+            member_codes = training_requests.values_list("member_code")
+            results = results.filter(registration_code__in=member_codes)
 
         return results
 
@@ -297,20 +356,11 @@ class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
 
 
 class KnowledgeDomainLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def dispatch(self, request, *args, **kwargs):
-        self.subtag = "subtag" in request.GET.keys()
-        return super().dispatch(request, *args, **kwargs)
-
     def get_queryset(self):
         results = models.KnowledgeDomain.objects.all()
 
         if self.term:
-            results = results.filter(
-                Q(name__icontains=self.term) | Q(subtag__icontains=self.term)
-            )
-
-            if self.subtag:
-                return results.filter(subtag__iexact=self.term)
+            results = results.filter(Q(name__icontains=self.term))
 
         results = results.annotate(person_count=Count("person")).order_by(
             "-person_count"
@@ -435,6 +485,11 @@ urlpatterns = [
     path("badges/", BadgeLookupView.as_view(), name="badge-lookup"),
     path("lessons/", LessonLookupView.as_view(), name="lesson-lookup"),
     path("events/", EventLookupView.as_view(), name="event-lookup"),
+    path(
+        "events_for_awards/",
+        EventLookupForAwardsView.as_view(),
+        name="event-lookup-for-awards",
+    ),
     path("ttt_events/", TTTEventLookupView.as_view(), name="ttt-event-lookup"),
     path(
         "organizations/", OrganizationLookupView.as_view(), name="organization-lookup"
@@ -445,6 +500,11 @@ urlpatterns = [
         name="administrator-org-lookup",
     ),
     path("memberships/", MembershipLookupView.as_view(), name="membership-lookup"),
+    path(
+        "memberships_for_tasks/",
+        MembershipLookupForTasksView.as_view(),
+        name="membership-lookup-for-tasks",
+    ),
     path("member-roles/", MemberRoleLookupView.as_view(), name="memberrole-lookup"),
     path(
         "membership-person-roles/",

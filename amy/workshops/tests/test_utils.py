@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
+from unittest.mock import patch
 
-from django.test import RequestFactory
+from django.test import RequestFactory, TestCase
 from django.utils import timezone
 import requests.exceptions
 import requests_mock
@@ -12,6 +13,7 @@ from workshops.tests.base import TestBase
 from workshops.utils.consents import archive_least_recent_active_consents
 from workshops.utils.dates import human_daterange
 from workshops.utils.emails import match_notification_email
+from workshops.utils.feature_flags import feature_flag_enabled
 from workshops.utils.metadata import (
     datetime_decode,
     datetime_match,
@@ -26,6 +28,7 @@ from workshops.utils.metadata import (
 )
 from workshops.utils.pagination import Paginator
 from workshops.utils.reports import reports_link, reports_link_hash
+from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.usernames import create_username
 from workshops.utils.views import assign
 
@@ -1033,7 +1036,6 @@ class TestMatchingNotificationEmail(TestBase):
             preferred_dates=None,
             other_preferred_dates="soon",
             language=Language.objects.get(name="English"),
-            number_attendees="10-40",
             audience_description="Students of Hogwarts",
             administrative_fee="waiver",
             travel_expences_management="booked",
@@ -1230,3 +1232,97 @@ class TestArchiveLeastRecentActiveConsents(TestBase):
         for consent in consents:
             self.assertIsNone(consent.term_option)
             self.assertEqual(consent.person, self.base_obj)
+
+
+class TestFeatureFlagEnabled(TestCase):
+    def test_feature_flag_enabled_decorator(self) -> None:
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+            request = RequestFactory().get("/")
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(request=request), None)
+            mock_logger.debug.assert_called_once_with(
+                "EMAIL_MODULE feature flag not set, skipping test_func"
+            )
+
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+            request = RequestFactory().get("/")
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(request=request), True)
+            mock_logger.debug.assert_not_called()
+
+    def test_feature_flag_enabled_decorator__missing_request(self) -> None:
+        DEBUG_MSG = (
+            "Cannot check EMAIL_MODULE feature flag, `request` parameter to "
+            "test_func is missing"
+        )
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(), None)
+            mock_logger.debug.assert_called_once_with(DEBUG_MSG)
+
+        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}), patch(
+            "workshops.utils.feature_flags.logger"
+        ) as mock_logger:
+
+            @feature_flag_enabled("EMAIL_MODULE")
+            def test_func(**kwargs):
+                return True
+
+            self.assertEqual(test_func(), None)
+            mock_logger.debug.assert_called_once_with(DEBUG_MSG)
+
+
+class TestSafeNextOrDefaultURL(TestCase):
+    def test_default_url_if_next_empty(self):
+        # Arrange
+        next_url = None
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, default_url)
+
+    def test_default_url_if_next_not_provided(self):
+        # Arrange
+        next_url = ""
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, default_url)
+
+    def test_default_url_if_next_not_safe(self):
+        # Arrange
+        next_url = "https://google.com"
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, default_url)
+
+    def test_next_url_if_next_safe(self):
+        # Arrange
+        next_url = "/admin/"
+        default_url = "/dashboard/"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, next_url)

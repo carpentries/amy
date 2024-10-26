@@ -21,9 +21,17 @@ The Carpentries Instructor Training Team
 
 A copy of your request is included below for your reference.
 
+{% if object.member_code_override %}
+**Warning:** Your registration code "{{object.member_code}}" seems to be invalid. This may be due to a typo, an expired code, a code that has not yet been activated, or a code with no training seats remaining. A member of our team will check the code and follow up with you if there are any problems that require your attention.
+{% endif %}
+
 Submission date: {{ object.created_at }}
 Application Type: {{ object.get_review_process_display|default:"---" }}
-Registration Code: {{ object.group_name|default:"&mdash;" }}
+Registration Code: {{ object.member_code|default:"&mdash;" }}
+{% if object.member_code_override %}
+Continue with registration code marked as invalid: {{object.member_code_override|yesno}}
+{% endif %}
+Eventbrite URL: {{ object.eventbrite_url }}
 Person: {{object.personal}} {{object.middle}} {{object.family}} &lt;{{object.email}}&gt;
 Github: {{ object.github|default:"---" }}
 Occupation: {{ object.get_occupation_display }} {{ object.occupation_other }}
@@ -54,6 +62,8 @@ Description of your previous experience in teaching:
     ---
     {% endif %}
 How frequently do you work with the tools that The Carpentries teach, such as R, Python, MATLAB, Perl, SQL, Git, OpenRefine, and the Unix Shell: {{ object.get_programming_language_usage_frequency_display }}
+Do you intend to complete The Carpentries checkout process to be certified as a Carpentries Instructor: {{ object.get_checkout_intent_display }}
+Do you intend to teach Carpentries workshops within the next 12 months: {{ object.get_teaching_intent_display }}
 How often would you expect to teach Carpentry Workshops after this training: {{ object.get_teaching_frequency_expectation_display|default:"---" }}
     other: {{ object.teaching_frequency_expectation_other|default:"---" }}
 How frequently would you be able to travel to teach such classes? {{ object.get_max_travelling_frequency_display }}
@@ -73,5 +83,3 @@ Additional notes:
 
 Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
 Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
-Training completion within three months agreement: {{ object.training_completion_agreement|yesno }}
-Teach a workshop within 12 months agreement: {{ object.workshop_teaching_agreement|yesno }}

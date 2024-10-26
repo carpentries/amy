@@ -1,4 +1,5 @@
 {% extends "base_nav.html" %}
+{% load emails %}
 
 {% block title %}
 <h1>
@@ -11,14 +12,35 @@
 
 {% include "emails/scheduled_email_header_details.html" with scheduled_email=scheduled_email %}
 
+{% allowed_actions_for_status scheduled_email.state as available_status_actions %}
+
 {% if perms.emails.change_scheduledemail %}
 <div class="edit-object">
   <div class="btn-group">
+    {% if "edit" in available_status_actions %}
     <a class="btn btn-primary" href="{% url 'scheduledemail_edit' scheduled_email.id %}">Edit</a>
+    {% else %}
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="You can only edit emails that are in the 'scheduled', 'failed' or 'succeeded' states.">
+      <a class="btn btn-primary disabled" style="pointer-events:none" disabled href="#">Edit</a>
+    </span>
+    {% endif %}
+
+    {% if "reschedule" in available_status_actions %}
     <a class="btn btn-warning" href="{% url 'scheduledemail_reschedule' scheduled_email.id %}">Reschedule</a>
+    {% else %}
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="You can only reschedule emails that are in the 'scheduled', 'failed' or 'cancelled' states.">
+      <a class="btn btn-warning disabled" style="pointer-events:none" disabled href="#">Reschedule</a>
+    </span>
+    {% endif %}
   </div>
   <div class="float-right">
+    {% if "cancel" in available_status_actions %}
     <a class="btn btn-danger" href="{% url 'scheduledemail_cancel' scheduled_email.id %}">Cancel</a>
+    {% else %}
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="You can only cancel emails that are in the 'scheduled' or 'failed' states.">
+      <a class="btn btn-warning disabled" style="pointer-events:none" disabled href="#">Cancel</a>
+    </span>
+    {% endif %}
   </div>
 </div>
 {% else %}
@@ -35,12 +57,27 @@
 
 <table class="table table-striped">
   <tr>
-    <th width="20%">ID:</th>
-    <td colspan="2">{{ scheduled_email.id }}</td>
+    <th>Email template:</th>
+    <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
+  </tr>
+  <tr>
+    <th>Related object:</th>
+    <td colspan="2">
+      {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
+      <a href="{{ scheduled_email.generic_relation.get_absolute_url }}">{{ scheduled_email.generic_relation }}</a>
+      {% elif scheduled_email.generic_relation %}
+      {{ scheduled_email.generic_relation }}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
   </tr>
   <tr>
     <th>State:</th>
-    <td colspan="2"><strong>{{ scheduled_email.get_state_display }}</strong></td>
+    <td colspan="2">
+      <strong>{{ scheduled_email.get_state_display }}</strong>
+      <p>{{ status_explanation }}</p>
+    </td>
   </tr>
   <tr>
     <th>Created at:</th>
@@ -101,8 +138,15 @@
     </td>
   </tr>
   <tr>
-    <th>Subject:</th>
-    <td colspan="2"><code>{{ scheduled_email.subject }}</code></td>
+    <th>Subject: <br><small>(Markdown; converts to plain text when sent)</small></th>
+    <td>
+      <strong>Raw:</strong>
+      <pre>{{ scheduled_email.subject }}</pre>
+    </td>
+    <td>
+      <strong>Rendered:</strong>
+      <p>{{ rendered_subject }}</p>
+    </td>
   </tr>
   <tr>
     <th>Body: <br><small>(Markdown; converts to HTML when sent)</small></th>
@@ -116,31 +160,36 @@
     </td>
   </tr>
   <tr>
-    <th>Template:</th>
-    <td colspan="2"><a href="{{ scheduled_email.template.get_absolute_url }}">{{ scheduled_email.template }}</a></td>
+    <th width="20%">ID:</th>
+    <td colspan="2">{{ scheduled_email.id }}</td>
   </tr>
   <tr>
-    <th>Related object:</th>
-    <td colspan="2">
-      {% if scheduled_email.generic_relation and scheduled_email.generic_relation.get_absolute_url %}
-      <a href="{{ scheduled_email.generic_relation.get_absolute_url }}">{{ scheduled_email.generic_relation }}</a>
-      {% elif scheduled_email.generic_relation %}
-      {{ scheduled_email.generic_relation }}
-      {% else %}
-      &mdash;
-      {% endif %}
-    </td>
+    <th>Context JSON:</th>
+    <td colspan="2">{{ scheduled_email.context_json }}</td>
+  </tr>
+  <tr>
+    <th>Rendered context JSON:</th>
+    <td colspan="2">{{ rendered_context }}</td>
+  </tr>
+  <tr>
+    <th>"To" header context JSON:</th>
+    <td colspan="2">{{ scheduled_email.to_header_context_json }}</td>
+  </tr>
+  <tr>
+    <th>Rendered "To" header context JSON:</th>
+    <td colspan="2">{{ rendered_to_header_context }}</td>
   </tr>
 </table>
 
 <table class="table table-striped">
-  <caption><h2>History</h2> <small>(newest to oldest)</small></caption>
+  <caption><h2>History</h2> <small>(newest to oldest, last 500 entries)</small></caption>
   <thead>
     <tr>
       <th>Timestamp</th>
       <th>State before</th>
       <th>State after</th>
       <th>Details</th>
+      <th>Author</th>
       <th>Log entry ID</th>
     </tr>
   </thead>
@@ -152,6 +201,13 @@
       <td>{{ log.state_before }}</td>
       <td>{{ log.state_after }}</td>
       <td><code>{{ log.details }}</code></td>
+      <td>
+        {% if log.author %}
+        <a href="{{ log.author.get_absolute_url }}">{{ log.author }}</a>
+        {% else %}
+        &mdash;
+        {% endif %}
+      </td>
       <td>{{ log.id }}</td>
     </tr>
     {% endfor %}

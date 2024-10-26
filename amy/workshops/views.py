@@ -3,7 +3,7 @@ import datetime
 from functools import partial
 import io
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -45,23 +45,43 @@ import requests
 from reversion.models import Revision, Version
 from reversion_compare.forms import SelectDiffForm
 
-from autoemails.actions import (
-    AskForWebsiteAction,
-    InstructorsHostIntroductionAction,
-    NewInstructorAction,
-    NewSupportingInstructorAction,
-    PostWorkshopAction,
-    RecruitHelpersAction,
-)
-from autoemails.base_views import ActionManageMixin
-from autoemails.models import Trigger
 from communityroles.forms import CommunityRoleForm
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.forms import ActiveTermConsentsForm
 from consents.models import Consent, TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
-from emails.signals import instructor_badge_awarded_signal, persons_merged_signal
+from emails.actions.ask_for_website import (
+    ask_for_website_strategy,
+    run_ask_for_website_strategy,
+)
+from emails.actions.exceptions import EmailStrategyException
+from emails.actions.host_instructors_introduction import (
+    host_instructors_introduction_strategy,
+    run_host_instructors_introduction_strategy,
+)
+from emails.actions.instructor_badge_awarded import (
+    instructor_badge_awarded_strategy,
+    run_instructor_badge_awarded_strategy,
+)
+from emails.actions.instructor_confirmed_for_workshop import (
+    instructor_confirmed_for_workshop_strategy,
+    run_instructor_confirmed_for_workshop_strategy,
+)
+from emails.actions.instructor_training_approaching import (
+    instructor_training_approaching_strategy,
+    run_instructor_training_approaching_strategy,
+)
+from emails.actions.post_workshop_7days import (
+    post_workshop_7days_strategy,
+    run_post_workshop_7days_strategy,
+)
+from emails.actions.recruit_helpers import (
+    recruit_helpers_strategy,
+    run_recruit_helpers_strategy,
+)
+from emails.signals import persons_merged_signal
 from fiscal.models import MembershipTask
+from recruitment.models import InstructorRecruitmentSignup
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -110,6 +130,7 @@ from workshops.models import (
     Tag,
     Task,
     TrainingProgress,
+    TrainingRequirement,
 )
 from workshops.signals import create_comment_signal
 from workshops.utils.access import OnlyForAdminsMixin, admin_required, login_required
@@ -661,7 +682,48 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
         # add new Qualifications
         for lesson in form.cleaned_data.pop("lessons"):
             Qualification.objects.create(person=self.object, lesson=lesson)
-        return super().form_valid(form)
+        result = super().form_valid(form)
+
+        user_tasks = Task.objects.filter(
+            person=self.object, event__isnull=False
+        ).select_related("event")
+        for task in user_tasks:
+            run_ask_for_website_strategy(
+                ask_for_website_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_instructor_training_approaching_strategy(
+                instructor_training_approaching_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_host_instructors_introduction_strategy(
+                host_instructors_introduction_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_recruit_helpers_strategy(
+                recruit_helpers_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_post_workshop_7days_strategy(
+                post_workshop_7days_strategy(task.event),
+                self.request,
+                task.event,
+            )
+            run_instructor_confirmed_for_workshop_strategy(
+                instructor_confirmed_for_workshop_strategy(task),
+                self.request,
+                task=task,
+                person_id=self.object.pk,
+                event_id=task.event.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
+            )
+
+        return result
 
 
 class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
@@ -1026,6 +1088,12 @@ def event_details(request, slug):
     admin_lookup_form.helper = BootstrapHelper(
         form_action=reverse("event_assign", args=[slug]), add_cancel_button=False
     )
+    if hasattr(event, "instructorrecruitment"):
+        instructor_recruitment_signups = InstructorRecruitmentSignup.objects.filter(
+            recruitment=event.instructorrecruitment
+        )
+    else:
+        instructor_recruitment_signups = []
 
     context = {
         "title": "Event {0}".format(event),
@@ -1048,6 +1116,7 @@ def event_details(request, slug):
             "longitude": event.longitude,
         },
         "recruitment_stats": recruitment_stats,
+        "related_instructor_recruitment_signups": instructor_recruitment_signups,
     }
     return render(request, "workshops/event.html", context)
 
@@ -1111,35 +1180,11 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
         # save the object
         res = super().form_valid(form)
 
-        # check conditions for running a PostWorkshopAction
-        if PostWorkshopAction.check(self.object):
-            triggers = Trigger.objects.filter(
-                active=True, action="week-after-workshop-completion"
-            )
-            ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
-
-        # check conditions for running a InstructorsHostIntroductionAction
-        if InstructorsHostIntroductionAction.check(self.object):
-            triggers = Trigger.objects.filter(
-                active=True, action="instructors-host-introduction"
-            )
-            ActionManageMixin.add(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object),
+            self.request,
+            self.object,
+        )
 
         # return remembered results
         return res
@@ -1159,6 +1204,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     )
     slug_field = "slug"
     template_name = "workshops/event_edit_form.html"
+    object: Event
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1191,130 +1237,37 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     def form_valid(self, form):
         """Check if RQ job conditions changed, and add/delete jobs if
         necessary."""
-        old = self.get_object()
-        check_pwa_old = PostWorkshopAction.check(old)
-        check_ihia_old = InstructorsHostIntroductionAction.check(old)
-        check_afwa_old = AskForWebsiteAction.check(old)
-        check_rha_old = RecruitHelpersAction.check(old)
-
         res = super().form_valid(form)
-        new = self.object  # refreshed by `super().form_valid()`
-        check_pwa_new = PostWorkshopAction.check(new)
-        check_ihia_new = InstructorsHostIntroductionAction.check(new)
-        check_afwa_new = AskForWebsiteAction.check(new)
-        check_rha_new = RecruitHelpersAction.check(new)
 
-        # PostWorkshopAction conditions are not met, but weren't before
-        if not check_pwa_old and check_pwa_new:
-            triggers = Trigger.objects.filter(
-                active=True, action="week-after-workshop-completion"
-            )
-            ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object),
+            self.request,
+            self.object,
+        )
 
-        # PostWorkshopAction conditions were met, but aren't anymore
-        elif check_pwa_old and not check_pwa_new:
-            jobs = self.object.rq_jobs.filter(
-                trigger__action="week-after-workshop-completion"
-            )
-            ActionManageMixin.remove(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object),
+            self.request,
+            self.object,
+        )
 
-        # InstructorsHostIntroductionAction conditions are not met, but weren't before
-        if not check_ihia_old and check_ihia_new:
-            triggers = Trigger.objects.filter(
-                active=True, action="instructors-host-introduction"
-            )
-            ActionManageMixin.add(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object),
+            self.request,
+            self.object,
+        )
 
-        # InstructorsHostIntroductionAction conditions were met, but aren't anymore
-        elif check_ihia_old and not check_ihia_new:
-            jobs = self.object.rq_jobs.filter(
-                trigger__action="instructors-host-introduction"
-            )
-            ActionManageMixin.remove(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object),
+            self.request,
+            self.object,
+        )
 
-        # AskForWebsiteAction conditions are met, but weren't before
-        if not check_afwa_old and check_afwa_new:
-            triggers = Trigger.objects.filter(active=True, action="ask-for-website")
-            ActionManageMixin.add(
-                action_class=AskForWebsiteAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
-
-        # AskForWebsiteAction conditions were met, but aren't anymore
-        elif check_afwa_old and not check_afwa_new:
-            jobs = self.object.rq_jobs.filter(trigger__action="ask-for-website")
-            ActionManageMixin.remove(
-                action_class=AskForWebsiteAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
-
-        # RecruitHelpersAction conditions are met, but weren't before
-        if not check_rha_old and check_rha_new:
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object),
-                object_=self.object,
-                request=self.request,
-            )
-
-        # RecruitHelpersAction conditions were met, but aren't anymore
-        elif check_rha_old and not check_rha_new:
-            jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object),
+            self.request,
+            self.object,
+        )
 
         return res
 
@@ -1323,56 +1276,37 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Event
     permission_required = "workshops.delete_event"
     success_url = reverse_lazy("all_events")
+    object: Event
 
     def before_delete(self, *args, **kwargs):
-        jobs = self.object.rq_jobs.filter(
-            trigger__action="week-after-workshop-completion"
-        )
-        ActionManageMixin.remove(
-            action_class=PostWorkshopAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object),
+            self.request,
+            self.object,
         )
 
-        jobs = self.object.rq_jobs.filter(
-            trigger__action="instructors-host-introduction"
-        )
-        ActionManageMixin.remove(
-            action_class=InstructorsHostIntroductionAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object),
+            self.request,
+            self.object,
         )
 
-        # This should not happen - first one would have to remove related instructor
-        # task, therefore cancelling the job, which would render this part pointless.
-        jobs = self.object.rq_jobs.filter(trigger__action="ask-for-website")
-        ActionManageMixin.remove(
-            action_class=AskForWebsiteAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object),
+            self.request,
+            self.object,
         )
 
-        jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
-        ActionManageMixin.remove(
-            action_class=RecruitHelpersAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object),
+            self.request,
+            self.object,
+        )
+
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object),
+            self.request,
+            self.object,
         )
 
 
@@ -1721,9 +1655,6 @@ class TaskCreate(
         seat_membership = form.cleaned_data["seat_membership"]
         seat_public = form.cleaned_data["seat_public"]
         event = form.cleaned_data["event"]
-        check_ihia_old = InstructorsHostIntroductionAction.check(event)
-        check_afwa_old = AskForWebsiteAction.check(event)
-        check_rha_old = RecruitHelpersAction.check(event)
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
@@ -1778,88 +1709,45 @@ class TaskCreate(
         res = super().form_valid(form)
         self.object: Task  # created and saved to DB by super().form_valid()
 
-        # check conditions for running a NewInstructorAction
-        if NewInstructorAction.check(self.object):
-            ActionManageMixin.add(
-                action_class=NewInstructorAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(active=True, action="new-instructor"),
-                context_objects=dict(task=self.object, event=self.object.event),
-                object_=self.object,
-                request=self.request,
-            )
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(event),
+            self.request,
+            event,
+        )
 
-        # check conditions for running a NewSupportingInstructorAction
-        if NewSupportingInstructorAction.check(self.object):
-            ActionManageMixin.add(
-                action_class=NewSupportingInstructorAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True, action="new-supporting-instructor"
-                ),
-                context_objects=dict(task=self.object, event=self.object.event),
-                object_=self.object,
-                request=self.request,
-            )
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(event),
+            self.request,
+            event,
+        )
 
-        # check conditions for running a InstructorsHostIntroductionAction
-        if not check_ihia_old and InstructorsHostIntroductionAction.check(
-            self.object.event
-        ):
-            triggers = Trigger.objects.filter(
-                active=True, action="instructors-host-introduction"
-            )
-            ActionManageMixin.add(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(event),
+            self.request,
+            event,
+        )
 
-        # check conditions for running an AskForWebsiteAction
-        if not check_afwa_old and AskForWebsiteAction.check(self.object.event):
-            triggers = Trigger.objects.filter(active=True, action="ask-for-website")
-            ActionManageMixin.add(
-                action_class=AskForWebsiteAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
 
-        # check conditions for running a RecruitHelpersAction
-        if not check_rha_old and RecruitHelpersAction.check(self.object.event):
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(event),
+            self.request,
+            event,
+        )
 
-        # When someone adds a helper, then the condition will no longer be met and we
-        # have to remove the job.
-        elif check_rha_old and not RecruitHelpersAction.check(self.object.event):
-            jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.object,
+            person_id=self.object.person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
+        )
 
         # return remembered results
         return res
@@ -1875,24 +1763,12 @@ class TaskUpdate(
     queryset = Task.objects.select_related("event", "role", "person")
     form_class = TaskForm
     pk_url_kwarg = "task_id"
+    object: Task
 
     def form_valid(self, form):
         """Check if RQ job conditions changed, and add/delete jobs if
         necessary."""
-        old = self.get_object()
-        check_nia_old = NewInstructorAction.check(old)
-        check_nsia_old = NewSupportingInstructorAction.check(old)
-        check_ihia_old = InstructorsHostIntroductionAction.check(old.event)
-        check_afwa_old = AskForWebsiteAction.check(old.event)
-        check_rha_old = RecruitHelpersAction.check(old.event)
-
         res = super().form_valid(form)
-        new = self.object  # refreshed by `super().form_valid()`
-        check_nia_new = NewInstructorAction.check(new)
-        check_nsia_new = NewSupportingInstructorAction.check(new)
-        check_ihia_new = InstructorsHostIntroductionAction.check(new.event)
-        check_afwa_new = AskForWebsiteAction.check(new.event)
-        check_rha_new = RecruitHelpersAction.check(new.event)
 
         seat_membership = form.cleaned_data["seat_membership"]
         seat_public = form.cleaned_data["seat_public"]
@@ -1919,143 +1795,45 @@ class TaskUpdate(
                     "it's been allowed.",
                 )
 
-        # NewInstructorAction conditions are met, but weren't before
-        if not check_nia_old and check_nia_new:
-            triggers = Trigger.objects.filter(active=True, action="new-instructor")
-            ActionManageMixin.add(
-                action_class=NewInstructorAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(task=self.object, event=self.object.event),
-                object_=self.object,
-                request=self.request,
-            )
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # NewInstructorAction conditions were met, but aren't anymore
-        elif check_nia_old and not check_nia_new:
-            jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
-            ActionManageMixin.remove(
-                action_class=NewInstructorAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # NewSupportingInstructorAction conditions are met, but weren't before
-        if not check_nsia_old and check_nsia_new:
-            triggers = Trigger.objects.filter(
-                active=True, action="new-supporting-instructor"
-            )
-            ActionManageMixin.add(
-                action_class=NewSupportingInstructorAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(task=self.object, event=self.object.event),
-                object_=self.object,
-                request=self.request,
-            )
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # NewSupportingInstructorAction conditions were met, but aren't anymore
-        elif check_nsia_old and not check_nsia_new:
-            jobs = self.object.rq_jobs.filter(
-                trigger__action="new-supporting-instructor"
-            )
-            ActionManageMixin.remove(
-                action_class=NewSupportingInstructorAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # InstructorsHostIntroductionAction conditions are met, but weren't before
-        if not check_ihia_old and check_ihia_new:
-            triggers = Trigger.objects.filter(
-                active=True, action="instructors-host-introduction"
-            )
-            ActionManageMixin.add(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # InstructorsHostIntroductionAction conditions were met, but aren't anymore
-        elif check_ihia_old and not check_ihia_new:
-            jobs = self.object.event.rq_jobs.filter(
-                trigger__action="instructors-host-introduction"
-            )
-            ActionManageMixin.remove(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
-
-        # AskForWebsiteAction conditions are met, but weren't before
-        if not check_afwa_old and check_afwa_new:
-            triggers = Trigger.objects.filter(active=True, action="ask-for-website")
-            ActionManageMixin.add(
-                action_class=AskForWebsiteAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
-
-        # AskForWebsiteAction conditions were met, but aren't anymore
-        elif check_afwa_old and not check_afwa_new:
-            jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
-            ActionManageMixin.remove(
-                action_class=AskForWebsiteAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
-
-        # RecruitHelpersAction conditions are met, but weren't before
-        if not check_rha_old and check_rha_new:
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.object.event),
-                object_=self.object.event,
-                request=self.request,
-            )
-
-        # RecruitHelpersAction conditions were met, but aren't anymore
-        elif check_rha_old and not check_rha_new:
-            jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.object,
+            person_id=self.object.person.pk,
+            event_id=self.object.event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
+        )
 
         return res
 
@@ -2070,96 +1848,52 @@ class TaskDelete(
     permission_required = "workshops.delete_task"
     success_url = reverse_lazy("all_tasks")
     pk_url_kwarg = "task_id"
+    object: Task
 
     def before_delete(self, *args, **kwargs):
-        jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
-        ActionManageMixin.remove(
-            action_class=NewInstructorAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
-        )
-
-        jobs = self.object.rq_jobs.filter(trigger__action="new-supporting-instructor")
-        ActionManageMixin.remove(
-            action_class=NewSupportingInstructorAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
-            request=self.request,
-        )
-
-        # We need to store the check from before object delete
-        # and compare in the `after_delete` method.
-        old = self.get_object()
-        self.event = old.event
-        self.check_ihia_old = InstructorsHostIntroductionAction.check(self.event)
-        self.check_afwa_old = AskForWebsiteAction.check(self.event)
-        self.check_rha_old = RecruitHelpersAction.check(self.event)
+        self.old: Task = cast(Task, self.get_object())
+        self.event = self.old.event
 
     def after_delete(self, *args, **kwargs):
-        self.check_ihia_new = InstructorsHostIntroductionAction.check(self.event)
-        self.check_afwa_new = AskForWebsiteAction.check(self.event)
-        self.check_rha_new = RecruitHelpersAction.check(self.event)
+        run_instructor_training_approaching_strategy(
+            instructor_training_approaching_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # InstructorsHostIntroductionAction conditions were met, but aren't anymore
-        if self.check_ihia_old and not self.check_ihia_new:
-            jobs = self.object.event.rq_jobs.filter(
-                trigger__action="instructors-host-introduction"
-            )
-            ActionManageMixin.remove(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_host_instructors_introduction_strategy(
+            host_instructors_introduction_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # AskForWebsiteAction conditions were met, but aren't anymore
-        if self.check_afwa_old and not self.check_afwa_new:
-            jobs = self.object.event.rq_jobs.filter(trigger__action="ask-for-website")
-            ActionManageMixin.remove(
-                action_class=AskForWebsiteAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object.event,
-                request=self.request,
-            )
+        run_recruit_helpers_strategy(
+            recruit_helpers_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # RecruitHelpersAction conditions are met, but weren't before
-        if not self.check_rha_old and self.check_rha_new:
-            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
-            ActionManageMixin.add(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=self.event),
-                object_=self.event,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
 
-        # RecruitHelpersAction conditions were met, but aren't anymore
-        elif self.check_rha_old and not self.check_rha_new:
-            jobs = self.object.event.rq_jobs.filter(trigger__action="recruit-helpers")
-            ActionManageMixin.remove(
-                action_class=RecruitHelpersAction,
-                logger=logger,
-                scheduler=scheduler,
-                connection=redis_connection,
-                jobs=jobs.values_list("job_id", flat=True),
-                object_=self.event,
-                request=self.request,
-            )
+        run_ask_for_website_strategy(
+            ask_for_website_strategy(self.object.event),
+            self.request,
+            self.object.event,
+        )
+
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(self.object),
+            self.request,
+            task=self.old,
+            person_id=self.object.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=None,
+            instructor_recruitment_signup_id=None,
+        )
 
 
 # ------------------------------------------------------------
@@ -2186,11 +1920,19 @@ class MockAwardCreate(
 
         # Determine initial event in AwardForm
         if "find-training" in self.request.GET:
-            tasks = Person.objects.get(
-                pk=self.request.GET["person"]
-            ).get_training_tasks()
-            if tasks.count() == 1:
-                initial.update({"event": tasks[0].event})
+            initial["badge"] = Badge.objects.get(name="instructor")
+            try:
+                progress = TrainingProgress.objects.get(
+                    trainee__id=self.request.GET["person"],
+                    requirement=TrainingRequirement.objects.get(name="Training"),
+                    state="p",
+                )
+                initial["event"] = progress.event
+            except (
+                TrainingProgress.DoesNotExist,
+                TrainingProgress.MultipleObjectsReturned,
+            ):
+                pass
 
         return initial
 
@@ -2235,13 +1977,13 @@ class MockAwardCreate(
                 f"person {person}"
             )
 
-        if badge.name == "instructor":
-            instructor_badge_awarded_signal.send(
-                sender=self.object,
-                request=self.request,
-                person_id=person.pk,
-                award_id=self.object.pk,
-            )
+        run_instructor_badge_awarded_strategy(
+            instructor_badge_awarded_strategy(self.object, self.object.person),
+            self.request,
+            self.object.person,
+            award_id=self.object.pk,
+            person_id=person.pk,
+        )
 
         return result
 
@@ -2253,6 +1995,7 @@ class AwardCreate(RedirectSupportMixin, MockAwardCreate):
 class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Award
     permission_required = "workshops.delete_award"
+    object: Award
 
     def back_address(self) -> Optional[str]:
         fallback_url = reverse(
@@ -2264,6 +2007,30 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
             if url_has_allowed_host_and_scheme(referrer, settings.ALLOWED_HOSTS)
             else fallback_url
         )
+
+    def before_delete(self, *args, **kwargs):
+        """Save for use in `after_delete` method."""
+        self._award = self.object
+        self._award_pk = self.object.pk
+        self._person = self.object.person
+
+    def after_delete(self, *args, **kwargs):
+        award = self._award
+        award_pk = self._award_pk
+        person = self._person
+        try:
+            run_instructor_badge_awarded_strategy(
+                instructor_badge_awarded_strategy(award, person),
+                request=self.request,
+                person=person,
+                award_id=award_pk,
+                person_id=person.pk,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor badge awarded strategy. {exc}",
+            )
 
     def get_success_url(self):
         return reverse("badge_details", args=[self.get_object().badge.name])

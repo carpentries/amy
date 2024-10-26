@@ -1,4 +1,4 @@
-{% extends "base_nav.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load pagination %}
 {% load tags %}
@@ -7,19 +7,30 @@
 {% if scheduled_emails %}
     <table class="table table-striped">
       <tr>
-        <th>ID</th>
+        <th>Name</th>
         <th>State</th>
         <th>Scheduled at</th>
+        <th>Related object</th>
         <th>To</th>
         <th>From</th>
         <th>Subject</th>
-        <th>Template</th>
       </tr>
     {% for email in scheduled_emails %}
       <tr>
-        <td><a href="{{ email.get_absolute_url }}">{{ email.id }}</a></td>
+        <td>
+          <a href="{{ email.get_absolute_url }}">{{ email.template.name }}</a>
+        </td>
         <td class="text-{% if email.state == 'failed' %}danger{% elif email.state == 'succeeded'%}success{% elif email.state == 'cancelled' %}secondary{% else %}info{% endif %}">{{ email.state }}</td>
         <td>{{ email.scheduled_at }}</td>
+        <td>
+          {% if email.generic_relation and email.generic_relation.get_absolute_url %}
+          <a href="{{ email.generic_relation.get_absolute_url }}">{{ email.generic_relation }}</a>
+          {% elif email.generic_relation %}
+          {{ email.generic_relation }}
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
         <td>
             {% if email.to_header %}
             <ul>
@@ -33,7 +44,6 @@
         </td>
         <td>{{ email.from_header }}</td>
         <td>{{ email.subject }}</td>
-        <td><a href="{{ email.template.get_absolute_url }}">{{ email.template.name }}</a></td>
       </tr>
     {% endfor %}
     </table>

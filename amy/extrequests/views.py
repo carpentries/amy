@@ -1,7 +1,7 @@
 import csv
-import datetime
 import io
 import logging
+from typing import cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -16,12 +16,16 @@ from django.urls import reverse
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.actions import PostWorkshopAction, SelfOrganisedRequestAction
-from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
-from autoemails.models import EmailTemplate, Trigger
+from autoemails.models import EmailTemplate
 from consents.models import Term, TermOption, TrainingRequestConsent
 from consents.util import reconsent_for_term_option_type
+from emails.actions.new_self_organised_workshop import new_self_organised_workshop_check
+from emails.actions.post_workshop_7days import (
+    post_workshop_7days_strategy,
+    run_post_workshop_7days_strategy,
+)
+from emails.signals import new_self_organised_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
     SelfOrganisedSubmissionFilter,
@@ -41,6 +45,12 @@ from extrequests.forms import (
     WorkshopRequestAdminForm,
 )
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
+from extrequests.utils import (
+    accept_training_request_and_match_to_event,
+    get_membership_from_training_request_or_raise_error,
+    get_membership_or_none_from_code,
+    get_membership_warnings_after_match,
+)
 from workshops.base_views import (
     AMYDetailView,
     AMYListView,
@@ -60,6 +70,7 @@ from workshops.forms import (
 from workshops.models import (
     Event,
     Language,
+    Membership,
     Organization,
     Person,
     Role,
@@ -103,10 +114,14 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "object"
     template_name = "requests/workshoprequest.html"
     pk_url_kwarg = "request_id"
+    object: WorkshopRequest
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Workshop request #{}".format(self.get_object().pk)
+
+        member_code = cast(WorkshopRequest, self.get_object()).member_code
+        context["membership"] = get_membership_or_none_from_code(member_code)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
@@ -157,8 +172,14 @@ class WorkshopRequestAcceptEvent(
     pk_url_kwarg = "request_id"
 
     def get_context_data(self, **kwargs):
-        kwargs["title"] = "Accept and create a new event"
-        return super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
+
+        context["title"] = "Accept and create a new event"
+
+        member_code = cast(WorkshopRequest, self.get_other_object()).member_code
+        context["membership"] = get_membership_or_none_from_code(member_code)
+
+        return context
 
     def get_success_url(self):
         return reverse("event_details", args=[self.object.slug])
@@ -167,32 +188,23 @@ class WorkshopRequestAcceptEvent(
         self.object = form.save()
 
         event = self.object
-        wr = self.other_object
+        workshop_request = cast(WorkshopRequest, self.other_object)
 
-        person = wr.host()
+        person = workshop_request.host()
         if person:
             Task.objects.create(
                 event=event, person=person, role=Role.objects.get(name="host")
             )
 
-        if PostWorkshopAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True,
-                    action="week-after-workshop-completion",
-                ),
-                context_objects=objs,
-                object_=event,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
 
-        wr.state = "a"
-        wr.event = event
-        wr.save()
+        workshop_request.state = "a"
+        workshop_request.event = event
+        workshop_request.save()
         return super().form_valid(form)
 
 
@@ -223,6 +235,7 @@ class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "object"
     template_name = "requests/workshopinquiry.html"
     pk_url_kwarg = "inquiry_id"
+    object: WorkshopInquiryRequest
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -285,32 +298,23 @@ class WorkshopInquiryAcceptEvent(
         self.object = form.save()
 
         event = self.object
-        wr = self.other_object
+        inquiry = cast(WorkshopInquiryRequest, self.other_object)
 
-        person = wr.host()
+        person = inquiry.host()
         if person:
             Task.objects.create(
                 event=event, person=person, role=Role.objects.get(name="host")
             )
 
-        if PostWorkshopAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True,
-                    action="week-after-workshop-completion",
-                ),
-                context_objects=objs,
-                object_=event,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
 
-        wr.state = "a"
-        wr.event = event
-        wr.save()
+        inquiry.state = "a"
+        inquiry.event = event
+        inquiry.save()
         return super().form_valid(form)
 
 
@@ -341,6 +345,7 @@ class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "object"
     template_name = "requests/selforganisedsubmission.html"
     pk_url_kwarg = "submission_id"
+    object: SelfOrganisedSubmission
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -395,6 +400,7 @@ class SelfOrganisedSubmissionAcceptEvent(
     queryset_other = SelfOrganisedSubmission.objects.filter(state="p")
     context_other_object_name = "object"
     pk_url_kwarg = "submission_id"
+    other_object: SelfOrganisedSubmission
 
     def get_form_kwargs(self):
         """Extend form kwargs with `initial` values.
@@ -463,45 +469,30 @@ class SelfOrganisedSubmissionAcceptEvent(
         self.object = form.save()
 
         event = self.object
-        wr = self.other_object
+        submission = cast(SelfOrganisedSubmission, self.other_object)
 
-        person = wr.host()
+        person = submission.host()
         if person:
             Task.objects.create(
                 event=event, person=person, role=Role.objects.get(name="host")
             )
 
-        wr.state = "a"
-        wr.event = event
-        wr.save()
+        submission.state = "a"
+        submission.event = event
+        submission.save()
 
-        if SelfOrganisedRequestAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=SelfOrganisedRequestAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True, action="self-organised-request-form"
-                ),
-                context_objects=objs,
-                object_=event,
-                request=self.request,
-            )
+        run_post_workshop_7days_strategy(
+            post_workshop_7days_strategy(event),
+            self.request,
+            event,
+        )
 
-        if PostWorkshopAction.check(event):
-            objs = dict(event=event, request=wr)
-            jobs, rqjobs = ActionManageMixin.add(
-                action_class=PostWorkshopAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=Trigger.objects.filter(
-                    active=True,
-                    action="week-after-workshop-completion",
-                ),
-                context_objects=objs,
-                object_=event,
+        if new_self_organised_workshop_check(event):
+            new_self_organised_workshop_signal.send(
+                sender=event,
                 request=self.request,
+                event=event,
+                self_organised_submission=submission,
             )
 
         return super().form_valid(form)
@@ -545,69 +536,91 @@ def all_trainingrequests(request):
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]
             membership = match_form.cleaned_data["seat_membership"]
+            membership_auto_assign = match_form.cleaned_data[
+                "seat_membership_auto_assign"
+            ]
             seat_public = match_form.cleaned_data["seat_public"]
             open_seat = match_form.cleaned_data["seat_open_training"]
             role = Role.objects.get(name="learner")
 
-            # Perform bulk match
-            for r in match_form.cleaned_data["requests"]:
-                # automatically accept this request
-                r.state = "a"
-                r.save()
+            # Perform bulk match using one of two methods
+            training_requests = match_form.cleaned_data["requests"]
+            errors = []
+            warnings = []
 
-                # assign to an event
-                Task.objects.get_or_create(
-                    event=event,
-                    person=r.person,
-                    role=role,
-                    defaults=dict(
-                        seat_membership=membership,
+            # Method 1: Auto assign membership
+            # membership is different for each seat (and may not be None)
+            if membership_auto_assign:
+                for r in training_requests:
+                    # find which membership to use
+                    # if membership can't be determined, skip this request
+                    try:
+                        membership_to_use = (
+                            get_membership_from_training_request_or_raise_error(r)
+                        )
+                    except (ValueError, Membership.DoesNotExist) as e:
+                        errors.append(str(e))
+                        continue
+
+                    # perform match
+                    accept_training_request_and_match_to_event(
+                        request=r,
+                        event=event,
+                        role=role,
                         seat_public=seat_public,
                         seat_open_training=open_seat,
-                    ),
+                        seat_membership=membership_to_use,
+                    )
+
+                    # collect warnings after each match
+                    warnings += [
+                        f"{r}: {w}"
+                        for w in get_membership_warnings_after_match(
+                            membership=membership_to_use,
+                            seat_public=seat_public,
+                            event=event,
+                        )
+                    ]
+
+            # Method 2: Don't auto assign membership
+            # membership is same for all seats (and may be None)
+            else:
+                # perform matches
+                for r in training_requests:
+                    accept_training_request_and_match_to_event(
+                        request=r,
+                        event=event,
+                        role=role,
+                        seat_public=seat_public,
+                        seat_open_training=open_seat,
+                        seat_membership=membership,
+                    )
+
+                # collect warnings after all requests are processed
+                if membership:
+                    warnings = get_membership_warnings_after_match(
+                        membership=membership, seat_public=seat_public, event=event
+                    )
+
+            # Matching is complete, display messages
+            for msg in warnings:
+                messages.warning(request, msg)
+            for msg in errors:
+                messages.error(request, msg)
+            if errors:
+                changed_count = len(match_form.cleaned_data["requests"]) - len(errors)
+                info_msg = (
+                    f"Accepted and matched {changed_count} "
+                    f'{"person" if changed_count==1 else "people"} to training, '
+                    f"which raised {len(warnings)} warning(s). "
+                    f"{len(errors)} request(s) were skipped due to errors."
                 )
-
-            today = datetime.date.today()
-
-            if membership:
-                remaining = (
-                    membership.public_instructor_training_seats_remaining
-                    if seat_public
-                    else membership.inhouse_instructor_training_seats_remaining
+                messages.info(request, info_msg)
+            else:
+                messages.success(
+                    request,
+                    "Successfully accepted and matched selected people to training.",
                 )
-                if remaining <= 0:
-                    messages.warning(
-                        request,
-                        f'Membership "{membership}" is using more training seats than '
-                        "it's been allowed.",
-                    )
-
-                # check if membership is active
-                if not (
-                    membership.agreement_start <= today <= membership.agreement_end
-                ):
-                    messages.warning(
-                        request,
-                        f'Membership "{membership}" is not active.',
-                    )
-
-                # show warning if training falls out of agreement dates
-                if (
-                    event.start
-                    and event.start < membership.agreement_start
-                    or event.end
-                    and event.end > membership.agreement_end
-                ):
-                    messages.warning(
-                        request,
-                        f'Training "{event}" has start or end date outside '
-                        f'membership "{membership}" agreement dates.',
-                    )
-
-            messages.success(
-                request,
-                "Successfully accepted and matched selected people to training.",
-            )
 
     elif request.method == "POST" and "accept" in request.POST:
         # Bulk discard selected TrainingRequests.
@@ -825,6 +838,12 @@ class TrainingRequestUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateV
     form_class = TrainingRequestUpdateForm
     template_name = "generic_form_with_comments.html"
 
+    def get_form_kwargs(self):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
 
 @admin_required
 @permission_required(
@@ -879,7 +898,7 @@ def trainingrequests_merge(request):
             easy = (
                 "state",
                 "person",
-                "group_name",
+                "member_code",
                 "personal",
                 "middle",
                 "family",
@@ -903,14 +922,14 @@ def trainingrequests_merge(request):
                 "previous_experience_other",
                 "previous_experience_explanation",
                 "programming_language_usage_frequency",
+                "checkout_intent",
+                "teaching_intent",
                 "teaching_frequency_expectation",
                 "teaching_frequency_expectation_other",
                 "max_travelling_frequency",
                 "max_travelling_frequency_other",
                 "reason",
                 "user_notes",
-                "training_completion_agreement",
-                "workshop_teaching_agreement",
                 "data_privacy_agreement",
                 "code_of_conduct_agreement",
                 "created_at",

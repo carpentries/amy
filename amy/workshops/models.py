@@ -30,7 +30,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
-import pytz
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
@@ -65,6 +64,7 @@ from workshops.mixins import (
 from workshops.signals import person_archived_signal
 from workshops.utils.dates import human_daterange
 from workshops.utils.emails import find_emails
+from workshops.utils.reports import reports_link
 
 # ------------------------------------------------------------
 
@@ -309,7 +309,7 @@ class Membership(models.Model):
     )
 
     agreement_link = models.URLField(
-        blank=True,
+        blank=False,
         default="",
         verbose_name="Link to member agreement",
         help_text="Link to member agreement document or folder in Google Drive",
@@ -363,6 +363,17 @@ class Membership(models.Model):
 
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
+
+    def active_on_date(
+        self, date: datetime.date, grace_before: int = 0, grace_after: int = 0
+    ) -> bool:
+        """Returns True if the date is within the membership agreement dates,
+        with an optional grace period (in days) at the start and/or end of the
+        agreement.
+        """
+        start_date = self.agreement_start - datetime.timedelta(days=grace_before)
+        end_date = self.agreement_end + datetime.timedelta(days=grace_after)
+        return start_date <= date <= end_date
 
     def _base_queryset(self):
         """Provide universal queryset for looking up workshops for this membership."""
@@ -480,7 +491,7 @@ class Membership(models.Model):
         return self._base_queryset().filter(self_organized)
 
     @cached_property
-    def self_organized_workshops_completed(self):
+    def self_organized_workshops_completed(self) -> int:
         """Count self-organized workshops hosted the year agreement started (completed,
         ie. in past)."""
         return (
@@ -490,7 +501,7 @@ class Membership(models.Model):
         )
 
     @cached_property
-    def self_organized_workshops_planned(self):
+    def self_organized_workshops_planned(self) -> int:
         """Count self-organized workshops hosted the year agreement started (planned,
         ie. in future)."""
         return (
@@ -500,7 +511,7 @@ class Membership(models.Model):
         )
 
     @property
-    def public_instructor_training_seats_total(self):
+    def public_instructor_training_seats_total(self) -> int:
         """Calculate combined public instructor training seats total.
 
         Unlike workshops w/o admin fee, instructor training seats have two numbers
@@ -512,12 +523,12 @@ class Membership(models.Model):
         return a + b + c
 
     @cached_property
-    def public_instructor_training_seats_utilized(self):
+    def public_instructor_training_seats_utilized(self) -> int:
         """Count number of learner tasks that point to this membership."""
         return self.task_set.filter(role__name="learner", seat_public=True).count()
 
     @property
-    def public_instructor_training_seats_remaining(self):
+    def public_instructor_training_seats_remaining(self) -> int:
         """Count remaining public seats for instructor training."""
         a = self.public_instructor_training_seats_total
         b = self.public_instructor_training_seats_utilized
@@ -525,7 +536,7 @@ class Membership(models.Model):
         return a - b - c
 
     @property
-    def inhouse_instructor_training_seats_total(self):
+    def inhouse_instructor_training_seats_total(self) -> int:
         """Calculate combined in-house instructor training seats total.
 
         Unlike workshops w/o admin fee, instructor training seats have two numbers
@@ -537,12 +548,12 @@ class Membership(models.Model):
         return a + b + c
 
     @cached_property
-    def inhouse_instructor_training_seats_utilized(self):
+    def inhouse_instructor_training_seats_utilized(self) -> int:
         """Count number of learner tasks that point to this membership."""
         return self.task_set.filter(role__name="learner", seat_public=False).count()
 
     @property
-    def inhouse_instructor_training_seats_remaining(self):
+    def inhouse_instructor_training_seats_remaining(self) -> int:
         """Count remaining in-house seats for instructor training."""
         a = self.inhouse_instructor_training_seats_total
         b = self.inhouse_instructor_training_seats_utilized
@@ -1064,12 +1075,15 @@ class Person(
 
 
 class TagQuerySet(QuerySet):
+    CARPENTRIES_TAG_NAMES = ["SWC", "DC", "LC"]
+    NON_CARPENTRIES_TAG_NAMES = ["TTT", "Circuits", "CLDT"]
+    MAIN_TAG_NAMES = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
+
     def main_tags(self):
-        names = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
-        return self.filter(name__in=names)
+        return self.filter(name__in=self.MAIN_TAG_NAMES)
 
     def carpentries(self):
-        return self.filter(name__in=["SWC", "DC", "LC"])
+        return self.filter(name__in=self.CARPENTRIES_TAG_NAMES)
 
     def strings(self):
         return self.values_list("name", flat=True)
@@ -1583,6 +1597,9 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             )
         )
 
+    def workshop_reports_link(self) -> str:
+        return reports_link(str(self.slug))
+
     def clean(self):
         """Additional model validation."""
 
@@ -1611,6 +1628,9 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             self.address = "Internet"
             self.latitude = None
             self.longitude = None
+
+        if self.slug and not self.completed:
+            self.instructors_pre = reports_link(self.slug)
 
         super().save(*args, **kwargs)
 
@@ -1859,6 +1879,9 @@ class Award(models.Model):
             self.person, self.badge, self.awarded, self.event
         )
 
+    def get_absolute_url(self) -> str:
+        return reverse("person_details", args=[self.person.pk])
+
 
 # ------------------------------------------------------------
 
@@ -2105,7 +2128,7 @@ class TrainingRequest(
         verbose_name="Application Type",
     )
 
-    group_name = models.CharField(
+    member_code = models.CharField(
         blank=True,
         default="",
         null=False,
@@ -2114,6 +2137,24 @@ class TrainingRequest(
         help_text="If you have been given a registration code through "
         "a Carpentries member site or for a specific scheduled "
         "event, please enter it here:",
+    )
+    member_code_override = models.BooleanField(
+        null=False,
+        default=False,
+        blank=True,
+        verbose_name="Continue with registration code marked as invalid",
+        help_text="A member of our team will check the code and follow up with you if "
+        "there are any problems that require your attention.",
+    )
+    eventbrite_url = models.URLField(
+        null=False,
+        blank=True,
+        default="",
+        verbose_name="Eventbrite URL",
+        help_text="If you are registering or have registered for a training event "
+        "through Eventbrite, enter the URL of that event. You can find this on the "
+        "registration page or in the confirmation email. "
+        "If you have not yet registered for an event, leave this field blank.",
     )
 
     personal = models.CharField(
@@ -2235,11 +2276,11 @@ class TrainingRequest(
         "application's ranking.",
     )
 
-    # new field for teaching-related experience in non-profit or volunteer org.
+    # teaching-related experience in non-profit or volunteer org
     nonprofit_teaching_experience = models.CharField(
         max_length=STR_LONGEST,
         blank=True,
-        null=True,
+        default="",
         verbose_name="I have been an active contributor to other volunteer or"
         " non-profit groups with significant teaching or training"
         " components.",
@@ -2269,8 +2310,8 @@ class TrainingRequest(
     )
     previous_training_explanation = models.TextField(
         verbose_name="Description of your previous training in teaching",
-        null=True,
         blank=True,
+        default="",
     )
 
     # this part changed a little bit, mostly wording and choices
@@ -2294,8 +2335,8 @@ class TrainingRequest(
     )
     previous_experience_explanation = models.TextField(
         verbose_name="Description of your previous experience in teaching",
-        null=True,
         blank=True,
+        default="",
     )
 
     PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES = (
@@ -2316,6 +2357,52 @@ class TrainingRequest(
         default="daily",
     )
 
+    CHECKOUT_INTENT_CHOICES = (
+        ("yes", "Yes"),
+        ("no", "No"),
+        ("unsure", "Not sure"),
+    )
+    checkout_intent = models.CharField(
+        max_length=STR_MED,
+        choices=CHECKOUT_INTENT_CHOICES,
+        verbose_name="Do you intend to complete The Carpentries checkout process to be "
+        "certified as a Carpentries Instructor?",
+        help_text="The checkout process is described on our "
+        '<a href="https://carpentries.github.io/instructor-training/checkout.html">'
+        "Checkout Instructions</a> page.",
+        null=False,
+        blank=False,
+        default="unsure",
+    )
+
+    TEACHING_INTENT_CHOICES = (
+        (
+            "yes-local",
+            "Yes - I plan to teach Carpentries workshops "
+            "in my local community or personal networks",
+        ),
+        (
+            "yes-central",
+            "Yes - I plan to volunteer with The Carpentries "
+            "to teach workshops for other communities",
+        ),
+        (
+            "yes-either",
+            "Yes - either or both of the above",
+        ),
+        ("no", "No"),
+        ("unsure", "Not sure"),
+    )
+    teaching_intent = models.CharField(
+        max_length=STR_MED,
+        choices=TEACHING_INTENT_CHOICES,
+        verbose_name="Do you intend to teach Carpentries workshops "
+        "within the next 12 months?",
+        null=False,
+        blank=False,
+        default="unsure",
+    )
+
     TEACHING_FREQUENCY_EXPECTATION_CHOICES = (
         ("not-at-all", "Not at all"),
         ("yearly", "Once a year"),
@@ -2327,8 +2414,8 @@ class TrainingRequest(
         teaching_frequency_expectation_other,
     ) = choice_field_with_other(
         choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
-        verbose_name="How often would you expect to teach Carpentry Workshops"
-        " after this training?",
+        verbose_name="How often would you expect to teach Carpentries workshops "
+        " (of any kind) after this training?",
         default="not-at-all",
     )
 
@@ -2360,25 +2447,6 @@ class TrainingRequest(
         blank=True,
         help_text="What else do you want us to know?",
         verbose_name="Anything else?",
-    )
-
-    # a few agreements
-    training_completion_agreement = models.BooleanField(
-        null=False,
-        blank=False,
-        default=False,  # for 'normal' migration purposes
-        verbose_name="I agree to complete this training within three months of"
-        " the training course. The completion steps are described"
-        ' at <a href="http://carpentries.github.io/instructor-'
-        'training/checkout">http://carpentries.github.io/'
-        "instructor-training/checkout</a>.",
-    )
-    workshop_teaching_agreement = models.BooleanField(
-        null=False,
-        blank=False,
-        default=False,  # for 'normal' migration purposes
-        verbose_name="I agree to teach a Carpentry workshop within 12 months "
-        "of this Training Course.",
     )
 
     score_auto = models.PositiveIntegerField(
@@ -2701,7 +2769,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         # if other checks passed, verify that date is no later than today
         # (considering timezones ahead of UTC)
         if self.date and self.date > timezone.localdate(
-            timezone=pytz.timezone("Etc/GMT-14")
+            timezone=datetime.timezone(datetime.timedelta(hours=14))
         ):
             msg = "Date must be in the past."
             return ValidationError(msg)
@@ -2758,6 +2826,12 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     class Meta:
         ordering = ["created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["trainee", "event"],
+                name="unique_trainee_at_event",
+            )
+        ]
 
 
 # ------------------------------------------------------------
@@ -2871,6 +2945,17 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         null=False,
         default="",
         verbose_name="Department/School/Library affiliation (if applicable)",
+    )
+
+    member_code = models.CharField(
+        max_length=STR_MED,
+        blank=True,
+        null=False,
+        default="",
+        verbose_name="Membership registration code",
+        help_text="If you are affiliated with a Carpentries member organization, "
+        "please enter the registration code associated with the membership. "
+        "Your Member Affiliate can provide this.",
     )
 
     ONLINE_INPERSON_CHOICES = (
@@ -3079,22 +3164,7 @@ class WorkshopRequest(
         ("40-80", "40-80 (two rooms, four instructors)"),
         ("80-120", "80-120 (three rooms, six instructors)"),
     )
-    number_attendees = models.CharField(
-        max_length=15,
-        choices=ATTENDEES_NUMBER_CHOICES,
-        blank=False,
-        null=False,
-        default=None,
-        verbose_name="Anticipated number of attendees",
-        help_text="These recommendations are for in-person workshops. "
-        "This number doesn't need to be precise, but will help us "
-        "decide how many instructors your workshop will need. "
-        "Each workshop must have at least two instructors.<br>"
-        "For online Carpentries workshops, we recommend a maximum of "
-        "20 learners per class. If your workshop attendance will "
-        "exceed 20 learners please be sure to include a note in the "
-        "comments section below. ",
-    )
+
     # MISSING
     # This field is no longer needed, and should be hidden in the form and
     # templates.
@@ -3147,8 +3217,8 @@ class WorkshopRequest(
         (
             "forprofit",
             "I am with a corporate or for-profit site. I understand the costs for "
-            "for-profit organisations are four times the price for not-for-profit "
-            "organisations.",
+            "for-profit organisations are higher than the price for not-for-profit "
+            "organisations, as listed on The Carpentries website.",
         ),
         (
             "member",
@@ -3170,8 +3240,10 @@ class WorkshopRequest(
         verbose_name="Which of the following applies to your payment for the "
         "administrative fee?",
         help_text=(
-            "<a href='{}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a>".format(FEE_DETAILS_URL)
+            "<b><a href='{}' target='_blank' rel='noreferrer nofollow'>"
+            "The Carpentries website workshop fee listing.</a></b>".format(
+                FEE_DETAILS_URL
+            )
         ),
     )
     scholarship_circumstances = models.TextField(

@@ -372,6 +372,23 @@ class BulkUploadCSVForm(forms.Form):
 
 
 class EventForm(forms.ModelForm):
+    host = forms.ModelChoiceField(
+        label="Host Site",
+        required=True,
+        help_text=Event._meta.get_field("host").help_text,
+        queryset=Organization.objects.all(),
+        widget=ModelSelect2Widget(data_view="organization-lookup"),
+    )
+
+    sponsor = forms.ModelChoiceField(
+        label="Organiser",
+        required=True,
+        help_text=Event._meta.get_field("sponsor").help_text
+        + " Previously called 'Sponsor'.",
+        queryset=Organization.objects.all(),
+        widget=ModelSelect2Widget(data_view="organization-lookup"),
+    )
+
     administrator = forms.ModelChoiceField(
         label="Administrator",
         required=True,
@@ -408,6 +425,15 @@ class EventForm(forms.ModelForm):
         required=False,
     )
 
+    instructors_pre = forms.URLField(
+        label="Assessment survey for instructors:",
+        help_text=(
+            "Auto-generated as long as the event is NOT marked as complete and "
+            "it has a slug."
+        ),
+        required=False,
+    )
+
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta:
@@ -438,12 +464,9 @@ class EventForm(forms.ModelForm):
             "lessons",
             "public_status",
             "instructors_pre",
-            "instructors_post",
             "comment",
         ]
         widgets = {
-            "host": ModelSelect2Widget(data_view="organization-lookup"),
-            "sponsor": ModelSelect2Widget(data_view="organization-lookup"),
             "membership": ModelSelect2Widget(data_view="membership-lookup"),
             "manual_attendance": TextInput,
             "latitude": TextInput,
@@ -486,7 +509,6 @@ class EventForm(forms.ModelForm):
             "manual_attendance",
             "contact",
             "instructors_pre",
-            "instructors_post",
             Div(
                 Div(HTML("Location details"), css_class="card-header"),
                 Div(
@@ -642,7 +664,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         required=False,
         queryset=Membership.objects.all(),
         widget=ModelSelect2Widget(
-            data_view="membership-lookup",
+            data_view="membership-lookup-for-tasks",
             attrs=SELECT2_SIDEBAR,
         ),
     )
@@ -668,6 +690,9 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             ),
             "seat_public": forms.RadioSelect(),
         }
+
+    class Media:
+        js = ("task_form.js",)
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
@@ -1026,12 +1051,15 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
                 data_view="person-lookup", attrs=SELECT2_SIDEBAR
             ),
             "event": ModelSelect2Widget(
-                data_view="event-lookup", attrs=SELECT2_SIDEBAR
+                data_view="event-lookup-for-awards", attrs=SELECT2_SIDEBAR
             ),
             "awarded_by": ModelSelect2Widget(
                 data_view="admin-lookup", attrs=SELECT2_SIDEBAR
             ),
         }
+
+    class Media:
+        js = ("award_form.js",)
 
     def __init__(self, *args, **kwargs):
         form_tag = kwargs.pop("form_tag", True)
@@ -1133,8 +1161,12 @@ class EventsMergeForm(forms.Form):
     )
     start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    sponsor = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    host = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Host Site"
+    )
+    sponsor = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Organiser"
+    )
     administrator = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,

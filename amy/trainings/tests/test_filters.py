@@ -1,6 +1,4 @@
-from datetime import datetime, timedelta
-
-from django.utils import timezone
+from datetime import UTC, datetime, timedelta
 
 from trainings.filters import TraineeFilter
 from trainings.models import Involvement
@@ -150,7 +148,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_search_email(self):
         # Arrange
@@ -161,7 +159,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_all_persons(self):
         # Arrange
@@ -172,7 +170,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, Person.objects.all())
+        self.assertQuerySetEqual(result, Person.objects.all())
 
     def test_filter_get_involved(self):
         # Arrange
@@ -183,7 +181,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.ironman])
+        self.assertQuerySetEqual(result, [self.ironman])
 
     def test_filter_training_request_true(self):
         # Arrange
@@ -196,7 +194,7 @@ class TestTraineeFilter(TestBase):
         # Assert
         self.assertIn(self.spiderman, result)
         self.assertNotIn(self.ironman, result)
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_training_request_false(self):
         # Arrange
@@ -232,7 +230,7 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerysetEqual(result, [self.spiderman])
+        self.assertQuerySetEqual(result, [self.spiderman])
 
     def test_filter_order_by(self):
         # Arrange
@@ -241,9 +239,9 @@ class TestTraineeFilter(TestBase):
         qs = self.qs.filter(pk__in=[self.spiderman.pk, self.ironman.pk])
         results = {}
         # none of these users have logged in, so manually set
-        self.spiderman.last_login = datetime(2023, 4, 1, 0, 0, 0, tzinfo=timezone.utc)
+        self.spiderman.last_login = datetime(2023, 4, 1, 0, 0, 0, tzinfo=UTC)
         self.spiderman.save()
-        self.ironman.last_login = datetime(2023, 5, 1, 0, 0, 0, tzinfo=timezone.utc)
+        self.ironman.last_login = datetime(2023, 5, 1, 0, 0, 0, tzinfo=UTC)
         self.ironman.save()
 
         # default ordering is ascending
@@ -261,4 +259,4 @@ class TestTraineeFilter(TestBase):
         self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
-            self.assertQuerysetEqual(results[field], expected_results[field])
+            self.assertQuerySetEqual(results[field], expected_results[field])

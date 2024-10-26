@@ -9,7 +9,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
@@ -146,7 +146,7 @@ class AMYDeleteView(DeleteView):
     def back_address(self) -> Optional[str]:
         return None
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form) -> HttpResponse:
         # Workaround for https://code.djangoproject.com/ticket/21926
         # Replicates the `delete` method of DeleteMixin
         self.object = self.get_object()
@@ -450,11 +450,11 @@ class ConditionallyEnabledMixin:
 
     view_enabled: Optional[bool] = None
 
-    def get_view_enabled(self) -> bool:
+    def get_view_enabled(self, request) -> bool:
         return self.view_enabled is True
 
     def dispatch(self, request, *args, **kwargs):
-        if self.get_view_enabled() is not True:
+        if self.get_view_enabled(request) is not True:
             raise Http404("Page not found")
 
         return super().dispatch(request, *args, **kwargs)

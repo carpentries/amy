@@ -6,17 +6,18 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.template import TemplateSyntaxError, engines
+from django.template import TemplateSyntaxError as DjangoTemplateSyntaxError
+from django.template import engines
 from django.template.backends.base import BaseEngine
 from django.urls import reverse
+import jinja2
+from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 from reversion import revisions as reversion
 
 from workshops.mixins import ActiveMixin, CreatedMixin, CreatedUpdatedMixin
+from workshops.models import Person
 
-DJANGO_TEMPLATE_DOCS = (
-    "https://docs.djangoproject.com/en/dev/topics/"
-    "templates/#the-django-template-language"
-)
+JINJA2_TEMPLATE_DOCS = "https://jinja.palletsprojects.com/en/3.1.x/templates/"
 
 MAX_LENGTH = 255
 
@@ -61,7 +62,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name="Email subject",
         help_text="Enter text for email subject. If you need to use loops, "
         "conditions, etc., use "
-        f"<a href='{DJANGO_TEMPLATE_DOCS}'>Django templates language</a>.",
+        f"<a href='{JINJA2_TEMPLATE_DOCS}'>Jinja2 templates language</a>.",
     )
     body = models.TextField(
         blank=False,
@@ -69,7 +70,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name="Email body (markdown)",
         help_text="Enter Markdown for email body. If you need to use loops, "
         "conditions, etc., use "
-        f"<a href='{DJANGO_TEMPLATE_DOCS}'>Django templates language</a>.",
+        f"<a href='{JINJA2_TEMPLATE_DOCS}'>Jinja2 templates language</a>.",
     )
 
     @staticmethod
@@ -86,8 +87,11 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     ) -> bool:
         try:
             self.render_template(engine, template, context or dict())
-        except TemplateSyntaxError as exp:
+        except (DjangoTemplateSyntaxError, JinjaTemplateSyntaxError) as exp:
             raise ValidationError(f"Invalid syntax: {exp}") from exp
+        except jinja2.exceptions.UndefinedError:
+            # ignore undefined variables
+            pass
         return True
 
     def clean(self) -> None:
@@ -110,12 +114,42 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
 
 class ScheduledEmailStatus(models.TextChoices):
-    SCHEDULED = "scheduled"
-    LOCKED = "locked"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+    SCHEDULED = "scheduled"  # editing, cancelling allowed
+    LOCKED = "locked"  # nothing allowed
+    RUNNING = "running"  # nothing allowed
+    SUCCEEDED = "succeeded"  # editing allowed with note about re-sending
+    FAILED = "failed"  # editing, cancelling allowed
+    CANCELLED = "cancelled"  # allowed to re-schedule
+
+
+# List of states when specific actions are allowed. This is used in per-object
+# permissions to block or allow specific actions.
+ScheduledEmailStatusActions = {
+    "edit": [
+        ScheduledEmailStatus.SCHEDULED,
+        ScheduledEmailStatus.FAILED,
+    ],
+    "reschedule": [
+        ScheduledEmailStatus.SCHEDULED,
+        ScheduledEmailStatus.FAILED,
+        ScheduledEmailStatus.CANCELLED,
+    ],
+    "cancel": [
+        ScheduledEmailStatus.SCHEDULED,
+        ScheduledEmailStatus.FAILED,
+    ],
+}
+
+
+# Displayed in scheduled email details view.
+ScheduledEmailStatusExplanation = {
+    ScheduledEmailStatus.SCHEDULED: "Scheduled to be sent",
+    ScheduledEmailStatus.LOCKED: "Locked for sending; worker is processing it",
+    ScheduledEmailStatus.RUNNING: "Sending in progress",
+    ScheduledEmailStatus.SUCCEEDED: "Sent successfully",
+    ScheduledEmailStatus.FAILED: "Sending failed; worker will re-try soon",
+    ScheduledEmailStatus.CANCELLED: "Sending cancelled",
+}
 
 
 class ScheduledEmail(CreatedUpdatedMixin, models.Model):
@@ -140,6 +174,10 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
     )
 
     to_header = ArrayField(models.EmailField(blank=False), verbose_name="To (header)")
+
+    # contains "[{link: API_uri, property: name}, ...]"
+    to_header_context_json = models.JSONField(blank=True, default=list)
+
     from_header = models.EmailField(blank=False, verbose_name="From (header)")
     reply_to_header = models.EmailField(
         blank=True, default="", verbose_name="Reply-To (header)"
@@ -161,6 +199,9 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         null=False,
         verbose_name="Email body (rendered from template)",
     )
+
+    # contains "{obj_name: API_uri, ...}"
+    context_json = models.JSONField(blank=True, default=dict)
 
     template = models.ForeignKey(
         EmailTemplate,
@@ -222,6 +263,7 @@ class ScheduledEmailLog(CreatedMixin, models.Model):
     )
 
     scheduled_email = models.ForeignKey(ScheduledEmail, on_delete=models.CASCADE)
+    author = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self) -> str:
         return f"[{self.state_before}->{self.state_after}]: {self.details}"

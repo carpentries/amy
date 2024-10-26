@@ -12,6 +12,11 @@ urlpatterns = [
             [
                 path("", views.admin_dashboard, name="admin-dashboard"),
                 path("search/", views.search, name="search"),
+                path(
+                    "feature_flags/",
+                    views.AllFeatureFlags.as_view(),
+                    name="feature_flags",
+                ),
             ]
         ),
     ),

@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, timezone
+from unittest.mock import MagicMock
 from urllib.parse import urlencode
 
 from django.contrib.messages import WARNING
@@ -39,7 +40,7 @@ from workshops.tests.base import TestBase
 def create_training_request(state, person, open_review=True, reg_code=""):
     return TrainingRequest.objects.create(
         review_process="open" if open_review else "preapproved",
-        group_name=reg_code,
+        member_code=reg_code,
         personal="John",
         family="Smith",
         email="john@smith.com",
@@ -50,6 +51,8 @@ def create_training_request(state, person, open_review=True, reg_code=""):
         previous_training="none",
         previous_experience="none",
         programming_language_usage_frequency="daily",
+        checkout_intent="yes",
+        teaching_intent="yes-central",
         reason="Just for fun.",
         teaching_frequency_expectation="monthly",
         max_travelling_frequency="yearly",
@@ -292,7 +295,7 @@ class TestTrainingRequestsListView(TestBase):
     def test_view_loads(self):
         """
         View should default to settings:
-            state=no_d (Pending or accepted)
+            state=pa (Pending or accepted)
             matched=u (Unmatched)
         """
         # Act
@@ -615,6 +618,75 @@ class TestTrainingRequestsListView(TestBase):
         )
         self.assertEqual(task.seat_public, data["seat_public"])
 
+    def test_auto_assign_membership_seats(self):
+        """Test that the bulk form can match multiple trainees to different memberships
+        according to member code."""
+        # Arrange
+        # set up some memberships
+        membership_alpha = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            registration_code="alpha44",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=2,
+        )
+        membership_beta = Membership.objects.create(
+            name="Beta Organization",
+            variant="bronze",
+            registration_code="beta55",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=0,
+        )
+        # create some requests for these codes
+        req1 = create_training_request(
+            "p", self.blackwidow, open_review=False, reg_code="alpha44"
+        )
+        req2 = create_training_request(
+            "p", self.ironman, open_review=False, reg_code="beta55"
+        )
+        req3 = create_training_request(
+            "p", self.spiderman, open_review=False, reg_code="invalid"
+        )
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "seat_membership_auto_assign": "True",
+            "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
+            "seat_public": "True",
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        self.assertNotContains(
+            rv, "Successfully accepted and matched selected people to training"
+        )
+        self.assertContains(rv, "Accepted and matched 2 people to training")
+        self.assertContains(rv, "raised 1 warning")
+        self.assertContains(rv, "2 request(s) were skipped due to errors")
+        self.assertEqual(
+            Task.objects.filter(seat_membership=membership_alpha).count(), 1
+        )
+        self.assertEqual(
+            Task.objects.filter(seat_membership=membership_beta).count(), 1
+        )
+        self.assertContains(
+            rv, "No membership found for registration code &quot;invalid&quot;"
+        )
+        self.assertContains(
+            rv,
+            "Request does not include a member registration "
+            "code, so cannot be matched to a membership seat.",
+        )
+
 
 class TestMatchingTrainingRequestAndDetailedView(TestBase):
     def setUp(self):
@@ -815,12 +887,12 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         factory = RequestFactory()
         request = factory.get("/")  # doesn't really matter where
         # adding session middleware, because it's required by messages
-        session_middleware = SessionMiddleware()
+        session_middleware = SessionMiddleware(MagicMock())
         session_middleware.process_request(request)
         request.session.save()
         # adding messages because they're used in
         # _match_training_request_to_person
-        messages_middleware = MessageMiddleware()
+        messages_middleware = MessageMiddleware(MagicMock())
         messages_middleware.process_request(request)
 
         create = False
@@ -1040,7 +1112,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "obj_a",
             "state": "obj_b",
             "person": "obj_a",
-            "group_name": "obj_a",
+            "member_code": "obj_a",
             "personal": "obj_a",
             "middle": "obj_a",
             "family": "obj_a",
@@ -1066,14 +1138,14 @@ class TestTrainingRequestMerging(TestBase):
             "previous_experience_other": "obj_a",
             "previous_experience_explanation": "obj_a",
             "programming_language_usage_frequency": "obj_a",
+            "checkout_intent": "obj_a",
+            "teaching_intent": "obj_a",
             "teaching_frequency_expectation": "obj_a",
             "teaching_frequency_expectation_other": "obj_a",
             "max_travelling_frequency": "obj_a",
             "max_travelling_frequency_other": "obj_a",
             "reason": "obj_a",
             "user_notes": "obj_a",
-            "training_completion_agreement": "obj_a",
-            "workshop_teaching_agreement": "obj_a",
             "data_privacy_agreement": "obj_a",
             "code_of_conduct_agreement": "obj_a",
             "created_at": "obj_a",
@@ -1086,7 +1158,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "obj_b",
             "state": "obj_a",
             "person": "obj_a",
-            "group_name": "obj_b",
+            "member_code": "obj_b",
             "personal": "obj_b",
             "middle": "obj_b",
             "family": "obj_b",
@@ -1112,14 +1184,14 @@ class TestTrainingRequestMerging(TestBase):
             "previous_experience_other": "obj_a",
             "previous_experience_explanation": "obj_a",
             "programming_language_usage_frequency": "obj_a",
+            "checkout_intent": "obj_a",
+            "teaching_intent": "obj_a",
             "teaching_frequency_expectation": "obj_a",
             "teaching_frequency_expectation_other": "obj_a",
             "max_travelling_frequency": "obj_a",
             "max_travelling_frequency_other": "obj_a",
             "reason": "obj_a",
             "user_notes": "obj_a",
-            "training_completion_agreement": "obj_a",
-            "workshop_teaching_agreement": "obj_a",
             "data_privacy_agreement": "obj_a",
             "code_of_conduct_agreement": "obj_a",
             "created_at": "obj_a",
@@ -1154,7 +1226,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": "combine",
             "state": "combine",
             "person": "combine",
-            "group_name": "combine",
+            "member_code": "combine",
             "personal": "combine",
             "middle": "combine",
             "family": "combine",
@@ -1178,12 +1250,12 @@ class TestTrainingRequestMerging(TestBase):
             "previous_experience_other": "combine",
             "previous_experience_explanation": "combine",
             "programming_language_usage_frequency": "combine",
+            "checkout_intent": "combine",
+            "teaching_intent": "combine",
             "teaching_frequency_expectation": "combine",
             "teaching_frequency_expectation_other": "combine",
             "max_travelling_frequency": "combine",
             "max_travelling_frequency_other": "combine",
-            "training_completion_agreement": "combine",
-            "workshop_teaching_agreement": "combine",
             "data_privacy_agreement": "combine",
             "code_of_conduct_agreement": "combine",
             "created_at": "combine",
@@ -1232,7 +1304,7 @@ class TestTrainingRequestMerging(TestBase):
             "id": self.first_req.id,
             "state": self.second_req.state,
             "person": self.first_req.person,
-            "group_name": self.first_req.group_name,
+            "member_code": self.first_req.member_code,
             "personal": self.first_req.personal,
             "middle": self.first_req.middle,
             "family": self.first_req.family,
@@ -1254,14 +1326,14 @@ class TestTrainingRequestMerging(TestBase):
             "previous_experience_other": self.first_req.previous_experience_other,
             "previous_experience_explanation": self.first_req.previous_experience_explanation,  # noqa: line too long
             "programming_language_usage_frequency": self.first_req.programming_language_usage_frequency,  # noqa: line too long
+            "checkout_intent": self.first_req.checkout_intent,
+            "teaching_intent": self.first_req.teaching_intent,
             "teaching_frequency_expectation": self.first_req.teaching_frequency_expectation,  # noqa: line too long
             "teaching_frequency_expectation_other": self.first_req.teaching_frequency_expectation_other,  # noqa: line too long
             "max_travelling_frequency": self.first_req.max_travelling_frequency,
             "max_travelling_frequency_other": self.first_req.max_travelling_frequency_other,  # noqa: line too long
             "reason": self.first_req.reason,
             "user_notes": self.first_req.user_notes,
-            "training_completion_agreement": self.first_req.training_completion_agreement,  # noqa: line too long
-            "workshop_teaching_agreement": self.first_req.workshop_teaching_agreement,
             "data_privacy_agreement": self.first_req.data_privacy_agreement,
             "code_of_conduct_agreement": self.first_req.code_of_conduct_agreement,
             "created_at": self.first_req.created_at,

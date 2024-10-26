@@ -1,5 +1,6 @@
 {% load state %}
 {% load utils %}
+{% load eventbrite %}
 <table class="table table-striped">
   <tbody>
     <tr><th>Submission date:</th>
@@ -25,7 +26,20 @@
     <tr><th>Application Type:</th>
         <td>{{ object.get_review_process_display|default:"&mdash;" }}</td></tr>
     <tr><th>Registration Code:</th>
-        <td>{{ object.group_name|default:"&mdash;" }}</td></tr>
+        <td>{{ object.member_code|default:"&mdash;" }}</td></tr>
+{% if admin or object.member_code_override %}
+    <tr><th>Continue with registration code marked as invalid:</th>
+        <td>{{ object.member_code_override|yesno }}</td></tr>
+{% endif %}
+    <tr><th>Eventbrite URL:</th>
+        <td>{{ object.eventbrite_url|default:"&mdash;" }}
+        {% url_matches_eventbrite_format object.eventbrite_url as url_format_valid %}
+        {% if object.eventbrite_url and not url_format_valid %}
+        <div class="alert alert-warning">
+            This URL doesn't match known Eventbrite URLs. Please use caution if copying this link.
+        </div>
+        {% endif %}
+        </td></tr>
     <tr><th>Personal name:</th>
         <td>{{ object.personal }}</td></tr>
     <tr><th>Middle name:</th>
@@ -117,7 +131,11 @@
         </td></tr>
     <tr><th>How frequently do you work with the tools that The Carpentries teach, such as R, Python, MATLAB, Perl, SQL, Git, OpenRefine, and the Unix Shell?</th>
         <td>{{ object.get_programming_language_usage_frequency_display }}</td></tr>
-    <tr><th>How often would you expect to teach Carpentry Workshops after this training?</th>
+    <tr><th>Do you intend to complete The Carpentries checkout process to be certified as a Carpentries Instructor?</th>
+        <td>{{ object.get_checkout_intent_display }}</td></tr>
+    <tr><th>Do you intend to teach Carpentries workshops within the next 12 months?</th>
+        <td>{{ object.get_teaching_intent_display }}</td></tr>
+    <tr><th>How often would you expect to teach Carpentries workshops (of any kind) after this training?</th>
         <td>
             {{ object.get_teaching_frequency_expectation_display }}
             {% if object.teaching_frequency_expectation_other %}
@@ -145,10 +163,6 @@
         <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
     <tr><th>Code of Conduct agreement:</th>
         <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
-    <tr><th>Training completion within three months agreement:</th>
-        <td>{{ object.training_completion_agreement|yesno }}</td></tr>
-    <tr><th>Teach a workshop within 12 months agreement:</th>
-        <td>{{ object.workshop_teaching_agreement|yesno }}</td></tr>
     <tr>
       <th>{{ consents_content.may_contact }}</th>
       <td>{% if consents.may_contact %}{{ consents.may_contact.term_option }}{% else %}Unset{% endif %}</td>

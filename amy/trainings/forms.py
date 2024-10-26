@@ -1,9 +1,9 @@
 from crispy_forms.layout import Layout
 from django import forms
-from django.core.exceptions import ValidationError
 from django.forms import CharField, RadioSelect, TextInput
 
 from trainings.models import Involvement
+from trainings.utils import raise_validation_error_if_no_learner_task
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -34,7 +34,9 @@ class TrainingProgressForm(forms.ModelForm):
         label="Event",
         required=False,
         queryset=Event.objects.all(),
-        widget=ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),
+        help_text="If a trainee is selected, only the events for which that trainee "
+        "has a learner task are listed.",
+        widget=ModelSelect2Widget(data_view="ttt-event-lookup", attrs=SELECT2_SIDEBAR),
     )
     trainee_notes = CharField(
         label="Notes from trainee",
@@ -79,15 +81,11 @@ class TrainingProgressForm(forms.ModelForm):
     class Media:
         js = ("trainingprogress_form.js",)
 
-    def add_error(self, field: str, error: ValidationError | str):
-        """Overrides add_error to ignore any errors that are intended to appear
-        on the trainee-only "trainee_notes" field."""
-        if field == "trainee_notes":
-            return
-        elif hasattr(error, "error_dict") and "trainee_notes" in error.error_dict:
-            error.error_dict.pop("trainee_notes")
-
-        super().add_error(field, error)
+    def clean_event(self):
+        trainee = self.cleaned_data["trainee"]
+        event = self.cleaned_data["event"]
+        raise_validation_error_if_no_learner_task(trainee, event)
+        return event
 
 
 class BulkAddTrainingProgressForm(forms.ModelForm):

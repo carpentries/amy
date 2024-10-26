@@ -5,12 +5,18 @@ from crispy_forms.layout import HTML, Div, Layout, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
+from django.http import HttpRequest
 
 from extrequests.models import (
     DataVariant,
     InfoSource,
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
+)
+from extrequests.utils import (
+    MemberCodeValidationError,
+    member_code_valid,
+    member_code_valid_training,
 )
 from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
@@ -35,6 +41,7 @@ from workshops.models import (
     TrainingRequest,
     WorkshopRequest,
 )
+from workshops.utils.feature_flags import feature_flag_enabled
 
 
 class BulkChangeTrainingRequestForm(forms.Form):
@@ -118,6 +125,13 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="membership-lookup"),
     )
 
+    seat_membership_auto_assign = forms.BooleanField(
+        label="Automatically match seats to memberships",
+        help_text="Assigned users will take instructor seats based on the "
+        "registration code they entered.",
+        required=False,
+    )
+
     seat_public = forms.TypedChoiceField(
         coerce=lambda x: x == "True",
         choices=Task.SEAT_PUBLIC_CHOICES,
@@ -140,6 +154,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     helper.layout = Layout(
         "event",
         "seat_membership",
+        "seat_membership_auto_assign",
         "seat_public",
         "seat_open_training",
     )
@@ -162,7 +177,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
         super().clean()
 
         event = self.cleaned_data["event"]
-        member_site = self.cleaned_data["seat_membership"]
+        seat_membership = self.cleaned_data["seat_membership"]
+        seat_membership_auto_assign = self.cleaned_data["seat_membership_auto_assign"]
         open_training = self.cleaned_data["seat_open_training"]
 
         if any(r.person is None for r in self.cleaned_data.get("requests", [])):
@@ -173,10 +189,16 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "and match with a trainee."
             )
 
-        if member_site and open_training:
+        if (seat_membership or seat_membership_auto_assign) and open_training:
             raise ValidationError(
                 "Cannot simultaneously match as open training and use "
                 "a Membership instructor training seat."
+            )
+
+        if seat_membership and seat_membership_auto_assign:
+            raise ValidationError(
+                "Cannot simultaneously use seats from selected membership "
+                "and use seats based on registration code."
             )
 
         if open_training and not event.open_TTT_applications:
@@ -300,6 +322,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
+            "member_code",
             "location",
             "country",
             "online_inperson",
@@ -307,7 +330,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "preferred_dates",
             "other_preferred_dates",
             "language",
-            "number_attendees",
             "audience_description",
             "administrative_fee",
             "scholarship_circumstances",
@@ -335,7 +357,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "country": Select2Widget,
             "online_inperson": forms.RadioSelect(),
             "language": Select2Widget,
-            "number_attendees": forms.RadioSelect(),
             "academic_levels": forms.CheckboxSelectMultiple(),
             "computing_levels": forms.CheckboxSelectMultiple(),
             "organization_type": forms.RadioSelect(),
@@ -352,6 +373,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         # the field isn't required, but we want user to fill it
@@ -419,6 +442,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             "secondary_email",
             "institution_department",
+            "member_code",
             "country",
             "audience_description",
             "user_notes",
@@ -441,6 +465,37 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         """Static method that overrides ModelChoiceField choice labels,
         essentially works just like `Model.__str__`."""
         return "{}".format(obj.fullname)
+
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+        error_msg = (
+            "This code is invalid. "
+            "This may be due to a typo, an expired code, "
+            "or a code that has not yet been activated."
+            "Please confirm that you have copied the code correctly, "
+            "or contact your Member Affiliate to verify your code."
+        )
+
+        if not member_code:
+            return None
+
+        # confirm that membership is active at the time of submission
+        # grace period: 60 days before, 0 days after
+        try:
+            member_code_valid(
+                code=member_code,
+                date=datetime.date.today(),
+                grace_before=60,
+                grace_after=0,
+            )
+        except MemberCodeValidationError:
+            errors["member_code"] = ValidationError(error_msg)
+
+        return errors
 
     def clean(self):
         super().clean()
@@ -564,6 +619,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                     'planned for less than 2 months away or "Other" arrangements '
                     "were selected."
                 )
+
+        # 8: enforce membership registration codes
+        membership_errors = self.validate_member_code(request=self.request_http)
+        if membership_errors:
+            errors.update(membership_errors)
 
         # raise errors if any present
         if errors:
@@ -717,7 +777,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "preferred_dates",
             "other_preferred_dates",
             "language",
-            "number_attendees",
             "administrative_fee",
             "travel_expences_management",
             "travel_expences_management_other",
@@ -743,7 +802,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "country": Select2Widget,
             "online_inperson": forms.RadioSelect(),
             "language": Select2Widget,
-            "number_attendees": forms.RadioSelect(),
             "computing_levels": forms.CheckboxSelectMultiple(),
             "administrative_fee": forms.RadioSelect(),
             "travel_expences_management": RadioSelectWithOther(
@@ -1382,6 +1440,52 @@ class TrainingRequestUpdateForm(forms.ModelForm):
             "state": forms.RadioSelect(),
         }
 
+    def __init__(self, *args, **kwargs):
+        # request is required for ENFORCE_MEMBER_CODES flag
+        self.request_http = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        errors = self.validate_member_code(request=self.request_http)
+        if errors:
+            raise ValidationError(errors)
+
+    @feature_flag_enabled("ENFORCE_MEMBER_CODES")
+    def validate_member_code(
+        self, request: HttpRequest
+    ) -> None | dict[str, ValidationError]:
+        errors = dict()
+        member_code = self.cleaned_data.get("member_code", "")
+        member_code_override = self.cleaned_data.get("member_code_override", False)
+
+        if not member_code:
+            return None
+
+        try:
+            member_code_is_valid = member_code_valid_training(
+                member_code,
+                self.instance.created_at.date(),
+                grace_before=90,
+                grace_after=90,
+            )
+            if member_code_is_valid and member_code_override:
+                # case where a user corrects their code but ticks the box anyway
+                # checkbox doesn't need to be ticked, so correct it quietly and continue
+                self.cleaned_data["member_code_override"] = False
+        except MemberCodeValidationError as e:
+            if not member_code_override:
+                # user must either correct the code or tick the override
+                error_msg = (
+                    "This code is invalid: "
+                    f"{e.message} "
+                    "Tick the checkbox below to ignore this message."
+                )
+                errors["member_code"] = ValidationError(error_msg)
+
+        return errors
+
 
 class TrainingRequestsSelectionForm(forms.Form):
     trainingrequest_a = forms.ModelChoiceField(
@@ -1420,7 +1524,7 @@ class TrainingRequestsMergeForm(forms.Form):
     id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     state = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     person = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    group_name = forms.ChoiceField(
+    member_code = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,
@@ -1530,6 +1634,16 @@ class TrainingRequestsMergeForm(forms.Form):
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )
+    checkout_intent = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
+    teaching_intent = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
     teaching_frequency_expectation = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
@@ -1557,16 +1671,6 @@ class TrainingRequestsMergeForm(forms.Form):
     )
     user_notes = forms.ChoiceField(
         choices=THREE,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    training_completion_agreement = forms.ChoiceField(
-        choices=TWO,
-        initial=DEFAULT,
-        widget=forms.RadioSelect,
-    )
-    workshop_teaching_agreement = forms.ChoiceField(
-        choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,
     )

@@ -40,7 +40,6 @@ Requested workshop types: {% for type in object.requested_workshop_types.all %}{
 Preferred date: {{ object.preferred_dates|date:'Y-m-d' }}
 Other dates for the workshop: {{ object.other_preferred_dates }}
 Preferred language for this workshop: {{ object.language }}
-Anticipated number of attendees: {{ object.get_number_attendees_display }}
 Administrative fee payment: {{ object.get_administrative_fee_display }}
 Travel expences management: {{ object.get_travel_expences_management_display }} {% if object.travel_expences_management_other %}{{ object.travel_expences_management_other }}{% endif %}
 Travel expences agreement: {{ object.travel_expences_agreement|yesno }}

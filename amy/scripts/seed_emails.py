@@ -127,6 +127,139 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
             "Log in to AMY to view your profile and verify things are correct."
         ),
     ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("a002c623-b849-4843-a589-08020f4b8589"),
+        name="Instructor Training Approaching",
+        signal=SignalNameEnum.instructor_training_approaching,
+        from_header="instructor.training@carpentries.org",
+        reply_to_header="",
+        cc_header=["instructor.training@carpentries.org"],
+        bcc_header=[],
+        subject="(Workshop) is one month away!",
+        body=(
+            "Hi, {{ instructor.0.personal }} {{ instructor.0.family }} and "
+            "{{ instructor.1.personal }} {{ instructor.1.family }}."
+            "Thank you for participating in the instructor training program. "
+            "Your training is one month away. Please be sure to do the following... "
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("17234a5e-a15e-4314-a328-783f917d6630"),
+        name="Instructor Training completed but not yet badged",
+        signal=SignalNameEnum.instructor_training_completed_not_badged,
+        from_header="instructor.training@carpentries.org",
+        reply_to_header="",
+        cc_header=["instructor.training@carpentries.org"],
+        bcc_header=[],
+        subject="Carpentries Instructor Training Deadline Approaching",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "Thank you for joining the Carpentries instructor training on (date). "
+            "You have completed the following steps towards certification "
+            "(passed requirements). "
+            "Here's what you have left to do: (missing requirements)."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("4e737df8-d2ef-4ebd-9a26-087212af233b"),
+        name="New / renewing membership starting (member onboarding)",
+        signal=SignalNameEnum.new_membership_onboarding,
+        from_header="membership@carpentries.org",
+        reply_to_header="",
+        cc_header=["membership@carpentries.org"],
+        bcc_header=[],
+        subject="Carpentries Membership with (member names), (member start-end dates)",
+        body=(
+            "Thank you for joining The Carpentries as a member organization. "
+            "Here is information to get you started: "
+            "https://carpentries.org/membership/"
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("e368058b-7e3b-4717-b9e9-0b8765bd0d0d"),
+        name="Host-instructors introduction",
+        signal=SignalNameEnum.host_instructors_introduction,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="Instructors for workshop at {{ event.venue }} on {{ event.start }}",
+        body=(
+            "Hey {{ host }}, this is {{ instructors.0 }} and {{ instructors.1 }} for "
+            "event {{ event }}."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("b5a3a298-c0aa-4153-8d72-a02b997ba0ee"),
+        name="Recruit helpers",
+        signal=SignalNameEnum.recruit_helpers,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="Time to Recruit Helpers for workshop at {{ event.venue }}",
+        body=(
+            "Hey everyone, please remember to seek helpers for the workshop "
+            "{{ event.slug }} -Best, {{ assignee.full_name }}."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("e4a39483-590b-44e0-93cb-e3d403d15d8f"),
+        name="Post Workshop 7 days",
+        signal=SignalNameEnum.post_workshop_7days,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject=(
+            "Completed workshop at {{ event.venue }} on {{ event.human_dates }} "
+            "({{ event.slug }})"
+        ),
+        body=(
+            "Thank you for hosting and teaching the workshop at {{ event.venue }} "
+            "(({{ event.slug }})!"
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("2f0058b5-cfc6-420c-90e5-2b8160eab7ec"),
+        name="New Self-Organised Workshop",
+        signal=SignalNameEnum.new_self_organised_workshop,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="{{ workshop_host.fullname }} ({{ event.slug }}) Workshop",
+        body=(
+            "Thanks for your Self-Organised workshop submission at {{ event.venue }} on"
+            " {{ event.human_readable_date }}. Your workshop has been added to our "
+            "database."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("1b7cff0e-5102-4c88-9bd5-efba57078580"),
+        name="Ask for website",
+        signal=SignalNameEnum.ask_for_website,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject=(
+            "Workshop Website needed for workshop at {{ event.venue }} on "
+            "{{ event.human_readable_date }}"
+        ),
+        body=(
+            "This is a friendly reminder to please share with me the workshop "
+            "website once it has been completed."
+        ),
+    ),
 ]
 
 

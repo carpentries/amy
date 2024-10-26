@@ -8,6 +8,7 @@ from typing import cast
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 import environ
+import jinja2
 
 ROOT_DIR = Path(__file__).parent.parent  # amy/
 APPS_DIR = ROOT_DIR / "amy"
@@ -18,6 +19,7 @@ env = environ.Env(
     AMY_DEBUG=(bool, True),
     AMY_SITE_ID=(int, 2),
     AMY_ALLOWED_HOSTS=(list, ["amy.carpentries.org"]),
+    AMY_CSRF_TRUSTED_ORIGINS=(list, []),
     AMY_DATABASE_HOST=(str, "localhost"),
     AMY_DATABASE_PORT=(int, 5432),
     AMY_DATABASE_NAME=(str, "amy"),
@@ -44,9 +46,6 @@ env = environ.Env(
         "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
     ),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
-    # Feature flags
-    AMY_INSTRUCTOR_RECRUITMENT_ENABLED=(bool, False),
-    AMY_EMAIL_MODULE_ENABLED=(bool, False),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -67,10 +66,10 @@ TIME_ZONE = "UTC"
 LANGUAGE_CODE = "en-us"
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
 USE_I18N = True
-# https://docs.djangoproject.com/en/dev/ref/settings/#use-l10n
-USE_L10N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
+# https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-FORMAT_MODULE_PATH
+FORMAT_MODULE_PATH = ["amy.locale"]
 # Secret key must be kept secret
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
 SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)  # type: ignore
@@ -82,9 +81,15 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = env("AMY_SITE_ID")
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = env("AMY_ALLOWED_HOSTS")
 if DEBUG:
     ALLOWED_HOSTS.append("127.0.0.1")
+    ALLOWED_HOSTS.append("localhost")
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#csrf-trusted-origins
+CSRF_TRUSTED_ORIGINS = env("AMY_CSRF_TRUSTED_ORIGINS")
 
 # DATABASES
 # -----------------------------------------------------------------------------
@@ -148,6 +153,7 @@ THIRD_PARTY_APPS = [
     "reversion",
     "reversion_compare",
     "rest_framework",
+    "knox",
     "captcha",
     "social_django",
     "debug_toolbar",
@@ -158,6 +164,7 @@ THIRD_PARTY_APPS = [
     "django_rq",
     "djangoformsetjs",
     "django_better_admin_arrayfield",
+    "flags",
 ]
 LOCAL_APPS = [
     "amy.workshops.apps.WorkshopsConfig",
@@ -287,6 +294,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "workshops.middleware.github_auth.GithubAuthMiddleware",
     "consents.middleware.TermsMiddleware",
+    "workshops.middleware.feature_flags.SaveSessionFeatureFlagMiddleware",
 ]
 
 # STATIC
@@ -323,7 +331,11 @@ STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 WHITENOISE_AUTOREFRESH = DEBUG or CONTINUOUS_INTEGRATION  # faster tests
 
 # MEDIA
@@ -368,6 +380,7 @@ TEMPLATES = [
                 # AMY version
                 "workshops.context_processors.version",
                 "workshops.context_processors.site_banner",
+                "workshops.context_processors.feature_flags_enabled",
                 # Consent enums
                 "consents.context_processors.terms",
                 # GitHub auth
@@ -378,7 +391,7 @@ TEMPLATES = [
             "string_if_invalid": "XXX-unset-variable-XXX",
         },
     },
-    # backend used for reading templates from the database
+    # `autoemails` app backend used for reading templates from the database
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "NAME": "db_backend",
@@ -394,6 +407,17 @@ TEMPLATES = [
             ],
             # Warn about invalid template variables
             "string_if_invalid": "XXX-unset-variable-XXX",
+        },
+    },
+    # `emails` app backend used for reading templates from the database
+    {
+        "BACKEND": "django.template.backends.jinja2.Jinja2",
+        "NAME": "email_jinja2_backend",
+        # not-allowed to fetch from disk
+        "DIRS": [],
+        "APP_DIRS": False,
+        "OPTIONS": {
+            "undefined": jinja2.Undefined,
         },
     },
 ]
@@ -466,6 +490,7 @@ MESSAGE_TAGS = {
     message_constants.WARNING: "warning alert-warning",
     message_constants.ERROR: "error alert-danger",
 }
+ONLY_FOR_ADMINS_TAG = "only-for-admins"
 
 # django-countries
 # -----------------------------------------------------------------------------
@@ -543,6 +568,10 @@ LOGGING = {
             "handlers": ["console"],
             "level": "DEBUG",
         },
+        "rq.worker": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
     },
 }
 
@@ -550,6 +579,23 @@ LOGGING = {
 # -----------------------------------------------------------------------------
 INTERNAL_IPS = ["127.0.0.1", "::1"]
 DEBUG_TOOLBAR_CONFIG = {"SHOW_COLLAPSED": True}
+DEBUG_TOOLBAR_PANELS = [
+    "debug_toolbar.panels.history.HistoryPanel",
+    "debug_toolbar.panels.versions.VersionsPanel",
+    "debug_toolbar.panels.timer.TimerPanel",
+    "debug_toolbar.panels.settings.SettingsPanel",
+    "debug_toolbar.panels.headers.HeadersPanel",
+    "debug_toolbar.panels.request.RequestPanel",
+    "debug_toolbar.panels.sql.SQLPanel",
+    "debug_toolbar.panels.staticfiles.StaticFilesPanel",
+    "debug_toolbar.panels.templates.TemplatesPanel",
+    "debug_toolbar.panels.cache.CachePanel",
+    "debug_toolbar.panels.signals.SignalsPanel",
+    "debug_toolbar.panels.redirects.RedirectsPanel",
+    "debug_toolbar.panels.profiling.ProfilingPanel",
+    "flags.panels.FlagsPanel",
+    "flags.panels.FlagChecksPanel",
+]
 
 # Django-contrib-comments
 # -----------------------------------------------------------------------------
@@ -602,8 +648,8 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRE
 # Email module
 # -----------------------------------------------------------------------------
 # This module is the next version of Autoemails.
-EMAIL_TEMPLATE_ENGINE_BACKEND = "db_backend"
-EMAIL_MODULE_ENABLED = env("AMY_EMAIL_MODULE_ENABLED")
+EMAIL_TEMPLATE_ENGINE_BACKEND = "email_jinja2_backend"
+EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed attempts
 
 # Reports
 # -----------------------------------------------------------------------------
@@ -618,11 +664,6 @@ if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
 
 REPORTS_LINK = env("AMY_REPORTS_LINK")
 
-# Instructor Recruitment Process
-# -----------------------------------------------------------------------------
-# Settings for Instructor Recruitment project
-INSTRUCTOR_RECRUITMENT_ENABLED = env("AMY_INSTRUCTOR_RECRUITMENT_ENABLED")
-
 # Site banner style
 # -----------------------------------------------------------------------------
 # This should show a special banner on all sites so that users are aware of
@@ -632,3 +673,40 @@ if SITE_BANNER_STYLE not in ("local", "testing", "production"):
     raise ImproperlyConfigured(
         "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
     )
+
+PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
+
+# Feature Flags
+# -----------------------------------------------------------------------------
+# These flags are used to enable/disable features in AMY.
+# See https://cfpb.github.io/django-flags/ for more details.
+
+# ------------
+# The system for enabling or disabling feature flags by users themselves should only be
+# used if the feature flag can be enabled by a single parameter condition set to `=true`
+# Disabling the feature flag should be done by setting the URL parameter to `=false`.
+# There should also be included a session condition. For example:
+#
+#  FLAGS = {
+#      "SOME_MODULE": [
+#          {"condition": "anonymous", "value": False, "required": True},
+#          {"condition": "parameter", "value": "enable_some_module=true"},  # CHANGE ME
+#          {"condition": "session", "value": "enable_some_module"},  # CHANGE ME
+#      ],
+#  }
+# ------------
+FLAGS = {
+    # Enable instructor recruitment views.
+    "INSTRUCTOR_RECRUITMENT": [
+        {"condition": "boolean", "value": True},
+    ],
+    # ------------
+    # Enable the new email module.
+    "EMAIL_MODULE": [
+        {"condition": "boolean", "value": True},
+    ],
+    # Always enabled.
+    "ENFORCE_MEMBER_CODES": [
+        {"condition": "boolean", "value": True},
+    ],
+}

@@ -256,6 +256,36 @@
       {% endwith %}
     </td>
   </tr>
+  <tr>
+    <th>Related scheduled emails:</th>
+    <td>
+      {% include "includes/related_scheduled_emails.html" with object=person %}
+    </td>
+  </tr>
+  <tr>
+    <th>Related scheduled emails for awards:</th>
+    <td>
+      {% with awards=person.award_set.all %}
+      {% for award in awards %}
+      {% include "includes/related_scheduled_emails_no_empty_msg.html" with object=award %}
+      {% empty %}
+      &mdash;
+      {% endfor %}
+      {% endwith %}
+    </td>
+  </tr>
+  <tr>
+    <th>Related scheduled emails for recruitments:</th>
+    <td>
+      {% with signups=person.instructorrecruitmentsignup_set.all %}
+      {% for signup in signups %}
+      {% include "includes/related_scheduled_emails_no_empty_msg.html" with object=signup %}
+      {% empty %}
+      &mdash;
+      {% endfor %}
+      {% endwith %}
+    </td>
+  </tr>
 </table>
 
 <div class="edit-object">

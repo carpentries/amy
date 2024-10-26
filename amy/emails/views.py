@@ -1,12 +1,14 @@
-from typing import Any
+from typing import Any, cast
 
-from django.conf import settings
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
+from django.views.generic.detail import SingleObjectMixin
+from flags.views import FlaggedViewMixin
+from jinja2 import DebugUndefined, Environment, TemplateError
 from markdownx.utils import markdownify
 
 from emails.controller import EmailController
+from emails.filters import EmailTemplateFilter, ScheduledEmailFilter
 from emails.forms import (
     EmailTemplateCreateForm,
     EmailTemplateUpdateForm,
@@ -14,7 +16,22 @@ from emails.forms import (
     ScheduledEmailRescheduleForm,
     ScheduledEmailUpdateForm,
 )
-from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailLog
+from emails.models import (
+    EmailTemplate,
+    ScheduledEmail,
+    ScheduledEmailLog,
+    ScheduledEmailStatus,
+    ScheduledEmailStatusActions,
+    ScheduledEmailStatusExplanation,
+)
+from emails.signals import ALL_SIGNALS
+from emails.utils import (
+    build_context_from_dict,
+    build_context_from_list,
+    find_signal_by_name,
+    jinjanify,
+    person_from_request,
+)
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -22,25 +39,22 @@ from workshops.base_views import (
     AMYFormView,
     AMYListView,
     AMYUpdateView,
-    ConditionallyEnabledMixin,
 )
 from workshops.utils.access import OnlyForAdminsMixin
 
 
-class EmailModuleEnabledMixin(ConditionallyEnabledMixin):
-    def get_view_enabled(self) -> bool:
-        return settings.EMAIL_MODULE_ENABLED is True
-
-
-class AllEmailTemplates(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
+class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_templates"
     template_name = "emails/email_template_list.html"
     queryset = EmailTemplate.objects.order_by("name")
     title = "Email templates"
+    filter_class = EmailTemplateFilter
 
 
-class EmailTemplateDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetailView):
+class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_detail.html"
@@ -51,10 +65,21 @@ class EmailTemplateDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetai
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
         context["rendered_body"] = markdownify(self.object.body)
+
+        signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = {
+                k: repr(v) for k, v in signal.context_type.__annotations__.items()
+            }
         return context
 
 
-class EmailTemplateCreate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYCreateView):
+class EmailTemplateCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.add_emailtemplate"]
     template_name = "emails/email_template_create.html"
     form_class = EmailTemplateCreateForm
@@ -63,7 +88,8 @@ class EmailTemplateCreate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYCreate
     title = "Create a new email template"
 
 
-class EmailTemplateUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView):
+class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_edit.html"
@@ -74,10 +100,21 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdate
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
+
+        signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
+
+        context["body_context_type"] = None
+        context["body_context_annotations"] = {}
+        if signal:
+            context["body_context_type"] = signal.context_type
+            context["body_context_annotations"] = {
+                k: repr(v) for k, v in signal.context_type.__annotations__.items()
+            }
         return context
 
 
-class EmailTemplateDelete(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeleteView):
+class EmailTemplateDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.delete_emailtemplate"]
     model = EmailTemplate
 
@@ -88,15 +125,18 @@ class EmailTemplateDelete(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDelete
 # -------------------------------------------------------------------------------
 
 
-class AllScheduledEmails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYListView):
+class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_emails"
     template_name = "emails/scheduled_email_list.html"
     queryset = ScheduledEmail.objects.select_related("template").order_by("-created_at")
     title = "Scheduled emails"
+    filter_class = ScheduledEmailFilter
 
 
-class ScheduledEmailDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDetailView):
+class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_detail.html"
@@ -106,20 +146,66 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYDeta
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
-        context["log_entries"] = ScheduledEmailLog.objects.filter(
-            scheduled_email=self.object
-        ).order_by("-created_at")
-        context["rendered_body"] = markdownify(self.object.body)
+        context["log_entries"] = (
+            ScheduledEmailLog.objects.select_related("author")
+            .filter(scheduled_email=self.object)
+            .order_by("-created_at")
+        )[0:500]
+
+        engine = Environment(autoescape=True, undefined=DebugUndefined)
+        try:
+            body_context = build_context_from_dict(self.object.context_json)
+            context["rendered_context"] = body_context
+        except ValueError as exc:
+            body_context = {}
+            context["rendered_context"] = f"Unable to render context: {exc}"
+
+        try:
+            context["rendered_body"] = markdownify(
+                jinjanify(engine, self.object.body, body_context)
+            )
+        except (TemplateError, AttributeError, ValueError, TypeError) as exc:
+            context["rendered_body"] = markdownify(f"Unable to render template: {exc}")
+
+        try:
+            context["rendered_subject"] = jinjanify(
+                engine, self.object.subject, body_context
+            )
+        except (TemplateError, AttributeError, ValueError, TypeError) as exc:
+            context["rendered_subject"] = f"Unable to render template: {exc}"
+
+        try:
+            to_header_context = build_context_from_list(
+                self.object.to_header_context_json
+            )
+            context["rendered_to_header_context"] = to_header_context
+        except ValueError as exc:
+            context["rendered_to_header_context"] = f"Unable to render context: {exc}"
+
+        context["status_explanation"] = ScheduledEmailStatusExplanation[
+            ScheduledEmailStatus(self.object.state)
+        ]
+        context["ScheduledEmailStatusActions"] = ScheduledEmailStatusActions
         return context
 
 
-class ScheduledEmailUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdateView):
+class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_edit.html"
     form_class = ScheduledEmailUpdateForm
     model = ScheduledEmail
     object: ScheduledEmail
+
+    # Will lock this object in the database for the duration of the request.
+    # Most specifically, we want to lock it when we're saving the form. This way the DB
+    # helps us make sure the data is consistent.
+    # Additionally, we're limiting the queryset to only those objects that can be edited
+    # (see ScheduledEmailStatusActions).
+    queryset = ScheduledEmail.objects.filter(
+        state__in=ScheduledEmailStatusActions["edit"]
+    ).select_for_update()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -134,22 +220,35 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYUpdat
             state_before=self.object.state,
             state_after=self.object.state,
             scheduled_email=self.object,
+            author=person_from_request(self.request),
         )
 
         return result
 
 
 class ScheduledEmailReschedule(
-    OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormView
+    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView
 ):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_reschedule.html"
     form_class = ScheduledEmailRescheduleForm
     object: ScheduledEmail
+    request: HttpRequest
     title: str
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object = get_object_or_404(ScheduledEmail, pk=self.kwargs["pk"])
+    # Will lock this object in the database for the duration of the request.
+    # Most specifically, we want to lock it when we're saving the form. This way the DB
+    # helps us make sure the data is consistent.
+    # Additionally, we're limiting the queryset to only those objects that can be edited
+    # (see ScheduledEmailStatusActions).
+    queryset = ScheduledEmail.objects.filter(
+        state__in=ScheduledEmailStatusActions["reschedule"]
+    ).select_for_update()
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        self.request = request
+        self.object = cast(ScheduledEmail, self.get_object())
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -166,19 +265,37 @@ class ScheduledEmailReschedule(
         return self.object.get_absolute_url()
 
     def form_valid(self, form: ScheduledEmailRescheduleForm) -> HttpResponse:
-        EmailController.reschedule_email(self.object, form.cleaned_data["scheduled_at"])
+        EmailController.reschedule_email(
+            self.object,
+            form.cleaned_data["scheduled_at"],
+            author=person_from_request(self.request),
+        )
         return super().form_valid(form)
 
 
-class ScheduledEmailCancel(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormView):
+class ScheduledEmailCancel(
+    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView
+):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_cancel.html"
     form_class = ScheduledEmailCancelForm
     object: ScheduledEmail
+    request: HttpRequest
     title: str
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object = get_object_or_404(ScheduledEmail, pk=self.kwargs["pk"])
+    # Will lock this object in the database for the duration of the request.
+    # Most specifically, we want to lock it when we're saving the form. This way the DB
+    # helps us make sure the data is consistent.
+    # Additionally, we're limiting the queryset to only those objects that can be edited
+    # (see ScheduledEmailStatusActions).
+    queryset = ScheduledEmail.objects.filter(
+        state__in=ScheduledEmailStatusActions["cancel"]
+    ).select_for_update()
+
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
+        self.request = request
+        self.object = cast(ScheduledEmail, self.get_object())
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict[str, Any]:
@@ -189,8 +306,11 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, EmailModuleEnabledMixin, AMYFormV
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()
 
-    def form_valid(self, form: ScheduledEmailRescheduleForm):
+    def form_valid(self, form: ScheduledEmailCancelForm):
         if form.cleaned_data.get("confirm"):
-            EmailController.cancel_email(self.object)
+            EmailController.cancel_email(
+                self.object,
+                author=person_from_request(self.request),
+            )
 
         return super().form_valid(form)

@@ -197,6 +197,44 @@ class TestMembership(TestBase):
         self.assertEqual(self.current.public_instructor_training_seats_utilized, 5)
         self.assertEqual(self.current.public_instructor_training_seats_remaining, 23)
 
+    def test_active_on_date(self):
+        self.assertFalse(
+            self.current.active_on_date(self.agreement_start - timedelta(days=1))
+        )
+        self.assertTrue(self.current.active_on_date(self.agreement_start))
+        self.assertTrue(self.current.active_on_date(self.agreement_end))
+        self.assertFalse(
+            self.current.active_on_date(self.agreement_end + timedelta(days=1))
+        )
+
+    def test_active_on_date_with_grace_before(self):
+        self.assertFalse(
+            self.current.active_on_date(
+                self.agreement_start - timedelta(days=91),
+                grace_before=90,
+                grace_after=60,
+            )
+        )
+        self.assertTrue(
+            self.current.active_on_date(
+                self.agreement_start - timedelta(days=90),
+                grace_before=90,
+                grace_after=60,
+            )
+        )
+
+    def test_active_on_date_with_grace_after(self):
+        self.assertTrue(
+            self.current.active_on_date(
+                self.agreement_end + timedelta(days=60), grace_before=90, grace_after=60
+            )
+        )
+        self.assertFalse(
+            self.current.active_on_date(
+                self.agreement_end + timedelta(days=61), grace_before=90, grace_after=60
+            )
+        )
+
 
 class TestMembershipConsortiumCountingBase(TestBase):
     def setUp(self):
@@ -533,6 +571,7 @@ class TestMembershipForms(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
+            "agreement_link": "https://example.com",
             "variant": "partner",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
@@ -556,6 +595,7 @@ class TestMembershipForms(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
+            "agreement_link": "https://example.com",
             "variant": "partner",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
@@ -609,6 +649,7 @@ class TestMembershipForms(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
+            "agreement_link": "https://example.com",
             "variant": "partner",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
@@ -629,6 +670,7 @@ class TestMembershipForms(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 26),
             "agreement_end": date(2020, 1, 26),
+            "agreement_link": "https://example.com",
             "variant": "partner",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
@@ -650,6 +692,7 @@ class TestMembershipForms(TestBase):
             variant="partner",
             agreement_start=date(2021, 3, 21),
             agreement_end=date(2022, 3, 21),
+            agreement_link="https://example.com",
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             public_instructor_training_seats=25,
@@ -672,6 +715,7 @@ class TestMembershipForms(TestBase):
             "public_status": membership.public_status,
             "agreement_start": membership.agreement_start,
             "agreement_end": membership.agreement_end,
+            "agreement_link": membership.agreement_link,
             "variant": membership.variant,
             "contribution_type": membership.contribution_type,
             "public_instructor_training_seats": membership.public_instructor_training_seats,  # noqa
@@ -703,6 +747,7 @@ class TestMembershipForms(TestBase):
             agreement_start=date(2021, 8, 1),
             agreement_end=date(2022, 7, 31),
             contribution_type="financial",
+            agreement_link="https://example.com",
             workshops_without_admin_fee_per_agreement=10,
             public_instructor_training_seats=10,
             inhouse_instructor_training_seats=10,
@@ -713,6 +758,7 @@ class TestMembershipForms(TestBase):
             variant="partner",
             agreement_start=date(2022, 8, 1),
             agreement_end=date(2023, 7, 31),
+            agreement_link="https://example.com",
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             public_instructor_training_seats=10,
@@ -724,6 +770,7 @@ class TestMembershipForms(TestBase):
             variant="partner",
             agreement_start=date(2023, 8, 1),
             agreement_end=date(2024, 7, 31),
+            agreement_link="https://example.com",
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             public_instructor_training_seats=10,
@@ -752,6 +799,7 @@ class TestMembershipForms(TestBase):
             "variant": membership2.variant,
             "agreement_start": membership2.agreement_start,
             "agreement_end": membership2.agreement_end,
+            "agreement_link": membership2.agreement_link,
             "contribution_type": membership2.contribution_type,
             "public_instructor_training_seats": membership2.public_instructor_training_seats,  # noqa
             "additional_public_instructor_training_seats": membership2.additional_public_instructor_training_seats,  # noqa
@@ -806,6 +854,7 @@ class TestMembershipForms(TestBase):
                     variant="partner",
                     agreement_start=date(2021, 8, 1),
                     agreement_end=agreement_end,
+                    agreement_link="https://example.com",
                     extensions=extensions,
                     contribution_type="financial",
                     workshops_without_admin_fee_per_agreement=10,
@@ -818,6 +867,7 @@ class TestMembershipForms(TestBase):
                     "variant": membership.variant,
                     "agreement_start": membership.agreement_start,
                     "agreement_end": membership.agreement_end,
+                    "agreement_link": membership.agreement_link,
                     "extensions_0": extensions[0] + increment,
                     "extensions_1": extensions[1] + increment,
                     "extensions_2": extensions[2] + increment,
@@ -872,6 +922,7 @@ class TestNewMembershipWorkflow(TestBase):
             "variant": "partner",
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
+            "agreement_link": "https://example.com",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
             "additional_public_instructor_training_seats": 0,
@@ -896,6 +947,7 @@ class TestNewMembershipWorkflow(TestBase):
             "variant": "partner",
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
+            "agreement_link": "https://example.com",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
             "additional_public_instructor_training_seats": 0,
@@ -920,6 +972,7 @@ class TestNewMembershipWorkflow(TestBase):
             "variant": "partner",
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
+            "agreement_link": "https://example.com",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
             "additional_public_instructor_training_seats": 0,
@@ -946,6 +999,7 @@ class TestNewMembershipWorkflow(TestBase):
             "variant": "partner",
             "agreement_start": "2021-02-14",
             "agreement_end": "2022-02-14",
+            "agreement_link": "https://example.com",
             "contribution_type": "financial",
             "public_instructor_training_seats": 0,
             "additional_public_instructor_training_seats": 0,
@@ -1091,11 +1145,11 @@ class TestMembershipExtension(TestBase):
         comment = "Everything is awesome."
         data = {"new_agreement_end": date(2021, 3, 31), "comment": comment}
         today = date.today()
-        expected_comment = f"""Extended membership by 30 days on {today} (new end date: 2021-03-31).
-
-----
-
-{comment}"""
+        expected_comment = (
+            f"Extended membership by 30 days on {today} (new end date: 2021-03-31)."
+            "\n\n----\n\n"
+            f"{comment}"
+        )
 
         # Act
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data)
@@ -1119,6 +1173,7 @@ class TestMembershipCreateRollOver(TestBase):
             "variant": "partner",
             "agreement_start": "2021-03-01",
             "agreement_end": "2022-03-01",
+            "agreement_link": "https://example.com",
             "contribution_type": "financial",
             "workshops_without_admin_fee_per_agreement": 10,
             "public_instructor_training_seats": 12,
@@ -1145,6 +1200,7 @@ class TestMembershipCreateRollOver(TestBase):
             variant="partner",
             agreement_start=date(2020, 3, 1),
             agreement_end=date(2021, 3, 1),
+            agreement_link="https://example.com",
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=workshops_without_admin_fee_per_agreement,  # noqa
             public_instructor_training_seats=public_instructor_training_seats,  # noqa

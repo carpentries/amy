@@ -1,18 +1,17 @@
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.test import override_settings
 from django.urls import reverse
 
-from autoemails.models import EmailTemplate, RQJob, Trigger
-from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import WorkshopRequestBaseForm
-import extrequests.views
 from workshops.forms import EventCreateForm
 from workshops.models import (
     Curriculum,
     Event,
     InfoSource,
     Language,
+    Membership,
     Organization,
     Role,
     Tag,
@@ -25,6 +24,16 @@ from workshops.tests.base import FormTestHelper, TestBase
 class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
 
+    def setUpMembership(self):
+        Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date(2023, 8, 15),
+            agreement_end=date(2024, 8, 14),
+            contribution_type="financial",
+            registration_code="valid123",
+        )
+
     def test_minimal_form(self):
         """Test if minimal form works."""
         data = {
@@ -33,6 +42,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "email": "hpotter@magic.gov",
             "institution_other_name": "Ministry of Magic",
             "institution_other_URL": "magic.gov.uk",
+            "member_code": "",
             "location": "London",
             "country": "GB",
             "requested_workshop_types": [
@@ -44,7 +54,6 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "preferred_dates": "{:%Y-%m-%d}".format(date.today()),
             "other_preferred_dates": "17-18 August, 2019",
             "language": Language.objects.get(name="English").pk,
-            "number_attendees": "10-40",
             "audience_description": "Students of Hogwarts",
             "administrative_fee": "waiver",
             "scholarship_circumstances": "Bugdet cuts in Ministry of Magic",
@@ -345,6 +354,162 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             self.assertNotIn("instructor_availability", form.errors)
 
 
+class TestWorkshopRequestCreateView(TestBase):
+    """
+    Tests membership code validation which relies on the ENFORCE_MEMBER_CODES flag.
+    All other form validation is tested in the TestWorkshopRequestBaseForm class above.
+    """
+
+    INVALID_CODE_ERROR = "This code is invalid."
+
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
+
+    def setUpMembership(self):
+        self.membership = Membership.objects.create(
+            name="Alpha Organization",
+            variant="bronze",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            workshops_without_admin_fee_per_agreement=2,
+            contribution_type="financial",
+            registration_code="valid123",
+        )
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
+    def test_member_code_validation__not_enforced(self):
+        """Invalid code should pass if enforcement is not enabled."""
+        # Arrange
+        data = {
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("training_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_valid(self):
+        """valid code - no error"""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_no_match(self):
+        """code does not match a membership - error on code"""
+        # Arrange
+        data = {
+            "member_code": "invalid",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_too_early(self):
+        """code used before the membership is active - error on code"""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_start = date.today() + timedelta(days=61)
+        self.membership.save()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_too_late(self):
+        """code used after the membership ends - error on code"""
+        # Arrange
+        self.setUpMembership()
+        self.membership.agreement_end = date.today() - timedelta(days=1)
+        self.membership.save()
+        data = {
+            "member_code": "valid123",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation__code_no_workshops_remaining(self):
+        """code matches a membership with no workshops remaining - no error"""
+        # Arrange
+        self.setUpMembership()
+        data = {
+            "member_code": "valid123",
+        }
+        # create some past events for this membership
+        swc = Organization.objects.create(
+            domain="software-carpentry.org",
+            fullname="Software Carpentry",
+        )
+        Event.objects.create(
+            slug="test-membership-1",
+            host=self.org_alpha,
+            administrator=swc,
+            membership=self.membership,
+            start=date.today() - timedelta(weeks=1),
+        )
+        Event.objects.create(
+            slug="test-membership-2",
+            host=self.org_alpha,
+            administrator=swc,
+            membership=self.membership,
+            start=date.today() - timedelta(weeks=2),
+        )
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, self.INVALID_CODE_ERROR)
+
+    @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
+    def test_member_code_validation_code_empty(self):
+        """empty code - no error"""
+        # Arrange
+        data = {
+            "member_code": "",
+        }
+
+        # Act
+        rv = self.client.post(reverse("workshop_request"), data=data)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+
+
 class TestWorkshopRequestViews(TestBase):
     def setUp(self):
         super().setUp()
@@ -362,7 +527,6 @@ class TestWorkshopRequestViews(TestBase):
             preferred_dates=None,
             other_preferred_dates="soon",
             language=Language.objects.get(name="English"),
-            number_attendees="10-40",
             audience_description="Students of Hogwarts",
             administrative_fee="nonprofit",
             scholarship_circumstances="",
@@ -384,7 +548,6 @@ class TestWorkshopRequestViews(TestBase):
             preferred_dates=None,
             other_preferred_dates="soon",
             language=Language.objects.get(name="English"),
-            number_attendees="40-80",
             audience_description="Students of Hogwarts",
             administrative_fee="forprofit",
             scholarship_circumstances="",
@@ -444,6 +607,58 @@ class TestWorkshopRequestViews(TestBase):
         self.assertEqual(rv.status_code, 302)
         request = Event.objects.get(slug="2018-10-28-test-event").workshoprequest
         self.assertEqual(request, self.wr1)
+
+    def test_accept_with_event_autofill(self):
+        """Ensure that fields are autofilled correctly when creating an Event from a
+        WorkshopRequest."""
+        # Arrange
+        expected_membership = Membership.objects.create(
+            name="Hogwarts",
+            agreement_start=date.today() - timedelta(weeks=26),
+            agreement_end=date.today() + timedelta(weeks=26),
+            registration_code="hogwarts55",
+        )
+        wr = WorkshopRequest.objects.create(
+            # required fields
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@potter.com",
+            location="Scotland",
+            country="GB",
+            language=Language.objects.get(name="English"),
+            audience_description="Students of Hogwarts",
+            administrative_fee="forprofit",
+            travel_expences_management="reimbursed",
+            # fields that should be autofilled
+            institution=Organization.objects.first(),
+            preferred_dates=date.today(),
+            online_inperson="online",
+            workshop_listed=False,
+            additional_contact="hermione@granger.com",
+            member_code="hogwarts55",
+        )
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        wr.requested_workshop_types.set([curriculum])
+
+        expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
+
+        # Act
+        rv = self.client.get(reverse("workshoprequest_accept_event", args=[wr.pk]))
+        form_initial = rv.context["form"].initial
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertQuerySetEqual(
+            form_initial["curricula"].all(), wr.requested_workshop_types.all()
+        )
+        self.assertQuerySetEqual(form_initial["tags"], expected_tags)
+        self.assertEqual(form_initial["public_status"], "private")
+        self.assertEqual(form_initial["contact"], wr.additional_contact)
+        self.assertEqual(form_initial["host"].pk, wr.institution.pk)
+        self.assertEqual(form_initial["start"], wr.preferred_dates)
+        self.assertEqual(form_initial["end"], wr.preferred_dates + timedelta(days=1))
+        self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
     def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(
@@ -521,7 +736,6 @@ class TestAcceptingWorkshopRequest(TestBase):
             preferred_dates=None,
             other_preferred_dates="soon",
             language=Language.objects.get(name="English"),
-            number_attendees="10-40",
             audience_description="Students of Hogwarts",
             administrative_fee="nonprofit",
             scholarship_circumstances="",
@@ -584,108 +798,3 @@ class TestAcceptingWorkshopRequest(TestBase):
         Task.objects.get(
             person=self.harry, event=event, role=Role.objects.get(name="host")
         )
-
-
-class TestAcceptWorkshopRequestAddsEmailAction(FakeRedisTestCaseMixin, TestBase):
-    def setUp(self):
-        super().setUp()
-        self._setUpRoles()
-        self._setUpUsersAndLogin()
-        # we're missing some tags
-        Tag.objects.bulk_create(
-            [
-                Tag(name="automated-email", priority=0),
-                Tag(name="SWC", priority=10),
-                Tag(name="DC", priority=20),
-                Tag(name="LC", priority=30),
-                Tag(name="TTT", priority=40),
-            ]
-        )
-
-        self.wr1 = WorkshopRequest.objects.create(
-            state="p",
-            personal="Harry",
-            family="Potter",
-            email="harry@hogwarts.edu",
-            institution_other_name="Hogwarts",
-            location="Scotland",
-            country="GB",
-            preferred_dates=None,
-            other_preferred_dates="soon",
-            language=Language.objects.get(name="English"),
-            number_attendees="10-40",
-            audience_description="Students of Hogwarts",
-            administrative_fee="nonprofit",
-            scholarship_circumstances="",
-            travel_expences_management="booked",
-            travel_expences_management_other="",
-            institution_restrictions="no_restrictions",
-            institution_restrictions_other="",
-            carpentries_info_source_other="",
-            user_notes="",
-        )
-
-        template1 = EmailTemplate.objects.create(
-            slug="sample-template1",
-            subject="Welcome to {{ site.name }}",
-            to_header="recipient@address.com",
-            from_header="test@address.com",
-            cc_header="copy@example.org",
-            bcc_header="bcc@example.org",
-            reply_to_header="{{ reply_to }}",
-            body_template="Sample text.",
-        )
-        self.trigger1 = Trigger.objects.create(
-            action="week-after-workshop-completion",
-            template=template1,
-        )
-
-        self.url = reverse("workshoprequest_accept_event", args=[self.wr1.pk])
-
-        # save scheduler and connection data
-        self._saved_scheduler = extrequests.views.scheduler
-        self._saved_redis_connection = extrequests.views.redis_connection
-        # overwrite them
-        extrequests.views.scheduler = self.scheduler
-        extrequests.views.redis_connection = self.connection
-
-    def tearDown(self):
-        super().tearDown()
-        extrequests.views.scheduler = self._saved_scheduler
-        extrequests.views.redis_connection = self._saved_redis_connection
-
-    def test_jobs_created(self):
-        data = {
-            "slug": "xxxx-xx-xx-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.get(domain="self-organized").pk,
-            "start": date.today() + timedelta(days=7),
-            "end": date.today() + timedelta(days=8),
-            "tags": Tag.objects.filter(name__in=["automated-email", "LC"]).values_list(
-                "pk", flat=True
-            ),
-        }
-
-        # no jobs scheduled
-        rqjobs_pre = RQJob.objects.all()
-        self.assertQuerysetEqual(rqjobs_pre, [])
-
-        # send data in
-        rv = self.client.post(self.url, data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        event = Event.objects.get(slug="xxxx-xx-xx-test-event")
-        request = event.workshoprequest
-        self.assertEqual(request, self.wr1)
-
-        # 1 job created
-        rqjobs_post = RQJob.objects.all()
-        self.assertEqual(len(rqjobs_post), 1)
-
-        # ensure the job ids are mentioned in the page output
-        content = rv.content.decode("utf-8")
-        for job in rqjobs_post:
-            self.assertIn(job.job_id, content)
-
-        # ensure the job is for PostWorkshopAction
-        rqjobs_post[0].trigger = self.trigger1

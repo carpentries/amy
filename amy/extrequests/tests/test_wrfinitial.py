@@ -9,7 +9,14 @@ from extrequests.views import (
     WorkshopInquiryAcceptEvent,
     WorkshopRequestAcceptEvent,
 )
-from workshops.models import Curriculum, Language, Organization, Tag, WorkshopRequest
+from workshops.models import (
+    Curriculum,
+    Language,
+    Membership,
+    Organization,
+    Tag,
+    WorkshopRequest,
+)
 
 
 class InitialWRFTestMixin:
@@ -38,6 +45,7 @@ class InitialWRFTestMixin:
             "host": Organization.objects.first(),
             "start": date(2020, 11, 11),
             "end": date(2020, 11, 12),
+            "membership": None,
         }
 
     def test_get_initial(self):
@@ -54,6 +62,19 @@ class InitialWRFTestMixin:
 class TestInitialWorkshopRequestAccept(InitialWRFTestMixin, TestCase):
     view_class = WorkshopRequestAcceptEvent
 
+    def setUp(self):
+        self.member_code = "hogwarts55"
+        membership = Membership.objects.create(
+            name="Hogwarts",
+            variant="bronze",
+            agreement_start=date(2020, 1, 1),
+            agreement_end=date(2021, 1, 1),
+            contribution_type="financial",
+            registration_code=self.member_code,
+        )
+        super().setUp()
+        self.expected.update({"membership": membership})
+
     def setUpOther(self):
         other_object = WorkshopRequest.objects.create(
             state="p",
@@ -61,10 +82,10 @@ class TestInitialWorkshopRequestAccept(InitialWRFTestMixin, TestCase):
             family="Potter",
             email="harry@hogwarts.edu",
             institution=Organization.objects.first(),
+            member_code=self.member_code,
             location="Scotland",
             preferred_dates=date(2020, 11, 11),
             language=Language.objects.get(name="English"),
-            number_attendees="10-40",
             administrative_fee="nonprofit",
             additional_contact="test@example.org;test2@example.org",
             online_inperson="online",
@@ -91,7 +112,6 @@ class TestInitialWorkshopInquiryAccept(InitialWRFTestMixin, TestCase):
             location="Scotland",
             preferred_dates=date(2020, 11, 11),
             language=Language.objects.get(name="English"),
-            number_attendees="10-40",
             administrative_fee="nonprofit",
             additional_contact="test@example.org;test2@example.org",
             online_inperson="online",

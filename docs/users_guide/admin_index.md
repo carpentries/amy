@@ -15,9 +15,9 @@ All menus and a search bar are displayed across the top. The main page has two c
 * *Current workshops* have a complete start and end date, a valid url, and a complete location.
 * *In progress workshops* are all workshops that do not meet these criteria.
 
-Current Data, Library, and Software Carpentry workshops will be listed on The Carpentries website, the corresponding lesson program website, and The Carpentries data feeds if the box to publish the workshop is checked.  Instructor Training events are not publicly listed.
+Current Data, Library, and Software Carpentry workshops will be listed on [The Carpentries website](https://carpentries.org/), the corresponding lesson program website, and [The Carpentries data feeds](https://feeds.carpentries.org/) if the box to publish the workshop is checked.  Instructor Training events are not publicly listed.
 
-From here you can also add new [persons](#adding-a-new-person), [events](#adding-a-new-event), [organisations](#adding-a-new-organisation), or [airports](#adding-a-new-airport) to the database.
+From here you can also add new [events](#adding-a-new-event), [organisations](#adding-a-new-organisation),  [persons](#adding-a-new-person), or [airports](#adding-a-new-airport) to the database.
 
 ![AMY add new elements](images/amy_add_new.png)
 
@@ -30,21 +30,25 @@ The "Affiliated Organization" field is not being used; always leave this blank.
 ![AMY add new organisation](images/amy_new_organisation.png)
 
 
-### Adding a New Membership
+### Memberships
 
 AMY is also used to track all Carpentries memberships.  To create a new membership, the site must first be listed as an [organisation](#adding-a-new-organisation) in AMY.
 
 Select "Memberships" from the top menu bar to view a [list of all Memberships](https://amy.carpentries.org/fiscal/memberships/). Memberships can be searched by Organisation name, Consortium status, Public/Private listing, Variant, Contribution type, Active status, and allowed or remaining training seats.
 
-New Memberships can be created one of two ways:
+#### Creating memberships
 
-* If this is an entirely new membership, click on the "New Membership" button at the top of the [membership page](https://amy.carpentries.org/fiscal/memberships/). This will take you to a blank new membership form.
+New Memberships can be created one of two ways, based on whether it is an entirely new membership or a renewing membership:
+
+* **New memberships:** If this is an entirely new membership, click on the "New Membership" button at the top of the [membership page](https://amy.carpentries.org/fiscal/memberships/). This will take you to a blank new membership form.
 
 ![AMY add new membership](images/amy_new_membership.png)
 
-* If this is a [renewal of a current membership](#renewing-memberships), select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
+*  **Renewing memberships:** If this is a [renewal of a current membership](#renewing-memberships), select that membership and click on the green "Create new & roll-over button" at the bottom of that page.  This will take you to a new membership form with some information pre-populated.
 
 ![AMY membership rollover](images/membership_rollover.png)
+
+#### Membership fields
 
 The following fields are included in the Member view:
 
@@ -107,7 +111,7 @@ The number of workshops or instructor training seats rolled over from the previo
 
 ### Adding a New Person
 
-If a person's record does not exist in the database, it can be added individually or as part of a bulk upload.
+A Person record can be created by [accepting an Instructor Training application](#accepting-trainee-applications) or a [Workshop Request form](#creating-a-new-event-from-a-workshop-request).  A Person record can also be created independent of this activity.  If a person's record does not exist in the database, it can be added individually or as part of a bulk upload.
 
 #### Adding an Individual Person Record
 
@@ -118,26 +122,33 @@ Select "New person" and enter in as much information as possible.  At minimum a 
 
 #### Adding Bulk Person Records
 
-`Person` records can also be added in bulk from a `.csv` file using the `Bulk add persons` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.
+`Person` records can also be added in bulk from a `.csv` file using the `Bulk add people` menu option in the  `New` menu at the top right or the `More` menu. Use the blank template to generate a well formed CSV noting each person's personal name, family name (optional), email address (optional), role, and associated event. Any additional information about the person must be entered manually.  **Note: To bulk add records, the persons must have a role specified (instructor, helper, learner, host) associated with a specific event**.  Because the *learner* role at an Instructor Training event requires a membership or open application affiliation, Instructor Training learner roles can not be bulk added.
 
 ![AMY bulk add person menu](images/bulk_add_persons.png)
 
-The role must exactly match the [instructions here](https://amy.carpentries.org/workshops/persons/bulk_upload/). The event slug must exactly match the slug for the event recorded in AMY.
+The column for role name must exactly match the [instructions here](https://amy.carpentries.org/workshops/persons/bulk_upload/). The event slug must exactly match the slug for the event recorded in AMY. This may include invisible space characters.
 
 This will take you to a screen where you can verify each record, correct any errors, and submit them for bulk upload.  If a person with the same name and email already exists in the database, you will be able to match the new entry to the existing record.  Otherwise a new person record will be created.
 
 #### Consents
 
-AMY asks all users to consent or agree to the following:
+AMY asks all users for the following consents:
 
-* **I have read and agree to the data privacy policy of The Carpentries.**
-* **Can we contact you for volunteering opportunities, surveys, feedback, etc.?**
-* **Do you consent to publish your profile on The Carpentries website?**
-* **Do you consent to have your name or identity associated with lesson publications?**
+**Mandatory consents:**
+
+* I have read and agree to the [privacy policy of The Carpentries](https://docs.carpentries.org/topic_folders/policies/privacy.html).
+* I acknowledge that I am at least 16 years old.
+* Do you agree to the transfer of your data outside of the European Economic Area/United Kingdom?
+
+**Optional consents:**
+
+* Can we contact you for volunteering opportunities, surveys, feedback, etc.?
+* Do you consent to publish your profile on The Carpentries website?
+* Do you consent to have your name or identity associated with lesson publications?
 
 By default, all consents have null values (i.e., neither yes nor no). After a Person's record has been created, the individual can log in to AMY and edit their own consents. Admin users may also make these edits on behalf of the user, but this should be used only in rare circumstances. Consents are edited in the "Consents" tab in the Person view. This tab also shows the full consent history for the Person.
 
-Some of the questions above are also asked during the instructor training application. If a Person record is created from a training request, the consents from that training request will be carried across to the Person.
+Some of the questions above are also asked during the [instructor training application](https://amy.carpentries.org/forms/request_training/). If a [Person record is created from a training request](#accepting-trainee-applications), the consents from that training request will be carried across to the Person.
 
 ### Adding a New Airport
 
@@ -151,9 +162,11 @@ Enter in the airport's IATA code, full name, country, and latitude and longitude
 
 New events can be created one of several ways:
 
-* By manually entering all information on the [new event page](#creating-a-new-event-manually)
-* By importing from URL on the [new event page](#creating-a-new-event-from-url)
-* By accepting a [workshop request](#creating-a-new-event-from-a-workshop-request)
+* [Create a new event manually](#creating-a-new-event-manually)
+* [Create a new event from URL](#creating-a-new-event-from-url)
+* [Create a new event from workshop request](#creating-a-new-event-from-a-workshop-request)
+
+Regardless of how an event is created, roles such as Instructor, Host, and helper can be [assigned](#assigning-people-to-events) after the event is created and saved.
 
 #### Creating a New Event Manually
 
@@ -161,9 +174,46 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event](images/new_event.png)
 
+[All fields](#event-fields) will need to be manually entered in.  
+
+
+#### Creating a New Event from URL
+
+If you already have the event's URL with properly formatted metadata using [The Carpentries workshop template](https://github.com/carpentries/workshop-template), some information can automatically be imported.  Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).  Click on the "Import from URL" button and enter the link to the workshop website OR GitHub URL.
+
+![AMY new event from URL](images/new_event_from_url.png)
+
+If the website repo contained properly formatted data, the slug, start/end dates, and location may automatically be populated. [All other fields](#event-fields) will need to be manually entered in.  
+
+Instructor and helper names will be in the notes field but not assigned in the database.  
+
+#### Creating a New Event from a Workshop Request
+
+A workshop can be requested from a host site, and this information can be used to create an event in AMY. In the "Requests" menu, select one of the following options:
+
+* Workshop requests
+* Workshop inquiries
+* Self-Organised submissions
+
+![AMY workshop requests](images/workshop_requests_menu.png)
+
+This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
+
+![AMY workshop request list](images/workshop_requests.png)
+
+At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request. 
+
+This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above. 
+
+![AMY workshop accept request](images/event_from_request.png)
+
+#### Event fields
+
 * **Slug** Create the workshop slug. This must be in the form `YYYY-MM-DD-sitename` (for example, `2018-01-01-hawkins`.  The same slug should be used for the workshop's GitHub page and any other place the workshop is identified. If the exact date is not known, `XX` can replace the month and/or day (for example, `2018-01-xx-starfleet`).
 
-* **Workshop Dates** If known, enter in the workshop start and dates.  Do not check the "Completed" box -- this will be checked after the workshop is over and all associated wrap up work is finished.
+* **Workshop Dates** If known, enter in the workshop start and dates.
+
+* **Completed** Do not check the "Completed" box yet -- this will be checked after the workshop is over to indicate all associated wrap up work is finished.
 
 * **Host** Select the Host name from the drop down menu. The Host is the institution where the workshop is actually being held (or would be held for online workshops). If the Host does not appear on the list, [create a new organisation](#adding-a-new-organization).
 
@@ -173,7 +223,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 * **Administrator** Select the administrator from the drop down menu.  This will always be  `Data Carpentry`, `Library Carpentry`, `Software Carpentry`,  `Instructor Training`, `Collaborative Lesson Development Training` or `Self-Organised`.
 
-* **Is this workshop public** If the workshop Host consents, choose "Public." This will list the workshop on the websites for The Carpentries, the associated lesson programs, and The Carpentries data feeds.  If "Private" it will not be listed publicly anywhere.
+* **Is this workshop public** If the workshop Host consents, choose "Public." This will list the workshop on the websites for The Carpentries, the associated lesson programs, and [The Carpentries data feeds](https://feeds.carpentries.org/).  If "Private" it will not be listed publicly anywhere.
 
 * **Assigned to** Select the name of The Carpentries team member responsible for managing this workshop.  Only AMY admin users appear in this list.  This assignment is used in the views throught AMY.
 
@@ -187,6 +237,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
     - *online*: Administrative. Identifies workshops taking place on line.
     - *TTT*: Event type. Identifies Instructor Training events.
     - *ITT*: Event type. Identifies Trainer Training events.
+    - *CLDT* Event type.  Identifies Collaborative Lesson Development Training events.
     - *Pilot*: Event type. Identifies workshops teaching pilot curricula.
     - *for-profit*: Administrative. Identifies workshops run by for-profit institutions.
     - *Scholarship*: Administrative. Identifies sponsored workshops. 
@@ -200,7 +251,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
     - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.  
     <br>  
 
-* **TTT Open applications** For instructor training events, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
+* **TTT Open applications** For instructor training events only, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
 
 
 * **Curricula taught at the workshop** Select the curricula taught at this workshop.
@@ -221,45 +272,6 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 * **Location details**  Add in the location including the country, venue name, address, and latitude/longitude coordinates.
 
 * **Comment**  Add in any other notes that may not be covered in any fields above.  This will be transformed into a timestamped notes log once the event is saved.  Comments can be formatted in Markdown.
-
-**Click "Submit" to save this event.**  Roles such as Instructor, Host, and helper can be [assigned](#assigning-people-to-events) after the event is created and saved.
-
-#### Creating a New Event from URL
-
-If you already have the event's URL with properly formatted metadata using [The Carpentries workshop template](https://github.com/carpentries/workshop-template), some information can automatically be imported.  Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by clicking on `New >> New Event` in the top right corner, or clicking on the `New Event` button on the [Events listing page](https://amy.carpentries.org/workshops/events/).  Click on the "Import from URL" button and enter the link to the workshop website OR GitHub URL.
-
-![AMY new event from URL](images/new_event_from_url.png)
-
-This will automatically populate the following fields:
-
-* Slug (created from GitHub repo name)
-* Start and end dates
-* Location details
-
-Instructor and helper names will be in the notes field but not assigned in the database.  All people will need to be [assigned to the event](#assigning-people-to-events).
-
-All other information will need to be [entered in as above](#creating-a-new-event-manually).
-
-#### Creating a New Event from a Workshop Request
-
-A workshop can be requested from a host site, and this information can be used to create an event in AMY. In the "Requests" menu, select one of the following options:
-
-* Workshop requests
-* Workshop inquiries
-* Self-Organised submissions
-
-![AMY workshop requests](images/workshop_requests_menu.png)
-
-This will take you to a summary view of the workshop requests, workshop inquiries, or self-organised submissions.  Click on the "information" icon at the right of each row to see more details.
-
-![AMY workshop request list](images/workshop_requests.png)
-
-At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request. 
-
-This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above.
-
-![AMY workshop accept request](images/event_from_request.png)
-
 
 
 ### Recruiting Instructors for Workshops
@@ -298,7 +310,7 @@ Once at least two Instructors have been confirmed, the admin may close signups f
 
 Regardless of how events are created, adding the people associated with each event can not easily be automated. [Name matching is hard](http://www.kalzumeus.com/2010/06/17/falsehoods-programmers-believe-about-names/).
 
-People can be associated with events one by one or as a bulk upload.  The person must already [be in AMY](#adding-a-new-person) before assigning them to a role at an event.
+People can be associated with events one by one or as a bulk upload.  The person must already [be in AMY](#adding-a-new-person) before assigning them to a role at an event.  If an Instructor is assigned via the Instructor Recruitment process, the Instructor role is automatically assigned.
 
 #### Assigning People to Events, One by One
 
@@ -344,13 +356,15 @@ Once an individual submits the form, they receive an email that confirms their a
 
 ![Training request menu](images/training_request_menu.png)
 
-Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affiliation and location searches rely on text strings, so *UCLA* will not return *University of California Los Angeles* and *Joburg ZA* will not return *Johannesburg* or *South Africa*.
+This will display a list of all applications that are *Pending or Accepted* and *Unmatched* to an existing person. Applications can then be searched by individual name, email address, group (registration code), status (pending, accepted, discarded, or withdrawn), affiliation, or location.  Affiliation and location searches rely on text strings, so *UCLA* will not return *University of California Los Angeles* and *Joburg ZA* will not return *Johannesburg* or *South Africa*.
+
+![Training request list view](images/amy_training_requests.png)
 
 Some trainees will already be in AMY. If there is a record with a matching name and email address, they will show up with a "matched trainee" when you search for them. You can match the application to this trainee, or if the match was incorrect, search for a different Person record or create a new Person.
 
 ![Match trainee to person](images/match_trainee.png)
 
-If "matched trainee" is blank, you will need to create a new person record for them.  To create a trainee record, click on the "i" icon at the far right of the individual's line. If you know this person is in AMY under a different name or email address, look this person up here and click "Match to selected trainee account."  If this is a new person, click "Create new trainee account."  This will create a new Person record for that trainee.
+If "matched trainee" is blank, it means a match was not found.  If you think a match exists, you can search for it.  Otherwise, you will need to create a new person record for them.  If you know this person is in AMY under a different name or email address, look this person up here and click "Match to selected trainee account."  If this is a new person, click "Create new trainee account."  This will create a new Person record for that trainee.
 
 ![AMY Trainee no match](images/trainee_no_match.png)
 
@@ -368,29 +382,104 @@ Click "Accept & match selected trainees to chosen training." The search screen w
 
 #### Tracking Checkout Progress
 
-The above steps note that a trainee was accepted in to a training event. Completion of the training event and three steps towards trainee checkout can be tracked in AMY.  Each person's record will have a line for Instructor Training Progress. Hover over any item to see more information.
+The above steps note that a trainee was accepted in to a training event. Completion of the training event and [three steps towards trainee checkout](https://carpentries.github.io/instructor-training/checkout.html) can be tracked in AMY.
 
-![AMY training progress](images/instructor_training_progress.png)
+A list of all current trainees and their progress can be seen on the "Trainees" page under the "More" menu.
 
-Click on the plus sign in the Training Progress line. This will go to a screen where you can track all the steps towards certification.
+![Trainees link under More menu](images/trainees_menu.png)
 
-![AMY training progress steps](images/new_training_progress.png)
+![All trainees page](images/all_trainees.png)
 
-* **Trainee** Start typing in the person's name.  Auto-completed suggested names will appear.
-* **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or the lesson contribution (Lesson Contribution).  The lesson contribution type requires a link to the GitHub issue or PR.
+The colour of each item represents its state:
+
+* Green: Passed
+* Blue: Asked to repeat
+* Yellow: Not evaluated yet
+* Red: Failed
+
+Hover over any item to see more information about it, including its state, date, and any notes.
+
+Click on the plus sign next to a trainee's progress to track a new step for that trainee. Click on the "information" or "pencil" icon at the right of each row to view or edit the trainee's profile.
+
+Each person's individual record also has a line for Instructor Training Progress, where these steps can be tracked and edited in the same way.
+
+Individuals may have multiple entries for any step, especially if they were asked to repeat.  Do not edit the previous step; create a new entry if they repeat a step. 
+
+![AMY checkout progress in instructor profile](images/instructor_training_progress.png)
+
+Again, hover over any item to see more information, or click the plus sign to add another item.
+
+#### Adding checkout progress one by one
+
+Click the plus sign in the "Trainees" page or an individual person's record to add a new progress item.
+
+![AMY checkout progress steps](images/new_training_progress.png)
+
+* **Trainee** The page will pre-fill the trainee if possible. Otherwise, start typing in the person's name.  Auto-completed suggested names will appear.
+* **Type** This will be the training event (Training), the welcome session (Welcome Session), the teaching demo (Demo), or a community contribution (Get Involved). When a choice is made, additional fields may appear (see below).
 * **State** For the checkout type noted above, indicate if the trainee passed, was asked to repeat, or failed.  Failed should only be used in extreme circumstances.
-* **Notes** Any free notes from the admin.
+* **Notes** Any free notes from the admin. Notes are required if the state is set to Failed, or if certain Get Involved activities have been selected ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
+
+Additional fields will appear depending on the Type selection:
+
+* **Event** The training event that the trainee attended. The trainee should have a learner task at this event (see [Assigning people to events](#assigning-people-to-events)). This field is only required when **Type** is set to Training.
+* **Get Involved activity** The activity that the trainee completed for the Get Involved step. This field is only required when **Type** is set to Get Involved.  
+Each activity, when selected, requires some or all of the **URL**, **Date**, and **Notes** fields to be filled as well. The community user guide contains a [table of these requirements](./community_index.md#information-required-for-each-get-involved-activity). When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed. 
+* **URL** A URL to a GitHub contribution, workshop website, or other contribution. This field is only required for some Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
+* **Date** The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. This field is required for all Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)). 
+
+#### Adding checkout progress in bulk
+
+Checkout progress can only be added in bulk if **all selected Trainees** have the exact same information for that checkout step (i.e., the same status for the same event). ["Get Involved" submissions](#evaluating-get-involved-submissions) can not be accepted in bulk. Go to the "Trainees" page under the "More" menu.
+
+To add the same step to many trainees, select the relevant trainees using the checkboxes on the left of each row, then complete the form at the bottom of the page. This form has the same fields as the [individual progress form](#adding-checkout-progress-one-by-one), minus the **Trainee** field. When the form is submitted, an identical item will be added to each selected trainee.
+
+![Bulk add checkout progress form](images/bulk_add_progress.png)
+
+#### Updating and deleting checkout progress
+
+Click on any progress item in the "Trainees" view or a person's individual record to view and update the details of that item. On the update page, there is also a "Delete" button in the top right, which will remove the item completely.
+
+Items cannot be updated or deleted in bulk.
+
+#### Evaluating Get Involved submissions
+
+Trainees may submit a contribution for the Get Involved checkout step through the instructor dashboard - see the [community user guide](./community_index.md#submitting-your-get-involved-step) to understand how their side of the submission works.
+
+Submissions must be evaluated by an administrator to ensure that the contribution is valid.
+
+In the "Trainees" page (under the "More" menu), select the filter "Only trainees with unevaluated Get Involved submission" in the left sidebar, then click "Submit" at the bottom of the sidebar. This will [update the page to show only trainees awaiting evaluation](https://amy.carpentries.org/trainings/trainees/?search=&get_involved=on&is_instructor=&training=&training_request=unknown&order_by=). 
+
+![Trainees with unevaluated submissions](images/trainees_with_unevaluated_submissions.png)
+
+The relevant items are shown with a yellow background, which represents the "Not evaluated yet" state. Clicking on any of these items takes you to view the details of the submission and update its state. Notice there is an extra non-editable field: **Trainee notes**, which contains information provided by the trainee as part of their submission. Change this selection to "Passed" if this is a valid contribution.  Otherwise, change this to "Asked to repeat" and contact the individual to inform them.
+
+![Progress edit page](images/evaluate_get_involved_submission.png)
+
+#### Issuing Instructor Badge
+
+The Instructor badge can be issued through a person's record (see [Issuing Badges](#issuing-badges)) or through the Trainees page.
+
+On the Trainees page, the **Eligible** column shows whether the trainee has passed all checkout steps and is eligible for an instructor badge. If the trainee is eligible, the "instructor badge" button will appear green and can be clicked to award the badge. If the trainee is not eligible, the button appears grey and the text is struck through. 
+
+![Trainees page with instructor eligibility highlighted](images/trainees_eligible_instructor.png)
+
+This list can also be filtered to only display trainees eligible to be certified using the left side menu.
+
+![Traainees page with instructor eligibility filter](images/filter_eligible_certification.png)
+
+If eligible, clicking the green "instructor badge" button on that person's row takes you to a screen where the details of the badge can be added. See [Issuing Badges](#issuing-badges) for guidance on completing this form. The **Person** and **Event** fields will be pre-filled.
 
 ### Issuing Badges
 
-The Carpentries has various badges that can be issued, including Data Carpentry Instructor, Software Carpentry Instructor, Trainer, Maintainer, and more.  
+The Carpentries has various badges that can be issued, including Instructor, Trainer, Maintainer, and more.  
 
 An individual badge can be issued by going to a person's record and clicking the `Edit` button.  Choose the `Awards` tab on the next screen.  
 
 * **Badge** The specific badge that is being awarded
 * **Awarded** The date the badge is being awarded on
 * **Event** Used only if the badge was offered after an event, such as Instructor Training or Maintainer Onboarding
-* **Awarded by** The admin user awarding the badge
+* **Awarded by** The admin user awarding the badge.  Not required.
 
 ![AMY issue badge](images/issuing_badges.png)
 
@@ -398,9 +487,9 @@ An individual badge can be issued by going to a person's record and clicking the
 
 AMY comes with several built in reporting features that can be accessed by clicking `Reports` in the top menu.
 
-* **Membership training statistics** Lists all memberships by variant, agreement dates, contribution type, and total/used/remaining instructor training seats (inhouse and public)
-* **Workshop issues** and **Instructor issues** identify specific workshops and instructors with gaps in data.
-* **Find duplicate persons** and **Find duplicate training requests** identifies Persons or Training Requests that may be listed as duplicates due to having the same name or email address, and allows the user to merge them. [Read more on how to merge duplicates](#merging-duplicate-persons-training-requests-or-events)
+* **[Membership training statistics](https://amy.carpentries.org/reports/membership_trainings_stats/)** Lists all memberships by variant, agreement dates, contribution type, and total/used/remaining instructor training seats (inhouse and public)
+* **[Workshop issues](https://amy.carpentries.org/reports/workshop_issues/)** and **[Instructor issues](https://amy.carpentries.org/reports/instructor_issues/)** identify specific workshops and instructors with gaps in data.
+* **[Find duplicate persons](https://amy.carpentries.org/reports/duplicate_persons/)** and **[Find duplicate training requests](https://amy.carpentries.org/reports/duplicate_training_requests/)** identifies Persons or Training Requests that may be listed as duplicates due to having the same name or email address, and allows the user to merge them. [Read more on how to merge duplicates](#merging-duplicate-persons-training-requests-or-events)
 
 ### User and Administrator Roles
 
@@ -408,7 +497,7 @@ What you are able to edit or view depends on your assigned role as a user or adm
 
 #### Instructor Login
 
-Instructors can log in to AMY to view and update their own information. To do so, they must have a valid GitHub username in their profile. Instructors should visit the [AMY login page](https://amy.carpentries.org/account/login/) and click on `Log in with your GitHub account`.
+Instructors can log in to AMY to view and update their own information. To do so, they must have a valid GitHub username in their profile. Instructors should visit the [AMY login page](https://amy.carpentries.org/account/login/) and click on `Log in with your GitHub account`.  More information for the user can be found in the [community users guide](../community_index/).
 
 If an instructor is having trouble logging in, an administrator can verify the following information.
 
@@ -420,56 +509,56 @@ If an instructor is having trouble logging in, an administrator can verify the f
 
 Admin users will have rights to view and edit many other parts of the AMY database.  The Django admin panel can be accessed from the top right menu, under the user's name, generating a unique URL for the session.
 
-An admin user can view their profile as if they were an ordinary user on [this dashboard page](https://amy.carpentries.org/dashboard/trainee/).
+An admin user can view their profile as if they were an ordinary user on [this dashboard page](https://amy.carpentries.org/dashboard/instructor/).
 
 
 ### Automated emails
 
 AMY sends automated emails for workshop administration.  The following seven email automations are currently enabled.  The content of each email can be viewed by authorized users only. View by selecting `Django Admin` in the top right menu, and select `Email Templates` from the admin page.
 
-**Email description:** Introduction of instructors and host. See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L703)  
+**Email description:** Introduction of instructors and host. 
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Instructors for {{ workshop_main_type }} workshop organized by {{ workshop_host.fullname }} {% if dates %} on {{ dates }}{% endif %}  
 **Date sent:** One hour from when conditions are met.  
 **Conditions:**  Start date more than seven days in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least two instructors and at least one host. Has at least one supporting instructor if online.  Centrally organized only.  
 
-**Email description:** Recruit Helpers.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L973)  
+**Email description:** Recruit Helpers.  
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:** Regional coordinator email (admin-xx@carpentries.org)  
 **Subject:** Time to Recruit Helpers for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}  
 **Date sent:** 21 days before start date.  
 **Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least one instructor or at least one host.  Has no helpers.  Centrally organized only.  
 
-**Email description:** Website URL is missing.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L839)  
+**Email description:** Website URL is missing.  
 **Sent to:**  All Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Workshop Website needed for  {DC, SWC, LC} workshop at {site} on {dates}  
 **Date sent:**  30 days before start date.  
 **Conditions:** Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  No workshop URL. At least one instructor. Centrally organized or Self organized.  
  
-**Email description:**  Supporting Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L348)  
+**Email description:**  Supporting Instructor is added to the workshop.  
 **Sent to:**  Single new supporting instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}  
 **Date sent:**  One hour after conditions are met.  
 **Conditions:**  New role of supporting instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Online workshop. Centrally organized only.  
 
-**Email description:** Instructor is added to the workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L256)	 
+**Email description:** Instructor is added to the workshop.  
 **Sent to:**  Single new instructor  
 **Sent from:**  Regional coordinator email  
 **Subject:** Confirmation of your participation as an instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %} ({{ dates }}){% endif %}  
 **Date sent:** One hour after conditions are met.  
 **Conditions:** New role of instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Centrally organized only.  
 
-**Email description:** A new event is created from Self-Organised Request Form.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L594)	 
+**Email description:** A new event is created from Self-Organised Request Form.  
 **Sent to:**  Form submitter and additional contacts  
 **Sent from:**  Regional coordinator email  
 **Subject:**  {{ workshop.host.fullname }} ({{ workshop.slug }}) Workshop  
 **Date sent:** One hour after conditions are met.  
 **Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive.  Event created from SO form.  Self organized only.  
 
-**Email description:** 7 days past the end date of an active workshop.  See [Code](https://github.com/carpentries/amy/blob/develop/amy/autoemails/actions.py#L430)  
+**Email description:** 7 days past the end date of an active workshop.  
 **Sent to:**  All Workshop Hosts + Instructors  
 **Sent from:**  Regional coordinator email  
 **Subject:** Completed {% if workshop_main_type %}{{ workshop_main_type }}{% else %}Carpentries{% endif %} workshop at {{ workshop.venue }} on {{ dates }} ({{ workshop.slug }})  
@@ -486,7 +575,7 @@ If duplicate Person, Training Request, or Event records exist, they can be merge
 
 ![AMY merge duplicates menu](images/merge_menu.png)
 
-Once you select "Merge Persons" or "Merge Events" you will be taken to a screen to select the two Persons or Events you would like to merge. Start typing in the Person's name or the Event's slug, and AMY will autocomplete with possible options.
+Once you select [Merge Persons](https://amy.carpentries.org/workshops/persons/merge/), [Merge Events](https://amy.carpentries.org/workshops/events/merge/), or [Merge Training Requests](https://amy.carpentries.org/requests/training_requests/merge) you will be taken to a screen to select the two Persons, Events, or Training Requests you would like to merge. Start typing in the name or slug, and AMY will autocomplete with possible options.
 
 ![AMY select Persons to merge](images/select_merge_persons.png)
 
@@ -525,7 +614,7 @@ If only one result is found across all fields, AMY will automatically redirect t
 
 #### Searching for Qualified Instructors
 
-Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the following criteria:
+Under the "More" menu, select "[Find Workshop Staff](https://amy.carpentries.org/workshops/workshop_staff/)."  Here you can filter by the following criteria:
 
 * **Airport**: This returns a list of all Instructors beginning with those who list that airport as their closest airport, and then continues reaching farther out.
 * **Country**: This returns a list of all Instructors who are in that country.  It does not continue to any proximate countries.
@@ -535,7 +624,7 @@ Under the "More" menu, select "Find Workshop Staff."  Here you can filter by the
 
 #### Searching for Events
 
-Clicking "Events" on the top menu bar will take you to a list of *all* recorded events - past, present, and future, including those that were stalled or cancelled. Here you can filter by the following criteria:
+Clicking "[Events](https://amy.carpentries.org/workshops/events/)" on the top menu bar will take you to a list of *all* recorded events - past, present, and future, including those that were stalled or cancelled. Here you can filter by the following criteria:
 
 * **Assigned to**: The admin user the event is assigned to
 * **Tags**: Any tags applied to that event
@@ -549,7 +638,7 @@ Clicking "Events" on the top menu bar will take you to a list of *all* recorded 
 
 #### Searching for Organisations
 
-Clicking "Organisations" on the top menu bar will take you to a list of *all* recorded organisations, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
+Clicking "[Organisations](https://amy.carpentries.org/fiscal/organizations/)" on the top menu bar will take you to a list of *all* recorded organisations, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
 
 * **Country**: Country the organisation is based in
 * **Memberships (current or past)**: Whether the organisation has had any current or past membership, by selected membership variant
@@ -557,7 +646,7 @@ Clicking "Organisations" on the top menu bar will take you to a list of *all* re
 
 #### Searching for Memberships
 
-Clicking "Memberships" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:
+Clicking "[Memberships](https://amy.carpentries.org/fiscal/memberships/)" on the top menu bar will take you to a list of all Carpentries memberships - past, present, and future.  Here you can filter by the following criteria:
 
 * **Organisation Name**: For most memberships, this will be the name of the main organisation. For consortium memberships, this will be the name of the consortium.
 * **Consortium**:  Whether the membership is listed as a consortium
@@ -571,7 +660,7 @@ Clicking "Memberships" on the top menu bar will take you to a list of all Carpen
 
 #### Searching for Persons
 
-Clicking "Persons" on the top menu bar will take you to a list of *all* recorded persons, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
+Clicking "[Persons](https://amy.carpentries.org/workshops/persons/)" on the top menu bar will take you to a list of *all* recorded persons, regardless of their involvement with The Carpentries. Here you can filter by the following criteria:
 
 * **Badges** This will return Persons who have any of the selected badges
 * **Taught at workshops of type** This will list Persons who have taught at workshops with any of the selected tags

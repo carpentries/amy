@@ -39,9 +39,19 @@ footer {
     background: #ffc107;
 }
 
+.banner-local a {
+    color: #000000;
+    text-decoration: underline;
+}
+
 .banner-testing {
     color: #FFFFFF;
     background: #dc3545;
+}
+
+.banner-testing a {
+    color: #FFFFFF;
+    text-decoration: underline;
 }
 
 .navbar-banner-displacement {

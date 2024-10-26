@@ -427,9 +427,9 @@ class TestPerson(TestBase):
         self.assertEqual(set(p1.get_training_tasks()), {t1})
 
     def test_awarding_instructor_badge_workflow(self):
-        """Test that you can click "SWC" and "DC" labels in "eligible"
+        """Test that you can click "instructor badge" label in "eligible"
         column in trainees list view. When you click them, you're moved to
-        the view where you can edit person's awards. "Award" and "event"
+        the view where you can edit person's awards. "Award", "Badge", and "Event"
         field should be prefilled in. Also test if you're moved back to
         trainees view after adding the badge."""
 
@@ -447,6 +447,12 @@ class TestPerson(TestBase):
         training = Event.objects.create(slug="2016-08-10-training", host=host)
         training.tags.add(ttt)
         Task.objects.create(person=trainee, event=training, role=learner)
+        TrainingProgress.objects.create(
+            trainee=trainee,
+            requirement=TrainingRequirement.objects.get(name="Training"),
+            event=training,
+            state="p",
+        )
 
         trainees = self.app.get(reverse("all_trainees"), user="admin")
 
@@ -456,11 +462,13 @@ class TestPerson(TestBase):
 
         # Test workflow starting from clicking at "instructor badge" label
         swc_res = trainees.click("^<strike>instructor badge</strike>$")
-        self.assertSelected(swc_res.forms["main-form"]["award-badge"], "---------")
+        self.assertEqual(
+            int(swc_res.forms["main-form"]["award-badge"].value),
+            self.instructor_badge.pk,
+        )
         self.assertEqual(
             int(swc_res.forms["main-form"]["award-event"].value), training.pk
         )
-        swc_res.forms["main-form"]["award-badge"].select(self.instructor_badge.pk)
         res = swc_res.forms["main-form"].submit()
         self.assertRedirects(res, reverse("all_trainees"))
         self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)

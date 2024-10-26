@@ -1,53 +1,69 @@
 site_name: AMY documentation
 repo_url: https://github.com/carpentries/amy/
-edit_uri: 'edit/develop/docs/'
+edit_uri: "edit/develop/docs/"
 
 extra_javascript:
-    - 'js/navigation.js'
+    - "js/navigation.js"
 
 theme:
     name: material
     collapse_navigation: true
+    logo: assets/TheCarpentries.svg
+    features:
+      - navigation.top
+
 
 nav:
-    - 'Home': 'index.md'
-    - 'For Carpentries Community members':
-        - 'Community Users Guide': 'users_guide/community_index.md'
-    - 'For AMY Administrators':
-        - 'Users Guide': 'users_guide/admin_index.md'
-        - 'Database Structure': 'amy_database_structure.md'
-    - 'For AMY Developers':
-        - 'Design': 'design/index.md'
-        - 'Application design': 'design/application_design.md'
-        - 'Database models': 'design/database_models.md'
-        - 'Model versioning': 'design/model_versioning.md'
-        - 'Templates': 'design/template_hierarchy.md'
-        - 'Views': 'design/views_hierarchy.md'
-        - 'Server Infrastructure': 'design/server_infrastructure.md'
-        - 'Database backups': 'design/database_backups.md'
-        - 'CI/CD': 'design/cicd.md'
-        - 'Procedures': 'procedures.md'
-        - 'Releases': './releases/README.md'
-        - 'Accessibility Testing': 'accessibility_testing.md'
-        - 'Projects':
-          - 'Projects': './design/projects/README.md'
-          - 'Automated emails': './design/projects/2019_automated_emails.md'
-          - 'Memberships': './design/projects/2021_memberships.md'
-          - 'Consents': './design/projects/2021_consents.md'
-          - 'Profile Archival': './design/projects/2021_profile_archival.md'
-          - 'Community Roles': './design/projects/2021_community_roles.md'
-          - 'Instructor Selection': './design/projects/2021_instructor_selection.md'
-          - 'Single Instructor Badge': './design/projects/2021_single_instructor_badge.md'
-    - 'About The Carpentries':
-        - 'The Carpentries': 'https://carpentries.org'
-        - 'Data Carpentry': 'https://datacarpentry.org/'
-        - 'Library Carpentry': 'https://librarycarpentry.org/'
-        - 'Software Carpentry': 'https://software-carpentry.org/'
-        - 'AMY': 'https://amy.carpentries.org'
-
+    - "Home": "index.md"
+    - "For Carpentries Community members":
+          - "AMY Community Users Guide": "users_guide/community_index.md"
+    - "For AMY Administrators":
+          - "Users Guide": "users_guide/admin_index.md"
+          - "Database Structure": "amy_database_structure.md"
+    - "For AMY Developers":
+          - "Design": "design/index.md"
+          - "Application design": "design/application_design.md"
+          - "Database models": "design/database_models.md"
+          - "Model versioning": "design/model_versioning.md"
+          - "Templates": "design/template_hierarchy.md"
+          - "Views": "design/views_hierarchy.md"
+          - "Design Pattern Reference": "design/design_patterns.md"
+          - "Server Infrastructure": "design/server_infrastructure.md"
+          - "Database backups": "design/database_backups.md"
+          - "Accessibility Testing": "accessibility_testing.md"
+          - "Deploying AMY":
+                - "Procedures": "procedures.md"
+                - "CI/CD": "design/cicd.md"
+                - "Releases": "./releases/README.md"
+                - "Release-Specific Manual Deployment Steps": "manual_deployment_steps.md"
+          - "Projects":
+                - "Projects": "./design/projects/README.md"
+                - "Automated emails": "./design/projects/2019_automated_emails.md"
+                - "Memberships": "./design/projects/2021_memberships.md"
+                - "Consents": "./design/projects/2021_consents.md"
+                - "Profile Archival": "./design/projects/2021_profile_archival.md"
+                - "Community Roles": "./design/projects/2021_community_roles.md"
+                - "Instructor Selection": "./design/projects/2021_instructor_selection.md"
+                - "Single Instructor Badge": "./design/projects/2021_single_instructor_badge.md"
+                - "Instructor Checkout Changes": "./design/projects/2023_instructor_checkout_changes.md"
+                - "Member Code Enforcement": "./design/projects/2023_member_code_enforcement.md"
+          - "Feature flags": "design/feature_flags.md"
+    - "About The Carpentries":
+          - "The Carpentries": "https://carpentries.org"
+          - "Data Carpentry": "https://datacarpentry.org/"
+          - "Library Carpentry": "https://librarycarpentry.org/"
+          - "Software Carpentry": "https://software-carpentry.org/"
+          - "AMY": "https://amy.carpentries.org"
 
 markdown_extensions:
-  - toc:
-      permalink: True
+    - toc:
+          permalink: True
+    - pymdownx.superfences:
+          custom_fences:
+            - name: mermaid
+              class: mermaid
+              format: !!python/name:pymdownx.superfences.fence_code_format 
+
+
 
 extra_css: [extra.css]

@@ -1,4 +1,4 @@
-{% extends "base_nav.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load pagination %}
 {% load tags %}
@@ -12,8 +12,8 @@
 {% if email_templates %}
     <table class="table table-striped">
       <tr>
-        <th>ID</th>
         <th>Name</th>
+        <th>Active</th>
         <th>Signal</th>
         <th>From</th>
         <th>Reply-To</th>
@@ -24,8 +24,8 @@
       </tr>
     {% for template in email_templates %}
       <tr>
-        <td><a href="{{ template.get_absolute_url }}">{{ template.id }}</a></td>
-        <td>{{ template.name }}</td>
+        <td><a href="{{ template.get_absolute_url }}">{{ template.name }}</a></td>
+        <td>{{ template.active|yesno }}</td>
         <td><code>{{ template.signal }}</code></td>
         <td>{{ template.from_header }}</td>
         <td>{{ template.reply_to_header|default:"&mdash;" }}</td>
@@ -52,7 +52,7 @@
             {% endif %}
         </td>
         <td>{{ template.subject }}</td>
-        <td>{{ template.body }}</td>
+        <td>{{ template.body|truncatechars:150 }}</td>
       </tr>
     {% endfor %}
     </table>

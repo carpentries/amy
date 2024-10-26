@@ -3,7 +3,6 @@ import logging
 from typing import Callable
 from urllib.parse import unquote
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -16,16 +15,12 @@ from django.urls import reverse
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
 import django_rq
+from flags.views import FlaggedViewMixin
 
-from autoemails.actions import (
-    DeclinedInstructorsAction,
-    InstructorsHostIntroductionAction,
-    NewInstructorAction,
+from emails.actions.host_instructors_introduction import (
+    host_instructors_introduction_strategy,
+    run_host_instructors_introduction_strategy,
 )
-from autoemails.base_views import ActionManageMixin
-from autoemails.job import Job
-from autoemails.models import RQJob, Trigger
-from autoemails.utils import safe_next_or_default_url
 from emails.signals import (
     admin_signs_instructor_up_for_workshop_signal,
     instructor_confirmed_for_workshop_signal,
@@ -44,11 +39,11 @@ from workshops.base_views import (
     AMYDetailView,
     AMYListView,
     AMYUpdateView,
-    ConditionallyEnabledMixin,
     RedirectSupportMixin,
 )
 from workshops.models import Event, Person, Role, Task
 from workshops.utils.access import OnlyForAdminsMixin
+from workshops.utils.urls import safe_next_or_default_url
 
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
@@ -61,14 +56,8 @@ redis_connection = django_rq.get_connection("default")
 # InstructorRecruitment related views
 
 
-class RecruitmentEnabledMixin:
-    def get_view_enabled(self) -> bool:
-        return settings.INSTRUCTOR_RECRUITMENT_ENABLED is True
-
-
-class InstructorRecruitmentList(
-    OnlyForAdminsMixin, RecruitmentEnabledMixin, ConditionallyEnabledMixin, AMYListView
-):
+class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Recruitment processes"
     filter_class = InstructorRecruitmentFilter
@@ -162,10 +151,10 @@ class InstructorRecruitmentCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     AMYCreateView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.add_instructorrecruitment"
     model = InstructorRecruitment
     template_name = "recruitment/instructorrecruitment_add.html"
@@ -241,10 +230,10 @@ class InstructorRecruitmentCreate(
 
 class InstructorRecruitmentDetails(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     AMYDetailView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = (
         InstructorRecruitment.objects.annotate_with_priority()
@@ -304,14 +293,14 @@ class InstructorRecruitmentDetails(
 
 class InstructorRecruitmentAddSignup(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     SuccessMessageMixin,
     PermissionRequiredMixin,
     FormView,
 ):
     """POST requests for adding new signup for an existing recruitment."""
 
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.change_instructorrecruitment",
         "recruitment.view_instructorrecruitmentsignup",
@@ -366,14 +355,14 @@ class InstructorRecruitmentAddSignup(
 
 class InstructorRecruitmentSignupChangeState(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     FormMixin,
     PermissionRequiredMixin,
     View,
 ):
     """POST requests for editing (confirming or declining) the instructor signup."""
 
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.change_instructorrecruitmentsignup"
     form_class = InstructorRecruitmentSignupChangeStateForm
 
@@ -434,8 +423,9 @@ class InstructorRecruitmentSignupChangeState(
             person=person,
             role=role,
         )
-        self.add_automated_email(task)
 
+        # Note: there's a strategy for this email, but this case may be simple enough
+        # that we don't need to use it.
         instructor_confirmed_for_workshop_signal.send(
             sender=signup,
             request=request,
@@ -461,7 +451,6 @@ class InstructorRecruitmentSignupChangeState(
         except Task.DoesNotExist:
             pass
         else:
-            self.remove_automated_email(task)
             task.delete()
 
         instructor_declined_from_workshop_signal.send(
@@ -471,34 +460,6 @@ class InstructorRecruitmentSignupChangeState(
             event_id=event.pk,
             instructor_recruitment_id=signup.recruitment.pk,
             instructor_recruitment_signup_id=signup.pk,
-        )
-
-    def add_automated_email(self, task: Task) -> tuple[list[Job], list[RQJob]]:
-        trigger_name = "new-instructor"
-        triggers = Trigger.objects.filter(active=True, action=trigger_name)
-        return ActionManageMixin.add(
-            action_class=NewInstructorAction,
-            logger=logger,
-            scheduler=scheduler,
-            triggers=triggers,
-            context_objects=dict(task=task, event=task.event),
-            object_=task,
-            request=self.request,
-        )
-
-    def remove_automated_email(self, task: Task) -> None:
-        trigger_name = "new-instructor"
-        jobs = task.rq_jobs.filter(trigger__action=trigger_name).values_list(
-            "job_id", flat=True
-        )
-        return ActionManageMixin.remove(
-            action_class=NewInstructorAction,
-            logger=logger,
-            scheduler=scheduler,
-            connection=redis_connection,
-            jobs=jobs,
-            object_=task,
-            request=self.request,
         )
 
     def post(self, request, *args, **kwargs):
@@ -513,14 +474,14 @@ class InstructorRecruitmentSignupChangeState(
 
 class InstructorRecruitmentChangeState(
     OnlyForAdminsMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     FormMixin,
     PermissionRequiredMixin,
     View,
 ):
     """POST requests for editing (e.g. closing) the instructor recruitment."""
 
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     form_class = InstructorRecruitmentChangeStateForm
     permission_required = "recruitment.change_instructorrecruitment"
 
@@ -564,55 +525,14 @@ class InstructorRecruitmentChangeState(
                 self.request,
                 f"Successfully closed recruitment {self.object}.",
             )
-            self.send_introduction_email(self.object.event, self.object)
-            self.send_thank_you_to_declined(self.object)
+
+            run_host_instructors_introduction_strategy(
+                host_instructors_introduction_strategy(self.object.event),
+                self.request,
+                self.object.event,
+            )
 
         return HttpResponseRedirect(self.get_success_url())
-
-    def send_introduction_email(
-        self, event: Event, recruitment: InstructorRecruitment
-    ) -> None:
-        if InstructorsHostIntroductionAction.check(event):
-            triggers = Trigger.objects.filter(
-                active=True, action="instructors-host-introduction"
-            )
-            ActionManageMixin.add(
-                action_class=InstructorsHostIntroductionAction,
-                logger=logger,
-                scheduler=scheduler,
-                triggers=triggers,
-                context_objects=dict(event=event, recruitment=recruitment),
-                object_=event,
-                request=self.request,
-            )
-        else:
-            messages.warning(
-                self.request,
-                "Instructors-Host introduction email was not sent due to "
-                "unmet conditions.",
-            )
-
-    def send_thank_you_to_declined(self, recruitment: InstructorRecruitment) -> None:
-        declined_instructor_signups = recruitment.signups.filter(state="d")
-        triggers = Trigger.objects.filter(
-            active=True, action=DeclinedInstructorsAction.trigger_name
-        )
-
-        for signup in declined_instructor_signups:
-            if DeclinedInstructorsAction.check(signup):
-                ActionManageMixin.add(
-                    action_class=DeclinedInstructorsAction,
-                    logger=logger,
-                    scheduler=scheduler,
-                    triggers=triggers,
-                    context_objects=dict(
-                        recruitment=recruitment,
-                        event=recruitment.event,
-                        person=signup.person,
-                    ),
-                    object_=signup,
-                    request=self.request,
-                )
 
     @staticmethod
     def _validate_for_reopening(recruitment: InstructorRecruitment) -> bool:
@@ -632,6 +552,12 @@ class InstructorRecruitmentChangeState(
             self.object.save()
             messages.success(
                 self.request, f"Successfully re-opened recruitment {self.object}."
+            )
+
+            run_host_instructors_introduction_strategy(
+                host_instructors_introduction_strategy(self.object.event),
+                self.request,
+                self.object.event,
             )
 
         return HttpResponseRedirect(self.get_success_url())
@@ -668,10 +594,10 @@ class InstructorRecruitmentSignupUpdate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    RecruitmentEnabledMixin,
-    ConditionallyEnabledMixin,
+    FlaggedViewMixin,
     AMYUpdateView,
 ):
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.change_instructorrecruitmentsignup"
     form_class = InstructorRecruitmentSignupUpdateForm
     model = InstructorRecruitmentSignup

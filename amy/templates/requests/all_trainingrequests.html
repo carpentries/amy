@@ -61,7 +61,7 @@
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
             &lt;{{ req.email|urlize }}&gt;
           </td>
-          <td>{{ req.group_name|default:"—" }}</td>
+          <td>{{ req.member_code|default:"—" }}</td>
           <td>
             {{ req.affiliation|default:"—" }}
             {% if req.person %}
@@ -122,8 +122,8 @@
 
     <div class="btn-group" role="group" aria-label="Actions for list of training requests">
       <a class="btn btn-info" bulk-email-on-click>Mail selected</a>
-      <a class="btn btn-secondary" href="{% url 'api:training-requests' %}?format=csv&" amy-download-selected>Download selected</a>
-      <a class="btn btn-dark" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1" amy-download-selected>Download selected for bulk manual scoring</a>
+      <a class="btn btn-secondary" href="{% url 'api-v1:training-requests' %}?format=csv&" amy-download-selected>Download selected</a>
+      <a class="btn btn-dark" href="{% url 'api-v1:training-requests' %}?format=csv2&manualscore=1" amy-download-selected>Download selected for bulk manual scoring</a>
     </div>
 
     <hr>
