@@ -128,6 +128,7 @@ ScheduledEmailStatusActions = {
     "edit": [
         ScheduledEmailStatus.SCHEDULED,
         ScheduledEmailStatus.FAILED,
+        ScheduledEmailStatus.CANCELLED,
     ],
     "reschedule": [
         ScheduledEmailStatus.SCHEDULED,
