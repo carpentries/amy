@@ -483,6 +483,15 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write('Added "{}" organization.'.format(domain))
 
+    def fake_membership_person_roles(self):
+        self.stdout.write("Generating fake membership person roles...")
+        MemberRole.objects.create(
+            name="billing_contact", verbose_name="Billing Contact"
+        )
+        MemberRole.objects.create(
+            name="programmatic_contact", verbose_name="Programmatic Contact"
+        )
+
     def fake_memberships(self, count=10):
         self.stdout.write("Generating {} fake memberships...".format(count))
 
@@ -1003,6 +1012,7 @@ class Command(BaseCommand):
             self.fake_admins()
             self.fake_organizations()
             self.real_organizations()
+            self.fake_membership_person_roles()
             self.fake_memberships()
             self.fake_current_events()
             self.fake_unpublished_events()
