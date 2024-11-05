@@ -544,6 +544,7 @@ class MembershipCreateRollOver(
     permission_required = ["workshops.create_membership", "workshops.change_membership"]
     template_name = "generic_form.html"
     model = Membership
+    object: Membership
     form_class = MembershipRollOverForm
     pk_url_kwarg = "membership_id"
     success_message = (
@@ -643,6 +644,18 @@ class MembershipCreateRollOver(
                     MembershipTask(membership=self.object, person=m.person, role=m.role)
                     for m in self.membership.membershiptask_set.all()
                 ]
+            )
+
+        try:
+            run_new_membership_onboarding_strategy(
+                new_membership_onboarding_strategy(self.object),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
             )
 
         return result

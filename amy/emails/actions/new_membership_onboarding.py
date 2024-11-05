@@ -52,20 +52,13 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     log_condition_elements(
         **{
             "membership.pk": membership.pk,
-            "membership.rolled_from_membership": getattr(
-                membership, "rolled_from_membership", None
-            ),
             "task_count": task_count,
         }
     )
 
     # Membership can't be removed without removing the tasks first. This is when the
     # email would be de-scheduled.
-    email_should_exist = (
-        membership.pk
-        and getattr(membership, "rolled_from_membership", None) is None
-        and task_count
-    )
+    email_should_exist = bool(membership.pk and task_count)
 
     if not email_scheduled and email_should_exist:
         result = StrategyEnum.CREATE
