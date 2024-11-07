@@ -18,7 +18,11 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
         self.event = Event.objects.create(
-            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
+            slug="test-event",
+            host=host,
+            administrator=host,
+            start=date(2024, 8, 5),
+            end=date(2024, 8, 5),
         )
         swc_tag = Tag.objects.create(name="SWC")
         self.event.tags.set([swc_tag])
