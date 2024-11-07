@@ -41,15 +41,23 @@ def instructor_confirmed_for_workshop_strategy(task: Task) -> StrategyEnum:
     carpentries_tags = task.event.tags.filter(
         name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
     ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
+    centrally_organised = (
+        task.event.administrator and task.event.administrator.domain != "self-organized"
+    )
 
     log_condition_elements(
         instructor_role=instructor_role,
         person_email_exists=person_email_exists,
         carpentries_tags=carpentries_tags,
+        centrally_organised=centrally_organised,
     )
 
     email_should_exist = (
-        task.pk and instructor_role and person_email_exists and carpentries_tags
+        task.pk
+        and instructor_role
+        and person_email_exists
+        and carpentries_tags
+        and centrally_organised
     )
     logger.debug(f"{email_should_exist=}")
 
