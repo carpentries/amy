@@ -27,6 +27,7 @@ class InstructorBadgeAwardedKwargs(TypedDict):
 class InstructorBadgeAwardedContext(TypedDict):
     person: Person
     award: Award | None
+    award_id: int
 
 
 class InstructorConfirmedKwargs(TypedDict):

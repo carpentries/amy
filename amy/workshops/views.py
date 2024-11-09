@@ -2025,7 +2025,7 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
         person = self._person
         try:
             run_instructor_badge_awarded_strategy(
-                instructor_badge_awarded_strategy(award, person),
+                instructor_badge_awarded_strategy(award, person, award_pk),
                 request=self.request,
                 person=person,
                 award_id=award_pk,
