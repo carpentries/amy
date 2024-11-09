@@ -84,7 +84,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.task,
         )
 
         # Act
@@ -97,6 +97,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
                 task=self.task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
+                task_id=self.task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )
@@ -125,7 +126,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.task,
         )
 
         # Act
@@ -138,6 +139,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
                 task=self.task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
+                task_id=self.task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )
@@ -164,7 +166,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.task,
         )
         scheduled_email2 = ScheduledEmail.objects.create(
             template=template,
@@ -173,7 +175,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.task,
         )
 
         # Act
@@ -186,6 +188,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
                 task=self.task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
+                task_id=self.task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )
@@ -267,6 +270,7 @@ class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
                 task=task,
                 person_id=task.person.pk,
                 event_id=task.event.pk,
+                task_id=task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )

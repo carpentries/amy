@@ -431,6 +431,7 @@ class InstructorRecruitmentSignupChangeState(
             request=request,
             person_id=person.pk,
             event_id=event.pk,
+            task_id=task.pk,
             instructor_recruitment_id=signup.recruitment.pk,
             instructor_recruitment_signup_id=signup.pk,
         )

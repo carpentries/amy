@@ -18,6 +18,7 @@ from api.v2.serializers import (
     ScheduledEmailLogDetailsSerializer,
     ScheduledEmailSerializer,
     SelfOrganisedSubmissionSerializer,
+    TaskSerializer,
     TrainingProgressSerializer,
     TrainingRequirementSerializer,
 )
@@ -31,6 +32,7 @@ from workshops.models import (
     Membership,
     Organization,
     Person,
+    Task,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -232,6 +234,24 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
             email, serializer.validated_data["details"], request.user
         )
         return Response(self.get_serializer(locked_email).data)
+
+
+class TaskViewSet(viewsets.ReadOnlyModelViewSet):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = (
+        Task.objects.select_related("person", "event", "role", "seat_membership")
+        .order_by("pk")
+        .all()
+    )
+    serializer_class = TaskSerializer
+    pagination_class = StandardResultsSetPagination
 
 
 class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):

@@ -208,6 +208,16 @@ class BaseActionCancel(BaseAction):
     def get_scheduled_at(self, **kwargs) -> datetime:
         raise NotImplementedError()
 
+    def get_generic_relation_content_type(
+        self, context: dict[str, Any], generic_relation_obj: Any
+    ) -> ContentType:
+        return ContentType.objects.get_for_model(generic_relation_obj)
+
+    def get_generic_relation_pk(
+        self, context: dict[str, Any], generic_relation_obj: Any
+    ) -> int | Any:
+        return generic_relation_obj.pk
+
     def __call__(self, sender: Any, **kwargs) -> None:
         if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_cancel", **kwargs):
             return
@@ -220,10 +230,15 @@ class BaseActionCancel(BaseAction):
         generic_relation_obj = self.get_generic_relation_object(context, **kwargs)
         signal_name = self.signal
 
-        ct = ContentType.objects.get_for_model(generic_relation_obj)
+        generic_relation_ct = self.get_generic_relation_content_type(
+            context, generic_relation_obj
+        )
+        generic_relation_pk = self.get_generic_relation_pk(
+            context, generic_relation_obj
+        )
         scheduled_emails = ScheduledEmail.objects.filter(
-            generic_relation_content_type=ct,
-            generic_relation_pk=generic_relation_obj.pk,
+            generic_relation_content_type=generic_relation_ct,
+            generic_relation_pk=generic_relation_pk,
             template__signal=signal_name,
             state=ScheduledEmailStatus.SCHEDULED,
         ).select_for_update()

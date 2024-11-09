@@ -59,7 +59,7 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.task,
         )
 
         # Act
@@ -89,7 +89,7 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.task,
         )
 
         # Act

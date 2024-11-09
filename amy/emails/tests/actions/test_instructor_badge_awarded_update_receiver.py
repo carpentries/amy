@@ -12,7 +12,7 @@ from emails.signals import (
     INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
     instructor_badge_awarded_update_signal,
 )
-from emails.utils import api_model_url
+from emails.utils import api_model_url, scalar_value_url
 from workshops.models import Award, Badge, Person
 from workshops.tests.base import TestBase
 
@@ -75,7 +75,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
 
         # Act
@@ -115,7 +115,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
         scheduled_at = datetime(2023, 8, 5, 12, 0, tzinfo=UTC)
         mock_immediate_action.return_value = scheduled_at
@@ -138,6 +138,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
                 {
                     "person": api_model_url("person", self.person.pk),
                     "award": api_model_url("award", self.award.pk),
+                    "award_id": scalar_value_url("int", self.award.pk),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -150,7 +151,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
                     },  # type: ignore
                 ]
             ),
-            generic_relation_obj=self.person,
+            generic_relation_obj=self.award,
             author=None,
         )
 
@@ -164,7 +165,6 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         request = RequestFactory().get("/")
         signal = INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME
         award = self.award
-        person = award.person
 
         # Act
         instructor_badge_awarded_update_signal.send(
@@ -177,7 +177,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={person!r} "
+            f"Scheduled email for signal {signal} and generic_relation_obj={award!r} "
             "does not exist."
         )
 
@@ -198,7 +198,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
         ScheduledEmail.objects.create(
             template=template,
@@ -207,7 +207,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
         award = self.award
 
@@ -223,7 +223,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
             f"Too many scheduled emails for signal {signal} and "
-            f"generic_relation_obj={award.person!r}. Can't update them."
+            f"generic_relation_obj={award!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -241,7 +241,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
         signal = INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME
         self.person.email = ""
