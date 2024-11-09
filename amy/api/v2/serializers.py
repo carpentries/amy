@@ -10,6 +10,7 @@ from workshops.models import (
     Organization,
     Person,
     TagQuerySet,
+    Task,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -289,6 +290,26 @@ class ScheduledEmailSerializer(serializers.ModelSerializer):
 
 class ScheduledEmailLogDetailsSerializer(serializers.Serializer):
     details = serializers.CharField(max_length=MAX_LENGTH)
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
+    person = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    role = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    seat_membership = serializers.SlugRelatedField(read_only=True, slug_field="name")
+
+    class Meta:
+        model = Task
+        fields = (
+            "event",
+            "person",
+            "role",
+            "title",
+            "url",
+            "seat_membership",
+            "seat_public",
+            "seat_open_training",
+        )
 
 
 class TrainingProgressSerializer(serializers.ModelSerializer):

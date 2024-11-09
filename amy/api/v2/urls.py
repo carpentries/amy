@@ -13,6 +13,7 @@ router.register("instructorrecruitmentsignup", views.InstructorRecruitmentSignup
 router.register("membership", views.MembershipViewSet)
 router.register("person", views.PersonViewSet)
 router.register("scheduledemail", views.ScheduledEmailViewSet)
+router.register("task", views.TaskViewSet)
 router.register("trainingprogress", views.TrainingProgressViewSet)
 router.register("trainingrequirement", views.TrainingRequirementViewSet)
 router.register("selforganisedsubmission", views.SelfOrganisedSubmissionViewSet)
