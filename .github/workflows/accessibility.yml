@@ -16,14 +16,14 @@ jobs:
         # pa11y runs faster and produces smaller artifacts
         # lighthouse includes performance tests and other checks for non-a11y best practices
         # for now, just use pa11y as we focus on improving a11y specifically
-        package: ["pa11y"] 
+        package: ["pa11y"]
       fail-fast: false # don't cancel lighthouse job if pa11y fails, and vice versa
     env:
       AMY_DATABASE_HOST: localhost
       AMY_DATABASE_PORT: 5432
       AMY_DATABASE_NAME: test_amy
       AMY_DATABASE_USER: postgres
-      AMY_DATABASE_PASSWORD: postgres  
+      AMY_DATABASE_PASSWORD: postgres
       AMY_INSTRUCTOR_RECRUITMENT_ENABLED: True
 
     services:
@@ -40,7 +40,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
     steps:
 
       # Database setup
@@ -94,7 +94,7 @@ jobs:
 
       - name: run Lighthouse CI
         run: |
-          npm install -g @lhci/cli@0.12.x 
+          npm install -g @lhci/cli@0.12.x
           npm install -g puppeteer
           lhci autorun
         env:
@@ -109,7 +109,7 @@ jobs:
         if: matrix.package == 'lighthouse'
 
       # Pa11y
-      
+
       - name: Start server in background
         run: |
           pipenv run make serve &
@@ -123,7 +123,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload pa11y test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pa11y-ci-report
           path: pa11y-ci-report/
