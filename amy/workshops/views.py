@@ -719,6 +719,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 task=task,
                 person_id=self.object.pk,
                 event_id=task.event.pk,
+                task_id=task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )
@@ -1745,6 +1746,7 @@ class TaskCreate(
             task=self.object,
             person_id=self.object.person.pk,
             event_id=event.pk,
+            task_id=self.object.pk,
             instructor_recruitment_id=None,
             instructor_recruitment_signup_id=None,
         )
@@ -1831,6 +1833,7 @@ class TaskUpdate(
             task=self.object,
             person_id=self.object.person.pk,
             event_id=self.object.event.pk,
+            task_id=self.object.pk,
             instructor_recruitment_id=None,
             instructor_recruitment_signup_id=None,
         )
@@ -1852,6 +1855,7 @@ class TaskDelete(
 
     def before_delete(self, *args, **kwargs):
         self.old: Task = cast(Task, self.get_object())
+        self.old_pk = self.old.pk
         self.event = self.old.event
 
     def after_delete(self, *args, **kwargs):
@@ -1886,11 +1890,12 @@ class TaskDelete(
         )
 
         run_instructor_confirmed_for_workshop_strategy(
-            instructor_confirmed_for_workshop_strategy(self.object),
+            instructor_confirmed_for_workshop_strategy(self.object, self.old_pk),
             self.request,
             task=self.old,
             person_id=self.object.person.pk,
             event_id=self.event.pk,
+            task_id=self.old_pk,
             instructor_recruitment_id=None,
             instructor_recruitment_signup_id=None,
         )

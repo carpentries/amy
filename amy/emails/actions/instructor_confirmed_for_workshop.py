@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
@@ -26,6 +27,7 @@ from emails.utils import (
     immediate_action,
     log_condition_elements,
     scalar_value_none,
+    scalar_value_url,
 )
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import Event, Person, TagQuerySet, Task
@@ -33,7 +35,9 @@ from workshops.models import Event, Person, TagQuerySet, Task
 logger = logging.getLogger("amy")
 
 
-def instructor_confirmed_for_workshop_strategy(task: Task) -> StrategyEnum:
+def instructor_confirmed_for_workshop_strategy(
+    task: Task, optional_task_pk: int | None = None
+) -> StrategyEnum:
     logger.info(f"Running InstructorConfirmedForWorkshop strategy for {task=}")
 
     instructor_role = task.role.name == "instructor"
@@ -46,6 +50,9 @@ def instructor_confirmed_for_workshop_strategy(task: Task) -> StrategyEnum:
     )
 
     log_condition_elements(
+        task=task,
+        task_pk=task.pk,
+        optional_task_pk=optional_task_pk,
         instructor_role=instructor_role,
         person_email_exists=person_email_exists,
         carpentries_tags=carpentries_tags,
@@ -61,10 +68,10 @@ def instructor_confirmed_for_workshop_strategy(task: Task) -> StrategyEnum:
     )
     logger.debug(f"{email_should_exist=}")
 
-    ct = ContentType.objects.get_for_model(task.person)  # type: ignore
+    ct = ContentType.objects.get_for_model(Task)  # type: ignore
     has_email_scheduled = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
-        generic_relation_pk=task.person.pk,
+        generic_relation_pk=optional_task_pk or task.pk,
         template__signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
         state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
@@ -111,22 +118,28 @@ def get_context(
 ) -> InstructorConfirmedContext:
     person = Person.objects.get(pk=kwargs["person_id"])
     event = Event.objects.get(pk=kwargs["event_id"])
+    task = Task.objects.filter(pk=kwargs["task_id"]).first()
     instructor_recruitment_signup = InstructorRecruitmentSignup.objects.filter(
         pk=kwargs["instructor_recruitment_signup_id"]
     ).first()
     return {
         "person": person,
         "event": event,
+        "task": task,
+        "task_id": kwargs["task_id"],
         "instructor_recruitment_signup": instructor_recruitment_signup,
     }
 
 
 def get_context_json(context: InstructorConfirmedContext) -> ContextModel:
     signup = context["instructor_recruitment_signup"]
+    task = context["task"]
     return ContextModel(
         {
             "person": api_model_url("person", context["person"].pk),
             "event": api_model_url("event", context["event"].pk),
+            "task": api_model_url("task", task.pk) if task else scalar_value_none(),
+            "task_id": scalar_value_url("int", f"{context['task_id']}"),
             "instructor_recruitment_signup": (
                 api_model_url(
                     "instructorrecruitmentsignup",
@@ -141,8 +154,9 @@ def get_context_json(context: InstructorConfirmedContext) -> ContextModel:
 
 def get_generic_relation_object(
     context: InstructorConfirmedContext, **kwargs: Unpack[InstructorConfirmedKwargs]
-) -> Person:
-    return context["person"]
+) -> Task:
+    # When removing task, this will be None.
+    return context["task"]  # type: ignore
 
 
 def get_recipients(
@@ -184,7 +198,7 @@ class InstructorConfirmedForWorkshopReceiver(BaseAction):
         self,
         context: InstructorConfirmedContext,
         **kwargs: Unpack[InstructorConfirmedKwargs],
-    ) -> Person:
+    ) -> Task:
         return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
@@ -220,7 +234,7 @@ class InstructorConfirmedForWorkshopUpdateReceiver(BaseActionUpdate):
         self,
         context: InstructorConfirmedContext,
         **kwargs: Unpack[InstructorConfirmedKwargs],
-    ) -> Person:
+    ) -> Task:
         return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
@@ -249,11 +263,21 @@ class InstructorConfirmedForWorkshopCancelReceiver(BaseActionCancel):
     def get_context_json(self, context: InstructorConfirmedContext) -> ContextModel:
         return get_context_json(context)
 
+    def get_generic_relation_content_type(
+        self, context: InstructorConfirmedContext, generic_relation_obj: Any
+    ) -> ContentType:
+        return ContentType.objects.get_for_model(Task)
+
+    def get_generic_relation_pk(
+        self, context: InstructorConfirmedContext, generic_relation_obj: Any
+    ) -> int | Any:
+        return context["task_id"]
+
     def get_generic_relation_object(
         self,
         context: InstructorConfirmedContext,
         **kwargs: Unpack[InstructorConfirmedKwargs],
-    ) -> Person:
+    ) -> Task:
         return get_generic_relation_object(context, **kwargs)
 
     def get_recipients_context_json(
