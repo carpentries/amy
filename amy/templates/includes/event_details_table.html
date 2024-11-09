@@ -81,6 +81,16 @@
     </td>
   </tr>
   <tr>
+    <th>Related scheduled emails for tasks:</th>
+    <td colspan="2">
+      {% for task in tasks %}
+      {% include "includes/related_scheduled_emails_no_empty_msg.html" with object=task %}
+      {% empty %}
+      &mdash;
+      {% endfor %}
+    </td>
+  </tr>
+  <tr>
     <th>Related scheduled emails for recruitments:</th>
     <td colspan="2">
       {% with signups=related_instructor_recruitment_signups %}
