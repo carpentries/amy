@@ -12,6 +12,20 @@ $ python docs/generate_changelog.py v4.1
 Then paste output from that script here.
 
 -----------------------------------------------------------------
+## v4.4 - 2024-11-10
+
+### Bugfixes
+* [Emails] Change related object to Task in Instructor Confirmed for Workshop and to Award in Instructor Badge Awarded - [#2720](https://github.com/carpentries/amy/pull/2720) by @pbanaszkiewicz
+
+### Features
+* [Emails] Change email scheduled condition in some strategies - [#2722](https://github.com/carpentries/amy/pull/2722) by @pbanaszkiewicz
+* [Emails] Limit instructor confirmed for workshop email - [#2718](https://github.com/carpentries/amy/pull/2718) by @pbanaszkiewicz
+* [Emails] Enable membership onboarding email for membership rollovers - [#2715](https://github.com/carpentries/amy/pull/2715) by @pbanaszkiewicz
+* [Emails] Remove RQ Jobs listings from event and task detail pages - [#2714](https://github.com/carpentries/amy/pull/2714) by @pbanaszkiewicz
+* Bump waitress from 3.0.0 to 3.0.1 - [#2712](https://github.com/carpentries/amy/pull/2712) by @dependabot[bot]
+* [Emails] Allow editing cancelled emails - [#2711](https://github.com/carpentries/amy/pull/2711) by @pbanaszkiewicz
+
+
 ## v4.3 - 2024-10-26
 
 ### Bugfixes
