@@ -517,7 +517,7 @@ class TestScheduledEmailUpdate(TestBase):
                 for state in [
                     ScheduledEmailStatus.LOCKED,
                     ScheduledEmailStatus.RUNNING,
-                    ScheduledEmailStatus.CANCELLED,
+                    ScheduledEmailStatus.SUCCEEDED,
                 ]
             ]
         )
