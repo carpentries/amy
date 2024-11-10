@@ -15,7 +15,7 @@ from emails.signals import (
     INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
     instructor_confirmed_for_workshop_update_signal,
 )
-from emails.utils import api_model_url, scalar_value_none
+from emails.utils import api_model_url, scalar_value_none, scalar_value_url
 from workshops.forms import PersonForm
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
@@ -80,6 +80,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         request = RequestFactory().get("/")
 
         template = self.setUpEmailTemplate()
+        task = self.task
         ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -87,7 +88,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=task,
         )
 
         # Act
@@ -95,11 +96,12 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             "emails.actions.base_action.messages_action_updated"
         ) as mock_messages_action_updated:
             instructor_confirmed_for_workshop_update_signal.send(
-                sender=self.task,
+                sender=task,
                 request=request,
-                task=self.task,
+                task=task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
+                task_id=task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )
@@ -123,6 +125,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
+        task = self.task
         scheduled_email = ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -130,7 +133,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=task,
         )
         scheduled_at = datetime(2024, 8, 5, 12, 0, tzinfo=UTC)
         mock_immediate_action.return_value = scheduled_at
@@ -145,6 +148,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
                 task=self.task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
+                task_id=task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )
@@ -156,6 +160,8 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
                 {
                     "person": api_model_url("person", self.person.pk),
                     "event": api_model_url("event", self.event.pk),
+                    "task": api_model_url("task", task.pk),
+                    "task_id": scalar_value_url("int", task.pk),
                     "instructor_recruitment_signup": scalar_value_none(),
                 }
             ),
@@ -169,7 +175,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
                     },  # type: ignore
                 ]
             ),
-            generic_relation_obj=self.person,
+            generic_relation_obj=task,
             author=None,
         )
 
@@ -182,15 +188,16 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         # Arrange
         request = RequestFactory().get("/")
         signal = INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME
-        person = self.person
+        task = self.task
 
         # Act
         instructor_confirmed_for_workshop_update_signal.send(
-            sender=self.task,
+            sender=task,
             request=request,
-            task=self.task,
-            person_id=person.pk,
+            task=task,
+            person_id=self.person.pk,
             event_id=self.event.pk,
+            task_id=task.pk,
             instructor_recruitment_id=None,
             instructor_recruitment_signup_id=None,
         )
@@ -198,7 +205,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={person!r} "
+            f"Scheduled email for signal {signal} and generic_relation_obj={task!r} "
             "does not exist."
         )
 
@@ -212,6 +219,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         request = RequestFactory().get("/")
         signal = INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME
         template = self.setUpEmailTemplate()
+        task = self.task
         ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -219,7 +227,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=task,
         )
         ScheduledEmail.objects.create(
             template=template,
@@ -228,17 +236,17 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=task,
         )
-        person = self.person
 
         # Act
         instructor_confirmed_for_workshop_update_signal.send(
-            sender=self.task,
+            sender=task,
             request=request,
-            task=self.task,
+            task=task,
             person_id=self.person.pk,
             event_id=self.event.pk,
+            task_id=task.pk,
             instructor_recruitment_id=None,
             instructor_recruitment_signup_id=None,
         )
@@ -247,7 +255,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
             f"Too many scheduled emails for signal {signal} and "
-            f"generic_relation_obj={person!r}. Can't update them."
+            f"generic_relation_obj={task!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -258,6 +266,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
+        task = self.task
         ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -265,7 +274,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=task,
         )
         signal = INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME
         self.person.email = ""
@@ -273,11 +282,12 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
 
         # Act
         instructor_confirmed_for_workshop_update_signal.send(
-            sender=self.task,
+            sender=task,
             request=request,
-            task=self.task,
+            task=task,
             person_id=self.person.pk,
             event_id=self.event.pk,
+            task_id=task.pk,
             instructor_recruitment_id=None,
             instructor_recruitment_signup_id=None,
         )
@@ -348,6 +358,7 @@ class TestInstructorConfirmedForWorkshopUpdateIntegration(TestBase):
                 task=task,
                 person_id=task.person.pk,
                 event_id=task.event.pk,
+                task_id=task.pk,
                 instructor_recruitment_id=None,
                 instructor_recruitment_signup_id=None,
             )

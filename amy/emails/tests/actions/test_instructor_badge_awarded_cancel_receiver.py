@@ -76,7 +76,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
 
         # Act
@@ -114,7 +114,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
 
         # Act
@@ -150,7 +150,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
         scheduled_email2 = ScheduledEmail.objects.create(
             template=template,
@@ -159,7 +159,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=self.award,
         )
 
         # Act

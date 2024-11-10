@@ -33,4 +33,4 @@ class TestAllowedActionsForStatusTag(TestCase):
         result2 = allowed_actions_for_status(ScheduledEmailStatus.CANCELLED)
         # Assert
         self.assertEqual(result1, [])
-        self.assertEqual(result2, ["reschedule"])
+        self.assertEqual(result2, ["edit", "reschedule"])

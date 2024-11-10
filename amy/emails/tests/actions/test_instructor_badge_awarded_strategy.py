@@ -48,7 +48,7 @@ class TestInstructorBadgeAwardedStrategy(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=award.person,
+            generic_relation=award,
         )
 
         # Act
@@ -60,6 +60,7 @@ class TestInstructorBadgeAwardedStrategy(TestCase):
     def test_strategy_cancel(self) -> None:
         # Arrange
         # Award intentionally not created
+        award = Award.objects.create(badge=self.badge, person=self.person)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
             signal=INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
@@ -76,11 +77,15 @@ class TestInstructorBadgeAwardedStrategy(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.person,
+            generic_relation=award,
         )
+        award_pk = award.pk
+        award.delete()
 
         # Act
-        result = instructor_badge_awarded_strategy(award=None, person=self.person)
+        result = instructor_badge_awarded_strategy(
+            award=None, person=self.person, optional_award_pk=award_pk
+        )
 
         # Assert
         self.assertEqual(result, StrategyEnum.CANCEL)

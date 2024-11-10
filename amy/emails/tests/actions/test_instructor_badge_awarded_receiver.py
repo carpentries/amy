@@ -8,7 +8,7 @@ from emails.actions import instructor_badge_awarded_receiver
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_badge_awarded_signal
-from emails.utils import api_model_url
+from emails.utils import api_model_url, scalar_value_url
 from workshops.models import Award, Badge, Person
 from workshops.tests.base import TestBase
 
@@ -111,6 +111,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
                 {
                     "person": api_model_url("person", person.pk),
                     "award": api_model_url("award", award.pk),
+                    "award_id": scalar_value_url("int", award.pk),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -123,7 +124,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
                     }  # type: ignore
                 ]
             ),
-            generic_relation_obj=person,
+            generic_relation_obj=award,
             author=None,
         )
 

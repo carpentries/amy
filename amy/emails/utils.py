@@ -23,6 +23,7 @@ from api.v2.serializers import (
     OrganizationSerializer,
     PersonSerializer,
     SelfOrganisedSubmissionSerializer,
+    TaskSerializer,
     TrainingProgressSerializer,
     TrainingRequirementSerializer,
 )
@@ -36,6 +37,7 @@ from workshops.models import (
     Membership,
     Organization,
     Person,
+    Task,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -265,6 +267,7 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
         Membership: MembershipSerializer,
         Person: PersonSerializer,
         ScheduledEmail: ScheduledEmailSerializer,
+        Task: TaskSerializer,
         TrainingProgress: TrainingProgressSerializer,
         TrainingRequirement: TrainingRequirementSerializer,
         SelfOrganisedSubmission: SelfOrganisedSubmissionSerializer,
