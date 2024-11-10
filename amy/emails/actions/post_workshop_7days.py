@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
-from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.models import ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     POST_WORKSHOP_7DAYS_SIGNAL_NAME,
@@ -57,7 +57,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         at_least_1_instructor=at_least_1_instructor,
     )
 
-    email_should_exist = (
+    email_exists = (
         not_self_organised
         and not_cldt
         and end_date_in_future
@@ -66,22 +66,21 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         and at_least_1_host
         and at_least_1_instructor
     )
-    logger.debug(f"{email_should_exist=}")
+    logger.debug(f"{email_exists=}")
 
     ct = ContentType.objects.get_for_model(event)  # type: ignore
     has_email_scheduled = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
         template__signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
-        state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
     logger.debug(f"{has_email_scheduled=}")
 
-    if not has_email_scheduled and email_should_exist:
+    if not has_email_scheduled and email_exists:
         result = StrategyEnum.CREATE
-    elif has_email_scheduled and not email_should_exist:
+    elif has_email_scheduled and not email_exists:
         result = StrategyEnum.CANCEL
-    elif has_email_scheduled and email_should_exist:
+    elif has_email_scheduled and email_exists:
         result = StrategyEnum.UPDATE
     else:
         result = StrategyEnum.NOOP

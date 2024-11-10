@@ -7,7 +7,7 @@ from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
-from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.models import ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
@@ -39,11 +39,10 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     logger.info(f"Running NewMembershipOnboarding strategy for {membership}")
 
     ct = ContentType.objects.get_for_model(membership)  # type: ignore
-    email_scheduled = ScheduledEmail.objects.filter(
+    email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=membership.pk,
         template__signal=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
-        state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
     task_count = MembershipTask.objects.filter(
         membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
@@ -60,11 +59,11 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     # email would be de-scheduled.
     email_should_exist = bool(membership.pk and task_count)
 
-    if not email_scheduled and email_should_exist:
+    if not email_exists and email_should_exist:
         result = StrategyEnum.CREATE
-    elif email_scheduled and not email_should_exist:
+    elif email_exists and not email_should_exist:
         result = StrategyEnum.CANCEL
-    elif email_scheduled and email_should_exist:
+    elif email_exists and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
         result = StrategyEnum.NOOP
