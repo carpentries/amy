@@ -8,7 +8,7 @@ from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
-from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.models import ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
@@ -68,20 +68,19 @@ def instructor_confirmed_for_workshop_strategy(
     )
     logger.debug(f"{email_should_exist=}")
 
-    ct = ContentType.objects.get_for_model(Task)  # type: ignore
-    has_email_scheduled = ScheduledEmail.objects.filter(
+    ct = ContentType.objects.get_for_model(Task)
+    email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=optional_task_pk or task.pk,
         template__signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
-        state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
-    logger.debug(f"{has_email_scheduled=}")
+    logger.debug(f"{email_exists=}")
 
-    if not has_email_scheduled and email_should_exist:
+    if not email_exists and email_should_exist:
         result = StrategyEnum.CREATE
-    elif has_email_scheduled and not email_should_exist:
+    elif email_exists and not email_should_exist:
         result = StrategyEnum.CANCEL
-    elif has_email_scheduled and email_should_exist:
+    elif email_exists and email_should_exist:
         result = StrategyEnum.UPDATE
     else:
         result = StrategyEnum.NOOP
