@@ -1,7 +1,8 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
+from django.utils import timezone
 
 from emails.actions.exceptions import EmailStrategyException
 from emails.actions.instructor_confirmed_for_workshop import (
@@ -21,8 +22,8 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
             slug="test-event",
             host=host,
             administrator=host,
-            start=date(2024, 8, 5),
-            end=date(2024, 8, 5),
+            start=timezone.now().date() + timedelta(days=2),
+            end=timezone.now().date() + timedelta(days=3),
         )
         swc_tag = Tag.objects.create(name="SWC")
         self.event.tags.set([swc_tag])

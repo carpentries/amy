@@ -4,6 +4,7 @@ from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
+from django.utils import timezone
 from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
@@ -48,6 +49,9 @@ def instructor_confirmed_for_workshop_strategy(
     centrally_organised = (
         task.event.administrator and task.event.administrator.domain != "self-organized"
     )
+    start_date_in_future = (
+        task.event.start and task.event.start >= timezone.now().date()
+    )
 
     log_condition_elements(
         task=task,
@@ -57,6 +61,7 @@ def instructor_confirmed_for_workshop_strategy(
         person_email_exists=person_email_exists,
         carpentries_tags=carpentries_tags,
         centrally_organised=centrally_organised,
+        start_date_in_future=start_date_in_future,
     )
 
     email_should_exist = (
@@ -65,6 +70,7 @@ def instructor_confirmed_for_workshop_strategy(
         and person_email_exists
         and carpentries_tags
         and centrally_organised
+        and start_date_in_future
     )
     logger.debug(f"{email_should_exist=}")
 
