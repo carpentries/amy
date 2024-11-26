@@ -338,6 +338,12 @@ class SignupForRecruitmentForm(forms.ModelForm):
         except CommunityRole.DoesNotExist:
             raise ValidationError("You don't have an active Instructor Community Role")
 
+        signups_exist = self.recruitment.signups.filter(  # type: ignore
+            person=self.person
+        ).exists()
+        if signups_exist:
+            raise ValidationError("You are already signed up for this recruitment")
+
         # Check if user has any instructor roles for events taking place at the same
         # time of this event.
         event: Event = self.recruitment.event
