@@ -30,6 +30,10 @@ class InstructorRecruitmentAddSignupForm(forms.ModelForm):
         model = InstructorRecruitmentSignup
         fields = ("person", "notes")
 
+    def __init__(self, *args, **kwargs):
+        self._recruitment = kwargs.pop("recruitment", None)
+        super().__init__(*args, **kwargs)
+
     def clean_person(self) -> None:
         person = self.cleaned_data["person"]
 
@@ -43,6 +47,16 @@ class InstructorRecruitmentAddSignupForm(forms.ModelForm):
             raise ValidationError(
                 f"Person {person} does not have an active Instructor Community Role"
             )
+
+        if (
+            self._recruitment
+            and self._recruitment.signups.filter(person=person).exists()
+        ):
+            raise ValidationError(
+                f"Person {person} is already signed up for this recruitment"
+            )
+
+        return person
 
 
 class InstructorRecruitmentSignupUpdateForm(forms.ModelForm):
