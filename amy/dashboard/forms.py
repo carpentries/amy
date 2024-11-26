@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django_countries.fields import CountryField
 
+from communityroles.models import CommunityRole
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.fields import (
@@ -327,6 +328,15 @@ class SignupForRecruitmentForm(forms.ModelForm):
 
     def clean(self):
         super().clean()
+
+        try:
+            (
+                CommunityRole.objects.active().get(  # type: ignore
+                    person=self.person, config__name="instructor"
+                )
+            )
+        except CommunityRole.DoesNotExist:
+            raise ValidationError("You don't have an active Instructor Community Role")
 
         # Check if user has any instructor roles for events taking place at the same
         # time of this event.
