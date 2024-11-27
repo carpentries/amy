@@ -1,6 +1,6 @@
 from datetime import date
 import logging
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import unquote
 
 from django.contrib import messages
@@ -325,6 +325,11 @@ class InstructorRecruitmentAddSignup(
 
     def get_success_message(self, cleaned_data: dict[str, str]) -> str:
         return f"Added {cleaned_data['person']} to {self.object}"
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["recruitment"] = self.object
+        return kwargs
 
     def form_valid(self, form: InstructorRecruitmentAddSignupForm) -> HttpResponse:
         signup: InstructorRecruitmentSignup = form.save(commit=False)

@@ -484,6 +484,18 @@ class TestSignupForRecruitment(TestCase):
         )
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
 
+        config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            display_name="Instructor",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        CommunityRole.objects.create(
+            config=config,
+            person=person,
+        )
+
         request = RequestFactory().post("/")
         request.user = person
         view = SignupForRecruitment(

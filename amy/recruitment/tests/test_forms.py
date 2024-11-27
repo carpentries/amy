@@ -1,11 +1,7 @@
 from django.db.utils import IntegrityError
 from django.test import TestCase
 
-from communityroles.models import (
-    CommunityRole,
-    CommunityRoleConfig,
-    CommunityRoleInactivation,
-)
+from communityroles.models import CommunityRole, CommunityRoleConfig
 from recruitment.forms import (
     InstructorRecruitmentAddSignupForm,
     InstructorRecruitmentChangeStateForm,
@@ -57,11 +53,9 @@ class TestInstructorRecruitmentAddSignupForm(TestCase):
             link_to_membership=False,
             additional_url=False,
         )
-        inactivation = CommunityRoleInactivation.objects.create(name="inactivation")
         CommunityRole.objects.create(
             config=config,
             person=person,
-            inactivation=inactivation,
         )
         return person
 
