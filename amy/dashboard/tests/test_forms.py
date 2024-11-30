@@ -2,6 +2,7 @@ from datetime import date
 
 from django.test import TestCase
 
+from communityroles.models import CommunityRole, CommunityRoleConfig
 from dashboard.forms import GetInvolvedForm, SignupForRecruitmentForm
 from recruitment.models import InstructorRecruitment
 from trainings.models import Involvement
@@ -53,6 +54,17 @@ class TestSignupForRecruitmentForm(TestCase):
         person = Person.objects.create(
             personal="Test", family="User", email="test@user.com"
         )
+        config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            display_name="Instructor",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        CommunityRole.objects.create(
+            config=config,
+            person=person,
+        )
         event = Event.objects.create(slug="test-event", host=host)  # no dates
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
         data = {}
@@ -68,6 +80,17 @@ class TestSignupForRecruitmentForm(TestCase):
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(
             personal="Test", family="User", email="test@user.com"
+        )
+        config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            display_name="Instructor",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        CommunityRole.objects.create(
+            config=config,
+            person=person,
         )
         event = Event.objects.create(
             slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
@@ -86,6 +109,17 @@ class TestSignupForRecruitmentForm(TestCase):
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(
             personal="Test", family="User", email="test@user.com"
+        )
+        config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            display_name="Instructor",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        CommunityRole.objects.create(
+            config=config,
+            person=person,
         )
         event = Event.objects.create(
             slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)

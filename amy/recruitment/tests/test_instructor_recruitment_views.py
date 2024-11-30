@@ -7,11 +7,7 @@ from django.test import override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
 
-from communityroles.models import (
-    CommunityRole,
-    CommunityRoleConfig,
-    CommunityRoleInactivation,
-)
+from communityroles.models import CommunityRole, CommunityRoleConfig
 from emails.types import StrategyEnum
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
@@ -585,11 +581,9 @@ class TestInstructorRecruitmentAddSignup(TestBase):
             link_to_membership=False,
             additional_url=False,
         )
-        inactivation = CommunityRoleInactivation.objects.create(name="inactivation")
         CommunityRole.objects.create(
             config=config,
             person=person,
-            inactivation=inactivation,
         )
         notes = "Lorem ipsum"
         data = {"person": person.pk, "notes": notes}
