@@ -19,6 +19,7 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
+from fiscal.models import MembershipPersonRole
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.models import (
@@ -485,10 +486,10 @@ class Command(BaseCommand):
 
     def fake_membership_person_roles(self):
         self.stdout.write("Generating fake membership person roles...")
-        MemberRole.objects.create(
+        MembershipPersonRole.objects.create(
             name="billing_contact", verbose_name="Billing Contact"
         )
-        MemberRole.objects.create(
+        MembershipPersonRole.objects.create(
             name="programmatic_contact", verbose_name="Programmatic Contact"
         )
 
