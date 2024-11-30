@@ -12,6 +12,13 @@ $ python docs/generate_changelog.py v4.1
 Then paste output from that script here.
 
 -----------------------------------------------------------------
+## v4.5 - 2024-11-30
+
+### Features
+* [Recruitment] Disallow multiple signups for the same person - [#2725](https://github.com/carpentries/amy/pull/2725) by @pbanaszkiewicz
+* [Emails] Add condition for event in future in Instructor Confirmed for Workshop - [#2724](https://github.com/carpentries/amy/pull/2724) by @pbanaszkiewicz
+
+
 ## v4.4 - 2024-11-10
 
 ### Bugfixes
