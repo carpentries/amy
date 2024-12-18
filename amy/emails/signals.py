@@ -82,9 +82,14 @@ INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME = "instructor_confirmed_for_worksh
     SignalNameEnum.instructor_confirmed_for_workshop,
     InstructorConfirmedContext,
 )
-instructor_declined_from_workshop_signal = Signal(
-    signal_name=SignalNameEnum.instructor_declined_from_workshop,
-    context_type=InstructorDeclinedContext,
+INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME = "instructor_declined_from_workshop"
+(
+    instructor_declined_from_workshop_signal,
+    instructor_declined_from_workshop_update_signal,
+    instructor_declined_from_workshop_cancel_signal,
+) = triple_signals(
+    SignalNameEnum.instructor_declined_from_workshop,
+    InstructorDeclinedContext,
 )
 instructor_signs_up_for_workshop_signal = Signal(
     signal_name=SignalNameEnum.instructor_signs_up_for_workshop,
