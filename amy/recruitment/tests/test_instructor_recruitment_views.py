@@ -6,6 +6,7 @@ from django.http import Http404
 from django.test import override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
+from django.utils import timezone
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from emails.types import StrategyEnum
@@ -679,14 +680,10 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         )
         view.remove_instructor_task.assert_not_called()
 
-    # Disable email module so that signals don't fail on fetching a mocked object
-    # from DB.
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     def test_add_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
-        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -696,20 +693,19 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             slug="test-event",
             host=organization,
             administrator=organization,
+            start=timezone.now().date(),
         )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         # Act
-        task = view.add_instructor_task(request, mock_signup, person, event)
+        task = view.add_instructor_task(request, signup, person, event)
         # Assert
         self.assertTrue(task.pk)
 
-    # Disable email module so that signals don't fail on fetching a mocked object
-    # from DB.
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     def test_remove_instructor_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
-        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -719,23 +715,22 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             slug="test-event",
             host=organization,
             administrator=organization,
+            start=timezone.now().date(),
         )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         role = Role.objects.get(name="instructor")
         task = Task.objects.create(person=person, event=event, role=role)
         # Act
-        view.remove_instructor_task(request, mock_signup, person, event)
+        view.remove_instructor_task(request, signup, person, event)
         # Assert
         with self.assertRaises(Task.DoesNotExist):
             task.refresh_from_db()
 
-    # Disable email module so that signals don't fail on fetching a mocked object
-    # from DB.
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     def test_remove_instructor_task__no_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
-        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -746,8 +741,10 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             host=organization,
             administrator=organization,
         )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         # Act & Assert - no error
-        view.remove_instructor_task(request, mock_signup, person, event)
+        view.remove_instructor_task(request, signup, person, event)
 
     def test_post__form_valid(self) -> None:
         # Arrange

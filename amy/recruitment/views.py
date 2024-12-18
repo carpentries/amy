@@ -21,11 +21,15 @@ from emails.actions.host_instructors_introduction import (
     host_instructors_introduction_strategy,
     run_host_instructors_introduction_strategy,
 )
-from emails.signals import (
-    admin_signs_instructor_up_for_workshop_signal,
-    instructor_confirmed_for_workshop_signal,
-    instructor_declined_from_workshop_signal,
+from emails.actions.instructor_confirmed_for_workshop import (
+    instructor_confirmed_for_workshop_strategy,
+    run_instructor_confirmed_for_workshop_strategy,
 )
+from emails.actions.instructor_declined_from_workshop import (
+    instructor_declined_from_workshop_strategy,
+    run_instructor_declined_from_workshop_strategy,
+)
+from emails.signals import admin_signs_instructor_up_for_workshop_signal
 from recruitment.filters import InstructorRecruitmentFilter
 from recruitment.forms import (
     InstructorRecruitmentAddSignupForm,
@@ -408,7 +412,8 @@ class InstructorRecruitmentSignupChangeState(
                 self.object.recruitment.event,
             )
             return super().form_valid(form)
-        except IntegrityError:
+        except IntegrityError as exc:
+            logger.error(f"{exc}")
             messages.error(
                 self.request,
                 "Unable to create or remove instructor task due to database error.",
@@ -429,14 +434,22 @@ class InstructorRecruitmentSignupChangeState(
             role=role,
         )
 
-        # Note: there's a strategy for this email, but this case may be simple enough
-        # that we don't need to use it.
-        instructor_confirmed_for_workshop_signal.send(
-            sender=signup,
-            request=request,
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(task),
+            request,
+            task=task,
             person_id=person.pk,
             event_id=event.pk,
             task_id=task.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
+        run_instructor_declined_from_workshop_strategy(
+            instructor_declined_from_workshop_strategy(signup),
+            request,
+            signup=signup,
+            person_id=person.pk,
+            event_id=event.pk,
             instructor_recruitment_id=signup.recruitment.pk,
             instructor_recruitment_signup_id=signup.pk,
         )
@@ -454,14 +467,31 @@ class InstructorRecruitmentSignupChangeState(
         don't throw errors."""
         try:
             task = Task.objects.get(role__name="instructor", person=person, event=event)
+            old_task = Task.objects.get(
+                role__name="instructor", person=person, event=event
+            )  # Fetched again to omit problem with referencing `task`.
         except Task.DoesNotExist:
             pass
         else:
             task.delete()
+            run_instructor_confirmed_for_workshop_strategy(
+                instructor_confirmed_for_workshop_strategy(
+                    task,
+                    optional_task_pk=old_task.pk,
+                ),
+                request,
+                task=old_task,
+                person_id=person.pk,
+                event_id=event.pk,
+                task_id=old_task.pk,
+                instructor_recruitment_id=signup.recruitment.pk,
+                instructor_recruitment_signup_id=signup.pk,
+            )
 
-        instructor_declined_from_workshop_signal.send(
-            sender=signup,
-            request=request,
+        run_instructor_declined_from_workshop_strategy(
+            instructor_declined_from_workshop_strategy(signup),
+            request,
+            signup=signup,
             person_id=person.pk,
             event_id=event.pk,
             instructor_recruitment_id=signup.recruitment.pk,
