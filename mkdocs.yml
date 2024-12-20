@@ -58,6 +58,8 @@ nav:
 markdown_extensions:
     - toc:
           permalink: True
+    - admonition
+    - pymdownx.details  
     - pymdownx.superfences:
           custom_fences:
             - name: mermaid
