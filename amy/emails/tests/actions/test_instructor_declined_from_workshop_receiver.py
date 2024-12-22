@@ -8,10 +8,13 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from emails.actions import instructor_declined_from_workshop_receiver
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
-from emails.signals import instructor_declined_from_workshop_signal
+from emails.signals import (
+    INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME,
+    instructor_declined_from_workshop_signal,
+)
 from emails.utils import api_model_url
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from workshops.models import Event, Organization, Person
+from workshops.models import Event, Organization, Person, Tag
 from workshops.tests.base import TestBase
 
 
@@ -228,15 +231,11 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
             "EMAIL_MODULE": [("boolean", True)],
         }
     )
-    @patch("django.contrib.messages.views.messages")
-    @patch("emails.actions.base_action.messages_action_scheduled")
-    def test_integration(
-        self,
-        mock_messages_action_scheduled: MagicMock,
-        mock_contrib_messages_views: MagicMock,
-    ) -> None:
+    def test_integration(self) -> None:
         # Arrange
         self._setUpRoles()
+        self._setUpTags()
+        self._setUpAdministrators()
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create_user(  # type: ignore
             username="test_test",
@@ -257,8 +256,13 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
             person=person,
         )
         event = Event.objects.create(
-            slug="test-event", host=host, start=date(2023, 7, 22), end=date(2023, 7, 23)
+            slug="test-event",
+            host=host,
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            administrator=Organization.objects.get(domain="software-carpentry.org"),
         )
+        event.tags.add(Tag.objects.get(name="SWC"))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
@@ -266,7 +270,7 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_declined_from_workshop_signal.signal_name,
+            signal=INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],

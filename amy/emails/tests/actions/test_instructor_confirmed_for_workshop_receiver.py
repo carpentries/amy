@@ -13,7 +13,7 @@ from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_confirmed_for_workshop_signal
 from emails.utils import api_model_url, scalar_value_url
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from workshops.models import Event, Organization, Person, Role, Task
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
@@ -249,6 +249,8 @@ class TestInstructorConfirmedForWorkshopReceiverIntegration(TestBase):
     ) -> None:
         # Arrange
         self._setUpRoles()
+        self._setUpTags()
+        self._setUpAdministrators()
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create_user(  # type: ignore
             username="test_test",
@@ -269,8 +271,13 @@ class TestInstructorConfirmedForWorkshopReceiverIntegration(TestBase):
             person=person,
         )
         event = Event.objects.create(
-            slug="test-event", host=host, start=date(2023, 7, 22), end=date(2023, 7, 23)
+            slug="test-event",
+            host=host,
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            administrator=Organization.objects.get(domain="software-carpentry.org"),
         )
+        event.tags.add(Tag.objects.get(name="SWC"))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
