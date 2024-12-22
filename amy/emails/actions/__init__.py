@@ -14,10 +14,14 @@ from emails.actions.host_instructors_introduction import (
 )
 from emails.actions.instructor_badge_awarded import instructor_badge_awarded_receiver
 from emails.actions.instructor_confirmed_for_workshop import (
+    instructor_confirmed_for_workshop_cancel_receiver,
     instructor_confirmed_for_workshop_receiver,
+    instructor_confirmed_for_workshop_update_receiver,
 )
 from emails.actions.instructor_declined_from_workshop import (
+    instructor_declined_from_workshop_cancel_receiver,
     instructor_declined_from_workshop_receiver,
+    instructor_declined_from_workshop_update_receiver,
 )
 from emails.actions.instructor_signs_up_for_workshop import (
     instructor_signs_up_for_workshop_receiver,

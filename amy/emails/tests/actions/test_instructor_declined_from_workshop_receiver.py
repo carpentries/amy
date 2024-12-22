@@ -8,7 +8,10 @@ from communityroles.models import CommunityRole, CommunityRoleConfig
 from emails.actions import instructor_declined_from_workshop_receiver
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
-from emails.signals import instructor_declined_from_workshop_signal
+from emails.signals import (
+    INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME,
+    instructor_declined_from_workshop_signal,
+)
 from emails.utils import api_model_url
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.models import Event, Organization, Person, Tag
@@ -228,9 +231,7 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
             "EMAIL_MODULE": [("boolean", True)],
         }
     )
-    def test_integration(
-        self,
-    ) -> None:
+    def test_integration(self) -> None:
         # Arrange
         self._setUpRoles()
         self._setUpTags()
@@ -269,7 +270,7 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_declined_from_workshop_signal.signal_name,
+            signal=INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
