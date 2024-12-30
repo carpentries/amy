@@ -788,7 +788,7 @@ class InstructorsHostIntroductionAction(BaseAction):
 
         task_emails = [t.person.email for t in tasks]
         contacts = event.contact.split(TAG_SEPARATOR)
-        context["all_emails"] = list(filter(bool, task_emails + contacts))
+        context["all_emails"] = sorted(filter(bool, task_emails + contacts))
 
         context["assignee"] = (
             event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"

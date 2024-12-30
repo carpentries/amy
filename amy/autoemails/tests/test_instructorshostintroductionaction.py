@@ -250,13 +250,13 @@ class TestInstructorsHostIntroductionAction(TestCase):
             supporting_instructor2=supporting_instructor2.person,
             hosts=[host.person],
             all_emails=[
-                "hp@magic.uk",
-                "rw@magic.uk",
                 "hg@magic.uk",
-                "peter@webslinger.net",
+                "hp@magic.uk",
                 "me@stark.com",
-                "test@hogwart.com",
+                "peter@webslinger.net",
+                "rw@magic.uk",
                 "test2@magic.uk",
+                "test@hogwart.com",
             ],
             assignee="Regional Coordinator",
             tags=["automated-email", "LC"],
@@ -314,11 +314,11 @@ class TestInstructorsHostIntroductionAction(TestCase):
         self.assertEqual(
             email.to,
             [
+                "hg@magic.uk",
                 "hp@magic.uk",
                 "rw@magic.uk",
-                "hg@magic.uk",
-                "test@hogwart.com",
                 "test2@magic.uk",
+                "test@hogwart.com",
             ],
         )
 
@@ -409,6 +409,6 @@ class TestInstructorsHostIntroductionAction(TestCase):
         )
 
         ctx = a.get_additional_context(objects=dict(event=e))
-        expected = ["rw@magic.uk", "hg@magic.uk"]
+        expected = ["hg@magic.uk", "rw@magic.uk"]
         self.assertEqual(ctx["all_emails"], expected)
         self.assertEqual(a.all_recipients(), "rw@magic.uk, hg@magic.uk")
