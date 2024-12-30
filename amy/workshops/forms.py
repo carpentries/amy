@@ -383,8 +383,7 @@ class EventForm(forms.ModelForm):
     sponsor = forms.ModelChoiceField(
         label="Organiser",
         required=True,
-        help_text=Event._meta.get_field("sponsor").help_text
-        + " Previously called 'Sponsor'.",
+        help_text=Event._meta.get_field("sponsor").help_text,
         queryset=Organization.objects.all(),
         widget=ModelSelect2Widget(data_view="organization-lookup"),
     )

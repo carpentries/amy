@@ -1307,22 +1307,25 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         null=False,
         blank=False,
         related_name="hosted_events",
-        help_text="Organisation hosting the event.",
+        help_text="The institution where the workshop is taking place (or would take "
+        "place for online workshops).",
     )
+    # Currently this is organiser
     sponsor = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
         null=True,
         blank=False,
         related_name="sponsored_events",
-        help_text="Institution that is funding or organising the workshop.",
+        help_text="The institution responsible for organizing and funding the workshop "
+        "(often the same as Host).",
     )
     membership = models.ForeignKey(
         Membership,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        help_text="A membership this event should be counted towards.",
+        help_text="The membership this workshop should count towards.",
     )
     administrator = models.ForeignKey(
         Organization,
