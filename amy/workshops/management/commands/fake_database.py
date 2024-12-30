@@ -619,12 +619,6 @@ class Command(BaseCommand):
                 event=event,
                 person=person,
                 role=role,
-                title=(
-                    self.faker.sentence(nb_words=4, variable_nb_words=True)
-                    if randbool(0.2)
-                    else ""
-                ),
-                url=self.faker.url() if randbool(0.2) else "",
             )
 
     def fake_unmatched_training_requests(self, count=20):

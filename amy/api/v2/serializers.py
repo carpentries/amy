@@ -304,8 +304,6 @@ class TaskSerializer(serializers.ModelSerializer):
             "event",
             "person",
             "role",
-            "title",
-            "url",
             "seat_membership",
             "seat_public",
             "seat_open_training",

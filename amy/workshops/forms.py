@@ -674,8 +674,6 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             "event",
             "person",
             "role",
-            "title",
-            "url",
             "seat_membership",
             "seat_public",
             "seat_open_training",

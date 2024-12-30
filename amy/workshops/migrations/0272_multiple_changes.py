@@ -11,6 +11,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # #2044
         migrations.AlterField(
             model_name="event",
             name="host",
@@ -42,5 +43,18 @@ class Migration(migrations.Migration):
                 related_name="sponsored_events",
                 to="workshops.organization",
             ),
+        ),
+        # #2094
+        migrations.AlterUniqueTogether(
+            name="task",
+            unique_together={("event", "person", "role")},
+        ),
+        migrations.RemoveField(
+            model_name="task",
+            name="title",
+        ),
+        migrations.RemoveField(
+            model_name="task",
+            name="url",
         ),
     ]

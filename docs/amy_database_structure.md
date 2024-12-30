@@ -298,7 +298,6 @@ The primary tables used in AMY (that will appear in most queries) are those that
   * `seat_membership_id` Used for Instructor Training Learner role only.  An integer representing the membership this seat was assigned to.
   * `seat_public` Used for Instructor Training Learner role only.  Determines if the seat counts as public or in-house for the specific membership.
   * `seat_open_training` Used for Instructor Training Learner role only. Boolean field noting whether this was an open (non-member) training seat.
-  * `title` and`url` are not used.
 
 ### Tags
 
