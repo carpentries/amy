@@ -886,6 +886,7 @@ def persons_merge(request):
                 "airport",
                 "github",
                 "twitter",
+                "bluesky",
                 "url",
                 "affiliation",
                 "occupation",

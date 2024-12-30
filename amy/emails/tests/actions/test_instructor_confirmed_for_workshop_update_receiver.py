@@ -339,6 +339,7 @@ class TestInstructorConfirmedForWorkshopUpdateIntegration(TestBase):
             airport=self.airport_0_0,
             github="",
             twitter="",
+            bluesky="@purdy_kelsi.bsky.social",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",

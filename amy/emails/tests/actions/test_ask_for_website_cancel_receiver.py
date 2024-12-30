@@ -235,6 +235,7 @@ class TestAskForWebsiteCancelIntegration(TestBase):
             airport=self.airport_0_0,
             github="purdy_kelsi",
             twitter="purdy_kelsi",
+            bluesky="@purdy_kelsi.bsky.social",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",

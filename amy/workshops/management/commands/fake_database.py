@@ -416,6 +416,7 @@ class Command(BaseCommand):
 
         github = social_username
         twitter = social_username
+        bluesky = f"@{social_username}.bsky.social"
         url = self.faker.url() if randbool(0.5) else ""
 
         person = Person.objects.create(
@@ -426,6 +427,7 @@ class Command(BaseCommand):
             gender_other=gender_other,
             airport=airport,
             twitter=twitter,
+            bluesky=bluesky,
             github=github,
             url=url,
             username=username,
@@ -639,6 +641,7 @@ class Command(BaseCommand):
             # avoid integrity errors due to unique constraints
             p.username = create_username(p.personal, p.family)
             p.twitter = None
+            p.bluesky = None
             p.github = None
             p.email = self.faker.email()
 

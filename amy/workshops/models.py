@@ -809,6 +809,13 @@ class Person(
         blank=True,
         verbose_name="Twitter username",
     )
+    bluesky = models.CharField(
+        max_length=STR_LONG,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="BlueSky username",
+    )
     url = models.CharField(
         max_length=STR_LONG,
         blank=True,
@@ -1026,6 +1033,7 @@ class Person(
         self.airport = self.airport or None
         self.github = self.github or None
         self.twitter = self.twitter or None
+        self.bluesky = self.bluesky or None
         super().save(*args, **kwargs)
 
     def archive(self) -> None:
@@ -1041,6 +1049,7 @@ class Person(
         self.airport = None
         self.github = None
         self.twitter = None
+        self.bluesky = None
         self.url = ""
         self.user_notes = ""
         self.affiliation = ""

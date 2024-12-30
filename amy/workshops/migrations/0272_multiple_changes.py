@@ -57,4 +57,16 @@ class Migration(migrations.Migration):
             model_name="task",
             name="url",
         ),
+        # #2726
+        migrations.AddField(
+            model_name="person",
+            name="bluesky",
+            field=models.CharField(
+                blank=True,
+                max_length=100,
+                null=True,
+                unique=True,
+                verbose_name="BlueSky username",
+            ),
+        ),
     ]
