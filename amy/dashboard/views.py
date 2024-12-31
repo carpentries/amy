@@ -1,10 +1,10 @@
 from datetime import date, timedelta
-import re
 from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.postgres.search import SearchVector
 from django.db.models import (
     Case,
     Count,
@@ -585,6 +585,12 @@ class ResignFromRecruitment(
 def search(request):
     """Search the database by term."""
 
+    def multiple_Q_icontains(term: str, *args: str) -> Q:
+        q = Q()
+        for arg in args:
+            q |= Q(**{f"{arg}__icontains": term})
+        return q
+
     term = ""
     organizations = None
     memberships = None
@@ -598,7 +604,6 @@ def search(request):
         form = SearchForm(request.GET)
         if form.is_valid():
             term = form.cleaned_data.get("term", "").strip()
-            tokens = re.split(r"\s+", term)
             results_combined = []
 
             organizations = list(
@@ -628,79 +633,58 @@ def search(request):
             )
             results_combined += events
 
-            # if user searches for two words, assume they mean a person
-            # name
-            if len(tokens) == 2:
-                name1, name2 = tokens
-                complex_q = (
-                    (Q(personal__icontains=name1) & Q(family__icontains=name2))
-                    | (Q(personal__icontains=name2) & Q(family__icontains=name1))
-                    | Q(email__icontains=term)
-                    | Q(secondary_email__icontains=term)
-                    | Q(github__icontains=term)
+            persons = (
+                Person.objects.annotate(
+                    search=SearchVector("personal", "middle", "family")
                 )
-                persons = list(Person.objects.filter(complex_q).order_by("family"))
-            else:
-                persons = list(
-                    Person.objects.filter(
-                        Q(personal__icontains=term)
-                        | Q(family__icontains=term)
-                        | Q(email__icontains=term)
-                        | Q(secondary_email__icontains=term)
-                        | Q(github__icontains=term)
-                    ).order_by("family")
+                .filter(
+                    Q(search=term)
+                    | multiple_Q_icontains(term, "email", "secondary_email", "github")
                 )
-
-            results_combined += persons
+                .order_by("family")
+            )
+            results_combined += list(persons)
 
             airports = list(
                 Airport.objects.filter(
-                    Q(iata__icontains=term) | Q(fullname__icontains=term)
+                    multiple_Q_icontains(term, "iata", "fullname")
                 ).order_by("iata")
             )
             results_combined += airports
 
-            if len(tokens) == 2:
-                name1, name2 = tokens
-                complex_q = (
-                    Q(member_code__icontains=term)
-                    | (Q(personal__icontains=name1) & Q(family__icontains=name2))
-                    | (Q(personal__icontains=name2) & Q(family__icontains=name1))
-                    | Q(email__icontains=term)
-                    | Q(secondary_email__icontains=term)
-                    | Q(github__icontains=term)
-                    | Q(affiliation__icontains=term)
-                    | Q(location__icontains=term)
-                    | Q(user_notes__icontains=term)
+            training_requests = (
+                TrainingRequest.objects.annotate(
+                    search=SearchVector("personal", "middle", "family")
                 )
-                training_requests = list(
-                    TrainingRequest.objects.filter(complex_q).order_by("family")
+                .filter(
+                    Q(search=term)
+                    | multiple_Q_icontains(
+                        term,
+                        "member_code",
+                        "email",
+                        "secondary_email",
+                        "github",
+                        "affiliation",
+                        "location",
+                        "user_notes",
+                    )
                 )
-
-            else:
-                training_requests = list(
-                    TrainingRequest.objects.filter(
-                        Q(member_code__icontains=term)
-                        | Q(family__icontains=term)
-                        | Q(email__icontains=term)
-                        | Q(github__icontains=term)
-                        | Q(affiliation__icontains=term)
-                        | Q(location__icontains=term)
-                        | Q(user_notes__icontains=term)
-                    ).order_by("family")
-                )
-
-            results_combined += training_requests
+                .order_by("family")
+            )
+            results_combined += list(training_requests)
 
             comments = list(
                 Comment.objects.filter(
-                    Q(comment__icontains=term)
-                    | Q(user_name__icontains=term)
-                    | Q(user_email__icontains=term)
-                    | Q(user__personal__icontains=term)
-                    | Q(user__family__icontains=term)
-                    | Q(user__email__icontains=term)
-                    | Q(user__github__icontains=term)
+                    multiple_Q_icontains(
+                        term,
+                        "comment",
+                        "user_name",
+                        "user_email",
+                        "user__personal",
+                        "user__family",
+                        "user__email",
+                        "user__github",
+                    )
                 ).prefetch_related("content_object")
             )
             results_combined += comments
@@ -709,7 +693,7 @@ def search(request):
             if len(results_combined) == 1 and not form.cleaned_data["no_redirect"]:
                 result = results_combined[0]
                 msg = format_html(
-                    "You were moved to this page, because your search <i>{}</i> "
+                    "You were moved to this page, because your search <code>{}</code> "
                     "yields only this result.",
                     term,
                 )
