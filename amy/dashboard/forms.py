@@ -84,6 +84,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             "airport",
             "github",
             "twitter",
+            "bluesky",
             "url",
             "username",
             "affiliation",

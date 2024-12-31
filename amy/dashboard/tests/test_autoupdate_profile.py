@@ -62,6 +62,7 @@ class TestAutoUpdateProfile(TestBase):
             "airport": self.airport_0_0.pk,
             "github": "changed",
             "twitter": "",
+            "bluesky": "",
             "url": "",
             "username": "changed",
             "affiliation": "",

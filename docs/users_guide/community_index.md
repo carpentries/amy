@@ -18,8 +18,9 @@ The Carpentries can maintain the following information about individuals in our 
 * Country
 * Airport (Airports are used as approximate geographic identifiers for our instructors. Instructors can self-select the airport closest to them or the airport they most frequently use. If your aiport is not in the drop down, please contact <team@carpentries.org> so we can add it in.)
 * Affiliation
-* GitHub username 
+* GitHub username
 * Twitter username
+* BlueSky username
 * Personal website
 * Current occupation/career stage
 * ORCID ID
@@ -62,13 +63,13 @@ Carpentries Instructor trainees can [log in to AMY](#logging-in) to view their c
 
 ![AMY Training Progress Menu](images/training_progress_menu.png)
 
-You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon successful completion of the Training and all three checkout steps.  
+You may submit your "Get Involved" step here, to be evaluated by The Carpentries Instructor Training team.  The Instructor Training team will also record your status in completing the Teaching Demo and Welcome Session requirements and award your certificate upon successful completion of the Training and all three checkout steps.
 
 **Please allow 7-10 days for each of these steps to be evaluated and recorded.**
 
 ### Submitting your "Get Involved" step
 
-To submit your "Get Involved" step, click on the blue "Submit a Get Involved Activity" button.  
+To submit your "Get Involved" step, click on the blue "Submit a Get Involved Activity" button.
 
 ![AMY Training Progress Submit](images/training_progress_submit.png)
 
@@ -91,15 +92,15 @@ Once you submit your Get Involved step, your summary page will show your submiss
 
 ### Teaching Demonstration
 
-The Trainer leading your Teaching Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team. 
+The Trainer leading your Teaching Demonstration will inform the Instructor Training Team whether you passed or were asked to repeat your teaching demo, and your participation will be recorded by our Instructor Training team.
 
 ### Welcome Session
 
-If you signed in on the [Welcome Session Etherpad](https://pad.carpentries.org/welcome-sessions-2024), your participation will be recorded by our Instructor Training team. 
+If you signed in on the [Welcome Session Etherpad](https://pad.carpentries.org/welcome-sessions-2024), your participation will be recorded by our Instructor Training team.
 
 ### Certificate
 
-Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge and you will receive an email with a pdf certificate attached.  
+Once you have completed all three steps, your summary page will show your status as complete.  The Instructor Training team will award your badge and you will receive an email with a pdf certificate attached.
 
 ![AMY Checkout Complete](images/checkout_complete.png)
 
@@ -114,13 +115,13 @@ The next page will list all upcoming teaching opportunites.  This list can be so
 
 ![AMY Instructor signup filter view](images/upcoming_teaching_opportunities.png)
 
-Instructors can then register their interest in teaching specific workshop.  
+Instructors can then register their interest in teaching specific workshop.
 
 ![AMY Instructor signup form](images/workshop_intersted_signup.png)
 
 A workshop administrator will follow up shortly to confirm or decline each instructor.
 
-### Notes about signing up 
+### Notes about signing up
 
 * Instructors will get a warning if they sign up as interested in concurrent workshops or workshops within two weeks of confirmed workshops.  This is to remind Instructors about possible scheduling conflicts and that they may be overextending themsleves.  This does not prevent Instructors from signing up.
 * Instructors will be blocked from signing up for workshops if they are already confirmed to teach a concurrent workshop. This is to prevent actual scheduling conflicts.  Instructors may contact <workshops@carpentries.org> if they are interested in teaching concurrent workshops to discuss scheduling options.
