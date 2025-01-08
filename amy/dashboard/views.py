@@ -380,6 +380,9 @@ class UpcomingTeachingOpportunitiesList(
         return super().get_queryset()
 
     def get_view_enabled(self, request) -> bool:
+        if request.user.is_admin:
+            return True
+
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
@@ -438,6 +441,9 @@ class SignupForRecruitment(
     template_name = "dashboard/signup_for_recruitment.html"
 
     def get_view_enabled(self, request) -> bool:
+        if request.user.is_admin:
+            return True
+
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
@@ -563,6 +569,9 @@ class ResignFromRecruitment(
         return redirect(redirect_url)
 
     def get_view_enabled(self, request) -> bool:
+        if request.user.is_admin:
+            return True
+
         try:
             role = CommunityRole.objects.get(
                 person=self.request.user, config__name="instructor"
