@@ -525,41 +525,41 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
 #### Active emails (Workshops)
 
 ??? abstract "Admin Signs Instructor Up for Workshop"
-    **[View in AMY](https://amy.carpentries.org/emails/template/53209bdb-fbd2-4620-988b-16703d38a083/)**  
+    [View in AMY](https://amy.carpentries.org/emails/template/53209bdb-fbd2-4620-988b-16703d38a083/)  
     **Email description:**  Send email to Instructor informing them the admin has signed them up as interested in teaching a workshop  
     **Sent to:**  Instructor   
     **Date sent:**   One hour after admin action  
 
 ??? abstract "Ask for website"
-    **[View in AMY](https://amy.carpentries.org/emails/template/8b29643c-d4f2-4b58-bc3c-5ebc4ff3d7b4/)**  
+    [View in AMY](https://amy.carpentries.org/emails/template/8b29643c-d4f2-4b58-bc3c-5ebc4ff3d7b4/)  
     **Email description:**  Send email to workshop Hosts & Instructors reminding them to send us workshop website link  
     **Sent to:**  Instructors and Hosts   
     **Date sent:**  One month before event start  
     **Conditions:** Has administrator; Has at least one Instructor; Tagged SWC/DC/LC; Start date in future; not stalled/cancelled; Missing website  
 
 ??? abstract "Host-instructors introduction"
-    [View in AMY](https://amy.carpentries.org/emails/template/fb7286a4-e4a1-4d92-81b8-33e698170178/)  
+    [View in AMY](https://amy.carpentries.org/emails/template/fb7286a4-e4a1-4d92-81b8-33e698170178/)
     **Email description:**  Send email introducing workshop Hosts & Instructors providing general inforamtion  
     **Sent to:**  Instructors and Hosts   
     **Date sent:**  One month before event start  
     **Conditions:** Centrally-Organised; Instructor recruitment closed; Not stalled/cancelled; Has at least two Instructors; Has host; Tagged SWC/DC/LC; At least seven days in future  
 
 ??? abstract "Instructor confirmed for workshop"
-    [View in AMY](https://amy.carpentries.org/emails/template/ba2d0130-d123-402d-97d5-8818b72af963/)  
+    [View in AMY](https://amy.carpentries.org/emails/template/ba2d0130-d123-402d-97d5-8818b72af963/)
     **Email description:** Emails instructor to confirm they have been assigned to a workshop    
     **Sent to:**  Instructor  
     **Date sent:** One hour after conditions are met     
     **Conditions:** Instructor task created; Tagged SWC/DC/LC; Centrally-Organised; Start date in future   
 
 ??? abstract "Instructor declined for workshop"
-    [View in AMY](https://amy.carpentries.org/emails/template/be7a8e81-d4fb-47c1-b78f-1e5f809bc128/)  
+    [View in AMY](https://amy.carpentries.org/emails/template/be7a8e81-d4fb-47c1-b78f-1e5f809bc128/)
     **Email description:** Emails instructor to inform them they have not been assigned to a workshop    
     **Sent to:**  Instructor  
     **Date sent:** One hour after conditions are met     
     **Conditions:** Instructor declined in recruitment process  
 
 ??? abstract "Instructor Signs Up for Workshop"
-    [View in AMY](https://amy.carpentries.org/emails/template/43754daa-c312-41db-a0f6-00ac4f88bafd/)  
+    [View in AMY](https://amy.carpentries.org/emails/template/43754daa-c312-41db-a0f6-00ac4f88bafd/)
     **Email description:** Emails instructor to confirm they have expressed interest in a workshop   
     **Sent to:**  Instructor  
     **Date sent:** One hour after conditions are met     
