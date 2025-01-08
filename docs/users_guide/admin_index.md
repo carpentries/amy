@@ -532,10 +532,10 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
 
 ??? abstract "Ask for website"
     [View in AMY](https://amy.carpentries.org/emails/template/8b29643c-d4f2-4b58-bc3c-5ebc4ff3d7b4/)  
-    **Email description:**  Send email to workshop Hosts & Instructors reminding them to send us workshop website link  
-    **Sent to:**  Instructors and Hosts   
+    **Email description:**  Send email to workshop Instructors reminding them to send us workshop website link  
+    **Sent to:**  Instructors  
     **Date sent:**  One month before event start  
-    **Conditions:** Has administrator; Has at least one Instructor; Tagged SWC/DC/LC; Start date in future; not stalled/cancelled; Missing website  
+    **Conditions:** Has administrator; Has at least one Instructor; Tagged SWC/DC/LC; Start date in future; not stalled/cancelled/unresponsive; Missing website  
 
 ??? abstract "Host-instructors introduction"
     [View in AMY](https://amy.carpentries.org/emails/template/fb7286a4-e4a1-4d92-81b8-33e698170178/)
@@ -568,23 +568,23 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
 ??? abstract "New Self-Organised Workshop"
     [View in AMY](https://amy.carpentries.org/emails/template/f967122e-55a8-483e-a571-c3dff43dd33e/)  
     **Email description:** Emails Self-Organised workshop host to confirm their submission has been accepted  
-    **Sent to:**  Workshop Host  
+    **Sent to:**  Contacts from Self-Organised Workshop submission form
     **Date sent:** One hour after conditions are met     
-    **Conditions:** Self organized submission form accepted
+    **Conditions:** Self organized submission form accepted and linked to event; start date in future; not stalled/cancelled/unresponsive;  
 
 ??? abstract "Post Workshop 7 days"
     [View in AMY](https://amy.carpentries.org/emails/template/4809378c-c1aa-4118-a3a7-cbc9586c686b/)  
     **Email description:** Follow up one week after Centrally-Organised workshop is complete  
     **Sent to:** Hosts and Instructors     
     **Date sent:** Later of seven days after workshop end or seven days from now      
-    **Conditions:** Centrally-Organised; At least one host; At least one Instructor;  Tagged SWC/DC/LC; 
+    **Conditions:** Centrally-Organised; At least one host; At least one Instructor;  Tagged SWC/DC/LC; Not CLDT; end date in future; not stalled/cancelled/unresponsive
 
 ??? abstract "Recruit helpers"
     [View in AMY](https://amy.carpentries.org/emails/template/d1b20e74-a245-4c7d-9182-663f3acd8a48/)
     **Email description:** Reminder to host to recruit helpers
     **Sent to:** Hosts and Instructors     
     **Date sent:** 21 days before event  
-    **Conditions:** Centrally-Organised; At least one host; At least 1 Instructor;  Tagged SWC/DC/LC; Not stalled/cancelled; At least one host; At least one Instructor; No helpers; Start date at least 14 days in future
+    **Conditions:** Centrally-Organised; Tagged SWC/DC/LC; Not stalled/cancelled; At least one host; At least one Instructor; No helpers; Start date at least 14 days in future; not stalled/cancelled/unresponsive
 
 
 
@@ -603,7 +603,7 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
     [View in AMY](https://amy.carpentries.org/emails/template/f1311aaf-c546-429b-930c-c36a5a8009fb/)  
     **Email description:**  Onboarding message for new/renewing memberships 
     **Sent to:**   Programmatic and billing contacts
-    **Date sent:** One month before membership start date or immediately (whichever is first)   
+    **Date sent:** One month before membership start date or immediately (whichever is later)   
     **Conditions:** Membership roles exist
 
 #### Inactive emails
