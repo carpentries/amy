@@ -4,7 +4,7 @@ name: CI/CD (develop)
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, 'chore/Update-cicd-workflow' ]
   pull_request:
     branches: [ develop ]
 
