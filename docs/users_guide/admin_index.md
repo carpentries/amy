@@ -539,7 +539,7 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
 
 ??? abstract "Host-instructors introduction"
     [View in AMY](https://amy.carpentries.org/emails/template/fb7286a4-e4a1-4d92-81b8-33e698170178/)
-    **Email description:**  Send email introducing workshop Hosts & Instructors providing general inforamtion  
+    **Email description:**  Send email introducing workshop Hosts & Instructors providing general information  
     **Sent to:**  Instructors and Hosts   
     **Date sent:**  One month before event start  
     **Conditions:** Centrally-Organised; Instructor recruitment closed; Not stalled/cancelled; Has at least two Instructors; Has host; Tagged SWC/DC/LC; At least seven days in future  
