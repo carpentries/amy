@@ -139,6 +139,18 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
         {% endif %}
         {% endwith %}
     </td></tr>
+    <tr>
+      <th>Your activity summary:</th>
+      <td>
+        <ul>
+          <li>Instructor: {{ user.num_instructor }} times</li>
+          <li>Trainer: {{ user.num_trainer }} times</li>
+          <li>Supporting Instructor: {{ user.num_supporting }} times</li>
+          <li>Helper: {{ user.num_helper }} times</li>
+          <li>Learner: {{ user.num_learner }} times</li>
+        </ul>
+      </td>
+    </tr>
     {% with membership_tasks=user.membershiptask_set.all %}
     {% if membership_tasks %}
     <tr><th>Your roles in memberships:</th>

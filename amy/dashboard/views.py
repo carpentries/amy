@@ -137,21 +137,25 @@ def admin_dashboard(request):
 
 @login_required
 def instructor_dashboard(request):
-    qs = Person.objects.select_related("airport").prefetch_related(
-        "badges",
-        "lessons",
-        "domains",
-        "languages",
-        Prefetch(
-            "task_set",
-            queryset=Task.objects.select_related("event", "role").order_by(
-                "event__start", "event__slug"
+    qs = (
+        Person.objects.annotate_with_role_count()  # type: ignore
+        .select_related("airport")
+        .prefetch_related(
+            "badges",
+            "lessons",
+            "domains",
+            "languages",
+            Prefetch(
+                "task_set",
+                queryset=Task.objects.select_related("event", "role").order_by(
+                    "event__start", "event__slug"
+                ),
             ),
-        ),
-        Prefetch(
-            "membershiptask_set",
-            queryset=MembershipTask.objects.select_related("membership", "role"),
-        ),
+            Prefetch(
+                "membershiptask_set",
+                queryset=MembershipTask.objects.select_related("membership", "role"),
+            ),
+        )
     )
     user = get_object_or_404(qs, id=request.user.id)
 
