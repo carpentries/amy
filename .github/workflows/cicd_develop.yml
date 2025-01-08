@@ -30,7 +30,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1-node16
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ vars.AWS_ECR_ROLE_TO_ASSUME }}
         aws-region: ${{ vars.AWS_REGION }}
@@ -62,7 +62,7 @@ jobs:
 
     steps:
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1-node16
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ vars.AWS_ECS_ROLE_TO_ASSUME }}
         aws-region: ${{ vars.AWS_REGION }}
