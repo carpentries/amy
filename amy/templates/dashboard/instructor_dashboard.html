@@ -12,8 +12,10 @@
 
 {% flag_enabled 'INSTRUCTOR_RECRUITMENT' as INSTRUCTOR_RECRUITMENT_ENABLED %}
 {% get_community_role user role_name="instructor" as INSTRUCTOR_COMMUNITY_ROLE %}
-{% if INSTRUCTOR_RECRUITMENT_ENABLED and INSTRUCTOR_COMMUNITY_ROLE.is_active %}
-<a href="{% url 'upcoming-teaching-opportunities' %}" class="btn btn-primary btn-lg my-3">View upcoming teaching opportunities with The Carpentries</a>
+{% if INSTRUCTOR_RECRUITMENT_ENABLED %}
+  {% if INSTRUCTOR_COMMUNITY_ROLE.is_active or user.is_admin %}
+  <a href="{% url 'upcoming-teaching-opportunities' %}" class="btn btn-primary btn-lg my-3">View upcoming teaching opportunities with The Carpentries</a>
+  {% endif %}
 {% endif %}
 
 <div>

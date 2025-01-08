@@ -19,8 +19,10 @@
 
           {% flag_enabled 'INSTRUCTOR_RECRUITMENT' as INSTRUCTOR_RECRUITMENT_ENABLED %}
           {% get_community_role user role_name="instructor" as INSTRUCTOR_COMMUNITY_ROLE %}
-          {% if INSTRUCTOR_RECRUITMENT_ENABLED and INSTRUCTOR_COMMUNITY_ROLE.is_active %}
-            {% navbar_element "Upcoming Teaching Opportunities" "upcoming-teaching-opportunities" %}
+          {% if INSTRUCTOR_RECRUITMENT_ENABLED %}
+            {% if INSTRUCTOR_COMMUNITY_ROLE.is_active or user.is_admin %}
+              {% navbar_element "Upcoming Teaching Opportunities" "upcoming-teaching-opportunities" %}
+            {% endif %}
           {% endif %}
         </ul>
 
