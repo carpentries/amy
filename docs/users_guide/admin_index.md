@@ -518,7 +518,7 @@ AMY sends automated emails for membership, instructor training, and workshop adm
 
 [Email templates](https://amy.carpentries.org/emails/templates/) and [status of scheduled emails](https://amy.carpentries.org/emails/scheduled_emails/) can be viewed directly through the user interface under the "More" menu.  Not all templated emails are currently active.
 
-Email recipients, schedule, and conditions are all set in the AMY codebase.
+Email recipients, schedule, and conditions are all set in the AMY codebase.  All automated emails depend on recipients having a valid email address in AMY.
 
 From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject and body are also set in the AMY interface. These fields can all be modified by admin users at any time.
 
