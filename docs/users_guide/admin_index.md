@@ -549,7 +549,7 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
     **Email description:** Emails instructor to confirm they have been assigned to a workshop    
     **Sent to:**  Instructor  
     **Date sent:** One hour after conditions are met     
-    **Conditions:** Instructor task created; Tagged SWC/DC/LC; Centrally-Organised; Start date in future   
+    **Conditions:** Instructor task created (either through recruitment process or manual data entry); Tagged SWC/DC/LC; Centrally-Organised; Start date in future   
 
 ??? abstract "Instructor declined for workshop"
     [View in AMY](https://amy.carpentries.org/emails/template/be7a8e81-d4fb-47c1-b78f-1e5f809bc128/)
