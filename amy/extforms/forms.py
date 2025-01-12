@@ -2,12 +2,12 @@ from datetime import date
 from typing import Iterable, cast
 from urllib.parse import urlparse
 
-from captcha.fields import ReCaptchaField
 from crispy_forms.layout import HTML, Div, Field, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.http import HttpRequest
+from django_recaptcha.fields import ReCaptchaField
 
 from consents.forms import option_display_value
 from consents.models import Term, TrainingRequestConsent
