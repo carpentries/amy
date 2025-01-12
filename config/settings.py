@@ -124,7 +124,7 @@ RECAPTCHA_PRIVATE_KEY = env("AMY_RECAPTCHA_PRIVATE_KEY")
 RECAPTCHA_USE_SSL = True
 NOCAPTCHA = True
 if DEBUG:
-    SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
+    SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 # APPS
 # -----------------------------------------------------------------------------
@@ -146,6 +146,7 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
+    "crispy_bootstrap4",
     "django_select2",
     "django_countries",
     "django_filters",
@@ -153,7 +154,7 @@ THIRD_PARTY_APPS = [
     "reversion_compare",
     "rest_framework",
     "knox",
-    "captcha",
+    "django_recaptcha",
     "social_django",
     "debug_toolbar",
     "django_extensions",
