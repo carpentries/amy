@@ -12,6 +12,7 @@ from django.forms import BaseForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.html import format_html
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
 import django_rq
@@ -428,11 +429,20 @@ class InstructorRecruitmentSignupChangeState(
         event: Event,
     ) -> Task:
         role = Role.objects.get(name="instructor")
-        task = Task.objects.create(
+        task, created = Task.objects.get_or_create(
             event=event,
             person=person,
             role=role,
         )
+        if not created:
+            messages.warning(
+                request,
+                format_html(
+                    'Instructor task already <a href="{}">exists</a>, '
+                    "recruitment signup was accepted.",
+                    task.get_absolute_url(),
+                ),
+            )
 
         run_instructor_confirmed_for_workshop_strategy(
             instructor_confirmed_for_workshop_strategy(task),
