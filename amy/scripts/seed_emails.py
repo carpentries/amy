@@ -129,6 +129,21 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
     ),
     EmailTemplateDef(
         active=True,
+        id=UUID("8419c339-6997-47ce-b272-bfa98b447364"),
+        name="Instructor task created for workshop",
+        signal=SignalNameEnum.instructor_task_created_for_workshop,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="You will teach (workshop)",
+        body=(
+            "Hi, {{ person.personal }} {{ person.family }}. "
+            "We have added you to teach at (TODO event). For more details go to..."
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
         id=UUID("a002c623-b849-4843-a589-08020f4b8589"),
         name="Instructor Training Approaching",
         signal=SignalNameEnum.instructor_training_approaching,

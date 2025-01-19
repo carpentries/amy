@@ -12,6 +12,7 @@ from workshops.models import (
     Membership,
     Organization,
     Person,
+    Task,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -94,6 +95,20 @@ class PersonsMergedKwargs(TypedDict):
 
 class PersonsMergedContext(TypedDict):
     person: Person
+
+
+class InstructorTaskCreatedForWorkshopKwargs(TypedDict):
+    request: HttpRequest
+    person_id: int
+    event_id: int
+    task_id: int
+
+
+class InstructorTaskCreatedForWorkshopContext(TypedDict):
+    person: Person
+    event: Event
+    task: Task | None
+    task_id: int | None
 
 
 class InstructorTrainingApproachingKwargs(TypedDict):

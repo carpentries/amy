@@ -63,9 +63,9 @@ from emails.actions.instructor_badge_awarded import (
     instructor_badge_awarded_strategy,
     run_instructor_badge_awarded_strategy,
 )
-from emails.actions.instructor_confirmed_for_workshop import (
-    instructor_confirmed_for_workshop_strategy,
-    run_instructor_confirmed_for_workshop_strategy,
+from emails.actions.instructor_task_created_for_workshop import (
+    instructor_task_created_for_workshop_strategy,
+    run_instructor_task_created_for_workshop_strategy,
 )
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
@@ -713,15 +713,13 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
                 self.request,
                 task.event,
             )
-            run_instructor_confirmed_for_workshop_strategy(
-                instructor_confirmed_for_workshop_strategy(task),
+            run_instructor_task_created_for_workshop_strategy(
+                instructor_task_created_for_workshop_strategy(task),
                 self.request,
                 task=task,
                 person_id=self.object.pk,
                 event_id=task.event.pk,
                 task_id=task.pk,
-                instructor_recruitment_id=None,
-                instructor_recruitment_signup_id=None,
             )
 
         return result
@@ -1741,15 +1739,13 @@ class TaskCreate(
             event,
         )
 
-        run_instructor_confirmed_for_workshop_strategy(
-            instructor_confirmed_for_workshop_strategy(self.object),
+        run_instructor_task_created_for_workshop_strategy(
+            instructor_task_created_for_workshop_strategy(self.object),
             self.request,
             task=self.object,
             person_id=self.object.person.pk,
             event_id=event.pk,
             task_id=self.object.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
         )
 
         # return remembered results
@@ -1828,15 +1824,13 @@ class TaskUpdate(
             self.object.event,
         )
 
-        run_instructor_confirmed_for_workshop_strategy(
-            instructor_confirmed_for_workshop_strategy(self.object),
+        run_instructor_task_created_for_workshop_strategy(
+            instructor_task_created_for_workshop_strategy(self.object),
             self.request,
             task=self.object,
             person_id=self.object.person.pk,
             event_id=self.object.event.pk,
             task_id=self.object.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
         )
 
         return res
@@ -1890,15 +1884,13 @@ class TaskDelete(
             self.object.event,
         )
 
-        run_instructor_confirmed_for_workshop_strategy(
-            instructor_confirmed_for_workshop_strategy(self.object, self.old_pk),
+        run_instructor_task_created_for_workshop_strategy(
+            instructor_task_created_for_workshop_strategy(self.object, self.old_pk),
             self.request,
             task=self.old,
             person_id=self.object.person.pk,
             event_id=self.event.pk,
             task_id=self.old_pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
         )
 
 
