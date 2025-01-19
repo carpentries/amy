@@ -438,8 +438,8 @@ class InstructorRecruitmentSignupChangeState(
             messages.warning(
                 request,
                 format_html(
-                    'Instructor task already <a href="{}">exists</a>, '
-                    "recruitment signup was accepted.",
+                    "The signup was accepted, but instructor task already "
+                    '<a href="{}">exists</a>.',
                     task.get_absolute_url(),
                 ),
             )
@@ -477,8 +477,8 @@ class InstructorRecruitmentSignupChangeState(
             messages.warning(
                 request,
                 format_html(
-                    'Instructor task was <a href="{}">found</a>. '
-                    'The signup was declined.',
+                    "The signup was declined, but instructor task was "
+                    '<a href="{}">found</a>. ',
                     task.get_absolute_url(),
                 ),
             )
