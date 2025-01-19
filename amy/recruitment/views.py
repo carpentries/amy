@@ -401,8 +401,8 @@ class InstructorRecruitmentSignupChangeState(
                 [HttpRequest, InstructorRecruitmentSignup, Person, Event], Task | None
             ],
         ] = {
-            "a": self.add_instructor_task,
-            "d": self.remove_instructor_task,
+            "a": self.accept_signup,
+            "d": self.decline_signup,
         }
         handler = state_to_method_action_mapping[self.object.state]
         try:
@@ -421,7 +421,7 @@ class InstructorRecruitmentSignupChangeState(
             )
             return HttpResponseRedirect(self.get_success_url())
 
-    def add_instructor_task(
+    def accept_signup(
         self,
         request: HttpRequest,
         signup: InstructorRecruitmentSignup,
@@ -465,7 +465,7 @@ class InstructorRecruitmentSignupChangeState(
 
         return task
 
-    def remove_instructor_task(
+    def decline_signup(
         self,
         request: HttpRequest,
         signup: InstructorRecruitmentSignup,

@@ -595,8 +595,8 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         # Assert
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
-        self.assertEqual(recruitment.signups.count(), 1)
-        signup = recruitment.signups.last()
+        self.assertEqual(recruitment.signups.count(), 1)  # type: ignore
+        signup = recruitment.signups.last()  # type: ignore
         self.assertEqual(signup.person, person)
         self.assertEqual(signup.user_notes, "")
         self.assertEqual(signup.notes, notes)
@@ -665,8 +665,8 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         view = InstructorRecruitmentSignupChangeState(
             object=mock_signup, request=request
         )
-        view.add_instructor_task = mock.MagicMock()
-        view.remove_instructor_task = mock.MagicMock()
+        view.accept_signup = mock.MagicMock()
+        view.decline_signup = mock.MagicMock()
         data = {"action": "confirm"}
         form = InstructorRecruitmentSignupChangeStateForm(data)
         form.is_valid()
@@ -675,10 +675,10 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Assert
         self.assertEqual(mock_signup.state, "a")
         mock_signup.save.assert_called_once()
-        view.add_instructor_task.assert_called_once_with(
+        view.accept_signup.assert_called_once_with(
             request, mock_signup, mock_signup.person, mock_signup.recruitment.event
         )
-        view.remove_instructor_task.assert_not_called()
+        view.decline_signup.assert_not_called()
 
     def test_add_instructor_task(self) -> None:
         # Arrange
@@ -698,7 +698,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         recruitment = InstructorRecruitment(event=event)
         signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         # Act
-        task = view.add_instructor_task(request, signup, person, event)
+        task = view.accept_signup(request, signup, person, event)
         # Assert
         self.assertTrue(task.pk)
 
@@ -722,7 +722,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         role = Role.objects.get(name="instructor")
         task = Task.objects.create(person=person, event=event, role=role)
         # Act
-        view.remove_instructor_task(request, signup, person, event)
+        view.decline_signup(request, signup, person, event)
         # Assert
         with self.assertRaises(Task.DoesNotExist):
             task.refresh_from_db()
@@ -744,7 +744,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         recruitment = InstructorRecruitment(event=event)
         signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         # Act & Assert - no error
-        view.remove_instructor_task(request, signup, person, event)
+        view.decline_signup(request, signup, person, event)
 
     def test_post__form_valid(self) -> None:
         # Arrange
@@ -935,13 +935,13 @@ class TestInstructorRecruitmentChangeState(TestBase):
     def test__validate_for_closing(self) -> None:
         # Arrange
         recruitment1 = InstructorRecruitment(event=None, status="o")
-        recruitment1.num_pending = 123
+        recruitment1.num_pending = 123  # type: ignore
         recruitment2 = InstructorRecruitment(event=None, status="c")
-        recruitment2.num_pending = 123
+        recruitment2.num_pending = 123  # type: ignore
         recruitment3 = InstructorRecruitment(event=None, status="o")
-        recruitment3.num_pending = 0
+        recruitment3.num_pending = 0  # type: ignore
         recruitment4 = InstructorRecruitment(event=None, status="c")
-        recruitment4.num_pending = 0
+        recruitment4.num_pending = 0  # type: ignore
         data = [
             (recruitment1, False),
             (recruitment2, False),
