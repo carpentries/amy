@@ -472,14 +472,18 @@ class InstructorRecruitmentSignupChangeState(
         person: Person,
         event: Event,
     ) -> None:
-        """Remove instructor task from a Person only if the task exists. If it doesn't,
-        don't throw errors."""
         try:
             task = Task.objects.get(role__name="instructor", person=person, event=event)
+            messages.warning(
+                request,
+                format_html(
+                    'Instructor task was <a href="{}">found</a>. '
+                    'The signup was declined.',
+                    task.get_absolute_url(),
+                ),
+            )
         except Task.DoesNotExist:
             pass
-        else:
-            task.delete()
 
         run_instructor_confirmed_for_workshop_strategy(
             instructor_confirmed_for_workshop_strategy(signup),
