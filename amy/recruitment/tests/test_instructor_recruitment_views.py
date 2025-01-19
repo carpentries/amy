@@ -680,7 +680,33 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         )
         view.decline_signup.assert_not_called()
 
-    def test_add_instructor_task(self) -> None:
+    @mock.patch("recruitment.views.messages")
+    def test_accept_signup(self, mock_messages: mock.MagicMock) -> None:
+        # Arrange
+        super()._setUpRoles()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = self.org_alpha
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=timezone.now().date(),
+        )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
+        role = Role.objects.get(name="instructor")
+        task = Task.objects.create(person=person, event=event, role=role)
+        # Act
+        task2 = view.accept_signup(request, signup, person, event)
+        # Assert
+        self.assertEqual(task.pk, task2.pk)
+        mock_messages.warning.assert_called_once()
+
+    def test_accept_signup__no_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
@@ -702,7 +728,8 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Assert
         self.assertTrue(task.pk)
 
-    def test_remove_instructor_task(self) -> None:
+    @mock.patch("recruitment.views.messages")
+    def test_decline_signup(self, mock_messages: mock.MagicMock) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
@@ -721,13 +748,12 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         role = Role.objects.get(name="instructor")
         task = Task.objects.create(person=person, event=event, role=role)
-        # Act
+        # Act & Assert - no error - task is not removed, but a warning is added
         view.decline_signup(request, signup, person, event)
-        # Assert
-        with self.assertRaises(Task.DoesNotExist):
-            task.refresh_from_db()
+        task.refresh_from_db()
+        mock_messages.warning.assert_called_once()
 
-    def test_remove_instructor_task__no_task(self) -> None:
+    def test_decline_signup__no_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
