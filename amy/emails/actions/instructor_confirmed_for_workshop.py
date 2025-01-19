@@ -1,6 +1,5 @@
 from datetime import datetime
 import logging
-from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
@@ -9,7 +8,7 @@ from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
-from emails.models import ScheduledEmail
+from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
@@ -23,41 +22,34 @@ from emails.types import (
     InstructorConfirmedKwargs,
     StrategyEnum,
 )
-from emails.utils import (
-    api_model_url,
-    immediate_action,
-    log_condition_elements,
-    scalar_value_none,
-    scalar_value_url,
-)
+from emails.utils import api_model_url, immediate_action, log_condition_elements
 from recruitment.models import InstructorRecruitmentSignup
-from workshops.models import Event, Person, TagQuerySet, Task
+from workshops.models import Event, Person, TagQuerySet
 
 logger = logging.getLogger("amy")
 
 
 def instructor_confirmed_for_workshop_strategy(
-    task: Task, optional_task_pk: int | None = None
+    signup: InstructorRecruitmentSignup,
 ) -> StrategyEnum:
-    logger.info(f"Running InstructorConfirmedForWorkshop strategy for {task=}")
+    logger.info(f"Running InstructorConfirmedForWorkshop strategy for {signup=}")
 
-    instructor_role = task.role.name == "instructor"
-    person_email_exists = bool(task.person.email)
-    carpentries_tags = task.event.tags.filter(
+    signup_is_accepted = signup.state == "a"
+    person_email_exists = bool(signup.person.email)
+    event = signup.recruitment.event
+    carpentries_tags = event.tags.filter(
         name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
     ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
     centrally_organised = (
-        task.event.administrator and task.event.administrator.domain != "self-organized"
+        event.administrator and event.administrator.domain != "self-organized"
     )
-    start_date_in_future = (
-        task.event.start and task.event.start >= timezone.now().date()
-    )
+    start_date_in_future = event.start and event.start >= timezone.now().date()
 
     log_condition_elements(
-        task=task,
-        task_pk=task.pk,
-        optional_task_pk=optional_task_pk,
-        instructor_role=instructor_role,
+        signup=signup,
+        signup_pk=signup.pk,
+        signup_is_accepted=signup_is_accepted,
+        event=event,
         person_email_exists=person_email_exists,
         carpentries_tags=carpentries_tags,
         centrally_organised=centrally_organised,
@@ -65,8 +57,7 @@ def instructor_confirmed_for_workshop_strategy(
     )
 
     email_should_exist = (
-        task.pk
-        and instructor_role
+        signup_is_accepted
         and person_email_exists
         and carpentries_tags
         and centrally_organised
@@ -74,11 +65,12 @@ def instructor_confirmed_for_workshop_strategy(
     )
     logger.debug(f"{email_should_exist=}")
 
-    ct = ContentType.objects.get_for_model(Task)
+    ct = ContentType.objects.get_for_model(InstructorRecruitmentSignup)
     email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
-        generic_relation_pk=optional_task_pk or task.pk,
+        generic_relation_pk=signup.pk,
         template__signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
+        state=ScheduledEmailStatus.SCHEDULED,
     ).exists()
     logger.debug(f"{email_exists=}")
 
@@ -96,7 +88,10 @@ def instructor_confirmed_for_workshop_strategy(
 
 
 def run_instructor_confirmed_for_workshop_strategy(
-    strategy: StrategyEnum, request: HttpRequest, task: Task, **kwargs
+    strategy: StrategyEnum,
+    request: HttpRequest,
+    signup: InstructorRecruitmentSignup,
+    **kwargs,
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_confirmed_for_workshop_signal,
@@ -108,8 +103,8 @@ def run_instructor_confirmed_for_workshop_strategy(
         strategy,
         signal_mapping,
         request,
-        sender=task,
-        task=task,
+        sender=signup,
+        signup=signup,
         **kwargs,
     )
 
@@ -123,35 +118,24 @@ def get_context(
 ) -> InstructorConfirmedContext:
     person = Person.objects.get(pk=kwargs["person_id"])
     event = Event.objects.get(pk=kwargs["event_id"])
-    task = Task.objects.filter(pk=kwargs["task_id"]).first()
-    instructor_recruitment_signup = InstructorRecruitmentSignup.objects.filter(
+    instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
         pk=kwargs["instructor_recruitment_signup_id"]
-    ).first()
+    )
     return {
         "person": person,
         "event": event,
-        "task": task,
-        "task_id": kwargs["task_id"],
         "instructor_recruitment_signup": instructor_recruitment_signup,
     }
 
 
 def get_context_json(context: InstructorConfirmedContext) -> ContextModel:
-    signup = context["instructor_recruitment_signup"]
-    task = context["task"]
     return ContextModel(
         {
             "person": api_model_url("person", context["person"].pk),
             "event": api_model_url("event", context["event"].pk),
-            "task": api_model_url("task", task.pk) if task else scalar_value_none(),
-            "task_id": scalar_value_url("int", f"{context['task_id']}"),
-            "instructor_recruitment_signup": (
-                api_model_url(
-                    "instructorrecruitmentsignup",
-                    signup.pk,
-                )
-                if signup
-                else scalar_value_none()
+            "instructor_recruitment_signup": api_model_url(
+                "instructorrecruitmentsignup",
+                context["instructor_recruitment_signup"].pk,
             ),
         },
     )
@@ -159,9 +143,8 @@ def get_context_json(context: InstructorConfirmedContext) -> ContextModel:
 
 def get_generic_relation_object(
     context: InstructorConfirmedContext, **kwargs: Unpack[InstructorConfirmedKwargs]
-) -> Task:
-    # When removing task, this will be None.
-    return context["task"]  # type: ignore
+) -> InstructorRecruitmentSignup:
+    return context["instructor_recruitment_signup"]
 
 
 def get_recipients(
@@ -203,7 +186,7 @@ class InstructorConfirmedForWorkshopReceiver(BaseAction):
         self,
         context: InstructorConfirmedContext,
         **kwargs: Unpack[InstructorConfirmedKwargs],
-    ) -> Task:
+    ) -> InstructorRecruitmentSignup:
         return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
@@ -239,7 +222,7 @@ class InstructorConfirmedForWorkshopUpdateReceiver(BaseActionUpdate):
         self,
         context: InstructorConfirmedContext,
         **kwargs: Unpack[InstructorConfirmedKwargs],
-    ) -> Task:
+    ) -> InstructorRecruitmentSignup:
         return get_generic_relation_object(context, **kwargs)
 
     def get_recipients(
@@ -268,22 +251,19 @@ class InstructorConfirmedForWorkshopCancelReceiver(BaseActionCancel):
     def get_context_json(self, context: InstructorConfirmedContext) -> ContextModel:
         return get_context_json(context)
 
-    def get_generic_relation_content_type(
-        self, context: InstructorConfirmedContext, generic_relation_obj: Any
-    ) -> ContentType:
-        return ContentType.objects.get_for_model(Task)
-
-    def get_generic_relation_pk(
-        self, context: InstructorConfirmedContext, generic_relation_obj: Any
-    ) -> int | Any:
-        return context["task_id"]
-
     def get_generic_relation_object(
         self,
         context: InstructorConfirmedContext,
         **kwargs: Unpack[InstructorConfirmedKwargs],
-    ) -> Task:
+    ) -> InstructorRecruitmentSignup:
         return get_generic_relation_object(context, **kwargs)
+
+    def get_recipients(
+        self,
+        context: InstructorConfirmedContext,
+        **kwargs: Unpack[InstructorConfirmedKwargs],
+    ) -> list[str]:
+        return get_recipients(context, **kwargs)
 
     def get_recipients_context_json(
         self,

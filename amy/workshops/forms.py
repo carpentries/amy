@@ -719,7 +719,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             # corresponds to role "instructor"; otherwise it's "instructor" community
             # role.
             community_role_name = "instructor"
-            if event.administrator.domain == "carpentries.org":
+            if event.administrator and event.administrator.domain == "carpentries.org":
                 community_role_name = "trainer"
 
             person_community_roles = CommunityRole.objects.filter(

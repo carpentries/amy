@@ -12,6 +12,7 @@ from django.forms import BaseForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.html import format_html
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
 import django_rq
@@ -67,7 +68,7 @@ class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListVie
     filter_class = InstructorRecruitmentFilter
 
     queryset = (
-        InstructorRecruitment.objects.annotate_with_priority()
+        InstructorRecruitment.objects.annotate_with_priority()  # type: ignore
         .select_related("event", "assigned_to")
         .prefetch_related(
             Prefetch(
@@ -129,7 +130,7 @@ class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListVie
         it's still possible to clear that filter value, in which case the query param
         will become `?assigned_to=` (empty)."""
         data = super().get_filter_data().copy()
-        data.setdefault("assigned_to", self.request.user.pk)
+        data.setdefault("assigned_to", self.request.user.pk)  # type: ignore
         return data
 
     def get_context_data(self, **kwargs):
@@ -214,19 +215,19 @@ class InstructorRecruitmentCreate(
 
     def get_initial(self) -> dict:
         try:
-            workshop_request = self.event.workshoprequest
+            workshop_request = self.event.workshoprequest  # type: ignore
             return {
                 "notes": (
                     f"{workshop_request.audience_description}\n\n"
                     f"{workshop_request.user_notes}"
                 )
             }
-        except Event.workshoprequest.RelatedObjectDoesNotExist:
+        except Event.workshoprequest.RelatedObjectDoesNotExist:  # type: ignore
             return {}
 
     def form_valid(self, form: InstructorRecruitmentCreateForm):
         self.object: InstructorRecruitment = form.save(commit=False)
-        self.object.assigned_to = self.request.user
+        self.object.assigned_to = self.request.user  # type: ignore
         self.object.event = self.event
         self.object.save()
         return super().form_valid(form)
@@ -240,7 +241,7 @@ class InstructorRecruitmentDetails(
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = (
-        InstructorRecruitment.objects.annotate_with_priority()
+        InstructorRecruitment.objects.annotate_with_priority()  # type: ignore
         .prefetch_related(
             Prefetch(
                 "signups",
@@ -400,8 +401,8 @@ class InstructorRecruitmentSignupChangeState(
                 [HttpRequest, InstructorRecruitmentSignup, Person, Event], Task | None
             ],
         ] = {
-            "a": self.add_instructor_task,
-            "d": self.remove_instructor_task,
+            "a": self.accept_signup,
+            "d": self.decline_signup,
         }
         handler = state_to_method_action_mapping[self.object.state]
         try:
@@ -420,7 +421,7 @@ class InstructorRecruitmentSignupChangeState(
             )
             return HttpResponseRedirect(self.get_success_url())
 
-    def add_instructor_task(
+    def accept_signup(
         self,
         request: HttpRequest,
         signup: InstructorRecruitmentSignup,
@@ -428,19 +429,27 @@ class InstructorRecruitmentSignupChangeState(
         event: Event,
     ) -> Task:
         role = Role.objects.get(name="instructor")
-        task = Task.objects.create(
+        task, created = Task.objects.get_or_create(
             event=event,
             person=person,
             role=role,
         )
+        if not created:
+            messages.warning(
+                request,
+                format_html(
+                    "The signup was accepted, but instructor task already "
+                    '<a href="{}">exists</a>.',
+                    task.get_absolute_url(),
+                ),
+            )
 
         run_instructor_confirmed_for_workshop_strategy(
-            instructor_confirmed_for_workshop_strategy(task),
+            instructor_confirmed_for_workshop_strategy(signup),
             request,
-            task=task,
+            signup=signup,
             person_id=person.pk,
             event_id=event.pk,
-            task_id=task.pk,
             instructor_recruitment_id=signup.recruitment.pk,
             instructor_recruitment_signup_id=signup.pk,
         )
@@ -456,38 +465,35 @@ class InstructorRecruitmentSignupChangeState(
 
         return task
 
-    def remove_instructor_task(
+    def decline_signup(
         self,
         request: HttpRequest,
         signup: InstructorRecruitmentSignup,
         person: Person,
         event: Event,
     ) -> None:
-        """Remove instructor task from a Person only if the task exists. If it doesn't,
-        don't throw errors."""
         try:
             task = Task.objects.get(role__name="instructor", person=person, event=event)
-            old_task = Task.objects.get(
-                role__name="instructor", person=person, event=event
-            )  # Fetched again to omit problem with referencing `task`.
+            messages.warning(
+                request,
+                format_html(
+                    "The signup was declined, but instructor task was "
+                    '<a href="{}">found</a>. ',
+                    task.get_absolute_url(),
+                ),
+            )
         except Task.DoesNotExist:
             pass
-        else:
-            task.delete()
-            run_instructor_confirmed_for_workshop_strategy(
-                instructor_confirmed_for_workshop_strategy(
-                    task,
-                    optional_task_pk=old_task.pk,
-                ),
-                request,
-                task=old_task,
-                person_id=person.pk,
-                event_id=event.pk,
-                task_id=old_task.pk,
-                instructor_recruitment_id=signup.recruitment.pk,
-                instructor_recruitment_signup_id=signup.pk,
-            )
 
+        run_instructor_confirmed_for_workshop_strategy(
+            instructor_confirmed_for_workshop_strategy(signup),
+            request,
+            signup=signup,
+            person_id=person.pk,
+            event_id=event.pk,
+            instructor_recruitment_id=signup.recruitment.pk,
+            instructor_recruitment_signup_id=signup.pk,
+        )
         run_instructor_declined_from_workshop_strategy(
             instructor_declined_from_workshop_strategy(signup),
             request,

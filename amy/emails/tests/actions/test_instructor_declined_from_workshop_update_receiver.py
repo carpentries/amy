@@ -23,7 +23,7 @@ from emails.signals import (
 )
 from emails.utils import api_model_url
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from workshops.models import Event, Organization, Person, Role, Tag, Task
+from workshops.models import Event, Organization, Person, Tag
 from workshops.tests.base import TestBase
 
 
@@ -34,10 +34,6 @@ class TestInstructorDeclinedFromWorkshopUpdateReceiver(TestCase):
             slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
         )
         self.person = Person.objects.create(email="test@example.org")
-        instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
-        )
         self.recruitment = InstructorRecruitment.objects.create(
             event=self.event, notes="Test notes"
         )

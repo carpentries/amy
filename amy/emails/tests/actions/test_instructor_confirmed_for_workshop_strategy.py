@@ -12,7 +12,8 @@ from emails.actions.instructor_confirmed_for_workshop import (
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME
 from emails.types import StrategyEnum
-from workshops.models import Event, Organization, Person, Role, Tag, Task
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from workshops.models import Event, Organization, Person, Tag
 
 
 class TestInstructorConfirmedForWorkshopStrategy(TestCase):
@@ -28,16 +29,18 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
         swc_tag = Tag.objects.create(name="SWC")
         self.event.tags.set([swc_tag])
         self.person = Person.objects.create(email="test@example.org")
-        instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
+        self.recruitment = InstructorRecruitment.objects.create(
+            event=self.event, notes="Test notes"
+        )
+        self.signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=self.recruitment, person=self.person, state="a"
         )
 
     def test_strategy_create(self) -> None:
         # Arrange
 
         # Act
-        result = instructor_confirmed_for_workshop_strategy(self.task)
+        result = instructor_confirmed_for_workshop_strategy(self.signup)
 
         # Assert
         self.assertEqual(result, StrategyEnum.CREATE)
@@ -60,19 +63,19 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.task,
+            generic_relation=self.signup,
         )
 
         # Act
-        result = instructor_confirmed_for_workshop_strategy(self.task)
+        result = instructor_confirmed_for_workshop_strategy(self.signup)
 
         # Assert
         self.assertEqual(result, StrategyEnum.UPDATE)
 
     def test_strategy_cancel(self) -> None:
         # Arrange
-        self.task.role = Role.objects.create(name="learner")
-        self.task.save()
+        self.signup.state = "d"
+        self.signup.save()
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -90,11 +93,11 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.task,
+            generic_relation=self.signup,
         )
 
         # Act
-        result = instructor_confirmed_for_workshop_strategy(self.task)
+        result = instructor_confirmed_for_workshop_strategy(self.signup)
 
         # Assert
         self.assertEqual(result, StrategyEnum.CANCEL)
@@ -107,9 +110,11 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
             slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
         )
         self.person = Person.objects.create(email="test@example.org")
-        instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
+        self.recruitment = InstructorRecruitment.objects.create(
+            event=self.event, notes="Test notes"
+        )
+        self.signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=self.recruitment, person=self.person
         )
 
     @patch(
@@ -128,22 +133,22 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         run_instructor_confirmed_for_workshop_strategy(
             strategy,
             request,
-            task=self.task,
-            person_id=self.task.person.pk,
-            event_id=self.task.event.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
+            signup=self.signup,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=self.recruitment.pk,
+            instructor_recruitment_signup_id=self.signup.pk,
         )
 
         # Assert
         mock_instructor_confirmed_for_workshop_signal.send.assert_called_once_with(
-            sender=self.task,
+            sender=self.signup,
             request=request,
-            task=self.task,
-            person_id=self.task.person.pk,
-            event_id=self.task.event.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
+            signup=self.signup,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=self.recruitment.pk,
+            instructor_recruitment_signup_id=self.signup.pk,
         )
 
     @patch(
@@ -152,7 +157,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
     )
     def test_strategy_calls_update_signal(
         self,
-        mock_instructor_confirmed_for_workshop_update_signal,
+        mock_update_signal,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -162,22 +167,22 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         run_instructor_confirmed_for_workshop_strategy(
             strategy,
             request,
-            task=self.task,
-            person_id=self.task.person.pk,
-            event_id=self.task.event.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
+            signup=self.signup,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=self.recruitment.pk,
+            instructor_recruitment_signup_id=self.signup.pk,
         )
 
         # Assert
-        mock_instructor_confirmed_for_workshop_update_signal.send.assert_called_once_with(  # noqa: E501
-            sender=self.task,
+        mock_update_signal.send.assert_called_once_with(
+            sender=self.signup,
             request=request,
-            task=self.task,
-            person_id=self.task.person.pk,
-            event_id=self.task.event.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
+            signup=self.signup,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=self.recruitment.pk,
+            instructor_recruitment_signup_id=self.signup.pk,
         )
 
     @patch(
@@ -186,7 +191,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
     )
     def test_strategy_calls_cancel_signal(
         self,
-        mock_instructor_confirmed_for_workshop_cancel_signal,
+        mock_cancel_signal,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -196,22 +201,22 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         run_instructor_confirmed_for_workshop_strategy(
             strategy,
             request,
-            task=self.task,
-            person_id=self.task.person.pk,
-            event_id=self.task.event.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
+            signup=self.signup,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=self.recruitment.pk,
+            instructor_recruitment_signup_id=self.signup.pk,
         )
 
         # Assert
-        mock_instructor_confirmed_for_workshop_cancel_signal.send.assert_called_once_with(  # noqa: E501
-            sender=self.task,
+        mock_cancel_signal.send.assert_called_once_with(
+            sender=self.signup,
             request=request,
-            task=self.task,
-            person_id=self.task.person.pk,
-            event_id=self.task.event.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
+            signup=self.signup,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=self.recruitment.pk,
+            instructor_recruitment_signup_id=self.signup.pk,
         )
 
     @patch("emails.actions.base_strategy.logger")
@@ -242,11 +247,11 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         run_instructor_confirmed_for_workshop_strategy(
             strategy,
             request,
-            task=self.task,
-            person_id=self.task.person.pk,
-            event_id=self.task.event.pk,
-            instructor_recruitment_id=None,
-            instructor_recruitment_signup_id=None,
+            signup=self.signup,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            instructor_recruitment_id=self.recruitment.pk,
+            instructor_recruitment_signup_id=self.signup.pk,
         )
 
         # Assert
@@ -254,7 +259,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         mock_instructor_confirmed_for_workshop_update_signal.send.assert_not_called()
         mock_instructor_confirmed_for_workshop_cancel_signal.send.assert_not_called()
         mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {self.task} is a no-op"
+            f"Strategy {strategy} for {self.signup} is a no-op"
         )
 
     def test_invalid_strategy(self) -> None:
@@ -269,9 +274,9 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
             run_instructor_confirmed_for_workshop_strategy(
                 strategy,
                 request,
-                task=self.task,
-                person_id=self.task.person.pk,
-                event_id=self.task.event.pk,
-                instructor_recruitment_id=None,
-                instructor_recruitment_signup_id=None,
+                signup=self.signup,
+                person_id=self.person.pk,
+                event_id=self.event.pk,
+                instructor_recruitment_id=self.recruitment.pk,
+                instructor_recruitment_signup_id=self.signup.pk,
             )
