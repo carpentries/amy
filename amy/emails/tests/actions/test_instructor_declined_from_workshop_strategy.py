@@ -13,7 +13,7 @@ from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME
 from emails.types import StrategyEnum
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from workshops.models import Event, Organization, Person, Role, Tag, Task
+from workshops.models import Event, Organization, Person, Tag
 
 
 class TestInstructorDeclinedFromWorkshopStrategy(TestCase):
@@ -29,10 +29,6 @@ class TestInstructorDeclinedFromWorkshopStrategy(TestCase):
         swc_tag = Tag.objects.create(name="SWC")
         self.event.tags.set([swc_tag])
         self.person = Person.objects.create(email="test@example.org")
-        instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
-        )
         self.recruitment = InstructorRecruitment.objects.create(
             event=self.event, notes="Test notes"
         )
@@ -114,10 +110,6 @@ class TestRunInstructorDeclinedFromWorkshopStrategy(TestCase):
             slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
         )
         self.person = Person.objects.create(email="test@example.org")
-        instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
-        )
         self.recruitment = InstructorRecruitment.objects.create(
             event=self.event, notes="Test notes"
         )
