@@ -12,7 +12,6 @@ from workshops.models import (
     Membership,
     Organization,
     Person,
-    Task,
     TrainingProgress,
     TrainingRequirement,
 )
@@ -34,17 +33,14 @@ class InstructorConfirmedKwargs(TypedDict):
     request: HttpRequest
     person_id: int
     event_id: int
-    task_id: int
-    instructor_recruitment_id: int | None
-    instructor_recruitment_signup_id: int | None
+    instructor_recruitment_id: int
+    instructor_recruitment_signup_id: int
 
 
 class InstructorConfirmedContext(TypedDict):
     person: Person
     event: Event
-    task: Task | None
-    task_id: int
-    instructor_recruitment_signup: InstructorRecruitmentSignup | None
+    instructor_recruitment_signup: InstructorRecruitmentSignup
 
 
 class InstructorDeclinedKwargs(TypedDict):

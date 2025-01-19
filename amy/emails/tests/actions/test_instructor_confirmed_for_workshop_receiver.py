@@ -10,10 +10,13 @@ from emails.actions.instructor_confirmed_for_workshop import (
 )
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
-from emails.signals import instructor_confirmed_for_workshop_signal
-from emails.utils import api_model_url, scalar_value_url
+from emails.signals import (
+    INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
+    instructor_confirmed_for_workshop_signal,
+)
+from emails.utils import api_model_url
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
-from workshops.models import Event, Organization, Person, Role, Tag, Task
+from workshops.models import Event, Organization, Person, Tag
 from workshops.tests.base import TestBase
 
 
@@ -57,8 +60,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
             event=event, notes="Test notes"
         )
         person = Person.objects.create(email="test@example.org")
-        instructor_role = Role.objects.create(name="instructor")
-        task = Task.objects.create(person=person, event=event, role=instructor_role)
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -82,7 +83,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
                 request=request,
                 person_id=signup.person.pk,
                 event_id=signup.recruitment.event.pk,
-                task_id=task.pk,
                 instructor_recruitment_id=signup.recruitment.pk,
                 instructor_recruitment_signup_id=signup.pk,
             )
@@ -112,8 +112,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
             event=event, notes="Test notes"
         )
         person = Person.objects.create(email="test@example.org")
-        instructor_role = Role.objects.create(name="instructor")
-        task = Task.objects.create(person=person, event=event, role=instructor_role)
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
@@ -133,7 +131,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
                 request=request,
                 person_id=signup.person.pk,
                 event_id=signup.recruitment.event.pk,
-                task_id=task.pk,
                 instructor_recruitment_id=signup.recruitment.pk,
                 instructor_recruitment_signup_id=signup.pk,
             )
@@ -145,8 +142,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
                 {
                     "person": api_model_url("person", person.pk),
                     "event": api_model_url("event", event.pk),
-                    "task": api_model_url("task", task.pk),
-                    "task_id": scalar_value_url("int", task.pk),
                     "instructor_recruitment_signup": api_model_url(
                         "instructorrecruitmentsignup", signup.pk
                     ),
@@ -162,7 +157,7 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
                     }  # type: ignore
                 ]
             ),
-            generic_relation_obj=task,
+            generic_relation_obj=signup,
             author=None,
         )
 
@@ -183,8 +178,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
-        instructor_role = Role.objects.create(name="instructor")
-        task = Task.objects.create(person=person, event=event, role=instructor_role)
         request = RequestFactory().get("/")
         signal = instructor_confirmed_for_workshop_signal.signal_name
 
@@ -194,7 +187,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
             request=request,
             person_id=signup.person.pk,
             event_id=signup.recruitment.event.pk,
-            task_id=task.pk,
             instructor_recruitment_id=signup.recruitment.pk,
             instructor_recruitment_signup_id=signup.pk,
         )
@@ -217,8 +209,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person
         )
-        instructor_role = Role.objects.create(name="instructor")
-        task = Task.objects.create(person=person, event=event, role=instructor_role)
         request = RequestFactory().get("/")
         signal = instructor_confirmed_for_workshop_signal.signal_name
 
@@ -228,7 +218,6 @@ class TestInstructorConfirmedForWorkshopReceiver(TestCase):
             request=request,
             person_id=signup.person.pk,
             event_id=signup.recruitment.event.pk,
-            task_id=task.pk,
             instructor_recruitment_id=signup.recruitment.pk,
             instructor_recruitment_signup_id=signup.pk,
         )
@@ -244,9 +233,7 @@ class TestInstructorConfirmedForWorkshopReceiverIntegration(TestBase):
             "EMAIL_MODULE": [("boolean", True)],
         }
     )
-    def test_integration(
-        self,
-    ) -> None:
+    def test_integration(self) -> None:
         # Arrange
         self._setUpRoles()
         self._setUpTags()
@@ -285,7 +272,7 @@ class TestInstructorConfirmedForWorkshopReceiverIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=instructor_confirmed_for_workshop_signal.signal_name,
+            signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],

@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
+from communityroles.models import CommunityRole, CommunityRoleConfig
 from emails.actions.instructor_confirmed_for_workshop import (
     instructor_confirmed_for_workshop_cancel_receiver,
     instructor_confirmed_for_workshop_strategy,
@@ -14,7 +15,8 @@ from emails.signals import (
     INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
     instructor_confirmed_for_workshop_cancel_signal,
 )
-from workshops.models import Event, Organization, Person, Role, Tag, Task
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from workshops.models import Event, Organization, Person, Tag
 from workshops.tests.base import TestBase
 
 
@@ -25,9 +27,11 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
         )
         self.person = Person.objects.create(email="test@example.org")
-        instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
+        self.recruitment = InstructorRecruitment.objects.create(
+            event=self.event, notes="Test notes"
+        )
+        self.signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=self.recruitment, person=self.person
         )
 
     def setUpEmailTemplate(self) -> EmailTemplate:
@@ -84,7 +88,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.task,
+            generic_relation=self.signup,
         )
 
         # Act
@@ -92,14 +96,12 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             "emails.actions.base_action.messages_action_cancelled"
         ) as mock_messages_action_cancelled:
             instructor_confirmed_for_workshop_cancel_signal.send(
-                sender=self.task,
+                sender=self.signup,
                 request=request,
-                task=self.task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
-                task_id=self.task.pk,
-                instructor_recruitment_id=None,
-                instructor_recruitment_signup_id=None,
+                instructor_recruitment_id=self.recruitment.pk,
+                instructor_recruitment_signup_id=self.signup.pk,
             )
 
         # Assert
@@ -126,7 +128,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.task,
+            generic_relation=self.signup,
         )
 
         # Act
@@ -134,14 +136,12 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
             instructor_confirmed_for_workshop_cancel_signal.send(
-                sender=self.task,
+                sender=self.signup,
                 request=request,
-                task=self.task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
-                task_id=self.task.pk,
-                instructor_recruitment_id=None,
-                instructor_recruitment_signup_id=None,
+                instructor_recruitment_id=self.recruitment.pk,
+                instructor_recruitment_signup_id=self.signup.pk,
             )
 
         # Assert
@@ -166,7 +166,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.task,
+            generic_relation=self.signup,
         )
         scheduled_email2 = ScheduledEmail.objects.create(
             template=template,
@@ -175,7 +175,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.task,
+            generic_relation=self.signup,
         )
 
         # Act
@@ -183,14 +183,12 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
             instructor_confirmed_for_workshop_cancel_signal.send(
-                sender=self.task,
+                sender=self.signup,
                 request=request,
-                task=self.task,
                 person_id=self.person.pk,
                 event_id=self.event.pk,
-                task_id=self.task.pk,
-                instructor_recruitment_id=None,
-                instructor_recruitment_signup_id=None,
+                instructor_recruitment_id=self.recruitment.pk,
+                instructor_recruitment_signup_id=self.signup.pk,
             )
 
         # Assert
@@ -209,12 +207,49 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
 
 
 class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @override_settings(
+        FLAGS={
+            "INSTRUCTOR_RECRUITMENT": [("boolean", True)],
+            "EMAIL_MODULE": [("boolean", True)],
+        }
+    )
     def test_integration(self) -> None:
         # Arrange
         self._setUpRoles()
         self._setUpTags()
+        self._setUpAdministrators()
         self._setUpUsersAndLogin()
+        host = Organization.objects.create(domain="test.com", fullname="Test")
+        person = Person.objects.create_user(  # type: ignore
+            username="test_test",
+            personal="Test",
+            family="User",
+            email="test@user.com",
+            password="test",
+        )
+        config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            display_name="Instructor",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        CommunityRole.objects.create(
+            config=config,
+            person=person,
+        )
+        event = Event.objects.create(
+            slug="test-event",
+            host=host,
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            administrator=Organization.objects.get(domain="software-carpentry.org"),
+        )
+        event.tags.add(Tag.objects.get(name="SWC"))
+        recruitment = InstructorRecruitment.objects.create(status="o", event=event)
+        signup = InstructorRecruitmentSignup.objects.create(
+            recruitment=recruitment, person=person, state="a"
+        )
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -226,61 +261,26 @@ class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        host_organization = Organization.objects.create(
-            domain="example.com", fullname="Example"
-        )
-        event = Event.objects.create(
-            slug="2024-08-05-test-event",
-            host=host_organization,
-            administrator=ttt_organization,
-            start=date.today() + timedelta(days=30),
-        )
-        event.tags.set([Tag.objects.get(name="SWC")])
-
-        instructor = Person.objects.create(
-            personal="Kelsi",
-            middle="",
-            family="Purdy",
-            username="purdy_kelsi",
-            email="purdy.kelsi@example.com",
-            secondary_email="notused@amy.org",
-            gender="F",
-            airport=self.airport_0_0,
-            github="",
-            twitter="",
-            bluesky="@purdy_kelsi.bsky.social",
-            url="http://kelsipurdy.com/",
-            affiliation="University of Arizona",
-            occupation="TA at Biology Department",
-            orcid="0000-0000-0000",
-            is_active=True,
-        )
-        instructor_role = Role.objects.get(name="instructor")
-        task = Task.objects.create(event=event, person=instructor, role=instructor_role)
-
         request = RequestFactory().get("/")
         with patch(
             "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
             run_instructor_confirmed_for_workshop_strategy(
-                instructor_confirmed_for_workshop_strategy(task),
+                instructor_confirmed_for_workshop_strategy(signup),
                 request,
-                task=task,
-                person_id=task.person.pk,
-                event_id=task.event.pk,
-                task_id=task.pk,
-                instructor_recruitment_id=None,
-                instructor_recruitment_signup_id=None,
+                signup=signup,
+                person_id=person.pk,
+                event_id=event.pk,
+                instructor_recruitment_id=recruitment.pk,
+                instructor_recruitment_signup_id=signup.pk,
             )
         scheduled_email = ScheduledEmail.objects.get(template=template)
 
-        url = reverse("task_delete", args=[task.pk])
+        url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
+        payload = {"action": "decline"}
 
         # Act
-        rv = self.client.post(url)
+        rv = self.client.post(url, payload)
 
         # Arrange
         mock_action_scheduled.assert_called_once()
