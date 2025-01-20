@@ -12,6 +12,27 @@ $ python docs/generate_changelog.py v4.1
 Then paste output from that script here.
 
 -----------------------------------------------------------------
+
+## v4.6 - 2025-01-20
+
+### Bugfixes
+* Emails: Improve managing instructor task in recruitments, new email action Instructor Task Created for Workshop - [#2739](https://github.com/carpentries/amy/pull/2739) by @pbanaszkiewicz
+
+### Features
+* chore(deps): Bump django from 4.2.17 to 4.2.18 - [#2740](https://github.com/carpentries/amy/pull/2740) by @dependabot[bot]
+* chore(deps-dev): Bump virtualenv from 20.26.2 to 20.26.6 - [#2738](https://github.com/carpentries/amy/pull/2738) by @dependabot[bot]
+* chore(deps): Bump jinja2 from 3.1.4 to 3.1.5 - [#2736](https://github.com/carpentries/amy/pull/2736) by @dependabot[bot]
+* Update CICD workflow - [#2735](https://github.com/carpentries/amy/pull/2735) by @pbanaszkiewicz
+* Allow admins to see upcoming teaching opportunities - [#2734](https://github.com/carpentries/amy/pull/2734) by @pbanaszkiewicz
+* Display tasks per role summary in instructor dashboard - [#2733](https://github.com/carpentries/amy/pull/2733) by @pbanaszkiewicz
+* Leverage full-text search in Postgres to improve searching for people and training requests - [#2732](https://github.com/carpentries/amy/pull/2732) by @pbanaszkiewicz
+* Multiple changes - [#2731](https://github.com/carpentries/amy/pull/2731) by @pbanaszkiewicz
+* Updates admin user documentation about automated emails - [#2730](https://github.com/carpentries/amy/pull/2730) by @maneesha
+* [Emails] Complex strategy for instructor declined for workshop - [#2729](https://github.com/carpentries/amy/pull/2729) by @pbanaszkiewicz
+* Bump django from 4.2.16 to 4.2.17 - [#2727](https://github.com/carpentries/amy/pull/2727) by @dependabot[bot]
+* Update upload-artifact version to v4 - [#2716](https://github.com/carpentries/amy/pull/2716) by @froggleston
+
+
 ## v4.5 - 2024-11-30
 
 ### Features

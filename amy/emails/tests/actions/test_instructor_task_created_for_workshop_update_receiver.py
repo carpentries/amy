@@ -4,54 +4,39 @@ from unittest.mock import MagicMock, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import post_workshop_7days_update_receiver
-from emails.actions.post_workshop_7days import (
-    post_workshop_7days_strategy,
-    run_post_workshop_7days_strategy,
+from emails.actions.instructor_task_created_for_workshop import (
+    instructor_task_created_for_workshop_strategy,
+    instructor_task_created_for_workshop_update_receiver,
+    run_instructor_task_created_for_workshop_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
-    POST_WORKSHOP_7DAYS_SIGNAL_NAME,
-    post_workshop_7days_update_signal,
+    INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
+    instructor_task_created_for_workshop_update_signal,
 )
-from emails.utils import api_model_url, scalar_value_none
+from emails.utils import api_model_url, scalar_value_url
+from workshops.forms import PersonForm
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
-class TestPostWorkshop7DaysUpdateReceiver(TestCase):
+class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
     def setUp(self) -> None:
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        host = Organization.objects.create(domain="test.com", fullname="Test")
         self.event = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.create(domain="example.com", fullname="Example"),
-            administrator=ttt_organization,
-            start=date.today() + timedelta(days=30),
-            end=date.today() + timedelta(days=31),
+            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
         )
-        swc_tag = Tag.objects.create(name="SWC")
-        self.event.tags.add(swc_tag)
-
-        instructor_role = Role.objects.create(name="instructor")
-        self.instructor = Person.objects.create(
-            personal="Test", family="Test", email="test1@example.org", username="test1"
+        self.person = Person.objects.create(email="test@example.org")
+        instructor = Role.objects.create(name="instructor")
+        self.task = Task.objects.create(
+            role=instructor, person=self.person, event=self.event
         )
-        host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=instructor_role
-        )
-        Task.objects.create(event=self.event, person=self.host, role=host_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
+            signal=INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -65,20 +50,25 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            post_workshop_7days_update_receiver(None, request=request)
+            instructor_task_created_for_workshop_update_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping post_workshop_7days_update"
+                "EMAIL_MODULE feature flag not set, skipping "
+                "instructor_task_created_for_workshop_update"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = post_workshop_7days_update_signal.receivers[:]
+        original_receivers = (
+            instructor_task_created_for_workshop_update_signal.receivers[:]
+        )
 
         # Act
         # attempt to connect the receiver
-        post_workshop_7days_update_signal.connect(post_workshop_7days_update_receiver)
-        new_receivers = post_workshop_7days_update_signal.receivers[:]
+        instructor_task_created_for_workshop_update_signal.connect(
+            instructor_task_created_for_workshop_update_receiver
+        )
+        new_receivers = instructor_task_created_for_workshop_update_signal.receivers[:]
 
         # Assert
         # the same receiver list means this receiver has already been connected
@@ -90,6 +80,7 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
         request = RequestFactory().get("/")
 
         template = self.setUpEmailTemplate()
+        task = self.task
         ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -97,39 +88,42 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=task,
         )
 
         # Act
         with patch(
             "emails.actions.base_action.messages_action_updated"
         ) as mock_messages_action_updated:
-            post_workshop_7days_update_signal.send(
-                sender=self.event,
+            instructor_task_created_for_workshop_update_signal.send(
+                sender=task,
                 request=request,
-                event=self.event,
-                event_end_date=self.event.end,
+                task=task,
+                person_id=self.person.pk,
+                event_id=self.event.pk,
+                task_id=task.pk,
             )
 
         # Assert
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_updated.assert_called_once_with(
             request,
-            POST_WORKSHOP_7DAYS_SIGNAL_NAME,
+            INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
             scheduled_email,
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_action_updated")
-    @patch("emails.actions.post_workshop_7days.get_scheduled_at")
+    @patch("emails.actions.instructor_task_created_for_workshop.immediate_action")
     def test_email_updated(
         self,
-        mock_get_scheduled_at: MagicMock,
+        mock_immediate_action: MagicMock,
         mock_messages_action_updated: MagicMock,
     ) -> None:
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
+        task = self.task
         scheduled_email = ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -137,20 +131,22 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=task,
         )
-        scheduled_at = datetime(2023, 8, 5, 12, 0, tzinfo=UTC)
-        mock_get_scheduled_at.return_value = scheduled_at
+        scheduled_at = datetime(2024, 8, 5, 12, 0, tzinfo=UTC)
+        mock_immediate_action.return_value = scheduled_at
 
         # Act
         with patch(
             "emails.actions.base_action.EmailController.update_scheduled_email"
         ) as mock_update_scheduled_email:
-            post_workshop_7days_update_signal.send(
-                sender=self.event,
+            instructor_task_created_for_workshop_update_signal.send(
+                sender=self.task,
                 request=request,
-                event=self.event,
-                event_end_date=self.event.end,
+                task=self.task,
+                person_id=self.person.pk,
+                event_id=self.event.pk,
+                task_id=task.pk,
             )
 
         # Assert
@@ -158,28 +154,23 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
             scheduled_email=scheduled_email,
             context_json=ContextModel(
                 {
-                    "assignee": scalar_value_none(),
+                    "person": api_model_url("person", self.person.pk),
                     "event": api_model_url("event", self.event.pk),
-                    "hosts": [api_model_url("person", self.host.pk)],
-                    "instructors": [api_model_url("person", self.instructor.pk)],
-                    "helpers": [],
+                    "task": api_model_url("task", task.pk),
+                    "task_id": scalar_value_url("int", task.pk),
                 }
             ),
             scheduled_at=scheduled_at,
-            to_header=[self.host.email, self.instructor.email],
+            to_header=[self.person.email],
             to_header_context_json=ToHeaderModel(
                 [
                     {
-                        "api_uri": api_model_url("person", self.host.pk),
+                        "api_uri": api_model_url("person", self.person.pk),
                         "property": "email",
-                    },
-                    {
-                        "api_uri": api_model_url("person", self.instructor.pk),
-                        "property": "email",
-                    },
-                ]  # type: ignore
+                    },  # type: ignore
+                ]
             ),
-            generic_relation_obj=self.event,
+            generic_relation_obj=task,
             author=None,
         )
 
@@ -191,21 +182,23 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
     ) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        signal = POST_WORKSHOP_7DAYS_SIGNAL_NAME
-        event = self.event
+        signal = INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME
+        task = self.task
 
         # Act
-        post_workshop_7days_update_signal.send(
-            sender=self.event,
+        instructor_task_created_for_workshop_update_signal.send(
+            sender=task,
             request=request,
-            event=self.event,
-            event_end_date=self.event.end,
+            task=task,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            task_id=task.pk,
         )
 
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={event!r} "
+            f"Scheduled email for signal {signal} and generic_relation_obj={task!r} "
             "does not exist."
         )
 
@@ -217,8 +210,9 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
     ) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        signal = POST_WORKSHOP_7DAYS_SIGNAL_NAME
+        signal = INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME
         template = self.setUpEmailTemplate()
+        task = self.task
         ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -226,7 +220,7 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=task,
         )
         ScheduledEmail.objects.create(
             template=template,
@@ -235,23 +229,24 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=task,
         )
-        event = self.event
 
         # Act
-        post_workshop_7days_update_signal.send(
-            sender=self.event,
+        instructor_task_created_for_workshop_update_signal.send(
+            sender=task,
             request=request,
-            event=self.event,
-            event_end_date=self.event.end,
+            task=task,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            task_id=task.pk,
         )
 
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
             f"Too many scheduled emails for signal {signal} and "
-            f"generic_relation_obj={event!r}. Can't update them."
+            f"generic_relation_obj={task!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -262,6 +257,7 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
+        task = self.task
         ScheduledEmail.objects.create(
             template=template,
             scheduled_at=datetime.now(UTC),
@@ -269,27 +265,27 @@ class TestPostWorkshop7DaysUpdateReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.event,
+            generic_relation=task,
         )
-        signal = POST_WORKSHOP_7DAYS_SIGNAL_NAME
-        self.instructor.email = ""
-        self.instructor.save()
-        self.host.email = ""
-        self.host.save()
+        signal = INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME
+        self.person.email = ""
+        self.person.save()
 
         # Act
-        post_workshop_7days_update_signal.send(
-            sender=self.event,
+        instructor_task_created_for_workshop_update_signal.send(
+            sender=task,
             request=request,
-            event=self.event,
-            event_end_date=self.event.end,
+            task=task,
+            person_id=self.person.pk,
+            event_id=self.event.pk,
+            task_id=task.pk,
         )
 
         # Assert
         mock_messages_missing_recipients.assert_called_once_with(request, signal)
 
 
-class TestPostWorkshop7DaysUpdateIntegration(TestBase):
+class TestInstructorTaskCreatedForWorkshopUpdateIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
@@ -299,7 +295,7 @@ class TestPostWorkshop7DaysUpdateIntegration(TestBase):
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
+            signal=INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -314,16 +310,14 @@ class TestPostWorkshop7DaysUpdateIntegration(TestBase):
             domain="example.com", fullname="Example"
         )
         event = Event.objects.create(
-            slug="2023-09-14-test-event",
+            slug="2024-08-05-test-event",
             host=host_organization,
             administrator=ttt_organization,
             start=date.today() + timedelta(days=30),
-            end=date.today() + timedelta(days=31),
         )
-        swc_tag = Tag.objects.get(name="SWC")
-        event.tags.add(swc_tag)
+        event.tags.set([Tag.objects.get(name="SWC")])
 
-        instructor1 = Person.objects.create(
+        instructor = Person.objects.create(
             personal="Kelsi",
             middle="",
             family="Purdy",
@@ -332,8 +326,8 @@ class TestPostWorkshop7DaysUpdateIntegration(TestBase):
             secondary_email="notused@amy.org",
             gender="F",
             airport=self.airport_0_0,
-            github="purdy_kelsi",
-            twitter="purdy_kelsi",
+            github="",
+            twitter="",
             bluesky="@purdy_kelsi.bsky.social",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
@@ -341,50 +335,27 @@ class TestPostWorkshop7DaysUpdateIntegration(TestBase):
             orcid="0000-0000-0000",
             is_active=True,
         )
-        host = Person.objects.create(
-            personal="Jayden",
-            middle="",
-            family="Deckow",
-            username="deckow_jayden",
-            email="deckow.jayden@example.com",
-            secondary_email="notused@example.org",
-            gender="M",
-            airport=self.airport_0_50,
-            github="deckow_jayden",
-            twitter="deckow_jayden",
-            bluesky="@deckow_jayden.bsky.social",
-            url="http://jaydendeckow.com/",
-            affiliation="UFlo",
-            occupation="Staff",
-            orcid="0000-0000-0001",
-            is_active=True,
-        )
         instructor_role = Role.objects.get(name="instructor")
-        Task.objects.create(event=event, person=instructor1, role=instructor_role)
-        host_role = Role.objects.get(name="host")
-        Task.objects.create(event=event, person=host, role=host_role)
+        task = Task.objects.create(event=event, person=instructor, role=instructor_role)
 
         request = RequestFactory().get("/")
         with patch(
             "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
-            run_post_workshop_7days_strategy(
-                post_workshop_7days_strategy(event),
+            run_instructor_task_created_for_workshop_strategy(
+                instructor_task_created_for_workshop_strategy(task),
                 request,
-                event,
+                task=task,
+                person_id=task.person.pk,
+                event_id=task.event.pk,
+                task_id=task.pk,
             )
         scheduled_email = ScheduledEmail.objects.get(template=template)
 
-        url = reverse("event_edit", args=[event.slug])
-        data = {
-            "slug": event.slug,
-            "host": event.host.pk,
-            "sponsor": event.host.pk,
-            "administrator": event.administrator.pk,  # type: ignore
-            "start": date.today() + timedelta(days=60),
-            "end": date.today() + timedelta(days=61),
-            "tags": [swc_tag.pk],
-        }
+        url = reverse("person_edit", args=[instructor.pk])
+        new_email = "fake_email@example.org"
+        data = PersonForm(instance=instructor).initial
+        data.update({"email": new_email, "github": "", "twitter": ""})
 
         # Act
         rv = self.client.post(url, data)
@@ -394,7 +365,4 @@ class TestPostWorkshop7DaysUpdateIntegration(TestBase):
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
-        self.assertEqual(
-            scheduled_email.scheduled_at.date(),
-            date.today() + timedelta(days=61 + 7),
-        )
+        self.assertEqual(scheduled_email.to_header, [new_email])

@@ -11,6 +11,7 @@ from emails.types import (
     InstructorConfirmedContext,
     InstructorDeclinedContext,
     InstructorSignupContext,
+    InstructorTaskCreatedForWorkshopContext,
     InstructorTrainingApproachingContext,
     InstructorTrainingCompletedNotBadgedContext,
     NewMembershipOnboardingContext,
@@ -28,6 +29,7 @@ class SignalNameEnum(StrEnum):
     instructor_signs_up_for_workshop = "instructor_signs_up_for_workshop"
     admin_signs_instructor_up_for_workshop = "admin_signs_instructor_up_for_workshop"
     persons_merged = "persons_merged"
+    instructor_task_created_for_workshop = "instructor_task_created_for_workshop"
     instructor_training_approaching = "instructor_training_approaching"
     instructor_training_completed_not_badged = (
         "instructor_training_completed_not_badged"
@@ -82,9 +84,14 @@ INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME = "instructor_confirmed_for_worksh
     SignalNameEnum.instructor_confirmed_for_workshop,
     InstructorConfirmedContext,
 )
-instructor_declined_from_workshop_signal = Signal(
-    signal_name=SignalNameEnum.instructor_declined_from_workshop,
-    context_type=InstructorDeclinedContext,
+INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME = "instructor_declined_from_workshop"
+(
+    instructor_declined_from_workshop_signal,
+    instructor_declined_from_workshop_update_signal,
+    instructor_declined_from_workshop_cancel_signal,
+) = triple_signals(
+    SignalNameEnum.instructor_declined_from_workshop,
+    InstructorDeclinedContext,
 )
 instructor_signs_up_for_workshop_signal = Signal(
     signal_name=SignalNameEnum.instructor_signs_up_for_workshop,
@@ -97,6 +104,17 @@ admin_signs_instructor_up_for_workshop_signal = Signal(
 persons_merged_signal = Signal(
     signal_name=SignalNameEnum.persons_merged,
     context_type=PersonsMergedContext,
+)
+INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME = (
+    "instructor_task_created_for_workshop"
+)
+(
+    instructor_task_created_for_workshop_signal,
+    instructor_task_created_for_workshop_update_signal,
+    instructor_task_created_for_workshop_cancel_signal,
+) = triple_signals(
+    SignalNameEnum.instructor_task_created_for_workshop,
+    InstructorTaskCreatedForWorkshopContext,
 )
 
 # Runs 1 month before the event.

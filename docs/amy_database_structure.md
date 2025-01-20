@@ -51,6 +51,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `may_contact` A boolean field. We may not contact people if this field is false. This field has been replaced by [new-style consents](#consent) (see also [2021 Consents Project](./design/projects/2021_consents.md)).
 * `github` Individual's GitHub user id
 * `twitter` Individual's Twitter user id
+* `bluesky` Individual's BlueSky user id
 * `orcid` Individual's ORCID iD
 * `url` Link to the individual's personal website
 * `airport_id` An integer representing the person's self identified nearest.  This is linked to the `workshops_airport` table
@@ -298,7 +299,6 @@ The primary tables used in AMY (that will appear in most queries) are those that
   * `seat_membership_id` Used for Instructor Training Learner role only.  An integer representing the membership this seat was assigned to.
   * `seat_public` Used for Instructor Training Learner role only.  Determines if the seat counts as public or in-house for the specific membership.
   * `seat_open_training` Used for Instructor Training Learner role only. Boolean field noting whether this was an open (non-member) training seat.
-  * `title` and`url` are not used.
 
 ### Tags
 

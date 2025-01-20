@@ -215,6 +215,7 @@ class TestBase(
             airport=self.airport_0_0,
             github="herself",
             twitter="herself",
+            bluesky="@herself.bsky.social",
             url="http://hermione.org",
             username="granger_hermione",
             country="GB",

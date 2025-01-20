@@ -383,8 +383,7 @@ class EventForm(forms.ModelForm):
     sponsor = forms.ModelChoiceField(
         label="Organiser",
         required=True,
-        help_text=Event._meta.get_field("sponsor").help_text
-        + " Previously called 'Sponsor'.",
+        help_text=Event._meta.get_field("sponsor").help_text,
         queryset=Organization.objects.all(),
         widget=ModelSelect2Widget(data_view="organization-lookup"),
     )
@@ -675,8 +674,6 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             "event",
             "person",
             "role",
-            "title",
-            "url",
             "seat_membership",
             "seat_public",
             "seat_open_training",
@@ -722,7 +719,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             # corresponds to role "instructor"; otherwise it's "instructor" community
             # role.
             community_role_name = "instructor"
-            if event.administrator.domain == "carpentries.org":
+            if event.administrator and event.administrator.domain == "carpentries.org":
                 community_role_name = "trainer"
 
             person_community_roles = CommunityRole.objects.filter(
@@ -781,6 +778,7 @@ class PersonForm(forms.ModelForm):
             "affiliation",
             "github",
             "twitter",
+            "bluesky",
             "url",
             "occupation",
             "orcid",
@@ -957,6 +955,11 @@ class PersonsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     twitter = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
+    bluesky = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,

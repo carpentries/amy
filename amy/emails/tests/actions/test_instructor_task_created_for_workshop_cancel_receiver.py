@@ -1,33 +1,39 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock, call, patch
 
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions.instructor_badge_awarded import (
-    instructor_badge_awarded_cancel_receiver,
-    instructor_badge_awarded_strategy,
-    run_instructor_badge_awarded_strategy,
+from emails.actions.instructor_task_created_for_workshop import (
+    instructor_task_created_for_workshop_cancel_receiver,
+    instructor_task_created_for_workshop_strategy,
+    run_instructor_task_created_for_workshop_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import (
-    INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
-    instructor_badge_awarded_cancel_signal,
+    INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
+    instructor_task_created_for_workshop_cancel_signal,
 )
-from workshops.models import Award, Badge, Person
+from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 
 
-class TestInstructorBadgeAwardedCancelReceiver(TestCase):
+class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
     def setUp(self) -> None:
-        self.badge = Badge.objects.create(name="instructor")
+        host = Organization.objects.create(domain="test.com", fullname="Test")
+        self.event = Event.objects.create(
+            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
+        )
         self.person = Person.objects.create(email="test@example.org")
-        self.award = Award.objects.create(badge=self.badge, person=self.person)
+        instructor = Role.objects.create(name="instructor")
+        self.task = Task.objects.create(
+            role=instructor, person=self.person, event=self.event
+        )
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
+            signal=INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -41,23 +47,25 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
             # Act
-            instructor_badge_awarded_cancel_receiver(None, request=request)
+            instructor_task_created_for_workshop_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
                 "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_badge_awarded_cancel"
+                "instructor_task_created_for_workshop_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = instructor_badge_awarded_cancel_signal.receivers[:]
+        original_receivers = (
+            instructor_task_created_for_workshop_cancel_signal.receivers[:]
+        )
 
         # Act
         # attempt to connect the receiver
-        instructor_badge_awarded_cancel_signal.connect(
-            instructor_badge_awarded_cancel_receiver
+        instructor_task_created_for_workshop_cancel_signal.connect(
+            instructor_task_created_for_workshop_cancel_receiver
         )
-        new_receivers = instructor_badge_awarded_cancel_signal.receivers[:]
+        new_receivers = instructor_task_created_for_workshop_cancel_signal.receivers[:]
 
         # Assert
         # the same receiver list means this receiver has already been connected
@@ -76,25 +84,27 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.award,
+            generic_relation=self.task,
         )
 
         # Act
         with patch(
             "emails.actions.base_action.messages_action_cancelled"
         ) as mock_messages_action_cancelled:
-            instructor_badge_awarded_cancel_signal.send(
-                sender=self.award,
+            instructor_task_created_for_workshop_cancel_signal.send(
+                sender=self.task,
                 request=request,
+                task=self.task,
                 person_id=self.person.pk,
-                award_id=self.award.pk,
+                event_id=self.event.pk,
+                task_id=self.task.pk,
             )
 
         # Assert
         scheduled_email = ScheduledEmail.objects.get(template=template)
         mock_messages_action_cancelled.assert_called_once_with(
             request,
-            INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
+            INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
             scheduled_email,
         )
 
@@ -114,18 +124,22 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.award,
+            generic_relation=self.task,
         )
 
         # Act
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            instructor_badge_awarded_cancel_signal.send(
-                sender=self.award,
+            instructor_task_created_for_workshop_cancel_signal.send(
+                sender=self.task,
                 request=request,
+                task=self.task,
                 person_id=self.person.pk,
-                award_id=self.award.pk,
+                event_id=self.event.pk,
+                task_id=self.task.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
             )
 
         # Assert
@@ -150,7 +164,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.award,
+            generic_relation=self.task,
         )
         scheduled_email2 = ScheduledEmail.objects.create(
             template=template,
@@ -159,18 +173,22 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             cc_header=[],
             bcc_header=[],
             state=ScheduledEmailStatus.SCHEDULED,
-            generic_relation=self.award,
+            generic_relation=self.task,
         )
 
         # Act
         with patch(
             "emails.actions.base_action.EmailController.cancel_email"
         ) as mock_cancel_email:
-            instructor_badge_awarded_cancel_signal.send(
-                sender=self.person,
+            instructor_task_created_for_workshop_cancel_signal.send(
+                sender=self.task,
                 request=request,
-                award_id=self.award.pk,
+                task=self.task,
                 person_id=self.person.pk,
+                event_id=self.event.pk,
+                task_id=self.task.pk,
+                instructor_recruitment_id=None,
+                instructor_recruitment_signup_id=None,
             )
 
         # Assert
@@ -188,15 +206,39 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         )
 
 
-class TestInstructorBadgeAwardedCancelIntegration(TestBase):
+class TestInstructorTaskCreatedForWorkshopCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_integration(self) -> None:
         # Arrange
         self._setUpRoles()
         self._setUpTags()
         self._setUpUsersAndLogin()
-        badge = Badge.objects.get(name="instructor")
-        person = Person.objects.create(
+
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings",
+            body="Hello! Nice to meet **you**.",
+        )
+
+        ttt_organization = Organization.objects.create(
+            domain="carpentries.org", fullname="Instructor Training"
+        )
+        host_organization = Organization.objects.create(
+            domain="example.com", fullname="Example"
+        )
+        event = Event.objects.create(
+            slug="2024-08-05-test-event",
+            host=host_organization,
+            administrator=ttt_organization,
+            start=date.today() + timedelta(days=30),
+        )
+        event.tags.set([Tag.objects.get(name="SWC")])
+
+        instructor = Person.objects.create(
             personal="Kelsi",
             middle="",
             family="Purdy",
@@ -205,8 +247,8 @@ class TestInstructorBadgeAwardedCancelIntegration(TestBase):
             secondary_email="notused@amy.org",
             gender="F",
             airport=self.airport_0_0,
-            github="purdy_kelsi",
-            twitter="purdy_kelsi",
+            github="",
+            twitter="",
             bluesky="@purdy_kelsi.bsky.social",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
@@ -214,33 +256,24 @@ class TestInstructorBadgeAwardedCancelIntegration(TestBase):
             orcid="0000-0000-0000",
             is_active=True,
         )
-        award = Award.objects.create(badge=badge, person=person)
-
-        template = EmailTemplate.objects.create(
-            name="Test Email Template",
-            signal=INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
-            from_header="workshops@carpentries.org",
-            cc_header=["team@carpentries.org"],
-            bcc_header=[],
-            subject="Greetings",
-            body="Hello! Nice to meet **you**.",
-        )
+        instructor_role = Role.objects.get(name="instructor")
+        task = Task.objects.create(event=event, person=instructor, role=instructor_role)
 
         request = RequestFactory().get("/")
-
         with patch(
             "emails.actions.base_action.messages_action_scheduled"
         ) as mock_action_scheduled:
-            run_instructor_badge_awarded_strategy(
-                instructor_badge_awarded_strategy(award, person),
+            run_instructor_task_created_for_workshop_strategy(
+                instructor_task_created_for_workshop_strategy(task),
                 request,
-                person,
-                award_id=award.pk,
-                person_id=person.pk,
+                task=task,
+                person_id=task.person.pk,
+                event_id=task.event.pk,
+                task_id=task.pk,
             )
         scheduled_email = ScheduledEmail.objects.get(template=template)
 
-        url = reverse("award_delete", args=[award.pk])
+        url = reverse("task_delete", args=[task.pk])
 
         # Act
         rv = self.client.post(url)

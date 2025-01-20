@@ -809,6 +809,13 @@ class Person(
         blank=True,
         verbose_name="Twitter username",
     )
+    bluesky = models.CharField(
+        max_length=STR_LONG,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="BlueSky username",
+    )
     url = models.CharField(
         max_length=STR_LONG,
         blank=True,
@@ -1026,6 +1033,7 @@ class Person(
         self.airport = self.airport or None
         self.github = self.github or None
         self.twitter = self.twitter or None
+        self.bluesky = self.bluesky or None
         super().save(*args, **kwargs)
 
     def archive(self) -> None:
@@ -1041,6 +1049,7 @@ class Person(
         self.airport = None
         self.github = None
         self.twitter = None
+        self.bluesky = None
         self.url = ""
         self.user_notes = ""
         self.affiliation = ""
@@ -1307,22 +1316,25 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         null=False,
         blank=False,
         related_name="hosted_events",
-        help_text="Organisation hosting the event.",
+        help_text="The institution where the workshop is taking place (or would take "
+        "place for online workshops).",
     )
+    # Currently this is organiser
     sponsor = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
         null=True,
         blank=False,
         related_name="sponsored_events",
-        help_text="Institution that is funding or organising the workshop.",
+        help_text="The institution responsible for organizing and funding the workshop "
+        "(often the same as Host).",
     )
     membership = models.ForeignKey(
         Membership,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        help_text="A membership this event should be counted towards.",
+        help_text="The membership this workshop should count towards.",
     )
     administrator = models.ForeignKey(
         Organization,
@@ -1674,8 +1686,6 @@ class Task(RQJobsMixin, models.Model):
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
     person = models.ForeignKey(Person, on_delete=models.PROTECT)
     role = models.ForeignKey(Role, on_delete=models.PROTECT)
-    title = models.CharField(max_length=STR_LONG, blank=True)
-    url = models.URLField(blank=True, verbose_name="URL")
     seat_membership = models.ForeignKey(
         Membership,
         on_delete=models.PROTECT,
@@ -1711,12 +1721,10 @@ class Task(RQJobsMixin, models.Model):
     objects = TaskManager()
 
     class Meta:
-        unique_together = ("event", "person", "role", "url")
+        unique_together = ("event", "person", "role")
         ordering = ("role__name", "event")
 
     def __str__(self):
-        if self.title:
-            return self.title
         return "{0}/{1}={2}".format(self.event, self.person, self.role)
 
     def get_absolute_url(self):

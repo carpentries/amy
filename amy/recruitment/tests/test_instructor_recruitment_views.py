@@ -6,6 +6,7 @@ from django.http import Http404
 from django.test import override_settings
 from django.test.client import RequestFactory
 from django.urls import reverse
+from django.utils import timezone
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from emails.types import StrategyEnum
@@ -594,8 +595,8 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         # Assert
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
-        self.assertEqual(recruitment.signups.count(), 1)
-        signup = recruitment.signups.last()
+        self.assertEqual(recruitment.signups.count(), 1)  # type: ignore
+        signup = recruitment.signups.last()  # type: ignore
         self.assertEqual(signup.person, person)
         self.assertEqual(signup.user_notes, "")
         self.assertEqual(signup.notes, notes)
@@ -664,8 +665,8 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         view = InstructorRecruitmentSignupChangeState(
             object=mock_signup, request=request
         )
-        view.add_instructor_task = mock.MagicMock()
-        view.remove_instructor_task = mock.MagicMock()
+        view.accept_signup = mock.MagicMock()
+        view.decline_signup = mock.MagicMock()
         data = {"action": "confirm"}
         form = InstructorRecruitmentSignupChangeStateForm(data)
         form.is_valid()
@@ -674,19 +675,16 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Assert
         self.assertEqual(mock_signup.state, "a")
         mock_signup.save.assert_called_once()
-        view.add_instructor_task.assert_called_once_with(
+        view.accept_signup.assert_called_once_with(
             request, mock_signup, mock_signup.person, mock_signup.recruitment.event
         )
-        view.remove_instructor_task.assert_not_called()
+        view.decline_signup.assert_not_called()
 
-    # Disable email module so that signals don't fail on fetching a mocked object
-    # from DB.
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
-    def test_add_instructor_task(self) -> None:
+    @mock.patch("recruitment.views.messages")
+    def test_accept_signup(self, mock_messages: mock.MagicMock) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
-        mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -696,46 +694,69 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             slug="test-event",
             host=organization,
             administrator=organization,
+            start=timezone.now().date(),
         )
-        # Act
-        task = view.add_instructor_task(request, mock_signup, person, event)
-        # Assert
-        self.assertTrue(task.pk)
-
-    # Disable email module so that signals don't fail on fetching a mocked object
-    # from DB.
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
-    def test_remove_instructor_task(self) -> None:
-        # Arrange
-        super()._setUpRoles()
-        request = RequestFactory().post("/")
-        mock_signup = mock.MagicMock()
-        view = InstructorRecruitmentSignupChangeState(request=request)
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
-        organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event",
-            host=organization,
-            administrator=organization,
-        )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         role = Role.objects.get(name="instructor")
         task = Task.objects.create(person=person, event=event, role=role)
         # Act
-        view.remove_instructor_task(request, mock_signup, person, event)
+        task2 = view.accept_signup(request, signup, person, event)
         # Assert
-        with self.assertRaises(Task.DoesNotExist):
-            task.refresh_from_db()
+        self.assertEqual(task.pk, task2.pk)
+        mock_messages.warning.assert_called_once()
 
-    # Disable email module so that signals don't fail on fetching a mocked object
-    # from DB.
-    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
-    def test_remove_instructor_task__no_task(self) -> None:
+    def test_accept_signup__no_task(self) -> None:
         # Arrange
         super()._setUpRoles()
         request = RequestFactory().post("/")
-        mock_signup = mock.MagicMock()
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = self.org_alpha
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=timezone.now().date(),
+        )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
+        # Act
+        task = view.accept_signup(request, signup, person, event)
+        # Assert
+        self.assertTrue(task.pk)
+
+    @mock.patch("recruitment.views.messages")
+    def test_decline_signup(self, mock_messages: mock.MagicMock) -> None:
+        # Arrange
+        super()._setUpRoles()
+        request = RequestFactory().post("/")
+        view = InstructorRecruitmentSignupChangeState(request=request)
+        person = Person.objects.create(
+            personal="Test", family="User", username="test_user"
+        )
+        organization = Organization.objects.first()
+        event = Event.objects.create(
+            slug="test-event",
+            host=organization,
+            administrator=organization,
+            start=timezone.now().date(),
+        )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
+        role = Role.objects.get(name="instructor")
+        task = Task.objects.create(person=person, event=event, role=role)
+        # Act & Assert - no error - task is not removed, but a warning is added
+        view.decline_signup(request, signup, person, event)
+        task.refresh_from_db()
+        mock_messages.warning.assert_called_once()
+
+    def test_decline_signup__no_task(self) -> None:
+        # Arrange
+        super()._setUpRoles()
+        request = RequestFactory().post("/")
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(
             personal="Test", family="User", username="test_user"
@@ -746,8 +767,10 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             host=organization,
             administrator=organization,
         )
+        recruitment = InstructorRecruitment(event=event)
+        signup = InstructorRecruitmentSignup(recruitment=recruitment, person=person)
         # Act & Assert - no error
-        view.remove_instructor_task(request, mock_signup, person, event)
+        view.decline_signup(request, signup, person, event)
 
     def test_post__form_valid(self) -> None:
         # Arrange
@@ -938,13 +961,13 @@ class TestInstructorRecruitmentChangeState(TestBase):
     def test__validate_for_closing(self) -> None:
         # Arrange
         recruitment1 = InstructorRecruitment(event=None, status="o")
-        recruitment1.num_pending = 123
+        recruitment1.num_pending = 123  # type: ignore
         recruitment2 = InstructorRecruitment(event=None, status="c")
-        recruitment2.num_pending = 123
+        recruitment2.num_pending = 123  # type: ignore
         recruitment3 = InstructorRecruitment(event=None, status="o")
-        recruitment3.num_pending = 0
+        recruitment3.num_pending = 0  # type: ignore
         recruitment4 = InstructorRecruitment(event=None, status="c")
-        recruitment4.num_pending = 0
+        recruitment4.num_pending = 0  # type: ignore
         data = [
             (recruitment1, False),
             (recruitment2, False),

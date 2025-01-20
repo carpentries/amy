@@ -197,7 +197,7 @@ def get_context_json(
     person = context["person"]
     return ContextModel(
         {
-            "person": api_model_url("event", person.pk),
+            "person": api_model_url("person", person.pk),
             "passed_requirements": [
                 api_model_url("trainingprogress", progress.pk)
                 for progress in context["passed_requirements"]

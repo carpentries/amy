@@ -86,6 +86,19 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         self.assertEqual(role.is_active(), True)
         self.assertEqual(view.get_view_enabled(request), True)
 
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
+    def test_view_enabled__admin(self):
+        # Arrange
+        request = RequestFactory().get("/")
+        person = Person.objects.create(
+            personal="Test", family="User", email="test@user.com", is_superuser=True
+        )
+        request.user = person
+        # Act
+        view = UpcomingTeachingOpportunitiesList(request=request)
+        # Assert
+        self.assertEqual(view.get_view_enabled(request), True)
+
     def test_get_queryset(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
@@ -263,6 +276,19 @@ class TestSignupForRecruitment(TestCase):
         view = SignupForRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
+        self.assertEqual(view.get_view_enabled(request), True)
+
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
+    def test_view_enabled__admin(self):
+        # Arrange
+        request = RequestFactory().get("/")
+        person = Person.objects.create(
+            personal="Test", family="User", email="test@user.com", is_superuser=True
+        )
+        request.user = person
+        # Act
+        view = SignupForRecruitment(request=request)
+        # Assert
         self.assertEqual(view.get_view_enabled(request), True)
 
     def test_get_context_data(self):
@@ -579,6 +605,19 @@ class TestResignFromRecruitment(TestCase):
         view = ResignFromRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
+        self.assertEqual(view.get_view_enabled(request), True)
+
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
+    def test_view_enabled__admin(self):
+        # Arrange
+        request = RequestFactory().get("/")
+        person = Person.objects.create(
+            personal="Test", family="User", email="test@user.com", is_superuser=True
+        )
+        request.user = person
+        # Act
+        view = ResignFromRecruitment(request=request)
+        # Assert
         self.assertEqual(view.get_view_enabled(request), True)
 
     def test_get_queryset(self):

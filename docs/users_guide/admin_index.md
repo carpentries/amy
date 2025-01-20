@@ -514,56 +514,109 @@ An admin user can view their profile as if they were an ordinary user on [this d
 
 ### Automated emails
 
-AMY sends automated emails for workshop administration.  The following seven email automations are currently enabled.  The content of each email can be viewed by authorized users only. View by selecting `Django Admin` in the top right menu, and select `Email Templates` from the admin page.
+AMY sends automated emails for membership, instructor training, and workshop administration. This system was completely revamped in October 2024.
 
-**Email description:** Introduction of instructors and host. 
-**Sent to:**  All Workshop Hosts + Instructors  
-**Sent from:**  Regional coordinator email  
-**Subject:** Instructors for {{ workshop_main_type }} workshop organized by {{ workshop_host.fullname }} {% if dates %} on {{ dates }}{% endif %}  
-**Date sent:** One hour from when conditions are met.  
-**Conditions:**  Start date more than seven days in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least two instructors and at least one host. Has at least one supporting instructor if online.  Centrally organized only.  
+[Email templates](https://amy.carpentries.org/emails/templates/) and [status of scheduled emails](https://amy.carpentries.org/emails/scheduled_emails/) can be viewed directly through the user interface under the "More" menu.  Not all templated emails are currently active.
 
-**Email description:** Recruit Helpers.  
-**Sent to:**  All Workshop Hosts + Instructors  
-**Sent from:** Regional coordinator email (admin-xx@carpentries.org)  
-**Subject:** Time to Recruit Helpers for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}  
-**Date sent:** 21 days before start date.  
-**Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Has at least one instructor or at least one host.  Has no helpers.  Centrally organized only.  
+Email recipients, schedule, and conditions are all set in the AMY codebase.  All automated emails depend on recipients having a valid email address in AMY.
 
-**Email description:** Website URL is missing.  
-**Sent to:**  All Instructors  
-**Sent from:**  Regional coordinator email  
-**Subject:** Workshop Website needed for  {DC, SWC, LC} workshop at {site} on {dates}  
-**Date sent:**  30 days before start date.  
-**Conditions:** Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  No workshop URL. At least one instructor. Centrally organized or Self organized.  
- 
-**Email description:**  Supporting Instructor is added to the workshop.  
-**Sent to:**  Single new supporting instructor  
-**Sent from:**  Regional coordinator email  
-**Subject:** Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %}({{ dates }}){% endif %}  
-**Date sent:**  One hour after conditions are met.  
-**Conditions:**  New role of supporting instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Online workshop. Centrally organized only.  
+From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject and body are also set in the AMY interface. These fields can all be modified by admin users at any time.
 
-**Email description:** Instructor is added to the workshop.  
-**Sent to:**  Single new instructor  
-**Sent from:**  Regional coordinator email  
-**Subject:** Confirmation of your participation as an instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop organized by {{ host.fullname }} {% if dates %} ({{ dates }}){% endif %}  
-**Date sent:** One hour after conditions are met.  
-**Conditions:** New role of instructor added. Start date in future.  Tag is not stalled, canceled, or unresponsive. Has administrator.  Centrally organized only.  
+#### Active emails (Workshops)
 
-**Email description:** A new event is created from Self-Organised Request Form.  
-**Sent to:**  Form submitter and additional contacts  
-**Sent from:**  Regional coordinator email  
-**Subject:**  {{ workshop.host.fullname }} ({{ workshop.slug }}) Workshop  
-**Date sent:** One hour after conditions are met.  
-**Conditions:**  Start date in future.  Tag is not stalled, canceled, or unresponsive.  Event created from SO form.  Self organized only.  
+??? abstract "Admin Signs Instructor Up for Workshop"
+    [View in AMY](https://amy.carpentries.org/emails/template/53209bdb-fbd2-4620-988b-16703d38a083/)  
+    **Email description:**  Send email to Instructor informing them the admin has signed them up as interested in teaching a workshop  
+    **Sent to:**  Instructor   
+    **Date sent:**   One hour after admin action  
 
-**Email description:** 7 days past the end date of an active workshop.  
-**Sent to:**  All Workshop Hosts + Instructors  
-**Sent from:**  Regional coordinator email  
-**Subject:** Completed {% if workshop_main_type %}{{ workshop_main_type }}{% else %}Carpentries{% endif %} workshop at {{ workshop.venue }} on {{ dates }} ({{ workshop.slug }})  
-**Date sent:** 7 days after end date.  
-**Conditions:** End date in past.  Tag is not stalled, canceled, or unresponsive. Tag is one of ["LC", "DC", "SWC", "Circuits"].  Centrally organized or Self organized.  
+??? abstract "Ask for website"
+    [View in AMY](https://amy.carpentries.org/emails/template/8b29643c-d4f2-4b58-bc3c-5ebc4ff3d7b4/)  
+    **Email description:**  Send email to workshop Instructors reminding them to send us workshop website link  
+    **Sent to:**  Instructors  
+    **Date sent:**  One month before event start  
+    **Conditions:** Has administrator; Has at least one Instructor; Tagged SWC/DC/LC; Start date in future; not stalled/cancelled/unresponsive; Missing website  
+
+??? abstract "Host-instructors introduction"
+    [View in AMY](https://amy.carpentries.org/emails/template/fb7286a4-e4a1-4d92-81b8-33e698170178/)
+    **Email description:**  Send email introducing workshop Hosts & Instructors providing general information  
+    **Sent to:**  Instructors and Hosts   
+    **Date sent:**  Immediately after conditions are met
+    **Conditions:** Centrally-Organised; Instructor recruitment closed; Not stalled/cancelled; Has at least two Instructors; Has host; Tagged SWC/DC/LC; At least seven days in future  
+
+??? abstract "Instructor confirmed for workshop"
+    [View in AMY](https://amy.carpentries.org/emails/template/ba2d0130-d123-402d-97d5-8818b72af963/)
+    **Email description:** Emails instructor to confirm they have been assigned to a workshop    
+    **Sent to:**  Instructor  
+    **Date sent:** One hour after conditions are met     
+    **Conditions:** Instructor task created (either through recruitment process or manual data entry); Tagged SWC/DC/LC; Centrally-Organised; Start date in future   
+
+??? abstract "Instructor declined for workshop"
+    [View in AMY](https://amy.carpentries.org/emails/template/be7a8e81-d4fb-47c1-b78f-1e5f809bc128/)
+    **Email description:** Emails instructor to inform them they have not been assigned to a workshop    
+    **Sent to:**  Instructor  
+    **Date sent:** One hour after conditions are met     
+    **Conditions:** Instructor declined in recruitment process  
+
+??? abstract "Instructor Signs Up for Workshop"
+    [View in AMY](https://amy.carpentries.org/emails/template/43754daa-c312-41db-a0f6-00ac4f88bafd/)
+    **Email description:** Emails instructor to confirm they have expressed interest in a workshop   
+    **Sent to:**  Instructor  
+    **Date sent:** One hour after conditions are met     
+    **Conditions:** Instructor signs up in recruitment process  
+
+??? abstract "New Self-Organised Workshop"
+    [View in AMY](https://amy.carpentries.org/emails/template/f967122e-55a8-483e-a571-c3dff43dd33e/)  
+    **Email description:** Emails Self-Organised workshop host to confirm their submission has been accepted  
+    **Sent to:**  Contacts from Self-Organised Workshop submission form
+    **Date sent:** One hour after conditions are met     
+    **Conditions:** Self organized submission form accepted and linked to event; start date in future; not stalled/cancelled/unresponsive;  
+
+??? abstract "Post Workshop 7 days"
+    [View in AMY](https://amy.carpentries.org/emails/template/4809378c-c1aa-4118-a3a7-cbc9586c686b/)  
+    **Email description:** Follow up one week after Centrally-Organised workshop is complete  
+    **Sent to:** Hosts and Instructors     
+    **Date sent:** Later of seven days after workshop end or seven days from now      
+    **Conditions:** Centrally-Organised; At least one host; At least one Instructor;  Tagged SWC/DC/LC; Not CLDT; end date in future; not stalled/cancelled/unresponsive
+
+??? abstract "Recruit helpers"
+    [View in AMY](https://amy.carpentries.org/emails/template/d1b20e74-a245-4c7d-9182-663f3acd8a48/)
+    **Email description:** Reminder to host to recruit helpers
+    **Sent to:** Hosts and Instructors     
+    **Date sent:** 21 days before event  
+    **Conditions:** Centrally-Organised; Tagged SWC/DC/LC; Not stalled/cancelled; At least one host; At least one Instructor; No helpers; Start date at least 14 days in future; not stalled/cancelled/unresponsive
+
+
+
+#### Active emails (Instructor Training)
+
+??? abstract "Instructor Training (One month away)"
+    [View in AMY](https://amy.carpentries.org/emails/template/bafe53c4-e486-4a6e-8b5d-894790946913/)  
+    **Email description:** Send Trainers information about upcoming Instructor Training  
+    **Sent to:** Trainers  
+    **Date sent:** One month before event start  
+    **Conditions:** Tag TTT; At least 2 Trainers; Start date in future  
+
+#### Active emails (Memberships)
+
+??? abstract "New / renewing membership starting (member onboarding)"
+    [View in AMY](https://amy.carpentries.org/emails/template/f1311aaf-c546-429b-930c-c36a5a8009fb/)  
+    **Email description:**  Onboarding message for new/renewing memberships 
+    **Sent to:**   Programmatic and billing contacts
+    **Date sent:** One month before membership start date or immediately (whichever is later)   
+    **Conditions:** Membership roles exist
+
+#### Inactive emails
+
+* [Instructor Badge awarded](https://amy.carpentries.org/emails/template/35bab114-43eb-48d1-8744-b6e1a356b0f1/)
+* [Instructor Training completed but not yet badged](https://amy.carpentries.org/emails/template/93f71266-60cb-4606-b4a6-b74266cfb04a/)
+* [Person records are merged](https://amy.carpentries.org/emails/template/f043ec2e-ebdb-4b61-b09e-b69e31868b8f/)
+
+#### Managing scheduled emails
+
+When an email is scheduled, it will be listed in the relevant event or person page.  It will also be listed on the main [Scheduled Emails page](https://amy.carpentries.org/emails/scheduled_emails/).
+
+Click on the listing for an individual scheduled email to see more information about it, to reschedule it, or to edit the recipients, subject, or body.
 
 ### Other Tasks
 

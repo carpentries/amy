@@ -5,18 +5,18 @@ from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from emails.actions.exceptions import EmailStrategyException
-from emails.actions.instructor_confirmed_for_workshop import (
-    instructor_confirmed_for_workshop_strategy,
-    run_instructor_confirmed_for_workshop_strategy,
+from emails.actions.instructor_declined_from_workshop import (
+    instructor_declined_from_workshop_strategy,
+    run_instructor_declined_from_workshop_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
-from emails.signals import INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME
+from emails.signals import INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME
 from emails.types import StrategyEnum
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from workshops.models import Event, Organization, Person, Tag
 
 
-class TestInstructorConfirmedForWorkshopStrategy(TestCase):
+class TestInstructorDeclinedFromWorkshopStrategy(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
         self.event = Event.objects.create(
@@ -33,14 +33,14 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
             event=self.event, notes="Test notes"
         )
         self.signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=self.recruitment, person=self.person, state="a"
+            recruitment=self.recruitment, person=self.person, state="d"
         )
 
     def test_strategy_create(self) -> None:
         # Arrange
 
         # Act
-        result = instructor_confirmed_for_workshop_strategy(self.signup)
+        result = instructor_declined_from_workshop_strategy(self.signup)
 
         # Assert
         self.assertEqual(result, StrategyEnum.CREATE)
@@ -49,7 +49,7 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
         # Arrange
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
+            signal=INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -67,19 +67,19 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
         # Act
-        result = instructor_confirmed_for_workshop_strategy(self.signup)
+        result = instructor_declined_from_workshop_strategy(self.signup)
 
         # Assert
         self.assertEqual(result, StrategyEnum.UPDATE)
 
     def test_strategy_cancel(self) -> None:
         # Arrange
-        self.signup.state = "d"
+        self.signup.state = "a"
         self.signup.save()
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
-            signal=INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
+            signal=INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME,
             from_header="workshops@carpentries.org",
             cc_header=["team@carpentries.org"],
             bcc_header=[],
@@ -97,13 +97,13 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
         # Act
-        result = instructor_confirmed_for_workshop_strategy(self.signup)
+        result = instructor_declined_from_workshop_strategy(self.signup)
 
         # Assert
         self.assertEqual(result, StrategyEnum.CANCEL)
 
 
-class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
+class TestRunInstructorDeclinedFromWorkshopStrategy(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
         self.event = Event.objects.create(
@@ -118,19 +118,19 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
     @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_signal"
+        "emails.actions.instructor_declined_from_workshop."
+        "instructor_declined_from_workshop_signal"
     )
     def test_strategy_calls_create_signal(
         self,
-        mock_instructor_confirmed_for_workshop_signal,
+        mock_instructor_declined_from_workshop_signal,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
         request = RequestFactory().get("/")
 
         # Act
-        run_instructor_confirmed_for_workshop_strategy(
+        run_instructor_declined_from_workshop_strategy(
             strategy,
             request,
             signup=self.signup,
@@ -141,7 +141,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
         # Assert
-        mock_instructor_confirmed_for_workshop_signal.send.assert_called_once_with(
+        mock_instructor_declined_from_workshop_signal.send.assert_called_once_with(
             sender=self.signup,
             request=request,
             signup=self.signup,
@@ -152,8 +152,8 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
     @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_update_signal"
+        "emails.actions.instructor_declined_from_workshop."
+        "instructor_declined_from_workshop_update_signal"
     )
     def test_strategy_calls_update_signal(
         self,
@@ -164,7 +164,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        run_instructor_confirmed_for_workshop_strategy(
+        run_instructor_declined_from_workshop_strategy(
             strategy,
             request,
             signup=self.signup,
@@ -186,8 +186,8 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
     @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_cancel_signal"
+        "emails.actions.instructor_declined_from_workshop."
+        "instructor_declined_from_workshop_cancel_signal"
     )
     def test_strategy_calls_cancel_signal(
         self,
@@ -198,7 +198,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        run_instructor_confirmed_for_workshop_strategy(
+        run_instructor_declined_from_workshop_strategy(
             strategy,
             request,
             signup=self.signup,
@@ -221,22 +221,22 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
 
     @patch("emails.actions.base_strategy.logger")
     @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_signal"
+        "emails.actions.instructor_declined_from_workshop."
+        "instructor_declined_from_workshop_signal"
     )
     @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_update_signal"
+        "emails.actions.instructor_declined_from_workshop."
+        "instructor_declined_from_workshop_update_signal"
     )
     @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_cancel_signal"
+        "emails.actions.instructor_declined_from_workshop."
+        "instructor_declined_from_workshop_cancel_signal"
     )
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_instructor_confirmed_for_workshop_cancel_signal,
-        mock_instructor_confirmed_for_workshop_update_signal,
-        mock_instructor_confirmed_for_workshop_signal,
+        mock_instructor_declined_from_workshop_cancel_signal,
+        mock_instructor_declined_from_workshop_update_signal,
+        mock_instructor_declined_from_workshop_signal,
         mock_logger,
     ) -> None:
         # Arrange
@@ -244,7 +244,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        run_instructor_confirmed_for_workshop_strategy(
+        run_instructor_declined_from_workshop_strategy(
             strategy,
             request,
             signup=self.signup,
@@ -255,9 +255,9 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
         # Assert
-        mock_instructor_confirmed_for_workshop_signal.send.assert_not_called()
-        mock_instructor_confirmed_for_workshop_update_signal.send.assert_not_called()
-        mock_instructor_confirmed_for_workshop_cancel_signal.send.assert_not_called()
+        mock_instructor_declined_from_workshop_signal.send.assert_not_called()
+        mock_instructor_declined_from_workshop_update_signal.send.assert_not_called()
+        mock_instructor_declined_from_workshop_cancel_signal.send.assert_not_called()
         mock_logger.debug.assert_called_once_with(
             f"Strategy {strategy} for {self.signup} is a no-op"
         )
@@ -271,7 +271,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         with self.assertRaises(
             EmailStrategyException, msg=f"Unknown strategy {strategy}"
         ):
-            run_instructor_confirmed_for_workshop_strategy(
+            run_instructor_declined_from_workshop_strategy(
                 strategy,
                 request,
                 signup=self.signup,

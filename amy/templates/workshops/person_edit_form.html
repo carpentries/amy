@@ -76,7 +76,6 @@
       <caption><h2>All tasks</h2></caption>
       <tr>
         <th>Event</th>
-        <th>URL</th>
         <th>Role</th>
         <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
         <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
@@ -85,7 +84,6 @@
       {% for t in tasks %}
       <tr>
         <td><a href="{{ t.event.get_absolute_url }}">{{ t.event.slug }}</a></td>
-        <td>{{ t.url|default:"—"|urlize_newtab }}</td>
         <td>{{ t.role.name }}</td>
         <td>
           {% if t.seat_membership %}

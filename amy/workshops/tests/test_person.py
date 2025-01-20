@@ -762,6 +762,7 @@ class TestPersonMerging(TestBase):
             airport=self.airport_0_0,
             github="purdy_kelsi",
             twitter="purdy_kelsi",
+            bluesky="@purdy_kelsi.bsky.social",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",
@@ -858,6 +859,7 @@ class TestPersonMerging(TestBase):
             airport=self.airport_0_50,
             github="deckow_jayden",
             twitter="deckow_jayden",
+            bluesky="@deckow_jayden.bsky.social",
             url="http://jaydendeckow.com/",
             affiliation="UFlo",
             occupation="Staff",
@@ -947,6 +949,7 @@ class TestPersonMerging(TestBase):
             "airport": "obj_a",
             "github": "obj_b",
             "twitter": "obj_a",
+            "bluesky": "obj_a",
             "url": "obj_b",
             "affiliation": "obj_b",
             "occupation": "obj_a",
@@ -986,6 +989,7 @@ class TestPersonMerging(TestBase):
             "airport": "combine",
             "github": "combine",
             "twitter": "combine",
+            "bluesky": "combine",
             "url": "combine",
             "affiliation": "combine",
             "occupation": "combine",
@@ -1049,6 +1053,7 @@ class TestPersonMerging(TestBase):
             "airport": self.person_a.airport,
             "github": self.person_b.github,
             "twitter": self.person_a.twitter,
+            "bluesky": self.person_a.bluesky,
             "url": self.person_b.url,
             "affiliation": self.person_b.affiliation,
             "occupation": self.person_a.occupation,
@@ -1604,6 +1609,7 @@ class TestArchivePerson(TestBase):
         self.assertIsNone(archived_profile.airport)
         self.assertIsNone(archived_profile.github)
         self.assertIsNone(archived_profile.twitter)
+        self.assertIsNone(archived_profile.bluesky)
         self.assertEqual(archived_profile.url, "")
         self.assertEqual(archived_profile.user_notes, "")
         self.assertEqual(archived_profile.affiliation, "")

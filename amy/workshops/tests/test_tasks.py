@@ -126,65 +126,14 @@ class TestTask(TestBase):
         response = self.client.get(reverse("task_details", args=[str(correct_task.id)]))
         assert response.context["task"].pk == correct_task.pk
 
-    def test_add_task_with_correct_url(self):
-        """Ensure that task can be saved with correct URL field"""
-        task = self.fixtures["test_task_1"]
-        payload = {
-            "event": task.event.pk,
-            "person": task.person.pk,
-            "role": task.role.pk,
-            "title": "Task title",
-            "url": "http://example.org",
-        }
-        response = self.client.post(
-            reverse("task_edit", kwargs={"task_id": task.pk}), payload, follow=True
-        )
-        self.assertRedirects(
-            response, reverse("task_details", kwargs={"task_id": task.pk})
-        )
-        task.refresh_from_db()
-        self.assertEqual(task.url, "http://example.org")
-        self.assertEqual(response.context["task"].url, "http://example.org")
-
-    def test_add_task_with_incorrect_url(self):
-        """Ensure that a task object cannot be saved with incorrect URL field"""
-        task = self.fixtures["test_task_1"]
-        payload = {
-            "event": task.event.pk,
-            "person": task.person.pk,
-            "role": task.role.pk,
-            "title": "Task title",
-            "url": "htp://example.org",
-        }
-        response = self.client.post(
-            reverse("task_edit", kwargs={"task_id": task.pk}),
-            payload,
-        )
-        self.assertEqual(response.status_code, 200)
-        task.refresh_from_db()
-        self.assertEqual(task.url, "")
-
     def test_add_duplicate_task(self):
-        """Ensure that duplicate tasks with empty url field cannot exist"""
-        task_1 = self.fixtures["test_task_1"]
-        with self.assertRaises(IntegrityError):
-            Task.objects.create(
-                event=task_1.event,
-                person=task_1.person,
-                role=task_1.role,
-            )
-
-    def test_add_duplicate_task_with_url(self):
         """Ensure that duplicate tasks cannot exist"""
         task_1 = self.fixtures["test_task_1"]
-        task_1.url = "http://example.org"
-        task_1.save()
         with self.assertRaises(IntegrityError):
             Task.objects.create(
                 event=task_1.event,
                 person=task_1.person,
                 role=task_1.role,
-                url=task_1.url,
             )
 
     def test_task_edit_view_reachable_from_event_person_and_role_of_task(self):
