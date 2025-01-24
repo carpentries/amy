@@ -1,4 +1,5 @@
 {% load crispy_forms_field %}
+{% load crispy_forms_field_additional %}
 
 {% if field.is_hidden %}
     {{ field }}
@@ -71,6 +72,12 @@
                             {% crispy_field field 'class' 'form-control-file is-invalid' %}
                         {% else %}
                             {% crispy_field field 'class' 'form-control-file' %}
+                        {% endif %}
+                    {% elif field|is_captcha %}
+                        {% if field.errors %}
+                            {% crispy_field field 'class' 'is-invalid' %}
+                        {% else %}
+                            {% crispy_field field %}
                         {% endif %}
                     {% else %}
                         {% if field.errors %}
