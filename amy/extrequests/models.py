@@ -259,7 +259,7 @@ class WorkshopInquiryRequest(
         "administrative fee?",
         help_text=(
             "<b><a href='{}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a><b>".format(
+            "The Carpentries website workshop fee listing.</a></b>".format(
                 FEE_DETAILS_URL
             )
         ),
