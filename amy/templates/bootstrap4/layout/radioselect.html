@@ -1,25 +1,34 @@
 {% load crispy_forms_filters %}
 {% load crispy_forms_field %}
-{% load attrs %}
 {% load l10n %}
 
-<div class="{% if inline_class %}form-check{% endif %}{% if field_class %} {{ field_class }}{% endif %}"{% if flat_attrs %} {{ flat_attrs|safe }}{% endif %}>
-    {% include 'bootstrap4/layout/field_errors_block.html' %}
+<div {% if field_class %}class="{{ field_class }}"{% endif %}>
+    {% include 'bootstrap4/layout/help_text.html' %}
 
-    {% block help_text_before %}{% include 'bootstrap4/layout/help_text.html' %}{% endblock %}
-    {% for choice in field.field.choices %}
-      {% if not inline_class %}<div class="form-check">{% endif %}
-        <label for="id_{{ field.id_for_label }}_{{ forloop.counter }}" class="form-check-{% if inline_class %}{{ inline_class }}{% else %}label{% endif %}">
-            <input type="radio" class="form-check-input"{% if choice.0|stringformat:"s" == field.value|default_if_none:""|stringformat:"s" or field.value|is_list and choice.0|stringformat:"s" in field.value or field.value|is_list and choice.0 in field.value %} checked="checked"{% endif %} name="{{ field.html_name }}" id="id_{{ field.id_for_label }}_{{ forloop.counter }}" value="{{ choice.0|unlocalize }}" {{ field.field.widget.attrs|flatatt }}>
-            {{ choice.1|unlocalize }}
-            {% if forloop.last %}
-                {% if field.field.widget.other_field_name %}
-                {% crispy_field field.field.widget.other_field 'class' 'form-control-sm' %}
-                {% endif %}
-            {% endif %}
+    {% for group, options, index in field|optgroups %}
+    {% if group %}<strong>{{ group }}</strong>{% endif %}
+    {% for option in options %}
+      <div class="{%if use_custom_control%}custom-control custom-radio{% if inline_class %} custom-control-inline{% endif %}{% else %}form-check{% if inline_class %} form-check-inline{% endif %}{% endif %}">
+        <input type="radio" class="{%if use_custom_control%}custom-control-input{% else %}form-check-input{% endif %}{% if field.errors %} is-invalid{% endif %}" name="{{ field.html_name }}" value="{{ option.value|unlocalize }}" {% include "bootstrap4/layout/attrs.html" with widget=option %}>
+        <label class="{%if use_custom_control%}custom-control-label{% else %}form-check-label{% endif %}" for="{{ option.attrs.id }}">
+            {{ option.label|unlocalize }}
         </label>
-      {% if not inline_class %}</div>{% endif %}
+        {% if forloop.last and forloop.parentloop.last %}
+            {% if field.field.widget.other_field_name %}
+            {% crispy_field field.field.widget.other_field 'class' 'form-control form-control-sm' %}
+            {% endif %}
+        {% endif %}
+        {% if field.errors and forloop.last and not inline_class and forloop.parentloop.last %}
+            {% include 'bootstrap4/layout/field_errors_block.html' %}
+        {% endif %}
+     </div>
     {% endfor %}
-
-    {% block help_text_after %}{% endblock %}
+    {% endfor %}
+    {% if field.errors and inline_class %}
+    <div class="w-100 {%if use_custom_control%}custom-control custom-radio{% if inline_class %} custom-control-inline{% endif %}{% else %}form-check{% if inline_class %} form-check-inline{% endif %}{% endif %}">
+        {# the following input is only meant to allow boostrap to render the error message as it has to be after an invalid input. As the input has no name, no data will be sent. #}
+        <input type="checkbox" class="custom-control-input {% if field.errors %}is-invalid{%endif%}">
+        {% include 'bootstrap4/layout/field_errors_block.html' %}
+    </div>
+    {% endif %}
 </div>
