@@ -13,6 +13,12 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.6.1 - 2025-01-28
+
+### Features
+* API: Add `state_verbose` API r/o field to models that have state` field - [#2747](https://github.com/carpentries/amy/pull/2747) by @pbanaszkiewicz
+
+
 ## v4.6 - 2025-01-20
 
 ### Bugfixes
