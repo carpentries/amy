@@ -131,6 +131,7 @@ class InstructorRecruitmentSignupSerializer(serializers.ModelSerializer):
     recruitment = serializers.PrimaryKeyRelatedField(read_only=True)
     event = serializers.CharField(read_only=True, source="recruitment.event.slug")
     person = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:
         model = InstructorRecruitmentSignup
@@ -143,6 +144,7 @@ class InstructorRecruitmentSignupSerializer(serializers.ModelSerializer):
             "user_notes",
             "notes",
             "state",
+            "state_verbose",
             "created_at",
             "last_updated_at",
         )
@@ -265,12 +267,14 @@ class ScheduledEmailSerializer(serializers.ModelSerializer):
     generic_relation_content_type = serializers.SlugRelatedField(
         read_only=True, slug_field="app_labeled_name"
     )
+    state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:
         model = ScheduledEmail
         fields = (
             "pk",
             "state",
+            "state_verbose",
             "scheduled_at",
             "to_header",
             "to_header_context_json",
@@ -316,6 +320,7 @@ class TrainingProgressSerializer(serializers.ModelSerializer):
     requirement = serializers.SlugRelatedField(read_only=True, slug_field="name")
     involvement_type = serializers.SlugRelatedField(read_only=True, slug_field="name")
     event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
+    state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:
         model = TrainingProgress
@@ -325,6 +330,7 @@ class TrainingProgressSerializer(serializers.ModelSerializer):
             "date",
             "requirement",
             "state",
+            "state_verbose",
             "involvement_type",
             "event",
             "url",
@@ -354,6 +360,7 @@ class SelfOrganisedSubmissionSerializer(serializers.ModelSerializer):
     workshop_types = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="name"
     )
+    state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:
         model = SelfOrganisedSubmission
@@ -361,6 +368,7 @@ class SelfOrganisedSubmissionSerializer(serializers.ModelSerializer):
             "pk",
             "assigned_to",
             "state",
+            "state_verbose",
             "created_at",
             "last_updated_at",
             "data_privacy_agreement",
