@@ -28,7 +28,6 @@
     <table class="table table-striped">
     <tr>
       <th>Person</th>
-      <th>URL</th>
       <th>Role</th>
       <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
       <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
@@ -41,7 +40,6 @@
         {% consent_agreed t.person.active_consents TermEnum.MAY_CONTACT as may_contact %}
         {% if t.person.email and may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}
       </td>
-      <td>{{ t.url|default:"—"|urlize_newtab }}</td>
       <td>{{ t.role.name }}</td>
       <td>
         {% if t.seat_membership %}
