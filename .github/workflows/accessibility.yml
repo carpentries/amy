@@ -102,7 +102,7 @@ jobs:
         if: matrix.package == 'lighthouse'
 
       - name: Upload Lighthouse test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lighthouse-ci-report
           path: lighthouse-ci-report/
