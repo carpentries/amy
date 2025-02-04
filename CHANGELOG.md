@@ -13,6 +13,16 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.6.2 - 2025-02-04
+
+### Bugfixes
+* [Emails] Prevent EmailTemplates removal if there are scheduled emails linked to them - [#2751](https://github.com/carpentries/amy/pull/2751) by @pbanaszkiewicz
+* Remove missed columns with URL field for tasks - [#2749](https://github.com/carpentries/amy/pull/2749) by @pbanaszkiewicz
+
+### Features
+* [Emails] Pretty-print JSON in scheduled email details - [#2748](https://github.com/carpentries/amy/pull/2748) by @pbanaszkiewicz
+
+
 ## v4.6.1 - 2025-01-28
 
 ### Features
