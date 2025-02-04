@@ -1,5 +1,6 @@
 {% extends "base_nav.html" %}
 {% load emails %}
+{% load pprint %}
 
 {% block title %}
 <h1>
@@ -165,19 +166,19 @@
   </tr>
   <tr>
     <th>Context JSON:</th>
-    <td colspan="2">{{ scheduled_email.context_json }}</td>
+    <td colspan="2"><pre><code class="language-json">{{ scheduled_email.context_json|indent_json }}</code></pre></td>
   </tr>
   <tr>
     <th>Rendered context JSON:</th>
-    <td colspan="2">{{ rendered_context }}</td>
+    <td colspan="2"><pre><code class="language-json">{{ rendered_context|indent_json }}</code></pre></td>
   </tr>
   <tr>
     <th>"To" header context JSON:</th>
-    <td colspan="2">{{ scheduled_email.to_header_context_json }}</td>
+    <td colspan="2"><pre><code class="language-json">{{ scheduled_email.to_header_context_json|indent_json }}</code></pre></td>
   </tr>
   <tr>
     <th>Rendered "To" header context JSON:</th>
-    <td colspan="2">{{ rendered_to_header_context }}</td>
+    <td colspan="2"><pre><code class="language-json">{{ rendered_to_header_context|indent_json }}</code></pre></td>
   </tr>
 </table>
 
