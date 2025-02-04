@@ -208,7 +208,7 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         EmailTemplate,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         verbose_name="Linked template",
     )
 
