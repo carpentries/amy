@@ -1,11 +1,12 @@
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.models import EmailTemplate
 
 
+@tag("autoemails")
 class TestEmailTemplate(TestCase):
     def prepare_template(self):
         """Create a sample email template."""

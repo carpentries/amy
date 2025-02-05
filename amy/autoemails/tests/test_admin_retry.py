@@ -1,10 +1,8 @@
+# flake8: noqa
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.urls import reverse
-from rq.exceptions import NoSuchJobError
-from rq.queue import Queue
-from rq.worker import SimpleWorker
 
 from autoemails import admin
 from autoemails.job import Job
@@ -13,6 +11,7 @@ from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_fail_job, dummy_
 from workshops.tests.base import SuperuserMixin
 
 
+@tag("autoemails")
 class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()

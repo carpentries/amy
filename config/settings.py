@@ -30,7 +30,6 @@ env = environ.Env(
     AMY_SOCIAL_AUTH_GITHUB_KEY=(str, ""),
     AMY_SOCIAL_AUTH_GITHUB_SECRET=(str, ""),
     AMY_GITHUB_API_TOKEN=(str, "fakeToken"),
-    AMY_REDIS_URL=(str, "redis://localhost:6379/"),
     AMY_STATIC_HOST=(str, ""),
     AMY_LIVE_EMAIL=(bool, False),
     AMY_SERVER_EMAIL=(str, "root@localhost"),
@@ -161,7 +160,6 @@ THIRD_PARTY_APPS = [
     "anymail",
     "django_comments",  # this used to be in django.contrib
     "markdownx",
-    "django_rq",
     "djangoformsetjs",
     "django_better_admin_arrayfield",
     "flags",
@@ -264,9 +262,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/2.2/topics/cache/#database-caching
 CACHES = {
-    # For Redis use:
-    # redis://127.0.0.1:6379/0?client_class=django_redis.client.DefaultClient
-    # redis://127.0.0.1:6379/1?client_class=django_redis.client.DefaultClient
     "default": env.cache_url(
         "AMY_CACHE_DEFAULT",
         cast(environ.NoValue, "dbcache://default_cache_table"),
@@ -568,10 +563,6 @@ LOGGING = {
             "handlers": ["console"],
             "level": "DEBUG",
         },
-        "rq.worker": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-        },
     },
 }
 
@@ -610,28 +601,6 @@ SELECT2_CSS = ""  # the same for CSS
 SELECT2_I18N = "select2/js/i18n"
 SELECT2_CACHE_BACKEND = "select2"
 
-# Django-RQ (Redis Queueing) settings
-# -----------------------------------------------------------------------------
-# https://github.com/rq/django-rq
-RQ_QUEUES = {
-    "default": {
-        "URL": env("AMY_REDIS_URL") + "2",
-        "DEFAULT_TIMEOUT": 360,
-    },
-    "testing": {
-        "URL": env("AMY_REDIS_URL") + "15",
-        "DEFAULT_TIMEOUT": 360,
-    },
-}
-# Add link to admin
-RQ_SHOW_ADMIN_LINK = False
-# If you need custom exception handlers
-# RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
-
-RQ = {
-    "JOB_CLASS": "autoemails.job.Job",
-    "DEFAULT_RESULT_TTL": 31536000,  # 1 year in seconds for keeping job results
-}
 
 # Test runner
 # -----------------------------------------------------------------------------

@@ -43,7 +43,6 @@ logs/
 
 # Docker local volumes
 docker/database/*
-docker/redis/*
 
 # mkdocs output folder
 site/

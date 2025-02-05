@@ -1,3 +1,4 @@
+# flake8: noqa
 from datetime import datetime, timedelta
 import logging
 
@@ -9,9 +10,7 @@ from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.http import require_POST
-import django_rq
 from markdownx.widgets import AdminMarkdownxWidget
-from rq.exceptions import NoSuchJobError
 
 from autoemails.actions import BaseRepeatedAction
 from autoemails.forms import RescheduleForm, TemplateForm
@@ -20,8 +19,10 @@ from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 from workshops.utils.access import admin_required
 
+# from rq.exceptions import NoSuchJobError
+
+
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
 
 
 class EmailTemplateAdmin(admin.ModelAdmin):
@@ -448,6 +449,6 @@ class RQJobAdmin(admin.ModelAdmin):
         return redirect(link)
 
 
-admin.site.register(EmailTemplate, EmailTemplateAdmin)
-admin.site.register(Trigger, TriggerAdmin)
-admin.site.register(RQJob, RQJobAdmin)
+# admin.site.register(EmailTemplate, EmailTemplateAdmin)
+# admin.site.register(Trigger, TriggerAdmin)
+# admin.site.register(RQJob, RQJobAdmin)

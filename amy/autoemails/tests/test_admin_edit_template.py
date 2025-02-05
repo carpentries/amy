@@ -1,8 +1,8 @@
+# flake8: noqa
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.urls import reverse
-from rq.exceptions import NoSuchJobError
 
 from autoemails import admin
 from autoemails.actions import NewInstructorAction
@@ -13,6 +13,7 @@ from workshops.models import Event, Organization, Person, Role, Task
 from workshops.tests.base import SuperuserMixin
 
 
+@tag("autoemails")
 class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()

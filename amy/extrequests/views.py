@@ -13,7 +13,6 @@ from django.db.models import Prefetch, ProtectedError, Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-import django_rq
 from requests.exceptions import HTTPError, RequestException
 
 from autoemails.forms import GenericEmailScheduleForm
@@ -90,8 +89,6 @@ from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete, redirect_with_next_support
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 # ------------------------------------------------------------

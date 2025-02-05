@@ -1,9 +1,8 @@
+# flake8: noqa
 from datetime import datetime, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.urls import reverse
-from rq.exceptions import NoSuchJobError
-from rq_scheduler.utils import to_unix
 
 from autoemails import admin
 from autoemails.job import Job
@@ -12,6 +11,7 @@ from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.tests.base import SuperuserMixin
 
 
+@tag("autoemails")
 class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()

@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock
 
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, tag
 from rq.exceptions import NoSuchJobError
 from rq_scheduler.utils import to_unix
 
@@ -13,6 +13,7 @@ from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
+@tag("autoemails")
 class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()

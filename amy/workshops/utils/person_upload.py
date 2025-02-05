@@ -6,14 +6,12 @@ from typing import Literal
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
-import django_rq
 
 from workshops.exceptions import InternalError
 from workshops.models import Event, Person, Role, Task
 from workshops.utils.usernames import create_username
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
 
 
 def upload_person_task_csv(

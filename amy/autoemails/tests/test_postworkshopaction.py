@@ -1,6 +1,7 @@
+# flake8: noqa
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import PostWorkshopAction
 from autoemails.models import EmailTemplate, Trigger
@@ -8,6 +9,7 @@ from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
+@tag("autoemails")
 class TestPostWorkshopAction(TestCase):
     def setUp(self):
         # we're missing some tags

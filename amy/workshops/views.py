@@ -39,7 +39,6 @@ from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonRespo
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
-import django_rq
 from github.GithubException import GithubException
 import requests
 from reversion.models import Revision, Version
@@ -153,8 +152,6 @@ from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 @login_required

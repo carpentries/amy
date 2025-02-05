@@ -6,13 +6,10 @@ from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
 from django.core.exceptions import ValidationError
 from django.http.response import HttpResponseRedirect
-import django_rq
 
 from consents.models import Consent, Term, TermOption
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 class ArchiveActionMixin:

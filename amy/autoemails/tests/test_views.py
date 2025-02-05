@@ -1,7 +1,7 @@
 from datetime import date
 
 from django.shortcuts import reverse
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import EmailTemplate, RQJob, Trigger
@@ -11,6 +11,7 @@ from workshops.models import Event, Language, Organization, WorkshopRequest
 from workshops.tests.base import SuperuserMixin
 
 
+@tag("autoemails")
 class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
