@@ -13,6 +13,12 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.6.3 - 2025-02-08
+
+### Bugfixes
+* [Email] Fix: Pretty-Print Python data instead of JSON - [#2754](https://github.com/carpentries/amy/pull/2754) by @pbanaszkiewicz
+
+
 ## v4.6.2 - 2025-02-04
 
 ### Bugfixes
