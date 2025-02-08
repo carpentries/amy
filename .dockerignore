@@ -41,9 +41,6 @@ test_db*
 # log file
 logs/
 
-# Docker local volumes
-docker/database/*
-
 # mkdocs output folder
 site/
 
