@@ -29,7 +29,7 @@ def update_link_for_existing_curriculums(apps, schema_editor) -> None:
     for name, website in DATA.items():
         affected_rows += Curriculum.objects.filter(slug=name).update(website=website)
 
-    print(f"Affected rows by the migration: {affected_rows}")
+    # print(f"Affected rows by the migration: {affected_rows}")
 
 
 class Migration(migrations.Migration):
