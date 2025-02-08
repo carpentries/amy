@@ -4,7 +4,7 @@
 # ----------------------------------
 # BASE IMAGE: slim debian bullseye
 # ----------------------------------
-FROM python:3.11-slim-bullseye AS base
+FROM python:3.12-slim-bullseye AS base
 
 # security updates
 RUN apt-get update && apt-get -y upgrade && apt-get install -y --no-install-recommends libpq5
