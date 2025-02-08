@@ -21,7 +21,7 @@ test :
 
 ## test_migrations    : test database migrations only
 test_migrations:
-	${MANAGE} test --parallel --tag migration_test
+	${MANAGE} test --tag migration_test
 
 ## dev_database : re-make database using saved data
 dev_database :
