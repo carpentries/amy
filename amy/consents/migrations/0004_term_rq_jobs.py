@@ -6,7 +6,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('autoemails', '0015_auto_20210405_1920'),
         ('consents', '0003_term_help_text'),
     ]
 
