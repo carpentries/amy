@@ -1,10 +1,10 @@
 # $ GIT_COMMIT=$(git rev-parse --short HEAD)
-# $ docker build -t amy:latest -t amy:$GIT_COMMIT --label commit=$GIT_COMMIT -f docker/Dockerfile .
+# $ docker build -t amy:latest -t amy:$GIT_COMMIT --label commit=$GIT_COMMIT .
 
 # ----------------------------------
 # BASE IMAGE: slim debian bullseye
 # ----------------------------------
-FROM python:3.11-slim-bullseye as base
+FROM python:3.11-slim-bullseye AS base
 
 # security updates
 RUN apt-get update && apt-get -y upgrade && apt-get install -y --no-install-recommends libpq5
@@ -73,4 +73,4 @@ EXPOSE 80
 
 ENV PATH="${PATH}:/venv/amy/bin"
 RUN chmod +x ./start.sh
-CMD ./start.sh
+CMD ["./start.sh"]
