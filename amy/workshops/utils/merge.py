@@ -9,9 +9,7 @@ from workshops.utils.consents import (
 )
 
 
-def merge_objects(
-    object_a, object_b, easy_fields, difficult_fields, choices, base_a=True
-):
+def merge_objects(object_a, object_b, easy_fields, difficult_fields, choices, base_a=True):
     """Merge two objects of the same model.
 
     `object_a` and `object_b` are two objects being merged. If `base_a==True`
@@ -140,23 +138,19 @@ def merge_objects(
 
                 # Reassign consents to the base object
                 try:
-                    Consent.objects.active().filter(
-                        person__in=[object_a, object_b]
-                    ).update(person=base_obj)
+                    Consent.objects.active().filter(person__in=[object_a, object_b]).update(person=base_obj)
                 except IntegrityError as e:
                     integrity_errors.append(str(e))
 
             elif attr == "trainingrequestconsent_set" and value == "most_recent":
                 # Special case: consents should be merge with a "most recent" strategy.
-                archive_least_recent_active_training_request_consents(
-                    object_a, object_b, base_obj
-                )
+                archive_least_recent_active_training_request_consents(object_a, object_b, base_obj)
 
                 # Reassign consents to the base object
                 try:
-                    TrainingRequestConsent.objects.active().filter(
-                        training_request__in=[object_a, object_b]
-                    ).update(training_request=base_obj)
+                    TrainingRequestConsent.objects.active().filter(training_request__in=[object_a, object_b]).update(
+                        training_request=base_obj
+                    )
                 except IntegrityError as e:
                     integrity_errors.append(str(e))
 

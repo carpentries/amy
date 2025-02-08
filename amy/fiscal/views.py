@@ -106,9 +106,7 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateV
         return initial
 
 
-class OrganizationUpdate(
-    UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView
-):
+class OrganizationUpdate(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     permission_required = "workshops.change_organization"
     model = Organization
     form_class = OrganizationForm
@@ -117,9 +115,7 @@ class OrganizationUpdate(
     template_name = "generic_form_with_comments.html"
 
 
-class OrganizationDelete(
-    UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
-):
+class OrganizationDelete(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Organization
     slug_field = "domain"
     slug_url_kwarg = "org_domain"
@@ -136,36 +132,28 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     context_object_name = "all_memberships"
     template_name = "fiscal/all_memberships.html"
     filter_class = MembershipFilter
-    queryset = (
-        Membership.objects.annotate_with_seat_usage()
-        .prefetch_related("organizations")
-        .order_by("id")
-    )
+    queryset = Membership.objects.annotate_with_seat_usage().prefetch_related("organizations").order_by("id")
     title = "All Memberships"
 
 
 class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
-    prefetch_awards = Prefetch(
-        "person__award_set", queryset=Award.objects.select_related("badge")
-    )
+    prefetch_awards = Prefetch("person__award_set", queryset=Award.objects.select_related("badge"))
     queryset = Membership.objects.prefetch_related(
         Prefetch(
             "member_set",
-            queryset=Member.objects.select_related(
-                "organization", "role", "membership"
-            ).order_by("organization__fullname"),
+            queryset=Member.objects.select_related("organization", "role", "membership").order_by(
+                "organization__fullname"
+            ),
         ),
         Prefetch(
             "membershiptask_set",
-            queryset=MembershipTask.objects.select_related(
-                "person", "role", "membership"
-            ).order_by("person__family", "person__personal", "role__name"),
+            queryset=MembershipTask.objects.select_related("person", "role", "membership").order_by(
+                "person__family", "person__personal", "role__name"
+            ),
         ),
         Prefetch(
             "task_set",
-            queryset=Task.objects.select_related("event", "person").prefetch_related(
-                prefetch_awards
-            ),
+            queryset=Task.objects.select_related("event", "person").prefetch_related(prefetch_awards),
         ),
     )
     context_object_name = "membership"
@@ -198,8 +186,7 @@ class MembershipCreate(
         if next_year != form.cleaned_data["agreement_end"]:
             messages.warning(
                 self.request,
-                "Membership agreement end is not full year from the start. "
-                f"It should be: {next_year:%Y-%m-%d}.",
+                "Membership agreement end is not full year from the start. " f"It should be: {next_year:%Y-%m-%d}.",
             )
 
         main_organization: Organization = form.cleaned_data["main_organization"]
@@ -227,9 +214,7 @@ class MembershipCreate(
         return reverse(path, args=[self.object.pk])
 
 
-class MembershipUpdate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView
-):
+class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView):
     permission_required = "workshops.change_membership"
     model = Membership
     object: Membership
@@ -376,9 +361,7 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
         return reverse("all_memberships")
 
 
-class MembershipMembers(
-    OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
-):
+class MembershipMembers(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView):
     permission_required = (
         "workshops.change_membership",
         "workshops.add_member",
@@ -398,9 +381,7 @@ class MembershipMembers(
         return kwargs
 
     def get_formset_queryset(self, object):
-        return object.member_set.select_related(
-            "organization", "role", "membership"
-        ).order_by("organization__fullname")
+        return object.member_set.select_related("organization", "role", "membership").order_by("organization__fullname")
 
     def get_context_data(self, **kwargs):
         if "title" not in kwargs:
@@ -424,14 +405,8 @@ class MembershipMembers(
         changed = "* Replaced with {organization}"
 
         comments = (
-            [
-                added.format(organization=member.organization)
-                for member in formset.new_objects
-            ]
-            + [
-                removed.format(organization=member.organization)
-                for member in formset.deleted_objects
-            ]
+            [added.format(organization=member.organization) for member in formset.new_objects]
+            + [removed.format(organization=member.organization) for member in formset.deleted_objects]
             + [
                 # it's difficult to figure out previous value of member.organization,
                 # so the comment will only contain the new version
@@ -451,18 +426,16 @@ class MembershipMembers(
         return result
 
 
-class MembershipTasks(
-    OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView
-):
+class MembershipTasks(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView):
     permission_required = "workshops.change_membership"
 
     def get_formset(self, *args, **kwargs):
         return modelformset_factory(MembershipTask, MembershipTaskForm, *args, **kwargs)
 
     def get_formset_queryset(self, object):
-        return object.membershiptask_set.select_related(
-            "person", "role", "membership"
-        ).order_by("person__family", "person__personal", "role__name")
+        return object.membershiptask_set.select_related("person", "role", "membership").order_by(
+            "person__family", "person__personal", "role__name"
+        )
 
     def get_context_data(self, **kwargs):
         if "title" not in kwargs:
@@ -487,16 +460,11 @@ class MembershipTasks(
         return result
 
 
-class MembershipExtend(
-    OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, FormView
-):
+class MembershipExtend(OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, FormView):
     form_class = MembershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "workshops.change_membership"
-    comment = (
-        "Extended membership by {days} days on {date} (new end date: {new_date})."
-        "\n\n----\n\n{comment}"
-    )
+    comment = "Extended membership by {days} days on {date} (new end date: {new_date})." "\n\n----\n\n{comment}"
 
     def get_initial(self):
         return {
@@ -538,19 +506,14 @@ class MembershipExtend(
         return self.membership.get_absolute_url()
 
 
-class MembershipCreateRollOver(
-    OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView
-):
+class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView):
     permission_required = ["workshops.create_membership", "workshops.change_membership"]
     template_name = "generic_form.html"
     model = Membership
     object: Membership
     form_class = MembershipRollOverForm
     pk_url_kwarg = "membership_id"
-    success_message = (
-        'Membership "{membership}" was successfully rolled-over to a new '
-        'membership "{new_membership}"'
-    )
+    success_message = 'Membership "{membership}" was successfully rolled-over to a new ' 'membership "{new_membership}"'
 
     def membership_queryset_kwargs(self):
         # Prevents already rolled-over memberships from rolling-over again.
@@ -631,9 +594,7 @@ class MembershipCreateRollOver(
         if form.cleaned_data["copy_members"]:
             Member.objects.bulk_create(
                 [
-                    Member(
-                        membership=self.object, organization=m.organization, role=m.role
-                    )
+                    Member(membership=self.object, organization=m.organization, role=m.role)
                     for m in self.membership.member_set.all()
                 ]
             )

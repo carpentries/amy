@@ -24,9 +24,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # fake RQJob
         self.email = EmailTemplate.objects.create(slug="test-1")
-        self.trigger = Trigger.objects.create(
-            action="new-instructor", template=self.email
-        )
+        self.trigger = Trigger.objects.create(action="new-instructor", template=self.email)
         self.rqjob = RQJob.objects.create(job_id="fake-id", trigger=self.trigger)
 
     def tearDown(self):
@@ -58,9 +56,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         url = reverse("admin:autoemails_rqjob_reschedule", args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
-        self.assertRedirects(
-            rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk])
-        )
+        self.assertRedirects(rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk]))
 
     def test_no_such_job(self):
         # log admin user
@@ -88,9 +84,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             pipe.watch(self.scheduler.scheduled_jobs_key)
             self.assertIsNone(pipe.zscore(self.scheduler.scheduled_jobs_key, job1.id))
         url = reverse("admin:autoemails_rqjob_reschedule", args=[rqjob1.pk])
-        scheduled_execution = datetime.now(tz=timezone.utc) + timedelta(
-            days=1, minutes=15
-        )
+        scheduled_execution = datetime.now(tz=timezone.utc) + timedelta(days=1, minutes=15)
         scheduled_execution = scheduled_execution.replace(microsecond=0)
         payload = {
             "scheduled_execution": scheduled_execution,
@@ -99,8 +93,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         }
         rv = self.client.post(url, payload, follow=True)
         self.assertIn(
-            f"The job {job1.id} was not rescheduled. It is probably "
-            "already executing or has recently executed",
+            f"The job {job1.id} was not rescheduled. It is probably " "already executing or has recently executed",
             rv.content.decode("utf-8"),
         )
 
@@ -117,8 +110,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         url = reverse("admin:autoemails_rqjob_reschedule", args=[rqjob2.pk])
         rv = self.client.post(url, payload, follow=True)
         self.assertIn(
-            f"The job {job2.id} was not rescheduled. It is probably "
-            "already executing or has recently executed",
+            f"The job {job2.id} was not rescheduled. It is probably " "already executing or has recently executed",
             rv.content.decode("utf-8"),
         )
 
@@ -133,9 +125,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         rqjob = RQJob.objects.create(job_id=job.id, trigger=self.trigger)
         Job.fetch(job.id, connection=self.scheduler.connection)  # no error
         url = reverse("admin:autoemails_rqjob_reschedule", args=[rqjob.pk])
-        scheduled_execution = datetime.now(tz=timezone.utc) + timedelta(
-            days=1, minutes=15
-        )
+        scheduled_execution = datetime.now(tz=timezone.utc) + timedelta(days=1, minutes=15)
         scheduled_execution = scheduled_execution.replace(microsecond=0)
         payload = {
             "scheduled_execution": scheduled_execution,

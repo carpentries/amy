@@ -28,17 +28,11 @@ class TestTask(TestBase):
         self._setUpTags()
         self._setUpRoles()
 
-        test_host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
 
-        self.test_person_1 = Person.objects.create(
-            personal="Test", family="Person1", username="person1"
-        )
+        self.test_person_1 = Person.objects.create(personal="Test", family="Person1", username="person1")
 
-        self.test_person_2 = Person.objects.create(
-            personal="Test", family="Person2", username="person2"
-        )
+        self.test_person_2 = Person.objects.create(personal="Test", family="Person2", username="person2")
 
         test_event_1 = Event.objects.create(
             start=datetime.now(),
@@ -70,13 +64,9 @@ class TestTask(TestBase):
         test_role_1 = Role.objects.create(name="test_role_1")
         test_role_2 = Role.objects.create(name="test_role_2")
 
-        test_task_1 = Task.objects.create(
-            person=self.test_person_1, event=test_event_1, role=test_role_1
-        )
+        test_task_1 = Task.objects.create(person=self.test_person_1, event=test_event_1, role=test_role_1)
 
-        test_task_2 = Task.objects.create(
-            person=self.test_person_2, event=test_event_2, role=test_role_2
-        )
+        test_task_2 = Task.objects.create(person=self.test_person_2, event=test_event_2, role=test_role_2)
 
         self.fixtures["test_task_1"] = test_task_1
         self.fixtures["test_task_2"] = test_task_2
@@ -244,13 +234,11 @@ class TestTask(TestBase):
         self.assertEqual(response2.status_code, 200)
         self.assertContains(
             response1,
-            f"Membership &quot;{self.membership}&quot; has no public instructor "
-            "training seats remaining.",
+            f"Membership &quot;{self.membership}&quot; has no public instructor " "training seats remaining.",
         )
         self.assertContains(
             response2,
-            f"Membership &quot;{self.membership}&quot; has no in-house instructor "
-            "training seats remaining.",
+            f"Membership &quot;{self.membership}&quot; has no in-house instructor " "training seats remaining.",
         )
 
     def test_exceeded_seats_warnings_when_adding(self):
@@ -332,25 +320,19 @@ class TestTask(TestBase):
         }
 
         # Act
-        response1 = self.client.post(
-            reverse("task_edit", args=[task1.pk]), data1, follow=True
-        )
-        response2 = self.client.post(
-            reverse("task_edit", args=[task2.pk]), data2, follow=True
-        )
+        response1 = self.client.post(reverse("task_edit", args=[task1.pk]), data1, follow=True)
+        response2 = self.client.post(reverse("task_edit", args=[task2.pk]), data2, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)
         self.assertEqual(response2.status_code, 200)
         self.assertContains(
             response1,
-            f"Membership &quot;{self.membership}&quot; has no public instructor "
-            "training seats remaining.",
+            f"Membership &quot;{self.membership}&quot; has no public instructor " "training seats remaining.",
         )
         self.assertContains(
             response2,
-            f"Membership &quot;{self.membership}&quot; has no in-house instructor "
-            "training seats remaining.",
+            f"Membership &quot;{self.membership}&quot; has no in-house instructor " "training seats remaining.",
         )
 
     def test_exceeded_seats_warnings_when_updating(self):
@@ -392,12 +374,8 @@ class TestTask(TestBase):
         }
 
         # Act
-        response1 = self.client.post(
-            reverse("task_edit", args=[task1.pk]), data1, follow=True
-        )
-        response2 = self.client.post(
-            reverse("task_edit", args=[task2.pk]), data2, follow=True
-        )
+        response1 = self.client.post(reverse("task_edit", args=[task1.pk]), data1, follow=True)
+        response2 = self.client.post(reverse("task_edit", args=[task2.pk]), data2, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)

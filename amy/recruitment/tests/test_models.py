@@ -103,9 +103,7 @@ class TestInstructorRecruitment(TestCase):
             event.save()
 
             # Act
-            result = InstructorRecruitment.objects.annotate_with_priority().get(
-                pk=recruitment.pk
-            )
+            result = InstructorRecruitment.objects.annotate_with_priority().get(pk=recruitment.pk)
             # Assert
             self.assertEqual(result.automatic_priority, expected_priority, start_date)
 
@@ -139,8 +137,6 @@ class TestInstructorRecruitment(TestCase):
             event.save()
 
             # Act
-            result = InstructorRecruitment.objects.annotate_with_priority().get(
-                pk=recruitment.pk
-            )
+            result = InstructorRecruitment.objects.annotate_with_priority().get(pk=recruitment.pk)
             # Assert
             self.assertEqual(result.automatic_priority, expected_priority, start_date)

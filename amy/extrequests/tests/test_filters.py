@@ -215,9 +215,7 @@ class TestTrainingRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(
-            result, [self.request_spiderman, self.request_ironman], ordered=False
-        )
+        self.assertQuerySetEqual(result, [self.request_spiderman, self.request_ironman], ordered=False)
 
     def test_filter_matched__unknown(self):
         # Arrange
@@ -239,9 +237,7 @@ class TestTrainingRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(
-            result, [self.request_blackwidow, self.request_hermione], ordered=False
-        )
+        self.assertQuerySetEqual(result, [self.request_blackwidow, self.request_hermione], ordered=False)
 
     def test_filter_matched__matched_trainee_unmatched_training(self):
         # Arrange
@@ -374,18 +370,14 @@ class TestTrainingRequestFilter(TestBase):
 
         # Act
         for field in fields.keys():
-            results[field] = self.filterset.filters[filter_name].filter(
-                self.qs, [field]
-            )
+            results[field] = self.filterset.filters[filter_name].filter(self.qs, [field])
 
         # Assert
         # we don't have any unexpected fields
         self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
-            self.assertQuerySetEqual(
-                results[field], expected_results[field], ordered=True
-            )
+            self.assertQuerySetEqual(results[field], expected_results[field], ordered=True)
 
 
 class TestWorkshopRequestFilter(TestBase):
@@ -448,9 +440,7 @@ class TestWorkshopRequestFilter(TestBase):
         kwargs["assigned_to"] = self.spiderman
         kwargs["country"] = "US"
         kwargs["state"] = "d"
-        self.req_assigned_discarded_unused_code = WorkshopRequest.objects.create(
-            **kwargs
-        )
+        self.req_assigned_discarded_unused_code = WorkshopRequest.objects.create(**kwargs)
         # 3. Request for a workshop in US,
         # from a member institution but without the member code,
         # with a preferred date selected which falls during the membership,
@@ -465,9 +455,7 @@ class TestWorkshopRequestFilter(TestBase):
         # accepted
         kwargs["member_code"] = "valid123"
         kwargs["state"] = "a"
-        self.req_accepted_valid_code_curriculum_chosen = WorkshopRequest.objects.create(
-            **kwargs
-        )
+        self.req_accepted_valid_code_curriculum_chosen = WorkshopRequest.objects.create(**kwargs)
         self.req_accepted_valid_code_curriculum_chosen.requested_workshop_types.set(
             Curriculum.objects.filter(slug="dc-ecology-r")
         )
@@ -514,9 +502,7 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(
-            result, [self.req_pending_country_gb, self.req_pending_dates_unused_code]
-        )
+        self.assertQuerySetEqual(result, [self.req_pending_country_gb, self.req_pending_dates_unused_code])
 
     def test_filter_state__accepted(self):
         # Arrange
@@ -527,9 +513,7 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(
-            result, [self.req_accepted_valid_code_curriculum_chosen]
-        )
+        self.assertQuerySetEqual(result, [self.req_accepted_valid_code_curriculum_chosen])
 
     def test_filter_state_discarded(self):
         # Arrange
@@ -584,9 +568,7 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(
-            result, [self.req_accepted_valid_code_curriculum_chosen]
-        )
+        self.assertQuerySetEqual(result, [self.req_accepted_valid_code_curriculum_chosen])
 
     def test_filter_unused_member_code(self):
         # Arrange
@@ -623,15 +605,11 @@ class TestWorkshopRequestFilter(TestBase):
 
         # Act
         for field in fields.keys():
-            results[field] = self.filterset.filters[filter_name].filter(
-                self.qs, [field]
-            )
+            results[field] = self.filterset.filters[filter_name].filter(self.qs, [field])
 
         # Assert
         # we don't have any unexpected fields
         self.assertEqual(fields.keys(), expected_results.keys())
         # each field was filtered correctly
         for field in fields.keys():
-            self.assertQuerySetEqual(
-                results[field], expected_results[field], ordered=True
-            )
+            self.assertQuerySetEqual(results[field], expected_results[field], ordered=True)

@@ -41,9 +41,7 @@ class TestNewMembershipOnboardingReceiverIntegration(TestBase):
             organization=self.org_beta,
             role=MemberRole.objects.first(),
         )
-        billing_contact_role = MembershipPersonRole.objects.create(
-            name="billing_contact"
-        )
+        billing_contact_role = MembershipPersonRole.objects.create(name="billing_contact")
         # task = MembershipTask.objects.create(
         #     person=self.hermione,
         #     membership=membership,
@@ -105,9 +103,7 @@ class TestNewMembershipOnboardingUpdateReceiverIntegration(TestBase):
             organization=self.org_beta,
             role=MemberRole.objects.first(),
         )
-        billing_contact_role = MembershipPersonRole.objects.create(
-            name="billing_contact"
-        )
+        billing_contact_role = MembershipPersonRole.objects.create(name="billing_contact")
         MembershipTask.objects.create(
             person=self.hermione,
             membership=membership,
@@ -126,9 +122,7 @@ class TestNewMembershipOnboardingUpdateReceiverIntegration(TestBase):
         )
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_new_membership_onboarding_strategy(
                 new_membership_onboarding_strategy(membership),
                 request=request,
@@ -164,11 +158,7 @@ class TestNewMembershipOnboardingUpdateReceiverIntegration(TestBase):
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
-        latest_log = (
-            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
-            .order_by("-created_at")
-            .first()
-        )
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at").first()
         assert latest_log
         self.assertEqual(latest_log.details, f"Updated {signal}")
 
@@ -195,9 +185,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
             organization=self.org_beta,
             role=MemberRole.objects.first(),
         )
-        billing_contact_role = MembershipPersonRole.objects.create(
-            name="billing_contact"
-        )
+        billing_contact_role = MembershipPersonRole.objects.create(name="billing_contact")
         task = MembershipTask.objects.create(
             person=self.hermione,
             membership=membership,
@@ -216,9 +204,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
         )
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_new_membership_onboarding_strategy(
                 new_membership_onboarding_strategy(membership),
                 request=request,
@@ -239,11 +225,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
-        latest_log = (
-            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
-            .order_by("-created_at")
-            .first()
-        )
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at").first()
         assert latest_log
         self.assertEqual(latest_log.details, "Email was cancelled")
 
@@ -268,9 +250,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
             organization=self.org_beta,
             role=MemberRole.objects.first(),
         )
-        billing_contact_role = MembershipPersonRole.objects.create(
-            name="billing_contact"
-        )
+        billing_contact_role = MembershipPersonRole.objects.create(name="billing_contact")
         task = MembershipTask.objects.create(
             person=self.hermione,
             membership=membership,
@@ -289,9 +269,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
         )
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_new_membership_onboarding_strategy(
                 new_membership_onboarding_strategy(membership),
                 request=request,
@@ -318,16 +296,10 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
         # Arrange
         mock_action_scheduled.assert_called_once()
         self.assertEqual(rv.status_code, 302)
-        self.assertEqual(
-            MembershipTask.objects.filter(membership=membership).count(), 0
-        )
+        self.assertEqual(MembershipTask.objects.filter(membership=membership).count(), 0)
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
-        latest_log = (
-            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
-            .order_by("-created_at")
-            .first()
-        )
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at").first()
         assert latest_log
         self.assertEqual(latest_log.details, "Email was cancelled")
 
@@ -352,9 +324,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
             organization=self.org_beta,
             role=MemberRole.objects.first(),
         )
-        billing_contact_role = MembershipPersonRole.objects.create(
-            name="billing_contact"
-        )
+        billing_contact_role = MembershipPersonRole.objects.create(name="billing_contact")
         MembershipTask.objects.create(
             person=self.hermione,
             membership=membership,
@@ -373,9 +343,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
         )
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_new_membership_onboarding_strategy(
                 new_membership_onboarding_strategy(membership),
                 request=request,

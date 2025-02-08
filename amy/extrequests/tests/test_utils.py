@@ -78,9 +78,7 @@ class TestMemberCodeValid(TestBase):
         code = "invalid"
 
         # Act & Assert
-        with self.assertRaises(
-            MemberCodeValidationError, msg='No membership found for code "invalid".'
-        ):
+        with self.assertRaises(MemberCodeValidationError, msg='No membership found for code "invalid".'):
             member_code_valid(
                 code=code,
                 date=self.date,
@@ -214,9 +212,7 @@ class TestMemberCodeValid(TestBase):
         code = self.valid_code
 
         # Act & Assert
-        with self.assertRaises(
-            MemberCodeValidationError, msg="Membership has no training seats remaining."
-        ):
+        with self.assertRaises(MemberCodeValidationError, msg="Membership has no training seats remaining."):
             member_code_valid_training(code=code, date=self.date)
 
     def test_code_only_public_seats_remaining(self):
@@ -309,9 +305,7 @@ class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
 
     def test_returns_correct_membership(self):
         # Arrange
-        request = create_training_request(
-            "p", self.spiderman, open_review=False, reg_code=self.valid_code
-        )
+        request = create_training_request("p", self.spiderman, open_review=False, reg_code=self.valid_code)
 
         # Act
         result = get_membership_from_training_request_or_raise_error(request)
@@ -321,9 +315,7 @@ class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
 
     def test_error_no_code(self):
         # Arrange
-        request = create_training_request(
-            "p", self.spiderman, open_review=False, reg_code=""
-        )
+        request = create_training_request("p", self.spiderman, open_review=False, reg_code="")
 
         # Act & Assert
         with self.assertRaisesMessage(
@@ -335,15 +327,12 @@ class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
 
     def test_error_invalid_code(self):
         # Arrange
-        request = create_training_request(
-            "p", self.spiderman, open_review=False, reg_code="invalid"
-        )
+        request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
 
         # Act & Assert
         with self.assertRaisesMessage(
             Membership.DoesNotExist,
-            f"{request}: No membership found for registration code "
-            f'"{request.member_code}".',
+            f"{request}: No membership found for registration code " f'"{request.member_code}".',
         ):
             get_membership_from_training_request_or_raise_error(request)
 
@@ -375,9 +364,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
 
     def test_accepts_request(self):
         # Arrange
-        request = create_training_request(
-            "p", self.spiderman, open_review=False, reg_code="invalid"
-        )
+        request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
 
         # Act
         accept_training_request_and_match_to_event(
@@ -394,9 +381,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
 
     def test_creates_task(self):
         # Arrange
-        request = create_training_request(
-            "p", self.spiderman, open_review=False, reg_code="invalid"
-        )
+        request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
 
         # Act
         result = accept_training_request_and_match_to_event(
@@ -420,9 +405,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
 
     def test_returns_existing_task(self):
         # Arrange
-        request = create_training_request(
-            "p", self.spiderman, open_review=False, reg_code="invalid"
-        )
+        request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
         Task.objects.create(
             person=self.spiderman,
             event=self.event,
@@ -478,14 +461,11 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         self.membership.public_instructor_training_seats = 0
         self.membership.save()
         expected = [
-            f'Membership "{self.membership}" is using more training seats than '
-            "it's been allowed.",
+            f'Membership "{self.membership}" is using more training seats than ' "it's been allowed.",
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=True, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=True, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)
@@ -495,14 +475,11 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         self.membership.inhouse_instructor_training_seats = 0
         self.membership.save()
         expected = [
-            f'Membership "{self.membership}" is using more training seats than '
-            "it's been allowed.",
+            f'Membership "{self.membership}" is using more training seats than ' "it's been allowed.",
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=False, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=False, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)
@@ -516,9 +493,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=True, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=True, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)
@@ -533,9 +508,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=True, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=True, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)
@@ -552,9 +525,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=True, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=True, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)
@@ -569,9 +540,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=True, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=True, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)
@@ -586,9 +555,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=True, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=True, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)
@@ -602,17 +569,14 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         self.event.end = self.event.start + timedelta(days=1)
         self.event.save()
         expected = [
-            f'Membership "{self.membership}" is using more training seats than '
-            "it's been allowed.",
+            f'Membership "{self.membership}" is using more training seats than ' "it's been allowed.",
             f'Membership "{self.membership}" is not active.',
             f'Training "{self.event}" has start or end date outside '
             f'membership "{self.membership}" agreement dates.',
         ]
 
         # Act
-        result = get_membership_warnings_after_match(
-            self.membership, seat_public=True, event=self.event
-        )
+        result = get_membership_warnings_after_match(self.membership, seat_public=True, event=self.event)
 
         # Assert
         self.assertListEqual(expected, result)

@@ -25,9 +25,7 @@ class InstructorRecruitmentFilter(AMYFilterSet):
         method="filter_online_inperson",
     )
 
-    country = AllCountriesMultipleFilter(
-        field_name="event__country", widget=Select2MultipleWidget
-    )
+    country = AllCountriesMultipleFilter(field_name="event__country", widget=Select2MultipleWidget)
 
     curricula = filters.ModelMultipleChoiceFilter(
         field_name="event__curricula",
@@ -53,9 +51,7 @@ class InstructorRecruitmentFilter(AMYFilterSet):
             "status",
         ]
 
-    def filter_online_inperson(
-        self, queryset: QuerySet, name: str, value: str
-    ) -> QuerySet:
+    def filter_online_inperson(self, queryset: QuerySet, name: str, value: str) -> QuerySet:
         """Filter recruitments based on the event (online/inperson) status."""
         if value == "online":
             return queryset.filter(event__tags__name="online")

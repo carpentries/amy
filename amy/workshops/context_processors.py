@@ -17,9 +17,5 @@ def site_banner(request: HttpRequest) -> dict:
 
 def feature_flags_enabled(request: HttpRequest) -> dict:
     flags = get_flags(request=request)
-    data = {
-        "FEATURE_FLAGS_ENABLED": [
-            flag for flag in flags.values() if flag.check_state(request=request) is True
-        ]
-    }
+    data = {"FEATURE_FLAGS_ENABLED": [flag for flag in flags.values() if flag.check_state(request=request) is True]}
     return data

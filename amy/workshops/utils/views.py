@@ -45,18 +45,14 @@ def assign(obj: Assignable, /, person: Optional[Person]) -> None:
         raise Http404(f"Unable to assign {person} to {obj}.")
 
 
-def redirect_with_next_support(
-    request: HttpRequest, *args, **kwargs
-) -> HttpResponseRedirect:
+def redirect_with_next_support(request: HttpRequest, *args, **kwargs) -> HttpResponseRedirect:
     """Works in the same way as `redirect` except when there is GET parameter
     named "next". In that case, user is redirected to the URL from that
     parameter. If you have a class-based view, use RedirectSupportMixin that
     does the same."""
 
     next_url = request.GET.get("next", None)
-    if next_url is not None and url_has_allowed_host_and_scheme(
-        next_url, allowed_hosts=settings.ALLOWED_HOSTS
-    ):
+    if next_url is not None and url_has_allowed_host_and_scheme(next_url, allowed_hosts=settings.ALLOWED_HOSTS):
         return redirect(next_url, permanent=False)
     else:
         return redirect(*args, permanent=False, **kwargs)

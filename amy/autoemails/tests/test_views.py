@@ -24,9 +24,7 @@ class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase)
             from_header="amy@example.org",
             body_template="# Hello there",
         )
-        self.trigger = Trigger.objects.create(
-            action="workshop-request-response1", template=self.template, active=True
-        )
+        self.trigger = Trigger.objects.create(action="workshop-request-response1", template=self.template, active=True)
 
     def _setUpWorkshopRequest(self, create_event=False):
         kwargs = dict(

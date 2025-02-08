@@ -76,12 +76,8 @@ def shift_date_and_apply_current_utc_time(date: date, offset: timedelta) -> date
     return combine_date_with_current_utc_time(date_shifted)
 
 
-one_month_before = partial(
-    shift_date_and_apply_current_utc_time, offset=-timedelta(days=30)
-)
-two_months_after = partial(
-    shift_date_and_apply_current_utc_time, offset=timedelta(days=60)
-)
+one_month_before = partial(shift_date_and_apply_current_utc_time, offset=-timedelta(days=30))
+two_months_after = partial(shift_date_and_apply_current_utc_time, offset=timedelta(days=60))
 
 
 def messages_missing_recipients(request: HttpRequest, signal: str) -> None:
@@ -101,21 +97,17 @@ def messages_missing_template(request: HttpRequest, signal: str) -> None:
     )
 
 
-def messages_missing_template_link(
-    request: HttpRequest, scheduled_email: ScheduledEmail
-) -> None:
+def messages_missing_template_link(request: HttpRequest, scheduled_email: ScheduledEmail) -> None:
     messages.warning(
         request,
-        f'Email action <a href="{ scheduled_email.get_absolute_url }">'
-        f"<code>{ scheduled_email.pk }</code></a> update was not performed due"
+        f'Email action <a href="{scheduled_email.get_absolute_url}">'
+        f"<code>{scheduled_email.pk}</code></a> update was not performed due"
         " to missing linked template.",
         extra_tags=settings.ONLY_FOR_ADMINS_TAG,
     )
 
 
-def messages_action_scheduled(
-    request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
-) -> None:
+def messages_action_scheduled(request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail) -> None:
     name = scheduled_email.template.name if scheduled_email.template else signal_name
     messages.info(
         request,
@@ -131,9 +123,7 @@ def messages_action_scheduled(
     )
 
 
-def messages_action_updated(
-    request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
-) -> None:
+def messages_action_updated(request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail) -> None:
     name = scheduled_email.template.name if scheduled_email.template else signal_name
     messages.info(
         request,
@@ -146,9 +136,7 @@ def messages_action_updated(
     )
 
 
-def messages_action_cancelled(
-    request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail
-) -> None:
+def messages_action_cancelled(request: HttpRequest, signal_name: str, scheduled_email: ScheduledEmail) -> None:
     name = scheduled_email.template.name if scheduled_email.template else signal_name
     messages.warning(
         request,
@@ -172,9 +160,7 @@ def person_from_request(request: HttpRequest) -> Person | None:
     return cast(Person, request.user)
 
 
-def find_signal_by_name(
-    signal_name: str, all_signals: Iterable[Signal]
-) -> Signal | None:
+def find_signal_by_name(signal_name: str, all_signals: Iterable[Signal]) -> Signal | None:
     return next(
         (signal for signal in all_signals if signal.signal_name == signal_name),
         None,
@@ -185,9 +171,7 @@ def api_model_url(model: str, pk: int) -> str:
     return f"api:{model}#{pk}"
 
 
-def scalar_value_url(
-    type_: Literal["str", "int", "float", "bool", "date", "none"], value: str
-) -> str:
+def scalar_value_url(type_: Literal["str", "int", "float", "bool", "date", "none"], value: str) -> str:
     return f"value:{type_}#{value}"
 
 
@@ -215,9 +199,7 @@ def scalar_value_from_type(type_: str, value: Any) -> BasicTypes:
     try:
         return cast(BasicTypes, mapping[type_](value))
     except KeyError as exc:
-        raise ValueError(
-            f"Unsupported scalar type {type_!r} (value {value!r})."
-        ) from exc
+        raise ValueError(f"Unsupported scalar type {type_!r} (value {value!r}).") from exc
     except ValueError as exc:
         raise ValueError(f"Failed to parse {value!r} for type {type_!r}.") from exc
 
@@ -236,20 +218,14 @@ def find_model_instance(model_class: type[Model], model_pk: Any) -> Model:
     try:
         return model_class.objects.get(pk=model_pk)
     except ValueError as exc:
-        raise ValueError(
-            f"Failed to parse pk {model_pk!r} for model {model_class!r}: {exc}"
-        ) from exc
+        raise ValueError(f"Failed to parse pk {model_pk!r} for model {model_class!r}: {exc}") from exc
     except model_class.DoesNotExist as exc:
-        raise ValueError(
-            f"Model {model_class!r} with pk {model_pk!r} not found."
-        ) from exc
+        raise ValueError(f"Model {model_class!r} with pk {model_pk!r} not found.") from exc
 
 
 def map_single_api_uri_to_value(uri: str) -> BasicTypes:
     match urlparse(uri):
-        case ParseResult(
-            scheme="value", netloc="", path=type_, params="", query="", fragment=value
-        ):
+        case ParseResult(scheme="value", netloc="", path=type_, params="", query="", fragment=value):
             return scalar_value_from_type(type_, value)
         case _:
             raise ValueError(f"Unsupported URI {uri!r}.")
@@ -274,9 +250,7 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
     }
 
     match urlparse(uri):
-        case ParseResult(
-            scheme="api", netloc="", path=model_name, params="", query="", fragment=id_
-        ):
+        case ParseResult(scheme="api", netloc="", path=model_name, params="", query="", fragment=id_):
             try:
                 model_class = find_model_class(model_name)
                 model_instance = find_model_instance(model_class, int(id_))
@@ -291,14 +265,10 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
 
 def map_single_api_uri_to_serialized_model_or_value(uri: str) -> SerializedData:
     match urlparse(uri):
-        case ParseResult(
-            scheme="value", netloc="", path=_, params="", query="", fragment=_
-        ):
+        case ParseResult(scheme="value", netloc="", path=_, params="", query="", fragment=_):
             return map_single_api_uri_to_value(uri)
 
-        case ParseResult(
-            scheme="api", netloc="", path=_, params="", query="", fragment=_
-        ):
+        case ParseResult(scheme="api", netloc="", path=_, params="", query="", fragment=_):
             return map_single_api_uri_to_serialized_model(uri)
 
         case _:
@@ -309,25 +279,15 @@ def map_api_uri_to_serialized_model_or_value(
     uri: str | list[str],
 ) -> SerializedData | list[SerializedData]:
     if isinstance(uri, list):
-        return [
-            map_single_api_uri_to_serialized_model_or_value(single_uri)
-            for single_uri in uri
-        ]
+        return [map_single_api_uri_to_serialized_model_or_value(single_uri) for single_uri in uri]
     return map_single_api_uri_to_serialized_model_or_value(uri)
 
 
-def build_context_from_dict(
-    context: dict[str, str | list[str]]
-) -> dict[str, SerializedData | list[SerializedData]]:
-    return {
-        key: map_api_uri_to_serialized_model_or_value(uri)
-        for key, uri in context.items()
-    }
+def build_context_from_dict(context: dict[str, str | list[str]]) -> dict[str, SerializedData | list[SerializedData]]:
+    return {key: map_api_uri_to_serialized_model_or_value(uri) for key, uri in context.items()}
 
 
-def build_context_from_list(
-    context: list[dict[str, str]]
-) -> list[SerializedData | list[SerializedData]]:
+def build_context_from_list(context: list[dict[str, str]]) -> list[SerializedData | list[SerializedData]]:
     return [
         (
             map_single_api_uri_to_serialized_model(item["api_uri"]).get(

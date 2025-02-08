@@ -86,9 +86,7 @@ def find_workshop_YAML_metadata(content: str) -> dict[str, str]:
 
     # get metadata to the form returned by `find_workshop_HTML_metadata`
     # because YAML tries to interpret values from index's header
-    filtered_metadata = {
-        key: value for key, value in metadata.items() if key in ALLOWED_METADATA_NAMES
-    }
+    filtered_metadata = {key: value for key, value in metadata.items() if key in ALLOWED_METADATA_NAMES}
     for key, value in filtered_metadata.items():
         if isinstance(value, int) or isinstance(value, float):
             filtered_metadata[key] = str(value)
@@ -107,11 +105,7 @@ def find_workshop_HTML_metadata(content: str) -> dict[str, str]:
     R = r'<meta\s+name="(?P<name>\w+?)"\s+content="(?P<content>.*?)"\s*?/?>'
     regexp = re.compile(R)
 
-    return {
-        name: content
-        for name, content in regexp.findall(content)
-        if name in ALLOWED_METADATA_NAMES
-    }
+    return {name: content for name, content in regexp.findall(content) if name in ALLOWED_METADATA_NAMES}
 
 
 def parse_workshop_metadata(metadata):
@@ -241,11 +235,7 @@ def validate_workshop_metadata(metadata):
 
     for requirement in requirements:
         d_ = requirement._asdict()
-        name_ = (
-            "{display} ({name})".format(**d_)
-            if requirement.display
-            else "{name}".format(**d_)
-        )
+        name_ = "{display} ({name})".format(**d_) if requirement.display else "{name}".format(**d_)
         required_ = requirement.required
         type_ = "required" if required_ else "optional"
         value_ = metadata.get(requirement.name)
@@ -255,18 +245,14 @@ def validate_workshop_metadata(metadata):
             issues.append("Missing {} metadata {}.".format(type_, name_))
 
         if value_ == "FIXME":
-            errors.append(
-                'Placeholder value "FIXME" for {} metadata {}.'.format(type_, name_)
-            )
+            errors.append('Placeholder value "FIXME" for {} metadata {}.'.format(type_, name_))
         else:
             try:
                 if required_ or value_:
                     if not re.match(requirement.match_format, value_):
                         errors.append(
                             'Invalid value "{}" for {} metadata {}: should be'
-                            ' in format "{}".'.format(
-                                value_, type_, name_, requirement.match_format
-                            )
+                            ' in format "{}".'.format(value_, type_, name_, requirement.match_format)
                         )
             except (re.error, TypeError):
                 pass

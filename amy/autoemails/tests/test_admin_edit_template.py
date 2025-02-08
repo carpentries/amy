@@ -26,17 +26,13 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # fake RQJob
         self.email = EmailTemplate.objects.create(slug="test-1")
-        self.trigger = Trigger.objects.create(
-            action="new-instructor", template=self.email
-        )
+        self.trigger = Trigger.objects.create(action="new-instructor", template=self.email)
         self.rqjob = RQJob.objects.create(job_id="fake-id", trigger=self.trigger)
 
         self.new_template = "Welcome to AMY!"
 
         # test event and task
-        LC_org = Organization.objects.create(
-            domain="librarycarpentry.org", fullname="Library Carpentry"
-        )
+        LC_org = Organization.objects.create(domain="librarycarpentry.org", fullname="Library Carpentry")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.first(),
@@ -44,9 +40,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
-        p = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         self.task = Task.objects.create(event=self.event, person=p, role=r)
 
@@ -79,9 +73,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         url = reverse("admin:autoemails_rqjob_edit_template", args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
-        self.assertRedirects(
-            rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk])
-        )
+        self.assertRedirects(rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk]))
 
     def test_no_such_job(self):
         # log admin user

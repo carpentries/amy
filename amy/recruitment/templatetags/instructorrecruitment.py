@@ -82,10 +82,7 @@ def get_signup_conflicts(
             continue
 
         # event getting checked must have start and end dates
-        if not (
-            signup_to_check.recruitment.event.start
-            and signup_to_check.recruitment.event.end
-        ):
+        if not (signup_to_check.recruitment.event.start and signup_to_check.recruitment.event.end):
             continue
 
         if (

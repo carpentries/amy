@@ -84,9 +84,7 @@ class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
     def get_auth_token(self) -> str:
         response = self.client.post(
             self.urls["token"],
-            HTTP_AUTHORIZATION=basic_auth_header(
-                self.admin.username, self.admin_password
-            ),
+            HTTP_AUTHORIZATION=basic_auth_header(self.admin.username, self.admin_password),
         )
         return response.json()["token"]
 
@@ -140,9 +138,7 @@ class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
         result = response.json()
         self.assertEqual(result["pk"], str(scheduled_email.pk))
         self.assertEqual(result["state"], ScheduledEmailStatus.LOCKED)
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).latest("created_at")
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).latest("created_at")
         self.assertEqual(latest_log.details, "State changed by worker")
         self.assertEqual(latest_log.state_before, ScheduledEmailStatus.SCHEDULED)
         self.assertEqual(latest_log.state_after, ScheduledEmailStatus.LOCKED)
@@ -196,9 +192,7 @@ class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
         result = response.json()
         self.assertEqual(result["pk"], str(scheduled_email.pk))
         self.assertEqual(result["state"], ScheduledEmailStatus.FAILED)
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).latest("created_at")
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).latest("created_at")
         self.assertEqual(latest_log.details, details)
         self.assertEqual(latest_log.state_before, ScheduledEmailStatus.SCHEDULED)
         self.assertEqual(latest_log.state_after, ScheduledEmailStatus.FAILED)
@@ -267,9 +261,7 @@ class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
         result = response.json()
         self.assertEqual(result["pk"], str(scheduled_email.pk))
         self.assertEqual(result["state"], ScheduledEmailStatus.SUCCEEDED)
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).latest("created_at")
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).latest("created_at")
         self.assertEqual(latest_log.details, details)
         self.assertEqual(latest_log.state_before, ScheduledEmailStatus.SCHEDULED)
         self.assertEqual(latest_log.state_after, ScheduledEmailStatus.SUCCEEDED)

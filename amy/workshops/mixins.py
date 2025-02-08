@@ -7,9 +7,7 @@ class AssignmentMixin(models.Model):
     """This abstract model acts as a mix-in, so it adds
     "assigned to admin [...]" field to any inheriting model."""
 
-    assigned_to = models.ForeignKey(
-        "workshops.Person", null=True, blank=True, on_delete=models.SET_NULL
-    )
+    assigned_to = models.ForeignKey("workshops.Person", null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
         abstract = True
@@ -143,8 +141,7 @@ class EventLinkMixin(models.Model):
         null=True,
         blank=True,
         verbose_name="Linked event object",
-        help_text="Link to the event instance created or otherwise related to this"
-        " object.",
+        help_text="Link to the event instance created or otherwise related to this" " object.",
         on_delete=models.PROTECT,
     )
 
@@ -161,9 +158,7 @@ class StateMixin(models.Model):
         ("d", "Discarded"),
         ("a", "Accepted"),
     )
-    state = models.CharField(
-        max_length=1, choices=STATE_CHOICES, null=False, blank=False, default="p"
-    )
+    state = models.CharField(max_length=1, choices=STATE_CHOICES, null=False, blank=False, default="p")
 
     class Meta:
         abstract = True
@@ -184,9 +179,7 @@ class StateExtendedMixin(models.Model):
 
     STATE_CHOICES = StateMixin.STATE_CHOICES + (("w", "Withdrawn"),)
 
-    state = models.CharField(
-        max_length=1, choices=STATE_CHOICES, null=False, blank=False, default="p"
-    )
+    state = models.CharField(max_length=1, choices=STATE_CHOICES, null=False, blank=False, default="p")
 
     class Meta:
         abstract = True
@@ -238,8 +231,7 @@ class SecondaryEmailMixin(models.Model):
         blank=True,
         default="",
         verbose_name="Secondary email address",
-        help_text="This is an optional, secondary email address we can "
-        "use to contact you.",
+        help_text="This is an optional, secondary email address we can " "use to contact you.",
     )
 
     class Meta:

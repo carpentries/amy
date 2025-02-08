@@ -147,9 +147,7 @@ def instructor_dashboard(request):
             "languages",
             Prefetch(
                 "task_set",
-                queryset=Task.objects.select_related("event", "role").order_by(
-                    "event__start", "event__slug"
-                ),
+                queryset=Task.objects.select_related("event", "role").order_by("event__start", "event__slug"),
             ),
             Prefetch(
                 "membershiptask_set",
@@ -169,9 +167,7 @@ def instructor_dashboard(request):
     )
     consents_by_key = {consent.term.key: consent for consent in consents}
     # get display content for all visible terms
-    consents_content = {
-        term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
-    }
+    consents_content = {term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)}
 
     context = {
         "title": "Your profile",
@@ -191,16 +187,12 @@ def autoupdate_profile(request):
         "form_tag": False,
         "prefix": "consents",
     }
-    form = AutoUpdateProfileForm(
-        instance=person, form_tag=False, add_submit_button=False
-    )
+    form = AutoUpdateProfileForm(instance=person, form_tag=False, add_submit_button=False)
     consent_form = TermBySlugsForm(term_slugs=TERM_SLUGS, **consent_form_kwargs)
 
     if request.method == "POST":
         form = AutoUpdateProfileForm(request.POST, instance=person)
-        consent_form = TermBySlugsForm(
-            request.POST, term_slugs=TERM_SLUGS, **consent_form_kwargs
-        )
+        consent_form = TermBySlugsForm(request.POST, term_slugs=TERM_SLUGS, **consent_form_kwargs)
         if form.is_valid() and form.instance == person and consent_form.is_valid():
             # save lessons
             person.lessons.clear()
@@ -265,9 +257,7 @@ class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
-    success_message = (
-        "Thank you. Your Get Involved submission will be evaluated within 7-10 days."
-    )
+    success_message = "Thank you. Your Get Involved submission will be evaluated within 7-10 days."
 
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
@@ -339,9 +329,7 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
 # Views for instructors - upcoming teaching opportunities
 
 
-class UpcomingTeachingOpportunitiesList(
-    LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView
-):
+class UpcomingTeachingOpportunitiesList(LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView):
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
@@ -353,11 +341,9 @@ class UpcomingTeachingOpportunitiesList(
 
         # this condition means: either venue, latitude and longitude are provided, or
         # the event has "online" tag
-        location = (
-            ~Q(event__venue="")
-            & Q(event__latitude__isnull=False)
-            & Q(event__longitude__isnull=False)
-        ) | Q(event__tags__name="online")
+        location = (~Q(event__venue="") & Q(event__latitude__isnull=False) & Q(event__longitude__isnull=False)) | Q(
+            event__tags__name="online"
+        )
 
         self.queryset = (
             InstructorRecruitment.objects.annotate_with_priority()
@@ -384,9 +370,7 @@ class UpcomingTeachingOpportunitiesList(
             return True
 
         try:
-            role = CommunityRole.objects.get(
-                person=self.request.user, config__name="instructor"
-            )
+            role = CommunityRole.objects.get(person=self.request.user, config__name="instructor")
             return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
@@ -396,9 +380,7 @@ class UpcomingTeachingOpportunitiesList(
 
         # person details with tasks counted
         context["person"] = (
-            Person.objects.annotate_with_role_count()
-            .select_related("airport")
-            .get(pk=self.request.user.pk)
+            Person.objects.annotate_with_role_count().select_related("airport").get(pk=self.request.user.pk)
         )
         context["person_instructor_tasks_slugs"] = Task.objects.filter(
             role__name="instructor", person__pk=self.request.user.pk
@@ -406,14 +388,14 @@ class UpcomingTeachingOpportunitiesList(
 
         context["person_instructor_task_events"] = {
             task.event
-            for task in Task.objects.filter(
-                role__name="instructor", person__pk=self.request.user.pk
-            ).select_related("event")
+            for task in Task.objects.filter(role__name="instructor", person__pk=self.request.user.pk).select_related(
+                "event"
+            )
         }
 
-        context["person_signups"] = InstructorRecruitmentSignup.objects.filter(
-            person=self.request.user
-        ).select_related("recruitment", "recruitment__event")
+        context["person_signups"] = InstructorRecruitmentSignup.objects.filter(person=self.request.user).select_related(
+            "recruitment", "recruitment__event"
+        )
 
         return context
 
@@ -431,9 +413,7 @@ class SignupForRecruitment(
     ]
     title = "Signup for workshop"
     model = InstructorRecruitmentSignup
-    queryset_other = InstructorRecruitment.objects.filter(status="o").select_related(
-        "event"
-    )
+    queryset_other = InstructorRecruitment.objects.filter(status="o").select_related("event")
     context_other_object_name = "recruitment"
     pk_url_kwarg = "recruitment_pk"
 
@@ -445,9 +425,7 @@ class SignupForRecruitment(
             return True
 
         try:
-            role = CommunityRole.objects.get(
-                person=self.request.user, config__name="instructor"
-            )
+            role = CommunityRole.objects.get(person=self.request.user, config__name="instructor")
             return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
@@ -461,9 +439,7 @@ class SignupForRecruitment(
 
         # person details with tasks counted
         context["person"] = (
-            Person.objects.annotate_with_role_count()
-            .select_related("airport")
-            .get(pk=self.request.user.pk)
+            Person.objects.annotate_with_role_count().select_related("airport").get(pk=self.request.user.pk)
         )
 
         return context
@@ -471,10 +447,7 @@ class SignupForRecruitment(
     def get_success_message(self, cleaned_data):
         self.other_object: InstructorRecruitment
         event = self.other_object.event
-        return (
-            f"Your interest in teaching at {event} has been recorded and is now "
-            "pending."
-        )
+        return f"Your interest in teaching at {event} has been recorded and is now " "pending."
 
     def get_success_url(self) -> str:
         next_url = self.request.GET.get("next", None)
@@ -512,9 +485,7 @@ class SignupForRecruitment(
             )
 
         # instructor has applied for opportunities in the same dates
-        if conflicting_signups := InstructorRecruitmentSignup.objects.exclude(
-            recruitment=recruitment
-        ).filter(
+        if conflicting_signups := InstructorRecruitmentSignup.objects.exclude(recruitment=recruitment).filter(
             person=self.request.user,
             recruitment__event__start__lte=event.end,
             recruitment__event__end__gte=event.start,
@@ -522,8 +493,7 @@ class SignupForRecruitment(
             gen = (signup.recruitment.event.slug for signup in conflicting_signups)
             messages.warning(
                 self.request,
-                "You have applied to other workshops on the same dates: "
-                f"{', '.join(gen)}",
+                "You have applied to other workshops on the same dates: " f"{', '.join(gen)}",
             )
 
         instructor_signs_up_for_workshop_signal.send(
@@ -573,17 +543,13 @@ class ResignFromRecruitment(
             return True
 
         try:
-            role = CommunityRole.objects.get(
-                person=self.request.user, config__name="instructor"
-            )
+            role = CommunityRole.objects.get(person=self.request.user, config__name="instructor")
             return role.is_active()
         except CommunityRole.DoesNotExist:
             return False
 
     def get_queryset(self):
-        return InstructorRecruitmentSignup.objects.filter(
-            person=self.request.user, recruitment__status="o"
-        )
+        return InstructorRecruitmentSignup.objects.filter(person=self.request.user, recruitment__status="o")
 
     def get_redirect_url(self) -> str:
         next_url = self.request.POST.get("next", None)
@@ -620,16 +586,16 @@ def search(request):
             results_combined = []
 
             organizations = list(
-                Organization.objects.filter(
-                    Q(domain__icontains=term) | Q(fullname__icontains=term)
-                ).order_by("fullname")
+                Organization.objects.filter(Q(domain__icontains=term) | Q(fullname__icontains=term)).order_by(
+                    "fullname"
+                )
             )
             results_combined += organizations
 
             memberships = list(
-                Membership.objects.filter(
-                    Q(name__icontains=term) | Q(registration_code__icontains=term)
-                ).order_by("-agreement_start")
+                Membership.objects.filter(Q(name__icontains=term) | Q(registration_code__icontains=term)).order_by(
+                    "-agreement_start"
+                )
             )
             results_combined += memberships
 
@@ -647,28 +613,17 @@ def search(request):
             results_combined += events
 
             persons = (
-                Person.objects.annotate(
-                    search=SearchVector("personal", "middle", "family")
-                )
-                .filter(
-                    Q(search=term)
-                    | multiple_Q_icontains(term, "email", "secondary_email", "github")
-                )
+                Person.objects.annotate(search=SearchVector("personal", "middle", "family"))
+                .filter(Q(search=term) | multiple_Q_icontains(term, "email", "secondary_email", "github"))
                 .order_by("family")
             )
             results_combined += list(persons)
 
-            airports = list(
-                Airport.objects.filter(
-                    multiple_Q_icontains(term, "iata", "fullname")
-                ).order_by("iata")
-            )
+            airports = list(Airport.objects.filter(multiple_Q_icontains(term, "iata", "fullname")).order_by("iata"))
             results_combined += airports
 
             training_requests = (
-                TrainingRequest.objects.annotate(
-                    search=SearchVector("personal", "middle", "family")
-                )
+                TrainingRequest.objects.annotate(search=SearchVector("personal", "middle", "family"))
                 .filter(
                     Q(search=term)
                     | multiple_Q_icontains(
@@ -706,16 +661,12 @@ def search(request):
             if len(results_combined) == 1 and not form.cleaned_data["no_redirect"]:
                 result = results_combined[0]
                 msg = format_html(
-                    "You were moved to this page, because your search <code>{}</code> "
-                    "yields only this result.",
+                    "You were moved to this page, because your search <code>{}</code> " "yields only this result.",
                     term,
                 )
                 if isinstance(result, Comment):
                     messages.success(request, msg)
-                    return redirect(
-                        result.content_object.get_absolute_url()
-                        + "#c{}".format(result.id)
-                    )
+                    return redirect(result.content_object.get_absolute_url() + "#c{}".format(result.id))
                 elif hasattr(result, "get_absolute_url"):
                     messages.success(request, msg)
                     return redirect(result.get_absolute_url())
@@ -749,9 +700,7 @@ class AllFeatureFlags(ConditionallyEnabledMixin, LoginRequiredMixin, TemplateVie
     template_name = "dashboard/all_feature_flags.html"
 
     def get_view_enabled(self, request) -> bool:
-        return bool(
-            settings.PROD_ENVIRONMENT and request.user.is_superuser
-        ) or not bool(settings.PROD_ENVIRONMENT)
+        return bool(settings.PROD_ENVIRONMENT and request.user.is_superuser) or not bool(settings.PROD_ENVIRONMENT)
 
     def get(self, request: HttpRequest, *args, **kwargs):
         self.request = request

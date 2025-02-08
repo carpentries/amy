@@ -105,9 +105,7 @@ class TestCommunityRoleForm(TestBase):
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
         self.assertEqual(form.errors.keys(), {"award"})
-        self.assertEqual(
-            form.errors["award"], ["Award is required with community role Test"]
-        )
+        self.assertEqual(form.errors["award"], ["Award is required with community role Test"])
 
     def test_award_same_person_required(self):
         # Arrange
@@ -140,9 +138,7 @@ class TestCommunityRoleForm(TestBase):
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
         self.assertEqual(form.errors.keys(), {"award"})
-        self.assertEqual(
-            form.errors["award"], [f"Award should belong to {self.hermione}"]
-        )
+        self.assertEqual(form.errors["award"], [f"Award should belong to {self.hermione}"])
 
     def test_specific_award_badge_required(self):
         # Arrange
@@ -176,10 +172,7 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(form.errors.keys(), {"award"})
         self.assertEqual(
             form.errors["award"],
-            [
-                "Award badge must be Software Carpentry Instructor "
-                "for community role Test"
-            ],
+            ["Award badge must be Software Carpentry Instructor " "for community role Test"],
         )
 
     def test_membership_required(self):
@@ -395,9 +388,7 @@ class TestCommunityRoleForm(TestBase):
         # Assert
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors.keys(), {"end"})
-        self.assertEqual(
-            form.errors["end"], ["Required when Reason for inactivation selected."]
-        )
+        self.assertEqual(form.errors["end"], ["Required when Reason for inactivation selected."])
 
     def test_find_concurrent_roles(self) -> None:
         # Arrange
@@ -429,12 +420,8 @@ class TestCommunityRoleForm(TestBase):
             url="https://example.org/",
         )
         # Act
-        roles1 = CommunityRoleForm.find_concurrent_roles(
-            config1, self.hermione, date(2022, 1, 1), date(2022, 1, 31)
-        )
-        roles2 = CommunityRoleForm.find_concurrent_roles(
-            config1, self.hermione, date(2022, 10, 1), date(2022, 10, 31)
-        )
+        roles1 = CommunityRoleForm.find_concurrent_roles(config1, self.hermione, date(2022, 1, 1), date(2022, 1, 31))
+        roles2 = CommunityRoleForm.find_concurrent_roles(config1, self.hermione, date(2022, 10, 1), date(2022, 10, 31))
         roles3 = CommunityRoleForm.find_concurrent_roles(
             config2, self.hermione, date(2022, 10, 1), date(2022, 10, 31), url=None
         )
@@ -485,9 +472,7 @@ class TestCommunityRoleForm(TestBase):
                 form_end=form_end,
             ):
                 # clear community roles if the test suite doesn't
-                CommunityRole.objects.filter(
-                    config=config, person=self.hermione
-                ).delete()
+                CommunityRole.objects.filter(config=config, person=self.hermione).delete()
 
                 community_role = CommunityRole.objects.create(
                     config=config,
@@ -515,10 +500,7 @@ class TestCommunityRoleForm(TestBase):
                 self.assertEqual(form.errors.keys(), {"person"})
                 self.assertEqual(
                     form.errors["person"],
-                    [
-                        f"Person {self.hermione} has concurrent community roles: "
-                        f"{[community_role]}."
-                    ],
+                    [f"Person {self.hermione} has concurrent community roles: " f"{[community_role]}."],
                 )
 
     def test_concurrent_community_roles_disallowed__validation_succeeds(self) -> None:
@@ -546,9 +528,7 @@ class TestCommunityRoleForm(TestBase):
                 form_end=form_end,
             ):
                 # clear community roles if the test suite doesn't
-                CommunityRole.objects.filter(
-                    config=config, person=self.hermione
-                ).delete()
+                CommunityRole.objects.filter(config=config, person=self.hermione).delete()
 
                 CommunityRole.objects.create(
                     config=config,
@@ -655,9 +635,7 @@ class TestCommunityRoleUpdateForm(TestBase):
         role = CommunityRole.objects.create(person=person, config=config)
 
         # Act
-        form = CommunityRoleUpdateForm(
-            data, instance=role, community_role_config=config
-        )
+        form = CommunityRoleUpdateForm(data, instance=role, community_role_config=config)
 
         # Assert
         self.assertFalse(form.is_valid())  # errors expected
@@ -692,9 +670,7 @@ class TestCommunityRoleUpdateForm(TestBase):
         }
 
         # Act
-        form = CommunityRoleUpdateForm(
-            data, instance=role, community_role_config=config
-        )
+        form = CommunityRoleUpdateForm(data, instance=role, community_role_config=config)
 
         # Assert
         self.assertTrue(form.is_valid(), form.errors)
@@ -726,9 +702,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             "generic_relation_pk": "",
             "custom_keys": ["", "another value"],
         }
-        form = CommunityRoleUpdateForm(
-            data, instance=role, community_role_config=config
-        )
+        form = CommunityRoleUpdateForm(data, instance=role, community_role_config=config)
 
         # Act
         form.save()

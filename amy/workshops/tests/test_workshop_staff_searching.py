@@ -271,12 +271,8 @@ class TestLocateWorkshopStaff(TestBase):
         helper_role = Role.objects.get(name="helper")
         organizer_role = Role.objects.get(name="organizer")
 
-        Task.objects.create(
-            role=helper_role, person=self.spiderman, event=Event.objects.first()
-        )
-        Task.objects.create(
-            role=organizer_role, person=self.blackwidow, event=Event.objects.first()
-        )
+        Task.objects.create(role=helper_role, person=self.spiderman, event=Event.objects.first())
+        Task.objects.create(role=organizer_role, person=self.blackwidow, event=Event.objects.first())
 
         response = self.client.get(
             self.url,
@@ -347,9 +343,7 @@ class TestLocateWorkshopStaff(TestBase):
         stalled = Tag.objects.get(name="stalled")
         e1 = Event.objects.create(slug="TTT-event", host=Organization.objects.first())
         e1.tags.set([TTT])
-        e2 = Event.objects.create(
-            slug="stalled-TTT-event", host=Organization.objects.first()
-        )
+        e2 = Event.objects.create(slug="stalled-TTT-event", host=Organization.objects.first())
         e2.tags.set([TTT, stalled])
 
         learner = Role.objects.get(name="learner")
@@ -414,8 +408,7 @@ class TestWorkshopStaffCSV(TestBase):
         rv = self.client.get(self.url)
         first_row = rv.content.decode("utf-8").splitlines()[0]
         first_row_expected = (
-            "Name,Email,Is instructor,Is trainer,Taught times,"
-            "Is trainee,Airport,Country,Lessons,Affiliation"
+            "Name,Email,Is instructor,Is trainer,Taught times," "Is trainee,Airport,Country,Lessons,Affiliation"
         )
 
         self.assertEqual(first_row, first_row_expected)

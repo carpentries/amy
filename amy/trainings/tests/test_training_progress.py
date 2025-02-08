@@ -60,12 +60,8 @@ class TestTrainingProgressValidation(TestBase):
         self.learner = Role.objects.get(name="learner")
 
     def test_url_is_required(self):
-        p1 = TrainingProgress.objects.create(
-            requirement=self.requirement, trainee=self.admin
-        )
-        p2 = TrainingProgress.objects.create(
-            requirement=self.url_required, trainee=self.admin
-        )
+        p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
+        p2 = TrainingProgress.objects.create(requirement=self.url_required, trainee=self.admin)
         p3 = TrainingProgress.objects.create(
             requirement=self.get_involved,
             involvement_type=self.url_and_date_required,
@@ -144,20 +140,14 @@ class TestTrainingProgressValidation(TestBase):
         p2.full_clean()  # URL should pass here, but fail in GetInvolvedForm
 
     def test_event_is_required(self):
-        p1 = TrainingProgress.objects.create(
-            requirement=self.requirement, trainee=self.admin
-        )
-        p2 = TrainingProgress.objects.create(
-            requirement=self.event_required, trainee=self.admin
-        )
+        p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
+        p2 = TrainingProgress.objects.create(requirement=self.event_required, trainee=self.admin)
         p1.full_clean()
         with self.assertValidationErrors(["event"]):
             p2.full_clean()
 
     def test_event_must_be_blank(self):
-        org = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         event = Event.objects.create(slug="ttt", host=org)
         event.tags.add(ttt)
@@ -180,9 +170,7 @@ class TestTrainingProgressValidation(TestBase):
         p2.full_clean()
 
     def test_event_progress_already_exists(self):
-        org = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         event = Event.objects.create(slug="ttt", host=org)
         event.tags.add(ttt)
@@ -208,9 +196,7 @@ class TestTrainingProgressValidation(TestBase):
         )
 
     def test_involvement_is_required(self):
-        p1 = TrainingProgress.objects.create(
-            requirement=self.requirement, trainee=self.admin
-        )
+        p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(
             requirement=self.get_involved,
             trainee=self.admin,
@@ -239,9 +225,7 @@ class TestTrainingProgressValidation(TestBase):
         p2.full_clean()
 
     def test_notes_required(self):
-        p1 = TrainingProgress.objects.create(
-            requirement=self.requirement, trainee=self.admin
-        )
+        p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(
             requirement=self.get_involved,
             involvement_type=self.notes_required,
@@ -288,9 +272,7 @@ class TestTrainingProgressValidation(TestBase):
         p1.full_clean()  # notes never have to be left blank
 
     def test_date_required(self):
-        p1 = TrainingProgress.objects.create(
-            requirement=self.requirement, trainee=self.admin
-        )
+        p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(
             requirement=self.get_involved,
             involvement_type=self.url_and_date_required,
@@ -416,8 +398,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Welcome Session"),
             ),
-            expected="Passed Welcome Session&lt;br /&gt;"
-            "on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Welcome Session&lt;br /&gt;" "on Sunday 01 May 2016 at 16:00.",
         )
 
     def test_notes(self):
@@ -486,14 +467,11 @@ class TestProgressDescriptionTemplateTag(TestBase):
                 created_at=datetime(2016, 5, 1, 16, 00),
                 requirement=TrainingRequirement(name="Welcome Session"),
             ),
-            expected="Passed Welcome Session&lt;br /&gt;"
-            "on Sunday 01 May 2016 at 16:00.",
+            expected="Passed Welcome Session&lt;br /&gt;" "on Sunday 01 May 2016 at 16:00.",
         )
 
     def _test(self, progress, expected):
-        template = Template(
-            "{% load training_progress %}" "{% progress_description p %}"
-        )
+        template = Template("{% load training_progress %}" "{% progress_description p %}")
         context = Context({"p": progress})
         got = template.render(context)
         self.assertEqual(got, expected)
@@ -548,22 +526,15 @@ class TestCRUDViews(TestBase):
         self.assertEqual(rv.status_code, 200)
 
     def test_create_view_works_with_initial_trainee(self):
-        rv = self.client.get(
-            reverse("trainingprogress_add"), {"trainee": self.ironman.pk}
-        )
+        rv = self.client.get(reverse("trainingprogress_add"), {"trainee": self.ironman.pk})
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(int(rv.context["form"].initial["trainee"]), self.ironman.pk)
 
     def test_create_view_does_not_show_archived_involvements(self):
         self.involvement_to_be_archived.archive()
-        rv = self.client.get(
-            reverse("trainingprogress_add"), {"type": self.get_involved.pk}
-        )
+        rv = self.client.get(reverse("trainingprogress_add"), {"type": self.get_involved.pk})
         self.assertEqual(rv.status_code, 200)
-        choices = [
-            c[0].instance.pk
-            for c in rv.context["form"].fields["involvement_type"].choices
-        ]
+        choices = [c[0].instance.pk for c in rv.context["form"].fields["involvement_type"].choices]
         self.assertEqual(choices, [self.involvement.pk, self.involvement_other.pk])
 
     def test_create_view_works(self):
@@ -604,8 +575,7 @@ class TestCRUDViews(TestBase):
         # check that "notes" field error is displayed
         self.assertContains(
             rv,
-            'This field is required for activity "Other" '
-            "if there are no notes from the trainee.",
+            'This field is required for activity "Other" ' "if there are no notes from the trainee.",
             html=True,
         )
         # confirm that no TrainingProgress was created
@@ -616,26 +586,18 @@ class TestCRUDViews(TestBase):
         self.assertEqual(rv.status_code, 200)
 
     def test_delete_view_get_request_not_allowed(self):
-        rv = self.client.get(
-            reverse("trainingprogress_delete", args=[self.progress.pk])
-        )
+        rv = self.client.get(reverse("trainingprogress_delete", args=[self.progress.pk]))
         self.assertEqual(rv.status_code, 405)
 
     def test_delete_view_works(self):
-        rv = self.client.post(
-            reverse("trainingprogress_delete", args=[self.progress.pk]), follow=True
-        )
+        rv = self.client.post(reverse("trainingprogress_delete", args=[self.progress.pk]), follow=True)
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainees")
         self.assertEqual(set(TrainingProgress.objects.all()), set())
 
     def test_delete_trainingprogress_from_edit_view(self):
         """Regression test for issue #1085."""
-        trainingprogress_edit = self.app.get(
-            reverse("trainingprogress_edit", args=[self.progress.pk]), user="admin"
-        )
-        self.assertRedirects(
-            trainingprogress_edit.forms["delete-form"].submit(), reverse("all_trainees")
-        )
+        trainingprogress_edit = self.app.get(reverse("trainingprogress_edit", args=[self.progress.pk]), user="admin")
+        self.assertRedirects(trainingprogress_edit.forms["delete-form"].submit(), reverse("all_trainees"))
         with self.assertRaises(TrainingProgress.DoesNotExist):
             self.progress.refresh_from_db()

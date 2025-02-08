@@ -117,11 +117,7 @@ class WorkshopRequestCreate(
         }
 
     def get_subject(self):
-        affiliation = (
-            str(self.object.institution)
-            if self.object.institution
-            else self.object.institution_other_name
-        )
+        affiliation = str(self.object.institution) if self.object.institution else self.object.institution_other_name
         subject = ("New workshop request: {affiliation}, {dates}").format(
             affiliation=affiliation,
             dates=self.object.dates(),
@@ -205,11 +201,7 @@ class WorkshopInquiryRequestCreate(
         }
 
     def get_subject(self):
-        affiliation = (
-            str(self.object.institution)
-            if self.object.institution
-            else self.object.institution_other_name
-        )
+        affiliation = str(self.object.institution) if self.object.institution else self.object.institution_other_name
         subject = ("New workshop inquiry: {affiliation}, {dates}").format(
             affiliation=affiliation,
             dates=self.object.dates(),
@@ -293,11 +285,7 @@ class SelfOrganisedSubmissionCreate(
         }
 
     def get_subject(self):
-        affiliation = (
-            str(self.object.institution)
-            if self.object.institution
-            else self.object.institution_other_name
-        )
+        affiliation = str(self.object.institution) if self.object.institution else self.object.institution_other_name
         subject = ("New self-organised submission: {affiliation}").format(
             affiliation=affiliation,
         )

@@ -73,10 +73,7 @@ FORMAT_MODULE_PATH = ["amy.locale"]
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
 SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)  # type: ignore
 if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
-    raise ImproperlyConfigured(
-        "You must specify non-default value for "
-        "SECRET_KEY when running with Debug=FALSE."
-    )
+    raise ImproperlyConfigured("You must specify non-default value for " "SECRET_KEY when running with Debug=FALSE.")
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = env("AMY_SITE_ID")
@@ -240,9 +237,7 @@ VALIDATION = "django.contrib.auth.password_validation"
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": f"{VALIDATION}.UserAttributeSimilarityValidator",
-        "OPTIONS": {
-            "user_attributes": ("username", "personal", "middle", "family", "email")
-        },
+        "OPTIONS": {"user_attributes": ("username", "personal", "middle", "family", "email")},
     },
     {
         "NAME": f"{VALIDATION}.MinimumLengthValidator",
@@ -446,12 +441,8 @@ ANYMAIL = {
         "tags": ["amy"],
     },
 }
-if not DEBUG and (
-    not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]
-):
-    raise ImproperlyConfigured(
-        "Mailgun settings are required when running with DEBUG=False."
-    )
+if not DEBUG and (not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]):
+    raise ImproperlyConfigured("Mailgun settings are required when running with DEBUG=False.")
 
 
 # NOTIFICATIONS
@@ -529,9 +520,7 @@ LOGGING = {
     "disable_existing_loggers": False,  # merge with default configuration
     "formatters": {
         "verbose": {
-            "format": (
-                "[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"
-            ),
+            "format": ("[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"),
             "style": "{",
         },
         "simple": {
@@ -627,10 +616,7 @@ EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed 
 REPORTS_SALT_FRONT = env("AMY_REPORTS_SALT_FRONT")
 REPORTS_SALT_BACK = env("AMY_REPORTS_SALT_BACK")
 if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
-    raise ImproperlyConfigured(
-        "Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK"
-        " in settings."
-    )
+    raise ImproperlyConfigured("Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK" " in settings.")
 
 REPORTS_LINK = env("AMY_REPORTS_LINK")
 
@@ -640,9 +626,7 @@ REPORTS_LINK = env("AMY_REPORTS_LINK")
 # local/dev/test stage they are using.
 SITE_BANNER_STYLE = env("AMY_SITE_BANNER")
 if SITE_BANNER_STYLE not in ("local", "testing", "production"):
-    raise ImproperlyConfigured(
-        "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
-    )
+    raise ImproperlyConfigured("SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'.")
 
 PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
 

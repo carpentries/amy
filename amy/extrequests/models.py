@@ -111,8 +111,7 @@ class WorkshopInquiryRequest(
     routine_data = models.ManyToManyField(
         DataVariant,
         blank=True,
-        verbose_name="What kinds of data does your target audience routinely "
-        "work with?",
+        verbose_name="What kinds of data does your target audience routinely " "work with?",
         help_text="Check all that apply.",
     )
     routine_data_other = models.CharField(
@@ -125,8 +124,7 @@ class WorkshopInquiryRequest(
         KnowledgeDomain,
         blank=True,
         verbose_name="Domains or topic of interest for target audience",
-        help_text="The attendees' academic field(s) of study, if known. Check "
-        "all that apply.",
+        help_text="The attendees' academic field(s) of study, if known. Check " "all that apply.",
     )
     domains_other = models.CharField(
         max_length=STR_LONGEST,
@@ -138,8 +136,7 @@ class WorkshopInquiryRequest(
         AcademicLevel,
         blank=True,
         verbose_name="Attendees' academic level / career stage",
-        help_text="If you know the academic level(s) of your attendees, "
-        "indicate them here. Check all that apply.",
+        help_text="If you know the academic level(s) of your attendees, " "indicate them here. Check all that apply.",
     )
     computing_levels = models.ManyToManyField(
         ComputingExperienceLevel,
@@ -152,21 +149,11 @@ class WorkshopInquiryRequest(
     )
     audience_description = models.TextField(
         blank=True,
-        verbose_name="Please describe your anticipated audience, including "
-        "their experience, background, and goals",
+        verbose_name="Please describe your anticipated audience, including " "their experience, background, and goals",
     )
-    SWC_LESSONS_LINK = (
-        '<a href="https://software-carpentry.org/lessons/">'
-        "Software Carpentry lessons page</a>"
-    )
-    DC_LESSONS_LINK = (
-        '<a href="http://www.datacarpentry.org/lessons/">'
-        "Data Carpentry lessons page</a>"
-    )
-    LC_LESSONS_LINK = (
-        '<a href="https://librarycarpentry.org/lessons/">'
-        "Library Carpentry lessons page</a>"
-    )
+    SWC_LESSONS_LINK = '<a href="https://software-carpentry.org/lessons/">' "Software Carpentry lessons page</a>"
+    DC_LESSONS_LINK = '<a href="http://www.datacarpentry.org/lessons/">' "Data Carpentry lessons page</a>"
+    LC_LESSONS_LINK = '<a href="https://librarycarpentry.org/lessons/">' "Library Carpentry lessons page</a>"
     requested_workshop_types = models.ManyToManyField(
         Curriculum,
         limit_choices_to={"active": True},
@@ -207,16 +194,14 @@ class WorkshopInquiryRequest(
         blank=True,
         null=False,
         default="",
-        verbose_name="If your dates are not set, please provide more "
-        "information below",
+        verbose_name="If your dates are not set, please provide more " "information below",
     )
     language = models.ForeignKey(
         Language,
         on_delete=models.PROTECT,
         blank=True,
         null=True,
-        verbose_name="What is the preferred language of communication for the "
-        "workshop?",
+        verbose_name="What is the preferred language of communication for the " "workshop?",
         help_text="Our workshops are offered primarily in English, with a few "
         "of our lessons available in Spanish. While materials are "
         "mainly in English, we know it can be valuable to have an "
@@ -255,13 +240,10 @@ class WorkshopInquiryRequest(
         blank=False,
         null=False,
         default=None,
-        verbose_name="Which of the following applies to your payment for the "
-        "administrative fee?",
+        verbose_name="Which of the following applies to your payment for the " "administrative fee?",
         help_text=(
             "<b><a href='{}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a></b>".format(
-                FEE_DETAILS_URL
-            )
+            "The Carpentries website workshop fee listing.</a></b>".format(FEE_DETAILS_URL)
         ),
     )
     TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
@@ -273,8 +255,7 @@ class WorkshopInquiryRequest(
         ),
         (
             "reimbursed",
-            "All expenses will be booked by instructors and "
-            "reimbursed within 60 days.",
+            "All expenses will be booked by instructors and " "reimbursed within 60 days.",
         ),
         ("other", "Other:"),
     )
@@ -284,8 +265,7 @@ class WorkshopInquiryRequest(
         blank=True,
         default="",
         choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
-        verbose_name="How will you manage travel expenses for Carpentries "
-        "Instructors?",
+        verbose_name="How will you manage travel expenses for Carpentries " "Instructors?",
     )
     travel_expences_management_other = models.CharField(
         max_length=STR_LONGEST,
@@ -365,8 +345,7 @@ class WorkshopInquiryRequest(
         null=False,
         blank=True,
         default="",
-        choices=(UNSURE_CHOICE,)
-        + CommonRequest._meta.get_field("public_event").choices,
+        choices=(UNSURE_CHOICE,) + CommonRequest._meta.get_field("public_event").choices,
         verbose_name=CommonRequest._meta.get_field("public_event").verbose_name,
         help_text=CommonRequest._meta.get_field("public_event").help_text,
     )
@@ -375,9 +354,7 @@ class WorkshopInquiryRequest(
         ordering = ["created_at"]
 
     def __str__(self):
-        return (
-            "Workshop inquiry ({institution}, {personal} {family}) - {state}"
-        ).format(
+        return ("Workshop inquiry ({institution}, {personal} {family}) - {state}").format(
             institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
             family=self.family,
@@ -421,8 +398,7 @@ class SelfOrganisedSubmission(
     start = models.DateField(
         null=True,
         verbose_name="Workshop start date",
-        help_text="Please provide the dates that your Self-Organised workshop will"
-        " run.",
+        help_text="Please provide the dates that your Self-Organised workshop will" " run.",
     )
     end = models.DateField(null=True, verbose_name="Workshop end date")
     workshop_url = models.URLField(
@@ -442,8 +418,7 @@ class SelfOrganisedSubmission(
         ("short", "Short session (less than two days)"),
         (
             "periodic",
-            "Modules taught over a period of time (several weeks, "
-            "one semester, etc.)",
+            "Modules taught over a period of time (several weeks, " "one semester, etc.)",
         ),
         ("other", "Other:"),
     )
@@ -477,8 +452,7 @@ class SelfOrganisedSubmission(
     )
     workshop_types_other_explain = models.TextField(
         blank=True,
-        verbose_name='If you selected "Mix & Match", please provide more'
-        " information here",
+        verbose_name='If you selected "Mix & Match", please provide more' " information here",
         help_text="For example \"We are teaching Software Carpentry's Git "
         'lesson only" or "We are teaching Data Carpentry\'s Ecology '
         'workshop, but not teaching a programming language."',
@@ -502,9 +476,7 @@ class SelfOrganisedSubmission(
         ordering = ["created_at"]
 
     def __str__(self):
-        return (
-            "Self-Organised Submission ({institution}, {personal} {family}) - {state}"
-        ).format(
+        return ("Self-Organised Submission ({institution}, {personal} {family}) - {state}").format(
             institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
             family=self.family,

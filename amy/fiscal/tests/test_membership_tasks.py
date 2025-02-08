@@ -66,13 +66,9 @@ class TestMembershipTasks(TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         self.assertEqual(self.membership.membershiptask_set.count(), 2)
-        self.assertEqual(
-            list(self.membership.persons.all()), [self.hermione, self.harry]
-        )
+        self.assertEqual(list(self.membership.persons.all()), [self.hermione, self.harry])
 
     def test_removing_tasks(self):
         mt1 = MembershipTask.objects.create(
@@ -110,9 +106,7 @@ class TestMembershipTasks(TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
 
         self.assertEqual(list(self.membership.persons.all()), [])
 
@@ -157,8 +151,6 @@ class TestMembershipTasks(TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
 
         self.assertEqual(list(self.membership.persons.all()), [self.ron])

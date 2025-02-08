@@ -14,9 +14,7 @@ class TestTrainingRequestUpdateForm(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
-        self.request = create_training_request(
-            state="p", person=None, open_review=False
-        )
+        self.request = create_training_request(state="p", person=None, open_review=False)
 
     def setUpMembership(self):
         self.membership = Membership.objects.create(
@@ -62,9 +60,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -81,9 +77,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -99,9 +93,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -120,9 +112,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -145,9 +135,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -169,9 +157,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -190,9 +176,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -211,9 +195,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -230,9 +212,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -250,9 +230,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("trainingrequest_edit", args=[self.request.pk]), data=data
-        )
+        rv = self.client.post(reverse("trainingrequest_edit", args=[self.request.pk]), data=data)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -281,6 +259,4 @@ class TestTrainingRequestUpdateForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "trainingrequest_details")
-        self.assertFalse(
-            TrainingRequest.objects.get(member_code="valid123").member_code_override
-        )
+        self.assertFalse(TrainingRequest.objects.get(member_code="valid123").member_code_override)

@@ -15,9 +15,7 @@ from workshops.models import Membership, Person
 
 
 class TestNewMembershipOnboardingCommonFunctions(TestCase):
-    def setUpMembershipTasks(
-        self, membership: Membership, person1: Person, person2: Person
-    ) -> list[MembershipTask]:
+    def setUpMembershipTasks(self, membership: Membership, person1: Person, person2: Person) -> list[MembershipTask]:
         role1 = MembershipPersonRole.objects.create(name="billing_contact")
         role2 = MembershipPersonRole.objects.create(name="programmatic_contact")
 
@@ -35,9 +33,7 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         }
 
     @patch("emails.actions.new_membership_onboarding.immediate_action")
-    def test_get_scheduled_at__immediately(
-        self, mock_immediate_action: MagicMock
-    ) -> None:
+    def test_get_scheduled_at__immediately(self, mock_immediate_action: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         membership_start_date = date(2022, 1, 1)

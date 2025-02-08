@@ -75,26 +75,18 @@ def filter_consent(
     )
 
     if value is None:
-        people_ids = consents.filter(term_option__isnull=True).values_list(
-            "person_id", flat=True
-        )
+        people_ids = consents.filter(term_option__isnull=True).values_list("person_id", flat=True)
         return queryset.filter(person_id__in=people_ids)
 
     option = TermOptionChoices.AGREE if value is True else TermOptionChoices.DECLINE
-    people_ids = consents.filter(term_option__option_type=option).values_list(
-        "person_id", flat=True
-    )
+    people_ids = consents.filter(term_option__option_type=option).values_list("person_id", flat=True)
     return queryset.filter(pk__in=people_ids)
 
 
 class PersonFilter(filters.FilterSet):
-    is_instructor = filters.BooleanFilter(
-        method=filter_instructors, label="Is instructor?"
-    )
+    is_instructor = filters.BooleanFilter(method=filter_instructors, label="Is instructor?")
 
-    may_contact = filters.BooleanFilter(
-        method=partial(filter_consent, slug=TermEnum.MAY_CONTACT), label="May contact"
-    )
+    may_contact = filters.BooleanFilter(method=partial(filter_consent, slug=TermEnum.MAY_CONTACT), label="May contact")
     publish_profile = filters.BooleanFilter(
         method=partial(filter_consent, slug=TermEnum.PUBLIC_PROFILE),
         label="Consent to making profile public",

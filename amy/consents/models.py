@@ -70,13 +70,10 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
         verbose_name="Content for Training Request Form",
         blank=True,
         help_text=(
-            "If set, the regular content will be replaced with this"
-            " text on the instructor training request form."
+            "If set, the regular content will be replaced with this" " text on the instructor training request form."
         ),
     )
-    required_type = models.CharField(
-        max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
-    )
+    required_type = models.CharField(max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE)
     help_text = models.TextField(verbose_name="Help Text", blank=True)
     short_description = models.CharField(max_length=STR_LONG)
     objects = TermManager.from_queryset(TermQuerySet)()
@@ -109,9 +106,7 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
         """
         self.archived_at = timezone.now()
         self.save()
-        TermOption.objects.filter(term=self).active().update(
-            archived_at=self.archived_at
-        )
+        TermOption.objects.filter(term=self).active().update(archived_at=self.archived_at)
         Consent.objects.filter(term=self).active().update(archived_at=self.archived_at)
 
     def __str__(self) -> str:
@@ -149,9 +144,7 @@ class TermOptionChoices(models.TextChoices):
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    option_type = models.CharField(
-        max_length=STR_MED, choices=TermOptionChoices.choices
-    )
+    option_type = models.CharField(max_length=STR_MED, choices=TermOptionChoices.choices)
     content = models.TextField(verbose_name="Content", blank=True)
     objects = Manager.from_queryset(TermOptionQuerySet)()
 
@@ -172,9 +165,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
         self._check_is_only_agree_option_for_required_term()
         self.archived_at = timezone.now()
         self.save()
-        Consent.objects.filter(term_option=self).active().update(
-            archived_at=self.archived_at
-        )
+        Consent.objects.filter(term_option=self).active().update(archived_at=self.archived_at)
 
     def _check_is_only_agree_option_for_required_term(self) -> None:
         """
@@ -190,11 +181,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
             and self.term.archived_at is None
         ):
             num_agree_options = len(
-                [
-                    option
-                    for option in self.term._fetch_options()
-                    if option.option_type == TermOptionChoices.AGREE
-                ]
+                [option for option in self.term._fetch_options() if option.option_type == TermOptionChoices.AGREE]
             )
             if num_agree_options == 1:
                 raise ValidationError(

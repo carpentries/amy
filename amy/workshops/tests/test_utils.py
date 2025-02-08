@@ -113,10 +113,7 @@ Other content.
     def test_fetching_event_metadata_html(self, mock):
         "Ensure 'fetch_workshop_metadata' works correctly with HTML metadata provided."
         website_url = "https://pbanaszkiewicz.github.io/workshop"
-        repo_url = (
-            "https://raw.githubusercontent.com/pbanaszkiewicz/"
-            "workshop/gh-pages/index.html"
-        )
+        repo_url = "https://raw.githubusercontent.com/pbanaszkiewicz/" "workshop/gh-pages/index.html"
         mock.get(website_url, text=self.html_content, status_code=200)
         mock.get(repo_url, text="", status_code=200)
         metadata = fetch_workshop_metadata(website_url)
@@ -126,10 +123,7 @@ Other content.
     def test_fetching_event_metadata_yaml(self, mock):
         "Ensure 'fetch_workshop_metadata' works correctly with YAML metadata provided."
         website_url = "https://pbanaszkiewicz.github.io/workshop"
-        repo_url = (
-            "https://raw.githubusercontent.com/pbanaszkiewicz/"
-            "workshop/gh-pages/index.html"
-        )
+        repo_url = "https://raw.githubusercontent.com/pbanaszkiewicz/" "workshop/gh-pages/index.html"
         mock.get(website_url, text="", status_code=200)
         mock.get(repo_url, text=self.yaml_content, status_code=200)
         metadata = fetch_workshop_metadata(website_url)
@@ -155,10 +149,7 @@ Other content.
             "http://github.com/swcarpentry/workshop-template",
             "https://github.com/swcarpentry/workshop-template",
         ]
-        expected_url = (
-            "https://raw.githubusercontent.com/swcarpentry/"
-            "workshop-template/gh-pages/index.html"
-        )
+        expected_url = "https://raw.githubusercontent.com/swcarpentry/" "workshop-template/gh-pages/index.html"
         expected_repo = "workshop-template"
         for url in tests:
             with self.subTest(url=url):
@@ -616,9 +607,7 @@ Other content.
         self.assertIn("2015-07-13-test", serialized_json)
         self.assertIn("-109.045173", serialized_json)
         self.assertIn("36.998977", serialized_json)
-        self.assertIn(
-            '["hermione@granger.co.uk", "rweasley@ministry.gov"]', serialized_json
-        )
+        self.assertIn('["hermione@granger.co.uk", "rweasley@ministry.gov"]', serialized_json)
 
     def test_metadata_serialization_deserialization(self) -> None:
         # Act
@@ -1130,9 +1119,7 @@ class TestReportsLink(TestBase):
         self.slug = "2020-04-12-Krakow"
 
     def test_hash_lowercased_nonlowercased(self):
-        self.assertEqual(
-            reports_link_hash(self.slug), reports_link_hash(self.slug.lower())
-        )
+        self.assertEqual(reports_link_hash(self.slug), reports_link_hash(self.slug.lower()))
 
     def test_salts_alter_hash(self):
         hash_pre = reports_link_hash(self.slug)
@@ -1143,9 +1130,7 @@ class TestReportsLink(TestBase):
         with self.settings(REPORTS_SALT_BACK="test12345"):
             hash_salt_back = reports_link_hash(self.slug)
 
-        with self.settings(
-            REPORTS_SALT_FRONT="test12345", REPORTS_SALT_BACK="test12345"
-        ):
+        with self.settings(REPORTS_SALT_FRONT="test12345", REPORTS_SALT_BACK="test12345"):
             hash_both_salts = reports_link_hash(self.slug)
 
         self.assertNotEqual(hash_pre, hash_salt_front)
@@ -1196,18 +1181,10 @@ class TestArchiveLeastRecentActiveConsents(TestBase):
         Archive the least recent consents that are
         currently active for the people given.
         """
-        Consent.objects.filter(person=self.person_a).active().update(
-            created_at=self.time_in_past
-        )
+        Consent.objects.filter(person=self.person_a).active().update(created_at=self.time_in_past)
         expected_consents = Consent.objects.filter(person=self.person_b).active()
-        archive_least_recent_active_consents(
-            self.person_a, self.person_b, self.base_obj
-        )
-        consents = (
-            Consent.objects.filter(person__in=[self.person_a, self.person_b])
-            .active()
-            .select_related("term")
-        )
+        archive_least_recent_active_consents(self.person_a, self.person_b, self.base_obj)
+        consents = Consent.objects.filter(person__in=[self.person_a, self.person_b]).active().select_related("term")
         # Assert we have all the consents we were expecting.
         self.assertCountEqual(self.term_slugs, [c.term.slug for c in consents])
         self.assertCountEqual(consents, expected_consents)
@@ -1218,15 +1195,9 @@ class TestArchiveLeastRecentActiveConsents(TestBase):
         archive both Consents and create a new one with term_option set to none
         and person set to base_object
         """
-        Consent.objects.filter(
-            person__in=[self.person_a, self.person_b]
-        ).active().update(created_at=self.time_in_past)
-        archive_least_recent_active_consents(
-            self.person_a, self.person_b, self.base_obj
-        )
-        consents = Consent.objects.filter(
-            person__in=[self.person_a, self.person_b]
-        ).active()
+        Consent.objects.filter(person__in=[self.person_a, self.person_b]).active().update(created_at=self.time_in_past)
+        archive_least_recent_active_consents(self.person_a, self.person_b, self.base_obj)
+        consents = Consent.objects.filter(person__in=[self.person_a, self.person_b]).active()
         # Assert we have all the consents we were expecting.
         self.assertCountEqual(self.term_slugs, [c.term.slug for c in consents])
         for consent in consents:
@@ -1236,9 +1207,10 @@ class TestArchiveLeastRecentActiveConsents(TestBase):
 
 class TestFeatureFlagEnabled(TestCase):
     def test_feature_flag_enabled_decorator(self) -> None:
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}), patch(
-            "workshops.utils.feature_flags.logger"
-        ) as mock_logger:
+        with (
+            self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}),
+            patch("workshops.utils.feature_flags.logger") as mock_logger,
+        ):
             request = RequestFactory().get("/")
 
             @feature_flag_enabled("EMAIL_MODULE")
@@ -1246,13 +1218,12 @@ class TestFeatureFlagEnabled(TestCase):
                 return True
 
             self.assertEqual(test_func(request=request), None)
-            mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping test_func"
-            )
+            mock_logger.debug.assert_called_once_with("EMAIL_MODULE feature flag not set, skipping test_func")
 
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}), patch(
-            "workshops.utils.feature_flags.logger"
-        ) as mock_logger:
+        with (
+            self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}),
+            patch("workshops.utils.feature_flags.logger") as mock_logger,
+        ):
             request = RequestFactory().get("/")
 
             @feature_flag_enabled("EMAIL_MODULE")
@@ -1263,13 +1234,11 @@ class TestFeatureFlagEnabled(TestCase):
             mock_logger.debug.assert_not_called()
 
     def test_feature_flag_enabled_decorator__missing_request(self) -> None:
-        DEBUG_MSG = (
-            "Cannot check EMAIL_MODULE feature flag, `request` parameter to "
-            "test_func is missing"
-        )
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}), patch(
-            "workshops.utils.feature_flags.logger"
-        ) as mock_logger:
+        DEBUG_MSG = "Cannot check EMAIL_MODULE feature flag, `request` parameter to " "test_func is missing"
+        with (
+            self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}),
+            patch("workshops.utils.feature_flags.logger") as mock_logger,
+        ):
 
             @feature_flag_enabled("EMAIL_MODULE")
             def test_func(**kwargs):
@@ -1278,9 +1247,10 @@ class TestFeatureFlagEnabled(TestCase):
             self.assertEqual(test_func(), None)
             mock_logger.debug.assert_called_once_with(DEBUG_MSG)
 
-        with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}), patch(
-            "workshops.utils.feature_flags.logger"
-        ) as mock_logger:
+        with (
+            self.settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]}),
+            patch("workshops.utils.feature_flags.logger") as mock_logger,
+        ):
 
             @feature_flag_enabled("EMAIL_MODULE")
             def test_func(**kwargs):
