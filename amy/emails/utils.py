@@ -281,7 +281,7 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
                 model_class = find_model_class(model_name)
                 model_instance = find_model_instance(model_class, int(id_))
                 serializer = ModelToSerializerMapper[model_class]
-                return serializer(model_instance).data
+                return dict(serializer(model_instance).data)
             except ValueError as exc:
                 raise ValueError(f"Failed to parse URI {uri!r}.") from exc
 
