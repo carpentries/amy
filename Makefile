@@ -11,17 +11,13 @@ all : commands
 commands : Makefile
 	@sed -n 's/^## //p' $<
 
+## database     : create Postgres database in Docker
+database:
+	docker run --name amy-database -e POSTGRES_USER=amy -e POSTGRES_PASSWORD=amypostgresql -e POSTGRES_DB=amy -p 5432:5432 -d postgres
+
 ## test         : run all tests except migration tests.
 test :
-	${MANAGE} test --exclude-tag migration_test
-
-## fast_test    : run all tests really fast.
-fast_test:
-	${MANAGE} test --keepdb --parallel --exclude-tag migration_test
-
-## fast_test_fail	: run all tests really fast, fails as soon as any test fails.
-fast_test_fail:
-	${MANAGE} test --keepdb --parallel --failfast --exclude-tag migration_test
+	${MANAGE} test --exclude-tag migration_test --exclude-tag autoemails
 
 ## test_migrations    : test database migrations only
 test_migrations:
@@ -56,20 +52,6 @@ serve :
 		--reload \
 		--env DJANGO_SETTINGS_MODULE=config.settings \
 		config.wsgi
-
-## outdated     : show outdated dependencies
-outdated :
-	-${PYTHON} -m pip list --outdated
-	-npm outdated
-
-## clean        : clean up.
-clean :
-	rm -rf \
-		$$(find . -name '*~' -print) \
-		$$(find . -name '*.pyc' -print) \
-		$$(find . -name '__pycache__' -print) \
-		htmlerror \
-		$$(find . -name 'test_db*.sqlite3*' -print) \
 
 ## build_docs   : build static docs in `site`
 build_docs :
