@@ -32,7 +32,6 @@ dev_database :
 	${MANAGE} reset_db --skip-checks
 	${MANAGE} migrate
 	${MANAGE} runscript seed_badges
-	${MANAGE} runscript seed_autoemails
 	${MANAGE} runscript seed_communityroles
 	${MANAGE} runscript seed_training_requirements
 	${MANAGE} runscript seed_involvements
