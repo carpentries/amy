@@ -131,12 +131,6 @@ class ApiRoot(APIView):
                         ),
                     ),
                     (
-                        "emailtemplate-list",
-                        reverse(
-                            "api-v1:emailtemplate-list", request=request, format=format
-                        ),
-                    ),
-                    (
                         "term-list",
                         reverse("api-v1:term-list", request=request, format=format),
                     ),
