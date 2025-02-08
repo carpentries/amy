@@ -1,14 +1,13 @@
+# flake8: noqa
 from datetime import datetime
 import logging
 
 from django.core.management.base import BaseCommand
-import django_rq
 
 from autoemails.actions import BaseRepeatedAction, UpdateProfileReminderRepeatedAction
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 
-scheduler = django_rq.get_scheduler()
 logger = logging.getLogger("amy")
 REPEATED_JOBS_BY_TRIGGER = {
     "profile-update": UpdateProfileReminderRepeatedAction,

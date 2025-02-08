@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import DeclinedInstructorsAction
 from autoemails.models import EmailTemplate, Trigger
@@ -9,6 +9,7 @@ from workshops.models import Event, Organization, Person, Tag
 from workshops.utils.dates import human_daterange
 
 
+@tag("autoemails")
 class TestDeclinedInstructorsAction(TestCase):
     def setUp(self):
         # we're missing some tags

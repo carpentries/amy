@@ -15,7 +15,6 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
-import django_rq
 from flags.views import FlaggedViewMixin
 
 from emails.actions.host_instructors_introduction import (
@@ -53,8 +52,6 @@ from workshops.utils.urls import safe_next_or_default_url
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 # ------------------------------------------------------------

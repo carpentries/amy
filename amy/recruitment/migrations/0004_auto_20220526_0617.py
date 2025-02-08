@@ -7,7 +7,6 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('autoemails', '0019_alter_trigger_action'),
         ('recruitment', '0003_auto_20220220_1514'),
     ]
 

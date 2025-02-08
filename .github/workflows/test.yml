@@ -27,7 +27,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -76,7 +76,7 @@ jobs:
         fi;
 
     - name: Unit tests
-      run: pipenv run python manage.py test --exclude-tag=migration_test
+      run: pipenv run make test
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432
@@ -86,7 +86,7 @@ jobs:
       if: matrix.test-type == 'Unit'
 
     - name: Migration tests
-      run: pipenv run python manage.py test --tag=migration_test
+      run: pipenv run make test_migrations
       env:
         AMY_DATABASE_HOST: localhost
         AMY_DATABASE_PORT: 5432

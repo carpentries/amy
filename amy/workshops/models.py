@@ -34,7 +34,6 @@ from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
 
-from autoemails.mixins import RQJobsMixin
 from trainings.models import Involvement
 from workshops import github_auth
 from workshops.consts import (
@@ -741,7 +740,6 @@ class Person(
     PermissionsMixin,
     CreatedUpdatedArchivedMixin,
     GenderMixin,
-    RQJobsMixin,
     SecondaryEmailMixin,
 ):
     """Represent a single person."""
@@ -1297,7 +1295,7 @@ class EventQuerySet(QuerySet):
 
 
 @reversion.register
-class Event(AssignmentMixin, RQJobsMixin, models.Model):
+class Event(AssignmentMixin, models.Model):
     """Represent a single event."""
 
     REPO_REGEX = re.compile(
@@ -1680,7 +1678,7 @@ class TaskManager(models.Manager):
 
 
 @reversion.register
-class Task(RQJobsMixin, models.Model):
+class Task(models.Model):
     """Represent who did what at events."""
 
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
@@ -3066,7 +3064,6 @@ class WorkshopRequest(
     HostResponsibilitiesMixin,
     InstructorAvailabilityMixin,
     EventLinkMixin,
-    RQJobsMixin,
     models.Model,
 ):
     location = models.CharField(

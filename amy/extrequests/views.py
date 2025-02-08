@@ -13,11 +13,8 @@ from django.db.models import Prefetch, ProtectedError, Q
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.forms import GenericEmailScheduleForm
-from autoemails.models import EmailTemplate
 from consents.models import Term, TermOption, TrainingRequestConsent
 from consents.util import reconsent_for_term_option_type
 from emails.actions.new_self_organised_workshop import new_self_organised_workshop_check
@@ -90,8 +87,6 @@ from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete, redirect_with_next_support
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 # ------------------------------------------------------------
@@ -136,10 +131,6 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
 
         context["person_lookup_form"] = person_lookup_form
 
-        context["templates"] = EmailTemplate.objects.filter(
-            slug__startswith="request-review", active=True
-        ).order_by("slug")
-        context["template_form"] = GenericEmailScheduleForm()
         return context
 
 

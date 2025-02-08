@@ -22,7 +22,7 @@ def migrate_lesson_contributions_to_involvements(apps, schema_editor) -> None:
         url_required=True,
         date_required=True,
     )
-    updated_rows = TrainingProgress.objects.filter(
+    TrainingProgress.objects.filter(
         requirement__name="Lesson Contribution"
     ).update(
         involvement_type=involvement,
@@ -31,7 +31,7 @@ def migrate_lesson_contributions_to_involvements(apps, schema_editor) -> None:
             "notes", Value(f"\nMigrated from Lesson Contribution on {datetime.now()}\n")
         ),
     )
-    print(f"Migrated {updated_rows} lesson contributions")
+    # print(f"Migrated {updated_rows} lesson contributions")
 
 
 def migrate_involvements_to_lesson_contributions(apps, schema_editor) -> None:
@@ -54,7 +54,7 @@ def migrate_involvements_to_lesson_contributions(apps, schema_editor) -> None:
             ),
         ),
     )
-    print(f"Reverse-migrated {updated_rows} lesson contributions")
+    # print(f"Reverse-migrated {updated_rows} lesson contributions")
 
     Involvement.objects.get(name="GitHub Contribution").delete()
 

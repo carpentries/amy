@@ -75,11 +75,13 @@ sudo apt-get install python3-dev libpq-dev
     npm install
     ~~~
 
-1. Start running a local instance of Postgres and Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
+1. Create a local instance of Postgres (in a container). This requires Docker to be installed locally.
 
     ~~~
-    docker compose -f docker/docker-compose.yml -p amy up -d database redis
+    make database
     ~~~
+
+1. Note: if the database container already exists, the above command will error out. Use `docker start amy-database` instead to start the database container.
 
 1. Set up your local database with fake (development-ready) data.  This will create a superuser with "admin" as both the username and password.
 
@@ -97,10 +99,10 @@ sudo apt-get install python3-dev libpq-dev
 
 1. Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking. Use the default "admin" as username and password.
 
-1. Shut down the local server by typing `Ctrl-C`.  Shut down the Docker Redis instance with:
+1. Shut down the local server by typing `Ctrl-C`.  Shut down the database instance with:
 
     ~~~
-    docker compose -f docker/docker-compose.yml -p amy down
+    docker stop amy-database
     ~~~
 
 ## How to build the docker image?
@@ -138,10 +140,16 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
         git checkout tags/<tag_name>
         ~~~~
 
-1. Update dependencies front-end and back-end dependencies:
+1. Update back-end dependencies:
 
     ~~~
-    pipenv run make upgrade
+    pipenv sync --dev
+    ~~~
+
+1. Update front-end dependencies:
+
+    ~~~
+    npm ci
     ~~~
 
 1. (Optional) make fresh development-ready database:
@@ -150,7 +158,7 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
     pipenv run make dev_database
     ~~~
 
-1. Run database migrations:
+1. Run database migrations (note: this is included in the `make dev_database` step above):
 
     ~~~~
     pipenv run python manage.py migrate
@@ -162,29 +170,6 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
     pipenv run make serve
     ~~~
 
-## Start hacking on email automation
-
-1. Make sure you have Redis running. See instructions above.
-
-1. Create dev database (it will add a super user and predefined database entries, too!):
-
-    ```shell
-    pipenv run make dev_database
-    ```
-
-1. Run the server:
-
-    ```shell
-    pipenv run python manage.py runserver
-    ```
-
-1. Run the RQ worker and scheduler (use separate terminals or processes for each
-   command):
-
-    ```shell
-    pipenv run python manage.py rqworker
-    pipenv run python manage.py rqscheduler
-    ```
 
 ## Run accessibility tests locally
 

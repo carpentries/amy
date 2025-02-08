@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.utils import timezone
 
 import autoemails.actions
@@ -13,6 +13,7 @@ from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.models import Person
 
 
+@tag("autoemails")
 class TestUpdateProfileRepeatedAction(FakeRedisTestCaseMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()

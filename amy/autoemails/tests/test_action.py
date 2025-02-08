@@ -6,7 +6,7 @@ from django.contrib.sites.models import Site
 from django.core import mail
 from django.db.models import ProtectedError
 from django.template.exceptions import TemplateSyntaxError
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 from django.test.client import RequestFactory
 
 from autoemails.actions import BaseAction
@@ -18,6 +18,7 @@ from consents.models import Term
 
 
 @override_settings(AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS=None)
+@tag("autoemails")
 class TestAction(TestCase):
     def testLaunchTimestamp(self):
         # the trigger and email template below are totally fake
@@ -354,6 +355,7 @@ Regional Coordinator""",
         self.assertEqual(email.from_email, "sender@example.org")
 
 
+@tag("autoemails")
 class BulkEmailTest(FakeRedisTestCaseMixin, TestCase):
     class ExampleAction(BaseAction):
         """

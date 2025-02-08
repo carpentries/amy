@@ -6,7 +6,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('autoemails', '0017_auto_20210901_0226'),
         ('workshops', '0250_auto_20210807_1951'),
     ]
 

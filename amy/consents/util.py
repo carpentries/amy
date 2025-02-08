@@ -1,8 +1,8 @@
 import logging
 
-from autoemails.actions import NewConsentRequiredAction
-from autoemails.bulk_email import send_bulk_email
-from autoemails.models import Trigger
+# from autoemails.actions import NewConsentRequiredAction
+# from autoemails.bulk_email import send_bulk_email
+# from autoemails.models import Trigger
 from consents.models import Consent, Term, TermEnum, TermOptionChoices
 from workshops.models import Person
 
@@ -41,18 +41,19 @@ def send_consent_email(request, term: Term) -> None:
         .active()
         .values_list("person__email", flat=True)
     )
-    triggers = Trigger.objects.filter(
-        active=True,
-        action="consent-required",
-    )
-    send_bulk_email(
-        request=request,
-        action_class=NewConsentRequiredAction,
-        triggers=triggers,
-        emails=emails,
-        additional_context_objects={"term": term},
-        object_=term,
-    )
+    len(emails)  # to make the `emails` used
+    # triggers = Trigger.objects.filter(
+    #     active=True,
+    #     action="consent-required",
+    # )
+    # send_bulk_email(
+    #     request=request,
+    #     action_class=NewConsentRequiredAction,
+    #     triggers=triggers,
+    #     emails=emails,
+    #     additional_context_objects={"term": term},
+    #     object_=term,
+    # )
 
 
 def reconsent_for_term_option_type(

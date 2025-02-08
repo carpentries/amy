@@ -1,3 +1,4 @@
+# flake8: noqa
 from __future__ import annotations
 
 from logging import Logger
@@ -8,9 +9,6 @@ from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
-from django_rq.queues import DjangoScheduler
-from redis import Redis, StrictRedis
-from rq.exceptions import NoSuchJobError
 
 from autoemails.actions import BaseAction
 from autoemails.job import Job
@@ -44,7 +42,6 @@ class ActionManageMixin:
     def add(
         action_class: Type[BaseAction],
         logger: Logger,
-        scheduler: DjangoScheduler,
         triggers: QuerySet[Trigger],
         context_objects: dict,
         object_: Optional[RQJobsMixin] = None,
@@ -134,7 +131,7 @@ class ActionManageMixin:
 
     @staticmethod
     def bulk_schedule_message(
-        request, num_emails: int, trigger: Trigger, job: Job, scheduler: DjangoScheduler
+        request, num_emails: int, trigger: Trigger, job: Job
     ) -> None:
         scheduled_at = scheduled_execution_time(
             job.get_id(), scheduler=scheduler, naive=False
@@ -158,8 +155,6 @@ class ActionManageMixin:
     def remove(
         action_class: Type[BaseAction],
         logger: Logger,
-        scheduler: DjangoScheduler,
-        connection: Union[Redis, StrictRedis],
         jobs: Sequence[str],
         object_: RQJobsMixin,
         request: Optional[HttpRequest] = None,

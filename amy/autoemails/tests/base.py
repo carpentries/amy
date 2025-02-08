@@ -1,10 +1,5 @@
-import django_rq
-from fakeredis import FakeStrictRedis
-from rq.queue import Queue
-
+# flake8: noqa
 from autoemails.job import Job
-
-connection = FakeStrictRedis()
 
 
 def dummy_job():
@@ -22,16 +17,16 @@ class FakeRedisTestCaseMixin:
 
     def setUp(self):
         super().setUp()
-        self.connection = connection
-        # self.connection = Redis()
-        self.queue = Queue(is_async=False, connection=self.connection, job_class=Job)
-        self.scheduler = django_rq.get_scheduler("testing", queue=self.queue)
-        self.scheduler.connection = self.connection
+        # self.connection = connection
+        # # self.connection = Redis()
+        # self.queue = Queue(is_async=False, connection=self.connection, job_class=Job)
+        # self.scheduler = django_rq.get_scheduler("testing", queue=self.queue)
+        # self.scheduler.connection = self.connection
 
     def tearDown(self):
         # clear job queue
-        for job in self.scheduler.get_jobs():
-            self.scheduler.cancel(job)
-        assert not bool(list(self.scheduler.get_jobs()))
-        assert self.scheduler.count() == 0
+        # for job in self.scheduler.get_jobs():
+        #     self.scheduler.cancel(job)
+        # assert not bool(list(self.scheduler.get_jobs()))
+        # assert self.scheduler.count() == 0
         super().tearDown()

@@ -6,13 +6,10 @@ from django.contrib import admin, messages
 from django.contrib.admin.options import csrf_protect_m
 from django.core.exceptions import ValidationError
 from django.http.response import HttpResponseRedirect
-import django_rq
 
 from consents.models import Consent, Term, TermOption
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 class ArchiveActionMixin:
@@ -122,7 +119,7 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
         TermOptionInline,
     ]
     actions = ["email_users_missing_consent", "email_users_to_reconsent"]
-    readonly_fields = ("rq_jobs", "archived_at")
+    readonly_fields = ("archived_at",)
 
     def email_users_missing_consent(self, request, queryset):
         messages.error(

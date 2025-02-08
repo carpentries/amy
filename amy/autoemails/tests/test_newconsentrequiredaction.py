@@ -1,12 +1,13 @@
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import NewConsentRequiredAction
 from autoemails.models import EmailTemplate, Trigger
 from consents.models import Term
 
 
+@tag("autoemails")
 class TestNewConsentRequiredAction(TestCase):
     def setUp(self):
         self.user_email = "admin@admin.com"

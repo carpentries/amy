@@ -6,7 +6,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('autoemails', '0005_rqjob_scheduled_execution'),
         ('workshops', '0211_task_rq_jobs'),
     ]
 

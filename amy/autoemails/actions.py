@@ -1,3 +1,4 @@
+# flake8: noqa
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
@@ -8,7 +9,6 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
-import django_rq
 
 from autoemails.models import EmailTemplate, Trigger
 from autoemails.utils import compare_emails
@@ -21,7 +21,6 @@ from workshops.utils.emails import match_notification_email
 from workshops.utils.reports import reports_link
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
 DAY_IN_SECONDS = 86400
 
 

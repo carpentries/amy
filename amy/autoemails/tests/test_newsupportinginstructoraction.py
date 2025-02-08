@@ -1,12 +1,13 @@
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import NewSupportingInstructorAction
 from autoemails.models import EmailTemplate, Trigger
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
+@tag("autoemails")
 class TestNewSupportingInstructorAction(TestCase):
     def setUp(self):
         Tag.objects.bulk_create(

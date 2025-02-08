@@ -1,6 +1,7 @@
+# flake8: noqa
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.urls import reverse
 
 from autoemails import admin
@@ -8,6 +9,7 @@ from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.tests.base import SuperuserMixin
 
 
+@tag("autoemails")
 class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()
