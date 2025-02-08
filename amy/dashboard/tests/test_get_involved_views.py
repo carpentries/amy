@@ -77,10 +77,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        choices = [
-            c[0].instance.pk
-            for c in rv.context["form"].fields["involvement_type"].choices
-        ]
+        choices = [c[0].instance.pk for c in rv.context["form"].fields["involvement_type"].choices]
         self.assertEqual(
             choices,
             [
@@ -113,13 +110,9 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(
-            rv, "Your Get Involved submission will be evaluated within 7-10 days."
-        )
+        self.assertContains(rv, "Your Get Involved submission will be evaluated within 7-10 days.")
         got = list(
-            TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement", "involvement_type", "date"
-            )
+            TrainingProgress.objects.values_list("state", "trainee", "url", "requirement", "involvement_type", "date")
         )
         expected = [
             (
@@ -172,13 +165,9 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(
-            rv, "Your Get Involved submission will be evaluated within 7-10 days."
-        )
+        self.assertContains(rv, "Your Get Involved submission will be evaluated within 7-10 days.")
         got = list(
-            TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement", "involvement_type", "date"
-            )
+            TrainingProgress.objects.values_list("state", "trainee", "url", "requirement", "involvement_type", "date")
         )
         expected = [
             (
@@ -222,20 +211,14 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True
-        )
+        rv = self.client.post(reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(
-            rv, "Your Get Involved submission was updated successfully."
-        )
+        self.assertContains(rv, "Your Get Involved submission was updated successfully.")
         got = list(
-            TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement", "involvement_type", "date"
-            )
+            TrainingProgress.objects.values_list("state", "trainee", "url", "requirement", "involvement_type", "date")
         )
         expected = [
             (
@@ -261,9 +244,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
 
         # Act
         rv_get = self.client.get(reverse("getinvolved_update", args=[self.progress.pk]))
-        rv_post = self.client.post(
-            reverse("getinvolved_update", args=[self.progress.pk]), data
-        )
+        rv_post = self.client.post(reverse("getinvolved_update", args=[self.progress.pk]), data)
 
         # Assert
         self.assertEqual(rv_get.status_code, 302)
@@ -286,9 +267,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
 
         # Act
         rv_get = self.client.get(reverse("getinvolved_update", args=[self.progress.pk]))
-        rv_post = self.client.post(
-            reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True
-        )
+        rv_post = self.client.post(reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True)
 
         # Assert
         self.assertEqual(rv_get.status_code, 404)
@@ -311,9 +290,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
 
         # Act
         rv_get = self.client.get(reverse("getinvolved_update", args=[progress.pk]))
-        rv_post = self.client.post(
-            reverse("getinvolved_update", args=[progress.pk]), data, follow=True
-        )
+        rv_post = self.client.post(reverse("getinvolved_update", args=[progress.pk]), data, follow=True)
 
         # Assert
         self.assertEqual(rv_get.status_code, 404)
@@ -330,9 +307,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
 
         # Act
         rv_get = self.client.get(reverse("getinvolved_update", args=[id]))
-        rv_post = self.client.post(
-            reverse("getinvolved_update", args=[id]), data, follow=True
-        )
+        rv_post = self.client.post(reverse("getinvolved_update", args=[id]), data, follow=True)
 
         # Assert
         self.assertEqual(rv_get.status_code, 404)
@@ -350,20 +325,14 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         }
 
         # Act
-        rv = self.client.post(
-            reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True
-        )
+        rv = self.client.post(reverse("getinvolved_update", args=[self.progress.pk]), data, follow=True)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
-        self.assertContains(
-            rv, "Your Get Involved submission was updated successfully."
-        )
+        self.assertContains(rv, "Your Get Involved submission was updated successfully.")
         got = list(
-            TrainingProgress.objects.values_list(
-                "state", "trainee", "url", "requirement", "involvement_type", "date"
-            )
+            TrainingProgress.objects.values_list("state", "trainee", "url", "requirement", "involvement_type", "date")
         )
         expected = [
             (  # date changed but not state or requirement
@@ -400,9 +369,7 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
 
     def test_delete_view_works(self):
         # Act
-        rv = self.client.post(
-            reverse("getinvolved_delete", args=[self.progress.pk]), follow=True
-        )
+        rv = self.client.post(reverse("getinvolved_delete", args=[self.progress.pk]), follow=True)
 
         # Assert
         self.assertEqual(rv.status_code, 200)
@@ -414,9 +381,7 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
         self.client.logout()
 
         # Act
-        rv_post = self.client.post(
-            reverse("getinvolved_delete", args=[self.progress.pk])
-        )
+        rv_post = self.client.post(reverse("getinvolved_delete", args=[self.progress.pk]))
 
         # Assert
         self.assertEqual(rv_post.status_code, 302)
@@ -426,9 +391,7 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
 
     def test_cannot_delete_other_trainees_submission(self):
         # Arrange
-        other_trainee = Person.objects.create(
-            personal="Bob", family="Trainee", email="bob_trainee@example.com"
-        )
+        other_trainee = Person.objects.create(personal="Bob", family="Trainee", email="bob_trainee@example.com")
 
         progress = TrainingProgress.objects.create(
             trainee=other_trainee,

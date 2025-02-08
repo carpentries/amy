@@ -56,9 +56,7 @@ class TestInstructorStatus(TestBase):
         they don't have appropriate badge."""
         rv = self.client.get(self.progress_url)
         self.assertNotContains(rv, "Congratulations, you're a certified Instructor!")
-        self.assertContains(
-            rv, "If you have recently completed a training or step towards checkout"
-        )
+        self.assertContains(rv, "If you have recently completed a training or step towards checkout")
 
     def test_progress_but_not_eligible(self):
         """Check the correct alert is displayed when some progress is completed."""
@@ -69,9 +67,7 @@ class TestInstructorStatus(TestBase):
         )
         rv = self.client.get(self.progress_url)
         self.assertNotContains(rv, "Congratulations, you're a certified Instructor!")
-        self.assertContains(
-            rv, "Please review your progress towards Instructor certification below."
-        )
+        self.assertContains(rv, "Please review your progress towards Instructor certification below.")
 
     def test_eligible_but_not_awarded(self):
         """Test what is displayed when a trainee is eligible to be certified
@@ -83,9 +79,7 @@ class TestInstructorStatus(TestBase):
             "Welcome Session",
             "Demo",
         ]
-        workshop_instructor, _ = Involvement.objects.get_or_create(
-            name="Workshop Instructor/Helper"
-        )
+        workshop_instructor, _ = Involvement.objects.get_or_create(name="Workshop Instructor/Helper")
         for requirement in requirements:
             if requirement == "Get Involved":
                 involvement = workshop_instructor
@@ -103,17 +97,14 @@ class TestInstructorStatus(TestBase):
                 url=url,
             )
 
-        admin = Person.objects.annotate_with_instructor_eligibility().get(
-            username="admin"
-        )
+        admin = Person.objects.annotate_with_instructor_eligibility().get(username="admin")
         assert admin.get_missing_instructor_requirements() == []
 
         rv = self.client.get(self.progress_url)
 
         self.assertContains(
             rv,
-            "You have successfully completed all steps towards Instructor "
-            "certification",
+            "You have successfully completed all steps towards Instructor " "certification",
         )
 
     def test_deadline_shown_when_training_passed(self):
@@ -194,38 +185,29 @@ class TestInstructorTrainingStatus(TestBase):
         self.progress_url = reverse("training-progress")
 
     def test_training_passed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.training, event=self.event
-        )
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.training, event=self.event)
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Training <span class="badge-success">passed</span> '
-            "as of June 5, 2023.</p>",
+            '<p>Training <span class="badge-success">passed</span> ' "as of June 5, 2023.</p>",
             html=True,
         )
 
     def test_training_failed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.training, event=self.event, state="f"
-        )
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.training, event=self.event, state="f")
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Training <span class="badge-danger">failed</span> '
-            "as of June 5, 2023.</p>",
+            '<p>Training <span class="badge-danger">failed</span> ' "as of June 5, 2023.</p>",
             html=True,
         )
 
     def test_training_asked_to_repeat(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.training, event=self.event, state="a"
-        )
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.training, event=self.event, state="a")
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Training <span class="badge-info">asked to repeat</span> '
-            "as of June 5, 2023.</p>",
+            '<p>Training <span class="badge-info">asked to repeat</span> ' "as of June 5, 2023.</p>",
             html=True,
         )
 
@@ -246,8 +228,7 @@ class TestGetInvolvedStatus(TestBase):
         self.workshop_instructor, _ = Involvement.objects.get_or_create(
             name="Workshop Instructor/Helper",
             defaults={
-                "display_name": "Served as an Instructor or a helper at a Carpentries "
-                "workshop",
+                "display_name": "Served as an Instructor or a helper at a Carpentries " "workshop",
                 "url_required": True,
             },
         )
@@ -419,9 +400,7 @@ class TestWelcomeSessionStatus(TestBase):
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
     def test_session_failed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.welcome, state="f"
-        )
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.welcome, state="f")
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
@@ -443,9 +422,7 @@ class TestDemoSessionStatus(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.demo, _ = TrainingRequirement.objects.get_or_create(
-            name="Demo", defaults={}
-        )
+        self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo", defaults={})
         self.progress_url = reverse("training-progress")
         self.SESSION_LINK_TEXT = "Register for a Demo Session on"
 
@@ -461,9 +438,7 @@ class TestDemoSessionStatus(TestBase):
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
     def test_session_asked_to_repeat(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.demo, state="a"
-        )
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo, state="a")
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
@@ -474,14 +449,11 @@ class TestDemoSessionStatus(TestBase):
         self.assertContains(rv, self.SESSION_LINK_TEXT)
 
     def test_session_failed(self):
-        TrainingProgress.objects.create(
-            trainee=self.admin, requirement=self.demo, state="f"
-        )
+        TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo, state="f")
         rv = self.client.get(self.progress_url)
         self.assertContains(
             rv,
-            '<p>Demo <span class="badge-danger">failed</span> '
-            f'as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
+            '<p>Demo <span class="badge-danger">failed</span> ' f'as of {datetime.today().strftime("%B %-d, %Y")}.</p>',
             html=True,
         )
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)

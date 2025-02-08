@@ -14,11 +14,7 @@ def person_has_consented_to_required_terms(person: Person) -> bool:
     Check the Required terms in the database
     and return true if they have all been consented to.
     """
-    required_term_ids = (
-        Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-        .active()
-        .values_list("id")
-    )
+    required_term_ids = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active().values_list("id")
     term_ids_user_consented_to = (
         Consent.objects.filter(
             person=person,
@@ -37,9 +33,7 @@ def send_consent_email(request, term: Term) -> None:
     exposing email addresses.
     """
     emails = (
-        Consent.objects.filter(term=term, term_option__isnull=True)
-        .active()
-        .values_list("person__email", flat=True)
+        Consent.objects.filter(term=term, term_option__isnull=True).active().values_list("person__email", flat=True)
     )
     len(emails)  # to make the `emails` used
     # triggers = Trigger.objects.filter(

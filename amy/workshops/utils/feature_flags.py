@@ -15,15 +15,12 @@ def feature_flag_enabled(feature_flag: str) -> Callable:
             request = kwargs.get("request")
             if not request:
                 logger.debug(
-                    f"Cannot check {feature_flag} feature flag, `request` parameter "
-                    f"to {func.__name__} is missing"
+                    f"Cannot check {feature_flag} feature flag, `request` parameter " f"to {func.__name__} is missing"
                 )
                 return
 
             if not flag_enabled(feature_flag, request=request):
-                logger.debug(
-                    f"{feature_flag} feature flag not set, skipping {func.__name__}"
-                )
+                logger.debug(f"{feature_flag} feature flag not set, skipping {func.__name__}")
                 return
 
             return func(*args, **kwargs)

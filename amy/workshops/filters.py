@@ -66,11 +66,7 @@ class BaseCountriesFilter(django_filters.Filter):
         if self.extend_countries:
             only = extend_country_choices(choices, settings.COUNTRIES_OVERRIDE)
         else:
-            only = {
-                abbrv: name
-                for abbrv, name in Countries().countries.items()
-                if abbrv in choices
-            }
+            only = {abbrv: name for abbrv, name in Countries().countries.items() if abbrv in choices}
 
         countries = Countries()
         countries.only = only  # type: ignore
@@ -82,9 +78,7 @@ class AllCountriesFilter(BaseCountriesFilter, django_filters.ChoiceFilter):
     pass
 
 
-class AllCountriesMultipleFilter(
-    BaseCountriesFilter, django_filters.MultipleChoiceFilter
-):
+class AllCountriesMultipleFilter(BaseCountriesFilter, django_filters.MultipleChoiceFilter):
     pass
 
 
@@ -213,9 +207,7 @@ class EventFilter(AMYFilterSet):
         ("published_events", "Published"),
         ("metadata_changed", "Detected changes in metadata"),
     ]
-    state = EventStateFilter(
-        choices=STATUS_CHOICES, label="Status", widget=Select2Widget
-    )
+    state = EventStateFilter(choices=STATUS_CHOICES, label="Status", widget=Select2Widget)
 
     tags = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
@@ -260,9 +252,7 @@ def filter_taught_workshops(queryset, name, values):
     if not values:
         return queryset
 
-    return queryset.filter(
-        task__role__name="instructor", task__event__tags__in=values
-    ).distinct()
+    return queryset.filter(task__role__name="instructor", task__event__tags__in=values).distinct()
 
 
 class PersonFilter(AMYFilterSet):

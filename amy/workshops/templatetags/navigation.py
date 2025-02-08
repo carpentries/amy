@@ -6,9 +6,7 @@ from django.utils.safestring import mark_safe
 register = template.Library()
 
 
-def navbar_template(
-    title, url, active=False, disabled=False, dropdown=False, deprecated=False
-):
+def navbar_template(title, url, active=False, disabled=False, dropdown=False, deprecated=False):
     """Compose Bootstrap v4 <li> element for top navigation bar.
 
     List item can be added one or more class attributes:
@@ -35,14 +33,10 @@ def navbar_template(
 
     classes = " ".join(classes)
     template = (
-        '<li class="nav-item {classes}"><a class="nav-link" '
-        'href="{url}">{badge}{title}{screen_reader}</a></li>'
+        '<li class="nav-item {classes}"><a class="nav-link" ' 'href="{url}">{badge}{title}{screen_reader}</a></li>'
     )
     if dropdown:
-        template = (
-            '<a class="dropdown-item {classes}" href="{url}">'
-            "{badge}{title}{screen_reader}</a>"
-        )
+        template = '<a class="dropdown-item {classes}" href="{url}">' "{badge}{title}{screen_reader}</a>"
     return format_html(
         template,
         classes=classes,
@@ -62,11 +56,7 @@ def navbar_element(context, title, url_name, dropdown=False, deprecated=False):
     """
     url = reverse(url_name)
     active = context["request"].path == url
-    return mark_safe(
-        navbar_template(
-            title, url, active=active, dropdown=dropdown, deprecated=deprecated
-        )
-    )
+    return mark_safe(navbar_template(title, url, active=active, dropdown=dropdown, deprecated=deprecated))
 
 
 @register.simple_tag(takes_context=True)

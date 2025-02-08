@@ -24,9 +24,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # fake RQJob
         self.email = EmailTemplate.objects.create(slug="test-1")
-        self.trigger = Trigger.objects.create(
-            action="new-instructor", template=self.email
-        )
+        self.trigger = Trigger.objects.create(action="new-instructor", template=self.email)
         self.rqjob = RQJob.objects.create(job_id="fake-id", trigger=self.trigger)
 
     def tearDown(self):
@@ -58,9 +56,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         url = reverse("admin:autoemails_rqjob_retry", args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
-        self.assertRedirects(
-            rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk])
-        )
+        self.assertRedirects(rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk]))
 
     def test_no_such_job(self):
         # log admin user

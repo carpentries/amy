@@ -17,9 +17,7 @@ from workshops.tests.base import TestBase
 
 class TestAskForWebsiteCancelReceiver(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -30,9 +28,7 @@ class TestAskForWebsiteCancelReceiver(TestCase):
         self.instructor1 = Person.objects.create(
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=instructor_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
@@ -87,9 +83,7 @@ class TestAskForWebsiteCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_cancelled"
-        ) as mock_messages_action_cancelled:
+        with patch("emails.actions.base_action.messages_action_cancelled") as mock_messages_action_cancelled:
             ask_for_website_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -125,9 +119,7 @@ class TestAskForWebsiteCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             ask_for_website_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -170,9 +162,7 @@ class TestAskForWebsiteCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             ask_for_website_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -213,9 +203,7 @@ class TestAskForWebsiteCancelIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -243,15 +231,11 @@ class TestAskForWebsiteCancelIntegration(TestBase):
             is_active=True,
         )
         instructor_role = Role.objects.get(name="instructor")
-        task = Task.objects.create(
-            event=event, person=instructor1, role=instructor_role
-        )
+        task = Task.objects.create(event=event, person=instructor1, role=instructor_role)
 
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_ask_for_website_strategy(
                 ask_for_website_strategy(event),
                 request,

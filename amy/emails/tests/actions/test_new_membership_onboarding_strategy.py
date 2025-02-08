@@ -24,9 +24,7 @@ class TestNewMembershipOnboardingStrategy(TestCase):
             agreement_end=date(2023, 1, 1),
             contribution_type="financial",
         )
-        billing_contact_role, _ = MembershipPersonRole.objects.get_or_create(
-            name="billing_contact"
-        )
+        billing_contact_role, _ = MembershipPersonRole.objects.get_or_create(name="billing_contact")
         person = Person.objects.create()
         MembershipTask.objects.create(
             membership=self.membership,
@@ -144,10 +142,7 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
             membership=membership,
         )
 
-    @patch(
-        "emails.actions.new_membership_onboarding."
-        "new_membership_onboarding_update_signal"
-    )
+    @patch("emails.actions.new_membership_onboarding." "new_membership_onboarding_update_signal")
     def test_strategy_calls_update_signal(
         self,
         mock_new_membership_onboarding_update_signal: MagicMock,
@@ -173,10 +168,7 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
             membership=membership,
         )
 
-    @patch(
-        "emails.actions.new_membership_onboarding."
-        "new_membership_onboarding_cancel_signal"
-    )
+    @patch("emails.actions.new_membership_onboarding." "new_membership_onboarding_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
         mock_new_membership_onboarding_cancel_signal: MagicMock,
@@ -204,14 +196,8 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
 
     @patch("emails.actions.base_strategy.logger")
     @patch("emails.actions.new_membership_onboarding.new_membership_onboarding_signal")
-    @patch(
-        "emails.actions.new_membership_onboarding."
-        "new_membership_onboarding_update_signal"
-    )
-    @patch(
-        "emails.actions.new_membership_onboarding."
-        "new_membership_onboarding_cancel_signal"
-    )
+    @patch("emails.actions.new_membership_onboarding." "new_membership_onboarding_update_signal")
+    @patch("emails.actions.new_membership_onboarding." "new_membership_onboarding_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
         mock_new_membership_onboarding_cancel_signal: MagicMock,
@@ -231,9 +217,7 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
         mock_new_membership_onboarding_signal.send.assert_not_called()
         mock_new_membership_onboarding_update_signal.send.assert_not_called()
         mock_new_membership_onboarding_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {membership} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {membership} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -242,7 +226,5 @@ class TestRunNewMembershipOnboardingStrategy(TestCase):
         membership = Membership()
 
         # Act & Assert
-        with self.assertRaisesMessage(
-            EmailStrategyException, f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaisesMessage(EmailStrategyException, f"Unknown strategy {strategy}"):
             run_new_membership_onboarding_strategy(strategy, request, membership)

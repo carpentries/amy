@@ -20,9 +20,7 @@ from workshops.tests.base import TestBase
 
 class TestPostWorkshop7DaysCancelReceiver(TestCase):
     def setUp(self) -> None:
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -38,12 +36,8 @@ class TestPostWorkshop7DaysCancelReceiver(TestCase):
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
         host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=instructor_role
-        )
+        self.host = Person.objects.create(personal="Test", family="Test", email="test2@example.org", username="test2")
+        Task.objects.create(event=self.event, person=self.instructor, role=instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=host_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
@@ -99,9 +93,7 @@ class TestPostWorkshop7DaysCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_cancelled"
-        ) as mock_messages_action_cancelled:
+        with patch("emails.actions.base_action.messages_action_cancelled") as mock_messages_action_cancelled:
             post_workshop_7days_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -136,9 +128,7 @@ class TestPostWorkshop7DaysCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             post_workshop_7days_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -180,9 +170,7 @@ class TestPostWorkshop7DaysCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             post_workshop_7days_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -222,9 +210,7 @@ class TestPostWorkshop7DaysCancelIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -278,9 +264,7 @@ class TestPostWorkshop7DaysCancelIntegration(TestBase):
 
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_post_workshop_7days_strategy(
                 post_workshop_7days_strategy(event),
                 request,

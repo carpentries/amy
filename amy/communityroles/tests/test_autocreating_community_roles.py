@@ -1,4 +1,5 @@
 """When an Award is created, it may automatically create Community Role(s)."""
+
 from datetime import date
 
 from django.urls import reverse

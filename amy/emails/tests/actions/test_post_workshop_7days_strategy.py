@@ -16,9 +16,7 @@ from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 class TestPostWorkshop7DaysStrategy(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -34,15 +32,11 @@ class TestPostWorkshop7DaysStrategy(TestCase):
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
         self.host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
+        self.host = Person.objects.create(personal="Test", family="Test", email="test2@example.org", username="test2")
 
     def test_strategy_create(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor, role=self.instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
 
         # Act
@@ -53,9 +47,7 @@ class TestPostWorkshop7DaysStrategy(TestCase):
 
     def test_strategy_update(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor, role=self.instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -84,9 +76,7 @@ class TestPostWorkshop7DaysStrategy(TestCase):
 
     def test_strategy_remove(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor, role=self.instructor_role)
         # Host Task intentionally not created
         # Task.objects.create(
         #     event=self.event, person=self.host, role=self.host_role
@@ -210,9 +200,7 @@ class TestRunPostWorkshop7DaysStrategy(TestCase):
         mock_post_workshop_7days_signal.send.assert_not_called()
         mock_post_workshop_7days_update_signal.send.assert_not_called()
         mock_post_workshop_7days_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {event} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {event} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -221,7 +209,5 @@ class TestRunPostWorkshop7DaysStrategy(TestCase):
         event = Event(end=date.today())
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_post_workshop_7days_strategy(strategy, request, event)

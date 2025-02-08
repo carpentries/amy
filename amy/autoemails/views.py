@@ -71,9 +71,7 @@ def generic_schedule_email(request, pk):
 
         job = scheduler.enqueue_in(launch_at, action, meta=meta)
         logger.debug("%s: enqueueing", action_name)
-        scheduled_at = scheduled_execution_time(
-            job.get_id(), scheduler=scheduler, naive=False
-        )
+        scheduled_at = scheduled_execution_time(job.get_id(), scheduler=scheduler, naive=False)
         logger.debug("%s: job created [%r]", action_name, job)
 
         rqj = workshop_request.rq_jobs.create(

@@ -19,15 +19,9 @@ class TestInstructorTrainingCompletedNotBadgedCommonFunctions(TestCase):
             name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
         )
         self.progresses = [
-            TrainingProgress(
-                state="p", trainee=person, requirement=self.requirements[0]
-            ),
-            TrainingProgress(
-                state="f", trainee=person, requirement=self.requirements[1]
-            ),
-            TrainingProgress(
-                state="a", trainee=person, requirement=self.requirements[2]
-            ),
+            TrainingProgress(state="p", trainee=person, requirement=self.requirements[0]),
+            TrainingProgress(state="f", trainee=person, requirement=self.requirements[1]),
+            TrainingProgress(state="a", trainee=person, requirement=self.requirements[2]),
             # Last requirement is left ungraded.
             # TrainingProgress(state="p", trainee=person, requirement=requirements[3]),
         ]

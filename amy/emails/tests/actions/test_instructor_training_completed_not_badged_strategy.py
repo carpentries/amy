@@ -24,16 +24,10 @@ from workshops.models import (
 
 class TestTrainingCompletionDate(TestCase):
     def setUp(self) -> None:
-        self.person = Person.objects.create(
-            personal="Test", family="Test", email="test@example.com"
-        )
+        self.person = Person.objects.create(personal="Test", family="Test", email="test@example.com")
 
-    def setUpEvent(
-        self, slug: str, start: date | None = None, end: date | None = None
-    ) -> Event:
-        organization, _ = Organization.objects.get_or_create(
-            domain="test.com", defaults={"fullname": "Test"}
-        )
+    def setUpEvent(self, slug: str, start: date | None = None, end: date | None = None) -> Event:
+        organization, _ = Organization.objects.get_or_create(domain="test.com", defaults={"fullname": "Test"})
         return Event.objects.create(
             slug=slug,
             host=organization,
@@ -41,9 +35,7 @@ class TestTrainingCompletionDate(TestCase):
             end=end,
         )
 
-    def setUpPassedTraining(
-        self, person: Person, event: Event | None = None
-    ) -> TrainingProgress:
+    def setUpPassedTraining(self, person: Person, event: Event | None = None) -> TrainingProgress:
         training_requirement = TrainingRequirement.objects.get(name="Training")
         return TrainingProgress.objects.create(
             trainee=person,
@@ -54,9 +46,7 @@ class TestTrainingCompletionDate(TestCase):
 
     def test_find_training_completion_date(self) -> None:
         # Arrange
-        event = self.setUpEvent(
-            slug="test-event", start=date(2023, 10, 28), end=date(2023, 10, 29)
-        )
+        event = self.setUpEvent(slug="test-event", start=date(2023, 10, 28), end=date(2023, 10, 29))
         self.setUpPassedTraining(self.person, event)
         # Act
         result = find_training_completion_date(self.person)
@@ -71,12 +61,8 @@ class TestTrainingCompletionDate(TestCase):
 
     def test_find_training_completion_date__multiple_trainings(self) -> None:
         # Arrange
-        event1 = self.setUpEvent(
-            slug="test-event1", start=date(2023, 10, 28), end=date(2023, 10, 29)
-        )
-        event2 = self.setUpEvent(
-            slug="test-event2", start=date(2023, 11, 4), end=date(2023, 11, 5)
-        )
+        event1 = self.setUpEvent(slug="test-event1", start=date(2023, 10, 28), end=date(2023, 10, 29))
+        event2 = self.setUpEvent(slug="test-event2", start=date(2023, 11, 4), end=date(2023, 11, 5))
         self.setUpPassedTraining(self.person, event1)
         self.setUpPassedTraining(self.person, event2)
         # Act & Assert
@@ -107,9 +93,7 @@ class TestTrainingCompletionDate(TestCase):
 
 class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
     def setUp(self) -> None:
-        self.person = Person.objects.create(
-            personal="Test", family="Test", email="test@example.com"
-        )
+        self.person = Person.objects.create(personal="Test", family="Test", email="test@example.com")
         organization = Organization.objects.create(domain="test.com", fullname="Test")
         self.event = Event.objects.create(
             slug="test-event",
@@ -159,9 +143,7 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
 
     def test_strategy_create(self) -> None:
         # Arrange
-        self.setUpPassedTrainingProgress(
-            self.person, self.training_requirement, self.event
-        )
+        self.setUpPassedTrainingProgress(self.person, self.training_requirement, self.event)
         # Act
         result = instructor_training_completed_not_badged_strategy(self.person)
         # Assert
@@ -169,9 +151,7 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
 
     def test_strategy_update(self) -> None:
         # Arrange
-        self.setUpPassedTrainingProgress(
-            self.person, self.training_requirement, self.event
-        )
+        self.setUpPassedTrainingProgress(self.person, self.training_requirement, self.event)
         self.setUpScheduledEmail(self.person)
         # Act
         result = instructor_training_completed_not_badged_strategy(self.person)
@@ -194,9 +174,7 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
 
     def test_strategy_noop_when_previous_successful_email_exists(self) -> None:
         # Arrange
-        self.setUpPassedTrainingProgress(
-            self.person, self.training_requirement, self.event
-        )
+        self.setUpPassedTrainingProgress(self.person, self.training_requirement, self.event)
         self.setUpScheduledEmail(self.person, state=ScheduledEmailStatus.SUCCEEDED)
         # Act
         result = instructor_training_completed_not_badged_strategy(self.person)
@@ -206,8 +184,7 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
 
 class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
     @patch(
-        "emails.actions.instructor_training_completed_not_badged."
-        "instructor_training_completed_not_badged_signal",
+        "emails.actions.instructor_training_completed_not_badged." "instructor_training_completed_not_badged_signal",
     )
     def test_strategy_calls_create_signal(
         self,
@@ -220,9 +197,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         training_completed_date = date(2023, 10, 29)
 
         # Act
-        run_instructor_training_completed_not_badged_strategy(
-            strategy, request, person, training_completed_date
-        )
+        run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)
 
         # Assert
         mock_instructor_training_completed_not_badged_signal.send.assert_called_once_with(  # noqa: E501
@@ -237,8 +212,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         "instructor_training_completed_not_badged_update_signal",
     )
     @patch(
-        "emails.actions.instructor_training_completed_not_badged."
-        "find_training_completion_date",
+        "emails.actions.instructor_training_completed_not_badged." "find_training_completion_date",
     )
     def test_strategy_calls_update_signal(
         self,
@@ -255,9 +229,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         mock_find_training_completion_date.return_value = date(2023, 10, 29)
 
         # Act
-        run_instructor_training_completed_not_badged_strategy(
-            strategy, request, person, training_completed_date
-        )
+        run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)
 
         # Assert
         mock_instructor_training_completed_not_badged_update_signal.send.assert_called_once_with(  # noqa: E501
@@ -272,8 +244,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         "instructor_training_completed_not_badged_cancel_signal",
     )
     @patch(
-        "emails.actions.instructor_training_completed_not_badged."
-        "find_training_completion_date",
+        "emails.actions.instructor_training_completed_not_badged." "find_training_completion_date",
     )
     def test_strategy_calls_cancel_signal(
         self,
@@ -290,9 +261,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         mock_find_training_completion_date.return_value = date(2023, 10, 29)
 
         # Act
-        run_instructor_training_completed_not_badged_strategy(
-            strategy, request, person, training_completed_date
-        )
+        run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)
 
         # Assert
         mock_instructor_training_completed_not_badged_cancel_signal.send.assert_called_once_with(  # noqa: E501
@@ -304,8 +273,7 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
 
     @patch("emails.actions.base_strategy.logger")
     @patch(
-        "emails.actions.instructor_training_completed_not_badged."
-        "instructor_training_completed_not_badged_signal",
+        "emails.actions.instructor_training_completed_not_badged." "instructor_training_completed_not_badged_signal",
     )
     @patch(
         "emails.actions.instructor_training_completed_not_badged."
@@ -329,17 +297,13 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         training_completed_date = date(2023, 10, 29)
 
         # Act
-        run_instructor_training_completed_not_badged_strategy(
-            strategy, request, person, training_completed_date
-        )
+        run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)
 
         # Assert
         mock_instructor_training_completed_not_badged_signal.send.assert_not_called()
         mock_instructor_training_completed_not_badged_update_signal.send.assert_not_called()  # noqa: E501
         mock_instructor_training_completed_not_badged_cancel_signal.send.assert_not_called()  # noqa: E501
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {person} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {person} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -349,16 +313,11 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         training_completed_date = date(2023, 10, 29)
 
         # Act & Assert
-        with self.assertRaisesMessage(
-            EmailStrategyException, f"Unknown strategy {strategy}"
-        ):
-            run_instructor_training_completed_not_badged_strategy(
-                strategy, request, person, training_completed_date
-            )
+        with self.assertRaisesMessage(EmailStrategyException, f"Unknown strategy {strategy}"):
+            run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)
 
     @patch(
-        "emails.actions.instructor_training_completed_not_badged."
-        "find_training_completion_date",
+        "emails.actions.instructor_training_completed_not_badged." "find_training_completion_date",
     )
     def test_missing_training_completed_date__multiple_training_progresses(
         self,
@@ -369,23 +328,17 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         request = RequestFactory().get("/")
         person = Person()
         training_completed_date = None
-        mock_find_training_completion_date.side_effect = (
-            TrainingProgress.MultipleObjectsReturned
-        )
+        mock_find_training_completion_date.side_effect = TrainingProgress.MultipleObjectsReturned
 
         # Act & Assert
         with self.assertRaisesMessage(
             EmailStrategyException,
-            "Unable to determine training completion date. Person "
-            "has multiple passed training progresses.",
+            "Unable to determine training completion date. Person " "has multiple passed training progresses.",
         ):
-            run_instructor_training_completed_not_badged_strategy(
-                strategy, request, person, training_completed_date
-            )
+            run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)
 
     @patch(
-        "emails.actions.instructor_training_completed_not_badged."
-        "find_training_completion_date",
+        "emails.actions.instructor_training_completed_not_badged." "find_training_completion_date",
     )
     def test_missing_training_completed_date__no_training_progress(
         self,
@@ -401,16 +354,12 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         # Act & Assert
         with self.assertRaisesMessage(
             EmailStrategyException,
-            "Unable to determine training completion date. Person doesn't have "
-            "a passed training progress.",
+            "Unable to determine training completion date. Person doesn't have " "a passed training progress.",
         ):
-            run_instructor_training_completed_not_badged_strategy(
-                strategy, request, person, training_completed_date
-            )
+            run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)
 
     @patch(
-        "emails.actions.instructor_training_completed_not_badged."
-        "find_training_completion_date",
+        "emails.actions.instructor_training_completed_not_badged." "find_training_completion_date",
     )
     def test_missing_training_completed_date__issue_with_event_or_event_date(
         self,
@@ -430,6 +379,4 @@ class TestRunInstructorTrainingCompletedNotBadgedStrategy(TestCase):
             "training progress not linked to an event, or the event doesn't have "
             "an end date.",
         ):
-            run_instructor_training_completed_not_badged_strategy(
-                strategy, request, person, training_completed_date
-            )
+            run_instructor_training_completed_not_badged_strategy(strategy, request, person, training_completed_date)

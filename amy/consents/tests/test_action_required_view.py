@@ -39,9 +39,7 @@ class TestActionRequiredTermView(ConsentTestBase):
             "initial": {"person": self.neville},
             "widgets": {"person": HiddenInput()},
         }
-        self.person_agree_to_terms(
-            self.neville, RequiredConsentsForm(**kwargs).get_terms()
-        )
+        self.person_agree_to_terms(self.neville, RequiredConsentsForm(**kwargs).get_terms())
 
         # form throws 404
         rv = self.client.get(url)
@@ -77,10 +75,7 @@ class TestActionRequiredTermView(ConsentTestBase):
             "widgets": {"person": HiddenInput()},
         }
         terms = RequiredConsentsForm(**kwargs).get_terms()
-        data = {
-            term.slug: term.options[0].pk
-            for term in terms.exclude(required_type=Term.PROFILE_REQUIRE_TYPE)
-        }
+        data = {term.slug: term.options[0].pk for term in terms.exclude(required_type=Term.PROFILE_REQUIRE_TYPE)}
         data["person"] = self.neville.pk
         # make sure it doesn't pass without the required consents
         form = RequiredConsentsForm(data, initial={"person": self.neville})
@@ -142,9 +137,7 @@ class TestTermsMiddleware(ConsentTestBase):
         with self.terms_middleware():
             for url in urls:
                 rv = self.client.get(url)
-                action_required_url = "{}?next={}".format(
-                    reverse("action_required_terms"), url
-                )
+                action_required_url = "{}?next={}".format(reverse("action_required_terms"), url)
                 self.assertRedirects(rv, action_required_url)
 
     def test_no_more_redirects_after_agreement(self):
@@ -159,9 +152,7 @@ class TestTermsMiddleware(ConsentTestBase):
         with self.terms_middleware():
             # we can't get to the url because we're redirected to the form
             rv = self.client.get(url)
-            action_required_url = "{}?next={}".format(
-                reverse("action_required_terms"), url
-            )
+            action_required_url = "{}?next={}".format(reverse("action_required_terms"), url)
             self.assertRedirects(rv, action_required_url)
 
             # agree on the required terms
@@ -190,9 +181,7 @@ class TestTermsMiddleware(ConsentTestBase):
         string."""
 
         url = reverse("autoupdate_profile")
-        form_url = "{}?{}".format(
-            reverse("action_required_terms"), urlencode({"next": url})
-        )
+        form_url = "{}?{}".format(reverse("action_required_terms"), urlencode({"next": url}))
 
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -200,9 +189,7 @@ class TestTermsMiddleware(ConsentTestBase):
 
         with self.terms_middleware():
             # fill in and submit form
-            terms = Term.objects.filter(
-                required_type=Term.PROFILE_REQUIRE_TYPE
-            ).prefetch_active_options()
+            terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).prefetch_active_options()
             data = {"person": self.neville.pk}
             for term in terms:
                 data[term.slug] = term.options[0].pk

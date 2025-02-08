@@ -24,9 +24,7 @@ class TestRecruitHelpersReceiver(TestCase):
             subject="Greetings",
             body="Hello! Nice to meet **you**.",
         )
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -40,12 +38,8 @@ class TestRecruitHelpersReceiver(TestCase):
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
         host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test3"
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=instructor_role
-        )
+        self.host = Person.objects.create(personal="Test", family="Test", email="test2@example.org", username="test3")
+        Task.objects.create(event=self.event, person=self.instructor, role=instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=host_role)
 
     @patch("emails.actions.base_action.logger")
@@ -56,9 +50,7 @@ class TestRecruitHelpersReceiver(TestCase):
             # Act
             recruit_helpers_receiver(None, request=request)
             # Assert
-            mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping recruit_helpers"
-            )
+            mock_logger.debug.assert_called_once_with("EMAIL_MODULE feature flag not set, skipping recruit_helpers")
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
@@ -79,9 +71,7 @@ class TestRecruitHelpersReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_messages_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_messages_action_scheduled:
             recruit_helpers_signal.send(
                 sender=self.event,
                 request=request,
@@ -112,9 +102,7 @@ class TestRecruitHelpersReceiver(TestCase):
         mock_shift_date_and_apply_current_utc_time.return_value = scheduled_at
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.schedule_email"
-        ) as mock_schedule_email:
+        with patch("emails.actions.base_action.EmailController.schedule_email") as mock_schedule_email:
             recruit_helpers_signal.send(
                 sender=self.event,
                 request=request,
@@ -153,9 +141,7 @@ class TestRecruitHelpersReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         self.instructor.email = None
         self.instructor.save()
@@ -213,9 +199,7 @@ class TestRecruitHelpersReceiverIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),

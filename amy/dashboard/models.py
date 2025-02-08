@@ -9,9 +9,7 @@ class Criterium(models.Model):
         blank=False,
         unique=True,
     )
-    countries = CountryField(
-        multiple=True, verbose_name="Countries to match this criterium"
-    )
+    countries = CountryField(multiple=True, verbose_name="Countries to match this criterium")
     email = models.EmailField(
         verbose_name="Notification email address",
         blank=False,

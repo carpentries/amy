@@ -44,9 +44,7 @@ def archive_least_recent_active_consents(object_a, object_b, base_obj):
                     term_option=None,
                 )
             )
-    Consent.objects.filter(pk__in=[c.pk for c in consents_to_archive]).update(
-        archived_at=timezone.now()
-    )
+    Consent.objects.filter(pk__in=[c.pk for c in consents_to_archive]).update(archived_at=timezone.now())
     Consent.objects.bulk_create(consents_to_recreate)
 
 
@@ -59,9 +57,7 @@ def archive_least_recent_active_training_request_consents(
     This method archives one of the two active terms so
     that the combine merge method will be successful.
     """
-    consents = TrainingRequestConsent.objects.filter(
-        training_request__in=[object_a, object_b]
-    )
+    consents = TrainingRequestConsent.objects.filter(training_request__in=[object_a, object_b])
     # Identify and group the active consents by term id
     active_consents_by_term_id = defaultdict(list)
     for consent in consents:
@@ -92,7 +88,5 @@ def archive_least_recent_active_training_request_consents(
                     term_option=None,
                 )
             )
-    TrainingRequestConsent.objects.filter(
-        pk__in=[c.pk for c in consents_to_archive]
-    ).update(archived_at=timezone.now())
+    TrainingRequestConsent.objects.filter(pk__in=[c.pk for c in consents_to_archive]).update(archived_at=timezone.now())
     TrainingRequestConsent.objects.bulk_create(consents_to_recreate)

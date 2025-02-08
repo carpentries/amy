@@ -28,9 +28,7 @@ class CommunityRoleDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class CommunityRoleCreate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView
-):
+class CommunityRoleCreate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView):
     permission_required = "communityroles.add_communityrole"
     model = CommunityRole
     form_class = CommunityRoleForm

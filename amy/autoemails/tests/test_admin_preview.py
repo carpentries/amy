@@ -26,9 +26,7 @@ class TestAdminJobPreview(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # fake RQJob
         self.email = EmailTemplate.objects.create(slug="test-1")
-        self.trigger = Trigger.objects.create(
-            action="new-instructor", template=self.email
-        )
+        self.trigger = Trigger.objects.create(action="new-instructor", template=self.email)
         self.rqjob = RQJob.objects.create(job_id="fake-id", trigger=self.trigger)
 
     def tearDown(self):
@@ -59,13 +57,9 @@ class TestAdminJobPreview(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             url="https://test-event.example.com",
         )
         self.event.tags.set(Tag.objects.filter(name__in=["SWC", "DC", "LC"]))
-        self.person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        self.person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         self.role = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            event=self.event, person=self.person, role=self.role
-        )
+        self.task = Task.objects.create(event=self.event, person=self.person, role=self.role)
 
     def test_view_access_by_anonymous(self):
         url = reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk])

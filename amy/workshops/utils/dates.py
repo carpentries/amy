@@ -32,22 +32,10 @@ def human_daterange(
     common_month = date_left.month == date_right.month  # type: ignore
 
     if common_year and common_month:
-        return (
-            f"{date_left:{common_month_left}}"
-            f"{separator}"
-            f"{date_right:{common_month_right}}"
-        )
+        return f"{date_left:{common_month_left}}" f"{separator}" f"{date_right:{common_month_right}}"
 
     elif common_year:
-        return (
-            f"{date_left:{common_year_left}}"
-            f"{separator}"
-            f"{date_right:{common_year_right}}"
-        )
+        return f"{date_left:{common_year_left}}" f"{separator}" f"{date_right:{common_year_right}}"
 
     else:
-        return (
-            f"{date_left:{nothing_common_left}}"
-            f"{separator}"
-            f"{date_right:{nothing_common_right}}"
-        )
+        return f"{date_left:{nothing_common_left}}" f"{separator}" f"{date_right:{nothing_common_right}}"

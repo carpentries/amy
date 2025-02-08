@@ -143,9 +143,7 @@ class TestEmailTemplate(TestCase):
         url = template.get_absolute_url()
 
         # Assert
-        self.assertEqual(
-            url, reverse("emailtemplate_details", kwargs={"pk": template.pk})
-        )
+        self.assertEqual(url, reverse("emailtemplate_details", kwargs={"pk": template.pk}))
 
 
 class TestScheduledEmail(TestCase):
@@ -179,9 +177,7 @@ class TestScheduledEmail(TestCase):
         # Assert
         self.assertIsNotNone(scheduled_email.id)  # `id` should be UUID
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
-        self.assertEqual(
-            scheduled_email.body, "Hello, Tony Stark! Nice to meet **you**."
-        )
+        self.assertEqual(scheduled_email.body, "Hello, Tony Stark! Nice to meet **you**.")
         self.assertEqual(
             str(scheduled_email),
             "['peter@spiderman.net', 'harry@potter.co.uk']: Greetings Tony Stark",
@@ -217,9 +213,7 @@ class TestScheduledEmail(TestCase):
         url = scheduled_email.get_absolute_url()
 
         # Assert
-        self.assertEqual(
-            url, reverse("scheduledemail_details", kwargs={"pk": scheduled_email.pk})
-        )
+        self.assertEqual(url, reverse("scheduledemail_details", kwargs={"pk": scheduled_email.pk}))
 
 
 class TestScheduledEmailLog(TestCase):

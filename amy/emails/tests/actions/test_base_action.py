@@ -36,8 +36,7 @@ class TestFeatureFlagEnabled(TestCase):
         # Assert
         self.assertEqual(result, False)
         mock_logger.debug.assert_called_once_with(
-            f"Cannot check {self.feature_flag} feature flag, `request` parameter "
-            f"to {self.signal_name} is missing"
+            f"Cannot check {self.feature_flag} feature flag, `request` parameter " f"to {self.signal_name} is missing"
         )
 
     @override_settings(FLAGS={feature_flag: [("boolean", False)]})
@@ -47,9 +46,7 @@ class TestFeatureFlagEnabled(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        result = feature_flag_enabled(
-            self.feature_flag, self.signal_name, request=request
-        )
+        result = feature_flag_enabled(self.feature_flag, self.signal_name, request=request)
 
         # Assert
         self.assertEqual(result, False)
@@ -64,9 +61,7 @@ class TestFeatureFlagEnabled(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        result = feature_flag_enabled(
-            self.feature_flag, self.signal_name, request=request
-        )
+        result = feature_flag_enabled(self.feature_flag, self.signal_name, request=request)
 
         # Assert
         self.assertEqual(result, True)
@@ -90,9 +85,7 @@ class BaseActionForTesting(BaseAction):
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
         return []
 
-    def get_recipients_context_json(
-        self, context: dict[str, Any], **kwargs
-    ) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
         return ToHeaderModel([])
 
 
@@ -120,9 +113,7 @@ class BaseActionUpdateForTesting(BaseActionUpdate):
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
         return []
 
-    def get_recipients_context_json(
-        self, context: dict[str, Any], **kwargs
-    ) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
         return ToHeaderModel([])
 
 
@@ -150,9 +141,7 @@ class BaseActionCancelForTesting(BaseActionCancel):
     def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
         return []
 
-    def get_recipients_context_json(
-        self, context: dict[str, Any], **kwargs
-    ) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
         return ToHeaderModel([])
 
 
@@ -182,9 +171,7 @@ class TestBaseAction(TestCase):
         context = instance.get_context()
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", instance.signal, **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", instance.signal, **kwargs)
         mock_person_from_request.assert_called_once_with(request)
         mock_schedule_email.assert_called_once_with(
             signal=instance.signal,
@@ -195,9 +182,7 @@ class TestBaseAction(TestCase):
             generic_relation_obj=instance.get_generic_relation_object(context),
             author=mock_person_from_request.return_value,
         )
-        mock_action_scheduled.assert_called_once_with(
-            request, instance.signal, scheduled_email
-        )
+        mock_action_scheduled.assert_called_once_with(request, instance.signal, scheduled_email)
 
     @patch("emails.actions.base_action.feature_flag_enabled", return_value=False)
     @patch("emails.actions.base_action.EmailController.schedule_email")
@@ -216,9 +201,7 @@ class TestBaseAction(TestCase):
         result = instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", instance.signal, **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", instance.signal, **kwargs)
         mock_schedule_email.assert_not_called()
         self.assertIsNone(result)
 
@@ -242,12 +225,8 @@ class TestBaseAction(TestCase):
         instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", instance.signal, **kwargs
-        )
-        mock_messages_missing_recipients.assert_called_once_with(
-            request, instance.signal
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", instance.signal, **kwargs)
+        mock_messages_missing_recipients.assert_called_once_with(request, instance.signal)
 
     @patch("emails.actions.base_action.feature_flag_enabled", return_value=True)
     @patch("emails.actions.base_action.EmailController.schedule_email")
@@ -269,9 +248,7 @@ class TestBaseAction(TestCase):
         instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", instance.signal, **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", instance.signal, **kwargs)
         mock_messages_missing_template.assert_called_once_with(request, instance.signal)
 
 
@@ -287,9 +264,7 @@ class TestBaseActionUpdate(TestCase):
             body="Hello, {{ name }}! Nice to meet **you**.",
         )
 
-    def setUpScheduledEmail(
-        self, template: EmailTemplate, generic_object: Any
-    ) -> ScheduledEmail:
+    def setUpScheduledEmail(self, template: EmailTemplate, generic_object: Any) -> ScheduledEmail:
         return ScheduledEmail.objects.create(
             scheduled_at=django_timezone.now() + timedelta(hours=1),
             to_header=["peter@spiderman.net", "harry@potter.co.uk"],
@@ -329,9 +304,7 @@ class TestBaseActionUpdate(TestCase):
         context = instance.get_context()
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_update", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_update", **kwargs)
         mock_person_from_request.assert_called_once_with(request)
         mock_update_scheduled_email.assert_called_once_with(
             scheduled_email=scheduled_email,
@@ -342,9 +315,7 @@ class TestBaseActionUpdate(TestCase):
             generic_relation_obj=instance.get_generic_relation_object(context),
             author=mock_person_from_request.return_value,
         )
-        mock_action_updated.assert_called_once_with(
-            request, instance.signal, mock_update_scheduled_email.return_value
-        )
+        mock_action_updated.assert_called_once_with(request, instance.signal, mock_update_scheduled_email.return_value)
 
     @patch("emails.actions.base_action.feature_flag_enabled", return_value=False)
     @patch("emails.actions.base_action.EmailController.update_scheduled_email")
@@ -363,9 +334,7 @@ class TestBaseActionUpdate(TestCase):
         result = instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_update", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_update", **kwargs)
         mock_update_scheduled_email.assert_not_called()
         self.assertIsNone(result)
 
@@ -387,13 +356,10 @@ class TestBaseActionUpdate(TestCase):
         result = instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_update", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_update", **kwargs)
         self.assertIsNone(result)
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {instance.signal} and "
-            f"generic_relation_obj={event!r} does not exist."
+            f"Scheduled email for signal {instance.signal} and " f"generic_relation_obj={event!r} does not exist."
         )
 
     @patch("emails.actions.base_action.feature_flag_enabled", return_value=True)
@@ -418,9 +384,7 @@ class TestBaseActionUpdate(TestCase):
         result = instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_update", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_update", **kwargs)
         self.assertIsNone(result)
         mock_logger.warning.assert_called_once_with(
             f"Too many scheduled emails for signal {instance.signal} and "
@@ -439,9 +403,7 @@ class TestBaseActionUpdate(TestCase):
         # Arrange
         instance = BaseActionUpdateForTesting()
         event = instance.get_generic_relation_object({})
-        mock_update_scheduled_email.side_effect = (
-            EmailControllerMissingRecipientsException()
-        )
+        mock_update_scheduled_email.side_effect = EmailControllerMissingRecipientsException()
 
         template = self.setUpEmailTemplate(instance.signal)
         self.setUpScheduledEmail(template, event)
@@ -453,12 +415,8 @@ class TestBaseActionUpdate(TestCase):
         instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_update", **kwargs
-        )
-        mock_messages_missing_recipients.assert_called_once_with(
-            request, instance.signal
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_update", **kwargs)
+        mock_messages_missing_recipients.assert_called_once_with(request, instance.signal)
 
     @patch("emails.actions.base_action.feature_flag_enabled", return_value=True)
     @patch("emails.actions.base_action.EmailController.update_scheduled_email")
@@ -472,9 +430,7 @@ class TestBaseActionUpdate(TestCase):
         # Arrange
         instance = BaseActionUpdateForTesting()
         event = instance.get_generic_relation_object({})
-        mock_update_scheduled_email.side_effect = (
-            EmailControllerMissingTemplateException()
-        )
+        mock_update_scheduled_email.side_effect = EmailControllerMissingTemplateException()
 
         template = self.setUpEmailTemplate(instance.signal)
         scheduled_email = self.setUpScheduledEmail(template, event)
@@ -486,12 +442,8 @@ class TestBaseActionUpdate(TestCase):
         instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_update", **kwargs
-        )
-        mock_messages_missing_template_link.assert_called_once_with(
-            request, scheduled_email
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_update", **kwargs)
+        mock_messages_missing_template_link.assert_called_once_with(request, scheduled_email)
 
 
 class TestBaseActionCancel(TestCase):
@@ -506,9 +458,7 @@ class TestBaseActionCancel(TestCase):
             body="Hello, {{ name }}! Nice to meet **you**.",
         )
 
-    def setUpScheduledEmail(
-        self, template: EmailTemplate, generic_object: Any
-    ) -> ScheduledEmail:
+    def setUpScheduledEmail(self, template: EmailTemplate, generic_object: Any) -> ScheduledEmail:
         return ScheduledEmail.objects.create(
             scheduled_at=django_timezone.now() + timedelta(hours=1),
             to_header=["peter@spiderman.net", "harry@potter.co.uk"],
@@ -547,17 +497,13 @@ class TestBaseActionCancel(TestCase):
         instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs)
         mock_person_from_request.assert_called_once_with(request)
         mock_cancel_email.assert_called_once_with(
             scheduled_email=scheduled_email,
             author=mock_person_from_request.return_value,
         )
-        mock_action_cancelled.assert_called_once_with(
-            request, instance.signal, mock_cancel_email.return_value
-        )
+        mock_action_cancelled.assert_called_once_with(request, instance.signal, mock_cancel_email.return_value)
 
     @patch("emails.actions.base_action.feature_flag_enabled", return_value=True)
     @patch("emails.actions.base_action.person_from_request")
@@ -585,9 +531,7 @@ class TestBaseActionCancel(TestCase):
         instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs)
         self.assertEqual(mock_person_from_request.call_count, 2)
         self.assertEqual(mock_cancel_email.call_count, 2)
         self.assertEqual(mock_action_cancelled.call_count, 2)
@@ -609,9 +553,7 @@ class TestBaseActionCancel(TestCase):
         result = instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs)
         mock_cancel_email.assert_not_called()
         self.assertIsNone(result)
 
@@ -634,8 +576,6 @@ class TestBaseActionCancel(TestCase):
         instance(sender, **kwargs)
 
         # Assert
-        mock_feature_flag_enabled.assert_called_once_with(
-            "EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs
-        )
+        mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs)
         mock_cancel_email.assert_not_called()
         mock_action_cancelled.assert_not_called()

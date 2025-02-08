@@ -48,16 +48,13 @@ class ArchiveActionMixin:
         if obj.archived_at is not None:
             messages.error(
                 request,
-                f"Error: Cannot archive. {obj.__class__.__name__}"
-                f"  {obj} is already archived.",
+                f"Error: Cannot archive. {obj.__class__.__name__}" f"  {obj} is already archived.",
             )
         else:
             try:
                 obj.archive()
             except ValidationError as error:
-                messages.error(
-                    request, f"Error: Could not archive {obj}.\n{str(error)}"
-                )
+                messages.error(request, f"Error: Could not archive {obj}.\n{str(error)}")
             else:
                 messages.success(request, f"Success: Archived {obj}.")
 
@@ -80,10 +77,7 @@ class TermOptionAdmin(ArchiveActionMixin, admin.ModelAdmin):
     def warning_message(self, obj: Any) -> str:
         message = super().warning_message(obj)
         if obj.term.required_type != Term.OPTIONAL_REQUIRE_TYPE:
-            return (
-                f"{message}. An email will be sent to all users who previously"
-                " consented with this term option."
-            )
+            return f"{message}. An email will be sent to all users who previously" " consented with this term option."
         return message
 
 

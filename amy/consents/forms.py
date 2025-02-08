@@ -49,9 +49,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
 
         self.term_id_by_consent = {
             consent.term_id: consent
-            for consent in Consent.objects.filter(
-                archived_at=None, term__in=self.terms, person=person
-            )
+            for consent in Consent.objects.filter(archived_at=None, term__in=self.terms, person=person)
         }
         for term in self.terms:
             self.fields[term.slug] = self.create_options_field(term)
@@ -84,9 +82,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
                 continue
             if consent:
                 consent.archive()
-            new_consents.append(
-                Consent(person=person, term_option_id=option_id, term_id=term.pk)
-            )
+            new_consents.append(Consent(person=person, term_option_id=option_id, term_id=term.pk))
         Consent.objects.bulk_create(new_consents)
 
     def get_terms(self) -> Iterable[Term]:
@@ -121,11 +117,7 @@ class RequiredConsentsForm(BaseTermConsentsForm):
         super()._build_form(person)
 
     def get_terms(self) -> Iterable[Term]:
-        return (
-            Term.objects.active()
-            .prefetch_active_options()
-            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-        )
+        return Term.objects.active().prefetch_active_options().filter(required_type=Term.PROFILE_REQUIRE_TYPE)
 
 
 class TermBySlugsForm(BaseTermConsentsForm):
@@ -134,8 +126,4 @@ class TermBySlugsForm(BaseTermConsentsForm):
         super().__init__(*args, **kwargs)
 
     def get_terms(self) -> Iterable[Term]:
-        return (
-            Term.objects.active()
-            .prefetch_active_options()
-            .filter(slug__in=self.term_slugs)
-        )
+        return Term.objects.active().prefetch_active_options().filter(slug__in=self.term_slugs)

@@ -30,16 +30,10 @@ from workshops.tests.base import TestBase
 class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        self.event = Event.objects.create(
-            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
-        )
+        self.event = Event.objects.create(slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5))
         self.person = Person.objects.create(email="test@example.org")
-        self.recruitment = InstructorRecruitment.objects.create(
-            event=self.event, notes="Test notes"
-        )
-        self.signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=self.recruitment, person=self.person
-        )
+        self.recruitment = InstructorRecruitment.objects.create(event=self.event, notes="Test notes")
+        self.signup = InstructorRecruitmentSignup.objects.create(recruitment=self.recruitment, person=self.person)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
@@ -61,21 +55,16 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             instructor_confirmed_for_workshop_update_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_confirmed_for_workshop_update"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_confirmed_for_workshop_update"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = instructor_confirmed_for_workshop_update_signal.receivers[
-            :
-        ]
+        original_receivers = instructor_confirmed_for_workshop_update_signal.receivers[:]
 
         # Act
         # attempt to connect the receiver
-        instructor_confirmed_for_workshop_update_signal.connect(
-            instructor_confirmed_for_workshop_update_receiver
-        )
+        instructor_confirmed_for_workshop_update_signal.connect(instructor_confirmed_for_workshop_update_receiver)
         new_receivers = instructor_confirmed_for_workshop_update_signal.receivers[:]
 
         # Assert
@@ -99,9 +88,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_updated"
-        ) as mock_messages_action_updated:
+        with patch("emails.actions.base_action.messages_action_updated") as mock_messages_action_updated:
             instructor_confirmed_for_workshop_update_signal.send(
                 sender=self.signup,
                 request=request,
@@ -143,9 +130,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         mock_immediate_action.return_value = scheduled_at
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.update_scheduled_email"
-        ) as mock_update_scheduled_email:
+        with patch("emails.actions.base_action.EmailController.update_scheduled_email") as mock_update_scheduled_email:
             instructor_confirmed_for_workshop_update_signal.send(
                 sender=self.signup,
                 request=request,
@@ -162,9 +147,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
                 {
                     "person": api_model_url("person", self.person.pk),
                     "event": api_model_url("event", self.event.pk),
-                    "instructor_recruitment_signup": api_model_url(
-                        "instructorrecruitmentsignup", self.signup.pk
-                    ),
+                    "instructor_recruitment_signup": api_model_url("instructorrecruitmentsignup", self.signup.pk),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -205,8 +188,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         mock_email_controller.update_scheduled_email.assert_not_called()
         signup = self.signup
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={signup!r} "
-            "does not exist."
+            f"Scheduled email for signal {signal} and generic_relation_obj={signup!r} " "does not exist."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -257,9 +239,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
@@ -331,9 +311,7 @@ class TestInstructorConfirmedForWorkshopUpdateIntegration(TestBase):
         )
         event.tags.add(Tag.objects.get(name="SWC"))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person, state="a"
-        )
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person, state="a")
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -346,9 +324,7 @@ class TestInstructorConfirmedForWorkshopUpdateIntegration(TestBase):
         )
 
         request = RequestFactory().get("/")
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_confirmed_for_workshop_strategy(
                 instructor_confirmed_for_workshop_strategy(signup),
                 request,
@@ -372,10 +348,6 @@ class TestInstructorConfirmedForWorkshopUpdateIntegration(TestBase):
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
         # Ensure that last log is update (from 'scheduled' to 'scheduled')
-        last_log = (
-            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
-            .order_by("created_at")
-            .last()
-        )
+        last_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("created_at").last()
         assert last_log
         self.assertEqual(last_log.state_before, last_log.state_after)

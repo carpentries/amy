@@ -41,9 +41,7 @@ class OrganizationForm(forms.ModelForm):
             "affiliated_organizations",
         ]
         widgets = {
-            "affiliated_organizations": ModelSelect2MultipleWidget(
-                data_view="organization-lookup"
-            ),
+            "affiliated_organizations": ModelSelect2MultipleWidget(data_view="organization-lookup"),
         }
 
     def clean_domain(self):
@@ -51,9 +49,7 @@ class OrganizationForm(forms.ModelForm):
         cleaned = self.cleaned_data["domain"]
 
         parsed_url = urlparse(cleaned)
-        unparsed_url = urlunparse(
-            parsed_url._replace(scheme="", params="", fragment="")
-        )
+        unparsed_url = urlunparse(parsed_url._replace(scheme="", params="", fragment=""))
 
         # after parsing-unparsing we may be left with scheme-less text
         # e.g. "//carpentries.org/lessons"; we obviously want to remove the slashes
@@ -68,8 +64,7 @@ class OrganizationForm(forms.ModelForm):
 class OrganizationCreateForm(OrganizationForm):
     comment = MarkdownxFormField(
         label="Comment",
-        help_text="This will be added to comments after the organization "
-        "is created.",
+        help_text="This will be added to comments after the organization " "is created.",
         widget=forms.Textarea,
         required=False,
     )
@@ -129,9 +124,7 @@ class MembershipForm(forms.ModelForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
         ]
 
-    def __init__(
-        self, *args, show_rolled_over=False, show_rolled_from_previous=False, **kwargs
-    ):
+    def __init__(self, *args, show_rolled_over=False, show_rolled_from_previous=False, **kwargs):
         super().__init__(*args, **kwargs)
         instance = kwargs.get("instance")
 
@@ -179,9 +172,7 @@ class MembershipForm(forms.ModelForm):
         agreement_end = self.cleaned_data.get("agreement_end")
         try:
             if agreement_end < agreement_start:
-                errors["agreement_end"] = ValidationError(
-                    "Agreement end date can't be sooner than the start date."
-                )
+                errors["agreement_end"] = ValidationError("Agreement end date can't be sooner than the start date.")
         except TypeError:
             pass
 
@@ -254,15 +245,13 @@ class MembershipRollOverForm(MembershipCreateForm):
     main_organization = None  # remove the additional field
 
     copy_members = forms.BooleanField(
-        label="Do you want to automatically copy member organisations from existing "
-        "membership?",
+        label="Do you want to automatically copy member organisations from existing " "membership?",
         required=False,
         initial=True,
         help_text="If not consortium, the main organisation is always copied.",
     )
     copy_membership_tasks = forms.BooleanField(
-        label="Do you want to automatically copy persons and their roles from existing "
-        "membership?",
+        label="Do you want to automatically copy persons and their roles from existing " "membership?",
         required=False,
         initial=True,
     )
@@ -294,9 +283,7 @@ class MembershipRollOverForm(MembershipCreateForm):
 
     def __init__(self, *args, **kwargs):
         max_values = kwargs.pop("max_values", {})
-        super().__init__(
-            *args, show_rolled_over=True, show_rolled_from_previous=True, **kwargs
-        )
+        super().__init__(*args, show_rolled_over=True, show_rolled_from_previous=True, **kwargs)
 
         # don't allow values over the limit imposed by the view using this form
         fields = [
@@ -354,12 +341,8 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
         add_submit_button=False,
         include_media=False,
     )
-    helper_empty_form = BootstrapHelper(
-        add_cancel_button=False, form_tag=False, add_submit_button=False
-    )
-    helper_empty_form_deletable = BootstrapHelper(
-        add_cancel_button=False, form_tag=False, add_submit_button=False
-    )
+    helper_empty_form = BootstrapHelper(add_cancel_button=False, form_tag=False, add_submit_button=False)
+    helper_empty_form_deletable = BootstrapHelper(add_cancel_button=False, form_tag=False, add_submit_button=False)
 
     class Media:
         js = ("member_form.js",)
@@ -402,9 +385,7 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
 
         self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
         self.helper_empty_form_deletable.layout.append("id")
-        self.helper_empty_form_deletable.layout.append(
-            Div("DELETE", css_class="d-none")  # hidden
-        )
+        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # hidden
         # remove EDITABLE checkbox from empty helper deletable form
         pos_index = self.helper_empty_form_deletable.layout.fields.index("EDITABLE")
         self.helper_empty_form_deletable.layout.pop(pos_index)
@@ -413,21 +394,15 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
 class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
     """Form intended to use in formset for creating multiple membership members."""
 
-    helper = BootstrapHelper(
-        add_cancel_button=False, form_tag=False, add_submit_button=False
-    )
+    helper = BootstrapHelper(add_cancel_button=False, form_tag=False, add_submit_button=False)
     helper_deletable = BootstrapHelper(
         add_cancel_button=False,
         form_tag=False,
         add_submit_button=False,
         include_media=False,
     )
-    helper_empty_form = BootstrapHelper(
-        add_cancel_button=False, form_tag=False, add_submit_button=False
-    )
-    helper_empty_form_deletable = BootstrapHelper(
-        add_cancel_button=False, form_tag=False, add_submit_button=False
-    )
+    helper_empty_form = BootstrapHelper(add_cancel_button=False, form_tag=False, add_submit_button=False)
+    helper_empty_form_deletable = BootstrapHelper(add_cancel_button=False, form_tag=False, add_submit_button=False)
 
     class Meta:
         model = MembershipTask
@@ -462,18 +437,14 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
 
         self.helper_empty_form.layout = self.helper.build_default_layout(self)
         self.helper_empty_form.layout.append("id")
-        self.helper_empty_form.layout.append(
-            Div("DELETE", css_class="d-none")  # hidden
-        )
+        self.helper_empty_form.layout.append(Div("DELETE", css_class="d-none"))  # hidden
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
 
         self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
         self.helper_empty_form_deletable.layout.append("id")
-        self.helper_empty_form_deletable.layout.append(
-            Div("DELETE", css_class="d-none")  # hidden
-        )
+        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # hidden
 
 
 class MembershipExtensionForm(forms.Form):
@@ -511,8 +482,7 @@ class MembershipExtensionForm(forms.Form):
         try:
             if new_agreement_end <= agreement_end:
                 errors["new_agreement_end"] = ValidationError(
-                    "New agreement end date must be later than original agreement "
-                    "end date."
+                    "New agreement end date must be later than original agreement " "end date."
                 )
         except TypeError:
             pass

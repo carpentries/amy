@@ -93,9 +93,7 @@ class CSVBulkUploadTestBase(TestBase):
 
     def setUp(self):
         super(CSVBulkUploadTestBase, self).setUp()
-        test_host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
 
         Role.objects.create(name="instructor")
         Role.objects.create(name="learner")
@@ -120,7 +118,6 @@ John,Doe,notin@db.com,foobar,instructor
 
 
 class VerifyUploadPersonTask(CSVBulkUploadTestBase):
-
     """Scenarios to test:
     - Everything is good
     - no 'person' key
@@ -297,9 +294,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         data[0]["email"] = "harry@hogwarts.edu"
         verify_upload_person_task(data)
         self.assertEqual(len(data[0]["errors"]), 2)
-        self.assertIn(
-            "Person with this email address already exists.", data[0]["errors"]
-        )
+        self.assertIn("Person with this email address already exists.", data[0]["errors"])
         self.assertIn("Person with this username already exists.", data[0]["errors"])
 
 
@@ -353,9 +348,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,Helper
         data, _ = upload_person_task_csv(StringIO(csv))
 
         # simulate user clicking "Use this user" next to matched person
-        data[0]["existing_person_id"] = Person.objects.get(
-            email="harry@hogwarts.edu"
-        ).pk
+        data[0]["existing_person_id"] = Person.objects.get(email="harry@hogwarts.edu").pk
 
         # self.client is authenticated user so we have access to the session
         store = self.client.session
@@ -375,9 +368,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,Helper
         people_pre = set(Person.objects.all())
         tasks_pre = set(Task.objects.filter(person=self.harry, event__slug="foobar"))
 
-        rv = self.client.post(
-            reverse("person_bulk_add_confirmation"), payload, follow=True
-        )
+        rv = self.client.post(reverse("person_bulk_add_confirmation"), payload, follow=True)
         self.assertEqual(rv.status_code, 200)
 
         people_post = set(Person.objects.all())
@@ -421,9 +412,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,instructor
         tasks_pre = set(Task.objects.filter(person=self.harry, event__slug="foobar"))
         users_pre = set(Person.objects.all())
 
-        rv = self.client.post(
-            reverse("person_bulk_add_confirmation"), payload, follow=True
-        )
+        rv = self.client.post(reverse("person_bulk_add_confirmation"), payload, follow=True)
 
         tasks_post = set(Task.objects.filter(person=self.harry, event__slug="foobar"))
         users_post = set(Person.objects.all())
@@ -446,9 +435,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
         data, _ = upload_person_task_csv(StringIO(csv))
 
         # simulate user clicking "Use this user" next to matched person
-        data[0]["existing_person_id"] = Person.objects.get(
-            email="harry@hogwarts.edu"
-        ).pk
+        data[0]["existing_person_id"] = Person.objects.get(email="harry@hogwarts.edu").pk
 
         # self.client is authenticated user so we have access to the session
         store = self.client.session
@@ -567,9 +554,7 @@ class TestBulkUploadAddsEmailAction(CSVBulkUploadTestBase):
         )
         Organization.objects.bulk_create(
             [
-                Organization(
-                    domain="librarycarpentry.org", fullname="Library Carpentry"
-                ),
+                Organization(domain="librarycarpentry.org", fullname="Library Carpentry"),
                 Organization(domain="carpentries.org", fullname="Instructor Training"),
             ]
         )
@@ -586,9 +571,7 @@ class TestBulkUploadAddsEmailAction(CSVBulkUploadTestBase):
             longitude=20.0,
             url="https://test-event.example.com",
         )
-        test_event_1.tags.set(
-            Tag.objects.filter(name__in=["SWC", "DC", "LC", "automated-email"])
-        )
+        test_event_1.tags.set(Tag.objects.filter(name__in=["SWC", "DC", "LC", "automated-email"]))
 
         self.csv = """personal,family,email,event,role
 Harry,Potter,harry@hogwarts.edu,test-event,host
@@ -600,15 +583,9 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
         data, _ = upload_person_task_csv(StringIO(self.csv))
 
         # simulate user clicking "Use this user" next to matched person
-        data[0]["existing_person_id"] = Person.objects.get(
-            email="harry@hogwarts.edu"
-        ).pk
-        data[1]["existing_person_id"] = Person.objects.get(
-            email="hermione@granger.co.uk"
-        ).pk
-        data[2]["existing_person_id"] = Person.objects.get(
-            email="rweasley@ministry.gov.uk"
-        ).pk
+        data[0]["existing_person_id"] = Person.objects.get(email="harry@hogwarts.edu").pk
+        data[1]["existing_person_id"] = Person.objects.get(email="hermione@granger.co.uk").pk
+        data[2]["existing_person_id"] = Person.objects.get(email="rweasley@ministry.gov.uk").pk
 
         # self.client is authenticated user so we have access to the session
         store = self.client.session
@@ -639,9 +616,7 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
         self.assertQuerySetEqual(tasks_pre, [])
 
         # send data in
-        rv = self.client.post(
-            reverse("person_bulk_add_confirmation"), payload, follow=True
-        )
+        rv = self.client.post(reverse("person_bulk_add_confirmation"), payload, follow=True)
         self.assertEqual(rv.status_code, 200)
 
         # 3 tasks created

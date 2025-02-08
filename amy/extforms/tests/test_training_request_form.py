@@ -16,9 +16,7 @@ from workshops.tests.base import TestBase
 class TestTrainingRequestForm(TestBase):
     INVALID_MEMBER_CODE_ERROR = "This code is invalid."
     MEMBER_CODE_OVERRIDE_LABEL = "Continue with registration code marked as invalid"
-    MEMBER_CODE_OVERRIDE_EMAIL_WARNING = (
-        "A member of our team will check the code and follow up with you"
-    )
+    MEMBER_CODE_OVERRIDE_EMAIL_WARNING = "A member of our team will check the code and follow up with you"
     INVALID_EVENTBRITE_URL_ERROR = "Must be an Eventbrite URL."
 
     def setUp(self):
@@ -97,17 +95,9 @@ class TestTrainingRequestForm(TestBase):
 
     def add_terms_to_payload(self) -> dict[str, int]:
         data = {}
-        terms = (
-            Term.objects.prefetch_active_options()
-            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-            .order_by("slug")
-        )
+        terms = Term.objects.prefetch_active_options().filter(required_type=Term.PROFILE_REQUIRE_TYPE).order_by("slug")
         for term in terms:
-            option = next(
-                option
-                for option in term.options
-                if option.option_type == TermOptionChoices.AGREE
-            )
+            option = next(option for option in term.options if option.option_type == TermOptionChoices.AGREE)
             data[term.slug] = option.pk
         return data
 
@@ -136,9 +126,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertIn("A copy of your request", msg.body)
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
-        self.assertNotIn(
-            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
-        )
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
 
     @tag("captcha")
     def test_invalid_request_not_added(self):
@@ -197,9 +185,7 @@ class TestTrainingRequestForm(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertContains(
-            rv, "Registration code must be empty for open training review process."
-        )
+        self.assertContains(rv, "Registration code must be empty for open training review process.")
         # test that override field is not visible
         self.assertEqual(
             rv.context["form"].fields["member_code_override"].widget.__class__,
@@ -438,18 +424,14 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training_request_confirm")
-        self.assertFalse(
-            TrainingRequest.objects.get(member_code="valid123").member_code_override
-        )
+        self.assertFalse(TrainingRequest.objects.get(member_code="valid123").member_code_override)
 
         # Test that the sender was emailed with correct content
         self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
-        self.assertNotIn(
-            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
-        )
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
 
     @tag("captcha")
     def test_member_code_validation__code_invalid_override_full_request(self):
@@ -468,18 +450,14 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "training_request_confirm")
-        self.assertTrue(
-            TrainingRequest.objects.get(member_code="invalid").member_code_override
-        )
+        self.assertTrue(TrainingRequest.objects.get(member_code="invalid").member_code_override)
 
         # Test that the sender was emailed with correct content
         self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
         self.assertIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
         self.assertIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
-        self.assertNotIn(
-            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
-        )
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
 
     def test_eventbrite_url_validation__none(self):
         """Should not error if no URL is entered."""
@@ -533,6 +511,4 @@ class TestTrainingRequestForm(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertIn("code_of_conduct_agreement", errors)
-        self.assertListEqual(
-            errors["code_of_conduct_agreement"], ["This field is required."]
-        )
+        self.assertListEqual(errors["code_of_conduct_agreement"], ["This field is required."])

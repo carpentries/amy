@@ -26,9 +26,7 @@ from workshops.utils.pagination import get_pagination_items
 @admin_required
 def membership_trainings_stats(request):
     """Display basic statistics for memberships and instructor trainings."""
-    data = Membership.objects.annotate_with_seat_usage().prefetch_related(
-        "organizations", "task_set"
-    )
+    data = Membership.objects.annotate_with_seat_usage().prefetch_related("organizations", "task_set")
 
     filter_ = MembershipTrainingsFilter(request.GET, data)
     paginated = get_pagination_items(request, filter_.qs)
@@ -77,10 +75,7 @@ def workshop_issues(request):
     bad_dates = Q(start__gt=F("end"))
 
     events = events.filter(
-        (no_attendance & ~Q(tags__name="unresponsive"))
-        | no_location
-        | bad_dates
-        | Q(num_instructors=0)
+        (no_attendance & ~Q(tags__name="unresponsive")) | no_location | bad_dates | Q(num_instructors=0)
     ).prefetch_related("task_set", "task_set__person")
 
     events = events.prefetch_related(
@@ -139,9 +134,7 @@ def instructor_issues(request):
 
     # Everyone who has a badge but needs attention.
     instructor_badges = Badge.objects.instructor_badges()
-    instructors = Person.objects.filter(badges__in=instructor_badges).filter(
-        airport__isnull=True
-    )
+    instructors = Person.objects.filter(badges__in=instructor_badges).filter(airport__isnull=True)
 
     # Everyone who's been in instructor training but doesn't yet have a badge.
     learner = Role.objects.get(name="learner")
@@ -160,9 +153,7 @@ def instructor_issues(request):
         flat=True,
     )
 
-    stalled_instructors = trainees.filter(event__tags=stalled).exclude(
-        person__id__in=pending_instructors_person_ids
-    )
+    stalled_instructors = trainees.filter(event__tags=stalled).exclude(person__id__in=pending_instructors_person_ids)
 
     context = {
         "title": "Instructors with Issues",
@@ -181,12 +172,8 @@ def duplicate_persons(request):
     * switched personal/family names
     * same name on different people."""
 
-    names_normal = set(
-        Person.objects.duplication_review_expired().values_list("personal", "family")
-    )
-    names_switched = set(
-        Person.objects.duplication_review_expired().values_list("family", "personal")
-    )
+    names_normal = set(Person.objects.duplication_review_expired().values_list("personal", "family"))
+    names_switched = set(Person.objects.duplication_review_expired().values_list("family", "personal"))
     names = names_normal & names_switched  # intersection
 
     switched_criteria = Q(id=0)
@@ -195,11 +182,7 @@ def duplicate_persons(request):
         # get people who appear in `names`
         switched_criteria |= Q(personal=personal) & Q(family=family)
 
-    switched_persons = (
-        Person.objects.duplication_review_expired()
-        .filter(switched_criteria)
-        .order_by("email")
-    )
+    switched_persons = Person.objects.duplication_review_expired().filter(switched_criteria).order_by("email")
 
     duplicate_names = (
         Person.objects.duplication_review_expired()
@@ -215,9 +198,7 @@ def duplicate_persons(request):
         duplicate_criteria |= Q(personal=name["personal"]) & Q(family=name["family"])
 
     duplicate_persons = (
-        Person.objects.duplication_review_expired()
-        .filter(duplicate_criteria)
-        .order_by("family", "personal", "email")
+        Person.objects.duplication_review_expired().filter(duplicate_criteria).order_by("family", "personal", "email")
     )
 
     context = {
@@ -235,9 +216,7 @@ def review_duplicate_persons(request):
         ids = request.POST.getlist("person_id")
         now = timezone.now()
         number = Person.objects.filter(id__in=ids).update(duplication_reviewed_on=now)
-        messages.success(
-            request, "Successfully marked {} persons as reviewed.".format(number)
-        )
+        messages.success(request, "Successfully marked {} persons as reviewed.".format(number))
 
     else:
         messages.warning(request, "Wrong request or request data missing.")
@@ -261,9 +240,7 @@ def duplicate_training_requests(request):
     )
     duplicate_names_criteria = Q(id=0)
     for name in names:
-        duplicate_names_criteria |= Q(personal=name["personal"]) & Q(
-            family=name["family"]
-        )
+        duplicate_names_criteria |= Q(personal=name["personal"]) & Q(family=name["family"])
 
     emails = (
         TrainingRequest.objects.values_list("email", flat=True)
@@ -275,12 +252,8 @@ def duplicate_training_requests(request):
     for email in emails:
         duplicate_emails_criteria |= Q(email=email)
 
-    duplicate_names = TrainingRequest.objects.filter(duplicate_names_criteria).order_by(
-        "family", "personal"
-    )
-    duplicate_emails = TrainingRequest.objects.filter(
-        duplicate_emails_criteria
-    ).order_by("email")
+    duplicate_names = TrainingRequest.objects.filter(duplicate_names_criteria).order_by("family", "personal")
+    duplicate_emails = TrainingRequest.objects.filter(duplicate_emails_criteria).order_by("email")
 
     context = {
         "title": "Possible duplicate training requests",

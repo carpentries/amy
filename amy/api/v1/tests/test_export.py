@@ -86,9 +86,7 @@ class TestExportingPersonData(BaseExportingTest):
         self.user.save()
 
         # create a fake organization
-        test_host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
 
         # create an event that will later be used
         event = Event.objects.create(
@@ -174,9 +172,7 @@ class TestExportingPersonData(BaseExportingTest):
             user_notes="I like trains",
         )
         training_request.domains.set([KnowledgeDomain.objects.first()])
-        training_request.previous_involvement.set(
-            Role.objects.filter(name="instructor")
-        )
+        training_request.previous_involvement.set(Role.objects.filter(name="instructor"))
 
         # add some training progress
         TrainingProgress.objects.create(
@@ -212,19 +208,13 @@ class TestExportingPersonData(BaseExportingTest):
             date=datetime.date(2023, 5, 31),
             trainee_notes="Notes submitted by trainee",
         )
-        terms = (
-            Term.objects.active()
-            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-            .prefetch_active_options()
-        )
+        terms = Term.objects.active().filter(required_type=Term.PROFILE_REQUIRE_TYPE).prefetch_active_options()
         consents = Consent.objects.filter(person=self.user).active()
         consents_by_term_id = {consent.term_id: consent for consent in consents}
         self.user_consents: List[Consent] = []
         for term in terms:
             self.user_consents.append(
-                Consent.reconsent(
-                    consent=consents_by_term_id[term.pk], term_option=term.options[0]
-                )
+                Consent.reconsent(consent=consents_by_term_id[term.pk], term_option=term.options[0])
             )
 
     def test_unauthorized_access(self):
@@ -359,16 +349,8 @@ class TestExportingPersonData(BaseExportingTest):
             [consent.term.slug for consent in user_consents],
             [consent["term"]["slug"] for consent in data["consents"]],
         )
-        may_publish_name = [
-            consent
-            for consent in user_consents
-            if consent.term.slug == "may-publish-name"
-        ][0]
-        public_profile = [
-            consent
-            for consent in user_consents
-            if consent.term.slug == "public-profile"
-        ][0]
+        may_publish_name = [consent for consent in user_consents if consent.term.slug == "may-publish-name"][0]
+        public_profile = [consent for consent in user_consents if consent.term.slug == "public-profile"][0]
         # assert consent format -- no term option
         self.assertIn(
             {
@@ -572,9 +554,5 @@ class TestExportingPersonData(BaseExportingTest):
             },
         ]
         self.assertEqual(len(data["training_progresses"]), 2)
-        self.assertEqual(
-            data["training_progresses"][0], expected["training_progresses"][0]
-        )
-        self.assertEqual(
-            data["training_progresses"][1], expected["training_progresses"][1]
-        )
+        self.assertEqual(data["training_progresses"][0], expected["training_progresses"][0])
+        self.assertEqual(data["training_progresses"][1], expected["training_progresses"][1])

@@ -66,16 +66,12 @@ class TestPerson(TestBase):
         self.assertEqual(user, self.admin)
 
     def test_display_person_correctly_with_all_fields(self):
-        response = self.client.get(
-            reverse("person_details", args=[str(self.hermione.id)])
-        )
+        response = self.client.get(reverse("person_details", args=[str(self.hermione.id)]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["person"], self.hermione)
 
     def test_display_person_correctly_with_some_fields(self):
-        response = self.client.get(
-            reverse("person_details", args=[str(self.ironman.id)])
-        )
+        response = self.client.get(reverse("person_details", args=[str(self.ironman.id)]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["person"], self.ironman)
 
@@ -145,26 +141,19 @@ class TestPerson(TestBase):
         has a failed training, and an award or task is added
         """
         warning_popup = (
-            'return confirm("Warning: Trainee failed previous training(s).'
-            ' Are you sure you want to continue?");'
+            'return confirm("Warning: Trainee failed previous training(s).' ' Are you sure you want to continue?");'
         )
         # No failed training, so no warning should show
         url = reverse("person_edit", args=[self.spiderman.pk])
         person_edit = self.app.get(url, user="admin")
         award_form = person_edit.forms[2]
         task_form = person_edit.forms[3]
-        self.assertNotEqual(
-            award_form.fields["submit"][0].attrs.get("onclick"), warning_popup
-        )
-        self.assertNotEqual(
-            task_form.fields["submit"][0].attrs.get("onclick"), warning_popup
-        )
+        self.assertNotEqual(award_form.fields["submit"][0].attrs.get("onclick"), warning_popup)
+        self.assertNotEqual(task_form.fields["submit"][0].attrs.get("onclick"), warning_popup)
 
         # Spiderman failed a training
         training = TrainingRequirement.objects.get(name="Training")
-        TrainingProgress.objects.create(
-            trainee=self.spiderman, state="f", requirement=training, notes="Failed"
-        )
+        TrainingProgress.objects.create(trainee=self.spiderman, state="f", requirement=training, notes="Failed")
 
         # A warning should be shown
         url = reverse("person_edit", args=[self.spiderman.pk])
@@ -199,9 +188,7 @@ class TestPerson(TestBase):
         assert self.hermione.groups.count() == 0
 
         user_permissions = Permission.objects.filter(content_type__app_label="admin")
-        user_permissions_ids = user_permissions.values_list("id", flat=True).order_by(
-            "id"
-        )
+        user_permissions_ids = user_permissions.values_list("id", flat=True).order_by("id")
 
         groups = Group.objects.all()
         groups_ids = groups.values_list("id", flat=True).order_by("id")
@@ -347,9 +334,7 @@ class TestPerson(TestBase):
             "gender": "U",
         }
         self.client.post(url, data)
-        Person.objects.get(
-            personal="Albert", family="Einstein", username="einstein_albert"
-        )
+        Person.objects.get(personal="Albert", family="Einstein", username="einstein_albert")
 
     def test_person_email_auto_lowercase(self):
         """Make sure PersonForm/PersonCreateForm lowercases user's email."""
@@ -379,9 +364,7 @@ class TestPerson(TestBase):
         assert response.status_code == 200
 
         user_permissions = Permission.objects.filter(content_type__app_label="admin")
-        user_permissions_ids = user_permissions.values_list("id", flat=True).order_by(
-            "id"
-        )
+        user_permissions_ids = user_permissions.values_list("id", flat=True).order_by("id")
 
         groups = Group.objects.all()
         groups_ids = groups.values_list("id", flat=True).order_by("id")
@@ -401,9 +384,7 @@ class TestPerson(TestBase):
     def test_get_training_tasks(self):
         p1 = Person.objects.create(username="p1")
         p2 = Person.objects.create(username="p2")
-        org = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         learner, _ = Role.objects.get_or_create(name="learner")
         other_role, _ = Role.objects.get_or_create(name="other role")
@@ -439,9 +420,7 @@ class TestPerson(TestBase):
             family="Smith",
             email="bob.smith@example.com",
         )
-        host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        host = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         learner, _ = Role.objects.get_or_create(name="learner")
         training = Event.objects.create(slug="2016-08-10-training", host=host)
@@ -466,9 +445,7 @@ class TestPerson(TestBase):
             int(swc_res.forms["main-form"]["award-badge"].value),
             self.instructor_badge.pk,
         )
-        self.assertEqual(
-            int(swc_res.forms["main-form"]["award-event"].value), training.pk
-        )
+        self.assertEqual(int(swc_res.forms["main-form"]["award-event"].value), training.pk)
         res = swc_res.forms["main-form"].submit()
         self.assertRedirects(res, reverse("all_trainees"))
         self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)
@@ -545,9 +522,7 @@ class TestPerson(TestBase):
         supporting_instructor = Role.objects.get(name="supporting-instructor")
         organizer = Role.objects.get(name="organizer")
 
-        Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
 
         workshop = Event.objects.create(
             slug="workshop-event",
@@ -588,9 +563,7 @@ class TestPerson(TestBase):
         # Act
         result = (
             Person.objects.annotate_with_role_count()
-            .filter(
-                badges__in=[self.swc_instructor, self.dc_instructor, self.lc_instructor]
-            )
+            .filter(badges__in=[self.swc_instructor, self.dc_instructor, self.lc_instructor])
             .get(pk=person.pk)
         )
         # Assert
@@ -770,9 +743,7 @@ class TestPersonMerging(TestBase):
             is_active=True,
         )
         self.person_consent_active_terms(self.person_a)
-        self.person_a.award_set.create(
-            badge=self.swc_instructor, awarded=date(2016, 2, 16)
-        )
+        self.person_a.award_set.create(badge=self.swc_instructor, awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_a, lesson=self.git)
         Qualification.objects.create(person=self.person_a, lesson=self.sql)
         self.person_a.domains.set([KnowledgeDomain.objects.first()])
@@ -800,51 +771,38 @@ class TestPersonMerging(TestBase):
             site=self.current_site,
         )
         term_options_by_term_slug = {
-            term.slug: iter(term.options)
-            for term in Term.objects.active().prefetch_active_options()
+            term.slug: iter(term.options) for term in Term.objects.active().prefetch_active_options()
         }
-        privacy_policy_only_term = next(
-            term_options_by_term_slug[TermEnum.PRIVACY_POLICY]
-        )
+        privacy_policy_only_term = next(term_options_by_term_slug[TermEnum.PRIVACY_POLICY])
 
         # consents for person_a
         person_a_consents_by_term_slug = {
             consent.term.slug: consent
-            for consent in Consent.objects.filter(person=self.person_a)
-            .active()
-            .select_related("term", "term_option")
+            for consent in Consent.objects.filter(person=self.person_a).active().select_related("term", "term_option")
         }
         self.person_a_consent_privacy_policy = Consent.reconsent(
             person_a_consents_by_term_slug[TermEnum.PRIVACY_POLICY],
             privacy_policy_only_term,
         )
-        self.person_a_consent_privacy_policy.created_at = datetime(
-            2023, 4, 10, tzinfo=timezone.utc
-        )
+        self.person_a_consent_privacy_policy.created_at = datetime(2023, 4, 10, tzinfo=timezone.utc)
         self.person_a_consent_privacy_policy.save()
         self.person_a_consent_may_contact = Consent.reconsent(
             person_a_consents_by_term_slug[TermEnum.MAY_CONTACT],
             next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
-        self.person_a_consent_may_contact.created_at = datetime(
-            2023, 4, 11, tzinfo=timezone.utc
-        )
+        self.person_a_consent_may_contact.created_at = datetime(2023, 4, 11, tzinfo=timezone.utc)
         self.person_a_consent_may_contact.save()
         self.person_a_consent_public_profile = Consent.reconsent(
             person_a_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
             next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
-        self.person_a_consent_public_profile.created_at = datetime(
-            2023, 4, 11, tzinfo=timezone.utc
-        )
+        self.person_a_consent_public_profile.created_at = datetime(2023, 4, 11, tzinfo=timezone.utc)
         self.person_a_consent_public_profile.save()
         self.person_a_consent_may_publish_name = Consent.reconsent(
             person_a_consents_by_term_slug[TermEnum.MAY_PUBLISH_NAME],
             next(term_options_by_term_slug[TermEnum.MAY_PUBLISH_NAME]),
         )
-        self.person_a_consent_may_publish_name.created_at = datetime(
-            2023, 4, 10, tzinfo=timezone.utc
-        )
+        self.person_a_consent_may_publish_name.created_at = datetime(2023, 4, 10, tzinfo=timezone.utc)
         self.person_a_consent_may_publish_name.save()
 
         # create second person
@@ -867,9 +825,7 @@ class TestPersonMerging(TestBase):
             is_active=True,
         )
         self.person_consent_active_terms(self.person_b)
-        self.person_b.award_set.create(
-            badge=self.dc_instructor, awarded=date(2016, 2, 16)
-        )
+        self.person_b.award_set.create(badge=self.dc_instructor, awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
         self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
@@ -896,41 +852,31 @@ class TestPersonMerging(TestBase):
         # consents for person_b
         person_b_consents_by_term_slug = {
             consent.term.slug: consent
-            for consent in Consent.objects.filter(person=self.person_b)
-            .active()
-            .select_related("term", "term_option")
+            for consent in Consent.objects.filter(person=self.person_b).active().select_related("term", "term_option")
         }
         self.person_b_consent_privacy_policy = Consent.reconsent(
             person_b_consents_by_term_slug[TermEnum.PRIVACY_POLICY],
             privacy_policy_only_term,
         )
-        self.person_b_consent_privacy_policy.created_at = datetime(
-            2023, 4, 11, tzinfo=timezone.utc
-        )
+        self.person_b_consent_privacy_policy.created_at = datetime(2023, 4, 11, tzinfo=timezone.utc)
         self.person_b_consent_privacy_policy.save()
         self.person_b_consent_may_contact = Consent.reconsent(
             person_b_consents_by_term_slug[TermEnum.MAY_CONTACT],
             next(term_options_by_term_slug[TermEnum.MAY_CONTACT]),
         )
-        self.person_b_consent_may_contact.created_at = datetime(
-            2023, 4, 10, tzinfo=timezone.utc
-        )
+        self.person_b_consent_may_contact.created_at = datetime(2023, 4, 10, tzinfo=timezone.utc)
         self.person_b_consent_may_contact.save()
         self.person_b_consent_public_profile = Consent.reconsent(
             person_b_consents_by_term_slug[TermEnum.PUBLIC_PROFILE],
             next(term_options_by_term_slug[TermEnum.PUBLIC_PROFILE]),
         )
-        self.person_b_consent_public_profile.created_at = datetime(
-            2023, 4, 10, tzinfo=timezone.utc
-        )
+        self.person_b_consent_public_profile.created_at = datetime(2023, 4, 10, tzinfo=timezone.utc)
         self.person_b_consent_public_profile.save()
         self.person_b_consent_may_publish_name = Consent.reconsent(
             person_b_consents_by_term_slug[TermEnum.MAY_PUBLISH_NAME],
             next(term_options_by_term_slug[TermEnum.MAY_PUBLISH_NAME]),
         )
-        self.person_b_consent_may_publish_name.created_at = datetime(
-            2023, 4, 11, tzinfo=timezone.utc
-        )
+        self.person_b_consent_may_publish_name.created_at = datetime(2023, 4, 11, tzinfo=timezone.utc)
         self.person_b_consent_may_publish_name.save()
 
         # set up a strategy
@@ -1293,9 +1239,7 @@ class TestPersonAndUserSocialAuth(TestBase):
         for #890."""
 
         self._setUpUsersAndLogin()
-        with patch.object(
-            Person, "synchronize_usersocialauth", side_effect=NotImplementedError
-        ):
+        with patch.object(Person, "synchronize_usersocialauth", side_effect=NotImplementedError):
             with self.assertRaises(NotImplementedError):
                 self.client.get(reverse("sync_usersocialauth", args=(self.admin.pk,)))
 
@@ -1308,17 +1252,11 @@ class TestGetMissingInstructorRequirements(TestBase):
             name="Get Involved", defaults={"involvement_required": True}
         )
         self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
-        self.demo, _ = TrainingRequirement.objects.get_or_create(
-            name="Demo", defaults={}
-        )
-        self.involvement, _ = Involvement.objects.get_or_create(
-            name="Test Involvement", defaults={}
-        )
+        self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo", defaults={})
+        self.involvement, _ = Involvement.objects.get_or_create(name="Test Involvement", defaults={})
 
     def test_all_requirements_satisfied(self):
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.training
-        )
+        TrainingProgress.objects.create(trainee=self.person, state="p", requirement=self.training)
         TrainingProgress.objects.create(
             trainee=self.person,
             state="p",
@@ -1326,16 +1264,10 @@ class TestGetMissingInstructorRequirements(TestBase):
             involvement_type=self.involvement,
             date=date(2023, 5, 1),
         )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.welcome
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="p", requirement=self.demo
-        )
+        TrainingProgress.objects.create(trainee=self.person, state="p", requirement=self.welcome)
+        TrainingProgress.objects.create(trainee=self.person, state="p", requirement=self.demo)
 
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
+        person = Person.objects.annotate_with_instructor_eligibility().get(username="person")
         self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
@@ -1355,25 +1287,17 @@ class TestGetMissingInstructorRequirements(TestBase):
             date=date(2023, 6, 1),
         )
         # Not passed progress should be ignored.
-        TrainingProgress.objects.create(
-            trainee=self.person, state="f", requirement=self.demo
-        )
-        TrainingProgress.objects.create(
-            trainee=self.person, state="n", requirement=self.welcome
-        )
+        TrainingProgress.objects.create(trainee=self.person, state="f", requirement=self.demo)
+        TrainingProgress.objects.create(trainee=self.person, state="n", requirement=self.welcome)
 
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
+        person = Person.objects.annotate_with_instructor_eligibility().get(username="person")
         self.assertEqual(
             person.get_missing_instructor_requirements(),
             ["Training", "Welcome Session", "Demo"],
         )
 
     def test_none_requirement_is_fulfilled(self):
-        person = Person.objects.annotate_with_instructor_eligibility().get(
-            username="person"
-        )
+        person = Person.objects.annotate_with_instructor_eligibility().get(username="person")
         self.assertEqual(
             person.get_missing_instructor_requirements(),
             ["Training", "Get Involved", "Welcome Session", "Demo"],
@@ -1391,9 +1315,7 @@ class TestFilterTaughtWorkshops(TestBase):
         self._setUpNonInstructors()
 
     def test_bug_975(self):
-        test_host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt = Tag.objects.get(name="TTT")
         swc = Tag.objects.get(name="SWC")
 
@@ -1404,21 +1326,11 @@ class TestFilterTaughtWorkshops(TestBase):
         e3 = Event.objects.create(slug="second-ttt-event", host=test_host)
         e3.tags.add(ttt)
 
-        Task.objects.create(
-            role=Role.objects.get(name="instructor"), person=self.hermione, event=e1
-        )
-        Task.objects.create(
-            role=Role.objects.get(name="learner"), person=self.harry, event=e1
-        )
-        Task.objects.create(
-            role=Role.objects.get(name="instructor"), person=self.ron, event=e2
-        )
-        Task.objects.create(
-            role=Role.objects.get(name="learner"), person=self.spiderman, event=e2
-        )
-        Task.objects.create(
-            role=Role.objects.get(name="instructor"), person=self.hermione, event=e3
-        )
+        Task.objects.create(role=Role.objects.get(name="instructor"), person=self.hermione, event=e1)
+        Task.objects.create(role=Role.objects.get(name="learner"), person=self.harry, event=e1)
+        Task.objects.create(role=Role.objects.get(name="instructor"), person=self.ron, event=e2)
+        Task.objects.create(role=Role.objects.get(name="learner"), person=self.spiderman, event=e2)
+        Task.objects.create(role=Role.objects.get(name="instructor"), person=self.hermione, event=e3)
 
         qs = Person.objects.all()
         filtered = filter_taught_workshops(qs, "", [ttt.pk])
@@ -1436,12 +1348,8 @@ class TestFilterTaughtWorkshops(TestBase):
 
 class TestPersonUpdateViewPermissions(TestBase):
     def setUp(self):
-        self.trainee = Person.objects.create_user(
-            "trainee", "Harry", "Potter", "hp@mail.com", "hp"
-        )
-        self.trainer = Person.objects.create_user(
-            "trainer", "Severus", "Snape", "ss@mail.com", "ss"
-        )
+        self.trainee = Person.objects.create_user("trainee", "Harry", "Potter", "hp@mail.com", "hp")
+        self.trainer = Person.objects.create_user("trainer", "Severus", "Snape", "ss@mail.com", "ss")
         self.person_consent_required_terms(self.trainer)
         trainer_group, _ = Group.objects.get_or_create(name="trainers")
         self.trainer.groups.add(trainer_group)
@@ -1480,9 +1388,7 @@ class TestRegression1076(TestBase):
 
     def test_bulk_upload(self):
         event_slug = Event.objects.first().slug
-        csv = (
-            "personal,family,email,event,role\n" "John,,john@smith.com,{0},learner\n"
-        ).format(event_slug)
+        csv = ("personal,family,email,event,role\n" "John,,john@smith.com,{0},learner\n").format(event_slug)
 
         upload_page = self.app.get(reverse("person_bulk_add"), user="admin")
         upload_form = upload_page.forms["main-form"]
@@ -1563,9 +1469,7 @@ class TestArchivePerson(TestBase):
         self.assertCountEqual(tasks, archived_profile.task_set.all())
         self.assertCountEqual(qualifications, archived_profile.qualification_set.all())
         self.assertCountEqual(domains, archived_profile.domains.all())
-        self.assertCountEqual(
-            consents, Consent.objects.filter(person=archived_profile).active()
-        )
+        self.assertCountEqual(consents, Consent.objects.filter(person=archived_profile).active())
         # social auth should be unchanged
         self.assertCountEqual(social_auth, archived_profile.social_auth.all())
 
@@ -1631,9 +1535,7 @@ class TestArchivePerson(TestBase):
         Superusers should be able to archive any user.
         """
         # Login as Admin
-        self.assertTrue(
-            self.client.login(username=self.admin.username, password="admin")
-        )
+        self.assertTrue(self.client.login(username=self.admin.username, password="admin"))
 
         # Admin should be able to archive other user's profile
         self.assert_person_archive(self.harry)
@@ -1646,9 +1548,7 @@ class TestArchivePerson(TestBase):
 
         # Archived admin should not be able to log in.
         self.assert_person_archive(self.admin)
-        self.assertFalse(
-            self.client.login(username=self.admin.username, password="admin")
-        )
+        self.assertFalse(self.client.login(username=self.admin.username, password="admin"))
 
     def test_archive_by_non_admin(self):
         """
@@ -1668,9 +1568,7 @@ class TestArchivePerson(TestBase):
         self.assert_person_archive(self.user)
 
         # Archived User should not be able to log in.
-        self.assertFalse(
-            self.client.login(username=self.user.username, password="pass")
-        )
+        self.assertFalse(self.client.login(username=self.user.username, password="pass"))
 
     def test_version_history_removed_when_archived(self) -> None:
         # Create the person and change their information a few times.
@@ -1703,9 +1601,7 @@ class TestArchivePerson(TestBase):
         # Login as the admin user and archive the profile
         # All profile change history after archival
         # should be removed but the current one
-        self.assertTrue(
-            self.client.login(username=self.admin.username, password="admin")
-        )
+        self.assertTrue(self.client.login(username=self.admin.username, password="admin"))
         self.assert_person_archive(person)
         archived_profile = Person.objects.get(pk=person.pk)
         versions_after_archive = Version.objects.get_for_object(archived_profile)
@@ -1732,9 +1628,7 @@ class TestArchivePerson(TestBase):
 
         # Login as Admin and archive
         assert self.admin.is_superuser
-        self.assertTrue(
-            self.client.login(username=self.admin.username, password="admin")
-        )
+        self.assertTrue(self.client.login(username=self.admin.username, password="admin"))
         self.assert_person_archive(self.admin)
         self.admin.refresh_from_db()
 

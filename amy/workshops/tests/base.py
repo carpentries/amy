@@ -31,11 +31,7 @@ def consent_to_all_required_consents(person: Person) -> None:
     """
     Helper function shared by SuperuserMixin and TestBase
     """
-    terms = (
-        Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-        .active()
-        .prefetch_active_options()
-    )
+    terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active().prefetch_active_options()
     old_consents = Consent.objects.filter(person=person, term__in=terms).active()
     old_consents_by_term_id = {consent.term_id: consent for consent in old_consents}
     for term in terms:
@@ -66,9 +62,7 @@ class SuperuserMixin:
         self.client.login(username=self.admin.username, password=self.admin_password)
 
 
-class TestBase(
-    SuperuserMixin, WebTest
-):  # Support for functional tests (django-webtest)
+class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django-webtest)
     """Base class for AMY test cases."""
 
     def setUp(self):
@@ -115,13 +109,9 @@ class TestBase(
     def _setUpOrganizations(self):
         """Set up organization objects."""
 
-        self.org_alpha = Organization.objects.create(
-            domain="alpha.edu", fullname="Alpha Organization", country="AZ"
-        )
+        self.org_alpha = Organization.objects.create(domain="alpha.edu", fullname="Alpha Organization", country="AZ")
 
-        self.org_beta = Organization.objects.create(
-            domain="beta.com", fullname="Beta Organization", country="BR"
-        )
+        self.org_beta = Organization.objects.create(domain="beta.com", fullname="Beta Organization", country="BR")
 
     def _setUpAirports(self):
         """Set up airport objects."""
@@ -186,15 +176,11 @@ class TestBase(
 
         self.swc_instructor, _ = Badge.objects.get_or_create(
             name="swc-instructor",
-            defaults=dict(
-                title="Software Carpentry Instructor", criteria="Worked hard for this"
-            ),
+            defaults=dict(title="Software Carpentry Instructor", criteria="Worked hard for this"),
         )
         self.dc_instructor, _ = Badge.objects.get_or_create(
             name="dc-instructor",
-            defaults=dict(
-                title="Data Carpentry Instructor", criteria="Worked hard for this"
-            ),
+            defaults=dict(title="Data Carpentry Instructor", criteria="Worked hard for this"),
         )
         # lc-instructor is provided via a migration
         self.lc_instructor = Badge.objects.get(name="lc-instructor")
@@ -330,9 +316,7 @@ class TestBase(
     def _setUpPermissions(self):
         """Set up permission objects for consistent form selection."""
         badge_admin = Group.objects.create(name="Badge Admin")
-        badge_admin.permissions.add(
-            *Permission.objects.filter(codename__endswith="_badge")
-        )
+        badge_admin.permissions.add(*Permission.objects.filter(codename__endswith="_badge"))
         add_badge = Permission.objects.get(codename="add_badge")
         self.ironman.groups.add(badge_admin)
         self.ironman.user_permissions.add(add_badge)
@@ -360,9 +344,7 @@ class TestBase(
         today = datetime.date.today()
 
         # Create a test host
-        test_host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
 
         # Create one new published event for each day in the next 10 days.
         for t in range(1, 11):
@@ -479,9 +461,7 @@ class TestBase(
                 Role(name="learner", verbose_name="Learner"),
                 Role(name="organizer", verbose_name="Organizer"),
                 Role(name="tutor", verbose_name="Tutor"),
-                Role(
-                    name="supporting-instructor", verbose_name="Supporting Instructor"
-                ),
+                Role(name="supporting-instructor", verbose_name="Supporting Instructor"),
             ]
         )
 
@@ -555,9 +535,7 @@ class TestBase(
 
     @staticmethod
     def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
-        consent = Consent.objects.get(
-            person=person, term=term, archived_at__isnull=True
-        )
+        consent = Consent.objects.get(person=person, term=term, archived_at__isnull=True)
         return Consent.reconsent(consent, term_option)
 
     def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
@@ -590,8 +568,7 @@ class TestBase(
         self.assertEqual(
             expected_value,
             got_value,
-            msg='Expected "{}" to be selected '
-            "while {} is/are selected.".format(expected, selected),
+            msg='Expected "{}" to be selected ' "while {} is/are selected.".format(expected, selected),
         )
 
     @contextmanager
@@ -614,9 +591,7 @@ class TestBase(
 
     def passCaptcha(self, data_dictionary):
         """Extends provided `data_dictionary` with RECAPTCHA pass data."""
-        data_dictionary.update(
-            {"g-recaptcha-response": "PASSED"}  # to auto-pass RECAPTCHA
-        )
+        data_dictionary.update({"g-recaptcha-response": "PASSED"})  # to auto-pass RECAPTCHA
 
 
 class FormTestHelper:
@@ -720,10 +695,7 @@ class TestViewPermissionsMixin:
                 # Arrange
                 self.user.user_permissions.clear()
                 self.user.user_permissions.add(
-                    *[
-                        Permission.objects.get(codename=permission)
-                        for permission in self.permissions
-                    ]
+                    *[Permission.objects.get(codename=permission) for permission in self.permissions]
                 )
                 # Act
                 self.client.force_login(self.user)
@@ -736,9 +708,7 @@ class TestViewPermissionsMixin:
             with self.subTest(method=method):
                 # Arrange
                 self.user.user_permissions.clear()
-                self.user.user_permissions.set(
-                    Permission.objects.exclude(codename__in=self.permissions)
-                )
+                self.user.user_permissions.set(Permission.objects.exclude(codename__in=self.permissions))
                 # Act
                 self.client.force_login(self.user)
                 result = self.client.generic(method.upper(), self.view_url)

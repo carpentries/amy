@@ -16,9 +16,7 @@ from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 class TestAskForWebsiteStrategy(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         swc_tag = Tag.objects.create(name="SWC")
         self.event = Event.objects.create(
             slug="test-event",
@@ -35,9 +33,7 @@ class TestAskForWebsiteStrategy(TestCase):
 
     def test_strategy_create(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
 
         # Act
         result = ask_for_website_strategy(self.event)
@@ -47,9 +43,7 @@ class TestAskForWebsiteStrategy(TestCase):
 
     def test_strategy_update(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
             signal=ASK_FOR_WEBSITE_SIGNAL_NAME,
@@ -200,9 +194,7 @@ class TestRunAskForWebsiteStrategy(TestCase):
         mock_ask_for_website_signal.send.assert_not_called()
         mock_ask_for_website_update_signal.send.assert_not_called()
         mock_ask_for_website_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {event} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {event} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -211,7 +203,5 @@ class TestRunAskForWebsiteStrategy(TestCase):
         event = Event(start=datetime.today())
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_ask_for_website_strategy(strategy, request, event)

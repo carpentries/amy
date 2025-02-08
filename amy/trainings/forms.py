@@ -34,8 +34,7 @@ class TrainingProgressForm(forms.ModelForm):
         label="Event",
         required=False,
         queryset=Event.objects.all(),
-        help_text="If a trainee is selected, only the events for which that trainee "
-        "has a learner task are listed.",
+        help_text="If a trainee is selected, only the events for which that trainee " "has a learner task are listed.",
         widget=ModelSelect2Widget(data_view="ttt-event-lookup", attrs=SELECT2_SIDEBAR),
     )
     trainee_notes = CharField(

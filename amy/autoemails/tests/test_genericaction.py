@@ -55,9 +55,7 @@ class TestGenericAction(TestCase):
             GenericAction.check(e)
 
     def testContext(self):
-        a = GenericAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = GenericAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
         with self.assertRaises(KeyError):
             a.get_additional_context(dict())  # missing 'request' object
         with self.assertRaises(AttributeError):

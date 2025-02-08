@@ -43,8 +43,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
             instructor_badge_awarded_update_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_badge_awarded_update"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_badge_awarded_update"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -53,9 +52,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
 
         # Act
         # attempt to connect the receiver
-        instructor_badge_awarded_update_signal.connect(
-            instructor_badge_awarded_update_receiver
-        )
+        instructor_badge_awarded_update_signal.connect(instructor_badge_awarded_update_receiver)
         new_receivers = instructor_badge_awarded_update_signal.receivers[:]
 
         # Assert
@@ -79,9 +76,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_updated"
-        ) as mock_messages_action_updated:
+        with patch("emails.actions.base_action.messages_action_updated") as mock_messages_action_updated:
             instructor_badge_awarded_update_signal.send(
                 sender=self.award,
                 request=request,
@@ -121,9 +116,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         mock_immediate_action.return_value = scheduled_at
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.update_scheduled_email"
-        ) as mock_update_scheduled_email:
+        with patch("emails.actions.base_action.EmailController.update_scheduled_email") as mock_update_scheduled_email:
             instructor_badge_awarded_update_signal.send(
                 sender=self.award,
                 request=request,
@@ -177,8 +170,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={award!r} "
-            "does not exist."
+            f"Scheduled email for signal {signal} and generic_relation_obj={award!r} " "does not exist."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -222,15 +214,12 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Too many scheduled emails for signal {signal} and "
-            f"generic_relation_obj={award!r}. Can't update them."
+            f"Too many scheduled emails for signal {signal} and " f"generic_relation_obj={award!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()

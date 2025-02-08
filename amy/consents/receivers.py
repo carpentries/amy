@@ -7,9 +7,7 @@ from workshops.signals import person_archived_signal
 
 
 @receiver(post_save, sender=Person)
-def create_unset_consents_on_user_create(
-    sender, instance: Person, created: bool, **kwargs
-):
+def create_unset_consents_on_user_create(sender, instance: Person, created: bool, **kwargs):
     if created:
         Consent.objects.bulk_create(
             Consent(
@@ -23,9 +21,7 @@ def create_unset_consents_on_user_create(
 
 
 @receiver(post_save, sender=Term)
-def create_unset_consents_on_term_create(
-    sender, instance: Term, created: bool, **kwargs
-):
+def create_unset_consents_on_term_create(sender, instance: Term, created: bool, **kwargs):
     if created:
         Consent.objects.bulk_create(
             Consent(

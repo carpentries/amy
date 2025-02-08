@@ -45,15 +45,11 @@ class TestAPIStructure(APITestCase):
             person=self.admin,
             term=self.term,
         ).active()[0]
-        self.consent = Consent.reconsent(
-            consent=old_consent, term_option=self.term.options[0]
-        )
+        self.consent = Consent.reconsent(consent=old_consent, term_option=self.term.options[0])
 
         self.instructor_role = Role.objects.create(name="instructor")
 
-        self.task = Task.objects.create(
-            event=self.event, person=self.admin, role=self.instructor_role
-        )
+        self.task = Task.objects.create(event=self.event, person=self.admin, role=self.instructor_role)
 
         self.client.login(username="admin", password="admin")
 
@@ -112,23 +108,15 @@ class TestAPIStructure(APITestCase):
         #   → event-detail
         event = self.client.get(reverse("api-v1:event-detail", args=[self.event.slug]))
         event_links = {
-            "host": reverse(
-                "api-v1:organization-detail", args=[self.event.host.domain]
-            ),
-            "administrator": reverse(
-                "api-v1:organization-detail", args=[self.event.administrator.domain]
-            ),
+            "host": reverse("api-v1:organization-detail", args=[self.event.host.domain]),
+            "administrator": reverse("api-v1:organization-detail", args=[self.event.administrator.domain]),
             "tasks": reverse("api-v1:event-tasks-list", args=[self.event.slug]),
-            "assigned_to": reverse(
-                "api-v1:person-detail", args=[self.event.assigned_to.pk]
-            ),
+            "assigned_to": reverse("api-v1:person-detail", args=[self.event.assigned_to.pk]),
         }
         for attr, link in event_links.items():
             self.assertIn(link, event.data[attr])
 
-        task = self.client.get(
-            reverse("api-v1:event-tasks-detail", args=[self.event.slug, self.task.pk])
-        )
+        task = self.client.get(reverse("api-v1:event-tasks-detail", args=[self.event.slug, self.task.pk]))
         task_links = {
             "person": reverse("api-v1:person-detail", args=[self.admin.pk]),
         }
@@ -145,9 +133,7 @@ class TestAPIStructure(APITestCase):
         for attr, link in person_links.items():
             self.assertIn(link, person.data[attr])
 
-        award = self.client.get(
-            reverse("api-v1:person-awards-detail", args=[self.admin.pk, self.award.pk])
-        )
+        award = self.client.get(reverse("api-v1:person-awards-detail", args=[self.admin.pk, self.award.pk]))
         award_links = {
             "event": reverse("api-v1:event-detail", args=[self.award.event.slug]),
         }

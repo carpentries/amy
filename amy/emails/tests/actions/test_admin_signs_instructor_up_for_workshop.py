@@ -25,8 +25,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
             admin_signs_instructor_up_for_workshop_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "admin_signs_instructor_up_for_workshop"
+                "EMAIL_MODULE feature flag not set, skipping " "admin_signs_instructor_up_for_workshop"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -35,9 +34,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
 
         # Act
         # attempt to connect the receiver
-        admin_signs_instructor_up_for_workshop_signal.connect(
-            admin_signs_instructor_up_for_workshop_receiver
-        )
+        admin_signs_instructor_up_for_workshop_signal.connect(admin_signs_instructor_up_for_workshop_receiver)
         new_receivers = admin_signs_instructor_up_for_workshop_signal.receivers[:]
 
         # Assert
@@ -48,16 +45,10 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
     def test_action_triggered(self) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="text@example.org")
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person
-        )
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
             signal=admin_signs_instructor_up_for_workshop_signal.signal_name,
@@ -70,9 +61,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_messages_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_messages_action_scheduled:
             admin_signs_instructor_up_for_workshop_signal.send(
                 sender=signup,
                 request=request,
@@ -100,16 +89,10 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
     ) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="test@example.org")
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person
-        )
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person)
         request = RequestFactory().get("/")
 
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
@@ -118,9 +101,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.schedule_email"
-        ) as mock_schedule_email:
+        with patch("emails.actions.base_action.EmailController.schedule_email") as mock_schedule_email:
             admin_signs_instructor_up_for_workshop_signal.send(
                 sender=signup,
                 request=request,
@@ -137,9 +118,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
                 {
                     "person": api_model_url("person", person.pk),
                     "event": api_model_url("event", event.pk),
-                    "instructor_recruitment_signup": api_model_url(
-                        "instructorrecruitmentsignup", signup.pk
-                    ),
+                    "instructor_recruitment_signup": api_model_url("instructorrecruitmentsignup", signup.pk),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -158,21 +137,13 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create()  # no email will cause missing recipients error
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person
-        )
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person)
         request = RequestFactory().get("/")
         signal = admin_signs_instructor_up_for_workshop_signal.signal_name
 
@@ -194,16 +165,10 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="test@example.org")
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person
-        )
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person)
         request = RequestFactory().get("/")
         signal = admin_signs_instructor_up_for_workshop_signal.signal_name
 
@@ -255,9 +220,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiverIntegration(TestBase):
             config=config,
             person=person,
         )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2023, 7, 22), end=date(2023, 7, 23)
-        )
+        event = Event.objects.create(slug="test-event", host=host, start=date(2023, 7, 22), end=date(2023, 7, 23))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
 
         template = EmailTemplate.objects.create(

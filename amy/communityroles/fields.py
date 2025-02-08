@@ -23,9 +23,7 @@ class CustomKeysWidget(forms.TextInput):
         try:
             value_deserialized_dict = dict(value_deserialized)
         except (ValueError, TypeError) as e:
-            logger.debug(
-                f"Failed to load custom key values {value_deserialized} to dict: {e}."
-            )
+            logger.debug(f"Failed to load custom key values {value_deserialized} to dict: {e}.")
             logger.debug("Proceeding without custom key values...")
             value_deserialized_dict = {}
         default_values = dict([(label, "") for label in self.labels])
@@ -48,9 +46,7 @@ class CustomKeysWidget(forms.TextInput):
         context["widget"]["subwidgets"] = subwidgets
         return context
 
-    def value_from_datadict(
-        self, data: QueryDict, files: MultiValueDict, name: str
-    ) -> list[tuple[str, str]]:
+    def value_from_datadict(self, data: QueryDict, files: MultiValueDict, name: str) -> list[tuple[str, str]]:
         """Prepare structure stored in database. The structure is tied to
         `CommunityRole.custom_keys` expected format:
             [
@@ -65,9 +61,7 @@ class CustomKeysWidget(forms.TextInput):
             values = data.get(name, [])
         return json.dumps(list(zip(self.labels, values)))
 
-    def value_omitted_from_data(
-        self, data: QueryDict, files: MultiValueDict, name: str
-    ) -> bool:
+    def value_omitted_from_data(self, data: QueryDict, files: MultiValueDict, name: str) -> bool:
         return False
 
 

@@ -73,6 +73,4 @@ def run() -> None:
         logger,
     )
 
-    deprecate_models(
-        TrainingRequirement, DEPRECATED_TRAINING_REQUIREMENTS, "name", logger
-    )
+    deprecate_models(TrainingRequirement, DEPRECATED_TRAINING_REQUIREMENTS, "name", logger)

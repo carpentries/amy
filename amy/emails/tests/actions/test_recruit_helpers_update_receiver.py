@@ -19,9 +19,7 @@ from workshops.tests.base import TestBase
 
 class TestRecruitHelpersUpdateReceiver(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -35,12 +33,8 @@ class TestRecruitHelpersUpdateReceiver(TestCase):
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
         host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test3"
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=instructor_role
-        )
+        self.host = Person.objects.create(personal="Test", family="Test", email="test2@example.org", username="test3")
+        Task.objects.create(event=self.event, person=self.instructor, role=instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=host_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
@@ -96,9 +90,7 @@ class TestRecruitHelpersUpdateReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_updated"
-        ) as mock_messages_action_updated:
+        with patch("emails.actions.base_action.messages_action_updated") as mock_messages_action_updated:
             recruit_helpers_update_signal.send(
                 sender=self.event,
                 request=request,
@@ -138,9 +130,7 @@ class TestRecruitHelpersUpdateReceiver(TestCase):
         mock_shift_date_and_apply_current_utc_time.return_value = scheduled_at
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.update_scheduled_email"
-        ) as mock_update_scheduled_email:
+        with patch("emails.actions.base_action.EmailController.update_scheduled_email") as mock_update_scheduled_email:
             recruit_helpers_update_signal.send(
                 sender=self.event,
                 request=request,
@@ -199,8 +189,7 @@ class TestRecruitHelpersUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={event!r} "
-            "does not exist."
+            f"Scheduled email for signal {signal} and generic_relation_obj={event!r} " "does not exist."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -244,15 +233,12 @@ class TestRecruitHelpersUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Too many scheduled emails for signal {signal} and "
-            f"generic_relation_obj={event!r}. Can't update them."
+            f"Too many scheduled emails for signal {signal} and " f"generic_relation_obj={event!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
@@ -301,12 +287,8 @@ class TestRecruitHelpersUpdateIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        host_organization = Organization.objects.create(
-            domain="example.com", fullname="Example"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
+        host_organization = Organization.objects.create(domain="example.com", fullname="Example")
         event = Event.objects.create(
             slug="2023-09-14-test-event",
             host=host_organization,
@@ -358,9 +340,7 @@ class TestRecruitHelpersUpdateIntegration(TestBase):
         Task.objects.create(event=event, person=host, role=host_role)
 
         request = RequestFactory().get("/")
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_recruit_helpers_strategy(
                 recruit_helpers_strategy(event),
                 request,

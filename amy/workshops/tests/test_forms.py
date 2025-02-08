@@ -30,9 +30,7 @@ class TestTaskForm(TestCase):
             host=host,
             administrator=instructor_training_organization,
         )
-        self.person = Person.objects.create(
-            personal="Test", family="User", email="test@example.org"
-        )
+        self.person = Person.objects.create(personal="Test", family="User", email="test@example.org")
         role = Role.objects.create(name="instructor", verbose_name="Instructor")
         self.payload = {
             "event": None,

@@ -16,9 +16,7 @@ class PersonsMergedReceiver(BaseAction):
     def get_scheduled_at(self, **kwargs: Unpack[PersonsMergedKwargs]) -> datetime:
         return immediate_action()
 
-    def get_context(
-        self, **kwargs: Unpack[PersonsMergedKwargs]
-    ) -> PersonsMergedContext:
+    def get_context(self, **kwargs: Unpack[PersonsMergedKwargs]) -> PersonsMergedContext:
         person = Person.objects.get(pk=kwargs["selected_person_id"])
         return {
             "person": person,
@@ -36,9 +34,7 @@ class PersonsMergedReceiver(BaseAction):
     ) -> Person:
         return context["person"]
 
-    def get_recipients(
-        self, context: PersonsMergedContext, **kwargs: Unpack[PersonsMergedKwargs]
-    ) -> list[str]:
+    def get_recipients(self, context: PersonsMergedContext, **kwargs: Unpack[PersonsMergedKwargs]) -> list[str]:
         person = context["person"]
         return [person.email] if person.email else []
 

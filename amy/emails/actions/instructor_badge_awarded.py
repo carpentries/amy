@@ -72,7 +72,7 @@ def instructor_badge_awarded_strategy(
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"InstructorBadgeAwarded strategy {result = }")
+    logger.debug(f"InstructorBadgeAwarded strategy {result=}")
     return result
 
 
@@ -154,14 +154,10 @@ def get_recipients_context_json(
 class InstructorBadgeAwardedReceiver(BaseAction):
     signal = instructor_badge_awarded_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> InstructorBadgeAwardedContext:
+    def get_context(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> InstructorBadgeAwardedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorBadgeAwardedContext) -> ContextModel:
@@ -192,14 +188,10 @@ class InstructorBadgeAwardedReceiver(BaseAction):
 class InstructorBadgeAwardedUpdateReceiver(BaseActionUpdate):
     signal = instructor_badge_awarded_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> InstructorBadgeAwardedContext:
+    def get_context(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> InstructorBadgeAwardedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorBadgeAwardedContext) -> ContextModel:
@@ -230,9 +222,7 @@ class InstructorBadgeAwardedUpdateReceiver(BaseActionUpdate):
 class InstructorBadgeAwardedCancelReceiver(BaseActionCancel):
     signal = instructor_badge_awarded_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> InstructorBadgeAwardedContext:
+    def get_context(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> InstructorBadgeAwardedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorBadgeAwardedContext) -> ContextModel:
@@ -243,9 +233,7 @@ class InstructorBadgeAwardedCancelReceiver(BaseActionCancel):
     ) -> ContentType:
         return ContentType.objects.get_for_model(Award)
 
-    def get_generic_relation_pk(
-        self, context: InstructorBadgeAwardedContext, generic_relation_obj: Any
-    ) -> int | Any:
+    def get_generic_relation_pk(self, context: InstructorBadgeAwardedContext, generic_relation_obj: Any) -> int | Any:
         return context["award_id"]
 
     def get_generic_relation_object(

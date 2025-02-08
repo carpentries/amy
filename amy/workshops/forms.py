@@ -236,12 +236,8 @@ def continent_list():
 class WorkshopStaffForm(forms.Form):
     """Represent instructor matching form."""
 
-    latitude = forms.FloatField(
-        label="Latitude", min_value=-90.0, max_value=90.0, required=False
-    )
-    longitude = forms.FloatField(
-        label="Longitude", min_value=-180.0, max_value=180.0, required=False
-    )
+    latitude = forms.FloatField(label="Latitude", min_value=-90.0, max_value=90.0, required=False)
+    longitude = forms.FloatField(label="Longitude", min_value=-180.0, max_value=180.0, required=False)
     airport = forms.ModelChoiceField(
         label="Airport",
         required=False,
@@ -284,23 +280,15 @@ class WorkshopStaffForm(forms.Form):
         required=False,
     )
 
-    is_instructor = forms.BooleanField(
-        required=False, label="Has active Instructor Community Role"
-    )
+    is_instructor = forms.BooleanField(required=False, label="Has active Instructor Community Role")
     is_trainer = forms.BooleanField(required=False, label="Has Trainer badge")
 
     GENDER_CHOICES = ((None, "---------"),) + Person.GENDER_CHOICES
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
 
-    was_helper = forms.BooleanField(
-        required=False, label="Was helper at least once before"
-    )
-    was_organizer = forms.BooleanField(
-        required=False, label="Was organizer at least once before"
-    )
-    is_in_progress_trainee = forms.BooleanField(
-        required=False, label="Is an in-progress instructor trainee"
-    )
+    was_helper = forms.BooleanField(required=False, label="Was helper at least once before")
+    was_organizer = forms.BooleanField(required=False, label="Was organizer at least once before")
+    is_in_progress_trainee = forms.BooleanField(required=False, label="Is an in-progress instructor trainee")
 
     def __init__(self, *args, **kwargs):
         """Build form layout dynamically."""
@@ -348,19 +336,13 @@ class WorkshopStaffForm(forms.Form):
         # if searching by coordinates, then there must be both lat & lng
         # present
         if lat ^ lng:
-            raise ValidationError(
-                "Must specify both latitude and longitude if searching by "
-                "coordinates"
-            )
+            raise ValidationError("Must specify both latitude and longitude if searching by " "coordinates")
 
         # User must search by airport, or country, or coordinates, or none
         # of them. Sum of boolean elements must be equal 0 (if general search)
         # or 1 (if searching by airport OR country OR lat/lng).
         if sum([airport, country, latlng]) not in [0, 1]:
-            raise ValidationError(
-                "Must specify an airport OR a country, OR use coordinates, OR "
-                "none of them."
-            )
+            raise ValidationError("Must specify an airport OR a country, OR use coordinates, OR " "none of them.")
         return cleaned_data
 
 
@@ -418,18 +400,14 @@ class EventForm(forms.ModelForm):
 
     comment = MarkdownxFormField(
         label="Comment",
-        help_text="Any content in here will be added to comments after this "
-        "event is saved.",
+        help_text="Any content in here will be added to comments after this " "event is saved.",
         widget=forms.Textarea,
         required=False,
     )
 
     instructors_pre = forms.URLField(
         label="Assessment survey for instructors:",
-        help_text=(
-            "Auto-generated as long as the event is NOT marked as complete and "
-            "it has a slug."
-        ),
+        help_text=("Auto-generated as long as the event is NOT marked as complete and " "it has a slug."),
         required=False,
     )
 
@@ -653,9 +631,7 @@ class EventCreateForm(EventForm):
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
     SEAT_MEMBERSHIP_HELP_TEXT = (
         "{}<br><b>Hint:</b> you can use input format YYYY-MM-DD to display "
-        "memberships available on that date.".format(
-            Task._meta.get_field("seat_membership").help_text
-        )
+        "memberships available on that date.".format(Task._meta.get_field("seat_membership").help_text)
     )
     seat_membership = forms.ModelChoiceField(
         label=Task._meta.get_field("seat_membership").verbose_name,
@@ -679,12 +655,8 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             "seat_open_training",
         ]
         widgets = {
-            "person": ModelSelect2Widget(
-                data_view="person-lookup", attrs=SELECT2_SIDEBAR
-            ),
-            "event": ModelSelect2Widget(
-                data_view="event-lookup", attrs=SELECT2_SIDEBAR
-            ),
+            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),
+            "event": ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),
             "seat_public": forms.RadioSelect(),
         }
 
@@ -701,8 +673,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         }
         if failed_trainings:
             bootstrap_kwargs["submit_onclick"] = (
-                'return confirm("Warning: Trainee failed previous training(s).'
-                ' Are you sure you want to continue?");'
+                'return confirm("Warning: Trainee failed previous training(s).' ' Are you sure you want to continue?");'
             )
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 
@@ -726,14 +697,11 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
                 person=person, config__name__iexact=community_role_name
             ).select_related("config")
 
-            no_active_role = not any(
-                role.is_active() for role in person_community_roles
-            )
+            no_active_role = not any(role.is_active() for role in person_community_roles)
 
             if person_community_roles and no_active_role:
                 errors["role"] = ValidationError(
-                    f'{person} has inactive "{community_role_name}" community role(s) '
-                    'related to "{role.name}" task.'
+                    f'{person} has inactive "{community_role_name}" community role(s) ' 'related to "{role.name}" task.'
                 )
 
         # raise errors if any present
@@ -817,9 +785,7 @@ class PersonForm(forms.ModelForm):
         if gender == GenderMixin.OTHER and not gender_other:
             errors["gender"] = ValidationError("This field is required.")
         elif gender != GenderMixin.OTHER and gender_other:
-            errors["gender"] = ValidationError(
-                'If you entered data in "Other" field, please select that ' "option."
-            )
+            errors["gender"] = ValidationError('If you entered data in "Other" field, please select that ' "option.")
 
         # raise errors if any present
         if errors:
@@ -891,13 +857,9 @@ class PersonsMergeForm(forms.Form):
     THREE = TWO + (("combine", "Combine"),)
     DEFAULT = "obj_a"
 
-    person_a = forms.ModelChoiceField(
-        queryset=Person.objects.all(), widget=forms.HiddenInput
-    )
+    person_a = forms.ModelChoiceField(queryset=Person.objects.all(), widget=forms.HiddenInput)
 
-    person_b = forms.ModelChoiceField(
-        queryset=Person.objects.all(), widget=forms.HiddenInput
-    )
+    person_b = forms.ModelChoiceField(queryset=Person.objects.all(), widget=forms.HiddenInput)
 
     id = forms.ChoiceField(
         choices=TWO,
@@ -1039,9 +1001,9 @@ class PersonsMergeForm(forms.Form):
 
 class AwardForm(WidgetOverrideMixin, forms.ModelForm):
     badge = forms.ModelChoiceField(
-        queryset=Badge.objects.exclude(
-            name__in=["lc-instructor", "dc-instructor", "swc-instructor"]
-        ).order_by("title", "name"),
+        queryset=Badge.objects.exclude(name__in=["lc-instructor", "dc-instructor", "swc-instructor"]).order_by(
+            "title", "name"
+        ),
         label="Badge",
         required=True,
     )
@@ -1050,15 +1012,9 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
         model = Award
         fields = "__all__"
         widgets = {
-            "person": ModelSelect2Widget(
-                data_view="person-lookup", attrs=SELECT2_SIDEBAR
-            ),
-            "event": ModelSelect2Widget(
-                data_view="event-lookup-for-awards", attrs=SELECT2_SIDEBAR
-            ),
-            "awarded_by": ModelSelect2Widget(
-                data_view="admin-lookup", attrs=SELECT2_SIDEBAR
-            ),
+            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),
+            "event": ModelSelect2Widget(data_view="event-lookup-for-awards", attrs=SELECT2_SIDEBAR),
+            "awarded_by": ModelSelect2Widget(data_view="admin-lookup", attrs=SELECT2_SIDEBAR),
         }
 
     class Media:
@@ -1074,8 +1030,7 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
         }
         if failed_trainings:
             bootstrap_kwargs["submit_onclick"] = (
-                'return confirm("Warning: Trainee failed previous training(s).'
-                ' Are you sure you want to continue?");'
+                'return confirm("Warning: Trainee failed previous training(s).' ' Are you sure you want to continue?");'
             )
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 
@@ -1142,13 +1097,9 @@ class EventsMergeForm(forms.Form):
     THREE = TWO + (("combine", "Combine"),)
     DEFAULT = "obj_a"
 
-    event_a = forms.ModelChoiceField(
-        queryset=Event.objects.all(), widget=forms.HiddenInput
-    )
+    event_a = forms.ModelChoiceField(queryset=Event.objects.all(), widget=forms.HiddenInput)
 
-    event_b = forms.ModelChoiceField(
-        queryset=Event.objects.all(), widget=forms.HiddenInput
-    )
+    event_b = forms.ModelChoiceField(queryset=Event.objects.all(), widget=forms.HiddenInput)
 
     id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     slug = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
@@ -1164,12 +1115,8 @@ class EventsMergeForm(forms.Form):
     )
     start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    host = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Host Site"
-    )
-    sponsor = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Organiser"
-    )
+    host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Host Site")
+    sponsor = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect, label="Organiser")
     administrator = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,

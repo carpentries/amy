@@ -57,9 +57,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_messages_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_messages_action_scheduled:
             instructor_badge_awarded_signal.send(
                 sender=award,
                 request=request,
@@ -94,9 +92,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.schedule_email"
-        ) as mock_schedule_email:
+        with patch("emails.actions.base_action.EmailController.schedule_email") as mock_schedule_email:
             instructor_badge_awarded_signal.send(
                 sender=award,
                 request=request,
@@ -130,9 +126,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         badge = Badge.objects.create(name="instructor")
         person = Person.objects.create()  # no email will cause missing recipients error

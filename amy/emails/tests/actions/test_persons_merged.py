@@ -23,9 +23,7 @@ class TestPersonsMergedReceiver(TestCase):
             # Act
             persons_merged_receiver(None, request=request)
             # Assert
-            mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping persons_merged"
-            )
+            mock_logger.debug.assert_called_once_with("EMAIL_MODULE feature flag not set, skipping persons_merged")
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
@@ -56,9 +54,7 @@ class TestPersonsMergedReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_messages_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_messages_action_scheduled:
             persons_merged_signal.send(
                 sender=person,
                 request=request,
@@ -92,9 +88,7 @@ class TestPersonsMergedReceiver(TestCase):
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.schedule_email"
-        ) as mock_schedule_email:
+        with patch("emails.actions.base_action.EmailController.schedule_email") as mock_schedule_email:
             persons_merged_signal.send(
                 sender=person,
                 request=request,
@@ -123,9 +117,7 @@ class TestPersonsMergedReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         person = Person.objects.create()  # no email will cause missing recipients error
         request = RequestFactory().get("/")

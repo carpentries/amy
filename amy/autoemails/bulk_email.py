@@ -23,8 +23,7 @@ def send_bulk_email(
     object_: Any,
 ):
     emails_to_send = [
-        emails[i : i + settings.BULK_EMAIL_LIMIT]  # noqa
-        for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)
+        emails[i : i + settings.BULK_EMAIL_LIMIT] for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)  # noqa
     ]
     for emails in emails_to_send:
         jobs, rqjobs = ActionManageMixin.add(

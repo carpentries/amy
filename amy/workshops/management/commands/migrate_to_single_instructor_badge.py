@@ -61,13 +61,10 @@ class Command(BaseCommand):
         instructors = self.find_instructors()
         self.log(
             no_output,
-            f"Found {len(instructors)} instructors with at least one SWC/DC/LC"
-            " instructor badge.",
+            f"Found {len(instructors)} instructors with at least one SWC/DC/LC" " instructor badge.",
         )
 
-        new_awards = [
-            self.create_instructor_award(instructor) for instructor in instructors
-        ]
+        new_awards = [self.create_instructor_award(instructor) for instructor in instructors]
         self.log(no_output, f"Bulk-creating {len(new_awards)} new Instructor awards...")
 
         Award.objects.bulk_create(new_awards)

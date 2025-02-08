@@ -17,9 +17,7 @@ from workshops.tests.base import TestBase
 
 class TestRecruitHelpersCancelReceiver(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -33,12 +31,8 @@ class TestRecruitHelpersCancelReceiver(TestCase):
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
         host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test3"
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=instructor_role
-        )
+        self.host = Person.objects.create(personal="Test", family="Test", email="test2@example.org", username="test3")
+        Task.objects.create(event=self.event, person=self.instructor, role=instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=host_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
@@ -94,9 +88,7 @@ class TestRecruitHelpersCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_cancelled"
-        ) as mock_messages_action_cancelled:
+        with patch("emails.actions.base_action.messages_action_cancelled") as mock_messages_action_cancelled:
             recruit_helpers_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -132,9 +124,7 @@ class TestRecruitHelpersCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             recruit_helpers_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -177,9 +167,7 @@ class TestRecruitHelpersCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             recruit_helpers_cancel_signal.send(
                 sender=self.event,
                 request=request,
@@ -220,9 +208,7 @@ class TestRecruitHelpersCancelIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -274,9 +260,7 @@ class TestRecruitHelpersCancelIntegration(TestBase):
 
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_recruit_helpers_strategy(
                 recruit_helpers_strategy(event),
                 request,

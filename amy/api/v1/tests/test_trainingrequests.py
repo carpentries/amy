@@ -85,9 +85,7 @@ class TestListingTrainingRequests(APITestCase):
             code_of_conduct_agreement=True,
         )
         self.tr1.save()
-        self.tr1.domains.set(
-            KnowledgeDomain.objects.filter(name__in=["Chemistry", "Medicine"])
-        )
+        self.tr1.domains.set(KnowledgeDomain.objects.filter(name__in=["Chemistry", "Medicine"]))
         # no previous involvement
         self.tr1.previous_involvement.clear()
 
@@ -134,9 +132,7 @@ class TestListingTrainingRequests(APITestCase):
         )
         self.tr2.save()
         self.tr2.domains.set(KnowledgeDomain.objects.filter(name__in=["Chemistry"]))
-        self.tr2.previous_involvement.set(
-            Role.objects.filter(name__in=["learner", "helper"])
-        )
+        self.tr2.previous_involvement.set(Role.objects.filter(name__in=["learner", "helper"]))
 
         # add TTT event self.admin was matched to
         self.ttt_event = Event(
@@ -165,12 +161,8 @@ class TestListingTrainingRequests(APITestCase):
                 # due to "strange feature" in DRF, the DateTimeField serialized
                 # representation gets rid of '+00:00' and changes it to 'Z'
                 # if the representation is in UTC
-                "created_at": self.tr1.created_at.astimezone(current_tz)
-                .isoformat()
-                .replace("+00:00", "Z"),
-                "last_updated_at": self.tr1.last_updated_at.astimezone(current_tz)
-                .isoformat()
-                .replace("+00:00", "Z"),
+                "created_at": self.tr1.created_at.astimezone(current_tz).isoformat().replace("+00:00", "Z"),
+                "last_updated_at": self.tr1.last_updated_at.astimezone(current_tz).isoformat().replace("+00:00", "Z"),
                 "state": "Pending",
                 "person": None,
                 "person_id": None,
@@ -220,12 +212,8 @@ class TestListingTrainingRequests(APITestCase):
                 # due to "strange feature" in DRF, the DateTimeField serialized
                 # representation gets rid of '+00:00' and changes it to 'Z'
                 # if the representation is in UTC
-                "created_at": self.tr2.created_at.astimezone(current_tz)
-                .isoformat()
-                .replace("+00:00", "Z"),
-                "last_updated_at": self.tr2.last_updated_at.astimezone(current_tz)
-                .isoformat()
-                .replace("+00:00", "Z"),
+                "created_at": self.tr2.created_at.astimezone(current_tz).isoformat().replace("+00:00", "Z"),
+                "last_updated_at": self.tr2.last_updated_at.astimezone(current_tz).isoformat().replace("+00:00", "Z"),
                 "state": "Accepted",
                 "person": "Super User",
                 "person_id": self.admin.pk,

@@ -28,9 +28,7 @@ class TestMembershipFilter(TestBase):
             consortium=True,
             public_status="public",
         )
-        self.member = Member.objects.create(
-            membership=self.membership, organization=self.org_alpha, role=member_role
-        )
+        self.member = Member.objects.create(membership=self.membership, organization=self.org_alpha, role=member_role)
         self.membership2 = Membership.objects.create(
             name="To Be Filtered Out",
             variant="Silver",
@@ -214,9 +212,7 @@ class TestMembershipFilter(TestBase):
 
         # Act
         for field in fields.keys():
-            results[field] = self.filterset.filters[filter_name].filter(
-                self.qs, [field]
-            )
+            results[field] = self.filterset.filters[filter_name].filter(self.qs, [field])
 
         # Assert
         # we don't have any unexpected fields
@@ -248,9 +244,7 @@ class TestMembershipTrainingsFilter(TestBase):
             contribution_type="Financial",
             public_instructor_training_seats=1,
         )
-        self.member = Member.objects.create(
-            membership=self.membership, organization=self.org_alpha, role=member_role
-        )
+        self.member = Member.objects.create(membership=self.membership, organization=self.org_alpha, role=member_role)
         self.membership2 = Membership.objects.create(
             name="To Be Filtered Out",
             variant="Silver",
@@ -385,9 +379,7 @@ class TestMembershipTrainingsFilter(TestBase):
 
         # Act
         for field in fields.keys():
-            results[field] = self.filterset.filters[filter_name].filter(
-                self.qs, [field]
-            )
+            results[field] = self.filterset.filters[filter_name].filter(self.qs, [field])
 
         # Assert
         # we don't have any unexpected fields

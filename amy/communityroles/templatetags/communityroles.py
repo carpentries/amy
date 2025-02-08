@@ -19,7 +19,5 @@ def get_community_role(person: Person, role_name: str) -> Optional[CommunityRole
 
 @register.simple_tag
 def community_role_human_dates(community_role: CommunityRole) -> str:
-    result = human_daterange(
-        community_role.start, community_role.end, no_date_right="present"
-    )
+    result = human_daterange(community_role.start, community_role.end, no_date_right="present")
     return result

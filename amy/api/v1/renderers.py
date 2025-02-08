@@ -56,9 +56,7 @@ class TrainingRequestCSVColumns:
 
     def __init__(self):
         self.header = self.serializer.Meta.fields
-        self.labels = {
-            k: v for k, v in self.translation_labels.items() if k in self.header
-        }
+        self.labels = {k: v for k, v in self.translation_labels.items() if k in self.header}
 
 
 class TrainingRequestCSVRenderer(CSVRenderer, TrainingRequestCSVColumns):

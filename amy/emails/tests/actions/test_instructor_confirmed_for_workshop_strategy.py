@@ -29,9 +29,7 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
         swc_tag = Tag.objects.create(name="SWC")
         self.event.tags.set([swc_tag])
         self.person = Person.objects.create(email="test@example.org")
-        self.recruitment = InstructorRecruitment.objects.create(
-            event=self.event, notes="Test notes"
-        )
+        self.recruitment = InstructorRecruitment.objects.create(event=self.event, notes="Test notes")
         self.signup = InstructorRecruitmentSignup.objects.create(
             recruitment=self.recruitment, person=self.person, state="a"
         )
@@ -106,21 +104,12 @@ class TestInstructorConfirmedForWorkshopStrategy(TestCase):
 class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        self.event = Event.objects.create(
-            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
-        )
+        self.event = Event.objects.create(slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5))
         self.person = Person.objects.create(email="test@example.org")
-        self.recruitment = InstructorRecruitment.objects.create(
-            event=self.event, notes="Test notes"
-        )
-        self.signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=self.recruitment, person=self.person
-        )
+        self.recruitment = InstructorRecruitment.objects.create(event=self.event, notes="Test notes")
+        self.signup = InstructorRecruitmentSignup.objects.create(recruitment=self.recruitment, person=self.person)
 
-    @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_signal"
-    )
+    @patch("emails.actions.instructor_confirmed_for_workshop." "instructor_confirmed_for_workshop_signal")
     def test_strategy_calls_create_signal(
         self,
         mock_instructor_confirmed_for_workshop_signal,
@@ -151,10 +140,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
             instructor_recruitment_signup_id=self.signup.pk,
         )
 
-    @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_update_signal"
-    )
+    @patch("emails.actions.instructor_confirmed_for_workshop." "instructor_confirmed_for_workshop_update_signal")
     def test_strategy_calls_update_signal(
         self,
         mock_update_signal,
@@ -185,10 +171,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
             instructor_recruitment_signup_id=self.signup.pk,
         )
 
-    @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_cancel_signal"
-    )
+    @patch("emails.actions.instructor_confirmed_for_workshop." "instructor_confirmed_for_workshop_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
         mock_cancel_signal,
@@ -220,18 +203,9 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         )
 
     @patch("emails.actions.base_strategy.logger")
-    @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_signal"
-    )
-    @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_update_signal"
-    )
-    @patch(
-        "emails.actions.instructor_confirmed_for_workshop."
-        "instructor_confirmed_for_workshop_cancel_signal"
-    )
+    @patch("emails.actions.instructor_confirmed_for_workshop." "instructor_confirmed_for_workshop_signal")
+    @patch("emails.actions.instructor_confirmed_for_workshop." "instructor_confirmed_for_workshop_update_signal")
+    @patch("emails.actions.instructor_confirmed_for_workshop." "instructor_confirmed_for_workshop_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
         mock_instructor_confirmed_for_workshop_cancel_signal,
@@ -258,9 +232,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         mock_instructor_confirmed_for_workshop_signal.send.assert_not_called()
         mock_instructor_confirmed_for_workshop_update_signal.send.assert_not_called()
         mock_instructor_confirmed_for_workshop_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {self.signup} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {self.signup} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -268,9 +240,7 @@ class TestRunInstructorConfirmedForWorkshopStrategy(TestCase):
         request = RequestFactory().get("/")
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_instructor_confirmed_for_workshop_strategy(
                 strategy,
                 request,

@@ -31,9 +31,7 @@ class SignalNameEnum(StrEnum):
     persons_merged = "persons_merged"
     instructor_task_created_for_workshop = "instructor_task_created_for_workshop"
     instructor_training_approaching = "instructor_training_approaching"
-    instructor_training_completed_not_badged = (
-        "instructor_training_completed_not_badged"
-    )
+    instructor_training_completed_not_badged = "instructor_training_completed_not_badged"
     new_membership_onboarding = "new_membership_onboarding"
     host_instructors_introduction = "host_instructors_introduction"
     recruit_helpers = "recruit_helpers"
@@ -43,9 +41,7 @@ class SignalNameEnum(StrEnum):
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
-        return [
-            (signal_name.value, signal_name.value) for signal_name in SignalNameEnum
-        ]
+        return [(signal_name.value, signal_name.value) for signal_name in SignalNameEnum]
 
 
 class Signal(DjangoSignal):
@@ -72,9 +68,7 @@ INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME = "instructor_badge_awarded"
     instructor_badge_awarded_signal,
     instructor_badge_awarded_update_signal,
     instructor_badge_awarded_cancel_signal,
-) = triple_signals(
-    SignalNameEnum.instructor_badge_awarded, InstructorBadgeAwardedContext
-)
+) = triple_signals(SignalNameEnum.instructor_badge_awarded, InstructorBadgeAwardedContext)
 INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME = "instructor_confirmed_for_workshop"
 (
     instructor_confirmed_for_workshop_signal,
@@ -105,9 +99,7 @@ persons_merged_signal = Signal(
     signal_name=SignalNameEnum.persons_merged,
     context_type=PersonsMergedContext,
 )
-INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME = (
-    "instructor_task_created_for_workshop"
-)
+INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME = "instructor_task_created_for_workshop"
 (
     instructor_task_created_for_workshop_signal,
     instructor_task_created_for_workshop_update_signal,
@@ -123,14 +115,10 @@ INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME = "instructor_training_approaching"
     instructor_training_approaching_signal,
     instructor_training_approaching_update_signal,
     instructor_training_approaching_cancel_signal,
-) = triple_signals(
-    INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME, InstructorTrainingApproachingContext
-)
+) = triple_signals(INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME, InstructorTrainingApproachingContext)
 
 # Runs 2 months after completing training.
-INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME = (
-    "instructor_training_completed_not_badged"
-)
+INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME = "instructor_training_completed_not_badged"
 (
     instructor_training_completed_not_badged_signal,
     instructor_training_completed_not_badged_update_signal,
@@ -145,18 +133,14 @@ NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME = "new_membership_onboarding"
     new_membership_onboarding_signal,
     new_membership_onboarding_update_signal,
     new_membership_onboarding_cancel_signal,
-) = triple_signals(
-    NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME, NewMembershipOnboardingContext
-)
+) = triple_signals(NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME, NewMembershipOnboardingContext)
 
 HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME = "host_instructors_introduction"
 (
     host_instructors_introduction_signal,
     host_instructors_introduction_update_signal,
     host_instructors_introduction_cancel_signal,
-) = triple_signals(
-    HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME, HostInstructorsIntroductionContext
-)
+) = triple_signals(HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME, HostInstructorsIntroductionContext)
 
 RECRUIT_HELPERS_SIGNAL_NAME = "recruit_helpers"
 (

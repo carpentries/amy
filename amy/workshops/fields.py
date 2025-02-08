@@ -104,9 +104,7 @@ class SafeModelChoiceField(SafeLabelFromInstanceMixin, forms.ModelChoiceField):
     pass
 
 
-class SafeModelMultipleChoiceField(
-    SafeLabelFromInstanceMixin, forms.ModelMultipleChoiceField
-):
+class SafeModelMultipleChoiceField(SafeLabelFromInstanceMixin, forms.ModelMultipleChoiceField):
     pass
 
 
@@ -117,9 +115,7 @@ class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
         # popover by clicking will automatically select the clicked item)
         data = (
             '<a tabindex="0" role="button" data-toggle="tooltip" '
-            'data-placement="top" title="{description}">{obj}</a>'.format(
-                obj=obj, description=obj.description
-            )
+            'data-placement="top" title="{description}">{obj}</a>'.format(obj=obj, description=obj.description)
         )
         return super().label_from_instance(data)
 
@@ -152,15 +148,11 @@ class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):
     pass
 
 
-class ModelSelect2Widget(
-    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2Widget
-):
+class ModelSelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2Widget):
     pass
 
 
-class ModelSelect2MultipleWidget(
-    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2MultipleWidget
-):
+class ModelSelect2MultipleWidget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2MultipleWidget):
     pass
 
 
@@ -204,15 +196,11 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
             values = []
 
         selected = set(values)
-        subgroup = [
-            self.create_option(name, v, v, selected, i) for i, v in enumerate(values)
-        ]
+        subgroup = [self.create_option(name, v, v, selected, i) for i, v in enumerate(values)]
         return [(None, subgroup, 0)]
 
 
-class HeavySelect2Widget(
-    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget
-):
+class HeavySelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget):
     pass
 
 

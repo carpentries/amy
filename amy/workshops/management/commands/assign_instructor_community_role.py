@@ -14,9 +14,7 @@ class Command(BaseCommand):
     def find_instructor_awards(self) -> QuerySet[Award]:
         return Award.objects.filter(badge=self.instructor_badge)
 
-    def exclude_instructor_community_roles(
-        self, qs: QuerySet[Award]
-    ) -> QuerySet[Award]:
+    def exclude_instructor_community_roles(self, qs: QuerySet[Award]) -> QuerySet[Award]:
         return qs.exclude(person__communityrole__config=self.community_role_config)
 
     def create_instructor_community_role(self, award: Award) -> CommunityRole:
@@ -37,9 +35,7 @@ class Command(BaseCommand):
 
         self.log(no_output, "Starting migration to a single instructor badge...")
 
-        instructor_awards = self.exclude_instructor_community_roles(
-            self.find_instructor_awards()
-        )
+        instructor_awards = self.exclude_instructor_community_roles(self.find_instructor_awards())
         self.log(
             no_output,
             f"Found {len(instructor_awards)} instructors with the Instructor Badge and"
@@ -47,13 +43,11 @@ class Command(BaseCommand):
         )
 
         new_community_roles = [
-            self.create_instructor_community_role(instructor_award)
-            for instructor_award in instructor_awards
+            self.create_instructor_community_role(instructor_award) for instructor_award in instructor_awards
         ]
         self.log(
             no_output,
-            f"Bulk-creating {len(new_community_roles)} new Instructor Community"
-            " Roles...",
+            f"Bulk-creating {len(new_community_roles)} new Instructor Community" " Roles...",
         )
 
         CommunityRole.objects.bulk_create(new_community_roles)

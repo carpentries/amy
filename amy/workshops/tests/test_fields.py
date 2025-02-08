@@ -61,12 +61,8 @@ class TestSelect2TagWidget(TestBase):
         )
 
         # correct input (2 values)
-        option1 = self.widget.create_option(
-            "name", "Harry", "Harry", set(["Harry", "Ron"]), 0
-        )
-        option2 = self.widget.create_option(
-            "name", "Ron", "Ron", set(["Harry", "Ron"]), 1
-        )
+        option1 = self.widget.create_option("name", "Harry", "Harry", set(["Harry", "Ron"]), 0)
+        option2 = self.widget.create_option("name", "Ron", "Ron", set(["Harry", "Ron"]), 1)
         self.assertEqual(
             self.widget.optgroups("name", ["Harry;Ron"]),
             [

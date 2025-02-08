@@ -22,10 +22,7 @@ class SaveSessionFeatureFlagMiddleware:
 
             # disable the feature flag in session of the request parameter is set to
             # "false"
-            elif (
-                request.session.get(param_name, None) is True
-                and request.GET.get(param_name, "").lower() == "false"
-            ):
+            elif request.session.get(param_name, None) is True and request.GET.get(param_name, "").lower() == "false":
                 self.disable_feature_flag(request, param_name)
 
         return self.get_response(request)

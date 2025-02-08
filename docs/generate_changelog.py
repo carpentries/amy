@@ -33,10 +33,7 @@ def search_closed_prs_in_milestone(
         raise RuntimeError("Too many pull request pages calls")
 
     Q = f"repo:{repository} type:pr is:merged milestone:{milestone}"
-    URL = (
-        f"{API_SEARCH_URL}/issues?q={Q}&sort=created&order=desc"
-        f"&per_page={per_page}&page={page}"
-    )
+    URL = f"{API_SEARCH_URL}/issues?q={Q}&sort=created&order=desc" f"&per_page={per_page}&page={page}"
     response = requests.get(URL)
     response.raise_for_status()
 
@@ -44,9 +41,7 @@ def search_closed_prs_in_milestone(
     results = json["items"]
 
     if len(results) >= per_page:
-        return results + search_closed_prs_in_milestone(
-            milestone, repository, page=page + 1, per_page=per_page
-        )
+        return results + search_closed_prs_in_milestone(milestone, repository, page=page + 1, per_page=per_page)
     return results
 
 
@@ -67,10 +62,7 @@ def pretty_milestone(milestone: dict) -> str:
 
 
 def pretty_pull_request(pr: dict) -> str:
-    return (
-        f"* {pr['title']} - [#{pr['number']}]({pr['html_url']})"
-        f" by @{pr['user']['login']}"
-    )
+    return f"* {pr['title']} - [#{pr['number']}]({pr['html_url']})" f" by @{pr['user']['login']}"
 
 
 def find_milestone_number_in_pr(pr: dict) -> int:
@@ -88,19 +80,11 @@ def find_bugs_features_in_prs(prs: list[dict]) -> tuple[list[dict], list[dict]]:
 
 
 def pretty_bugfixes(bugfixes: list[dict]) -> str:
-    return (
-        "### Bugfixes\n"
-        + "\n".join(pretty_pull_request(bugfix) for bugfix in bugfixes)
-        + "\n"
-    )
+    return "### Bugfixes\n" + "\n".join(pretty_pull_request(bugfix) for bugfix in bugfixes) + "\n"
 
 
 def pretty_features(features: list[dict]) -> str:
-    return (
-        "### Features\n"
-        + "\n".join(pretty_pull_request(feature) for feature in features)
-        + "\n"
-    )
+    return "### Features\n" + "\n".join(pretty_pull_request(feature) for feature in features) + "\n"
 
 
 def main() -> None:

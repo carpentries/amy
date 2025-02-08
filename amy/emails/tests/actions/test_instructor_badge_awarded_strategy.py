@@ -83,9 +83,7 @@ class TestInstructorBadgeAwardedStrategy(TestCase):
         award.delete()
 
         # Act
-        result = instructor_badge_awarded_strategy(
-            award=None, person=self.person, optional_award_pk=award_pk
-        )
+        result = instructor_badge_awarded_strategy(award=None, person=self.person, optional_award_pk=award_pk)
 
         # Assert
         self.assertEqual(result, StrategyEnum.CANCEL)
@@ -123,9 +121,7 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
             person_id=self.person.pk,
         )
 
-    @patch(
-        "emails.actions.instructor_badge_awarded.instructor_badge_awarded_update_signal"
-    )
+    @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_update_signal")
     def test_strategy_calls_update_signal(
         self,
         mock_instructor_badge_awarded_update_signal,
@@ -151,9 +147,7 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
             person_id=self.person.pk,
         )
 
-    @patch(
-        "emails.actions.instructor_badge_awarded.instructor_badge_awarded_cancel_signal"
-    )
+    @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
         mock_instructor_badge_awarded_cancel_signal,
@@ -181,12 +175,8 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
 
     @patch("emails.actions.base_strategy.logger")
     @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_signal")
-    @patch(
-        "emails.actions.instructor_badge_awarded.instructor_badge_awarded_update_signal"
-    )
-    @patch(
-        "emails.actions.instructor_badge_awarded.instructor_badge_awarded_cancel_signal"
-    )
+    @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_update_signal")
+    @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
         mock_instructor_badge_awarded_cancel_signal,
@@ -211,9 +201,7 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
         mock_instructor_badge_awarded_signal.send.assert_not_called()
         mock_instructor_badge_awarded_update_signal.send.assert_not_called()
         mock_instructor_badge_awarded_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {self.person} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {self.person} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -221,9 +209,7 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
         request = RequestFactory().get("/")
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_instructor_badge_awarded_strategy(
                 strategy,
                 request,

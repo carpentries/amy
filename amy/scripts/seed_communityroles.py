@@ -208,9 +208,7 @@ def run() -> None:
         logger,
     )
 
-    deprecate_models(
-        CommunityRoleConfig, DEPRECATED_COMMUNITY_ROLE_CONFIGS, "name", logger
-    )
+    deprecate_models(CommunityRoleConfig, DEPRECATED_COMMUNITY_ROLE_CONFIGS, "name", logger)
     deprecate_models(
         CommunityRoleInactivation,
         DEPRECATED_COMMUNITY_ROLE_INACTIVATIONS,

@@ -76,9 +76,7 @@ class ActionManageMixin:
             # enqueue job at specified timestamp with metadata
             logger.debug("%s: enqueueing", action_name)
             job = scheduler.enqueue_in(launch_at, action, meta=meta)
-            scheduled_at = scheduled_execution_time(
-                job.get_id(), scheduler=scheduler, naive=False
-            )
+            scheduled_at = scheduled_execution_time(job.get_id(), scheduler=scheduler, naive=False)
             logger.debug("%s: job created [%r]", action_name, job)
 
             if object_:
@@ -130,12 +128,8 @@ class ActionManageMixin:
         return created_jobs, created_rqjobs
 
     @staticmethod
-    def bulk_schedule_message(
-        request, num_emails: int, trigger: Trigger, job: Job
-    ) -> None:
-        scheduled_at = scheduled_execution_time(
-            job.get_id(), scheduler=scheduler, naive=False
-        )
+    def bulk_schedule_message(request, num_emails: int, trigger: Trigger, job: Job) -> None:
+        scheduled_at = scheduled_execution_time(job.get_id(), scheduler=scheduler, naive=False)
         messages.info(
             request,
             format_html(
