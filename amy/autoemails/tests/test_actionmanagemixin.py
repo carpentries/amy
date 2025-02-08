@@ -1,9 +1,8 @@
+# flake8: noqa
 from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock
 
 from django.test import RequestFactory, TestCase, tag
-from rq.exceptions import NoSuchJobError
-from rq_scheduler.utils import to_unix
 
 from autoemails.actions import NewInstructorAction
 from autoemails.base_views import ActionManageMixin
