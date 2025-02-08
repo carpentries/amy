@@ -118,7 +118,7 @@ known_first_party = [
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main"]
-python_version = 3.11
+python_version = "3.11"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_calls = true
