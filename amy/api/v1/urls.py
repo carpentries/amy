@@ -30,7 +30,6 @@ tasks_router = routers.NestedSimpleRouter(router, "events", lookup="event")
 tasks_router.register("tasks", views.TaskViewSet, basename="event-tasks")
 router.register("organizations", views.OrganizationViewSet)
 router.register("airports", views.AirportViewSet)
-router.register("emailtemplates", views.EmailTemplateViewSet, basename="emailtemplate")
 router.register("terms", views.TermViewSet)
 router.register(
     "communityroleconfigs",

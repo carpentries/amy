@@ -15,8 +15,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.forms import GenericEmailScheduleForm
-from autoemails.models import EmailTemplate
 from consents.models import Term, TermOption, TrainingRequestConsent
 from consents.util import reconsent_for_term_option_type
 from emails.actions.new_self_organised_workshop import new_self_organised_workshop_check
@@ -133,10 +131,6 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
 
         context["person_lookup_form"] = person_lookup_form
 
-        context["templates"] = EmailTemplate.objects.filter(
-            slug__startswith="request-review", active=True
-        ).order_by("slug")
-        context["template_form"] = GenericEmailScheduleForm()
         return context
 
 

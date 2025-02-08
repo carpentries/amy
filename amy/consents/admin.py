@@ -119,7 +119,7 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
         TermOptionInline,
     ]
     actions = ["email_users_missing_consent", "email_users_to_reconsent"]
-    readonly_fields = ("rq_jobs", "archived_at")
+    readonly_fields = ("archived_at",)
 
     def email_users_missing_consent(self, request, queryset):
         messages.error(

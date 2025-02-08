@@ -9,7 +9,6 @@ from django.db.models import Manager, Prefetch, QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from autoemails.mixins import RQJobsMixin
 from consents.exceptions import TermOptionDoesNotBelongToTermException
 from workshops.mixins import CreatedUpdatedArchivedMixin
 from workshops.models import STR_LONG, STR_MED, Person, TrainingRequest
@@ -57,7 +56,7 @@ class TermEnum(StrEnum):
     PRIVACY_POLICY = "privacy-policy"
 
 
-class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
+class Term(CreatedUpdatedArchivedMixin, models.Model):
     PROFILE_REQUIRE_TYPE = "profile"
     OPTIONAL_REQUIRE_TYPE = "optional"
     TERM_REQUIRE_TYPE = (

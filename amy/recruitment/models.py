@@ -15,7 +15,6 @@ from django.db.models import (
 from django.urls import reverse
 from reversion import revisions as reversion
 
-from autoemails.mixins import RQJobsMixin
 from workshops.mixins import AssignmentMixin, CreatedUpdatedMixin, StateMixin
 from workshops.models import Event, Person, Tag
 
@@ -125,9 +124,7 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
 
 
 @reversion.register
-class InstructorRecruitmentSignup(
-    CreatedUpdatedMixin, StateMixin, RQJobsMixin, models.Model
-):
+class InstructorRecruitmentSignup(CreatedUpdatedMixin, StateMixin, models.Model):
     """Instructor signup for a given event instructor recruitment process."""
 
     recruitment = models.ForeignKey(

@@ -27,7 +27,6 @@ from api.v1.serializers import (
     AwardSerializer,
     CommunityRoleConfigSerializer,
     ConsentSerializer,
-    EmailTemplateSerializer,
     EventSerializer,
     InstructorRecruitmentSerializer,
     OrganizationSerializer,
@@ -39,7 +38,6 @@ from api.v1.serializers import (
     TrainingRequestForManualScoringSerializer,
     TrainingRequestWithPersonSerializer,
 )
-from autoemails.models import EmailTemplate
 from communityroles.models import CommunityRoleConfig
 from consents.models import Consent, Term
 from recruitment.models import InstructorRecruitment
@@ -368,15 +366,6 @@ class AirportViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "iata__iexact"
     lookup_url_kwarg = "iata"
     pagination_class = StandardResultsSetPagination
-
-
-class EmailTemplateViewSet(viewsets.ReadOnlyModelViewSet):
-    """List email templates ReadOnly."""
-
-    permission_classes = (IsAuthenticated, IsAdmin)
-    queryset = EmailTemplate.objects.all()
-    serializer_class = EmailTemplateSerializer
-    lookup_field = "slug"
 
 
 class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):

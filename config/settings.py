@@ -174,7 +174,7 @@ LOCAL_APPS = [
     "amy.reports.apps.ReportsConfig",
     "amy.trainings.apps.TrainingsConfig",
     "amy.extcomments.apps.ExtcommentsConfig",
-    "amy.autoemails.apps.AutoemailsConfig",
+    "amy.autoemails.apps.AutoemailsConfig",  # TODO: eventually remove
     "amy.consents.apps.ConsentsConfig",
     "amy.communityroles.apps.CommunityRolesConfig",
     "amy.recruitment.apps.RecruitmentConfig",

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from autoemails.models import EmailTemplate
 from communityroles.models import CommunityRoleConfig
 from consents.models import Consent, Term
 from recruitment.models import InstructorRecruitment
@@ -514,25 +513,6 @@ class PersonSerializerAllData(PersonSerializer):
         queryset = Consent.objects.filter(person=person).active()
         serializer = ConsentSerializer(instance=queryset, many=True)
         return serializer.data
-
-
-class EmailTemplateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EmailTemplate
-        fields = [
-            "id",
-            "active",
-            "created_at",
-            "last_updated_at",
-            "slug",
-            "subject",
-            "to_header",
-            "from_header",
-            "cc_header",
-            "bcc_header",
-            "reply_to_header",
-            "body_template",
-        ]
 
 
 class CommunityRoleConfigSerializer(serializers.ModelSerializer):
