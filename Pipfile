@@ -53,7 +53,6 @@ black = "*"
 pre-commit = "*"
 django-stubs = "*"
 djangorestframework-stubs = "*"
-typing-extensions = "*"
 
 [requires]
 python_version = "3.11"
