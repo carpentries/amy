@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
-from amy import __version__
+from workshops.context_processors import read_version_from_toml
 
 
 class VersionCheckMiddleware(MiddlewareMixin):
@@ -10,4 +10,4 @@ class VersionCheckMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         if request.META["PATH_INFO"] == "/version/":
-            return HttpResponse(str(__version__))
+            return HttpResponse(read_version_from_toml())

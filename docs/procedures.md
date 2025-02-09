@@ -76,9 +76,9 @@ Execute the following commands on your local machine, not production.
 
 7.  Bump version on `main` (non-dev version corresponding to the milestone):
 
-        $ # manually edit version in `amy/__init__.py` and `package.json`
+        $ # manually edit version in `pyproject.toml` and `package.json`
         $ # use non-dev version string, e.g. `"v3.3.0"`
-        $ git add amy/__init__.py package.json
+        $ git add pyproject.toml package.json
         $ git commit -m "Bumping version to vX.Y.0"
 
 8.  Just to be safe, run tests:
@@ -92,16 +92,16 @@ Execute the following commands on your local machine, not production.
     Omit `-s` flag if you cannot create signed tags.
     See [Git documentation](https://git-scm.com/book/tr/v2/Git-Tools-Signing-Your-Work) for more info about signed tags.
 
-10.  Push `main` and the new tag everywhere:
+10. Push `main` and the new tag everywhere:
 
         $ git push origin main --tags
 
 11. Bump version on `develop` (dev version corresponding to the milestone):
 
         $ git checkout develop
-        $ # manually edit version in `amy/__init__.py` and `package.json`
+        $ # manually edit version in `pyproject.toml` and `package.json`
         $ # use dev version string, e.g. `"v3.4.0-dev"`
-        $ git add amy/__init__.py package.json
+        $ git add pyproject.toml package.json
         $ git commit -m "Bumping version to vX.Y.0-dev"
 
     This step is only needed if next development cycle begins (ie. no hotfix release was done).
