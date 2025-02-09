@@ -55,6 +55,7 @@ dependencies = [
   "social-auth-core (>=4.5.4,<5.0.0)",
   "typing-extensions",
   "whitenoise (>=6.8.2,<7.0.0)",
+  "toml (>=0.10.2,<0.11.0)",
 ]
 
 [build-system]
@@ -90,10 +91,11 @@ known_first_party = [
 ]
 
 [tool.mypy]
-plugins = ["mypy_django_plugin.main"]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 python_version = "3.12"
 show_error_codes = true
 strict = true
+mypy_path = "amy"
 
 [tool.django-stubs]
 django_settings_module = "config.settings"
