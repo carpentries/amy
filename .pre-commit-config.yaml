@@ -1,17 +1,30 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
+  - repo: local
     hooks:
       - id: black
-        language_version: python3
-        exclude: (migrations/|urls\.py)
-  - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
-    hooks:
+        name: Python Black
+        entry: poetry run black
+        require_serial: true
+        language: system
+        types: [python]
+
       - id: flake8
-        exclude: (migrations/|urls\.py)
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
+        name: Python Flake8
+        entry: poetry run flake8 --help
+        require_serial: true
+        language: system
+        types: [python]
+
       - id: isort
-        args: ["--profile", "black", "--filter-files"]
+        name: Python isort
+        entry: poetry run isort
+        require_serial: true
+        language: system
+        types: [python]
+
+      - id: mypy
+        name: Python Typing (mypy) strict
+        entry: poetry run mypy
+        require_serial: true
+        language: system
+        types: [python]
