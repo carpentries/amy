@@ -745,7 +745,8 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    "Test Person <email@email.com>;" "Another Person <person@example.com>"  # use ";" as separator
+                    "Test Person <email@email.com>;"
+                    "Another Person <person@example.com>"  # use ";" as separator
                 ),
                 location=self.faker.city(),
                 country=choice(Countries)[0],
@@ -824,7 +825,8 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    "Test Person <email@email.com>;" "Another Person <person@example.com>"  # use ";" as separator
+                    "Test Person <email@email.com>;"
+                    "Another Person <person@example.com>"  # use ";" as separator
                 ),
                 workshop_url=self.faker.url(),
                 workshop_format=workshop_format,

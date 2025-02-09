@@ -13,8 +13,7 @@ from workshops.models import Person
 class Assignable(Protocol):
     assigned_to: Optional[Person]
 
-    def save(self):
-        ...
+    def save(self): ...
 
 
 def failed_to_delete(request, object, protected_objects, back=None):

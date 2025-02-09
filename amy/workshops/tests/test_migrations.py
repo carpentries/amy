@@ -60,21 +60,15 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
         """Prepare some data before the migration."""
         super().prepare()
 
-        TrainingProgress = self.old_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
-        TrainingRequirement = self.old_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
+        TrainingProgress = self.old_state.apps.get_model("workshops", "TrainingProgress")
+        TrainingRequirement = self.old_state.apps.get_model("workshops", "TrainingRequirement")
 
         # Discussion should exist from a previous migration
         discussion = TrainingRequirement.objects.get(name="Discussion")
         swc_demo, _ = TrainingRequirement.objects.get_or_create(name="SWC Demo")
         dc_demo, _ = TrainingRequirement.objects.get_or_create(name="DC Demo")
         lc_homework, _ = TrainingRequirement.objects.get_or_create(name="LC Homework")
-        demo, _ = TrainingRequirement.objects.get_or_create(
-            name="Demo", defaults={"url_required": False}
-        )
+        demo, _ = TrainingRequirement.objects.get_or_create(name="Demo", defaults={"url_required": False})
         contribution, _ = TrainingRequirement.objects.get_or_create(
             name="Lesson Contribution", defaults={"url_required": True}
         )
@@ -84,19 +78,13 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
         TrainingProgress.objects.create(trainee=self.ironman, requirement=dc_demo)
         TrainingProgress.objects.create(trainee=self.ironman, requirement=lc_homework)
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=demo)
-        TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=contribution
-        )
+        TrainingProgress.objects.create(trainee=self.spiderman, requirement=contribution)
 
     def test_workshops_0259_existing_requirements(self):
         # test that deprecated requirements have been removed
 
-        TrainingRequirement = self.new_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
-        TrainingProgress = self.new_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
+        TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
+        TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
 
         # first migration step:
         # test that Discussion was renamed to Welcome Session
@@ -104,9 +92,7 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
             TrainingRequirement.objects.get(name="Discussion")
         TrainingRequirement.objects.get(name="Welcome Session")
         self.assertEqual(
-            TrainingProgress.objects.filter(
-                requirement__name="Welcome Session"
-            ).count(),
+            TrainingProgress.objects.filter(requirement__name="Welcome Session").count(),
             1,
         )
 
@@ -114,18 +100,12 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
         # test that progresses have been moved to the correct requirements
         for prefix in ["SWC", "DC", "LC"]:
             self.assertEqual(
-                TrainingProgress.objects.filter(
-                    requirement__name__startswith=prefix
-                ).count(),
+                TrainingProgress.objects.filter(requirement__name__startswith=prefix).count(),
                 0,
             )
+        self.assertEqual(TrainingProgress.objects.filter(requirement__name="Demo").count(), 3)
         self.assertEqual(
-            TrainingProgress.objects.filter(requirement__name="Demo").count(), 3
-        )
-        self.assertEqual(
-            TrainingProgress.objects.filter(
-                requirement__name="Lesson Contribution"
-            ).count(),
+            TrainingProgress.objects.filter(requirement__name="Lesson Contribution").count(),
             2,
         )
 
@@ -143,12 +123,8 @@ class TestWorkshops0259NewRequirements(BaseMigrationTestCase):
         """Prepare some data before the migration."""
         super().prepare()
 
-        TrainingProgress = self.old_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
-        TrainingRequirement = self.old_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
+        TrainingProgress = self.old_state.apps.get_model("workshops", "TrainingProgress")
+        TrainingRequirement = self.old_state.apps.get_model("workshops", "TrainingRequirement")
 
         swc_demo, _ = TrainingRequirement.objects.get_or_create(name="SWC Demo")
         dc_demo, _ = TrainingRequirement.objects.get_or_create(name="DC Demo")
@@ -159,12 +135,8 @@ class TestWorkshops0259NewRequirements(BaseMigrationTestCase):
         TrainingProgress.objects.create(trainee=self.ironman, requirement=lc_homework)
 
     def test_workshops_0259_new_requirements(self):
-        TrainingRequirement = self.new_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
-        TrainingProgress = self.new_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
+        TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
+        TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
 
         # second migration step:
         # test that generic training requirements were created
@@ -176,18 +148,12 @@ class TestWorkshops0259NewRequirements(BaseMigrationTestCase):
         # test that progresses have been moved to the correct generic requirements
         for prefix in ["SWC", "DC", "LC"]:
             self.assertEqual(
-                TrainingProgress.objects.filter(
-                    requirement__name__startswith=prefix
-                ).count(),
+                TrainingProgress.objects.filter(requirement__name__startswith=prefix).count(),
                 0,
             )
+        self.assertEqual(TrainingProgress.objects.filter(requirement__name="Demo").count(), 2)
         self.assertEqual(
-            TrainingProgress.objects.filter(requirement__name="Demo").count(), 2
-        )
-        self.assertEqual(
-            TrainingProgress.objects.filter(
-                requirement__name="Lesson Contribution"
-            ).count(),
+            TrainingProgress.objects.filter(requirement__name="Lesson Contribution").count(),
             1,
         )
 
@@ -202,23 +168,15 @@ class TestWorkshops0259Rollback(BaseMigrationTestCase):
         """Prepare some data before the migration."""
         super().prepare()
 
-        TrainingProgress = self.old_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
-        TrainingRequirement = self.old_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
+        TrainingProgress = self.old_state.apps.get_model("workshops", "TrainingProgress")
+        TrainingRequirement = self.old_state.apps.get_model("workshops", "TrainingRequirement")
 
         welcome = TrainingRequirement.objects.get(name="Welcome Session")
         TrainingProgress.objects.create(trainee=self.ironman, requirement=welcome)
 
     def test_workshops_0259_rollback(self):
-        TrainingRequirement = self.new_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
-        TrainingProgress = self.new_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
+        TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
+        TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
 
         # second migration step rollback: nothing happens
 
@@ -245,12 +203,8 @@ class TestWorkshops0261(BaseMigrationTestCase):
         """Prepare some data before the migration."""
         super().prepare()
 
-        TrainingProgress = self.old_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
-        TrainingRequirement = self.old_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
+        TrainingProgress = self.old_state.apps.get_model("workshops", "TrainingProgress")
+        TrainingRequirement = self.old_state.apps.get_model("workshops", "TrainingRequirement")
 
         demo = TrainingRequirement.objects.get(name="Demo")
         contribution, _ = TrainingRequirement.objects.get_or_create(
@@ -266,12 +220,8 @@ class TestWorkshops0261(BaseMigrationTestCase):
         )
 
     def test_workshops_0261(self):
-        TrainingRequirement = self.new_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
-        TrainingProgress = self.new_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
+        TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
+        TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
         Involvement = self.new_state.apps.get_model("trainings", "Involvement")
 
         # test that GitHub Contribution involvement was created
@@ -284,19 +234,13 @@ class TestWorkshops0261(BaseMigrationTestCase):
         self.assertTrue(get_involved.involvement_required)
 
         # test that progresses were properly migrated
-        self.assertEqual(
-            TrainingProgress.objects.filter(requirement__name="Get Involved").count(), 1
-        )
+        self.assertEqual(TrainingProgress.objects.filter(requirement__name="Get Involved").count(), 1)
         self.assertQuerySetEqual(
             TrainingProgress.objects.filter(requirement__name="Get Involved"),
-            TrainingProgress.objects.filter(
-                involvement_type__name="GitHub Contribution"
-            ),
+            TrainingProgress.objects.filter(involvement_type__name="GitHub Contribution"),
         )
 
-        progress = TrainingProgress.objects.get(
-            trainee__pk=self.ironman.pk, requirement__name="Get Involved"
-        )
+        progress = TrainingProgress.objects.get(trainee__pk=self.ironman.pk, requirement__name="Get Involved")
         self.assertEqual(progress.date, progress.created_at.date())
         self.assertIn(
             "Some test notes\nMigrated from Lesson Contribution on",
@@ -304,9 +248,7 @@ class TestWorkshops0261(BaseMigrationTestCase):
         )
 
         # test that other progress is unaffected
-        demo_progress = TrainingProgress.objects.get(
-            trainee__pk=self.spiderman.pk, requirement__name="Demo"
-        )
+        demo_progress = TrainingProgress.objects.get(trainee__pk=self.spiderman.pk, requirement__name="Demo")
         self.assertIsNone(demo_progress.involvement_type)
         self.assertIsNone(demo_progress.date)
         self.assertEqual(demo_progress.notes, "")
@@ -324,12 +266,8 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
         """Prepare some data before the migration."""
         super().prepare()
 
-        TrainingProgress = self.old_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
-        TrainingRequirement = self.old_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
+        TrainingProgress = self.old_state.apps.get_model("workshops", "TrainingProgress")
+        TrainingRequirement = self.old_state.apps.get_model("workshops", "TrainingRequirement")
         Involvement = self.old_state.apps.get_model("trainings", "Involvement")
 
         demo = TrainingRequirement.objects.get(name="Demo")
@@ -347,12 +285,8 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
         )
 
     def test_workshops_0261_rollback(self):
-        TrainingRequirement = self.new_state.apps.get_model(
-            "workshops", "TrainingRequirement"
-        )
-        TrainingProgress = self.new_state.apps.get_model(
-            "workshops", "TrainingProgress"
-        )
+        TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
+        TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
         Involvement = self.new_state.apps.get_model("trainings", "Involvement")
 
         # test that Get Involved was renamed to Lesson Contribution
@@ -361,21 +295,15 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
         self.assertFalse(get_involved.involvement_required)
 
         # test that GitHub Contribution Involvement was removed
-        self.assertEqual(
-            Involvement.objects.filter(name="GitHub Contribution").count(), 0
-        )
+        self.assertEqual(Involvement.objects.filter(name="GitHub Contribution").count(), 0)
 
         # test that progresses were properly migrated
         self.assertEqual(
-            TrainingProgress.objects.filter(
-                requirement__name="Lesson Contribution"
-            ).count(),
+            TrainingProgress.objects.filter(requirement__name="Lesson Contribution").count(),
             1,
         )
 
-        progress = TrainingProgress.objects.get(
-            trainee__pk=self.ironman.pk, requirement__name="Lesson Contribution"
-        )
+        progress = TrainingProgress.objects.get(trainee__pk=self.ironman.pk, requirement__name="Lesson Contribution")
         self.assertIsNone(progress.involvement_type)
         self.assertEqual(progress.date, date(2023, 5, 25))  # date unchanged
         self.assertIn(
@@ -384,9 +312,7 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
         )
 
         # test that other progress is unaffected
-        demo_progress = TrainingProgress.objects.get(
-            trainee__pk=self.spiderman.pk, requirement__name="Demo"
-        )
+        demo_progress = TrainingProgress.objects.get(trainee__pk=self.spiderman.pk, requirement__name="Demo")
         self.assertIsNone(demo_progress.involvement_type)
         self.assertIsNone(demo_progress.date)
         self.assertEqual(demo_progress.notes, "")
