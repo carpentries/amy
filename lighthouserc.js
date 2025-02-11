@@ -71,7 +71,7 @@ module.exports = {
                 "http://127.0.0.1:8000/workshops/workshop_staff/",
                 "http://127.0.0.1:8000/account/logout/"
             ],
-            startServerCommand: 'pipenv run make serve',
+            startServerCommand: 'poetry run make serve',
             puppeteerScript: 'puppeteer-script.js',
             numberOfRuns: 1
         },

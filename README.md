@@ -48,22 +48,17 @@ sudo apt-get install python3-dev libpq-dev
     git config blame.ignoreRevsFile .git-blame-ignore-revs
     ~~~
 
-1. Install [Pipenv](https://pipenv.pypa.io/en/latest/):
-
-    ~~~
-    python -m pip install --user pipenv
-    ~~~
+1. Install [Poetry](https://python-poetry.org/docs/#installation).
 
 1. Install Python dependencies:
 
     ~~~
-    pipenv sync --dev
+    poetry install
     ~~~
 
     **Note:**
-    Pipenv will create a new virtual environment for this installation, so you don't
+    Poetry will create a new virtual environment for this installation, so you don't
     have to create one yourself.
-    The `--dev` flag installs development dependencies, required e.g. for testing.
 
 1. Install [node][nodejs] for front-end packages management.
 
@@ -77,7 +72,7 @@ sudo apt-get install python3-dev libpq-dev
 1. Create a local instance of Postgres (in a container). This requires Docker to be installed locally.
 
     ~~~
-    make database
+    poetry run make database
     ~~~
 
 1. Note: if the database container already exists, the above command will error out. Use `docker start amy-database` instead to start the database container.
@@ -85,13 +80,13 @@ sudo apt-get install python3-dev libpq-dev
 1. Set up your local database with fake (development-ready) data.  This will create a superuser with "admin" as both the username and password.
 
     ~~~
-    pipenv run make dev_database
+    poetry run make dev_database
     ~~~
 
 1. Start a local Django development server by running:
 
     ~~~
-    pipenv run make serve
+    poetry run make serve
     ~~~
 
     **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
@@ -108,14 +103,14 @@ sudo apt-get install python3-dev libpq-dev
 
 ```shell
 LAST_COMMIT=`git rev-parse --short HEAD`
-docker build -t amy:latest -t amy:${LAST_COMMIT} --label commit=${LAST_COMMIT} -f docker/Dockerfile .
+docker build -t amy:latest -t amy:$LAST_COMMIT --label commit=$LAST_COMMIT .
 ```
 
 First command sets `LAST_COMMIT` environment variable to short commit hash of the
 last commit in the repository.
 
-Second command builds `docker/Dockerfile` in `.` as a context (should be your repository
-directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
+Second command builds `Dockerfile` in `.` as a context (should be your repository
+directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 
 ## Upgrading
 
@@ -142,7 +137,7 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
 1. Update back-end dependencies:
 
     ~~~
-    pipenv sync --dev
+    poetry sync
     ~~~
 
 1. Update front-end dependencies:
@@ -154,19 +149,19 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
 1. (Optional) make fresh development-ready database:
 
     ~~~
-    pipenv run make dev_database
+    poetry run make dev_database
     ~~~
 
 1. Run database migrations (note: this is included in the `make dev_database` step above):
 
     ~~~~
-    pipenv run python manage.py migrate
+    poetry run python manage.py migrate
     ~~~~
 
 1. Enjoy your new version of AMY:
 
     ~~~
-    pipenv run make serve
+    poetry run make serve
     ~~~
 
 
