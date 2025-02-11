@@ -1,20 +1,21 @@
 #!/bin/bash
 
-/venv/amy/bin/python manage.py check --fail-level WARNING
+ls -l /root/.local/bin
+/root/.local/bin/poetry run python manage.py check --fail-level WARNING
 
-/venv/amy/bin/python manage.py migrate
+/root/.local/bin/poetry run python manage.py migrate
 
-/venv/amy/bin/python manage.py createcachetable
+/root/.local/bin/poetry run python manage.py createcachetable
 
-/venv/amy/bin/python manage.py runscript seed_badges
-/venv/amy/bin/python manage.py runscript seed_communityroles
-/venv/amy/bin/python manage.py runscript seed_training_requirements
-/venv/amy/bin/python manage.py runscript seed_involvements
-/venv/amy/bin/python manage.py runscript seed_emails
+/root/.local/bin/poetry run python manage.py runscript seed_badges
+/root/.local/bin/poetry run python manage.py runscript seed_communityroles
+/root/.local/bin/poetry run python manage.py runscript seed_training_requirements
+/root/.local/bin/poetry run python manage.py runscript seed_involvements
+/root/.local/bin/poetry run python manage.py runscript seed_emails
 
-/venv/amy/bin/python manage.py create_superuser
+/root/.local/bin/poetry run python manage.py create_superuser
 
-/venv/amy/bin/gunicorn \
+/root/.local/bin/poetry run gunicorn \
     --workers=4 \
     --bind=0.0.0.0:80 \
     --access-logfile - \
