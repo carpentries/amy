@@ -17,11 +17,11 @@ database:
 
 ## test         : run all tests except migration tests.
 test :
-	${MANAGE} test --exclude-tag migration_test --exclude-tag autoemails
+	${MANAGE} test --exclude-tag migration_test --exclude-tag autoemails amy
 
 ## test_migrations    : test database migrations only
 test_migrations:
-	${MANAGE} test --tag migration_test
+	${MANAGE} test --tag migration_test amy
 
 ## dev_database : re-make database using saved data
 dev_database :
