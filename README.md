@@ -99,6 +99,23 @@ sudo apt-get install python3-dev libpq-dev
     docker stop amy-database
     ~~~
 
+## Running tests
+
+1. Set up the project using instructions above. Keep the database container running.
+
+1. Run this command:
+
+    ~~~
+    poetry run make test
+    ~~~
+
+1. To run tests intended for testing migrations:
+
+    ~~~
+    poetry run make test_migrations
+    ~~~
+
+
 ## How to build the docker image?
 
 ```shell
