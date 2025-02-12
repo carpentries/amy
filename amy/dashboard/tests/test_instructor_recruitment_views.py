@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 from urllib.parse import quote
 
 from django.contrib.messages.api import MessageFailure
@@ -358,7 +358,7 @@ class TestSignupForRecruitment(TestCase):
             # MessageFailure is expected here, it happens after the form saving part
             view.form_valid(form_mock)
         # Assert
-        form_mock.save.has_calls(call(commit=False))
+        form_mock.save.assert_any_call(commit=False)
         form_mock.save().save.assert_called_once_with()
         self.assertEqual(form_mock.save().recruitment, recruitment)
         self.assertEqual(form_mock.save().person, person)
