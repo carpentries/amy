@@ -24,7 +24,7 @@ repos:
 
       - id: mypy
         name: Python Typing (mypy) strict
-        entry: poetry run mypy
+        entry: poetry run mypy --follow-imports=silent
         require_serial: true
         language: system
         types: [python]
