@@ -7,7 +7,7 @@ from typing import cast
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
-import environ
+import environ  # type: ignore
 import jinja2
 
 ROOT_DIR = Path(__file__).parent.parent  # amy/
@@ -68,7 +68,7 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-FORMAT_MODULE_PATH
-FORMAT_MODULE_PATH = ["amy.locale"]
+FORMAT_MODULE_PATH = "amy.formats"
 # Secret key must be kept secret
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
 SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)  # type: ignore
