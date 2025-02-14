@@ -151,7 +151,11 @@ def find_workshop_HTML_metadata(content: str) -> dict[str, str]:
     parser = HTMLMetaParser()
     parser.feed(content)
 
-    return {name: content for name, content in parser.meta_tags.items() if name in ALLOWED_METADATA_NAMES and content}
+    return {
+        name: content
+        for name, content in parser.meta_tags.items()
+        if name in ALLOWED_METADATA_NAMES and content is not None
+    }
 
 
 def parse_workshop_metadata(metadata: dict[str, str]) -> WorkshopMetadata:
