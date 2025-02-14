@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, ProtectedError, Q
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from requests.exceptions import HTTPError, RequestException
@@ -721,7 +721,7 @@ def _match_training_request_to_person(
 
 
 @admin_required
-def trainingrequest_details(request, pk):
+def trainingrequest_details(request: HttpRequest, pk: str) -> HttpResponse:
     req = get_object_or_404(TrainingRequest, pk=int(pk))
 
     if request.method == "POST":
@@ -734,7 +734,7 @@ def trainingrequest_details(request, pk):
             if ok:
                 next_url = request.GET.get("next", None)
                 default_url = reverse("trainingrequest_details", args=[req.pk])
-                return safe_next_or_default_url(next_url, default_url)
+                return redirect(safe_next_or_default_url(next_url, default_url))
 
     else:  # GET request
         # Provide initial value for form.person
