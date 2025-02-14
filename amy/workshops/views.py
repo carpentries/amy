@@ -35,9 +35,16 @@ from django.db.models import (
     When,
 )
 from django.forms import BaseForm, HiddenInput
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.html import escape
 from django.utils.http import url_has_allowed_host_and_scheme
 from github.GithubException import GithubException
 import requests
@@ -1222,7 +1229,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
 
 
 @admin_required
-def event_import(request):
+def event_import(request: HttpRequest) -> HttpResponse:
     """Read metadata from remote URL and return them as JSON.
 
     This is used to read metadata from workshop website and then fill up fields
@@ -1231,13 +1238,14 @@ def event_import(request):
     url = request.GET.get("url", "").strip()
 
     try:
-        metadata = fetch_workshop_metadata(url)
+        metadata_dict = fetch_workshop_metadata(url)
         # normalize the metadata
-        metadata = parse_workshop_metadata(metadata)
+        metadata = parse_workshop_metadata(metadata_dict)
         return JsonResponse(metadata)
 
     except requests.exceptions.HTTPError as e:
-        return HttpResponseBadRequest('Request for "{0}" returned status code {1}.'.format(url, e.response.status_code))
+        escaped_url = escape(url)
+        return HttpResponseBadRequest(f'Request for "{escaped_url}" returned status code {e.response.status_code}.')
 
     except requests.exceptions.RequestException:
         return HttpResponseBadRequest("Network connection error.")
