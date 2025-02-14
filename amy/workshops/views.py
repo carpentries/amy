@@ -45,7 +45,6 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
-from django.utils.http import url_has_allowed_host_and_scheme
 from github.GithubException import GithubException
 import requests
 from reversion.models import Revision, Version
@@ -155,6 +154,7 @@ from workshops.utils.person_upload import (
     upload_person_task_csv,
     verify_upload_person_task,
 )
+from workshops.utils.urls import safe_next_or_default_url, safe_url
 from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete
 
@@ -761,7 +761,7 @@ def person_password(request, person_id):
 
 @admin_required
 @permission_required(["workshops.delete_person", "workshops.change_person"], raise_exception=True)
-def persons_merge(request):
+def persons_merge(request: HttpRequest) -> HttpResponse:
     """Display two persons side by side on GET and merge them on POST.
 
     If no persons are supplied via GET params, display person selection
@@ -774,8 +774,9 @@ def persons_merge(request):
             "title": "Merge Persons",
             "form": PersonsSelectionForm(),
         }
-        if "next" in request.GET:
-            return redirect(request.GET.get("next", "/"))
+        next_url = request.GET.get("next")
+        if next_url and safe_url(next_url):
+            return redirect(next_url)
         return render(request, "generic_form.html", context)
 
     elif obj_a_pk == obj_b_pk:
@@ -784,8 +785,9 @@ def persons_merge(request):
             "form": PersonsSelectionForm(),
         }
         messages.warning(request, "You cannot merge the same person with themself.")
-        if "next" in request.GET:
-            return redirect(request.GET.get("next", "/"))
+        next_url = request.GET.get("next")
+        if next_url and safe_url(next_url):
+            return redirect(next_url)
         return render(request, "generic_form.html", context)
 
     obj_a = get_object_or_404(Person, pk=obj_a_pk)
@@ -1888,9 +1890,9 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
     object: Award
 
     def back_address(self) -> Optional[str]:
-        fallback_url = reverse("person_edit", args=[self.get_object().person.id])  # type: ignore
+        fallback_url = reverse("person_edit", args=[self.get_object().person.id])
         referrer = self.request.headers.get("Referer", fallback_url)
-        return referrer if url_has_allowed_host_and_scheme(referrer, settings.ALLOWED_HOSTS) else fallback_url
+        return safe_next_or_default_url(referrer, fallback_url)
 
     def before_delete(self, *args, **kwargs):
         """Save for use in `after_delete` method."""
