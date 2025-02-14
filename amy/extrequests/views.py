@@ -83,8 +83,9 @@ from workshops.utils.trainingrequest_upload import (
     update_manual_score,
     upload_trainingrequest_manual_score_csv,
 )
+from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.usernames import create_username
-from workshops.utils.views import failed_to_delete, redirect_with_next_support
+from workshops.utils.views import failed_to_delete
 
 logger = logging.getLogger("amy")
 
@@ -731,7 +732,9 @@ def trainingrequest_details(request, pk):
             person = form.cleaned_data["person"]
             ok = _match_training_request_to_person(request, training_request=req, person=person, create=create)
             if ok:
-                return redirect_with_next_support(request, "trainingrequest_details", req.pk)
+                next_url = request.GET.get("next", None)
+                default_url = reverse("trainingrequest_details", args=[req.pk])
+                return safe_next_or_default_url(next_url, default_url)
 
     else:  # GET request
         # Provide initial value for form.person
