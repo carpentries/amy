@@ -1,10 +1,9 @@
-from collections import namedtuple
-from collections.abc import Iterable
-import datetime
+from dataclasses import dataclass
+from datetime import date, datetime, time
 from functools import partial
 import json
 import re
-from typing import Optional
+from typing import Any, Optional, TypedDict, cast
 
 import requests
 from rest_framework.utils.encoders import JSONEncoder
@@ -31,7 +30,37 @@ ALLOWED_METADATA_NAMES = [
 ]
 
 
-def fetch_workshop_metadata(event_url, timeout=5):
+class WorkshopMetadata(TypedDict):
+    slug: str
+    language: str
+    start: date | None
+    end: date | None
+    country: str
+    venue: str
+    address: str
+    latitude: float | None
+    longitude: float | None
+    reg_key: int | None
+    instructors: list[str]
+    helpers: list[str]
+    contact: list[str]
+
+
+@dataclass
+class Requirement:
+    name: str
+    display: str | None
+    required: bool
+    match_format: str | None
+
+    @property
+    def display_name(self) -> str:
+        if self.display:
+            return f"{self.display} {self.name}"
+        return self.name
+
+
+def fetch_workshop_metadata(event_url: str, timeout: int = 5) -> dict[str, str]:
     """Handle metadata from any event site (works with rendered <meta> tags
     metadata or YAML metadata in `index.html`)."""
     # fetch page
@@ -62,7 +91,7 @@ def fetch_workshop_metadata(event_url, timeout=5):
     return metadata
 
 
-def generate_url_to_event_index(website_url):
+def generate_url_to_event_index(website_url: str) -> tuple[str, str]:
     """Given URL to workshop's website, generate a URL to its raw `index.html`
     file in GitHub repository."""
     template = "https://raw.githubusercontent.com/{name}/{repo}" "/gh-pages/index.html"
@@ -90,7 +119,7 @@ def find_workshop_YAML_metadata(content: str) -> dict[str, str]:
     for key, value in filtered_metadata.items():
         if isinstance(value, int) or isinstance(value, float):
             filtered_metadata[key] = str(value)
-        elif isinstance(value, datetime.date):
+        elif isinstance(value, date):
             filtered_metadata[key] = "{:%Y-%m-%d}".format(value)
         elif isinstance(value, list):
             filtered_metadata[key] = "|".join(value)
@@ -108,7 +137,7 @@ def find_workshop_HTML_metadata(content: str) -> dict[str, str]:
     return {name: content for name, content in regexp.findall(content) if name in ALLOWED_METADATA_NAMES}
 
 
-def parse_workshop_metadata(metadata):
+def parse_workshop_metadata(metadata: dict[str, str]) -> WorkshopMetadata:
     """Simple preprocessing of the metadata from event website."""
     # no compatibility with old-style names
     country = metadata.get("country", "").upper()[0:2]
@@ -142,22 +171,22 @@ def parse_workshop_metadata(metadata):
         longitude = None
 
     try:
-        reg_key = metadata.get("eventbrite", "")
-        reg_key = int(reg_key)
+        reg_key_str = metadata.get("eventbrite", "")
+        reg_key = int(reg_key_str)
     except (ValueError, TypeError):
         # value error: can't convert string to int
         # type error: can't convert None to int
         reg_key = None
 
     try:
-        start = metadata.get("startdate", "")
-        start = datetime.datetime.strptime(start, "%Y-%m-%d").date()
+        start_str = metadata.get("startdate", "")
+        start = datetime.strptime(start_str, "%Y-%m-%d").date()
     except ValueError:
         start = None
 
     try:
-        end = metadata.get("enddate", "")
-        end = datetime.datetime.strptime(end, "%Y-%m-%d").date()
+        end_str = metadata.get("enddate", "")
+        end = datetime.strptime(end_str, "%Y-%m-%d").date()
     except ValueError:
         end = None
 
@@ -187,14 +216,9 @@ def parse_workshop_metadata(metadata):
     }
 
 
-def validate_workshop_metadata(metadata):
-    errors = []
-    warnings = []
-
-    Requirement = namedtuple(
-        "Requirement",
-        ["name", "display", "required", "match_format"],
-    )
+def validate_workshop_metadata(metadata: WorkshopMetadata) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
 
     DATE_FMT = r"^\d{4}-\d{2}-\d{2}$"
     SLUG_FMT = r"^\d{4}-\d{2}-\d{2}-.+$"
@@ -234,25 +258,23 @@ def validate_workshop_metadata(metadata):
         requirements.append(latlng_req)
 
     for requirement in requirements:
-        d_ = requirement._asdict()
-        name_ = "{display} ({name})".format(**d_) if requirement.display else "{name}".format(**d_)
+        name_ = requirement.display_name
         required_ = requirement.required
         type_ = "required" if required_ else "optional"
         value_ = metadata.get(requirement.name)
 
         if value_ is None:
             issues = errors if required_ else warnings
-            issues.append("Missing {} metadata {}.".format(type_, name_))
-
-        if value_ == "FIXME":
-            errors.append('Placeholder value "FIXME" for {} metadata {}.'.format(type_, name_))
+            issues.append(f"Missing {type_} metadata {name_}.")
+        elif value_ == "FIXME":
+            errors.append(f'Placeholder value "FIXME" for {type_} metadata {name_}.')
         else:
             try:
-                if required_ or value_:
-                    if not re.match(requirement.match_format, value_):
+                if (required_ or value_) and requirement.match_format is not None:
+                    if not re.match(requirement.match_format, str(value_)):
                         errors.append(
-                            'Invalid value "{}" for {} metadata {}: should be'
-                            ' in format "{}".'.format(value_, type_, name_, requirement.match_format)
+                            f'Invalid value "{value_}" for {type_} metadata {name_}: should be'
+                            f' in format "{requirement.match_format}".'
                         )
             except (re.error, TypeError):
                 pass
@@ -260,7 +282,7 @@ def validate_workshop_metadata(metadata):
     return errors, warnings
 
 
-def datetime_match(string):
+def datetime_match(string: str) -> date | time | str:
     """Convert string date/datetime/time to date/datetime/time."""
     formats = (
         # date
@@ -276,9 +298,9 @@ def datetime_match(string):
     )
     for format_, method in formats:
         try:
-            v = datetime.datetime.strptime(string, format_)
+            v = datetime.strptime(string, format_)
             if method is not None:
-                return getattr(v, method)()
+                return cast(date | time, getattr(v, method)())
             return v
         except ValueError:
             pass
@@ -291,24 +313,19 @@ def datetime_match(string):
     return string
 
 
-def datetime_decode(obj):
+def datetime_decode[T1: dict[Any, Any], T2: list[Any]](obj: T1 | T2 | str) -> T1 | T2 | date | time | str:
     """Recursively call for each iterable, and try to decode each string."""
-    iterator = None
-    if isinstance(obj, dict):
-        iterator = obj.items
-    elif isinstance(obj, list):
-        iterator = partial(enumerate, obj)
-
-    if iterator:
+    if isinstance(obj, dict) or isinstance(obj, list):
+        iterator = obj.items if isinstance(obj, dict) else partial(enumerate, obj)
         for k, item in iterator():
             if isinstance(item, str):
                 obj[k] = datetime_match(item)
 
-            elif isinstance(item, Iterable):
+            elif isinstance(item, list) or isinstance(item, dict):
                 # recursive call
                 obj[k] = datetime_decode(item)
 
-        return obj
+        return obj  # type: ignore
 
     elif isinstance(obj, str):
         return datetime_match(obj)
@@ -317,12 +334,12 @@ def datetime_decode(obj):
         return obj
 
 
-def metadata_serialize(obj):
+def metadata_serialize(obj: Any) -> str:
     """Serialize object to be put in the database."""
     return json.dumps(obj, cls=JSONEncoder)
 
 
-def metadata_deserialize(obj: str):
+def metadata_deserialize(obj: str) -> Any:
     """Deserialize object from the database."""
     objs = json.loads(obj)
     # convert strings to datetimes (if they match format)
