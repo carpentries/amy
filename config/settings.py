@@ -7,7 +7,7 @@ from typing import cast
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
-import environ
+import environ  # type: ignore
 import jinja2
 
 ROOT_DIR = Path(__file__).parent.parent  # amy/
@@ -68,15 +68,12 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-FORMAT_MODULE_PATH
-FORMAT_MODULE_PATH = ["amy.locale"]
+FORMAT_MODULE_PATH = "amy.formats"
 # Secret key must be kept secret
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
 SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)  # type: ignore
 if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
-    raise ImproperlyConfigured(
-        "You must specify non-default value for "
-        "SECRET_KEY when running with Debug=FALSE."
-    )
+    raise ImproperlyConfigured("You must specify non-default value for " "SECRET_KEY when running with Debug=FALSE.")
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = env("AMY_SITE_ID")
@@ -124,7 +121,7 @@ RECAPTCHA_PRIVATE_KEY = env("AMY_RECAPTCHA_PRIVATE_KEY")
 RECAPTCHA_USE_SSL = True
 NOCAPTCHA = True
 if DEBUG:
-    SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
+    SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 # APPS
 # -----------------------------------------------------------------------------
@@ -135,7 +132,6 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
-    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     # Handy template tags
     "django.contrib.humanize",
@@ -146,6 +142,7 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
+    "crispy_bootstrap4",
     "django_select2",
     "django_countries",
     "django_filters",
@@ -153,7 +150,7 @@ THIRD_PARTY_APPS = [
     "reversion_compare",
     "rest_framework",
     "knox",
-    "captcha",
+    "django_recaptcha",
     "social_django",
     "debug_toolbar",
     "django_extensions",
@@ -240,9 +237,7 @@ VALIDATION = "django.contrib.auth.password_validation"
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": f"{VALIDATION}.UserAttributeSimilarityValidator",
-        "OPTIONS": {
-            "user_attributes": ("username", "personal", "middle", "family", "email")
-        },
+        "OPTIONS": {"user_attributes": ("username", "personal", "middle", "family", "email")},
     },
     {
         "NAME": f"{VALIDATION}.MinimumLengthValidator",
@@ -417,6 +412,7 @@ TEMPLATES = [
     },
 ]
 # http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # EMAIL
@@ -445,12 +441,8 @@ ANYMAIL = {
         "tags": ["amy"],
     },
 }
-if not DEBUG and (
-    not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]
-):
-    raise ImproperlyConfigured(
-        "Mailgun settings are required when running with DEBUG=False."
-    )
+if not DEBUG and (not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]):
+    raise ImproperlyConfigured("Mailgun settings are required when running with DEBUG=False.")
 
 
 # NOTIFICATIONS
@@ -528,9 +520,7 @@ LOGGING = {
     "disable_existing_loggers": False,  # merge with default configuration
     "formatters": {
         "verbose": {
-            "format": (
-                "[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"
-            ),
+            "format": ("[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"),
             "style": "{",
         },
         "simple": {
@@ -626,10 +616,7 @@ EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed 
 REPORTS_SALT_FRONT = env("AMY_REPORTS_SALT_FRONT")
 REPORTS_SALT_BACK = env("AMY_REPORTS_SALT_BACK")
 if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
-    raise ImproperlyConfigured(
-        "Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK"
-        " in settings."
-    )
+    raise ImproperlyConfigured("Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK" " in settings.")
 
 REPORTS_LINK = env("AMY_REPORTS_LINK")
 
@@ -639,9 +626,7 @@ REPORTS_LINK = env("AMY_REPORTS_LINK")
 # local/dev/test stage they are using.
 SITE_BANNER_STYLE = env("AMY_SITE_BANNER")
 if SITE_BANNER_STYLE not in ("local", "testing", "production"):
-    raise ImproperlyConfigured(
-        "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
-    )
+    raise ImproperlyConfigured("SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'.")
 
 PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
 

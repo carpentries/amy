@@ -30,10 +30,7 @@ logger = logging.getLogger("amy")
 def feature_flag_enabled(feature_flag: str, signal_name: str, **kwargs) -> bool:
     request = kwargs.get("request")
     if not request:
-        logger.debug(
-            f"Cannot check {feature_flag} feature flag, `request` parameter "
-            f"to {signal_name} is missing"
-        )
+        logger.debug(f"Cannot check {feature_flag} feature flag, `request` parameter " f"to {signal_name} is missing")
         return False
 
     if not flag_enabled(feature_flag, request=request):
@@ -67,9 +64,7 @@ class BaseAction(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_recipients_context_json(
-        self, context: dict[str, Any], **kwargs
-    ) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
         raise NotImplementedError()
 
     def __call__(self, sender: Any, **kwargs) -> None:
@@ -87,10 +82,7 @@ class BaseAction(ABC):
 
         try:
             if dry_run:
-                logger.debug(
-                    f"Dry-run mode: email action for signal {self.signal}, "
-                    f"{generic_relation_obj}"
-                )
+                logger.debug(f"Dry-run mode: email action for signal {self.signal}, " f"{generic_relation_obj}")
                 return
 
             scheduled_email = EmailController.schedule_email(
@@ -98,9 +90,7 @@ class BaseAction(ABC):
                 context_json=context_json,
                 scheduled_at=scheduled_at,
                 to_header=self.get_recipients(context, **kwargs),
-                to_header_context_json=self.get_recipients_context_json(
-                    context, **kwargs
-                ),
+                to_header_context_json=self.get_recipients_context_json(context, **kwargs),
                 generic_relation_obj=generic_relation_obj,
                 author=person_from_request(request),
             )
@@ -149,10 +139,7 @@ class BaseActionUpdate(BaseAction):
             )
 
         except ScheduledEmail.DoesNotExist:
-            logger.warning(
-                f"Scheduled email for signal {signal_name} and {generic_relation_obj=} "
-                "does not exist."
-            )
+            logger.warning(f"Scheduled email for signal {signal_name} and {generic_relation_obj=} " "does not exist.")
             return
 
         except ScheduledEmail.MultipleObjectsReturned:
@@ -164,10 +151,7 @@ class BaseActionUpdate(BaseAction):
 
         try:
             if dry_run:
-                logger.debug(
-                    f"Dry-run mode: email update action for signal {self.signal}, "
-                    f"{generic_relation_obj}"
-                )
+                logger.debug(f"Dry-run mode: email update action for signal {self.signal}, " f"{generic_relation_obj}")
                 return
 
             scheduled_email = EmailController.update_scheduled_email(
@@ -175,9 +159,7 @@ class BaseActionUpdate(BaseAction):
                 context_json=context_json,
                 scheduled_at=scheduled_at,
                 to_header=self.get_recipients(context, **kwargs),
-                to_header_context_json=self.get_recipients_context_json(
-                    context, **kwargs
-                ),
+                to_header_context_json=self.get_recipients_context_json(context, **kwargs),
                 generic_relation_obj=generic_relation_obj,
                 author=person_from_request(request),
             )
@@ -208,14 +190,10 @@ class BaseActionCancel(BaseAction):
     def get_scheduled_at(self, **kwargs) -> datetime:
         raise NotImplementedError()
 
-    def get_generic_relation_content_type(
-        self, context: dict[str, Any], generic_relation_obj: Any
-    ) -> ContentType:
+    def get_generic_relation_content_type(self, context: dict[str, Any], generic_relation_obj: Any) -> ContentType:
         return ContentType.objects.get_for_model(generic_relation_obj)
 
-    def get_generic_relation_pk(
-        self, context: dict[str, Any], generic_relation_obj: Any
-    ) -> int | Any:
+    def get_generic_relation_pk(self, context: dict[str, Any], generic_relation_obj: Any) -> int | Any:
         return generic_relation_obj.pk
 
     def __call__(self, sender: Any, **kwargs) -> None:
@@ -230,12 +208,8 @@ class BaseActionCancel(BaseAction):
         generic_relation_obj = self.get_generic_relation_object(context, **kwargs)
         signal_name = self.signal
 
-        generic_relation_ct = self.get_generic_relation_content_type(
-            context, generic_relation_obj
-        )
-        generic_relation_pk = self.get_generic_relation_pk(
-            context, generic_relation_obj
-        )
+        generic_relation_ct = self.get_generic_relation_content_type(context, generic_relation_obj)
+        generic_relation_pk = self.get_generic_relation_pk(context, generic_relation_obj)
         scheduled_emails = ScheduledEmail.objects.filter(
             generic_relation_content_type=generic_relation_ct,
             generic_relation_pk=generic_relation_pk,
@@ -245,10 +219,7 @@ class BaseActionCancel(BaseAction):
 
         for scheduled_email in scheduled_emails:
             if dry_run:
-                logger.debug(
-                    f"Dry-run mode: email cancel action for signal {self.signal}, "
-                    f"{generic_relation_obj}"
-                )
+                logger.debug(f"Dry-run mode: email cancel action for signal {self.signal}, " f"{generic_relation_obj}")
                 continue
 
             scheduled_email = EmailController.cancel_email(

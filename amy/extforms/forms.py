@@ -2,12 +2,12 @@ from datetime import date
 from typing import Iterable, cast
 from urllib.parse import urlparse
 
-from captcha.fields import ReCaptchaField
 from crispy_forms.layout import HTML, Div, Field, Layout
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.http import HttpRequest
+from django_recaptcha.fields import ReCaptchaField
 
 from consents.forms import option_display_value
 from consents.models import Term, TrainingRequestConsent
@@ -90,12 +90,8 @@ class TrainingRequestForm(forms.ModelForm):
             "programming_language_usage_frequency": forms.RadioSelect(),
             "checkout_intent": forms.RadioSelect(),
             "teaching_intent": forms.RadioSelect(),
-            "teaching_frequency_expectation": RadioSelectWithOther(
-                "teaching_frequency_expectation_other"
-            ),
-            "max_travelling_frequency": RadioSelectWithOther(
-                "max_travelling_frequency_other"
-            ),
+            "teaching_frequency_expectation": RadioSelectWithOther("teaching_frequency_expectation_other"),
+            "max_travelling_frequency": RadioSelectWithOther("max_travelling_frequency_other"),
             "country": Select2Widget,
         }
 
@@ -106,9 +102,7 @@ class TrainingRequestForm(forms.ModelForm):
 
         # Only active and required terms.
         self.terms = (
-            Term.objects.prefetch_active_options()
-            .filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-            .order_by("slug")
+            Term.objects.prefetch_active_options().filter(required_type=Term.PROFILE_REQUIRE_TYPE).order_by("slug")
         )
 
         self.set_consent_fields(self.terms)
@@ -126,9 +120,7 @@ class TrainingRequestForm(forms.ModelForm):
         Set up a field so that it can be displayed as a separate widget.
         """
         WidgetType = self._meta.widgets[field_name].__class__  # type: ignore
-        cast(WidgetType, self[field_name].field.widget).other_field = self[
-            f"{field_name}_other"
-        ]
+        cast(WidgetType, self[field_name].field.widget).other_field = self[f"{field_name}_other"]
         layout.fields.remove(f"{field_name}_other")
 
     def set_other_fields(self, layout: Layout) -> None:
@@ -160,9 +152,7 @@ class TrainingRequestForm(forms.ModelForm):
             ],
             "open": [],  # this option doesn't require any additional fields
         }
-        self[
-            "review_process"
-        ].field.widget.notes = TrainingRequest.REVIEW_CHOICES_NOTES  # type: ignore
+        self["review_process"].field.widget.notes = TrainingRequest.REVIEW_CHOICES_NOTES  # type: ignore
 
         # get current position of `review_process` field
         pos_index = layout.fields.index("review_process")
@@ -176,9 +166,7 @@ class TrainingRequestForm(forms.ModelForm):
         layout.insert(
             pos_index,
             Div(
-                Field(
-                    "review_process", template="bootstrap4/layout/radio-accordion.html"
-                ),
+                Field("review_process", template="bootstrap4/layout/radio-accordion.html"),
                 css_class="form-group row",
             ),
         )
@@ -217,9 +205,7 @@ class TrainingRequestForm(forms.ModelForm):
         return field
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def validate_member_code(
-        self, request: HttpRequest
-    ) -> None | dict[str, ValidationError]:
+    def validate_member_code(self, request: HttpRequest) -> None | dict[str, ValidationError]:
         errors = dict()
         member_code = self.cleaned_data.get("member_code", "")
         member_code_override = self.cleaned_data.get("member_code_override", False)
@@ -279,15 +265,12 @@ class TrainingRequestForm(forms.ModelForm):
         # 'open'
         if review_process == "preapproved" and not member_code:
             errors["member_code"] = ValidationError(
-                "Registration code is required for pre-approved training "
-                "review process."
+                "Registration code is required for pre-approved training " "review process."
             )
 
         # it's required to be empty when review_process is 'open'
         if review_process == "open" and member_code:
-            errors["member_code"] = ValidationError(
-                "Registration code must be empty for open training review process."
-            )
+            errors["member_code"] = ValidationError("Registration code must be empty for open training review process.")
 
         # confirm that code is valid
         membership_errors = self.validate_member_code(request=self.request_http)

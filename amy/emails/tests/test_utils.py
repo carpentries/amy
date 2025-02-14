@@ -163,8 +163,7 @@ class TestMessagesMissingTemplate(TestCase):
         # Assert
         mock_messages_warning.assert_called_once_with(
             request,
-            "Email action was not scheduled due to missing template for signal "
-            f"{signal}.",
+            "Email action was not scheduled due to missing template for signal " f"{signal}.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
@@ -182,8 +181,8 @@ class TestMessagesMissingTemplateLink(TestCase):
         # Assert
         mock_messages_warning.assert_called_once_with(
             request,
-            f'Email action <a href="{ scheduled_email.get_absolute_url }">'
-            f"<code>{ scheduled_email.pk }</code></a> update was not performed due"
+            f'Email action <a href="{scheduled_email.get_absolute_url}">'
+            f"<code>{scheduled_email.pk}</code></a> update was not performed due"
             " to missing linked template.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
@@ -197,9 +196,7 @@ class TestMessagesActionScheduled(TestCase):
         signal_name = "test_signal"
         scheduled_at = timezone.now()
         scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
-        name = (
-            scheduled_email.template.name if scheduled_email.template else signal_name
-        )
+        name = scheduled_email.template.name if scheduled_email.template else signal_name
 
         # Act
         messages_action_scheduled(request, signal_name, scheduled_email)
@@ -223,9 +220,7 @@ class TestMessagesActionUpdated(TestCase):
         signal_name = "test_signal"
         scheduled_at = timezone.now()
         scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
-        name = (
-            scheduled_email.template.name if scheduled_email.template else signal_name
-        )
+        name = scheduled_email.template.name if scheduled_email.template else signal_name
 
         # Act
         messages_action_updated(request, signal_name, scheduled_email)
@@ -233,8 +228,7 @@ class TestMessagesActionUpdated(TestCase):
         # Assert
         mock_messages_info.assert_called_once_with(
             request,
-            f'Existing <a href="{scheduled_email.get_absolute_url()}">email action '
-            f"({name})</a> was updated.",
+            f'Existing <a href="{scheduled_email.get_absolute_url()}">email action ' f"({name})</a> was updated.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
@@ -247,9 +241,7 @@ class TestMessagesActionCancelled(TestCase):
         signal_name = "test_signal"
         scheduled_at = timezone.now()
         scheduled_email = ScheduledEmail(scheduled_at=scheduled_at)
-        name = (
-            scheduled_email.template.name if scheduled_email.template else signal_name
-        )
+        name = scheduled_email.template.name if scheduled_email.template else signal_name
 
         # Act
         messages_action_cancelled(request, signal_name, scheduled_email)
@@ -257,8 +249,7 @@ class TestMessagesActionCancelled(TestCase):
         # Assert
         mock_messages_warning.assert_called_once_with(
             request,
-            f'Existing <a href="{scheduled_email.get_absolute_url()}">email action '
-            f"({name})</a> was cancelled.",
+            f'Existing <a href="{scheduled_email.get_absolute_url()}">email action ' f"({name})</a> was cancelled.",
             extra_tags=settings.ONLY_FOR_ADMINS_TAG,
         )
 
@@ -488,9 +479,7 @@ class TestMapSingleApiUriToSerializedModelOrValue(TestCase):
         mock_scalar_value_from_type.assert_called_once_with("str", "test")
 
     @patch("emails.utils.find_model_instance")
-    def test_map_single_api_uri_to_serialized_model_or_value__model(
-        self, mock_find_model_instance: MagicMock
-    ) -> None:
+    def test_map_single_api_uri_to_serialized_model_or_value__model(self, mock_find_model_instance: MagicMock) -> None:
         # Arrange
         uri = "api:person#1"
         # Act
@@ -552,9 +541,7 @@ class TestMapApiUriToSerializedModelOrValue(TestCase):
 
 class TestBuildContextFromDict(TestCase):
     @patch("emails.utils.map_api_uri_to_serialized_model_or_value")
-    def test_build_context_from_dict(
-        self, mock_map_api_uri_to_serialized_model_or_value: MagicMock
-    ) -> None:
+    def test_build_context_from_dict(self, mock_map_api_uri_to_serialized_model_or_value: MagicMock) -> None:
         # Arrange
         context = {"key1": "uri1", "key2": "uri2", "key3": ["uri3", "uri4"]}
         # Act

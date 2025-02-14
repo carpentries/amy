@@ -58,17 +58,13 @@ class Command(BaseCommand):
         trigger_action: str,
         strategy: Callable[[Event], StrategyEnum],
     ) -> bool:
-        rqjob = RQJob.objects.filter(
-            event=event, trigger__action=trigger_action
-        ).first()
+        rqjob = RQJob.objects.filter(event=event, trigger__action=trigger_action).first()
         logger.info(f"RQJob for {event=}, {trigger_action=}: {rqjob}")
 
         strategy_result = strategy(event)
-        return bool(
-            strategy_result == StrategyEnum.CREATE
-            and rqjob
-            and rqjob.status == "scheduled"
-        ) or bool(strategy_result == StrategyEnum.CREATE and not rqjob)
+        return bool(strategy_result == StrategyEnum.CREATE and rqjob and rqjob.status == "scheduled") or bool(
+            strategy_result == StrategyEnum.CREATE and not rqjob
+        )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @transaction.atomic

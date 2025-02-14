@@ -27,9 +27,7 @@ class AssignmentForm(forms.Form):
     assigned_to = forms.ModelChoiceField(
         label="Assigned to:",
         required=False,
-        queryset=Person.objects.filter(
-            Q(is_superuser=True) | Q(groups__name="administrators")
-        ).distinct(),
+        queryset=Person.objects.filter(Q(is_superuser=True) | Q(groups__name="administrators")).distinct(),
         widget=Select2Widget(),
     )
     helper = BootstrapHelper(
@@ -136,9 +134,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
         if gender == GenderMixin.OTHER and not gender_other:
             errors["gender"] = ValidationError("This field is required.")
         elif gender != GenderMixin.OTHER and gender_other:
-            errors["gender"] = ValidationError(
-                'If you entered data in "Other" field, please select that ' "option."
-            )
+            errors["gender"] = ValidationError('If you entered data in "Other" field, please select that ' "option.")
 
         # raise errors if any present
         if errors:
@@ -162,8 +158,7 @@ class GetInvolvedForm(forms.ModelForm):
     )
     date = forms.DateField(
         label="Date of activity",
-        help_text="If the activity took place over multiple days, please enter the "
-        "first day. Format: YYYY-MM-DD",
+        help_text="If the activity took place over multiple days, please enter the " "first day. Format: YYYY-MM-DD",
         required=False,
     )
     url = forms.URLField(
@@ -216,9 +211,7 @@ class GetInvolvedForm(forms.ModelForm):
         2. all existing progress for the Get Involved step for this user has state "a"
         """
         get_involved = TrainingRequirement.objects.get(name="Get Involved")
-        existing_progresses = TrainingProgress.objects.filter(
-            requirement=get_involved, trainee=user
-        )
+        existing_progresses = TrainingProgress.objects.filter(requirement=get_involved, trainee=user)
         num_existing = existing_progresses.count()
         if num_existing == 0:
             return True
@@ -238,16 +231,12 @@ class GetInvolvedForm(forms.ModelForm):
                 # This check is part of model validation, but form validation runs
                 # first. As an empty URL will trigger the next error, first replicate
                 # the "URL required" error check here for this specific Involvement.
-                msg = (
-                    "This field is required for activity "
-                    f'"{involvement_type.display_name}".'
-                )
+                msg = "This field is required for activity " f'"{involvement_type.display_name}".'
                 raise ValidationError(msg)
             else:
                 case_insensitive_url = url.casefold()
                 if not any(
-                    f"github.com/{org}".casefold() in case_insensitive_url
-                    for org in self.CARPENTRIES_GITHUB_ORGS
+                    f"github.com/{org}".casefold() in case_insensitive_url for org in self.CARPENTRIES_GITHUB_ORGS
                 ):
                     msg = (
                         "This URL is not associated with a repository in any of the "
@@ -268,9 +257,7 @@ class GetInvolvedForm(forms.ModelForm):
         involvement_type = self.cleaned_data["involvement_type"]
         trainee_notes = self.cleaned_data["trainee_notes"]
         if involvement_type and involvement_type.notes_required and not trainee_notes:
-            raise ValidationError(
-                f'This field is required for activity "{involvement_type}".'
-            )
+            raise ValidationError(f'This field is required for activity "{involvement_type}".')
 
         return trainee_notes
 
@@ -279,19 +266,14 @@ class GetInvolvedForm(forms.ModelForm):
 
         # check that the user may create/update this TrainingProgress instance
         if self.instance:
-            if self.instance.pk is None and not self.user_may_create_submission(
-                self.instance.trainee
-            ):
+            if self.instance.pk is None and not self.user_may_create_submission(self.instance.trainee):
                 raise ValidationError(
                     "You already have an existing submission. "
                     "You may not create another submission unless your previous "
                     'submission has the status "asked to repeat."'
                 )
             elif self.instance.pk and self.instance.state != "n":
-                raise ValidationError(
-                    "This submission can no longer be edited as it has already been "
-                    "evaluated."
-                )
+                raise ValidationError("This submission can no longer be edited as it has already been " "evaluated.")
 
 
 class SearchForm(forms.Form):
@@ -331,17 +313,11 @@ class SignupForRecruitmentForm(forms.ModelForm):
         super().clean()
 
         try:
-            (
-                CommunityRole.objects.active().get(  # type: ignore
-                    person=self.person, config__name="instructor"
-                )
-            )
+            (CommunityRole.objects.active().get(person=self.person, config__name="instructor"))  # type: ignore
         except CommunityRole.DoesNotExist:
             raise ValidationError("You don't have an active Instructor Community Role")
 
-        signups_exist = self.recruitment.signups.filter(  # type: ignore
-            person=self.person
-        ).exists()
+        signups_exist = self.recruitment.signups.filter(person=self.person).exists()  # type: ignore
         if signups_exist:
             raise ValidationError("You are already signed up for this recruitment")
 

@@ -20,13 +20,9 @@ class TestNewInstructorAction(TestCase):
         )
         Organization.objects.bulk_create(
             [
-                Organization(
-                    domain="librarycarpentry.org", fullname="Library Carpentry"
-                ),
+                Organization(domain="librarycarpentry.org", fullname="Library Carpentry"),
                 Organization(domain="datacarpentry.org", fullname="Data Carpentry"),
-                Organization(
-                    domain="software-carpentry.org", fullname="Software Carpentry"
-                ),
+                Organization(domain="software-carpentry.org", fullname="Software Carpentry"),
                 Organization(domain="carpentries.org", fullname="Instructor Training"),
             ]
         )
@@ -34,9 +30,7 @@ class TestNewInstructorAction(TestCase):
     def testLaunchAt(self):
         # the trigger and email template below are totally fake
         # and shouldn't pass validation
-        a = NewInstructorAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = NewInstructorAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
         self.assertEqual(a.get_launch_at(), timedelta(hours=1))
 
     def testCheckConditions(self):
@@ -108,9 +102,7 @@ class TestNewInstructorAction(TestCase):
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
 
-        a = NewInstructorAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = NewInstructorAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):
@@ -135,9 +127,7 @@ class TestNewInstructorAction(TestCase):
             url="https://test-event.example.com",
         )
         e.tags.set(Tag.objects.filter(name="SWC"))
-        p = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         t = Task.objects.create(event=e, person=p, role=r)
 
@@ -173,9 +163,7 @@ class TestNewInstructorAction(TestCase):
             url="https://test-event.example.com",
         )
         e.tags.set(Tag.objects.filter(name="SWC"))
-        p = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         t = Task.objects.create(event=e, person=p, role=r)
 
@@ -200,9 +188,7 @@ class TestNewInstructorAction(TestCase):
             url="https://test-event.example.com",
         )
         e.tags.set(Tag.objects.filter(name="SWC"))
-        p = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         t = Task.objects.create(event=e, person=p, role=r)
 

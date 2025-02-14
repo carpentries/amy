@@ -37,12 +37,10 @@ def instructor_declined_from_workshop_strategy(
     signup_is_declined = signup.state == "d"
     person_email_exists = bool(signup.person.email)
     event = signup.recruitment.event
-    carpentries_tags = event.tags.filter(
-        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
-    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
-    centrally_organised = (
-        event.administrator and event.administrator.domain != "self-organized"
+    carpentries_tags = event.tags.filter(name__in=TagQuerySet.CARPENTRIES_TAG_NAMES).exclude(
+        name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES
     )
+    centrally_organised = event.administrator and event.administrator.domain != "self-organized"
     start_date_in_future = event.start and event.start >= timezone.now().date()
 
     log_condition_elements(
@@ -57,11 +55,7 @@ def instructor_declined_from_workshop_strategy(
     )
 
     email_should_exist = (
-        signup_is_declined
-        and person_email_exists
-        and carpentries_tags
-        and centrally_organised
-        and start_date_in_future
+        signup_is_declined and person_email_exists and carpentries_tags and centrally_organised and start_date_in_future
     )
     logger.debug(f"{email_should_exist=}")
 
@@ -83,7 +77,7 @@ def instructor_declined_from_workshop_strategy(
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"InstructorDeclinedFromWorkshop strategy {result = }")
+    logger.debug(f"InstructorDeclinedFromWorkshop strategy {result=}")
     return result
 
 
@@ -176,9 +170,7 @@ class InstructorDeclinedFromWorkshopReceiver(BaseAction):
     def get_scheduled_at(self, **kwargs: Unpack[InstructorDeclinedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorDeclinedKwargs]
-    ) -> InstructorDeclinedContext:
+    def get_context(self, **kwargs: Unpack[InstructorDeclinedKwargs]) -> InstructorDeclinedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorDeclinedContext) -> ContextModel:
@@ -212,9 +204,7 @@ class InstructorDeclinedFromWorkshopUpdateReceiver(BaseActionUpdate):
     def get_scheduled_at(self, **kwargs: Unpack[InstructorDeclinedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorDeclinedKwargs]
-    ) -> InstructorDeclinedContext:
+    def get_context(self, **kwargs: Unpack[InstructorDeclinedKwargs]) -> InstructorDeclinedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorDeclinedContext) -> ContextModel:
@@ -245,9 +235,7 @@ class InstructorDeclinedFromWorkshopUpdateReceiver(BaseActionUpdate):
 class InstructorDeclinedFromWorkshopCancelReceiver(BaseActionCancel):
     signal = instructor_declined_from_workshop_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorDeclinedKwargs]
-    ) -> InstructorDeclinedContext:
+    def get_context(self, **kwargs: Unpack[InstructorDeclinedKwargs]) -> InstructorDeclinedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorDeclinedContext) -> ContextModel:
@@ -276,18 +264,8 @@ class InstructorDeclinedFromWorkshopCancelReceiver(BaseActionCancel):
 
 
 instructor_declined_from_workshop_receiver = InstructorDeclinedFromWorkshopReceiver()
-instructor_declined_from_workshop_signal.connect(
-    instructor_declined_from_workshop_receiver
-)
-instructor_declined_from_workshop_update_receiver = (
-    InstructorDeclinedFromWorkshopUpdateReceiver()
-)
-instructor_declined_from_workshop_update_signal.connect(
-    instructor_declined_from_workshop_update_receiver
-)
-instructor_declined_from_workshop_cancel_receiver = (
-    InstructorDeclinedFromWorkshopCancelReceiver()
-)
-instructor_declined_from_workshop_cancel_signal.connect(
-    instructor_declined_from_workshop_cancel_receiver
-)
+instructor_declined_from_workshop_signal.connect(instructor_declined_from_workshop_receiver)
+instructor_declined_from_workshop_update_receiver = InstructorDeclinedFromWorkshopUpdateReceiver()
+instructor_declined_from_workshop_update_signal.connect(instructor_declined_from_workshop_update_receiver)
+instructor_declined_from_workshop_cancel_receiver = InstructorDeclinedFromWorkshopCancelReceiver()
+instructor_declined_from_workshop_cancel_signal.connect(instructor_declined_from_workshop_cancel_receiver)

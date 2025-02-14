@@ -79,9 +79,7 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
 
         # `0.0` is neutral element for this equation, so even if user doesn't have the
         # airport specified, the sorting should still work
-        distance = (F("event__latitude") - latitude) ** 2.0 + (
-            F("event__longitude") - longitude
-        ) ** 2.0
+        distance = (F("event__latitude") - latitude) ** 2.0 + (F("event__longitude") - longitude) ** 2.0
 
         if values == ["proximity"]:
             return queryset.annotate(distance=distance).order_by("distance")
@@ -90,9 +88,7 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
         else:
             return queryset.order_by(*values)
 
-    def filter_application_only(
-        self, queryset: QuerySet, name: str, value: bool
-    ) -> QuerySet:
+    def filter_application_only(self, queryset: QuerySet, name: str, value: bool) -> QuerySet:
         if value:
             return queryset.filter(signups__person=self.request.user)
 

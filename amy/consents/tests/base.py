@@ -15,12 +15,8 @@ class ConsentTestBase(TestBase):
             slug="optional-test-term",
             required_type=Term.OPTIONAL_REQUIRE_TYPE,
         )
-        TermOption.objects.create(
-            term=optional_term, option_type=TermOptionChoices.AGREE
-        )
-        TermOption.objects.create(
-            term=optional_term, option_type=TermOptionChoices.DECLINE
-        )
+        TermOption.objects.create(term=optional_term, option_type=TermOptionChoices.AGREE)
+        TermOption.objects.create(term=optional_term, option_type=TermOptionChoices.DECLINE)
         self.assert_required_terms()
 
     @contextmanager
@@ -42,8 +38,4 @@ class ConsentTestBase(TestBase):
         Asserts that there are required Terms in the database.
         Terms are added via a migration.
         """
-        self.assertTrue(
-            Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-            .active()
-            .exists()
-        )
+        self.assertTrue(Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active().exists())

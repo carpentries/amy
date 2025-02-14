@@ -13,9 +13,7 @@ from workshops.models import Person
 class TestActiveTermConsentsForm(ConsentTestBase):
     def test_person_has_consented_to_required_terms(self) -> None:
         # required term
-        required_terms = Term.objects.filter(
-            required_type=Term.PROFILE_REQUIRE_TYPE
-        ).active()
+        required_terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active()
         self.assertNotEqual(len(required_terms), 0)
         # optional Term
         Term.objects.create(
@@ -35,9 +33,7 @@ class TestActiveTermConsentsForm(ConsentTestBase):
             option_type=TermOptionChoices.AGREE,
             archived_at=timezone.now(),
         )
-        person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         self.assertEqual(person_has_consented_to_required_terms(person), False)
         # Consents created for the required terms; should return True
         self.person_agree_to_terms(person, required_terms)
@@ -78,12 +74,8 @@ class TestReconsentForTermOptionType(TestCase):
         # Arrange
         term_key = TermEnum.MAY_CONTACT
         term_option_type = TermOptionChoices.AGREE
-        person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
-        Consent.objects.filter(
-            term__slug=Term.key_to_slug(term_key), person=person
-        ).delete()
+        person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
+        Consent.objects.filter(term__slug=Term.key_to_slug(term_key), person=person).delete()
 
         # Act & Assert
         with self.assertRaises(Consent.DoesNotExist):
@@ -97,12 +89,8 @@ class TestReconsentForTermOptionType(TestCase):
         # Arrange
         term_key = TermEnum.MAY_CONTACT
         term_option_type = TermOptionChoices.AGREE
-        person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
-        old_consent = Consent.objects.get(
-            term__slug=Term.key_to_slug(term_key), person=person
-        )
+        person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
+        old_consent = Consent.objects.get(term__slug=Term.key_to_slug(term_key), person=person)
 
         # Act
         new_consent = reconsent_for_term_option_type(
@@ -120,12 +108,8 @@ class TestReconsentForTermOptionType(TestCase):
         # Arrange
         term_key = TermEnum.MAY_CONTACT
         term_option_type = TermOptionChoices.AGREE
-        person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
-        old_consent = Consent.objects.get(
-            term__slug=Term.key_to_slug(term_key), person=person
-        )
+        person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
+        old_consent = Consent.objects.get(term__slug=Term.key_to_slug(term_key), person=person)
 
         # Act
         new_consent = reconsent_for_term_option_type(

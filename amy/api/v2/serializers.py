@@ -36,9 +36,7 @@ class AwardSerializer(serializers.ModelSerializer):
 
 class OrganizationSerializer(serializers.ModelSerializer):
     country = serializers.CharField()
-    affiliated_organizations = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="domain"
-    )
+    affiliated_organizations = serializers.SlugRelatedField(many=True, read_only=True, slug_field="domain")
 
     class Meta:
         model = Organization
@@ -66,16 +64,12 @@ class EventSerializer(serializers.ModelSerializer):
     # attendance = serializers.IntegerField()
     country = serializers.CharField()
     assigned_to = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    curricula = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="slug"
-    )
+    curricula = serializers.SlugRelatedField(many=True, read_only=True, slug_field="slug")
     lessons = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
 
     human_readable_date = serializers.CharField(read_only=True)
     eligible_for_instructor_recruitment = serializers.BooleanField(read_only=True)
-    workshop_reports_link = serializers.CharField(
-        read_only=True, source="instructors_pre"
-    )
+    workshop_reports_link = serializers.CharField(read_only=True, source="instructors_pre")
     main_tag = serializers.SerializerMethodField()
 
     class Meta:
@@ -118,11 +112,7 @@ class EventSerializer(serializers.ModelSerializer):
         try:
             # Iterating like that is faster than using qs.filter(name__in=[...]).first()
             # because it doesn't introduce new queries.
-            return next(
-                tag.name
-                for tag in obj.tags.all()
-                if tag.name in TagQuerySet.CARPENTRIES_TAG_NAMES
-            )
+            return next(tag.name for tag in obj.tags.all() if tag.name in TagQuerySet.CARPENTRIES_TAG_NAMES)
         except (IndexError, AttributeError, StopIteration):
             return None
 
@@ -152,18 +142,10 @@ class InstructorRecruitmentSignupSerializer(serializers.ModelSerializer):
 
 class MembershipSerializer(serializers.ModelSerializer):
     # TODO: issue with intermediary model in M2M
-    organizations = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="domain"
-    )
-    persons = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="username"
-    )
-    rolled_from_membership = serializers.SlugRelatedField(
-        read_only=True, slug_field="name"
-    )
-    rolled_to_membership = serializers.SlugRelatedField(
-        read_only=True, slug_field="name"
-    )
+    organizations = serializers.SlugRelatedField(many=True, read_only=True, slug_field="domain")
+    persons = serializers.SlugRelatedField(many=True, read_only=True, slug_field="username")
+    rolled_from_membership = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    rolled_to_membership = serializers.SlugRelatedField(read_only=True, slug_field="name")
     workshops_without_admin_fee_total_allowed = serializers.IntegerField()
     workshops_without_admin_fee_available = serializers.IntegerField()
     workshops_without_admin_fee_completed = serializers.IntegerField()
@@ -264,9 +246,7 @@ class PersonSerializer(serializers.ModelSerializer):
 
 class ScheduledEmailSerializer(serializers.ModelSerializer):
     template = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    generic_relation_content_type = serializers.SlugRelatedField(
-        read_only=True, slug_field="app_labeled_name"
-    )
+    generic_relation_content_type = serializers.SlugRelatedField(read_only=True, slug_field="app_labeled_name")
     state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:
@@ -357,9 +337,7 @@ class SelfOrganisedSubmissionSerializer(serializers.ModelSerializer):
     event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
     additional_contact = serializers.CharField()
     country = serializers.CharField()
-    workshop_types = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name"
-    )
+    workshop_types = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:

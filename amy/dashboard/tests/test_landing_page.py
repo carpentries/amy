@@ -18,9 +18,7 @@ class TestAdminDashboard(TestBase):
         self.assigned_upcoming_event.save()
 
         # assign an unpublished event to the logged in user
-        self.assigned_unpublished_event = (
-            Event.objects.active().unpublished_events().first()
-        )
+        self.assigned_unpublished_event = Event.objects.active().unpublished_events().first()
         self.assigned_unpublished_event.assigned_to = self.admin
         self.assigned_unpublished_event.save()
 
@@ -35,9 +33,7 @@ class TestAdminDashboard(TestBase):
         events = response.context["current_events"]
 
         # all unassigned current events should be shown
-        num_current_events = (
-            Event.objects.current_events().filter(assigned_to=None).count()
-        )
+        num_current_events = Event.objects.current_events().filter(assigned_to=None).count()
         self.assertEqual(len(events), num_current_events)
 
         # They should all be labeled 'upcoming'.
@@ -68,9 +64,7 @@ class TestAdminDashboard(TestBase):
         )
         cancelled.tags.add(cancelled_tag)
 
-        completed = Event.objects.create(
-            slug="completed-event", completed=True, host=Organization.objects.first()
-        )
+        completed = Event.objects.create(slug="completed-event", completed=True, host=Organization.objects.first())
 
         # stalled event appears in unfiltered list of events
         self.assertNotIn(stalled, Event.objects.unpublished_events())
@@ -135,29 +129,17 @@ class TestAdminDashboard(TestBase):
 
         # Add an upcoming event to the logged in admin (self.admin)
         # and one to other_admin
-        upcoming_event = (
-            Event.objects.active()
-            .filter(assigned_to__isnull=True)
-            .upcoming_events()
-            .first()
-        )
+        upcoming_event = Event.objects.active().filter(assigned_to__isnull=True).upcoming_events().first()
         upcoming_event.assigned_to = other_admin
         upcoming_event.save()
 
         # Add an unpublished event to logged in admin (self.admin)
         # and another to other_admin
-        unpublished_event = (
-            Event.objects.active()
-            .filter(assigned_to__isnull=True)
-            .unpublished_events()
-            .first()
-        )
+        unpublished_event = Event.objects.active().filter(assigned_to__isnull=True).unpublished_events().first()
         unpublished_event.assigned_to = other_admin
         unpublished_event.save()
 
-        response = self.client.get(
-            f"{reverse('admin-dashboard')}?assigned_to={other_admin.id}"
-        )
+        response = self.client.get(f"{reverse('admin-dashboard')}?assigned_to={other_admin.id}")
 
         # This will fail if the context variable doesn't exist
         current_events = response.context["current_events"]
@@ -183,9 +165,7 @@ class TestDispatch(TestBase):
         )
         consent_to_all_required_consents(person)
 
-        rv = self.client.post(
-            reverse("login"), {"username": "admin", "password": "pass"}, follow=True
-        )
+        rv = self.client.post(reverse("login"), {"username": "admin", "password": "pass"}, follow=True)
 
         self.assertEqual(rv.resolver_match.view_name, "admin-dashboard")
 
@@ -201,9 +181,7 @@ class TestDispatch(TestBase):
         mentor.groups.add(admins)
         self.person_consent_required_terms(mentor)
 
-        rv = self.client.post(
-            reverse("login"), {"username": "user", "password": "pass"}, follow=True
-        )
+        rv = self.client.post(reverse("login"), {"username": "user", "password": "pass"}, follow=True)
 
         self.assertEqual(rv.resolver_match.view_name, "admin-dashboard")
 
@@ -219,9 +197,7 @@ class TestDispatch(TestBase):
         mentor.groups.add(steering_committee)
         self.person_consent_required_terms(mentor)
 
-        rv = self.client.post(
-            reverse("login"), {"username": "user", "password": "pass"}, follow=True
-        )
+        rv = self.client.post(reverse("login"), {"username": "user", "password": "pass"}, follow=True)
 
         self.assertEqual(rv.resolver_match.view_name, "admin-dashboard")
 
@@ -235,8 +211,6 @@ class TestDispatch(TestBase):
         )
         self.person_consent_required_terms(self.trainee)
 
-        rv = self.client.post(
-            reverse("login"), {"username": "trainee", "password": "pass"}, follow=True
-        )
+        rv = self.client.post(reverse("login"), {"username": "trainee", "password": "pass"}, follow=True)
 
         self.assertEqual(rv.resolver_match.view_name, "instructor-dashboard")

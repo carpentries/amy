@@ -24,14 +24,10 @@ from workshops.tests.base import TestBase
 class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        self.event = Event.objects.create(
-            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
-        )
+        self.event = Event.objects.create(slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5))
         self.person = Person.objects.create(email="test@example.org")
         instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
-        )
+        self.task = Task.objects.create(role=instructor, person=self.person, event=self.event)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
@@ -53,21 +49,16 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
             instructor_task_created_for_workshop_update_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_task_created_for_workshop_update"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_task_created_for_workshop_update"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = (
-            instructor_task_created_for_workshop_update_signal.receivers[:]
-        )
+        original_receivers = instructor_task_created_for_workshop_update_signal.receivers[:]
 
         # Act
         # attempt to connect the receiver
-        instructor_task_created_for_workshop_update_signal.connect(
-            instructor_task_created_for_workshop_update_receiver
-        )
+        instructor_task_created_for_workshop_update_signal.connect(instructor_task_created_for_workshop_update_receiver)
         new_receivers = instructor_task_created_for_workshop_update_signal.receivers[:]
 
         # Assert
@@ -92,9 +83,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_updated"
-        ) as mock_messages_action_updated:
+        with patch("emails.actions.base_action.messages_action_updated") as mock_messages_action_updated:
             instructor_task_created_for_workshop_update_signal.send(
                 sender=task,
                 request=request,
@@ -137,9 +126,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
         mock_immediate_action.return_value = scheduled_at
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.update_scheduled_email"
-        ) as mock_update_scheduled_email:
+        with patch("emails.actions.base_action.EmailController.update_scheduled_email") as mock_update_scheduled_email:
             instructor_task_created_for_workshop_update_signal.send(
                 sender=self.task,
                 request=request,
@@ -198,8 +185,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={task!r} "
-            "does not exist."
+            f"Scheduled email for signal {signal} and generic_relation_obj={task!r} " "does not exist."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -245,15 +231,12 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Too many scheduled emails for signal {signal} and "
-            f"generic_relation_obj={task!r}. Can't update them."
+            f"Too many scheduled emails for signal {signal} and " f"generic_relation_obj={task!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
@@ -303,12 +286,8 @@ class TestInstructorTaskCreatedForWorkshopUpdateIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        host_organization = Organization.objects.create(
-            domain="example.com", fullname="Example"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
+        host_organization = Organization.objects.create(domain="example.com", fullname="Example")
         event = Event.objects.create(
             slug="2024-08-05-test-event",
             host=host_organization,
@@ -339,9 +318,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateIntegration(TestBase):
         task = Task.objects.create(event=event, person=instructor, role=instructor_role)
 
         request = RequestFactory().get("/")
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_task_created_for_workshop_strategy(
                 instructor_task_created_for_workshop_strategy(task),
                 request,

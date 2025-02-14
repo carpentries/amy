@@ -14,20 +14,14 @@ from workshops.templatetags.training_progress import (
 
 class TestProgressDescriptionTemplateTag(TestCase):
     def setUp(self):
-        self.person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        self.person = Person.objects.create(personal="Test", family="User", email="test@user.com")
 
     def test_progress_description__basic(self):
         welcome, _ = TrainingRequirement.objects.get_or_create(name="Welcome Session")
-        progress = TrainingProgress.objects.create(
-            trainee=self.person, requirement=welcome, state="p"
-        )
+        progress = TrainingProgress.objects.create(trainee=self.person, requirement=welcome, state="p")
         created = progress.created_at
         # Act
-        expected = (
-            f'Passed Welcome Session<br/>on {created.strftime("%A %d %B %Y at %H:%M")}.'
-        )
+        expected = f'Passed Welcome Session<br/>on {created.strftime("%A %d %B %Y at %H:%M")}.'
         got = progress_description(progress)
         # Assert
         self.assertHTMLEqual(expected, got)
@@ -68,11 +62,7 @@ class TestProgressDescriptionTemplateTag(TestCase):
             state="p",
         )
         # Act
-        expected = (
-            "Passed Get Involved<br/>"
-            "GitHub Contribution<br/>"
-            f'on {day.strftime("%A %d %B %Y")}.'
-        )
+        expected = "Passed Get Involved<br/>" "GitHub Contribution<br/>" f'on {day.strftime("%A %d %B %Y")}.'
         got = progress_description(progress)
         # Assert
         self.assertHTMLEqual(expected, got)
@@ -94,11 +84,7 @@ class TestProgressDescriptionTemplateTag(TestCase):
             state="p",
         )
         # Act
-        expected = (
-            "Passed Get Involved<br/>"
-            "Other: Notes from trainee<br/>"
-            f'on {day.strftime("%A %d %B %Y")}.'
-        )
+        expected = "Passed Get Involved<br/>" "Other: Notes from trainee<br/>" f'on {day.strftime("%A %d %B %Y")}.'
         got = progress_description(progress)
         # Assert
         self.assertHTMLEqual(expected, got)
@@ -106,9 +92,7 @@ class TestProgressDescriptionTemplateTag(TestCase):
 
 class TestProgressLabelTemplateTag(TestCase):
     def test_progress_labels(self):
-        self.person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        self.person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         welcome, _ = TrainingRequirement.objects.get_or_create(name="Welcome Session")
 
         expected = {

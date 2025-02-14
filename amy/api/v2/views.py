@@ -53,11 +53,7 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Award.objects.select_related("person", "badge", "event", "awarded_by")
-        .order_by("pk")
-        .all()
-    )
+    queryset = Award.objects.select_related("person", "badge", "event", "awarded_by").order_by("pk").all()
     serializer_class = AwardSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -71,11 +67,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Organization.objects.prefetch_related("affiliated_organizations")
-        .order_by("pk")
-        .all()
-    )
+    queryset = Organization.objects.prefetch_related("affiliated_organizations").order_by("pk").all()
     serializer_class = OrganizationSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -90,9 +82,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        Event.objects.select_related(
-            "host", "sponsor", "membership", "administrator", "language", "assigned_to"
-        )
+        Event.objects.select_related("host", "sponsor", "membership", "administrator", "language", "assigned_to")
         .prefetch_related("tags", "curricula", "lessons")
         .order_by("pk")
         .all()
@@ -111,9 +101,7 @@ class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        InstructorRecruitmentSignup.objects.select_related(
-            "recruitment", "recruitment__event", "person"
-        )
+        InstructorRecruitmentSignup.objects.select_related("recruitment", "recruitment__event", "person")
         .order_by("pk")
         .all()
     )
@@ -130,11 +118,7 @@ class MembershipViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Membership.objects.prefetch_related("organizations", "persons")
-        .order_by("pk")
-        .all()
-    )
+    queryset = Membership.objects.prefetch_related("organizations", "persons").order_by("pk").all()
     serializer_class = MembershipSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -163,11 +147,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        ScheduledEmail.objects.select_related(
-            "template", "generic_relation_content_type"
-        )
-        .order_by("created_at")
-        .all()
+        ScheduledEmail.objects.select_related("template", "generic_relation_content_type").order_by("created_at").all()
     )
     serializer_class = ScheduledEmailSerializer
     pagination_class = StandardResultsSetPagination
@@ -191,9 +171,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["post"])
     def lock(self, request, pk=None):
         email = self.get_object()
-        locked_email = EmailController.lock_email(
-            email, "State changed by worker", request.user
-        )
+        locked_email = EmailController.lock_email(email, "State changed by worker", request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
@@ -204,9 +182,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        locked_email = EmailController.fail_email(
-            email, serializer.validated_data["details"], request.user
-        )
+        locked_email = EmailController.fail_email(email, serializer.validated_data["details"], request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
@@ -217,9 +193,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        locked_email = EmailController.succeed_email(
-            email, serializer.validated_data["details"], request.user
-        )
+        locked_email = EmailController.succeed_email(email, serializer.validated_data["details"], request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
@@ -230,9 +204,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        locked_email = EmailController.cancel_email(
-            email, serializer.validated_data["details"], request.user
-        )
+        locked_email = EmailController.cancel_email(email, serializer.validated_data["details"], request.user)
         return Response(self.get_serializer(locked_email).data)
 
 
@@ -245,11 +217,7 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Task.objects.select_related("person", "event", "role", "seat_membership")
-        .order_by("pk")
-        .all()
-    )
+    queryset = Task.objects.select_related("person", "event", "role", "seat_membership").order_by("pk").all()
     serializer_class = TaskSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -264,9 +232,7 @@ class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        TrainingProgress.objects.select_related(
-            "trainee", "requirement", "involvement_type", "event"
-        )
+        TrainingProgress.objects.select_related("trainee", "requirement", "involvement_type", "event")
         .order_by("pk")
         .all()
     )

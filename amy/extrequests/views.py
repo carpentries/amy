@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, ProtectedError, Q
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from requests.exceptions import HTTPError, RequestException
@@ -83,8 +83,9 @@ from workshops.utils.trainingrequest_upload import (
     update_manual_score,
     upload_trainingrequest_manual_score_csv,
 )
+from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.usernames import create_username
-from workshops.utils.views import failed_to_delete, redirect_with_next_support
+from workshops.utils.views import failed_to_delete
 
 logger = logging.getLogger("amy")
 
@@ -98,9 +99,9 @@ class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = "requests"
     template_name = "requests/all_workshoprequests.html"
     filter_class = WorkshopRequestFilter
-    queryset = WorkshopRequest.objects.select_related(
-        "assigned_to", "institution"
-    ).prefetch_related("requested_workshop_types")
+    queryset = WorkshopRequest.objects.select_related("assigned_to", "institution").prefetch_related(
+        "requested_workshop_types"
+    )
     title = "Workshop requests"
 
 
@@ -120,9 +121,7 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
-            person_lookup_form = AdminLookupForm(
-                initial={"person": self.object.assigned_to}
-            )
+            person_lookup_form = AdminLookupForm(initial={"person": self.object.assigned_to})
 
         person_lookup_form.helper = BootstrapHelper(
             form_action=reverse("workshoprequest_assign", args=[self.object.pk]),
@@ -150,9 +149,7 @@ class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permanent = False
 
 
-class WorkshopRequestAcceptEvent(
-    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
-):
+class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView):
     permission_required = ["workshops.change_workshoprequest", "workshops.add_event"]
     model = Event
     form_class = EventCreateForm
@@ -183,9 +180,7 @@ class WorkshopRequestAcceptEvent(
 
         person = workshop_request.host()
         if person:
-            Task.objects.create(
-                event=event, person=person, role=Role.objects.get(name="host")
-            )
+            Task.objects.create(event=event, person=person, role=Role.objects.get(name="host"))
 
         run_post_workshop_7days_strategy(
             post_workshop_7days_strategy(event),
@@ -215,9 +210,9 @@ class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = "inquiries"
     template_name = "requests/all_workshopinquiries.html"
     filter_class = WorkshopInquiryFilter
-    queryset = WorkshopInquiryRequest.objects.select_related(
-        "assigned_to", "institution"
-    ).prefetch_related("requested_workshop_types")
+    queryset = WorkshopInquiryRequest.objects.select_related("assigned_to", "institution").prefetch_related(
+        "requested_workshop_types"
+    )
     title = "Workshop inquiries"
 
 
@@ -234,9 +229,7 @@ class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
-            person_lookup_form = AdminLookupForm(
-                initial={"person": self.object.assigned_to}
-            )
+            person_lookup_form = AdminLookupForm(initial={"person": self.object.assigned_to})
 
         person_lookup_form.helper = BootstrapHelper(
             form_action=reverse("workshopinquiry_assign", args=[self.object.pk]),
@@ -263,9 +256,7 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permanent = False
 
 
-class WorkshopInquiryAcceptEvent(
-    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
-):
+class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView):
     permission_required = [
         "extrequests.change_workshopinquiryrequest",
         "workshops.add_event",
@@ -293,9 +284,7 @@ class WorkshopInquiryAcceptEvent(
 
         person = inquiry.host()
         if person:
-            Task.objects.create(
-                event=event, person=person, role=Role.objects.get(name="host")
-            )
+            Task.objects.create(event=event, person=person, role=Role.objects.get(name="host"))
 
         run_post_workshop_7days_strategy(
             post_workshop_7days_strategy(event),
@@ -325,9 +314,9 @@ class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListV
     context_object_name = "submissions"
     template_name = "requests/all_selforganisedsubmissions.html"
     filter_class = SelfOrganisedSubmissionFilter
-    queryset = SelfOrganisedSubmission.objects.select_related(
-        "assigned_to", "institution"
-    ).prefetch_related("workshop_types")
+    queryset = SelfOrganisedSubmission.objects.select_related("assigned_to", "institution").prefetch_related(
+        "workshop_types"
+    )
     title = "Self-Organised submissions"
 
 
@@ -344,14 +333,10 @@ class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
-            person_lookup_form = AdminLookupForm(
-                initial={"person": self.object.assigned_to}
-            )
+            person_lookup_form = AdminLookupForm(initial={"person": self.object.assigned_to})
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse(
-                "selforganisedsubmission_assign", args=[self.object.pk]
-            ),
+            form_action=reverse("selforganisedsubmission_assign", args=[self.object.pk]),
             add_cancel_button=False,
         )
 
@@ -359,9 +344,7 @@ class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class SelfOrganisedSubmissionChange(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView
-):
+class SelfOrganisedSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
     pk_url_kwarg = "submission_id"
@@ -407,8 +390,7 @@ class SelfOrganisedSubmissionAcceptEvent(
         url = self.other_object.workshop_url.strip()
         data = {
             "url": url,
-            "host": self.other_object.host_organization()
-            or self.other_object.institution,
+            "host": self.other_object.host_organization() or self.other_object.institution,
             "administrator": Organization.objects.get(domain="self-organized"),
         }
 
@@ -439,10 +421,7 @@ class SelfOrganisedSubmissionAcceptEvent(
             if "instructors" in data or "helpers" in data:
                 instructors = data.get("instructors") or ["none"]
                 helpers = data.get("helpers") or ["none"]
-                data["comment"] = (
-                    f"Instructors: {','.join(instructors)}\n\n"
-                    f"Helpers: {','.join(helpers)}"
-                )
+                data["comment"] = f"Instructors: {','.join(instructors)}\n\n" f"Helpers: {','.join(helpers)}"
 
         initial = super().get_initial()
         initial.update(data)
@@ -464,9 +443,7 @@ class SelfOrganisedSubmissionAcceptEvent(
 
         person = submission.host()
         if person:
-            Task.objects.create(
-                event=event, person=person, role=Role.objects.get(name="host")
-            )
+            Task.objects.create(event=event, person=person, role=Role.objects.get(name="host"))
 
         submission.state = "a"
         submission.event = event
@@ -509,9 +486,7 @@ def all_trainingrequests(request):
             Prefetch(
                 "person__task_set",
                 to_attr="training_tasks",
-                queryset=Task.objects.filter(
-                    role__name="learner", event__tags__name="TTT"
-                ).select_related("event"),
+                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT").select_related("event"),
             ),
         ),
     )
@@ -527,9 +502,7 @@ def all_trainingrequests(request):
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]
             membership = match_form.cleaned_data["seat_membership"]
-            membership_auto_assign = match_form.cleaned_data[
-                "seat_membership_auto_assign"
-            ]
+            membership_auto_assign = match_form.cleaned_data["seat_membership_auto_assign"]
             seat_public = match_form.cleaned_data["seat_public"]
             open_seat = match_form.cleaned_data["seat_open_training"]
             role = Role.objects.get(name="learner")
@@ -546,9 +519,7 @@ def all_trainingrequests(request):
                     # find which membership to use
                     # if membership can't be determined, skip this request
                     try:
-                        membership_to_use = (
-                            get_membership_from_training_request_or_raise_error(r)
-                        )
+                        membership_to_use = get_membership_from_training_request_or_raise_error(r)
                     except (ValueError, Membership.DoesNotExist) as e:
                         errors.append(str(e))
                         continue
@@ -602,7 +573,7 @@ def all_trainingrequests(request):
                 changed_count = len(match_form.cleaned_data["requests"]) - len(errors)
                 info_msg = (
                     f"Accepted and matched {changed_count} "
-                    f'{"person" if changed_count==1 else "people"} to training, '
+                    f'{"person" if changed_count == 1 else "people"} to training, '
                     f"which raised {len(warnings)} warning(s). "
                     f"{len(errors)} request(s) were skipped due to errors."
                 )
@@ -648,9 +619,7 @@ def all_trainingrequests(request):
             for r in form.cleaned_data["requests"]:
                 r.person.get_training_tasks().delete()
 
-            messages.success(
-                request, "Successfully unmatched selected " "people from trainings."
-            )
+            messages.success(request, "Successfully unmatched selected " "people from trainings.")
 
     context = {
         "title": "Training Requests",
@@ -673,9 +642,7 @@ def _match_training_request_to_person(
     if create:
         try:
             training_request.person = Person.objects.create_user(
-                username=create_username(
-                    training_request.personal, training_request.family
-                ),
+                username=create_username(training_request.personal, training_request.family),
                 personal=training_request.personal,
                 family=training_request.family,
                 email=training_request.email,
@@ -684,9 +651,7 @@ def _match_training_request_to_person(
             # email address is not unique
             messages.error(
                 request,
-                "Could not create a new person, because "
-                "there already exists a person with "
-                "exact email address.",
+                "Could not create a new person, because " "there already exists a person with " "exact email address.",
             )
             return False
 
@@ -732,9 +697,9 @@ def _match_training_request_to_person(
 
     # Create new style consents based on the training request consents used in the
     # training request form.
-    training_request_consents = TrainingRequestConsent.objects.filter(
-        training_request=training_request
-    ).select_related("term_option", "term")
+    training_request_consents = TrainingRequestConsent.objects.filter(training_request=training_request).select_related(
+        "term_option", "term"
+    )
     for consent in training_request_consents:
         try:
             option_type = consent.term_option.option_type
@@ -744,10 +709,7 @@ def _match_training_request_to_person(
                 person=training_request.person,
             )
         except (Term.DoesNotExist, TermOption.DoesNotExist):
-            logger.warning(
-                f"Either Term {consent.term.key} or its term option was not found, "
-                "can't proceed."
-            )
+            logger.warning(f"Either Term {consent.term.key} or its term option was not found, " "can't proceed.")
             messages.error(
                 request,
                 f"Error when setting person's consents. Term {consent.term.key} or "
@@ -759,7 +721,7 @@ def _match_training_request_to_person(
 
 
 @admin_required
-def trainingrequest_details(request, pk):
+def trainingrequest_details(request: HttpRequest, pk: str) -> HttpResponse:
     req = get_object_or_404(TrainingRequest, pk=int(pk))
 
     if request.method == "POST":
@@ -768,13 +730,11 @@ def trainingrequest_details(request, pk):
         if form.is_valid():
             create = form.action == "create"
             person = form.cleaned_data["person"]
-            ok = _match_training_request_to_person(
-                request, training_request=req, person=person, create=create
-            )
+            ok = _match_training_request_to_person(request, training_request=req, person=person, create=create)
             if ok:
-                return redirect_with_next_support(
-                    request, "trainingrequest_details", req.pk
-                )
+                next_url = request.GET.get("next", None)
+                default_url = reverse("trainingrequest_details", args=[req.pk])
+                return redirect(safe_next_or_default_url(next_url, default_url))
 
     else:  # GET request
         # Provide initial value for form.person
@@ -783,27 +743,20 @@ def trainingrequest_details(request, pk):
         else:
             # No person is matched to the TrainingRequest yet. Suggest a
             # person from existing records.
-            primary_email = Q(email__iexact=req.email) | Q(
-                secondary_email__iexact=req.email
-            )
+            primary_email = Q(email__iexact=req.email) | Q(secondary_email__iexact=req.email)
             # only match secondary email if there's one provided, otherwise
             # we could get false-positive matches for empty email.
             secondary_email = (
                 Q()
                 if not req.secondary_email
-                else (
-                    Q(email__iexact=req.secondary_email)
-                    | Q(secondary_email__iexact=req.secondary_email)
-                )
+                else (Q(email__iexact=req.secondary_email) | Q(secondary_email__iexact=req.secondary_email))
             )
             name = Q(
                 personal__iexact=req.personal,
                 middle__iexact=req.middle,
                 family__iexact=req.family,
             )
-            person = Person.objects.filter(
-                primary_email | secondary_email | name
-            ).first()  # may return None
+            person = Person.objects.filter(primary_email | secondary_email | name).first()  # may return None
         form = MatchTrainingRequestForm(initial={"person": person})
 
     TERM_SLUGS = ["may-contact", "privacy-policy", "public-profile"]
@@ -813,13 +766,11 @@ def trainingrequest_details(request, pk):
         "form": form,
         "consents": {
             consent.term.key: consent
-            for consent in TrainingRequestConsent.objects.select_related(
-                "term", "term_option"
-            ).filter(training_request=req)
+            for consent in TrainingRequestConsent.objects.select_related("term", "term_option").filter(
+                training_request=req
+            )
         },
-        "consents_content": {
-            term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)
-        },
+        "consents_content": {term.key: term.content for term in Term.objects.filter(slug__in=TERM_SLUGS)},
     }
     return render(request, "requests/trainingrequest.html", context)
 
@@ -860,9 +811,7 @@ def trainingrequests_merge(request):
     obj_a = get_object_or_404(TrainingRequest, pk=obj_a_pk)
     obj_b = get_object_or_404(TrainingRequest, pk=obj_b_pk)
 
-    form = TrainingRequestsMergeForm(
-        initial=dict(trainingrequest_a=obj_a, trainingrequest_b=obj_b)
-    )
+    form = TrainingRequestsMergeForm(initial=dict(trainingrequest_a=obj_a, trainingrequest_b=obj_b))
 
     if request.method == "POST":
         form = TrainingRequestsMergeForm(request.POST)
@@ -935,22 +884,14 @@ def trainingrequests_merge(request):
             )
 
             try:
-                _, integrity_errors = merge_objects(
-                    obj_a, obj_b, easy, difficult, choices=data, base_a=base_a
-                )
+                _, integrity_errors = merge_objects(obj_a, obj_b, easy, difficult, choices=data, base_a=base_a)
 
                 if integrity_errors:
-                    msg = (
-                        "There were integrity errors when merging related "
-                        "objects:\n"
-                        "\n".join(integrity_errors)
-                    )
+                    msg = "There were integrity errors when merging related " "objects:\n" "\n".join(integrity_errors)
                     messages.warning(request, msg)
 
             except ProtectedError as e:
-                return failed_to_delete(
-                    request, object=merging_obj, protected_objects=e.protected_objects
-                )
+                return failed_to_delete(request, object=merging_obj, protected_objects=e.protected_objects)
 
             else:
                 return redirect(base_obj.get_absolute_url())
@@ -964,15 +905,15 @@ def trainingrequests_merge(request):
         "form": form,
         "obj_a_consents": {
             consent.term.key: consent
-            for consent in TrainingRequestConsent.objects.select_related(
-                "term", "term_option"
-            ).filter(training_request=obj_a)
+            for consent in TrainingRequestConsent.objects.select_related("term", "term_option").filter(
+                training_request=obj_a
+            )
         },
         "obj_b_consents": {
             consent.term.key: consent
-            for consent in TrainingRequestConsent.objects.select_related(
-                "term", "term_option"
-            ).filter(training_request=obj_b)
+            for consent in TrainingRequestConsent.objects.select_related("term", "term_option").filter(
+                training_request=obj_b
+            )
         },
     }
     return render(request, "requests/trainingrequests_merge.html", context)
@@ -989,13 +930,9 @@ def bulk_upload_training_request_scores(request):
             try:
                 data = upload_trainingrequest_manual_score_csv(stream)
             except csv.Error as e:
-                messages.error(
-                    request, "Error processing uploaded .CSV file: {}".format(e)
-                )
+                messages.error(request, "Error processing uploaded .CSV file: {}".format(e))
             except UnicodeDecodeError:
-                messages.error(
-                    request, "Please provide a file in {} encoding.".format(charset)
-                )
+                messages.error(request, "Please provide a file in {} encoding.".format(charset))
             else:
                 request.session["bulk-upload-training-request-scores"] = data
                 return redirect("bulk_upload_training_request_scores_confirmation")
@@ -1048,16 +985,12 @@ def bulk_upload_training_request_scores_confirmation(request):
                         "Error saving data to the database: {}. Please make "
                         "sure to fix all errors listed below.".format(e),
                     )
-                    errors, cleaned_data = clean_upload_trainingrequest_manual_score(
-                        data
-                    )
+                    errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
                 else:
                     request.session["bulk-upload-training-request-scores"] = None
                     messages.success(
                         request,
-                        "Successfully updated {} Training Requests.".format(
-                            records_count
-                        ),
+                        "Successfully updated {} Training Requests.".format(records_count),
                     )
                     return redirect("bulk_upload_training_request_scores")
             else:

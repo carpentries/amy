@@ -43,9 +43,7 @@ class TestInstructorRecruitmentCreateForm(TestCase):
 
 class TestInstructorRecruitmentAddSignupForm(TestCase):
     def _prepare_person(self) -> Person:
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
         config = CommunityRoleConfig.objects.create(
             name="instructor",
             display_name="Instructor",

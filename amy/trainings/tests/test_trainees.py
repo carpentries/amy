@@ -62,9 +62,7 @@ class TestTraineesView(TestBase):
     def test_bulk_add_progress__welcome(self):
         # Arrange
         # create a pre-existing progress to ensure bulk adding doesn't interfere
-        TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=self.welcome, state="n"
-        )
+        TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.welcome, state="n")
         data = {
             "trainees": [self.spiderman.pk, self.ironman.pk],
             "requirement": self.welcome.pk,
@@ -81,9 +79,7 @@ class TestTraineesView(TestBase):
         msg = "Successfully changed progress of all selected trainees."
         self.assertContains(rv, msg)
 
-        got = set(
-            TrainingProgress.objects.values_list("trainee", "requirement", "state")
-        )
+        got = set(TrainingProgress.objects.values_list("trainee", "requirement", "state"))
         expected = {
             (self.spiderman.pk, self.welcome.pk, "n"),
             (self.spiderman.pk, self.welcome.pk, "a"),
@@ -94,9 +90,7 @@ class TestTraineesView(TestBase):
     def test_bulk_add_progress__training(self):
         # Arrange
         # create a pre-existing progress to ensure bulk adding doesn't interfere
-        TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=self.training, state="n"
-        )
+        TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.training, state="n")
         data = {
             "trainees": [self.spiderman.pk, self.ironman.pk],
             "requirement": self.training.pk,
@@ -114,9 +108,7 @@ class TestTraineesView(TestBase):
         msg = "Successfully changed progress of all selected trainees."
         self.assertContains(rv, msg)
 
-        got = set(
-            TrainingProgress.objects.values_list("trainee", "requirement", "state")
-        )
+        got = set(TrainingProgress.objects.values_list("trainee", "requirement", "state"))
         expected = {
             (self.spiderman.pk, self.training.pk, "n"),
             (self.spiderman.pk, self.training.pk, "a"),
@@ -152,25 +144,14 @@ class TestTraineesView(TestBase):
         self.assertEqual(rv.resolver_match.view_name, "all_trainees")
 
         msgs = [
-            (
-                f"Trainee {escape(str(self.ironman))} already has a training progress "
-                f"for event {self.ttt_event}."
-            ),
-            (
-                f"Trainee {escape(str(self.blackwidow))} does not have a learner task "
-                f"for event {self.ttt_event}."
-            ),
-            (
-                "Changed progress of 1 trainee(s). "
-                "2 trainee(s) were skipped due to errors."
-            ),
+            (f"Trainee {escape(str(self.ironman))} already has a training progress " f"for event {self.ttt_event}."),
+            (f"Trainee {escape(str(self.blackwidow))} does not have a learner task " f"for event {self.ttt_event}."),
+            ("Changed progress of 1 trainee(s). " "2 trainee(s) were skipped due to errors."),
         ]
         for msg in msgs:
             self.assertContains(rv, msg)
 
-        got = set(
-            TrainingProgress.objects.values_list("trainee", "requirement", "state")
-        )
+        got = set(TrainingProgress.objects.values_list("trainee", "requirement", "state"))
         expected = {
             (self.spiderman.pk, self.training.pk, "a"),  # new
             (self.ironman.pk, self.training.pk, "n"),  # pre-existing
@@ -180,9 +161,7 @@ class TestTraineesView(TestBase):
     def test_bulk_add_progress__demo(self):
         # Arrange
         # create a pre-existing progress to ensure bulk adding doesn't interfere
-        TrainingProgress.objects.create(
-            trainee=self.spiderman, requirement=self.demo, state="n"
-        )
+        TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.demo, state="n")
         data = {
             "trainees": [self.spiderman.pk, self.ironman.pk],
             "requirement": self.demo.pk,
@@ -199,9 +178,7 @@ class TestTraineesView(TestBase):
         msg = "Successfully changed progress of all selected trainees."
         self.assertContains(rv, msg)
 
-        got = set(
-            TrainingProgress.objects.values_list("trainee", "requirement", "state")
-        )
+        got = set(TrainingProgress.objects.values_list("trainee", "requirement", "state"))
         expected = {
             (self.spiderman.pk, self.demo.pk, "n"),
             (self.spiderman.pk, self.demo.pk, "a"),
@@ -239,9 +216,7 @@ class TestTraineesView(TestBase):
         msg = "Successfully changed progress of all selected trainees."
         self.assertContains(rv, msg)
 
-        got = set(
-            TrainingProgress.objects.values_list("trainee", "requirement", "state")
-        )
+        got = set(TrainingProgress.objects.values_list("trainee", "requirement", "state"))
         expected = {
             (self.spiderman.pk, self.get_involved.pk, "n"),
             (self.spiderman.pk, self.get_involved.pk, "a"),
@@ -260,18 +235,12 @@ class TestFilterTraineesByInstructorStatus(TestBase):
     def _setUpTrainingRequirements(self):
         """Add some Training Requirements created through seeding
         (amy/scripts/seed_training_requirements.py)"""
-        self.demo, _ = TrainingRequirement.objects.get_or_create(
-            name="Demo", defaults={"url_required": True}
-        )
-        self.get_involved, _ = TrainingRequirement.objects.get_or_create(
-            name="Get Involved", defaults={}
-        )
+        self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo", defaults={"url_required": True})
+        self.get_involved, _ = TrainingRequirement.objects.get_or_create(name="Get Involved", defaults={})
 
         self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.training = TrainingRequirement.objects.get(name="Training")
-        self.involvement, _ = Involvement.objects.get_or_create(
-            name="Test Involvement", defaults={}
-        )
+        self.involvement, _ = Involvement.objects.get_or_create(name="Test Involvement", defaults={})
 
     def _setUpInstructors(self):
         # prepare data
@@ -377,9 +346,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                 ),
             ]
         )
-        Award.objects.create(
-            person=self.trainee2, badge=self.instructor_badge, awarded=date(2014, 1, 1)
-        )
+        Award.objects.create(person=self.trainee2, badge=self.instructor_badge, awarded=date(2014, 1, 1))
         # 1 non-eligible trainee
         self.trainee3 = Person.objects.create(
             personal="Trainee3",
@@ -422,9 +389,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         # `filter_trainees_by_instructor_status` takes 3 parameters (queryset,
         # name and choice), but only 1 is used for tests (choice)
         self.queryset = all_trainees_queryset()
-        self.filter = partial(
-            filter_trainees_by_instructor_status, queryset=self.queryset, name=""
-        )
+        self.filter = partial(filter_trainees_by_instructor_status, queryset=self.queryset, name="")
 
     def test_no_choice(self):
         # result should be the same as original queryset

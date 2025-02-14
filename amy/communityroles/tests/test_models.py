@@ -47,9 +47,7 @@ class TestCommunityRoleQuery(TestCase):
     def test_active(self) -> None:
         # Arrange
         today = date.today()
-        self.instructor_badge = Badge.objects.create(
-            name="instructor", title="Instructor"
-        )
+        self.instructor_badge = Badge.objects.create(name="instructor", title="Instructor")
         self.instructor_community_role_config = CommunityRoleConfig.objects.create(
             name="instructor",
             link_to_award=True,
@@ -57,12 +55,8 @@ class TestCommunityRoleQuery(TestCase):
             link_to_membership=False,
             additional_url=False,
         )
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
-        award1 = Award.objects.create(
-            person=person1, badge=self.instructor_badge, awarded=date(2022, 1, 1)
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
+        award1 = Award.objects.create(person=person1, badge=self.instructor_badge, awarded=date(2022, 1, 1))
         CommunityRole.objects.create(
             config=self.instructor_community_role_config,
             person=person1,
@@ -70,9 +64,7 @@ class TestCommunityRoleQuery(TestCase):
             start=today + timedelta(days=30),
             end=None,
         )
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
         award2 = Award.objects.create(person=person2, badge=self.instructor_badge)
         crole2 = CommunityRole.objects.create(
             config=self.instructor_community_role_config,
@@ -81,9 +73,7 @@ class TestCommunityRoleQuery(TestCase):
             start=today - timedelta(days=7),
             end=today + timedelta(days=7),
         )
-        person3 = Person.objects.create(
-            username="test3", personal="Test3", family="User", email="test3@example.org"
-        )
+        person3 = Person.objects.create(username="test3", personal="Test3", family="User", email="test3@example.org")
         award3 = Award.objects.create(person=person3, badge=self.instructor_badge)
         crole3 = CommunityRole.objects.create(
             config=self.instructor_community_role_config,
@@ -92,9 +82,7 @@ class TestCommunityRoleQuery(TestCase):
             start=None,
             end=today + timedelta(days=30),
         )
-        person4 = Person.objects.create(
-            username="test4", personal="Test4", family="User", email="test4@example.org"
-        )
+        person4 = Person.objects.create(username="test4", personal="Test4", family="User", email="test4@example.org")
         award4 = Award.objects.create(person=person4, badge=self.instructor_badge)
         CommunityRole.objects.create(
             config=self.instructor_community_role_config,
@@ -103,9 +91,7 @@ class TestCommunityRoleQuery(TestCase):
             start=None,
             end=today - timedelta(days=30),
         )
-        person5 = Person.objects.create(
-            username="test5", personal="Test5", family="User", email="test5@example.org"
-        )
+        person5 = Person.objects.create(username="test5", personal="Test5", family="User", email="test5@example.org")
         award5 = Award.objects.create(person=person5, badge=self.instructor_badge)
         crole5 = CommunityRole.objects.create(
             config=self.instructor_community_role_config,
@@ -114,9 +100,7 @@ class TestCommunityRoleQuery(TestCase):
             start=None,
             end=None,
         )
-        person6 = Person.objects.create(
-            username="test6", personal="Test6", family="User", email="test6@example.org"
-        )
+        person6 = Person.objects.create(username="test6", personal="Test6", family="User", email="test6@example.org")
         award6 = Award.objects.create(person=person6, badge=self.instructor_badge)
         CommunityRole.objects.create(
             config=self.instructor_community_role_config,
@@ -168,9 +152,7 @@ class TestCommunityRoleModel(TestCase):
         # Act
         url = self.community_role.get_absolute_url()
         # Assert
-        self.assertEqual(
-            url, reverse("communityrole_details", args=[self.community_role.pk])
-        )
+        self.assertEqual(url, reverse("communityrole_details", args=[self.community_role.pk]))
 
     def test_is_active(self):
         # Arrange

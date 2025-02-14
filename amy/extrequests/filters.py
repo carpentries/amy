@@ -40,9 +40,7 @@ class TrainingRequestFilter(AMYFilterSet):
         method="filter_by_person",
     )
 
-    member_code = django_filters.CharFilter(
-        field_name="member_code", lookup_expr="icontains", label="Member code"
-    )
+    member_code = django_filters.CharFilter(field_name="member_code", lookup_expr="icontains", label="Member code")
 
     eventbrite_id = django_filters.CharFilter(
         label="Eventbrite ID or URL",
@@ -148,9 +146,7 @@ class TrainingRequestFilter(AMYFilterSet):
         if affiliation == "":
             return queryset
         else:
-            q = Q(affiliation__icontains=affiliation) | Q(
-                person__affiliation__icontains=affiliation
-            )
+            q = Q(affiliation__icontains=affiliation) | Q(person__affiliation__icontains=affiliation)
             return queryset.filter(q).distinct()
 
     def filter_training_requests_by_state(self, queryset, name, choice):
@@ -164,18 +160,14 @@ class TrainingRequestFilter(AMYFilterSet):
             return queryset.filter(score_manual__isnull=False)
         return queryset
 
-    def filter_member_code_override(
-        self, queryset: QuerySet, name: str, only_overrides: bool
-    ) -> QuerySet:
+    def filter_member_code_override(self, queryset: QuerySet, name: str, only_overrides: bool) -> QuerySet:
         """If checked, only show requests where the member code has been
         marked as invalid. Otherwise, show all requests."""
         if only_overrides:
             return queryset.filter(member_code_override=True)
         return queryset
 
-    def filter_eventbrite_id(
-        self, queryset: QuerySet, name: str, value: str
-    ) -> QuerySet:
+    def filter_eventbrite_id(self, queryset: QuerySet, name: str, value: str) -> QuerySet:
         """
         Returns the queryset filtered by an Eventbrite ID or URL.
         Events have multiple possible URLs which all contain the ID, so
@@ -226,9 +218,7 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
             "country",
         ]
 
-    def filter_unused_member_code(
-        self, queryset: QuerySet, name: str, apply_filter: bool
-    ) -> QuerySet:
+    def filter_unused_member_code(self, queryset: QuerySet, name: str, apply_filter: bool) -> QuerySet:
         if apply_filter:
             # find requests where no member code was provided
             requests_without_code = queryset.filter(member_code="")

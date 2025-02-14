@@ -41,9 +41,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         "online_inperson": "inperson",
     }
 
-    def _test_dont_know_yet_option(
-        self, Form, field, value_normal, value_dont_know_yet
-    ):
+    def _test_dont_know_yet_option(self, Form, field, value_normal, value_dont_know_yet):
         data = self.minimal_data.copy()
         data[field] = [
             value_normal,
@@ -210,18 +208,12 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="domains",
-            value_normal=KnowledgeDomain.objects.exclude(name="Don't know yet")
-            .first()
-            .pk,
-            value_dont_know_yet=KnowledgeDomain.objects.filter(name="Don't know yet")
-            .first()
-            .pk,
+            value_normal=KnowledgeDomain.objects.exclude(name="Don't know yet").first().pk,
+            value_dont_know_yet=KnowledgeDomain.objects.filter(name="Don't know yet").first().pk,
         )
         # additionally test against `domains_other`
         data = self.minimal_data.copy()
-        data["domains"] = [
-            KnowledgeDomain.objects.filter(name="Don't know yet").first().pk
-        ]
+        data["domains"] = [KnowledgeDomain.objects.filter(name="Don't know yet").first().pk]
         data["domains_other"] = "Other domains"
         form = WorkshopInquiryRequestBaseForm(data)
         self.assertIn("domains", form.errors)
@@ -230,32 +222,20 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="academic_levels",
-            value_normal=AcademicLevel.objects.exclude(name="Don't know yet")
-            .first()
-            .pk,
-            value_dont_know_yet=AcademicLevel.objects.filter(name="Don't know yet")
-            .first()
-            .pk,
+            value_normal=AcademicLevel.objects.exclude(name="Don't know yet").first().pk,
+            value_dont_know_yet=AcademicLevel.objects.filter(name="Don't know yet").first().pk,
         )
 
         # 5: computing levels
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="computing_levels",
-            value_normal=ComputingExperienceLevel.objects.exclude(name="Don't know yet")
-            .first()
-            .pk,
-            value_dont_know_yet=ComputingExperienceLevel.objects.filter(
-                name="Don't know yet"
-            )
-            .first()
-            .pk,
+            value_normal=ComputingExperienceLevel.objects.exclude(name="Don't know yet").first().pk,
+            value_dont_know_yet=ComputingExperienceLevel.objects.filter(name="Don't know yet").first().pk,
         )
 
         # 6: requested workshop types
-        base_curriculum = Curriculum.objects.default_order(
-            allow_other=True, allow_unknown=True
-        ).filter(active=True)
+        base_curriculum = Curriculum.objects.default_order(allow_other=True, allow_unknown=True).filter(active=True)
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="requested_workshop_types",
@@ -465,25 +445,19 @@ class TestWorkshopInquiryViews(TestBase):
         self.assertIn(self.wi2, rv.context["inquiries"])
 
     def test_set_state_pending_request_view(self):
-        rv = self.client.get(
-            reverse("workshopinquiry_set_state", args=[self.wi1.pk, "discarded"])
-        )
+        rv = self.client.get(reverse("workshopinquiry_set_state", args=[self.wi1.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wi1.refresh_from_db()
         self.assertEqual(self.wi1.state, "d")
 
     def test_set_state_discarded_request_view(self):
-        rv = self.client.get(
-            reverse("workshopinquiry_set_state", args=[self.wi2.pk, "discarded"])
-        )
+        rv = self.client.get(reverse("workshopinquiry_set_state", args=[self.wi2.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wi2.refresh_from_db()
         self.assertEqual(self.wi2.state, "d")
 
     def test_pending_request_accept(self):
-        rv = self.client.get(
-            reverse("workshopinquiry_set_state", args=[self.wi1.pk, "accepted"])
-        )
+        rv = self.client.get(reverse("workshopinquiry_set_state", args=[self.wi1.pk, "accepted"]))
         self.assertEqual(rv.status_code, 302)
 
     def test_pending_request_accepted_with_event(self):
@@ -496,9 +470,7 @@ class TestWorkshopInquiryViews(TestBase):
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
-        rv = self.client.post(
-            reverse("workshopinquiry_accept_event", args=[self.wi1.pk]), data
-        )
+        rv = self.client.post(reverse("workshopinquiry_accept_event", args=[self.wi1.pk]), data)
         self.assertEqual(rv.status_code, 302)
         request = Event.objects.get(slug="2018-10-28-test-event").workshopinquiryrequest
         self.assertEqual(request, self.wi1)
@@ -537,9 +509,7 @@ class TestWorkshopInquiryViews(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertQuerySetEqual(
-            form_initial["curricula"].all(), wi.requested_workshop_types.all()
-        )
+        self.assertQuerySetEqual(form_initial["curricula"].all(), wi.requested_workshop_types.all())
         self.assertQuerySetEqual(form_initial["tags"], expected_tags)
         self.assertEqual(form_initial["public_status"], "private")
         self.assertEqual(form_initial["contact"], wi.additional_contact)
@@ -548,9 +518,7 @@ class TestWorkshopInquiryViews(TestBase):
         self.assertEqual(form_initial["end"], wi.preferred_dates + timedelta(days=1))
 
     def test_discarded_request_not_accepted_with_event(self):
-        rv = self.client.get(
-            reverse("workshopinquiry_accept_event", args=[self.wi2.pk])
-        )
+        rv = self.client.get(reverse("workshopinquiry_accept_event", args=[self.wi2.pk]))
         self.assertEqual(rv.status_code, 404)
 
     def test_pending_request_discard(self):
@@ -688,6 +656,4 @@ class TestAcceptingWorkshopInquiry(TestBase):
         event = Event.objects.get(slug="2019-08-18-test-event")
 
         # check if Harry gained a task
-        Task.objects.get(
-            person=self.harry, event=event, role=Role.objects.get(name="host")
-        )
+        Task.objects.get(person=self.harry, event=event, role=Role.objects.get(name="host"))

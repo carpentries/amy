@@ -34,9 +34,7 @@ class TestAction(TestCase):
         a = BaseAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
         a.additional_context = dict(obj1="test1", obj2="test2", obj3=123)
 
-        self.assertEqual(
-            a.get_additional_context(), {"obj1": "test1", "obj2": "test2", "obj3": 123}
-        )
+        self.assertEqual(a.get_additional_context(), {"obj1": "test1", "obj2": "test2", "obj3": 123})
 
     def testContext(self):
         # the trigger and email template below are totally fake
@@ -382,13 +380,8 @@ class BulkEmailTest(FakeRedisTestCaseMixin, TestCase):
     def test_send_bulk_email(self) -> None:
         term = Term.objects.active()[0]
         times_over_limit = 5
-        emails = [
-            f"test-address{i}@example.org"
-            for i in range(0, settings.BULK_EMAIL_LIMIT * times_over_limit)
-        ]
-        trigger = Trigger.objects.create(
-            action="test-trigger", template=EmailTemplate.objects.create()
-        )
+        emails = [f"test-address{i}@example.org" for i in range(0, settings.BULK_EMAIL_LIMIT * times_over_limit)]
+        trigger = Trigger.objects.create(action="test-trigger", template=EmailTemplate.objects.create())
         with patch("amy.autoemails.base_views.messages.info") as mock_messages_info:
             send_bulk_email(
                 request=RequestFactory(),
@@ -409,8 +402,7 @@ class BulkEmailTest(FakeRedisTestCaseMixin, TestCase):
         rq_jobs = RQJob.objects.filter(trigger=trigger)
         self.assertEqual(len(rq_jobs), times_over_limit)
         expected_sent_emails = [
-            emails[i : i + settings.BULK_EMAIL_LIMIT]  # noqa
-            for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)
+            emails[i : i + settings.BULK_EMAIL_LIMIT] for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)  # noqa
         ]
         for job, expected_emails in zip(rq_jobs, expected_sent_emails):
             self.assertEqual(job.recipients.split(","), expected_emails)

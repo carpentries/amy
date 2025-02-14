@@ -46,9 +46,7 @@ class TestInstructorTrainingCompletedNotBadgedReceiverIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -118,9 +116,7 @@ class TestInstructorTrainingCompletedNotBadgedUpdateReceiverIntegration(TestBase
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -163,9 +159,7 @@ class TestInstructorTrainingCompletedNotBadgedUpdateReceiverIntegration(TestBase
             state="p",
         )
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_training_completed_not_badged_strategy(
                 instructor_training_completed_not_badged_strategy(learner),
                 request=request,
@@ -190,11 +184,7 @@ class TestInstructorTrainingCompletedNotBadgedUpdateReceiverIntegration(TestBase
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
-        latest_log = (
-            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
-            .order_by("-created_at")
-            .first()
-        )
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at").first()
         assert latest_log
         self.assertEqual(latest_log.details, f"Updated {signal}")
 
@@ -218,9 +208,7 @@ class TestInstructorTrainingCompletedNotBadgedCancelIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -279,9 +267,7 @@ class TestInstructorTrainingCompletedNotBadgedCancelIntegration(TestBase):
             ]
         )
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_training_completed_not_badged_strategy(
                 instructor_training_completed_not_badged_strategy(learner),
                 request=request,
@@ -306,10 +292,6 @@ class TestInstructorTrainingCompletedNotBadgedCancelIntegration(TestBase):
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
         self.assertEqual(scheduled_email.state, ScheduledEmailStatus.CANCELLED)
-        latest_log = (
-            ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email)
-            .order_by("-created_at")
-            .first()
-        )
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at").first()
         assert latest_log
         self.assertEqual(latest_log.details, "Email was cancelled")

@@ -31,9 +31,7 @@ EmailTemplateDef = TypedDict(
         "body_template": str,
     },
 )
-TriggerDef = TypedDict(
-    "TriggerDef", {"action": str, "template_slug": str, "active": bool}
-)
+TriggerDef = TypedDict("TriggerDef", {"action": str, "template_slug": str, "active": bool})
 
 TAGS: list[TagDef] = [
     TagDef(name="automated-email", details="Only for EMAIL AUTOMATION", priority=0),
@@ -261,16 +259,12 @@ def email_template_transform(email_template_def: dict) -> EmailTemplate:
 
 def trigger_transform(trigger_def: TriggerDef) -> Trigger:
     template = EmailTemplate.objects.get(slug=trigger_def["template_slug"])
-    return Trigger(
-        action=trigger_def["action"], active=trigger_def["active"], template=template
-    )
+    return Trigger(action=trigger_def["action"], active=trigger_def["active"], template=template)
 
 
 def run() -> None:
     seed_models(Tag, TAGS, "name", tag_transform, logger)
-    seed_models(
-        EmailTemplate, EMAIL_TEMPLATES, "slug", email_template_transform, logger
-    )
+    seed_models(EmailTemplate, EMAIL_TEMPLATES, "slug", email_template_transform, logger)
     seed_models(
         Trigger,
         TRIGGERS,

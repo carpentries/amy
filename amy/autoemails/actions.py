@@ -189,9 +189,7 @@ class BaseAction:
             # check if the recipients are being overridden in the settings
             if settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS:
                 self.logger.debug(
-                    "Overriding recipient address (due to "
-                    "`AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` "
-                    "setting)..."
+                    "Overriding recipient address (due to " "`AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` " "setting)..."
                 )
                 self.email.to = [
                     str(settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS),
@@ -261,9 +259,7 @@ class NewInstructorAction(BaseAction):
             #             communication like newsletter
             # task.person.may_contact and
             task.role.name == "instructor"
-            and not task.event.tags.filter(
-                name__in=["cancelled", "unresponsive", "stalled"]
-            )
+            and not task.event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             # 2019-12-24: instead of accepting only upcoming Events, let's
             #             accept (more broadly) events starting in future
             #             or some without start date
@@ -303,9 +299,7 @@ class NewInstructorAction(BaseAction):
         context["person"] = task.person
         context["instructor"] = task.person
         context["role"] = task.role
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
@@ -350,9 +344,7 @@ class NewSupportingInstructorAction(BaseAction):
         """Conditions for creating a NewSupportingInstructorAction."""
         return bool(
             task.role.name == "supporting-instructor"
-            and not task.event.tags.filter(
-                name__in=["cancelled", "unresponsive", "stalled"]
-            )
+            and not task.event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             and (not task.event.start or task.event.start >= date.today())
             and task.event.tags.filter(name__in=["automated-email", "online"])
             and task.event.administrator
@@ -384,9 +376,7 @@ class NewSupportingInstructorAction(BaseAction):
         context["person"] = task.person
         context["instructor"] = task.person
         context["role"] = task.role
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
@@ -458,9 +448,7 @@ class PostWorkshopAction(BaseAction):
         try:
             event = self.context_objects["event"]
             person_emails = list(
-                Person.objects.filter(
-                    task__in=event.task_set.filter(role__name__in=self.ROLES)
-                )
+                Person.objects.filter(task__in=event.task_set.filter(role__name__in=self.ROLES))
                 .distinct()
                 .values_list("email", flat=True)
             )
@@ -513,28 +501,16 @@ class PostWorkshopAction(BaseAction):
         context["regional_coordinator_email"] = list(match_notification_email(event))
 
         # to get only people from the task set
-        context["instructors"] = list(
-            Person.objects.filter(
-                task__in=event.task_set.filter(role__name="instructor")
-            )
-        )
+        context["instructors"] = list(Person.objects.filter(task__in=event.task_set.filter(role__name="instructor")))
         context["supporting_instructors"] = list(
-            Person.objects.filter(
-                task__in=event.task_set.filter(role__name="supporting-instructor")
-            )
+            Person.objects.filter(task__in=event.task_set.filter(role__name="supporting-instructor"))
         )
-        context["helpers"] = list(
-            Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
-        )
-        context["hosts"] = list(
-            Person.objects.filter(task__in=event.task_set.filter(role__name="host"))
-        )
+        context["helpers"] = list(Person.objects.filter(task__in=event.task_set.filter(role__name="helper")))
+        context["hosts"] = list(Person.objects.filter(task__in=event.task_set.filter(role__name="host")))
 
         # querying over Person.objects lets us get rid of duplicates
         person_emails = list(
-            Person.objects.filter(
-                task__in=event.task_set.filter(role__name__in=self.ROLES)
-            )
+            Person.objects.filter(task__in=event.task_set.filter(role__name__in=self.ROLES))
             .distinct()
             .values_list("email", flat=True)
         )
@@ -542,9 +518,7 @@ class PostWorkshopAction(BaseAction):
         all_emails = list(filter(bool, person_emails + additional_contacts))
         context["all_emails"] = all_emails
 
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
 
         context["reports_link"] = reports_link(event.slug)
         context["tags"] = list(event.tags.values_list("name", flat=True))
@@ -610,9 +584,7 @@ class SelfOrganisedRequestAction(BaseAction):
                 and event.start
                 and event.start >= date.today()
                 # no "cancelled", "unresponsive", or "stalled" tags
-                and not event.tags.filter(
-                    name__in=["cancelled", "unresponsive", "stalled"]
-                )
+                and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
                 # special "automated-email" tag
                 and event.tags.filter(name__icontains="automated-email")
                 # there should be a related object `SelfOrganisedSubmission`
@@ -651,9 +623,7 @@ class SelfOrganisedRequestAction(BaseAction):
         emails = [request.email] + request.additional_contact.split(TAG_SEPARATOR)
         context["all_emails"] = list(filter(bool, emails))
 
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
@@ -690,10 +660,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         """If available, return string of all recipients."""
         try:
             event = self.context_objects["event"]
-            task_emails = [
-                t.person.email
-                for t in event.task_set.filter(role__name__in=["host", "instructor"])
-            ]
+            task_emails = [t.person.email for t in event.task_set.filter(role__name__in=["host", "instructor"])]
             contacts = event.contact.split(TAG_SEPARATOR)
             all_emails = list(filter(bool, task_emails + contacts))
             return ", ".join(all_emails)
@@ -715,9 +682,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         # there is 1 host task and 2 instructor tasks
         host = event.task_set.filter(role__name="host").first()
         instructors = event.task_set.filter(role__name="instructor")
-        supporting_instructors = event.task_set.filter(
-            role__name="supporting-instructor"
-        )
+        supporting_instructors = event.task_set.filter(role__name="supporting-instructor")
 
         try:
             open_instructor_recruitment = event.instructorrecruitment.status == "o"
@@ -761,9 +726,9 @@ class InstructorsHostIntroductionAction(BaseAction):
         context["regional_coordinator_email"] = list(match_notification_email(event))
 
         # people
-        tasks = event.task_set.filter(
-            role__name__in=["host", "instructor", "supporting-instructor"]
-        ).order_by("role__name")
+        tasks = event.task_set.filter(role__name__in=["host", "instructor", "supporting-instructor"]).order_by(
+            "role__name"
+        )
         hosts = tasks.filter(role__name="host")
         instructors = tasks.filter(role__name="instructor")
         support = tasks.filter(role__name="supporting-instructor")
@@ -789,9 +754,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         contacts = event.contact.split(TAG_SEPARATOR)
         context["all_emails"] = sorted(filter(bool, task_emails + contacts))
 
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
@@ -861,11 +824,7 @@ class AskForWebsiteAction(BaseAction):
         try:
             event = self.context_objects["event"]
             task_set = event.task_set.filter(role__name__in=self.role_names)
-            person_emails = list(
-                Person.objects.filter(task__in=task_set)
-                .distinct()
-                .values_list("email", flat=True)
-            )
+            person_emails = list(Person.objects.filter(task__in=task_set).distinct().values_list("email", flat=True))
             all_emails = list(filter(bool, person_emails))
             return ", ".join(all_emails)
 
@@ -875,9 +834,7 @@ class AskForWebsiteAction(BaseAction):
     @staticmethod
     def check(event: Event):  # type: ignore
         """Conditions for creating a AskForWebsiteAction."""
-        instructors = event.task_set.filter(
-            role__name__in=AskForWebsiteAction.role_names
-        )
+        instructors = event.task_set.filter(role__name__in=AskForWebsiteAction.role_names)
 
         return bool(
             # start date is required and in future
@@ -921,9 +878,7 @@ class AskForWebsiteAction(BaseAction):
         task_emails = [task.person.email for task in instructors]
         context["all_emails"] = list(filter(bool, task_emails))
 
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
@@ -991,11 +946,7 @@ class RecruitHelpersAction(BaseAction):
         try:
             event = self.context_objects["event"]
             task_set = event.task_set.filter(role__name="instructor")
-            person_emails = list(
-                Person.objects.filter(task__in=task_set)
-                .distinct()
-                .values_list("email", flat=True)
-            )
+            person_emails = list(Person.objects.filter(task__in=task_set).distinct().values_list("email", flat=True))
             all_emails = list(filter(bool, person_emails))
             return ", ".join(all_emails)
 
@@ -1052,15 +1003,11 @@ class RecruitHelpersAction(BaseAction):
 
         task_emails = [
             task.person.email
-            for task in event.task_set.filter(
-                role__name__in=["host", "instructor"]
-            ).order_by("role__name")
+            for task in event.task_set.filter(role__name__in=["host", "instructor"]).order_by("role__name")
         ]
         context["all_emails"] = list(filter(bool, task_emails))
 
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
@@ -1111,31 +1058,19 @@ class GenericAction(BaseAction):
                 context["workshop_main_type"] = tmp.name
             context["dates"] = human_daterange(event.start, event.end)
             context["workshop_host"] = event.host
-            context["regional_coordinator_email"] = list(
-                match_notification_email(event)
-            )
+            context["regional_coordinator_email"] = list(match_notification_email(event))
 
             task_emails = [
                 task.person.email
-                for task in event.task_set.filter(
-                    role__name__in=["host", "instructor"]
-                ).order_by("role__name")
+                for task in event.task_set.filter(role__name__in=["host", "instructor"]).order_by("role__name")
             ]
             context["all_emails"] = list(filter(bool, task_emails))
 
-            context["assignee"] = (
-                event.assigned_to.full_name
-                if event.assigned_to
-                else "Regional Coordinator"
-            )
+            context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
             context["tags"] = list(event.tags.values_list("name", flat=True))
 
         else:
-            context["assignee"] = (
-                request.assigned_to.full_name
-                if request.assigned_to
-                else "Regional Coordinator"
-            )
+            context["assignee"] = request.assigned_to.full_name if request.assigned_to else "Regional Coordinator"
 
         return context
 
@@ -1182,10 +1117,7 @@ class NewConsentRequiredAction(BaseAction):
     @staticmethod
     def check(term: Term):
         """Conditions for creating a NewConsentRequiredAction."""
-        return (
-            term.archived_at is None
-            and term.required_type != Term.OPTIONAL_REQUIRE_TYPE
-        )
+        return term.archived_at is None and term.required_type != Term.OPTIONAL_REQUIRE_TYPE
 
     def get_additional_context(self, objects, *args, **kwargs):
         return dict()
@@ -1361,9 +1293,7 @@ class DeclinedInstructorsAction(BaseAction):
             context["dates"] = human_daterange(event.start, event.end)
         context["host"] = event.host
         context["regional_coordinator_email"] = list(match_notification_email(event))
-        context["assignee"] = (
-            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
-        )
+        context["assignee"] = event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context

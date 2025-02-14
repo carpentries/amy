@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 from urllib.parse import quote
 
 from django.contrib.messages.api import MessageFailure
@@ -26,9 +26,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().get("/")
-        request.user = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        request.user = Person.objects.create(personal="Test", family="User", email="test@user.com")
         # Act
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
@@ -38,9 +36,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
     def test_view_enabled__community_role_inactive(self):
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         request.user = person
         config = CommunityRoleConfig.objects.create(
             name="instructor",
@@ -65,9 +61,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
     def test_view_enabled__community_role_active(self):
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         request.user = person
         config = CommunityRoleConfig.objects.create(
             name="instructor",
@@ -90,9 +84,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
     def test_view_enabled__admin(self):
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com", is_superuser=True
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com", is_superuser=True)
         request.user = person
         # Act
         view = UpcomingTeachingOpportunitiesList(request=request)
@@ -102,9 +94,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
     def test_get_queryset(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         online_tag = Tag.objects.get(name="online")
         event_ineligible1 = Event.objects.create(
             slug="test-event1",
@@ -149,15 +139,9 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
                 InstructorRecruitment(status="o", event=event_ineligible3),
             ]
         )
-        recruitment1 = InstructorRecruitment.objects.create(
-            status="o", event=event_eligible1
-        )
-        recruitment2 = InstructorRecruitment.objects.create(
-            status="o", event=event_eligible2
-        )
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment1, person=person, interest="session"
-        )
+        recruitment1 = InstructorRecruitment.objects.create(status="o", event=event_eligible1)
+        recruitment2 = InstructorRecruitment.objects.create(status="o", event=event_eligible2)
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment1, person=person, interest="session")
         request = RequestFactory().get("/")
         request.user = person
         # Act
@@ -166,9 +150,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         # Assert
         self.assertEqual(set(qs), {recruitment1, recruitment2})
         # `person_signup` is an additional attribute created using `Prefetch()`
-        self.assertTrue(
-            any(recruitment.person_signup == [signup] for recruitment in qs)
-        )
+        self.assertTrue(any(recruitment.person_signup == [signup] for recruitment in qs))
 
     def test_get_context_data(self):
         """Context data is extended only with person object, but it includes pre-counted
@@ -178,9 +160,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         `get_context_data` in the view."""
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         instructor = Role.objects.create(name="instructor")
         supporting_instructor = Role.objects.create(name="supporting-instructor")
         helper = Role.objects.create(name="helper")
@@ -218,9 +198,7 @@ class TestSignupForRecruitment(TestCase):
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().get("/")
-        request.user = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        request.user = Person.objects.create(personal="Test", family="User", email="test@user.com")
         # Act
         view = SignupForRecruitment(request=request)
         # Assert
@@ -230,9 +208,7 @@ class TestSignupForRecruitment(TestCase):
     def test_view_enabled__community_role_inactive(self):
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         request.user = person
         config = CommunityRoleConfig.objects.create(
             name="instructor",
@@ -257,9 +233,7 @@ class TestSignupForRecruitment(TestCase):
     def test_view_enabled__community_role_active(self):
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         request.user = person
         config = CommunityRoleConfig.objects.create(
             name="instructor",
@@ -282,9 +256,7 @@ class TestSignupForRecruitment(TestCase):
     def test_view_enabled__admin(self):
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com", is_superuser=True
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com", is_superuser=True)
         request.user = person
         # Act
         view = SignupForRecruitment(request=request)
@@ -294,20 +266,14 @@ class TestSignupForRecruitment(TestCase):
     def test_get_context_data(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         instructor_role = Role.objects.create(name="instructor")
         Task.objects.create(event=event, person=person, role=instructor_role)
         request = RequestFactory().get("/")
         request.user = person
-        view = SignupForRecruitment(
-            request=request, object=None, kwargs={"recruitment_pk": recruitment.pk}
-        )
+        view = SignupForRecruitment(request=request, object=None, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
         # Act & Assert
         with self.assertNumQueries(1):
@@ -322,26 +288,19 @@ class TestSignupForRecruitment(TestCase):
     def test_get_success_message(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         request = RequestFactory().get("/")
         request.user = person
-        view = SignupForRecruitment(
-            request=request, kwargs={"recruitment_pk": recruitment.pk}
-        )
+        view = SignupForRecruitment(request=request, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
         # Act
         msg = view.get_success_message(None)
         # Assert
         self.assertEqual(
             msg,
-            f"Your interest in teaching at {event} has been recorded and is now "
-            "pending.",
+            f"Your interest in teaching at {event} has been recorded and is now " "pending.",
         )
 
     def test_get_success_url(self) -> None:
@@ -363,15 +322,11 @@ class TestSignupForRecruitment(TestCase):
     def test_get_form_kwargs(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
         request = RequestFactory().get("/")
         request.user = MagicMock()
-        view = SignupForRecruitment(
-            request=request, kwargs={"recruitment_pk": recruitment.pk}
-        )
+        view = SignupForRecruitment(request=request, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
         # Act
         kwargs = view.get_form_kwargs()
@@ -390,18 +345,12 @@ class TestSignupForRecruitment(TestCase):
     def test_form_valid__obj_saved_with_recruitment_and_person(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
         request = RequestFactory().get("/")
         request.user = person
-        view = SignupForRecruitment(
-            request=request, kwargs={"recruitment_pk": recruitment.pk}
-        )
+        view = SignupForRecruitment(request=request, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
         form_mock = MagicMock()
         # Act
@@ -409,7 +358,7 @@ class TestSignupForRecruitment(TestCase):
             # MessageFailure is expected here, it happens after the form saving part
             view.form_valid(form_mock)
         # Assert
-        form_mock.save.has_calls(call(commit=False))
+        form_mock.save.assert_any_call(commit=False)
         form_mock.save().save.assert_called_once_with()
         self.assertEqual(form_mock.save().recruitment, recruitment)
         self.assertEqual(form_mock.save().person, person)
@@ -419,12 +368,8 @@ class TestSignupForRecruitment(TestCase):
     def test_form_valid__tasks_nearby(self, mock_messages):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
 
         event2 = Event.objects.create(
@@ -437,9 +382,7 @@ class TestSignupForRecruitment(TestCase):
         Task.objects.create(event=event2, person=person, role=instructor_role)
         request = RequestFactory().get("/")
         request.user = person
-        view = SignupForRecruitment(
-            request=request, kwargs={"recruitment_pk": recruitment.pk}
-        )
+        view = SignupForRecruitment(request=request, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
 
         # Act
@@ -450,8 +393,7 @@ class TestSignupForRecruitment(TestCase):
         # Assert
         mock_messages.warning.assert_called_once_with(
             request,
-            "Selected event dates fall within 14 days of your other workshops: "
-            f"{event2}",
+            "Selected event dates fall within 14 days of your other workshops: " f"{event2}",
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
@@ -459,12 +401,8 @@ class TestSignupForRecruitment(TestCase):
     def test_form_valid__conflicting_signups(self, mock_messages):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
 
         event2 = Event.objects.create(
@@ -474,15 +412,11 @@ class TestSignupForRecruitment(TestCase):
             end=date(2022, 2, 19),
         )
         recruitment2 = InstructorRecruitment.objects.create(status="o", event=event2)
-        signup = InstructorRecruitmentSignup.objects.create(
-            person=person, recruitment=recruitment2
-        )
+        signup = InstructorRecruitmentSignup.objects.create(person=person, recruitment=recruitment2)
 
         request = RequestFactory().get("/")
         request.user = person
-        view = SignupForRecruitment(
-            request=request, kwargs={"recruitment_pk": recruitment.pk}
-        )
+        view = SignupForRecruitment(request=request, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
 
         # Act
@@ -493,8 +427,7 @@ class TestSignupForRecruitment(TestCase):
         # Assert
         mock_messages.warning.assert_called_once_with(
             request,
-            "You have applied to other workshops on the same dates: "
-            f"{signup.recruitment.event}",
+            "You have applied to other workshops on the same dates: " f"{signup.recruitment.event}",
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
@@ -502,12 +435,8 @@ class TestSignupForRecruitment(TestCase):
     def test_form_valid__creates_a_new_signup(self, mock_contrib_messages_views):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
 
         config = CommunityRoleConfig.objects.create(
@@ -524,9 +453,7 @@ class TestSignupForRecruitment(TestCase):
 
         request = RequestFactory().post("/")
         request.user = person
-        view = SignupForRecruitment(
-            request=request, kwargs={"recruitment_pk": recruitment.pk}
-        )
+        view = SignupForRecruitment(request=request, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
 
         # Act
@@ -535,9 +462,7 @@ class TestSignupForRecruitment(TestCase):
         view.form_valid(form)
 
         # Assert
-        mock_contrib_messages_views.success.assert_called_once_with(
-            request, view.get_success_message(None)
-        )
+        mock_contrib_messages_views.success.assert_called_once_with(request, view.get_success_message(None))
         # new object created
         self.assertTrue(isinstance(view.object, InstructorRecruitmentSignup))
 
@@ -547,9 +472,7 @@ class TestResignFromRecruitment(TestCase):
     def test_view_enabled__no_community_role(self):
         # Arrange
         request = RequestFactory().post("/")
-        request.user = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        request.user = Person.objects.create(personal="Test", family="User", email="test@user.com")
         # Act
         view = ResignFromRecruitment(request=request)
         # Assert
@@ -559,9 +482,7 @@ class TestResignFromRecruitment(TestCase):
     def test_view_enabled__community_role_inactive(self):
         # Arrange
         request = RequestFactory().post("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         request.user = person
         config = CommunityRoleConfig.objects.create(
             name="instructor",
@@ -586,9 +507,7 @@ class TestResignFromRecruitment(TestCase):
     def test_view_enabled__community_role_active(self):
         # Arrange
         request = RequestFactory().post("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         request.user = person
         config = CommunityRoleConfig.objects.create(
             name="instructor",
@@ -611,9 +530,7 @@ class TestResignFromRecruitment(TestCase):
     def test_view_enabled__admin(self):
         # Arrange
         request = RequestFactory().get("/")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com", is_superuser=True
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com", is_superuser=True)
         request.user = person
         # Act
         view = ResignFromRecruitment(request=request)
@@ -623,12 +540,8 @@ class TestResignFromRecruitment(TestCase):
     def test_get_queryset(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person1 = Person.objects.create(
-            personal="Test1", family="User1", email="test1@user1.com", username="test1"
-        )
-        person2 = Person.objects.create(
-            personal="Test2", family="User2", email="test2@user2.com", username="test2"
-        )
+        person1 = Person.objects.create(personal="Test1", family="User1", email="test1@user1.com", username="test1")
+        person2 = Person.objects.create(personal="Test2", family="User2", email="test2@user2.com", username="test2")
         event1 = Event.objects.create(slug="test-event1", host=host)
         event2 = Event.objects.create(slug="test-event2", host=host)
         recruitment1 = InstructorRecruitment.objects.create(status="c", event=event1)
@@ -637,9 +550,7 @@ class TestResignFromRecruitment(TestCase):
         signup2 = InstructorRecruitmentSignup(recruitment=recruitment1, person=person2)
         signup3 = InstructorRecruitmentSignup(recruitment=recruitment2, person=person1)
         signup4 = InstructorRecruitmentSignup(recruitment=recruitment2, person=person2)
-        InstructorRecruitmentSignup.objects.bulk_create(
-            [signup1, signup2, signup3, signup4]
-        )
+        InstructorRecruitmentSignup.objects.bulk_create([signup1, signup2, signup3, signup4])
 
         request = RequestFactory().post("/")
         request.user = person1
@@ -674,16 +585,10 @@ class TestResignFromRecruitment(TestCase):
     def test_post(self, mock_messages):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person
-        )
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person)
 
         request = RequestFactory().post("/")
         request.user = person

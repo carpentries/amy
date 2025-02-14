@@ -10,9 +10,7 @@ from workshops.models import Person
 class TestMessageAllowed(TestCase):
     def test_notification_not_tagged_for_admins_displays_for_admins(self) -> None:
         # Arrange
-        person = Person.objects.create_superuser(
-            "admin", "admin", "admin", "admin@example.org", "admin"
-        )
+        person = Person.objects.create_superuser("admin", "admin", "admin", "admin@example.org", "admin")
         request = RequestFactory().get("/")
         request.user = person
         message = Message(constants.INFO, "Test message", extra_tags="")
@@ -25,9 +23,7 @@ class TestMessageAllowed(TestCase):
 
     def test_notification_not_tagged_for_admins_displays_for_instructors(self) -> None:
         # Arrange
-        person = Person.objects.create_user(
-            "user", "user", "user", "user@example.org", "user"
-        )
+        person = Person.objects.create_user("user", "user", "user", "user@example.org", "user")
         request = RequestFactory().get("/")
         request.user = person
         message = Message(constants.INFO, "Test message", extra_tags="")
@@ -40,14 +36,10 @@ class TestMessageAllowed(TestCase):
 
     def test_notification_tagged_for_admins_displays_for_admins(self) -> None:
         # Arrange
-        person = Person.objects.create_superuser(
-            "admin", "admin", "admin", "admin@example.org", "admin"
-        )
+        person = Person.objects.create_superuser("admin", "admin", "admin", "admin@example.org", "admin")
         request = RequestFactory().get("/")
         request.user = person
-        message = Message(
-            constants.INFO, "Test message", extra_tags=settings.ONLY_FOR_ADMINS_TAG
-        )
+        message = Message(constants.INFO, "Test message", extra_tags=settings.ONLY_FOR_ADMINS_TAG)
 
         # Act
         result = message_allowed(message, request)
@@ -59,14 +51,10 @@ class TestMessageAllowed(TestCase):
         self,
     ) -> None:
         # Arrange
-        person = Person.objects.create_user(
-            "user", "user", "user", "user@example.org", "user"
-        )
+        person = Person.objects.create_user("user", "user", "user", "user@example.org", "user")
         request = RequestFactory().get("/")
         request.user = person
-        message = Message(
-            constants.INFO, "Test message", extra_tags=settings.ONLY_FOR_ADMINS_TAG
-        )
+        message = Message(constants.INFO, "Test message", extra_tags=settings.ONLY_FOR_ADMINS_TAG)
 
         # Act
         result = message_allowed(message, request)

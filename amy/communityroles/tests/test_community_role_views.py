@@ -25,9 +25,7 @@ class TestCommunityRoleMixin:
             family="Family",
             email="test.person@example.org",
         )
-        self.inactivation = CommunityRoleInactivation.objects.create(
-            name="Lack of activity"
-        )
+        self.inactivation = CommunityRoleInactivation.objects.create(name="Lack of activity")
         self.community_role = CommunityRole.objects.create(
             config=self.config,
             person=self.person,
@@ -126,9 +124,7 @@ class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):
         # Arrange
         url = reverse("communityrole_edit", args=[self.community_role.pk])
         data = self.data.copy()
-        data.pop(
-            "communityrole-award"
-        )  # creates a validation error as link_to_award is True
+        data.pop("communityrole-award")  # creates a validation error as link_to_award is True
 
         # Act
         page = self.client.post(url, data)

@@ -24,9 +24,7 @@ class SilenceLogsRunner(DiscoverRunner):
 
     def get_all_loggers(self) -> list[logging.Logger]:
         root_logger = logging.getLogger()
-        return [root_logger] + [
-            logging.getLogger(name) for name in logging.root.manager.loggerDict
-        ]
+        return [root_logger] + [logging.getLogger(name) for name in logging.root.manager.loggerDict]
 
     def print_handler_stream_to_stderr(self, handler: logging.StreamHandler) -> None:
         stream_value = handler.stream.getvalue()
@@ -46,9 +44,7 @@ class SilenceLogsRunner(DiscoverRunner):
 
     def teardown_test_environment(self, **kwargs) -> None:
         if self.log_output:
-            print(
-                "--------------------------- Logger output ----------------------------"
-            )
+            print("--------------------------- Logger output ----------------------------")
             loggers = self.get_all_loggers()
             for logger in loggers:
                 for handler in logger.handlers:

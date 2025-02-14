@@ -8,9 +8,7 @@ def add_comment(content_object, comment, **kwargs):
     """A simple way to create a comment for specific object."""
     user = kwargs.get("user", None)
     user_name = kwargs.get("user_name", "Automatic comment")
-    submit_date = kwargs.get(
-        "submit_date", datetime.datetime.now(datetime.timezone.utc)
-    )
+    submit_date = kwargs.get("submit_date", datetime.datetime.now(datetime.timezone.utc))
     site = kwargs.get("site", Site.objects.get_current())
 
     return Comment.objects.create(

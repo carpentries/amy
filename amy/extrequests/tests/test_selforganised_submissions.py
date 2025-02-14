@@ -29,10 +29,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
             "end": date(2020, 11, 8),
             "workshop_url": "",
             "workshop_types": [
-                Curriculum.objects.filter(active=True)
-                .exclude(mix_match=True)
-                .first()
-                .pk,
+                Curriculum.objects.filter(active=True).exclude(mix_match=True).first().pk,
             ],
             "workshop_types_other_explain": "",
             "country": "GB",
@@ -58,9 +55,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
 
         # 1: selected institution from the list
         data = {
-            "institution": Organization.objects.exclude(fullname="self-organised")
-            .first()
-            .pk,
+            "institution": Organization.objects.exclude(fullname="self-organised").first().pk,
             "institution_other_name": "",
             "institution_other_URL": "",
             "institution_department": "School of Wizardry",
@@ -207,9 +202,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
         # 1: required only when workshop types is "mix & match"
         data = self.minimal_data.copy()
         data["workshop_types"] = [curricula.exclude(mix_match=True).first().pk]
-        data["workshop_types_other_explain"] = (
-            "It doesn't matter when " "mix&match is not selected."
-        )
+        data["workshop_types_other_explain"] = "It doesn't matter when " "mix&match is not selected."
         form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn("workshop_types", form.errors)
         self.assertNotIn("workshop_types_other_explain", form.errors)
@@ -225,9 +218,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
         # 3: error fixed
         data = self.minimal_data.copy()
         data["workshop_types"] = [curricula.filter(mix_match=True).first().pk]
-        data["workshop_types_other_explain"] = (
-            "It does matter when " "mix&match is selected."
-        )
+        data["workshop_types_other_explain"] = "It does matter when " "mix&match is selected."
         form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn("workshop_types", form.errors)
         self.assertNotIn("workshop_types_other_explain", form.errors)
@@ -276,9 +267,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
             workshop_types_other_explain="",
             language=Language.objects.get(name="English"),
         )
-        self.sos2.workshop_types.set(
-            Curriculum.objects.filter(mix_match=False, unknown=False, other=False)[:1]
-        )
+        self.sos2.workshop_types.set(Curriculum.objects.filter(mix_match=False, unknown=False, other=False)[:1])
 
     def test_pending_requests_list(self):
         rv = self.client.get(reverse("all_selforganisedsubmissions"))
@@ -291,31 +280,19 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         self.assertIn(self.sos2, rv.context["submissions"])
 
     def test_set_state_pending_request_view(self):
-        rv = self.client.get(
-            reverse(
-                "selforganisedsubmission_set_state", args=[self.sos1.pk, "discarded"]
-            )
-        )
+        rv = self.client.get(reverse("selforganisedsubmission_set_state", args=[self.sos1.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.sos1.refresh_from_db()
         self.assertEqual(self.sos1.state, "d")
 
     def test_set_state_discarded_request_view(self):
-        rv = self.client.get(
-            reverse(
-                "selforganisedsubmission_set_state", args=[self.sos2.pk, "discarded"]
-            )
-        )
+        rv = self.client.get(reverse("selforganisedsubmission_set_state", args=[self.sos2.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.sos2.refresh_from_db()
         self.assertEqual(self.sos2.state, "d")
 
     def test_pending_request_accept(self):
-        rv = self.client.get(
-            reverse(
-                "selforganisedsubmission_set_state", args=[self.sos1.pk, "accepted"]
-            )
-        )
+        rv = self.client.get(reverse("selforganisedsubmission_set_state", args=[self.sos1.pk, "accepted"]))
         self.assertEqual(rv.status_code, 302)
 
     def test_pending_request_accepted_with_event(self):
@@ -328,13 +305,9 @@ class TestSelfOrganisedSubmissionViews(TestBase):
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
-        rv = self.client.post(
-            reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk]), data
-        )
+        rv = self.client.post(reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk]), data)
         self.assertEqual(rv.status_code, 302)
-        request = Event.objects.get(
-            slug="2018-10-28-test-event"
-        ).selforganisedsubmission
+        request = Event.objects.get(slug="2018-10-28-test-event").selforganisedsubmission
         self.assertEqual(request, self.sos1)
 
     def test_accept_with_event_autofill(self):
@@ -363,16 +336,12 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
 
         # Act
-        rv = self.client.get(
-            reverse("selforganisedsubmission_accept_event", args=[sos.pk])
-        )
+        rv = self.client.get(reverse("selforganisedsubmission_accept_event", args=[sos.pk]))
         form_initial = rv.context["form"].initial
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertQuerySetEqual(
-            form_initial["curricula"].all(), sos.workshop_types.all()
-        )
+        self.assertQuerySetEqual(form_initial["curricula"].all(), sos.workshop_types.all())
         self.assertQuerySetEqual(form_initial["tags"], expected_tags)
         self.assertEqual(form_initial["public_status"], "private")
         self.assertEqual(form_initial["contact"], sos.additional_contact)
@@ -381,25 +350,19 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         self.assertEqual(form_initial["end"], sos.end)
 
     def test_discarded_request_not_accepted_with_event(self):
-        rv = self.client.get(
-            reverse("selforganisedsubmission_accept_event", args=[self.sos2.pk])
-        )
+        rv = self.client.get(reverse("selforganisedsubmission_accept_event", args=[self.sos2.pk]))
         self.assertEqual(rv.status_code, 404)
 
     def test_pending_request_discard(self):
         rv = self.client.get(
-            reverse(
-                "selforganisedsubmission_set_state", args=[self.sos1.pk, "discarded"]
-            ),
+            reverse("selforganisedsubmission_set_state", args=[self.sos1.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
 
     def test_discarded_request_discard(self):
         rv = self.client.get(
-            reverse(
-                "selforganisedsubmission_set_state", args=[self.sos2.pk, "discarded"]
-            ),
+            reverse("selforganisedsubmission_set_state", args=[self.sos2.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
@@ -408,9 +371,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         self.sos1.state = "a"
         self.sos1.save()
         self.client.get(
-            reverse(
-                "selforganisedsubmission_set_state", args=[self.sos1.pk, "pending"]
-            ),
+            reverse("selforganisedsubmission_set_state", args=[self.sos1.pk, "pending"]),
             follow=True,
         )
         self.sos1.refresh_from_db()
@@ -419,9 +380,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
     def test_accepted_request_reopened(self):
         self.assertEqual(self.sos2.state, "d")
         self.client.get(
-            reverse(
-                "selforganisedsubmission_set_state", args=[self.sos2.pk, "pending"]
-            ),
+            reverse("selforganisedsubmission_set_state", args=[self.sos2.pk, "pending"]),
             follow=True,
         )
         self.sos2.refresh_from_db()
@@ -484,9 +443,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
             workshop_types_other_explain="",
             language=Language.objects.get(name="English"),
         )
-        self.sos2.workshop_types.set(
-            Curriculum.objects.filter(mix_match=False, unknown=False, other=False)[:1]
-        )
+        self.sos2.workshop_types.set(Curriculum.objects.filter(mix_match=False, unknown=False, other=False)[:1])
         self.url2 = reverse("selforganisedsubmission_accept_event", args=[self.sos2.pk])
 
     def test_page_context(self):
@@ -536,9 +493,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         event = Event.objects.get(slug="2019-08-18-test-event")
 
         # check if Harry gained a task
-        Task.objects.get(
-            person=self.harry, event=event, role=Role.objects.get(name="host")
-        )
+        Task.objects.get(person=self.harry, event=event, role=Role.objects.get(name="host"))
 
     def test_lessons_hidden_in_event_create_form(self):
         """Ensure Mix&Match doesn't trigger "lessons" field on EventCreateForm."""
@@ -546,9 +501,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         # field in Event form
         rv = self.client.get(self.url)
         self.assertEqual(rv.status_code, 200)
-        self.assertIn(
-            Curriculum.objects.get(mix_match=True), self.sos1.workshop_types.all()
-        )
+        self.assertIn(Curriculum.objects.get(mix_match=True), self.sos1.workshop_types.all())
         self.assertNotIn("lessons", rv.context["form"].fields.keys())
 
         # self.sos2 doesn't have Mix&Match workshop type, and the "lessons" field
@@ -557,9 +510,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         self.sos2.save()
         rv = self.client.get(self.url2)
         self.assertEqual(rv.status_code, 200)
-        self.assertNotIn(
-            Curriculum.objects.get(mix_match=True), self.sos2.workshop_types.all()
-        )
+        self.assertNotIn(Curriculum.objects.get(mix_match=True), self.sos2.workshop_types.all())
         self.assertNotIn("lessons", rv.context["form"].fields.keys())
 
 
@@ -592,9 +543,7 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         form = page.context["form"]
 
         # assert we see the warning
-        self.assertIn(
-            "Cannot automatically fill the form", page.content.decode("utf-8")
-        )
+        self.assertIn("Cannot automatically fill the form", page.content.decode("utf-8"))
 
         expected = {
             # fields below are pre-filled without accessing the website
@@ -662,12 +611,8 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         form = page.context["form"]
 
         # assert we see the warning
-        self.assertNotIn(
-            "Cannot automatically fill the form", page.content.decode("utf-8")
-        )
-        self.assertNotIn(
-            "Cannot automatically fill language", page.content.decode("utf-8")
-        )
+        self.assertNotIn("Cannot automatically fill the form", page.content.decode("utf-8"))
+        self.assertNotIn("Cannot automatically fill language", page.content.decode("utf-8"))
 
         expected = {
             # fields below are pre-filled without accessing the website

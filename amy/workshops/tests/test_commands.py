@@ -29,32 +29,22 @@ class TestMigrateToSingleInstructorBadge(TestCase):
         self.swc_instructor = Badge.objects.get(name="swc-instructor")
         self.dc_instructor = Badge.objects.get(name="dc-instructor")
         self.lc_instructor = Badge.objects.get(name="lc-instructor")
-        self.instructor_badge = Badge.objects.create(
-            name="instructor", title="Instructor"
-        )
+        self.instructor_badge = Badge.objects.create(name="instructor", title="Instructor")
         self.command = MigrateToSingleInstructorBadge()
 
     def test___init__(self) -> None:
         # Act
         # Assert
-        self.assertEqual(
-            self.command.instructor_badge, Badge.objects.get(name="instructor")
-        )
+        self.assertEqual(self.command.instructor_badge, Badge.objects.get(name="instructor"))
 
     def test_find_instructors(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         Award.objects.create(person=person1, badge=self.swc_instructor)
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
         Award.objects.create(person=person2, badge=self.swc_instructor)
         Award.objects.create(person=person2, badge=self.dc_instructor)
-        person3 = Person.objects.create(
-            username="test3", personal="Test3", family="User", email="test3@example.org"
-        )
+        person3 = Person.objects.create(username="test3", personal="Test3", family="User", email="test3@example.org")
         Award.objects.create(person=person3, badge=self.swc_instructor)
         Award.objects.create(person=person3, badge=self.dc_instructor)
         Award.objects.create(person=person3, badge=self.lc_instructor)
@@ -68,21 +58,11 @@ class TestMigrateToSingleInstructorBadge(TestCase):
 
     def test_earliest_award(self) -> None:
         # Arrange
-        person = Person.objects.create(
-            username="test", personal="Test", family="User", email="test@example.org"
-        )
-        Award.objects.create(
-            person=person, badge=self.swc_instructor, awarded=date(2022, 1, 1)
-        )
-        Award.objects.create(
-            person=person, badge=self.dc_instructor, awarded=date(2021, 1, 1)
-        )
-        award = Award.objects.create(
-            person=person, badge=self.lc_instructor, awarded=date(2020, 1, 1)
-        )
-        Award.objects.create(
-            person=person, badge=self.instructor_badge, awarded=date(1999, 1, 1)
-        )
+        person = Person.objects.create(username="test", personal="Test", family="User", email="test@example.org")
+        Award.objects.create(person=person, badge=self.swc_instructor, awarded=date(2022, 1, 1))
+        Award.objects.create(person=person, badge=self.dc_instructor, awarded=date(2021, 1, 1))
+        award = Award.objects.create(person=person, badge=self.lc_instructor, awarded=date(2020, 1, 1))
+        Award.objects.create(person=person, badge=self.instructor_badge, awarded=date(1999, 1, 1))
 
         # Act
         earliest_award = self.command.earliest_award(person)
@@ -92,24 +72,16 @@ class TestMigrateToSingleInstructorBadge(TestCase):
 
     def test_remove_awards_for_old_instructor_badges(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         Award.objects.create(person=person1, badge=self.swc_instructor)
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
         Award.objects.create(person=person2, badge=self.swc_instructor)
         Award.objects.create(person=person2, badge=self.dc_instructor)
-        person3 = Person.objects.create(
-            username="test3", personal="Test3", family="User", email="test3@example.org"
-        )
+        person3 = Person.objects.create(username="test3", personal="Test3", family="User", email="test3@example.org")
         Award.objects.create(person=person3, badge=self.swc_instructor)
         Award.objects.create(person=person3, badge=self.dc_instructor)
         Award.objects.create(person=person3, badge=self.lc_instructor)
-        instructor_award = Award.objects.create(
-            person=person3, badge=self.instructor_badge
-        )
+        instructor_award = Award.objects.create(person=person3, badge=self.instructor_badge)
 
         # Act
         self.command.remove_awards_for_old_instructor_badges()
@@ -121,18 +93,10 @@ class TestMigrateToSingleInstructorBadge(TestCase):
 
     def test_create_instructor_award(self) -> None:
         # Arrange
-        person = Person.objects.create(
-            username="test", personal="Test", family="User", email="test@example.org"
-        )
-        Award.objects.create(
-            person=person, badge=self.swc_instructor, awarded=date(2022, 1, 1)
-        )
-        Award.objects.create(
-            person=person, badge=self.dc_instructor, awarded=date(2021, 1, 1)
-        )
-        Award.objects.create(
-            person=person, badge=self.lc_instructor, awarded=date(2020, 1, 1)
-        )
+        person = Person.objects.create(username="test", personal="Test", family="User", email="test@example.org")
+        Award.objects.create(person=person, badge=self.swc_instructor, awarded=date(2022, 1, 1))
+        Award.objects.create(person=person, badge=self.dc_instructor, awarded=date(2021, 1, 1))
+        Award.objects.create(person=person, badge=self.lc_instructor, awarded=date(2020, 1, 1))
 
         # Act
         instructor_award = self.command.create_instructor_award(person)
@@ -146,33 +110,15 @@ class TestMigrateToSingleInstructorBadge(TestCase):
 
     def test_handle(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
-        Award.objects.create(
-            person=person1, badge=self.swc_instructor, awarded=date(2022, 1, 1)
-        )
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
-        Award.objects.create(
-            person=person2, badge=self.swc_instructor, awarded=date(2021, 1, 1)
-        )
-        Award.objects.create(
-            person=person2, badge=self.dc_instructor, awarded=date(2022, 1, 1)
-        )
-        person3 = Person.objects.create(
-            username="test3", personal="Test3", family="User", email="test3@example.org"
-        )
-        Award.objects.create(
-            person=person3, badge=self.swc_instructor, awarded=date(2020, 1, 1)
-        )
-        Award.objects.create(
-            person=person3, badge=self.dc_instructor, awarded=date(2021, 1, 1)
-        )
-        Award.objects.create(
-            person=person3, badge=self.lc_instructor, awarded=date(2022, 1, 1)
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
+        Award.objects.create(person=person1, badge=self.swc_instructor, awarded=date(2022, 1, 1))
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
+        Award.objects.create(person=person2, badge=self.swc_instructor, awarded=date(2021, 1, 1))
+        Award.objects.create(person=person2, badge=self.dc_instructor, awarded=date(2022, 1, 1))
+        person3 = Person.objects.create(username="test3", personal="Test3", family="User", email="test3@example.org")
+        Award.objects.create(person=person3, badge=self.swc_instructor, awarded=date(2020, 1, 1))
+        Award.objects.create(person=person3, badge=self.dc_instructor, awarded=date(2021, 1, 1))
+        Award.objects.create(person=person3, badge=self.lc_instructor, awarded=date(2022, 1, 1))
         expected = [
             Award(
                 person=person3,
@@ -216,9 +162,7 @@ class TestAssignInstructorCommunityRole(TestCase):
         self.swc_instructor = Badge.objects.get(name="swc-instructor")
         self.dc_instructor = Badge.objects.get(name="dc-instructor")
         self.lc_instructor = Badge.objects.get(name="lc-instructor")
-        self.instructor_badge = Badge.objects.create(
-            name="instructor", title="Instructor"
-        )
+        self.instructor_badge = Badge.objects.create(name="instructor", title="Instructor")
         self.instructor_community_role_config = CommunityRoleConfig.objects.create(
             name="instructor",
             link_to_award=True,
@@ -231,9 +175,7 @@ class TestAssignInstructorCommunityRole(TestCase):
     def test___init__(self) -> None:
         # Act
         # Assert
-        self.assertEqual(
-            self.command.instructor_badge, Badge.objects.get(name="instructor")
-        )
+        self.assertEqual(self.command.instructor_badge, Badge.objects.get(name="instructor"))
         self.assertEqual(
             self.command.community_role_config,
             self.instructor_community_role_config,
@@ -241,17 +183,11 @@ class TestAssignInstructorCommunityRole(TestCase):
 
     def test_find_instructor_awards(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         Award.objects.create(person=person1, badge=self.swc_instructor)
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
         Award.objects.create(person=person2, badge=self.instructor_badge)
-        person3 = Person.objects.create(
-            username="test3", personal="Test3", family="User", email="test3@example.org"
-        )
+        person3 = Person.objects.create(username="test3", personal="Test3", family="User", email="test3@example.org")
         Award.objects.create(person=person3, badge=self.dc_instructor)
         Award.objects.create(person=person3, badge=self.instructor_badge)
 
@@ -265,9 +201,7 @@ class TestAssignInstructorCommunityRole(TestCase):
 
     def test_exclude_instructor_community_roles(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         award1 = Award.objects.create(person=person1, badge=self.instructor_badge)
         CommunityRole.objects.create(
             config=self.instructor_community_role_config,
@@ -276,15 +210,11 @@ class TestAssignInstructorCommunityRole(TestCase):
             start=date.today(),
             end=None,
         )
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
         Award.objects.create(person=person2, badge=self.instructor_badge)
 
         # Act
-        instructor_awards = self.command.exclude_instructor_community_roles(
-            self.command.find_instructor_awards()
-        )
+        instructor_awards = self.command.exclude_instructor_community_roles(self.command.find_instructor_awards())
 
         # Assert
         self.assertEqual(len(instructor_awards), 1)
@@ -292,20 +222,14 @@ class TestAssignInstructorCommunityRole(TestCase):
 
     def test_create_instructor_community_role(self) -> None:
         # Arrange
-        person = Person.objects.create(
-            username="test", personal="Test", family="User", email="test@example.org"
-        )
-        award = Award.objects.create(
-            person=person, badge=self.instructor_badge, awarded=date(2022, 1, 1)
-        )
+        person = Person.objects.create(username="test", personal="Test", family="User", email="test@example.org")
+        award = Award.objects.create(person=person, badge=self.instructor_badge, awarded=date(2022, 1, 1))
 
         # Act
         instructor_community_role = self.command.create_instructor_community_role(award)
 
         # Assert
-        self.assertEqual(
-            instructor_community_role.config, self.instructor_community_role_config
-        )
+        self.assertEqual(instructor_community_role.config, self.instructor_community_role_config)
         self.assertEqual(instructor_community_role.person, person)
         self.assertEqual(instructor_community_role.award, award)
         self.assertEqual(instructor_community_role.start, award.awarded)
@@ -313,12 +237,8 @@ class TestAssignInstructorCommunityRole(TestCase):
 
     def test_handle(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
-        award1 = Award.objects.create(
-            person=person1, badge=self.instructor_badge, awarded=date(2022, 1, 1)
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
+        award1 = Award.objects.create(person=person1, badge=self.instructor_badge, awarded=date(2022, 1, 1))
         CommunityRole.objects.create(
             config=self.instructor_community_role_config,
             person=person1,
@@ -326,21 +246,11 @@ class TestAssignInstructorCommunityRole(TestCase):
             start=date.today(),
             end=None,
         )
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
-        award2 = Award.objects.create(
-            person=person2, badge=self.instructor_badge, awarded=date(2021, 1, 1)
-        )
-        Award.objects.create(
-            person=person2, badge=self.dc_instructor, awarded=date(2022, 1, 1)
-        )
-        person3 = Person.objects.create(
-            username="test3", personal="Test3", family="User", email="test3@example.org"
-        )
-        award3 = Award.objects.create(
-            person=person3, badge=self.instructor_badge, awarded=date(2020, 1, 1)
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
+        award2 = Award.objects.create(person=person2, badge=self.instructor_badge, awarded=date(2021, 1, 1))
+        Award.objects.create(person=person2, badge=self.dc_instructor, awarded=date(2022, 1, 1))
+        person3 = Person.objects.create(username="test3", personal="Test3", family="User", email="test3@example.org")
+        award3 = Award.objects.create(person=person3, badge=self.instructor_badge, awarded=date(2020, 1, 1))
         expected = [
             CommunityRole(
                 config=self.instructor_community_role_config,
@@ -394,13 +304,9 @@ class TestAssignTrainerCommunityRole(TestCase):
 
     def test_find_trainer_awards(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         Award.objects.create(person=person1, badge=self.trainer_badge)
-        Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
 
         # Act
         trainer_awards = self.command.find_trainer_awards()
@@ -411,9 +317,7 @@ class TestAssignTrainerCommunityRole(TestCase):
 
     def test_exclude_trainer_community_roles(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         award1 = Award.objects.create(person=person1, badge=self.trainer_badge)
         CommunityRole.objects.create(
             config=self.trainer_community_role_config,
@@ -422,15 +326,11 @@ class TestAssignTrainerCommunityRole(TestCase):
             start=date.today(),
             end=None,
         )
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
         Award.objects.create(person=person2, badge=self.trainer_badge)
 
         # Act
-        trainer_awards = self.command.exclude_trainer_community_roles(
-            self.command.find_trainer_awards()
-        )
+        trainer_awards = self.command.exclude_trainer_community_roles(self.command.find_trainer_awards())
 
         # Assert
         self.assertEqual(len(trainer_awards), 1)
@@ -438,20 +338,14 @@ class TestAssignTrainerCommunityRole(TestCase):
 
     def test_create_trainer_community_role(self) -> None:
         # Arrange
-        person = Person.objects.create(
-            username="test", personal="Test", family="User", email="test@example.org"
-        )
-        award = Award.objects.create(
-            person=person, badge=self.trainer_badge, awarded=date(2022, 1, 1)
-        )
+        person = Person.objects.create(username="test", personal="Test", family="User", email="test@example.org")
+        award = Award.objects.create(person=person, badge=self.trainer_badge, awarded=date(2022, 1, 1))
 
         # Act
         trainer_community_role = self.command.create_trainer_community_role(award)
 
         # Assert
-        self.assertEqual(
-            trainer_community_role.config, self.trainer_community_role_config
-        )
+        self.assertEqual(trainer_community_role.config, self.trainer_community_role_config)
         self.assertEqual(trainer_community_role.person, person)
         self.assertEqual(trainer_community_role.award, award)
         self.assertEqual(trainer_community_role.start, award.awarded)
@@ -459,12 +353,8 @@ class TestAssignTrainerCommunityRole(TestCase):
 
     def test_handle(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
-        award1 = Award.objects.create(
-            person=person1, badge=self.trainer_badge, awarded=date(2022, 1, 1)
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
+        award1 = Award.objects.create(person=person1, badge=self.trainer_badge, awarded=date(2022, 1, 1))
         CommunityRole.objects.create(
             config=self.trainer_community_role_config,
             person=person1,
@@ -472,12 +362,8 @@ class TestAssignTrainerCommunityRole(TestCase):
             start=date.today(),
             end=None,
         )
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
-        award2 = Award.objects.create(
-            person=person2, badge=self.trainer_badge, awarded=date(2021, 1, 1)
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
+        award2 = Award.objects.create(person=person2, badge=self.trainer_badge, awarded=date(2021, 1, 1))
         expected = CommunityRole(
             config=self.trainer_community_role_config,
             person=person2,
@@ -502,9 +388,7 @@ class TestAssignTrainerCommunityRole(TestCase):
 class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
     def setUp(self) -> None:
         self.trainer_badge = Badge.objects.get(name="trainer")
-        self.trainer_inactive_badge, _ = Badge.objects.get_or_create(
-            name="trainer-inactive"
-        )
+        self.trainer_inactive_badge, _ = Badge.objects.get_or_create(name="trainer-inactive")
         self.trainer_community_role_config = CommunityRoleConfig.objects.create(
             name="trainer",
             link_to_award=True,
@@ -517,9 +401,7 @@ class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
     def test__init__(self) -> None:
         # Assert
         self.assertEqual(self.command.trainer_badge, self.trainer_badge)
-        self.assertEqual(
-            self.command.trainer_inactive_badge, self.trainer_inactive_badge
-        )
+        self.assertEqual(self.command.trainer_inactive_badge, self.trainer_inactive_badge)
         self.assertEqual(
             self.command.community_role_config,
             self.trainer_community_role_config,
@@ -527,9 +409,7 @@ class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
 
     def test_find_people_with_trainer_community_role(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         award1 = Award.objects.create(person=person1, badge=self.trainer_badge)
         CommunityRole.objects.create(
             config=self.trainer_community_role_config,
@@ -538,27 +418,19 @@ class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
             start=date.today(),
             end=None,
         )
-        Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
 
         # Act
-        people_with_trainer_community_roles = (
-            self.command.find_people_with_trainer_community_role()
-        )
+        people_with_trainer_community_roles = self.command.find_people_with_trainer_community_role()
 
         # Assert
         self.assertEqual(list(people_with_trainer_community_roles), [person1])
 
     def test_find_trainer_inactive_awards(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         Award.objects.create(person=person1, badge=self.trainer_badge)
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
         award2 = Award.objects.create(person=person2, badge=self.trainer_inactive_badge)
 
         # Act
@@ -569,12 +441,8 @@ class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
 
     def test_handle(self) -> None:
         # Arrange
-        person1 = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
-        award1 = Award.objects.create(
-            person=person1, badge=self.trainer_badge, awarded=date(2022, 1, 1)
-        )
+        person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
+        award1 = Award.objects.create(person=person1, badge=self.trainer_badge, awarded=date(2022, 1, 1))
         CommunityRole.objects.create(
             config=self.trainer_community_role_config,
             person=person1,
@@ -582,12 +450,8 @@ class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
             start=date.today(),
             end=None,
         )
-        person2 = Person.objects.create(
-            username="test2", personal="Test2", family="User", email="test2@example.org"
-        )
-        award2 = Award.objects.create(
-            person=person2, badge=self.trainer_inactive_badge, awarded=date(2021, 1, 1)
-        )
+        person2 = Person.objects.create(username="test2", personal="Test2", family="User", email="test2@example.org")
+        award2 = Award.objects.create(person=person2, badge=self.trainer_inactive_badge, awarded=date(2021, 1, 1))
 
         # Act
         self.command.handle(no_output=True)

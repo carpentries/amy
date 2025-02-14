@@ -65,9 +65,7 @@ class CommunityRoleQuerySet(QuerySet):
 
 
 class CommunityRole(CreatedUpdatedMixin, models.Model):
-    config = models.ForeignKey(
-        CommunityRoleConfig, on_delete=models.PROTECT, verbose_name="Role Name"
-    )
+    config = models.ForeignKey(CommunityRoleConfig, on_delete=models.PROTECT, verbose_name="Role Name")
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     award = models.ForeignKey(
         Award,
@@ -102,9 +100,7 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
         blank=True,
     )
     generic_relation_pk = models.PositiveIntegerField(null=True, blank=True)
-    generic_relation = GenericForeignKey(
-        "generic_relation_content_type", "generic_relation_pk"
-    )
+    generic_relation = GenericForeignKey("generic_relation_content_type", "generic_relation_pk")
 
     # Store custom keys (as defined by CommunityRoleConfig.custom_key_labels) in a list
     # of pairs like so:

@@ -163,7 +163,5 @@ urlpatterns = [
     path("award/<int:pk>/delete/", views.AwardDelete.as_view(), name="award_delete"),
     # badges
     path("badges/", views.AllBadges.as_view(), name="all_badges"),
-    path(
-        "badge/<slug:badge_name>/", views.BadgeDetails.as_view(), name="badge_details"
-    ),
+    path("badge/<slug:badge_name>/", views.BadgeDetails.as_view(), name="badge_details"),
 ]

@@ -101,15 +101,11 @@ class ApiRoot(APIView):
                 [
                     (
                         "export-person-data",
-                        reverse(
-                            "api-v1:export-person-data", request=request, format=format
-                        ),
+                        reverse("api-v1:export-person-data", request=request, format=format),
                     ),
                     (
                         "training-requests",
-                        reverse(
-                            "api-v1:training-requests", request=request, format=format
-                        ),
+                        reverse("api-v1:training-requests", request=request, format=format),
                     ),
                     # "new" API list-type endpoints below
                     (
@@ -126,9 +122,7 @@ class ApiRoot(APIView):
                     ),
                     (
                         "organization-list",
-                        reverse(
-                            "api-v1:organization-list", request=request, format=format
-                        ),
+                        reverse("api-v1:organization-list", request=request, format=format),
                     ),
                     (
                         "term-list",
@@ -190,9 +184,7 @@ class TrainingRequests(ListAPIView):
             ),
             Prefetch(
                 "person__task_set",
-                queryset=Task.objects.filter(
-                    role__name="learner", event__tags__name="TTT"
-                ).select_related("event"),
+                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT").select_related("event"),
                 to_attr="training_tasks",
             ),
         )
@@ -226,11 +218,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     """List many events or retrieve only one."""
 
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset = (
-        Event.objects.select_related("host", "administrator")
-        .prefetch_related("tags")
-        .attendance()
-    )
+    queryset = Event.objects.select_related("host", "administrator").prefetch_related("tags").attendance()
     serializer_class = EventSerializer
     lookup_field = "slug"
     pagination_class = StandardResultsSetPagination

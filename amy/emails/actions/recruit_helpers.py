@@ -32,21 +32,15 @@ logger = logging.getLogger("amy")
 def recruit_helpers_strategy(event: Event) -> StrategyEnum:
     logger.info(f"Running RecruitHelpers strategy for {event}")
 
-    not_self_organised = (
-        event.administrator and event.administrator.domain != "self-organized"
-    )
-    start_date_in_at_least_14days = event.start and event.start >= (
-        timezone.now().date() + timedelta(days=14)
-    )
+    not_self_organised = event.administrator and event.administrator.domain != "self-organized"
+    start_date_in_at_least_14days = event.start and event.start >= (timezone.now().date() + timedelta(days=14))
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
     at_least_1_host = Task.objects.filter(role__name="host", event=event).count() >= 1
-    at_least_1_instructor = (
-        Task.objects.filter(role__name="instructor", event=event).count() >= 1
-    )
+    at_least_1_instructor = Task.objects.filter(role__name="instructor", event=event).count() >= 1
     no_helpers = Task.objects.filter(role__name="helper", event=event).count() == 0
-    carpentries_tags = event.tags.filter(
-        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
-    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
+    carpentries_tags = event.tags.filter(name__in=TagQuerySet.CARPENTRIES_TAG_NAMES).exclude(
+        name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES
+    )
 
     log_condition_elements(
         not_self_organised=not_self_organised,
@@ -86,13 +80,11 @@ def recruit_helpers_strategy(event: Event) -> StrategyEnum:
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"RecruitHelpers strategy {result = }")
+    logger.debug(f"RecruitHelpers strategy {result=}")
     return result
 
 
-def run_recruit_helpers_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
-) -> None:
+def run_recruit_helpers_strategy(strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: recruit_helpers_signal,
         StrategyEnum.UPDATE: recruit_helpers_update_signal,
@@ -113,20 +105,13 @@ def run_recruit_helpers_strategy(
 def get_scheduled_at(**kwargs: Unpack[RecruitHelpersKwargs]) -> datetime:
     # Should run 21 days before the event start date.
     event_start_date = kwargs["event_start_date"]
-    return shift_date_and_apply_current_utc_time(
-        event_start_date, offset=-timedelta(days=21)
-    )
+    return shift_date_and_apply_current_utc_time(event_start_date, offset=-timedelta(days=21))
 
 
 def get_context(**kwargs: Unpack[RecruitHelpersKwargs]) -> RecruitHelpersContext:
     event = kwargs["event"]
-    instructors = [
-        task.person
-        for task in Task.objects.filter(role__name="instructor", event=event)
-    ]
-    hosts = [
-        task.person for task in Task.objects.filter(role__name="host", event=event)
-    ]
+    instructors = [task.person for task in Task.objects.filter(role__name="instructor", event=event)]
+    hosts = [task.person for task in Task.objects.filter(role__name="host", event=event)]
     return {
         "assignee": event.assigned_to if event.assigned_to else None,
         "event": event,
@@ -140,33 +125,23 @@ def get_context_json(context: RecruitHelpersContext) -> ContextModel:
     return ContextModel(
         {
             "assignee": (
-                api_model_url("person", context["assignee"].pk)
-                if context["assignee"]
-                else scalar_value_none()
+                api_model_url("person", context["assignee"].pk) if context["assignee"] else scalar_value_none()
             ),
             "event": api_model_url("event", event.pk),
-            "instructors": [
-                api_model_url("person", person.pk) for person in context["instructors"]
-            ],
-            "hosts": [
-                api_model_url("person", person.pk) for person in context["hosts"]
-            ],
+            "instructors": [api_model_url("person", person.pk) for person in context["instructors"]],
+            "hosts": [api_model_url("person", person.pk) for person in context["hosts"]],
         },
     )
 
 
-def get_generic_relation_object(
-    context: RecruitHelpersContext, **kwargs: Unpack[RecruitHelpersKwargs]
-) -> Event:
+def get_generic_relation_object(context: RecruitHelpersContext, **kwargs: Unpack[RecruitHelpersKwargs]) -> Event:
     return context["event"]
 
 
-def get_recipients(
-    context: RecruitHelpersContext, **kwargs: Unpack[RecruitHelpersKwargs]
-) -> list[str]:
-    return [
-        instructor.email for instructor in context["instructors"] if instructor.email
-    ] + [host.email for host in context["hosts"] if host.email]
+def get_recipients(context: RecruitHelpersContext, **kwargs: Unpack[RecruitHelpersKwargs]) -> list[str]:
+    return [instructor.email for instructor in context["instructors"] if instructor.email] + [
+        host.email for host in context["hosts"] if host.email
+    ]
 
 
 def get_recipients_context_json(
@@ -196,9 +171,7 @@ class RecruitHelpersReceiver(BaseAction):
     def get_scheduled_at(self, **kwargs: Unpack[RecruitHelpersKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[RecruitHelpersKwargs]
-    ) -> RecruitHelpersContext:
+    def get_context(self, **kwargs: Unpack[RecruitHelpersKwargs]) -> RecruitHelpersContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: RecruitHelpersContext) -> ContextModel:
@@ -232,9 +205,7 @@ class RecruitHelpersUpdateReceiver(BaseActionUpdate):
     def get_scheduled_at(self, **kwargs: Unpack[RecruitHelpersKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[RecruitHelpersKwargs]
-    ) -> RecruitHelpersContext:
+    def get_context(self, **kwargs: Unpack[RecruitHelpersKwargs]) -> RecruitHelpersContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: RecruitHelpersContext) -> ContextModel:
@@ -265,9 +236,7 @@ class RecruitHelpersUpdateReceiver(BaseActionUpdate):
 class RecruitHelpersCancelReceiver(BaseActionCancel):
     signal = recruit_helpers_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[RecruitHelpersKwargs]
-    ) -> RecruitHelpersContext:
+    def get_context(self, **kwargs: Unpack[RecruitHelpersKwargs]) -> RecruitHelpersContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: RecruitHelpersContext) -> ContextModel:

@@ -38,23 +38,12 @@ class InstructorRecruitmentAddSignupForm(forms.ModelForm):
         person = self.cleaned_data["person"]
 
         try:
-            (
-                CommunityRole.objects.active().get(  # type: ignore
-                    person=person, config__name="instructor"
-                )
-            )
+            (CommunityRole.objects.active().get(person=person, config__name="instructor"))  # type: ignore
         except CommunityRole.DoesNotExist:
-            raise ValidationError(
-                f"Person {person} does not have an active Instructor Community Role"
-            )
+            raise ValidationError(f"Person {person} does not have an active Instructor Community Role")
 
-        if (
-            self._recruitment
-            and self._recruitment.signups.filter(person=person).exists()
-        ):
-            raise ValidationError(
-                f"Person {person} is already signed up for this recruitment"
-            )
+        if self._recruitment and self._recruitment.signups.filter(person=person).exists():
+            raise ValidationError(f"Person {person} is already signed up for this recruitment")
 
         return person
 

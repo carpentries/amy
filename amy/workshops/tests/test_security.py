@@ -283,11 +283,7 @@ class TestViews(TestBase):
         all_urls = get_resolved_urls(urls.urlpatterns)
 
         # ignore views listed on IGNORED_VIEWS list
-        all_urls = [
-            u
-            for u in all_urls
-            if not hasattr(u, "name") or u.name not in self.IGNORED_VIEWS
-        ]
+        all_urls = [u for u in all_urls if not hasattr(u, "name") or u.name not in self.IGNORED_VIEWS]
 
         for url in all_urls:
             with self.subTest(view=url):
@@ -301,9 +297,7 @@ class TestViews(TestBase):
                 cls = getattr(url.callback, "cls", None)
                 class_ = view_class or cls or None
 
-                is_function_based_view = (
-                    model_admin is None and admin_site is None and class_ is None
-                )
+                is_function_based_view = model_admin is None and admin_site is None and class_ is None
 
                 if is_function_based_view:
                     self.assertTrue(
@@ -317,21 +311,18 @@ class TestViews(TestBase):
                     self.assertEqual(
                         len(acl),
                         1,
-                        "You have more than one access control "
-                        "decorator defined in this view.",
+                        "You have more than one access control " "decorator defined in this view.",
                     )
 
                 else:  # class based view
                     is_markdownx_view = class_ is not None and (
-                        issubclass(class_, MarkdownifyView)
-                        or issubclass(class_, ImageUploadView)
+                        issubclass(class_, MarkdownifyView) or issubclass(class_, ImageUploadView)
                     )
 
                     if is_markdownx_view:
                         self.assertTrue(
                             acl is not None,
-                            "Markdownx views must be decorated "
-                            "with `login_required`.",
+                            "Markdownx views must be decorated " "with `login_required`.",
                         )
                     else:
                         self.assertTrue(
@@ -343,9 +334,7 @@ class TestViews(TestBase):
                         is_model_admin = isinstance(model_admin, ModelAdmin)
                         is_admin_site = isinstance(admin_site, AdminSite)
                         is_api_view = class_ is not None and issubclass(class_, APIView)
-                        is_redirect_view = class_ is not None and issubclass(
-                            class_, RedirectView
-                        )
+                        is_redirect_view = class_ is not None and issubclass(class_, RedirectView)
                         is_view = class_ is not None and issubclass(class_, View)
 
                         if is_model_admin or is_admin_site:
@@ -376,6 +365,5 @@ class TestViews(TestBase):
                             self.assertEqual(
                                 len(found),
                                 1,
-                                "You have more than one access control mixin "
-                                "defined in this view.",
+                                "You have more than one access control mixin " "defined in this view.",
                             )

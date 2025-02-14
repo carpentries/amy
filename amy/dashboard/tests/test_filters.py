@@ -161,15 +161,11 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
         filterset.request.user.airport.latitude = 123.4
         filterset.request.user.airport.longitude = 56.7
         name = "order_by"
-        distance_expression = (F("event__latitude") - 123.4) ** 2 + (
-            F("event__longitude") - 56.7
-        ) ** 2
+        distance_expression = (F("event__latitude") - 123.4) ** 2 + (F("event__longitude") - 56.7) ** 2
         # Act
         filterset.filter_order_by(qs_mock, name, ["proximity"])
         # Assert
-        self.assertEqual(
-            qs_mock.annotate.call_args_list[0], call(distance=distance_expression)
-        )
+        self.assertEqual(qs_mock.annotate.call_args_list[0], call(distance=distance_expression))
 
     def test_filter_application_only__not_applied(self) -> None:
         # Arrange

@@ -14,9 +14,7 @@ class MemberCodeValidationError(ValidationError):
     pass
 
 
-def member_code_valid(
-    code: str, date: date, grace_before: int = 0, grace_after: int = 0
-) -> tuple[bool, str]:
+def member_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> tuple[bool, str]:
     """Returns True if `code` matches an Membership that is active on `date`,
     including a grace period of `grace_before` days before
     and `grace_after` days after the Membership dates.
@@ -26,34 +24,24 @@ def member_code_valid(
         # find relevant membership - may raise Membership.DoesNotExist
         membership = Membership.objects.get(registration_code=code)
     except Membership.DoesNotExist as e:
-        raise MemberCodeValidationError(
-            f'No membership found for code "{code}".'
-        ) from e
+        raise MemberCodeValidationError(f'No membership found for code "{code}".') from e
 
     # confirm that membership was active at the time the request was submitted
     # grace period: 90 days before and after
-    if not membership.active_on_date(
-        date, grace_before=grace_before, grace_after=grace_after
-    ):
+    if not membership.active_on_date(date, grace_before=grace_before, grace_after=grace_after):
         raise MemberCodeValidationError(
-            "Membership is inactive "
-            f"(start {membership.agreement_start}, "
-            f"end {membership.agreement_end})."
+            "Membership is inactive " f"(start {membership.agreement_start}, " f"end {membership.agreement_end})."
         )
 
     return True
 
 
-def member_code_valid_training(
-    code: str, date: date, grace_before: int = 0, grace_after: int = 0
-) -> tuple[bool, str]:
+def member_code_valid_training(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> tuple[bool, str]:
     """Returns True if `code` matches an active Membership with training seats
     remaining. If there is no match, raises an Exception with a detailed error."""
     # first ensure the code matches an active membership
     try:
-        member_code_valid(
-            code=code, date=date, grace_before=grace_before, grace_after=grace_after
-        )
+        member_code_valid(code=code, date=date, grace_before=grace_before, grace_after=grace_after)
     except MemberCodeValidationError:
         raise
 
@@ -62,8 +50,7 @@ def member_code_valid_training(
 
     # confirm that membership has training seats remaining
     if (
-        membership.public_instructor_training_seats_remaining
-        + membership.inhouse_instructor_training_seats_remaining
+        membership.public_instructor_training_seats_remaining + membership.inhouse_instructor_training_seats_remaining
         <= 0
     ):
         raise MemberCodeValidationError("Membership has no training seats remaining.")
@@ -102,8 +89,7 @@ def get_membership_from_training_request_or_raise_error(
         return Membership.objects.get(registration_code=request.member_code)
     except Membership.DoesNotExist:
         raise Membership.DoesNotExist(
-            f"{request}: No membership found for registration code "
-            f'"{request.member_code}".'
+            f"{request}: No membership found for registration code " f'"{request.member_code}".'
         )
 
 
@@ -134,9 +120,7 @@ def accept_training_request_and_match_to_event(
     return task
 
 
-def get_membership_warnings_after_match(
-    membership: Membership, seat_public: bool, event: Event
-) -> list[str]:
+def get_membership_warnings_after_match(membership: Membership, seat_public: bool, event: Event) -> list[str]:
     """Returns a list of warnings based on membership remaining seats
     and start/end dates."""
     warnings = []
@@ -148,8 +132,7 @@ def get_membership_warnings_after_match(
     )
     if remaining <= 0:
         warnings.append(
-            f'Membership "{membership}" is using more training seats than '
-            "it's been allowed.",
+            f'Membership "{membership}" is using more training seats than ' "it's been allowed.",
         )
 
     # check if membership is active
@@ -166,8 +149,7 @@ def get_membership_warnings_after_match(
         and not (membership.agreement_start <= event.end <= membership.agreement_end)
     ):
         warnings.append(
-            f'Training "{event}" has start or end date outside '
-            f'membership "{membership}" agreement dates.',
+            f'Training "{event}" has start or end date outside ' f'membership "{membership}" agreement dates.',
         )
 
     return warnings

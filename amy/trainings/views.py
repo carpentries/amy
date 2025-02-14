@@ -67,9 +67,7 @@ class AllTrainings(OnlyForAdminsMixin, AMYListView):
 # Instructor Training related views
 
 
-class TrainingProgressCreate(
-    RedirectSupportMixin, PrepopulationSupportMixin, OnlyForAdminsMixin, AMYCreateView
-):
+class TrainingProgressCreate(RedirectSupportMixin, PrepopulationSupportMixin, OnlyForAdminsMixin, AMYCreateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
     populate_fields = ["trainee"]
@@ -156,9 +154,7 @@ def all_trainees_queryset():
             Prefetch(
                 "task_set",
                 to_attr="training_tasks",
-                queryset=Task.objects.filter(
-                    role__name="learner", event__tags__name="TTT"
-                ),
+                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT"),
             ),
             "training_tasks__event",
             "trainingrequest_set",
@@ -218,15 +214,11 @@ def all_trainees(request):
                     except EmailStrategyException as exc:
                         messages.error(
                             request,
-                            "Error when running instructor training completed strategy."
-                            f" {exc}",
+                            "Error when running instructor training completed strategy." f" {exc}",
                         )
 
                 except ValidationError as e:
-                    unique_constraint_message = (
-                        "Training progress with this Trainee "
-                        "and Training already exists."
-                    )
+                    unique_constraint_message = "Training progress with this Trainee " "and Training already exists."
                     if unique_constraint_message in e.messages:
                         msg = (
                             f"Trainee {trainee} already has a training progress "
@@ -248,9 +240,7 @@ def all_trainees(request):
                 )
                 messages.info(request, info_msg)
             else:
-                messages.success(
-                    request, "Successfully changed progress of all selected trainees."
-                )
+                messages.success(request, "Successfully changed progress of all selected trainees.")
 
             return redirect(request.build_absolute_uri())
 

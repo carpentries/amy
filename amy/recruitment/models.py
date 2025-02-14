@@ -79,13 +79,9 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
         ("o", "Open"),
         ("c", "Closed"),
     )
-    status = models.CharField(
-        max_length=1, choices=STATUS_CHOICES, null=False, blank=False, default="o"
-    )
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, null=False, blank=False, default="o")
     notes = models.TextField(default="", null=False, blank=True)
-    event = models.OneToOneField(
-        Event, on_delete=models.PROTECT, null=False, blank=False
-    )
+    event = models.OneToOneField(Event, on_delete=models.PROTECT, null=False, blank=False)
 
     objects = InstructorRecruitmentManager()
 
@@ -101,10 +97,7 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
         return reverse("instructorrecruitment_details", kwargs={"pk": self.pk})
 
     def __str__(self):
-        return (
-            f"Instructor Recruitment Process ({self.get_status_display()}) for "
-            f"event {self.event.slug}"
-        )
+        return f"Instructor Recruitment Process ({self.get_status_display()}) for " f"event {self.event.slug}"
 
     @staticmethod
     def calculate_priority(event: Event) -> RecruitmentPriority:
@@ -134,9 +127,7 @@ class InstructorRecruitmentSignup(CreatedUpdatedMixin, StateMixin, models.Model)
         blank=False,
         related_name="signups",
     )
-    person = models.ForeignKey(
-        Person, on_delete=models.CASCADE, null=False, blank=False
-    )
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, null=False, blank=False)
 
     INTEREST_CHOICES = (
         ("session", "Whole session"),
@@ -154,12 +145,7 @@ class InstructorRecruitmentSignup(CreatedUpdatedMixin, StateMixin, models.Model)
     notes = models.TextField(default="", null=False, blank=True)  # admin notes
 
     def __str__(self) -> str:
-        return (
-            f"Instructor Signup applicant {self.person.full_name} "
-            f"for {self.recruitment.event}"
-        )
+        return f"Instructor Signup applicant {self.person.full_name} " f"for {self.recruitment.event}"
 
     def get_absolute_url(self) -> str:
-        return reverse(
-            "instructorrecruitment_details", kwargs={"pk": self.recruitment.pk}
-        )
+        return reverse("instructorrecruitment_details", kwargs={"pk": self.recruitment.pk})

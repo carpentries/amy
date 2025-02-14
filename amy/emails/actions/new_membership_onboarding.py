@@ -68,7 +68,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"NewMembershipOnboarding strategy {result = }")
+    logger.debug(f"NewMembershipOnboarding strategy {result=}")
     return result
 
 
@@ -92,9 +92,7 @@ def run_new_membership_onboarding_strategy(
 
 
 def get_scheduled_at(**kwargs: Unpack[NewMembershipOnboardingKwargs]) -> datetime:
-    return max(
-        one_month_before(kwargs["membership"].agreement_start), immediate_action()
-    )
+    return max(one_month_before(kwargs["membership"].agreement_start), immediate_action())
 
 
 def get_context(
@@ -158,14 +156,10 @@ def get_recipients_context_json(
 class NewMembershipOnboardingReceiver(BaseAction):
     signal = new_membership_onboarding_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> NewMembershipOnboardingContext:
+    def get_context(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
@@ -196,14 +190,10 @@ class NewMembershipOnboardingReceiver(BaseAction):
 class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
     signal = new_membership_onboarding_update_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> NewMembershipOnboardingContext:
+    def get_context(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
@@ -234,9 +224,7 @@ class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
 class NewMembershipOnboardingCancelReceiver(BaseActionCancel):
     signal = new_membership_onboarding_cancel_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> NewMembershipOnboardingContext:
+    def get_context(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
@@ -265,12 +253,8 @@ new_membership_onboarding_signal.connect(new_membership_onboarding_receiver)
 
 
 new_membership_onboarding_update_receiver = NewMembershipOnboardingUpdateReceiver()
-new_membership_onboarding_update_signal.connect(
-    new_membership_onboarding_update_receiver
-)
+new_membership_onboarding_update_signal.connect(new_membership_onboarding_update_receiver)
 
 
 new_membership_onboarding_cancel_receiver = NewMembershipOnboardingCancelReceiver()
-new_membership_onboarding_cancel_signal.connect(
-    new_membership_onboarding_cancel_receiver
-)
+new_membership_onboarding_cancel_signal.connect(new_membership_onboarding_cancel_receiver)

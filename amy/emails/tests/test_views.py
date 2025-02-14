@@ -326,26 +326,16 @@ class TestScheduledEmailDetails(TestBase):
             rv.context["scheduled_email"],
             scheduled_email,
         )
-        self.assertEqual(
-            rv.context["title"], f'Scheduled email "{scheduled_email.subject}"'
-        )
+        self.assertEqual(rv.context["title"], f'Scheduled email "{scheduled_email.subject}"')
         self.assertEqual(
             list(rv.context["log_entries"]),
-            list(
-                ScheduledEmailLog.objects.filter(
-                    scheduled_email=scheduled_email
-                ).order_by("-created_at")
-            ),
+            list(ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")),
         )
         self.assertEqual(
             rv.context["status_explanation"],
-            ScheduledEmailStatusExplanation[
-                ScheduledEmailStatus(scheduled_email.state)
-            ],
+            ScheduledEmailStatusExplanation[ScheduledEmailStatus(scheduled_email.state)],
         )
-        self.assertEqual(
-            rv.context["ScheduledEmailStatusActions"], ScheduledEmailStatusActions
-        )
+        self.assertEqual(rv.context["ScheduledEmailStatusActions"], ScheduledEmailStatusActions)
         self.assertEqual(
             rv.context["rendered_context"],
             {
@@ -445,9 +435,7 @@ class TestScheduledEmailUpdate(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
-        email_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        email_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
 
         self.assertEqual(scheduled_email.to_header, ["hermione@granger.com"])
         self.assertEqual(scheduled_email.from_header, "noreply@carpentries.org")

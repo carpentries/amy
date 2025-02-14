@@ -2,7 +2,6 @@ from smtplib import SMTPException
 from typing import Optional
 
 from anymail.exceptions import AnymailRequestsAPIError
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -11,7 +10,6 @@ from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -26,6 +24,7 @@ from django.views.generic.edit import FormMixin
 
 from workshops.forms import AdminLookupForm, BootstrapHelper
 from workshops.utils.pagination import Paginator, get_pagination_items
+from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.views import assign, failed_to_delete
 
 
@@ -160,9 +159,7 @@ class AMYDeleteView(DeleteView):
             return HttpResponseRedirect(success_url)
         except ProtectedError as e:
             back = self.back_address()
-            return failed_to_delete(
-                self.request, self.object, e.protected_objects, back=back
-            )
+            return failed_to_delete(self.request, self.object, e.protected_objects, back=back)
 
     def get(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request, *args, **kwargs)
@@ -199,9 +196,7 @@ class AMYListView(ListView):
             self.filter = None
             self.qs = super().get_queryset()
         else:
-            self.filter = self.filter_class(
-                self.get_filter_data(), super().get_queryset(), request=self.request
-            )
+            self.filter = self.filter_class(self.get_filter_data(), super().get_queryset(), request=self.request)
             self.qs = self.filter.qs
         paginated = get_pagination_items(self.request, self.qs)
         return paginated
@@ -257,15 +252,10 @@ class EmailSendMixin:
 
 
 class RedirectSupportMixin:
-    def get_success_url(self):
-        default_url = super().get_success_url()
-        next_url = self.request.GET.get("next", None)
-        if next_url is not None and url_has_allowed_host_and_scheme(
-            next_url, allowed_hosts=settings.ALLOWED_HOSTS
-        ):
-            return next_url
-        else:
-            return default_url
+    def get_success_url(self) -> str:
+        next_url = self.request.GET.get("next", None)  # type: ignore
+        default_url = super().get_success_url()  # type: ignore
+        return safe_next_or_default_url(next_url, default_url)
 
 
 class PrepopulationSupportMixin:
@@ -383,9 +373,7 @@ class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, Redirec
     state_url_kwarg = "state"
 
     # Message shown upon successful state change
-    success_message = (
-        '%(name)s state was changed to "%(requested_state)s" ' "successfully."
-    )
+    success_message = '%(name)s state was changed to "%(requested_state)s" ' "successfully."
 
     def get_states(self):
         """Return state-state mapping; keys are URL values, and items are

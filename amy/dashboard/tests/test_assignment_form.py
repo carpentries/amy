@@ -42,6 +42,4 @@ class TestAssignmentForm(TestCase):
         self.both.groups.add(admins)
 
         field = AssignmentForm().fields["assigned_to"]
-        self.assertEqual(
-            list(field.queryset), [self.both, self.superuser, self.administrator]
-        )
+        self.assertEqual(list(field.queryset), [self.both, self.superuser, self.administrator])

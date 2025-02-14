@@ -26,9 +26,7 @@ class TestAskForWebsiteAction(TestCase):
         Organization.objects.bulk_create(
             [
                 Organization(domain="carpentries.org", fullname="Instructor Training"),
-                Organization(
-                    domain="librarycarpentry.org", fullname="Library Carpentry"
-                ),
+                Organization(domain="librarycarpentry.org", fullname="Library Carpentry"),
             ]
         )
 
@@ -98,9 +96,7 @@ class TestAskForWebsiteAction(TestCase):
             end=date.today() + timedelta(days=8),
         )
         e.tags.set(Tag.objects.filter(name__in=["automated-email"]))
-        p = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         s = Role.objects.create(name="supporting-instructor")
         t = Task.objects.create(event=e, person=p, role=r)
@@ -175,9 +171,7 @@ class TestAskForWebsiteAction(TestCase):
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
-        a = AskForWebsiteAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = AskForWebsiteAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):
@@ -196,9 +190,7 @@ class TestAskForWebsiteAction(TestCase):
             venue="Ministry of Magic",
         )
         e.tags.set(Tag.objects.filter(name__in=["TTT", "SWC"]))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         p2 = Person.objects.create(
             personal="Hermione",
             family="Granger",
@@ -249,9 +241,7 @@ class TestAskForWebsiteAction(TestCase):
             venue="Ministry of Magic",
         )
         e.tags.set(Tag.objects.filter(name="LC"))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         p2 = Person.objects.create(
             personal="Hermione",
             family="Granger",
@@ -298,9 +288,7 @@ class TestAskForWebsiteAction(TestCase):
             venue="Ministry of Magic",
         )
         e.tags.set(Tag.objects.filter(name="LC"))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         t = Task.objects.create(event=e, person=p1, role=r)
 
@@ -321,9 +309,7 @@ class TestAskForWebsiteAction(TestCase):
             venue="Ministry of Magic",
         )
         e.tags.set(Tag.objects.filter(name="LC"))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         p2 = Person.objects.create(
             personal="Hermione",
             family="Granger",

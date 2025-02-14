@@ -102,9 +102,7 @@ class TestWorkshopRequestExternalForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode("utf-8")
         if "form" in rv.context:
-            self.assertEqual(
-                rv.context["form"].is_valid(), True, dict(rv.context["form"].errors)
-            )
+            self.assertEqual(rv.context["form"].is_valid(), True, dict(rv.context["form"].errors))
         self.assertNotIn("Please fix errors in the form below", content)
         self.assertIn("Thank you for requesting a workshop", content)
         self.assertEqual(WorkshopRequest.objects.all().count(), 1)
@@ -126,9 +124,7 @@ class TestWorkshopRequestExternalForm(TestBase):
         msg = mail.outbox[0]
         self.assertEqual(msg.subject, "Workshop request confirmation")
         self.assertEqual(msg.recipients(), ["hpotter@magic.gov"])
-        self.assertNotIn(
-            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
-        )
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
         # test email for admins
         msg = mail.outbox[1]
         self.assertEqual(
@@ -136,6 +132,4 @@ class TestWorkshopRequestExternalForm(TestBase):
             "New workshop request: Ministry of Magic, 03-04 November, 2018",
         )
         self.assertEqual(msg.recipients(), ["admin-uk@carpentries.org"])
-        self.assertNotIn(
-            settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body
-        )
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)

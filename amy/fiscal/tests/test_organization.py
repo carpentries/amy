@@ -15,9 +15,7 @@ class TestOrganization(TestBase):
         """Make sure deleted organization is longer accessible.
 
         Additionally check on_delete behavior for Event."""
-        Event.objects.create(
-            host=self.org_alpha, administrator=self.org_beta, slug="test-event"
-        )
+        Event.objects.create(host=self.org_alpha, administrator=self.org_beta, slug="test-event")
 
         for org_domain in [self.org_alpha.domain_quoted, self.org_beta.domain_quoted]:
             rv = self.client.post(
@@ -134,16 +132,12 @@ class TestOrganization(TestBase):
         ]
 
         # Act
-        organizations_with_admin_domain = Organization.objects.filter(
-            domain__in=expected_domains
-        )
+        organizations_with_admin_domain = Organization.objects.filter(domain__in=expected_domains)
         administrators = Organization.objects.administrators()
 
         # Assert
         # check that all ADMIN_DOMAINS are represented
-        self.assertSetEqual(
-            set(expected_domains), set(Organization.objects.ADMIN_DOMAINS)
-        )
+        self.assertSetEqual(set(expected_domains), set(Organization.objects.ADMIN_DOMAINS))
         self.assertEqual(organizations_with_admin_domain.count(), len(expected_domains))
         # check that administrators() returns what we expect
         self.assertQuerySetEqual(organizations_with_admin_domain, administrators)

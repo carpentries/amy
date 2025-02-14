@@ -1,11 +1,10 @@
 from collections import defaultdict
-from typing import Optional, Protocol
+from typing import Any, Optional, Protocol
 
-from django.conf import settings
 from django.db import IntegrityError
-from django.http import Http404, HttpRequest, HttpResponseRedirect
-from django.shortcuts import redirect, render
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.db.models import Model
+from django.http import Http404, HttpRequest, HttpResponse
+from django.shortcuts import render
 
 from workshops.models import Person
 
@@ -13,14 +12,15 @@ from workshops.models import Person
 class Assignable(Protocol):
     assigned_to: Optional[Person]
 
-    def save(self):
-        ...
+    def save(self) -> None: ...
 
 
-def failed_to_delete(request, object, protected_objects, back=None):
-    context = {
+def failed_to_delete(
+    request: HttpRequest, object: Model, protected_objects: set[Model], back: str | None = None
+) -> HttpResponse:
+    context: dict[str, Any] = {
         "title": "Failed to delete",
-        "back": back or object.get_absolute_url,
+        "back": back or getattr(object, "get_absolute_url"),
         "object": object,
         "refs": defaultdict(list),
     }
@@ -43,20 +43,3 @@ def assign(obj: Assignable, /, person: Optional[Person]) -> None:
         obj.save()
     except IntegrityError:
         raise Http404(f"Unable to assign {person} to {obj}.")
-
-
-def redirect_with_next_support(
-    request: HttpRequest, *args, **kwargs
-) -> HttpResponseRedirect:
-    """Works in the same way as `redirect` except when there is GET parameter
-    named "next". In that case, user is redirected to the URL from that
-    parameter. If you have a class-based view, use RedirectSupportMixin that
-    does the same."""
-
-    next_url = request.GET.get("next", None)
-    if next_url is not None and url_has_allowed_host_and_scheme(
-        next_url, allowed_hosts=settings.ALLOWED_HOSTS
-    ):
-        return redirect(next_url, permanent=False)
-    else:
-        return redirect(*args, permanent=False, **kwargs)

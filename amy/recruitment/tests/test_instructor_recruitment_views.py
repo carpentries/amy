@@ -47,14 +47,10 @@ class TestInstructorRecruitmentListView(TestBase):
         # Arrange
         view = InstructorRecruitmentList()
         # Assert
-        self.assertEqual(
-            view.permission_required, "recruitment.view_instructorrecruitment"
-        )
+        self.assertEqual(view.permission_required, "recruitment.view_instructorrecruitment")
         self.assertEqual(view.title, "Recruitment processes")
         self.assertEqual(view.filter_class, InstructorRecruitmentFilter)
-        self.assertEqual(
-            view.template_name, "recruitment/instructorrecruitment_list.html"
-        )
+        self.assertEqual(view.template_name, "recruitment/instructorrecruitment_list.html")
         self.assertNotEqual(view.queryset, None)  # it's a complicated query
 
     def test_get_filter_data(self) -> None:
@@ -77,9 +73,7 @@ class TestInstructorRecruitmentListView(TestBase):
         context = view.get_context_data()
         # Assert
         self.assertIn("personal_conflicts", context.keys())
-        self.assertEqual(
-            list(context["personal_conflicts"]), list(Person.objects.none())
-        )
+        self.assertEqual(list(context["personal_conflicts"]), list(Person.objects.none()))
 
     def test_get_context_data(self) -> None:
         # Arrange
@@ -90,9 +84,7 @@ class TestInstructorRecruitmentListView(TestBase):
         event = Event.objects.create(slug="test-event", host=host)
         recruitment = InstructorRecruitment.objects.create(event=event)
         person = Person.objects.create(username="test_user")
-        InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person, interest="session"
-        )
+        InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person, interest="session")
         # Act
         context = view.get_context_data()
         # Assert
@@ -114,12 +106,8 @@ class TestInstructorRecruitmentListView(TestBase):
             event=event,
             notes="Test notes",
         )
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person, interest="session"
-        )
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person, interest="session")
         # Act
         response = self.client.get(reverse("all_instructorrecruitment"))
         # Assert
@@ -148,13 +136,9 @@ class TestInstructorRecruitmentCreateView(TestBase):
         # Arrange
         view = InstructorRecruitmentCreate()
         # Assert
-        self.assertEqual(
-            view.permission_required, "recruitment.add_instructorrecruitment"
-        )
+        self.assertEqual(view.permission_required, "recruitment.add_instructorrecruitment")
         self.assertEqual(view.model, InstructorRecruitment)
-        self.assertEqual(
-            view.template_name, "recruitment/instructorrecruitment_add.html"
-        )
+        self.assertEqual(view.template_name, "recruitment/instructorrecruitment_add.html")
         self.assertEqual(view.form_class, InstructorRecruitmentCreateForm)
 
     def test_get_other_object(self) -> None:
@@ -166,9 +150,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
             (Event.objects.create(slug="test2", host=host, start=date.today()), False),
             (Event.objects.create(slug="test3", host=host, start=date.today()), True),
             (
-                Event.objects.create(
-                    slug="test4", host=host, start=date.today(), venue="University"
-                ),
+                Event.objects.create(slug="test4", host=host, start=date.today(), venue="University"),
                 False,
             ),
             (
@@ -263,9 +245,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
             {
                 "title": "Begin Instructor Selection Process for test-event",
                 "event": event,
-                "event_dates": event.human_readable_date(
-                    common_month_left=r"%B %d", separator="-"
-                ),
+                "event_dates": event.human_readable_date(common_month_left=r"%B %d", separator="-"),
                 "view": view,
                 "model": InstructorRecruitment,
                 # it needs to be the same instance, otherwise the test fails
@@ -299,8 +279,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
         self.assertEqual(
             initial,
             {
-                "notes": f"{workshop_request.audience_description}\n\n"
-                f"{workshop_request.user_notes}",
+                "notes": f"{workshop_request.audience_description}\n\n" f"{workshop_request.user_notes}",
             },
         )
 
@@ -327,9 +306,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
         event = self.prepare_event()
         data = {"instructorrecruitment-notes": "Test notes"}
         # Act
-        response = self.client.post(
-            reverse("instructorrecruitment_add", args=[event.pk]), data, follow=True
-        )
+        response = self.client.post(reverse("instructorrecruitment_add", args=[event.pk]), data, follow=True)
         recruitment: InstructorRecruitment = response.context["object"]
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -355,13 +332,9 @@ class TestInstructorRecruitmentDetailsView(TestBase):
         # Arrange
         view = InstructorRecruitmentDetails()
         # Assert
-        self.assertEqual(
-            view.permission_required, "recruitment.view_instructorrecruitment"
-        )
+        self.assertEqual(view.permission_required, "recruitment.view_instructorrecruitment")
         self.assertNotEqual(view.queryset, None)  # actual qs is quite lengthy
-        self.assertEqual(
-            view.template_name, "recruitment/instructorrecruitment_details.html"
-        )
+        self.assertEqual(view.template_name, "recruitment/instructorrecruitment_details.html")
 
     def test_context_data(self) -> None:
         # Arrange
@@ -376,9 +349,7 @@ class TestInstructorRecruitmentDetailsView(TestBase):
             event=event,
             notes="Test notes",
         )
-        view = InstructorRecruitmentDetails(
-            kwargs={"pk": recruitment.pk}, object=recruitment
-        )
+        view = InstructorRecruitmentDetails(kwargs={"pk": recruitment.pk}, object=recruitment)
         # Act
         context = view.get_context_data()
         # Assert
@@ -408,9 +379,7 @@ class TestInstructorRecruitmentDetailsView(TestBase):
             notes="Test notes",
         )
         # Act
-        response = self.client.get(
-            reverse("instructorrecruitment_details", args=[recruitment.pk])
-        )
+        response = self.client.get(reverse("instructorrecruitment_details", args=[recruitment.pk]))
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["object"], recruitment)
@@ -429,9 +398,7 @@ class TestInstructorRecruitmentAddSignup(TestBase):
             ],
         )
         self.assertEqual(view.form_class, InstructorRecruitmentAddSignupForm)
-        self.assertEqual(
-            view.template_name, "recruitment/instructorrecruitment_add_signup.html"
-        )
+        self.assertEqual(view.template_name, "recruitment/instructorrecruitment_add_signup.html")
 
     def test_context_data(self) -> None:
         # Arrange
@@ -569,12 +536,8 @@ class TestInstructorRecruitmentAddSignup(TestBase):
             host=organization,
             administrator=organization,
         )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
         config = CommunityRoleConfig.objects.create(
             name="instructor",
             display_name="Instructor",
@@ -607,9 +570,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Arrange
         view = InstructorRecruitmentSignupChangeState()
         # Assert
-        self.assertEqual(
-            view.permission_required, "recruitment.change_instructorrecruitmentsignup"
-        )
+        self.assertEqual(view.permission_required, "recruitment.change_instructorrecruitmentsignup")
         self.assertEqual(view.form_class, InstructorRecruitmentSignupChangeStateForm)
 
     def test_get_object(self) -> None:
@@ -649,9 +610,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
             view.post(request)
         # Act
-        with mock.patch.object(
-            InstructorRecruitmentSignupChangeState, "get_success_url"
-        ) as mock_get_success_url:
+        with mock.patch.object(InstructorRecruitmentSignupChangeState, "get_success_url") as mock_get_success_url:
             mock_get_success_url.return_value = "/"
             result = view.form_invalid(mock.MagicMock())
         # Assert
@@ -662,9 +621,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # Arrange
         request = RequestFactory().post("/")
         mock_signup = mock.MagicMock()
-        view = InstructorRecruitmentSignupChangeState(
-            object=mock_signup, request=request
-        )
+        view = InstructorRecruitmentSignupChangeState(object=mock_signup, request=request)
         view.accept_signup = mock.MagicMock()
         view.decline_signup = mock.MagicMock()
         data = {"action": "confirm"}
@@ -686,9 +643,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         super()._setUpRoles()
         request = RequestFactory().post("/")
         view = InstructorRecruitmentSignupChangeState(request=request)
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
         organization = self.org_alpha
         event = Event.objects.create(
             slug="test-event",
@@ -711,9 +666,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         super()._setUpRoles()
         request = RequestFactory().post("/")
         view = InstructorRecruitmentSignupChangeState(request=request)
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
         organization = self.org_alpha
         event = Event.objects.create(
             slug="test-event",
@@ -734,9 +687,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         super()._setUpRoles()
         request = RequestFactory().post("/")
         view = InstructorRecruitmentSignupChangeState(request=request)
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
         organization = Organization.objects.first()
         event = Event.objects.create(
             slug="test-event",
@@ -758,9 +709,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         super()._setUpRoles()
         request = RequestFactory().post("/")
         view = InstructorRecruitmentSignupChangeState(request=request)
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
         organization = Organization.objects.first()
         event = Event.objects.create(
             slug="test-event",
@@ -780,18 +729,10 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # TODO: switch syntax for multiple context managers in Python 3.10+
         # https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
         with (
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "get_object"
-            ) as mock_get_object,
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "get_form"
-            ) as mock_get_form,
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "form_valid"
-            ) as mock_form_valid,
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "form_invalid"
-            ) as mock_form_invalid,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "get_object") as mock_get_object,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "get_form") as mock_get_form,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "form_valid") as mock_form_valid,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "form_invalid") as mock_form_invalid,
         ):
             mock_get_form.return_value.is_valid.return_value = True
             view.post(request)
@@ -810,18 +751,10 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         # TODO: switch syntax for multiple context managers in Python 3.10+
         # https://docs.python.org/3.10/whatsnew/3.10.html#parenthesized-context-managers
         with (
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "get_object"
-            ) as mock_get_object,
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "get_form"
-            ) as mock_get_form,
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "form_valid"
-            ) as mock_form_valid,
-            mock.patch.object(
-                InstructorRecruitmentSignupChangeState, "form_invalid"
-            ) as mock_form_invalid,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "get_object") as mock_get_object,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "get_form") as mock_get_form,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "form_valid") as mock_form_valid,
+            mock.patch.object(InstructorRecruitmentSignupChangeState, "form_invalid") as mock_form_invalid,
         ):
             mock_get_form.return_value.is_valid.return_value = False
             view.post(request)
@@ -842,15 +775,9 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             host=organization,
             administrator=organization,
         )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person
-        )
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person)
         role = Role.objects.create(name="instructor")
         data = {"action": "confirm"}
         url = reverse("instructorrecruitmentsignup_changestate", args=[signup.pk])
@@ -873,9 +800,7 @@ class TestInstructorRecruitmentChangeState(TestBase):
                 Tag(name="LC", priority=30),
             ]
         )
-        Organization.objects.bulk_create(
-            [Organization(domain="carpentries.org", fullname="Instructor Training")]
-        )
+        Organization.objects.bulk_create([Organization(domain="carpentries.org", fullname="Instructor Training")])
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.first(),
@@ -884,17 +809,13 @@ class TestInstructorRecruitmentChangeState(TestBase):
             end=date.today() + timedelta(days=8),
         )
         self.event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
-        self.recruitment = InstructorRecruitment.objects.create(
-            event=self.event, status="c"
-        )
+        self.recruitment = InstructorRecruitment.objects.create(event=self.event, status="c")
 
     def test_class_fields(self) -> None:
         # Arrange
         view = InstructorRecruitmentChangeState()
         # Assert
-        self.assertEqual(
-            view.permission_required, "recruitment.change_instructorrecruitment"
-        )
+        self.assertEqual(view.permission_required, "recruitment.change_instructorrecruitment")
 
     def test_get_object(self) -> None:
         # Arrange
@@ -996,15 +917,11 @@ class TestInstructorRecruitmentChangeState(TestBase):
 
         # Assert
         mock_messages.success.assert_not_called()
-        mock_messages.error.assert_called_once_with(
-            request, "Unable to close recruitment."
-        )
+        mock_messages.error.assert_called_once_with(request, "Unable to close recruitment.")
         self.assertEqual(result.status_code, 302)
 
     @mock.patch("recruitment.views.host_instructors_introduction_strategy")
-    def test_close_recruitment__success(
-        self, mock_host_instructors_introduction_strategy: mock.MagicMock
-    ) -> None:
+    def test_close_recruitment__success(self, mock_host_instructors_introduction_strategy: mock.MagicMock) -> None:
         # Arrange
         mock_host_instructors_introduction_strategy.return_value = StrategyEnum.NOOP
         request = RequestFactory().post("/")
@@ -1020,9 +937,7 @@ class TestInstructorRecruitmentChangeState(TestBase):
         # Assert
         self.assertEqual(view.object.status, "c")
         view.object.save.assert_called_once_with()
-        mock_messages.success.assert_called_once_with(
-            request, f"Successfully closed recruitment {view.object}."
-        )
+        mock_messages.success.assert_called_once_with(request, f"Successfully closed recruitment {view.object}.")
         view.get_success_url.assert_called_once_with()
         self.assertEqual(result.status_code, 302)
 
@@ -1056,15 +971,11 @@ class TestInstructorRecruitmentChangeState(TestBase):
 
         # Assert
         mock_messages.success.assert_not_called()
-        mock_messages.error.assert_called_once_with(
-            request, "Unable to re-open recruitment."
-        )
+        mock_messages.error.assert_called_once_with(request, "Unable to re-open recruitment.")
         self.assertEqual(result.status_code, 302)
 
     @mock.patch("recruitment.views.host_instructors_introduction_strategy")
-    def test_reopen_recruitment__success(
-        self, mock_host_instructors_introduction_strategy: mock.MagicMock
-    ) -> None:
+    def test_reopen_recruitment__success(self, mock_host_instructors_introduction_strategy: mock.MagicMock) -> None:
         # Arrange
         mock_host_instructors_introduction_strategy.return_value = StrategyEnum.NOOP
         request = RequestFactory().post("/")
@@ -1080,9 +991,7 @@ class TestInstructorRecruitmentChangeState(TestBase):
         # Assert
         self.assertEqual(view.object.status, "o")
         view.object.save.assert_called_once_with()
-        mock_messages.success.assert_called_once_with(
-            request, f"Successfully re-opened recruitment {view.object}."
-        )
+        mock_messages.success.assert_called_once_with(request, f"Successfully re-opened recruitment {view.object}.")
         view.get_success_url.assert_called_once_with()
         self.assertEqual(result.status_code, 302)
 
@@ -1138,12 +1047,8 @@ class TestInstructorRecruitmentSignupUpdateView(TestBase):
             host=organization,
             administrator=organization,
         )
-        recruitment = InstructorRecruitment.objects.create(
-            event=event, notes="Test notes"
-        )
-        person = Person.objects.create(
-            personal="Test", family="User", username="test_user"
-        )
+        recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
+        person = Person.objects.create(personal="Test", family="User", username="test_user")
         signup = InstructorRecruitmentSignup.objects.create(
             recruitment=recruitment, person=person, notes="Admin notes to be changed"
         )

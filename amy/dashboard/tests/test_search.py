@@ -62,9 +62,7 @@ class TestSearch(TestBase):
         response = self.search_for("a")
         self.assertEqual(response.status_code, 200)
         doc = response.content.decode("utf-8")
-        self.assertEqual(
-            len(response.context["organisations"]), 3, "Expected three search results"
-        )
+        self.assertEqual(len(response.context["organisations"]), 3, "Expected three search results")
         for org in ["alpha.edu", "self-organized", "beta.com"]:
             self.assertIn(org, doc, "Wrong names {0} in search result".format(org))
 
@@ -88,9 +86,7 @@ class TestSearch(TestBase):
         """Test if searching by secondary email yields people correctly."""
         # Let's add Hermione Granger email as some organisation's name.
         # This is required because of redirection if only 1 person matches.
-        org = Organization.objects.create(
-            fullname="hermione2@granger.co.uk", domain="hgr.com"
-        )
+        org = Organization.objects.create(fullname="hermione2@granger.co.uk", domain="hgr.com")
 
         # make sure Hermione has individual secondary email
         self.hermione.secondary_email = "hermione2@granger.co.uk"

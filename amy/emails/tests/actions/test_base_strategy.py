@@ -13,9 +13,7 @@ class TestRunStrategy(TestCase):
         # Arrange
         strategy = StrategyEnum.CREATE
         # Act & Assert
-        with self.assertRaisesMessage(
-            EmailStrategyException, f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaisesMessage(EmailStrategyException, f"Unknown strategy {strategy}"):
             run_strategy(
                 strategy,
                 {},

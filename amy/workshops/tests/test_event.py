@@ -49,17 +49,13 @@ class TestEvent(TestBase):
     def test_online_country_enforced_values(self):
         """Ensure that events from 'Online' country (W3) get some location data
         forced upon `save()`."""
-        e = Event.objects.create(
-            slug="online-event", country="W3", host=Organization.objects.first()
-        )
+        e = Event.objects.create(slug="online-event", country="W3", host=Organization.objects.first())
         self.assertEqual(e.venue, "Internet")
         self.assertEqual(e.address, "Internet")
         self.assertEqual(e.latitude, None)
         self.assertEqual(e.longitude, None)
 
-        e = Event.objects.create(
-            slug="offline-event", country="US", host=Organization.objects.first()
-        )
+        e = Event.objects.create(slug="offline-event", country="US", host=Organization.objects.first())
         self.assertNotEqual(e.venue, "Internet")
         self.assertNotEqual(e.address, "Internet")
         self.assertIsNone(e.latitude)
@@ -168,13 +164,9 @@ class TestEvent(TestBase):
         and Task.event's on_delete=PROTECT."""
         event = Event.objects.get(slug="starts-today-ongoing")
         role = Role.objects.create(name="NonInstructor")
-        badge = Badge.objects.create(
-            name="noninstructor", title="Non-instructor", criteria=""
-        )
+        badge = Badge.objects.create(name="noninstructor", title="Non-instructor", criteria="")
         task = Task.objects.create(event=event, person=self.spiderman, role=role)
-        award = Award.objects.create(
-            person=self.spiderman, badge=badge, awarded=date.today(), event=event
-        )
+        award = Award.objects.create(person=self.spiderman, badge=badge, awarded=date.today(), event=event)
 
         rv = self.client.post(reverse("event_delete", args=[event.slug]))
         self.assertEqual(rv.status_code, 200)
@@ -210,9 +202,7 @@ class TestEvent(TestBase):
         REPO = "https://github.com/user-name/repo-name"
         WEBSITE = "https://user-name.github.io/repo-name/"
         for index, link in enumerate(links):
-            event = Event.objects.create(
-                slug="e{}".format(index), host=test_host, url=link
-            )
+            event = Event.objects.create(slug="e{}".format(index), host=test_host, url=link)
             assert event.repository_url == REPO
             assert event.website_url == WEBSITE
 
@@ -251,9 +241,7 @@ class TestEvent(TestBase):
             (Event.objects.create(slug="test2", host=host, start=date.today()), False),
             (Event.objects.create(slug="test3", host=host, start=date.today()), True),
             (
-                Event.objects.create(
-                    slug="test4", host=host, start=date.today(), venue="University"
-                ),
+                Event.objects.create(slug="test4", host=host, start=date.today(), venue="University"),
                 False,
             ),
             (
@@ -342,9 +330,7 @@ class TestEventCreateFormComments(TestEventFormComments):
 
 class TestEventManager(TestBase):
     def test_ttt(self):
-        org = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt_tag = Tag.objects.create(name="TTT")
         _ = Event.objects.create(slug="first", host=org)
         second = Event.objects.create(slug="second", host=org)
@@ -370,9 +356,7 @@ class TestEventViews(TestBase):
         self.learner = Role.objects.get_or_create(name="learner")[0]
 
         # Create a test host
-        self.test_host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        self.test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
 
         # Create a test tag
         self.test_tag = Tag.objects.create(name="Test Tag", details="For testing")
@@ -482,13 +466,9 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/427"""
-        Event.objects.create(
-            host=self.test_host, sponsor=self.test_host, slug="testing-unique-slug"
-        )
+        Event.objects.create(host=self.test_host, sponsor=self.test_host, slug="testing-unique-slug")
         with self.assertRaises(IntegrityError):
-            Event.objects.create(
-                host=self.test_host, sponsor=self.test_host, slug="testing-unique-slug"
-            )
+            Event.objects.create(host=self.test_host, sponsor=self.test_host, slug="testing-unique-slug")
 
     def test_assign_to_field_populated(self):
         """Ensure that we can assign an admin to an event
@@ -734,9 +714,7 @@ class TestEventViews(TestBase):
         This is a regression test against that bug.
         The error happened when "".format encountered None instead of
         datetime."""
-        event = Event.objects.create(
-            slug="regression_event_0", host=self.test_host, sponsor=self.test_host
-        )
+        event = Event.objects.create(slug="regression_event_0", host=self.test_host, sponsor=self.test_host)
         rv = self.client.get(reverse("event_details", args=[event.slug]))
         assert rv.status_code == 200
 
@@ -925,9 +903,7 @@ class TestEventMerging(TestBase):
             learners_longterm="http://reichel.com/learners_longterm",
         )
         self.event_a.tags.set(Tag.objects.filter(name__in=["LC", "DC"]))
-        self.event_a.task_set.create(
-            person=self.harry, role=Role.objects.get(name="instructor")
-        )
+        self.event_a.task_set.create(person=self.harry, role=Role.objects.get(name="instructor"))
         # comments regarding this event
         self.ca = Comment.objects.create(
             content_object=self.event_a,
@@ -1350,12 +1326,8 @@ class TestEventAttendance(TestBase):
         # attendance == 0
         self.event.manual_attendance = 0
         self.event.save()
-        self.event.task_set.create(
-            person=self.hermione, role=Role.objects.get(name="instructor")
-        )
-        self.event.task_set.create(
-            person=self.ron, role=Role.objects.get(name="helper")
-        )
+        self.event.task_set.create(person=self.hermione, role=Role.objects.get(name="instructor"))
+        self.event.task_set.create(person=self.ron, role=Role.objects.get(name="helper"))
         self.assertEqual(Event.objects.attendance().get(slug=self.slug).attendance, 0)
 
     def test_single_manual_attendance(self):
@@ -1367,9 +1339,7 @@ class TestEventAttendance(TestBase):
     def test_single_learner_task(self):
         self.event.manual_attendance = 0
         self.event.save()
-        self.event.task_set.create(
-            person=self.harry, role=Role.objects.get(name="learner")
-        )
+        self.event.task_set.create(person=self.harry, role=Role.objects.get(name="learner"))
         self.assertEqual(self.event.attendance, 1)
 
     def test_equal_manual_attendance_and_learner_tasks(self):
@@ -1378,10 +1348,6 @@ class TestEventAttendance(TestBase):
         # attendance = 2
         self.event.manual_attendance = 2
         self.event.save()
-        self.event.task_set.create(
-            person=self.harry, role=Role.objects.get(name="learner")
-        )
-        self.event.task_set.create(
-            person=self.spiderman, role=Role.objects.get(name="learner")
-        )
+        self.event.task_set.create(person=self.harry, role=Role.objects.get(name="learner"))
+        self.event.task_set.create(person=self.spiderman, role=Role.objects.get(name="learner"))
         self.assertEqual(self.event.attendance, 2)

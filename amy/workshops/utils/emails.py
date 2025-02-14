@@ -35,9 +35,7 @@ def match_notification_email(obj):
     # some objects may not have this attribute, in this case we should fall
     # back to default criteria email
     if hasattr(obj, "country") and obj.country:
-        results = Criterium.objects.filter(countries__contains=obj.country).values_list(
-            "email", flat=True
-        )
+        results = Criterium.objects.filter(countries__contains=obj.country).values_list("email", flat=True)
     else:
         # use general notification criteria when event has no country
         results = [settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT]
