@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from functools import partial
+from html.parser import HTMLParser
 import json
 import re
 from typing import Any, Optional, TypedDict, cast
@@ -58,6 +59,23 @@ class Requirement:
         if self.display:
             return f"{self.display} {self.name}"
         return self.name
+
+
+class HTMLMetaParser(HTMLParser):
+    meta_tags: dict[str, str | None]
+
+    def __init__(self) -> None:
+        self.meta_tags = {}
+        super().__init__()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag != "meta":
+            return
+
+        name = next((v2 for v1, v2 in attrs if v1 == "name"), None)
+        content = next((v2 for v1, v2 in attrs if v1 == "content"), None)
+        if name:
+            self.meta_tags[name] = content
 
 
 def fetch_workshop_metadata(event_url: str, timeout: int = 5) -> dict[str, str]:
@@ -130,11 +148,10 @@ def find_workshop_YAML_metadata(content: str) -> dict[str, str]:
 def find_workshop_HTML_metadata(content: str) -> dict[str, str]:
     """Given website content, find and take <meta> metadata that have
     workshop-related data."""
+    parser = HTMLMetaParser()
+    parser.feed(content)
 
-    R = r'<meta\s+name="(?P<name>\w+?)"\s+content="(?P<content>.*?)"\s*?/?>'
-    regexp = re.compile(R)
-
-    return {name: content for name, content in regexp.findall(content) if name in ALLOWED_METADATA_NAMES}
+    return {name: content for name, content in parser.meta_tags.items() if name in ALLOWED_METADATA_NAMES and content}
 
 
 def parse_workshop_metadata(metadata: dict[str, str]) -> WorkshopMetadata:
