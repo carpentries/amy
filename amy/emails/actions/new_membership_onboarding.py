@@ -33,6 +33,7 @@ from workshops.models import Membership
 logger = logging.getLogger("amy")
 
 MEMBERSHIP_TASK_ROLES_EXPECTED = ["billing_contact", "programmatic_contact"]
+MEMBERSHIP_ACCEPTABLE_VARIANTS = ["bronze", "silver", "gold", "platinum"]
 
 
 def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
@@ -47,17 +48,24 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     task_count = MembershipTask.objects.filter(
         membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
     ).count()
+    membership_acceptable_variant = membership.variant in MEMBERSHIP_ACCEPTABLE_VARIANTS
 
     log_condition_elements(
         **{
             "membership.pk": membership.pk,
             "task_count": task_count,
+            "membership.variant": membership.variant,
+            "membership_acceptable_variant": membership_acceptable_variant,
         }
     )
 
     # Membership can't be removed without removing the tasks first. This is when the
     # email would be de-scheduled.
-    email_should_exist = bool(membership.pk and task_count)
+    # UPDATE 2025-02-15 (#2761):
+    #      We're allowing scheduling only for bronze, silver, gold or platinum variants.
+    email_should_exist = bool(
+        membership.pk and task_count and membership_acceptable_variant
+    )
 
     if not email_exists and email_should_exist:
         result = StrategyEnum.CREATE
