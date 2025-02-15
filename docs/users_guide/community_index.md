@@ -20,7 +20,7 @@ The Carpentries can maintain the following information about individuals in our 
 * Affiliation
 * GitHub username
 * Twitter username
-* BlueSky username
+* Bluesky username
 * Personal website
 * Current occupation/career stage
 * ORCID ID
