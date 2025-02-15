@@ -89,7 +89,7 @@ When a new membership is created, a new field called `Persons` will display. Cli
 
 If a membership is granted an extension to the membership date terms, do not change the original membership end date.  Instead, click the gray "Extend" button at the bottom of the membership view. Enter in the new membership end date.  The number of days of the extension will automatically be calculated.  Add in any comments, such as the context for the extension or a link to more information. Multiple extensions can be granted. The duration of the extension can be edited in the membership's edit view.  If a second extension is granted, do not edit the original. Instead, click on the gray "Extend" button again to enter in another extension.
 
-![AMY Membership Extension Button](images/membership_extension_button.png)  
+![AMY Membership Extension Button](images/membership_extension_button.png)
 
 ![Record Membership Extension](images/membership_extension.png)
 
@@ -174,7 +174,7 @@ Go to the [New Event](https://amy.carpentries.org/workshops/events/add/) page by
 
 ![AMY new event](images/new_event.png)
 
-[All fields](#event-fields) will need to be manually entered in.  
+[All fields](#event-fields) will need to be manually entered in.
 
 
 #### Creating a New Event from URL
@@ -183,9 +183,9 @@ If you already have the event's URL with properly formatted metadata using [The 
 
 ![AMY new event from URL](images/new_event_from_url.png)
 
-If the website repo contained properly formatted data, the slug, start/end dates, and location may automatically be populated. [All other fields](#event-fields) will need to be manually entered in.  
+If the website repo contained properly formatted data, the slug, start/end dates, and location may automatically be populated. [All other fields](#event-fields) will need to be manually entered in.
 
-Instructor and helper names will be in the notes field but not assigned in the database.  
+Instructor and helper names will be in the notes field but not assigned in the database.
 
 #### Creating a New Event from a Workshop Request
 
@@ -201,9 +201,9 @@ This will take you to a summary view of the workshop requests, workshop inquirie
 
 ![AMY workshop request list](images/workshop_requests.png)
 
-At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request. 
+At the bottom of the request information page, the user has the option to accept or discard the request. All requests should be accepted (unless spam or otherwise inappropriate) so The Carpentries can maintain a history of workshop requests. Events can later be tagged as stalled or cancelled. Choosing "Change state to Accepted" will mark it as accepted in the workshop request list but will not create a new event. Select "Accept and create a new event" to create a new event from this request.
 
-This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above. 
+This will open a page with a side by side view of the request details and view to create a new event, similar to the general new event page. The new event can be created [manually](#creating-a-new-event-manually) or if available, [from the URL](#creating-a-new-event-from-url), as described above.
 
 ![AMY workshop accept request](images/event_from_request.png)
 
@@ -240,16 +240,16 @@ This will open a page with a side by side view of the request details and view t
     - *CLDT* Event type.  Identifies Collaborative Lesson Development Training events.
     - *Pilot*: Event type. Identifies workshops teaching pilot curricula.
     - *for-profit*: Administrative. Identifies workshops run by for-profit institutions.
-    - *Scholarship*: Administrative. Identifies sponsored workshops. 
+    - *Scholarship*: Administrative. Identifies sponsored workshops.
     - *private-event*: Deprecated. Formerly used before explicit private/public field existed.
     - *cancelled*: Event status. Identifies workshops that got canceled after they were fully scheduled.
     - *unresponsive*: Event status. Identifies workshops whose Hosts/Instructors are not sending attendance data.
     - *stalled*: Event status. Identifies workshops where planning began but workshops did not happen.
     - *LMO*: Event type.  Identifies Lesson Maintainer Onboarding sessions (for Lesson Maintainers).
     - *LSO*: Event type.  Identifies Lesson Specific Onboarding sessions (for Instructors).
-    - *hackathon*: Event type. 
-    - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.  
-    <br>  
+    - *hackathon*: Event type.
+    - *WiSE*: Event audience. Identifies workshops for Women in Science and Engineering.
+    <br>
 
 * **TTT Open applications** For instructor training events only, member sites become associated with the event as individuals from that member site are assigned to that event. Checking this box will allow people from the open application pool to be matched to this event as well.  This box is automatically checked for events with the `TTT` tag.
 
@@ -314,14 +314,14 @@ People can be associated with events one by one or as a bulk upload.  The person
 
 #### Assigning People to Events, One by One
 
-Go to the event page and click the "Edit" button at the top of the page.  Select the "Tasks" tab. 
+Go to the event page and click the "Edit" button at the top of the page.  Select the "Tasks" tab.
 
 ![Assign person to task](images/assign_person_task.png)
 
 Fill in the following fields:
 
 * **Person** Start typing in the person's name.  Auto-completed suggested names will appear.
-* **Role** Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.). 
+* **Role** Add the person's role in the event (Helper, Instructor, Supporting Instructor, Workshop Host, Learner, Workshop Organiser. Contributed to Lesson Materials is not used in this context.).
 * **Title** and **URL** are not used in this context.
 
 If a person's name does not appear in the dropdown, they will need to be [added to the database](#adding-a-new-person).
@@ -403,7 +403,7 @@ Click on the plus sign next to a trainee's progress to track a new step for that
 
 Each person's individual record also has a line for Instructor Training Progress, where these steps can be tracked and edited in the same way.
 
-Individuals may have multiple entries for any step, especially if they were asked to repeat.  Do not edit the previous step; create a new entry if they repeat a step. 
+Individuals may have multiple entries for any step, especially if they were asked to repeat.  Do not edit the previous step; create a new entry if they repeat a step.
 
 ![AMY checkout progress in instructor profile](images/instructor_training_progress.png)
 
@@ -423,10 +423,10 @@ Click the plus sign in the "Trainees" page or an individual person's record to a
 Additional fields will appear depending on the Type selection:
 
 * **Event** The training event that the trainee attended. The trainee should have a learner task at this event (see [Assigning people to events](#assigning-people-to-events)). This field is only required when **Type** is set to Training.
-* **Get Involved activity** The activity that the trainee completed for the Get Involved step. This field is only required when **Type** is set to Get Involved.  
-Each activity, when selected, requires some or all of the **URL**, **Date**, and **Notes** fields to be filled as well. The community user guide contains a [table of these requirements](./community_index.md#information-required-for-each-get-involved-activity). When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed. 
+* **Get Involved activity** The activity that the trainee completed for the Get Involved step. This field is only required when **Type** is set to Get Involved.
+Each activity, when selected, requires some or all of the **URL**, **Date**, and **Notes** fields to be filled as well. The community user guide contains a [table of these requirements](./community_index.md#information-required-for-each-get-involved-activity). When you submit the form, the form will check that the correct fields have been filled and tell you if changes are needed.
 * **URL** A URL to a GitHub contribution, workshop website, or other contribution. This field is only required for some Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
-* **Date** The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. This field is required for all Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)). 
+* **Date** The date of the activity (not the date of submission). If the activity took place across multiple days, use the first day. This field is required for all Get Involved activities ([see table](./community_index.md#information-required-for-each-get-involved-activity)).
 
 #### Adding checkout progress in bulk
 
@@ -448,7 +448,7 @@ Trainees may submit a contribution for the Get Involved checkout step through th
 
 Submissions must be evaluated by an administrator to ensure that the contribution is valid.
 
-In the "Trainees" page (under the "More" menu), select the filter "Only trainees with unevaluated Get Involved submission" in the left sidebar, then click "Submit" at the bottom of the sidebar. This will [update the page to show only trainees awaiting evaluation](https://amy.carpentries.org/trainings/trainees/?search=&get_involved=on&is_instructor=&training=&training_request=unknown&order_by=). 
+In the "Trainees" page (under the "More" menu), select the filter "Only trainees with unevaluated Get Involved submission" in the left sidebar, then click "Submit" at the bottom of the sidebar. This will [update the page to show only trainees awaiting evaluation](https://amy.carpentries.org/trainings/trainees/?search=&get_involved=on&is_instructor=&training=&training_request=unknown&order_by=).
 
 ![Trainees with unevaluated submissions](images/trainees_with_unevaluated_submissions.png)
 
@@ -460,7 +460,7 @@ The relevant items are shown with a yellow background, which represents the "Not
 
 The Instructor badge can be issued through a person's record (see [Issuing Badges](#issuing-badges)) or through the Trainees page.
 
-On the Trainees page, the **Eligible** column shows whether the trainee has passed all checkout steps and is eligible for an instructor badge. If the trainee is eligible, the "instructor badge" button will appear green and can be clicked to award the badge. If the trainee is not eligible, the button appears grey and the text is struck through. 
+On the Trainees page, the **Eligible** column shows whether the trainee has passed all checkout steps and is eligible for an instructor badge. If the trainee is eligible, the "instructor badge" button will appear green and can be clicked to award the badge. If the trainee is not eligible, the button appears grey and the text is struck through.
 
 ![Trainees page with instructor eligibility highlighted](images/trainees_eligible_instructor.png)
 
@@ -472,9 +472,9 @@ If eligible, clicking the green "instructor badge" button on that person's row t
 
 ### Issuing Badges
 
-The Carpentries has various badges that can be issued, including Instructor, Trainer, Maintainer, and more.  
+The Carpentries has various badges that can be issued, including Instructor, Trainer, Maintainer, and more.
 
-An individual badge can be issued by going to a person's record and clicking the `Edit` button.  Choose the `Awards` tab on the next screen.  
+An individual badge can be issued by going to a person's record and clicking the `Edit` button.  Choose the `Awards` tab on the next screen.
 
 * **Badge** The specific badge that is being awarded
 * **Awarded** The date the badge is being awarded on
@@ -525,65 +525,65 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
 #### Active emails (Workshops)
 
 ??? abstract "Admin Signs Instructor Up for Workshop"
-    [View in AMY](https://amy.carpentries.org/emails/template/53209bdb-fbd2-4620-988b-16703d38a083/)  
-    **Email description:**  Send email to Instructor informing them the admin has signed them up as interested in teaching a workshop  
-    **Sent to:**  Instructor   
-    **Date sent:**   One hour after admin action  
+    [View in AMY](https://amy.carpentries.org/emails/template/53209bdb-fbd2-4620-988b-16703d38a083/)
+    **Email description:**  Send email to Instructor informing them the admin has signed them up as interested in teaching a workshop
+    **Sent to:**  Instructor
+    **Date sent:**   One hour after admin action
 
 ??? abstract "Ask for website"
-    [View in AMY](https://amy.carpentries.org/emails/template/8b29643c-d4f2-4b58-bc3c-5ebc4ff3d7b4/)  
-    **Email description:**  Send email to workshop Instructors reminding them to send us workshop website link  
-    **Sent to:**  Instructors  
-    **Date sent:**  One month before event start  
-    **Conditions:** Has administrator; Has at least one Instructor; Tagged SWC/DC/LC; Start date in future; not stalled/cancelled/unresponsive; Missing website  
+    [View in AMY](https://amy.carpentries.org/emails/template/8b29643c-d4f2-4b58-bc3c-5ebc4ff3d7b4/)
+    **Email description:**  Send email to workshop Instructors reminding them to send us workshop website link
+    **Sent to:**  Instructors
+    **Date sent:**  One month before event start
+    **Conditions:** Has administrator; Has at least one Instructor; Tagged SWC/DC/LC; Start date in future; not stalled/cancelled/unresponsive; Missing website
 
 ??? abstract "Host-instructors introduction"
     [View in AMY](https://amy.carpentries.org/emails/template/fb7286a4-e4a1-4d92-81b8-33e698170178/)
-    **Email description:**  Send email introducing workshop Hosts & Instructors providing general information  
-    **Sent to:**  Instructors and Hosts   
+    **Email description:**  Send email introducing workshop Hosts & Instructors providing general information
+    **Sent to:**  Instructors and Hosts
     **Date sent:**  Immediately after conditions are met
-    **Conditions:** Centrally-Organised; Instructor recruitment closed; Not stalled/cancelled; Has at least two Instructors; Has host; Tagged SWC/DC/LC; At least seven days in future  
+    **Conditions:** Centrally-Organised; Instructor recruitment closed; Not stalled/cancelled; Has at least two Instructors; Has host; Tagged SWC/DC/LC; At least seven days in future
 
 ??? abstract "Instructor confirmed for workshop"
     [View in AMY](https://amy.carpentries.org/emails/template/ba2d0130-d123-402d-97d5-8818b72af963/)
-    **Email description:** Emails instructor to confirm they have been assigned to a workshop    
-    **Sent to:**  Instructor  
-    **Date sent:** One hour after conditions are met     
-    **Conditions:** Instructor task created (either through recruitment process or manual data entry); Tagged SWC/DC/LC; Centrally-Organised; Start date in future   
+    **Email description:** Emails instructor to confirm they have been assigned to a workshop
+    **Sent to:**  Instructor
+    **Date sent:** One hour after conditions are met
+    **Conditions:** Instructor task created (either through recruitment process or manual data entry); Tagged SWC/DC/LC; Centrally-Organised; Start date in future
 
 ??? abstract "Instructor declined for workshop"
     [View in AMY](https://amy.carpentries.org/emails/template/be7a8e81-d4fb-47c1-b78f-1e5f809bc128/)
-    **Email description:** Emails instructor to inform them they have not been assigned to a workshop    
-    **Sent to:**  Instructor  
-    **Date sent:** One hour after conditions are met     
-    **Conditions:** Instructor declined in recruitment process  
+    **Email description:** Emails instructor to inform them they have not been assigned to a workshop
+    **Sent to:**  Instructor
+    **Date sent:** One hour after conditions are met
+    **Conditions:** Instructor declined in recruitment process
 
 ??? abstract "Instructor Signs Up for Workshop"
     [View in AMY](https://amy.carpentries.org/emails/template/43754daa-c312-41db-a0f6-00ac4f88bafd/)
-    **Email description:** Emails instructor to confirm they have expressed interest in a workshop   
-    **Sent to:**  Instructor  
-    **Date sent:** One hour after conditions are met     
-    **Conditions:** Instructor signs up in recruitment process  
+    **Email description:** Emails instructor to confirm they have expressed interest in a workshop
+    **Sent to:**  Instructor
+    **Date sent:** One hour after conditions are met
+    **Conditions:** Instructor signs up in recruitment process
 
 ??? abstract "New Self-Organised Workshop"
-    [View in AMY](https://amy.carpentries.org/emails/template/f967122e-55a8-483e-a571-c3dff43dd33e/)  
-    **Email description:** Emails Self-Organised workshop host to confirm their submission has been accepted  
+    [View in AMY](https://amy.carpentries.org/emails/template/f967122e-55a8-483e-a571-c3dff43dd33e/)
+    **Email description:** Emails Self-Organised workshop host to confirm their submission has been accepted
     **Sent to:**  Contacts from Self-Organised Workshop submission form
-    **Date sent:** One hour after conditions are met     
-    **Conditions:** Self organized submission form accepted and linked to event; start date in future; not stalled/cancelled/unresponsive;  
+    **Date sent:** One hour after conditions are met
+    **Conditions:** Self organized submission form accepted and linked to event; start date in future; not stalled/cancelled/unresponsive;
 
 ??? abstract "Post Workshop 7 days"
-    [View in AMY](https://amy.carpentries.org/emails/template/4809378c-c1aa-4118-a3a7-cbc9586c686b/)  
-    **Email description:** Follow up one week after Centrally-Organised workshop is complete  
-    **Sent to:** Hosts and Instructors     
-    **Date sent:** Later of seven days after workshop end or seven days from now      
-    **Conditions:** Centrally-Organised; At least one host; At least one Instructor;  Tagged SWC/DC/LC; Not CLDT; end date in future; not stalled/cancelled/unresponsive
+    [View in AMY](https://amy.carpentries.org/emails/template/4809378c-c1aa-4118-a3a7-cbc9586c686b/)
+    **Email description:** Follow up one week after Centrally-Organised or Self-Organised workshop is complete
+    **Sent to:** Hosts and Instructors
+    **Date sent:** Later of seven days after workshop end or seven days from now
+    **Conditions:** Centrally-Organised or Self-Organised; At least one host; At least one Instructor;  Tagged SWC/DC/LC; Not CLDT; end date in future; not stalled/cancelled/unresponsive
 
 ??? abstract "Recruit helpers"
     [View in AMY](https://amy.carpentries.org/emails/template/d1b20e74-a245-4c7d-9182-663f3acd8a48/)
     **Email description:** Reminder to host to recruit helpers
-    **Sent to:** Hosts and Instructors     
-    **Date sent:** 21 days before event  
+    **Sent to:** Hosts and Instructors
+    **Date sent:** 21 days before event
     **Conditions:** Centrally-Organised; Tagged SWC/DC/LC; Not stalled/cancelled; At least one host; At least one Instructor; No helpers; Start date at least 14 days in future; not stalled/cancelled/unresponsive
 
 
@@ -591,20 +591,20 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
 #### Active emails (Instructor Training)
 
 ??? abstract "Instructor Training (One month away)"
-    [View in AMY](https://amy.carpentries.org/emails/template/bafe53c4-e486-4a6e-8b5d-894790946913/)  
-    **Email description:** Send Trainers information about upcoming Instructor Training  
-    **Sent to:** Trainers  
-    **Date sent:** One month before event start  
-    **Conditions:** Tag TTT; At least 2 Trainers; Start date in future  
+    [View in AMY](https://amy.carpentries.org/emails/template/bafe53c4-e486-4a6e-8b5d-894790946913/)
+    **Email description:** Send Trainers information about upcoming Instructor Training
+    **Sent to:** Trainers
+    **Date sent:** One month before event start
+    **Conditions:** Tag TTT; At least 2 Trainers; Start date in future
 
 #### Active emails (Memberships)
 
 ??? abstract "New / renewing membership starting (member onboarding)"
-    [View in AMY](https://amy.carpentries.org/emails/template/f1311aaf-c546-429b-930c-c36a5a8009fb/)  
-    **Email description:**  Onboarding message for new/renewing memberships 
+    [View in AMY](https://amy.carpentries.org/emails/template/f1311aaf-c546-429b-930c-c36a5a8009fb/)
+    **Email description:**  Onboarding message for new/renewing memberships
     **Sent to:**   Programmatic and billing contacts
-    **Date sent:** One month before membership start date or immediately (whichever is later)   
-    **Conditions:** Membership roles exist
+    **Date sent:** One month before membership start date or immediately (whichever is later)
+    **Conditions:** Membership roles exist; membership variant is bronze, silver, gold or platinum.
 
 #### Inactive emails
 
@@ -644,8 +644,8 @@ If you want to check for duplicate Person or Training Requests in general, you c
 
 Here, you will see two lists:
 
-* **Possible duplicate persons**. This will include records where another record exists with the personal and family names switched, or a single person with the same personal and family name.  
-* **Persons with the same names**.  This compares people with the same personal and family names.  
+* **Possible duplicate persons**. This will include records where another record exists with the personal and family names switched, or a single person with the same personal and family name.
+* **Persons with the same names**.  This compares people with the same personal and family names.
 
 In either case, if these records should be merged, select records A and B.  This will take you to the Merge Persons screen (see above).  If these individuals are not the same person, select "Mark as Reviewed" and they will not show up in the list of possible duplicates again.
 

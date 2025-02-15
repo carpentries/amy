@@ -51,7 +51,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `may_contact` A boolean field. We may not contact people if this field is false. This field has been replaced by [new-style consents](#consent) (see also [2021 Consents Project](./design/projects/2021_consents.md)).
 * `github` Individual's GitHub user id
 * `twitter` Individual's Twitter user id
-* `bluesky` Individual's BlueSky user id
+* `bluesky` Individual's Bluesky user id
 * `orcid` Individual's ORCID iD
 * `url` Link to the individual's personal website
 * `airport_id` An integer representing the person's self identified nearest.  This is linked to the `workshops_airport` table

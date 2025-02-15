@@ -13,6 +13,16 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.6.4 - 2025-02-15
+
+### Bugfixes
+* Update display of `Bluesky` field in missed template - [#2765](https://github.com/carpentries/amy/pull/2765) by @pbanaszkiewicz
+
+### Features
+* [Emails] Update conditions for New Membership Onboarding - [#2768](https://github.com/carpentries/amy/pull/2768) by @pbanaszkiewicz
+* [Emails] Update conditions for Post Workshop 7 days - [#2767](https://github.com/carpentries/amy/pull/2767) by @pbanaszkiewicz
+
+
 ## v4.6.3 - 2025-02-08
 
 ### Bugfixes
