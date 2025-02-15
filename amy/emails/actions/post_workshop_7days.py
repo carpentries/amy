@@ -32,8 +32,13 @@ logger = logging.getLogger("amy")
 def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     logger.info(f"Running PostWorkshop7Days strategy for {event}")
 
-    not_self_organised = (
-        event.administrator and event.administrator.domain != "self-organized"
+    centrally_organised = (
+        event.administrator
+        and event.administrator.domain != "self-organized"
+        and event.administrator.domain != "carpentries.org/community-lessons/"
+    )
+    self_organised = (
+        event.administrator and event.administrator.domain == "self-organized"
     )
     not_cldt = (
         event.administrator
@@ -48,7 +53,8 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     )
 
     log_condition_elements(
-        not_self_organised=not_self_organised,
+        centrally_organised=centrally_organised,
+        self_organised=self_organised,
         not_cldt=not_cldt,
         end_date_in_future=end_date_in_future,
         active=active,
@@ -58,7 +64,10 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     )
 
     email_exists = (
-        not_self_organised
+        # UPDATE 2025-02-15 (#2760):
+        #      We're allowing scheduling for centrally-organised
+        #      and self-organised workshops.
+        (centrally_organised or self_organised)
         and not_cldt
         and end_date_in_future
         and active
