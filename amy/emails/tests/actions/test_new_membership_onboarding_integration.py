@@ -27,7 +27,7 @@ class TestNewMembershipOnboardingReceiverIntegration(TestBase):
         self._setUpUsersAndLogin()
 
         membership = Membership.objects.create(
-            variant="partner",
+            variant="gold",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),
@@ -91,7 +91,7 @@ class TestNewMembershipOnboardingUpdateReceiverIntegration(TestBase):
         membership = Membership.objects.create(
             name="Test Membership",
             consortium=False,
-            variant="partner",
+            variant="gold",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),
@@ -181,7 +181,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
 
         membership = Membership.objects.create(
             name="Test Membership",
-            variant="partner",
+            variant="gold",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),
@@ -254,7 +254,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
 
         membership = Membership.objects.create(
             name="Test Membership",
-            variant="partner",
+            variant="gold",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),
@@ -338,7 +338,7 @@ class TestNewMembershipOnboardingCancelIntegration(TestBase):
 
         membership = Membership.objects.create(
             name="Test Membership",
-            variant="partner",
+            variant="gold",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
             agreement_end=date.today() + timedelta(days=365),

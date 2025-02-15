@@ -604,7 +604,7 @@ From, Reply to, CC, and BCC are all set in the AMY interface.  The email subject
     **Email description:**  Onboarding message for new/renewing memberships
     **Sent to:**   Programmatic and billing contacts
     **Date sent:** One month before membership start date or immediately (whichever is later)
-    **Conditions:** Membership roles exist
+    **Conditions:** Membership roles exist; membership variant is bronze, silver, gold or platinum.
 
 #### Inactive emails
 
