@@ -49,9 +49,7 @@ class TestInstructorRecruitmentFilter(TestCase):
 
     def test_assigned_to_filter_choices(self) -> None:
         # Arrange
-        event = Event.objects.create(
-            slug="test-event", host=Organization.objects.first()
-        )
+        event = Event.objects.create(slug="test-event", host=Organization.objects.first())
         person = Person.objects.create(username="test_user")
         InstructorRecruitment.objects.create(event=event, assigned_to=person)
 

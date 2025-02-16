@@ -1,4 +1,5 @@
 {% load crispy_forms_field %}
+{% load crispy_forms_field_additional %}
 
 {% if field.is_hidden %}
     {{ field }}
@@ -9,9 +10,10 @@
             <div class="{% for offset in bootstrap_checkbox_offsets %}{{ offset }} {% endfor %}{{ field_class }}">
         {% endif %}
     {% endif %}
-    <{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="{% if not field|is_checkbox %}form-group{% if 'form-horizontal' in form_class %} row{% endif %}{% else %}form-check{% endif %}{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
+    <{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="{% if not field|is_checkbox %}form-group{% if 'form-horizontal' in form_class %} row{% endif %}{% else %}{%if use_custom_control%}{% if tag != 'td' %}custom-control {%endif%} custom-checkbox{% else %}form-check{% endif %}{% endif %}{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
         {% if field.label and not field|is_checkbox and form_show_labels %}
-            <label for="{{ field.id_for_label }}" class="col-form-label {{ label_class }}{% if field.field.required %} requiredField{% endif %}">
+        {# not field|is_radioselect in row below can be removed once Django 3.2 is no longer supported #}
+        <label {% if field.id_for_label and not field|is_radioselect %}for="{{ field.id_for_label }}" {% endif %}class="{% if 'form-horizontal' in form_class %}col-form-label {% endif %}{{ label_class }}{% if field.field.required %} requiredField{% endif %}">
                 {{ field.label|safe }}{% if field.field.required or field.field.widget.fake_required %}<span class="asteriskField">*</span>{% endif %}
             </label>
         {% endif %}
@@ -25,38 +27,73 @@
         {% endif %}
 
         {% if not field|is_checkboxselectmultiple and not field|is_radioselect %}
-            {% if field|is_checkbox and form_show_labels %}
-                <label for="{{ field.id_for_label }}" class="form-check-label{% if field.field.required %} requiredField{% endif %}">
-                    {% crispy_field field 'class' 'form-check-input' %}
-                    {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+            {% if field|is_checkbox %}
+                {% if use_custom_control %}
+                    {% if tag == 'td' %}
+                        <div class="custom-control custom-checkbox">
+                    {% endif %}
+
+                    {% if field.errors %}
+                        {% crispy_field field 'class' 'custom-control-input is-invalid' %}
+                    {% else %}
+                        {% crispy_field field 'class' 'custom-control-input' %}
+                    {% endif %}
+                {% else %}
+                    {% if field.errors %}
+                        {% crispy_field field 'class' 'form-check-input is-invalid' %}
+                    {% else %}
+                        {% crispy_field field 'class' 'form-check-input' %}
+                    {% endif %}
+                {% endif %}
+                <label for="{{ field.id_for_label }}" class="{%if use_custom_control%}custom-control-label{% else %}form-check-label{% endif %}{% if field.field.required %} requiredField{% endif %}">
+                    {% if form_show_labels %}
+                        {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+                    {% else %}
+                        &nbsp;
+                    {% endif %}
                 </label>
                 {% include 'bootstrap4/layout/help_text_and_errors.html' %}
-            {% elif field|is_file %}
+                {% if use_custom_control and tag == 'td' %}
+                    </div>
+                {% endif %}
+            {% elif field|is_file and use_custom_control  %}
                 {% include 'bootstrap4/layout/field_file.html' %}
             {% else %}
-                <div class="{{ field_class }}">
+                <div{% if field_class %} class="{{ field_class }}"{% endif %}>
                     {% include 'bootstrap4/layout/help_text_and_errors.html' %}
-                    {% crispy_field field %}
-
-                    {% if field.field.widget.subfield %}
-                        {% with subfield=field.field.widget.subfield %}
-                        {% if field.help_text %}
-                        {% crispy_field subfield 'class' 'form-control-sm mt-2' %}
+                    {% if field|is_select and use_custom_control %}
+                        {% if field.errors %}
+                            {% crispy_field field 'class' 'custom-select is-invalid' %}
                         {% else %}
-                        {% crispy_field subfield 'class' 'form-control-sm' %}
+                            {% crispy_field field 'class' 'custom-select' %}
                         {% endif %}
-                        {% endwith %}
-                    {% elif field.field.widget.subfields %}
+                    {% elif field|is_file %}
+                        {% if field.errors %}
+                            {% crispy_field field 'class' 'form-control-file is-invalid' %}
+                        {% else %}
+                            {% crispy_field field 'class' 'form-control-file' %}
+                        {% endif %}
+                    {% elif field|is_captcha %}
+                        {% if field.errors %}
+                            {% crispy_field field 'class' 'is-invalid' %}
+                        {% else %}
+                            {% crispy_field field %}
+                        {% endif %}
+                    {% else %}
+                        {% if field.errors %}
+                            {% crispy_field field 'class' 'form-control is-invalid' %}
+                        {% else %}
+                            {% crispy_field field 'class' 'form-control' %}
+                        {% endif %}
+                    {% endif %}
+
+                    {% if field.field.widget.subfields %}
                         <div class="row mb-3">
                         {% for f in field.field.widget.subfields %}
                             {% with superfield=field field=f.0 placeholder=f.1 %}
-                            {% if superfield.help_text %}
-                            <div class="col mt-2">
-                            {% else %}
-                            <div class="col">
-                            {% endif %}
+                            {% if superfield.help_text %}<div class="col mt-2">{% else %}<div class="col">{% endif %}
                                 {% include 'bootstrap4/layout/help_text_and_errors.html' %}
-                                {% crispy_field field 'class' 'form-control-sm' 'placeholder' placeholder %}
+                                {% crispy_field field 'class' 'form-control form-control-sm' 'placeholder' placeholder %}
                             </div>
                             {% endwith %}
                         {% endfor %}

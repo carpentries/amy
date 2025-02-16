@@ -24,9 +24,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
             ]
         )
         # by default there's only self-organized organization
-        Organization.objects.bulk_create(
-            [Organization(domain="carpentries.org", fullname="Instructor Training")]
-        )
+        Organization.objects.bulk_create([Organization(domain="carpentries.org", fullname="Instructor Training")])
 
         self.host = Role.objects.create(name="host")
         self.instructor = Role.objects.create(name="instructor")
@@ -186,9 +184,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
-        a = InstructorsHostIntroductionAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = InstructorsHostIntroductionAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):

@@ -51,9 +51,7 @@ class TestSignupForRecruitmentForm(TestCase):
     def test_clean_custom_validation__no_dates_event(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         config = CommunityRoleConfig.objects.create(
             name="instructor",
             display_name="Instructor",
@@ -78,9 +76,7 @@ class TestSignupForRecruitmentForm(TestCase):
     def test_clean_custom_validation__no_conflicting_tasks(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         config = CommunityRoleConfig.objects.create(
             name="instructor",
             display_name="Instructor",
@@ -92,9 +88,7 @@ class TestSignupForRecruitmentForm(TestCase):
             config=config,
             person=person,
         )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
         data = {}
 
@@ -107,9 +101,7 @@ class TestSignupForRecruitmentForm(TestCase):
     def test_clean_custom_validation__conflicting_tasks(self):
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         config = CommunityRoleConfig.objects.create(
             name="instructor",
             display_name="Instructor",
@@ -121,9 +113,7 @@ class TestSignupForRecruitmentForm(TestCase):
             config=config,
             person=person,
         )
-        event = Event.objects.create(
-            slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20)
-        )
+        event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
         event2 = Event.objects.create(
             slug="test2-event",
             host=host,
@@ -132,9 +122,7 @@ class TestSignupForRecruitmentForm(TestCase):
         )
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
         instructor_role = Role.objects.create(name="instructor")
-        conflicting_task = Task.objects.create(
-            event=event2, person=person, role=instructor_role
-        )
+        conflicting_task = Task.objects.create(event=event2, person=person, role=instructor_role)
         data = {}
 
         # Act
@@ -144,19 +132,14 @@ class TestSignupForRecruitmentForm(TestCase):
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(
             form.errors["__all__"],
-            [
-                "Selected event dates conflict with events: "
-                f"{conflicting_task.event.slug}"
-            ],
+            ["Selected event dates conflict with events: " f"{conflicting_task.event.slug}"],
         )
 
 
 class TestGetInvolvedForm(TestCase):
     def setUp(self):
         super().setUp()
-        self.person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        self.person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         self.get_involved = TrainingRequirement.objects.get(name="Get Involved")
 
         self.involvement, _ = Involvement.objects.get_or_create(
@@ -172,18 +155,14 @@ class TestGetInvolvedForm(TestCase):
             "You may not create another submission unless your previous "
             'submission has the status "asked to repeat."'
         )
-        self.ALREADY_EVALUATED_ERROR_TEXT = (
-            "This submission can no longer be edited as it has already been evaluated."
-        )
+        self.ALREADY_EVALUATED_ERROR_TEXT = "This submission can no longer be edited as it has already been evaluated."
 
     def test_fields(self):
         # Act
         form = GetInvolvedForm()
 
         # Assert
-        self.assertEqual(
-            {"involvement_type", "date", "url", "trainee_notes"}, form.fields.keys()
-        )
+        self.assertEqual({"involvement_type", "date", "url", "trainee_notes"}, form.fields.keys())
 
     def test_clean_custom_validation__url_empty(self):
         # Arrange
@@ -202,8 +181,7 @@ class TestGetInvolvedForm(TestCase):
         # Assert
         self.assertEqual(form.is_valid(), False)
         expected_msg = (
-            "This field is required for activity "
-            '"Submitted a contribution to a Carpentries repository on GitHub".'
+            "This field is required for activity " '"Submitted a contribution to a Carpentries repository on GitHub".'
         )
         self.assertEqual(
             form.errors["url"],

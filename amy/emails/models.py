@@ -49,12 +49,8 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default="",
         help_text="If empty, the default reply-to address will be 'from_header'.",
     )
-    cc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="CC (header)", blank=True
-    )
-    bcc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="BCC (header)", blank=True
-    )
+    cc_header = ArrayField(models.EmailField(blank=False), verbose_name="CC (header)", blank=True)
+    bcc_header = ArrayField(models.EmailField(blank=False), verbose_name="BCC (header)", blank=True)
     subject = models.CharField(
         max_length=MAX_LENGTH,
         blank=False,
@@ -82,9 +78,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         tpl = engine.from_string(template)
         return tpl.render(context)
 
-    def validate_template(
-        self, engine: BaseEngine, template: str, context: dict | None = None
-    ) -> bool:
+    def validate_template(self, engine: BaseEngine, template: str, context: dict | None = None) -> bool:
         try:
             self.render_template(engine, template, context or dict())
         except (DjangoTemplateSyntaxError, JinjaTemplateSyntaxError) as exp:
@@ -180,15 +174,9 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
     to_header_context_json = models.JSONField(blank=True, default=list)
 
     from_header = models.EmailField(blank=False, verbose_name="From (header)")
-    reply_to_header = models.EmailField(
-        blank=True, default="", verbose_name="Reply-To (header)"
-    )
-    cc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="CC (header)", blank=True
-    )
-    bcc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="BCC (header)", blank=True
-    )
+    reply_to_header = models.EmailField(blank=True, default="", verbose_name="Reply-To (header)")
+    cc_header = ArrayField(models.EmailField(blank=False), verbose_name="CC (header)", blank=True)
+    bcc_header = ArrayField(models.EmailField(blank=False), verbose_name="BCC (header)", blank=True)
     subject = models.CharField(
         max_length=MAX_LENGTH,
         blank=False,
@@ -221,9 +209,7 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         blank=True,
     )
     generic_relation_pk = models.PositiveIntegerField(null=True, blank=True)
-    generic_relation = GenericForeignKey(
-        "generic_relation_content_type", "generic_relation_pk"
-    )
+    generic_relation = GenericForeignKey("generic_relation_content_type", "generic_relation_pk")
 
     class Meta:
         indexes = [models.Index(fields=["state", "scheduled_at"])]

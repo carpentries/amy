@@ -99,9 +99,7 @@ class BulkChangeTrainingRequestForm(forms.Form):
 
     def clean(self):
         super().clean()
-        unmatched_request_exists = any(
-            r.person is None for r in self.cleaned_data.get("requests", [])
-        )
+        unmatched_request_exists = any(r.person is None for r in self.cleaned_data.get("requests", []))
         if self.check_person_matched and unmatched_request_exists:
             raise ValidationError("Select only requests matched to a person.")
 
@@ -120,15 +118,13 @@ class BulkMatchTrainingRequestForm(forms.Form):
         label="Membership seats",
         required=False,
         queryset=Membership.objects.all(),
-        help_text="Assigned users will take instructor seats from selected "
-        "member site.",
+        help_text="Assigned users will take instructor seats from selected " "member site.",
         widget=ModelSelect2Widget(data_view="membership-lookup"),
     )
 
     seat_membership_auto_assign = forms.BooleanField(
         label="Automatically match seats to memberships",
-        help_text="Assigned users will take instructor seats based on the "
-        "registration code they entered.",
+        help_text="Assigned users will take instructor seats based on the " "registration code they entered.",
         required=False,
     )
 
@@ -148,9 +144,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         "to count this person into open applications.",
     )
 
-    helper = BootstrapHelper(
-        add_submit_button=False, form_tag=False, add_cancel_button=False
-    )
+    helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
     helper.layout = Layout(
         "event",
         "seat_membership",
@@ -191,14 +185,12 @@ class BulkMatchTrainingRequestForm(forms.Form):
 
         if (seat_membership or seat_membership_auto_assign) and open_training:
             raise ValidationError(
-                "Cannot simultaneously match as open training and use "
-                "a Membership instructor training seat."
+                "Cannot simultaneously match as open training and use " "a Membership instructor training seat."
             )
 
         if seat_membership and seat_membership_auto_assign:
             raise ValidationError(
-                "Cannot simultaneously use seats from selected membership "
-                "and use seats based on registration code."
+                "Cannot simultaneously use seats from selected membership " "and use seats based on registration code."
             )
 
         if open_training and not event.open_TTT_applications:
@@ -259,9 +251,7 @@ class MatchTrainingRequestForm(forms.Form):
 class WorkshopRequestBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
-        queryset=Organization.objects.order_by("fullname").exclude(
-            fullname="self-organized"
-        ),
+        queryset=Organization.objects.order_by("fullname").exclude(fullname="self-organized"),
         widget=Select2Widget(fake_required=True),
         label=WorkshopRequest._meta.get_field("institution").verbose_name,
         help_text=WorkshopRequest._meta.get_field("institution").help_text,
@@ -290,9 +280,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
     requested_workshop_types = CurriculumModelMultipleChoiceField(
         required=True,
-        queryset=Curriculum.objects.default_order(
-            allow_unknown=False, allow_other=False
-        ).filter(active=True),
+        queryset=Curriculum.objects.default_order(allow_unknown=False, allow_other=False).filter(active=True),
         label=WorkshopRequest._meta.get_field("requested_workshop_types").verbose_name,
         help_text=WorkshopRequest._meta.get_field("requested_workshop_types").help_text,
         widget=RadioSelectFakeMultiple(),
@@ -361,14 +349,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "computing_levels": forms.CheckboxSelectMultiple(),
             "organization_type": forms.RadioSelect(),
             "administrative_fee": forms.RadioSelect(),
-            "travel_expences_management": RadioSelectWithOther(
-                "travel_expences_management_other"
-            ),
+            "travel_expences_management": RadioSelectWithOther("travel_expences_management_other"),
             "workshop_listed": forms.RadioSelect(),
             "public_event": RadioSelectWithOther("public_event_other"),
-            "institution_restrictions": RadioSelectWithOther(
-                "institution_restrictions_other"
-            ),
+            "institution_restrictions": RadioSelectWithOther("institution_restrictions_other"),
             "additional_contact": Select2TagWidget,
         }
 
@@ -382,25 +366,17 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # change institution object labels (originally Organization displays
         # domain as well)
-        self.fields[
-            "institution"
-        ].label_from_instance = self.institution_label_from_instance
+        self.fields["institution"].label_from_instance = self.institution_label_from_instance
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
-        self["travel_expences_management"].field.widget.other_field = self[
-            "travel_expences_management_other"
-        ]
+        self["travel_expences_management"].field.widget.other_field = self["travel_expences_management_other"]
         self["public_event"].field.widget.other_field = self["public_event_other"]
-        self["institution_restrictions"].field.widget.other_field = self[
-            "institution_restrictions_other"
-        ]
-        self["carpentries_info_source"].field.widget.other_field = self[
-            "carpentries_info_source_other"
-        ]
+        self["institution_restrictions"].field.widget.other_field = self["institution_restrictions_other"]
+        self["carpentries_info_source"].field.widget.other_field = self["carpentries_info_source_other"]
 
         # move "institution_other_name" field to "institution" subfield
         self["institution"].field.widget.subfields = [
@@ -467,9 +443,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         return "{}".format(obj.fullname)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def validate_member_code(
-        self, request: HttpRequest
-    ) -> None | dict[str, ValidationError]:
+    def validate_member_code(self, request: HttpRequest) -> None | dict[str, ValidationError]:
         errors = dict()
         member_code = self.cleaned_data.get("member_code", "")
         error_msg = (
@@ -510,13 +484,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             errors["institution"] = ValidationError("Institution is required.")
         elif institution and institution_other_name:
             errors["institution_other_name"] = ValidationError(
-                "You must select institution from the list, or enter its name "
-                "below the list. You can't do both."
+                "You must select institution from the list, or enter its name " "below the list. You can't do both."
             )
         elif institution and institution_other_URL:
             errors["institution_other_URL"] = ValidationError(
-                "You can't enter institution URL if you select institution "
-                "from the list above."
+                "You can't enter institution URL if you select institution " "from the list above."
             )
         elif (
             not institution
@@ -534,22 +506,16 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         preferred_dates = self.cleaned_data.get("preferred_dates", None)
         other_preferred_dates = self.cleaned_data.get("other_preferred_dates", None)
         if not preferred_dates and not other_preferred_dates:
-            errors["preferred_dates"] = ValidationError(
-                "This field or the field below is required."
-            )
+            errors["preferred_dates"] = ValidationError("This field or the field below is required.")
 
         yesterday = datetime.datetime.utcnow().date() - datetime.timedelta(days=1)
         if preferred_dates and preferred_dates < yesterday:
-            errors["preferred_dates"] = ValidationError(
-                "You cannot select date in the past."
-            )
+            errors["preferred_dates"] = ValidationError("You cannot select date in the past.")
 
         # 3: circumstances for scholarship request only required if scholarship
         #    is chosen
         administrative_fee = self.cleaned_data.get("administrative_fee", "")
-        scholarship_circumstances = self.cleaned_data.get(
-            "scholarship_circumstances", ""
-        )
+        scholarship_circumstances = self.cleaned_data.get("scholarship_circumstances", "")
 
         # 'waiver' is an old name for scholarship
         if administrative_fee == "waiver" and not scholarship_circumstances:
@@ -562,19 +528,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             )
 
         # 4: require travel expenses
-        travel_expences_management = self.cleaned_data.get(
-            "travel_expences_management", ""
-        )
-        travel_expences_management_other = self.cleaned_data.get(
-            "travel_expences_management_other", ""
-        )
-        if (
-            travel_expences_management == "other"
-            and not travel_expences_management_other
-        ):
-            errors["travel_expences_management"] = ValidationError(
-                "This field is required."
-            )
+        travel_expences_management = self.cleaned_data.get("travel_expences_management", "")
+        travel_expences_management_other = self.cleaned_data.get("travel_expences_management_other", "")
+        if travel_expences_management == "other" and not travel_expences_management_other:
+            errors["travel_expences_management"] = ValidationError("This field is required.")
         elif travel_expences_management != "other" and travel_expences_management_other:
             errors["travel_expences_management"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
@@ -582,13 +539,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # 5: require institution restrictions
         institution_restrictions = self.cleaned_data.get("institution_restrictions", "")
-        institution_restrictions_other = self.cleaned_data.get(
-            "institution_restrictions_other", ""
-        )
+        institution_restrictions_other = self.cleaned_data.get("institution_restrictions_other", "")
         if institution_restrictions == "other" and not institution_restrictions_other:
-            errors["institution_restrictions"] = ValidationError(
-                "This field is required."
-            )
+            errors["institution_restrictions"] = ValidationError("This field is required.")
         elif institution_restrictions != "other" and institution_restrictions_other:
             errors["institution_restrictions"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
@@ -598,9 +551,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         public_event = self.cleaned_data.get("public_event", "")
         public_event_other = self.cleaned_data.get("public_event_other", "")
         if public_event == "other" and not public_event_other:
-            errors["public_event"] = ValidationError(
-                'Please provide description if you selected "Other".'
-            )
+            errors["public_event"] = ValidationError('Please provide description if you selected "Other".')
         elif public_event != "other" and public_event_other:
             errors["public_event"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
@@ -610,9 +561,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         # confirmation in `instructor_availability`:
         instructor_availability: bool = self.cleaned_data.get("instructor_availability")
         two_months_away = datetime.date.today() + datetime.timedelta(days=60)
-        if (
-            preferred_dates and preferred_dates <= two_months_away
-        ) or not preferred_dates:
+        if (preferred_dates and preferred_dates <= two_months_away) or not preferred_dates:
             if not instructor_availability:
                 errors["instructor_availability"] = ValidationError(
                     "Please confirm instructor availability, since the workshop is "
@@ -647,9 +596,7 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
 class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
-        queryset=Organization.objects.order_by("fullname").exclude(
-            domain="self-organized"
-        ),
+        queryset=Organization.objects.order_by("fullname").exclude(domain="self-organized"),
         widget=Select2Widget,
         label=WorkshopInquiryRequest._meta.get_field("institution").verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field("institution").help_text,
@@ -688,27 +635,19 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     )
     data_privacy_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopInquiryRequest._meta.get_field(
-            "data_privacy_agreement"
-        ).verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field("data_privacy_agreement").verbose_name,
     )
     code_of_conduct_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopInquiryRequest._meta.get_field(
-            "code_of_conduct_agreement"
-        ).verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field("code_of_conduct_agreement").verbose_name,
     )
     host_responsibilities = forms.BooleanField(
         required=True,
-        label=WorkshopInquiryRequest._meta.get_field(
-            "host_responsibilities"
-        ).verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field("host_responsibilities").verbose_name,
     )
     instructor_availability = forms.BooleanField(
         required=False,
-        label=WorkshopInquiryRequest._meta.get_field(
-            "instructor_availability"
-        ).verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field("instructor_availability").verbose_name,
     )
 
     requested_workshop_types = CurriculumModelMultipleChoiceField(
@@ -716,33 +655,21 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         queryset=Curriculum.objects.default_order(
             allow_other=False, allow_unknown=True, dont_know_yet_first=True
         ).filter(active=True),
-        label=WorkshopInquiryRequest._meta.get_field(
-            "requested_workshop_types"
-        ).verbose_name,
-        help_text=WorkshopInquiryRequest._meta.get_field(
-            "requested_workshop_types"
-        ).help_text,
+        label=WorkshopInquiryRequest._meta.get_field("requested_workshop_types").verbose_name,
+        help_text=WorkshopInquiryRequest._meta.get_field("requested_workshop_types").help_text,
         widget=forms.CheckboxSelectMultiple(),
     )
 
     travel_expences_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopInquiryRequest._meta.get_field(
-            "travel_expences_agreement"
-        ).verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field("travel_expences_agreement").verbose_name,
     )
 
     carpentries_info_source = SafeModelMultipleChoiceField(
-        required=not WorkshopInquiryRequest._meta.get_field(
-            "carpentries_info_source"
-        ).blank,
+        required=not WorkshopInquiryRequest._meta.get_field("carpentries_info_source").blank,
         queryset=InfoSource.objects.all(),
-        label=WorkshopInquiryRequest._meta.get_field(
-            "carpentries_info_source"
-        ).verbose_name,
-        help_text=WorkshopInquiryRequest._meta.get_field(
-            "carpentries_info_source"
-        ).help_text,
+        label=WorkshopInquiryRequest._meta.get_field("carpentries_info_source").verbose_name,
+        help_text=WorkshopInquiryRequest._meta.get_field("carpentries_info_source").help_text,
         widget=CheckboxSelectMultipleWithOthers("carpentries_info_source_other"),
     )
 
@@ -804,14 +731,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "language": Select2Widget,
             "computing_levels": forms.CheckboxSelectMultiple(),
             "administrative_fee": forms.RadioSelect(),
-            "travel_expences_management": RadioSelectWithOther(
-                "travel_expences_management_other"
-            ),
+            "travel_expences_management": RadioSelectWithOther("travel_expences_management_other"),
             "workshop_listed": forms.RadioSelect(),
             "public_event": RadioSelectWithOther("public_event_other"),
-            "institution_restrictions": RadioSelectWithOther(
-                "institution_restrictions_other"
-            ),
+            "institution_restrictions": RadioSelectWithOther("institution_restrictions_other"),
             "additional_contact": Select2TagWidget,
         }
 
@@ -826,9 +749,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
 
         # change institution object labels (originally Organization displays
         # domain as well)
-        self.fields[
-            "institution"
-        ].label_from_instance = self.institution_label_from_instance
+        self.fields["institution"].label_from_instance = self.institution_label_from_instance
 
         self.fields["travel_expences_management"].required = False
         self.fields["institution_restrictions"].required = False
@@ -841,16 +762,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         # fields inline
         self["routine_data"].field.widget.other_field = self["routine_data_other"]
         self["domains"].field.widget.other_field = self["domains_other"]
-        self["travel_expences_management"].field.widget.other_field = self[
-            "travel_expences_management_other"
-        ]
+        self["travel_expences_management"].field.widget.other_field = self["travel_expences_management_other"]
         self["public_event"].field.widget.other_field = self["public_event_other"]
-        self["institution_restrictions"].field.widget.other_field = self[
-            "institution_restrictions_other"
-        ]
-        self["carpentries_info_source"].field.widget.other_field = self[
-            "carpentries_info_source_other"
-        ]
+        self["institution_restrictions"].field.widget.other_field = self["institution_restrictions_other"]
+        self["carpentries_info_source"].field.widget.other_field = self["carpentries_info_source_other"]
 
         # move "institution_other_name" field to "institution" subfield
         self["institution"].field.widget.subfields = [
@@ -934,18 +849,12 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 HTML(self.helper.hr()),
             )
 
-        AGREEMENTS_TEXT = (
-            "If we proceed with coordinating a workshop, you will agree to"
-            " the following:"
-        )
+        AGREEMENTS_TEXT = "If we proceed with coordinating a workshop, you will agree to" " the following:"
         self.helper.layout.insert(
             self.helper.layout.fields.index("data_privacy_agreement"),
             HTML(f"<p class='lead offset-lg-2'>{AGREEMENTS_TEXT}</p>"),
         )
-        TRAVEL_AGR_TEXT = (
-            "If we proceed with coordinating a workshop, I will agree to"
-            " the following:"
-        )
+        TRAVEL_AGR_TEXT = "If we proceed with coordinating a workshop, I will agree to" " the following:"
         self.helper.layout.insert(
             self.helper.layout.fields.index("travel_expences_agreement"),
             HTML(f"<p class='lead offset-lg-2'>{TRAVEL_AGR_TEXT}</p>"),
@@ -962,13 +871,11 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         institution_other_URL = self.cleaned_data.get("institution_other_URL", "")
         if institution and institution_other_name:
             errors["institution_other_name"] = ValidationError(
-                "You must select institution from the list, or enter its name "
-                "below the list. You can't do both."
+                "You must select institution from the list, or enter its name " "below the list. You can't do both."
             )
         elif institution and institution_other_URL:
             errors["institution_other_URL"] = ValidationError(
-                "You can't enter institution URL if you select institution "
-                "from the list above."
+                "You can't enter institution URL if you select institution " "from the list above."
             )
         elif (
             not institution
@@ -999,31 +906,21 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         if routine_data and routine_data.filter(unknown=True):
             if len(routine_data) > 1 or routine_data_other:
                 errors["routine_data"] = ValidationError(
-                    "If you select \"Don't know yet\", you can't select "
-                    "anything else or enter other values."
+                    "If you select \"Don't know yet\", you can't select " "anything else or enter other values."
                 )
 
         if domains and domains.filter(name="Don't know yet"):
             if len(domains) > 1 or domains_other:
                 errors["domains"] = ValidationError(
-                    "If you select \"Don't know yet\", you can't select "
-                    "anything else or enter other values."
+                    "If you select \"Don't know yet\", you can't select " "anything else or enter other values."
                 )
 
-        if (
-            academic_levels
-            and academic_levels.filter(name="Don't know yet")
-            and len(academic_levels) > 1
-        ):
+        if academic_levels and academic_levels.filter(name="Don't know yet") and len(academic_levels) > 1:
             errors["academic_levels"] = ValidationError(
                 "If you select \"Don't know yet\", you can't select " "anything else."
             )
 
-        if (
-            computing_levels
-            and computing_levels.filter(name="Don't know yet")
-            and len(computing_levels) > 1
-        ):
+        if computing_levels and computing_levels.filter(name="Don't know yet") and len(computing_levels) > 1:
             errors["computing_levels"] = ValidationError(
                 "If you select \"Don't know yet\", you can't select " "anything else."
             )
@@ -1042,21 +939,12 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
 
         yesterday = datetime.datetime.utcnow().date() - datetime.timedelta(days=1)
         if preferred_dates and preferred_dates < yesterday:
-            errors["preferred_dates"] = ValidationError(
-                "You cannot select date in the past."
-            )
+            errors["preferred_dates"] = ValidationError("You cannot select date in the past.")
 
         # 4: require travel expenses
-        travel_expences_management = self.cleaned_data.get(
-            "travel_expences_management", ""
-        )
-        travel_expences_management_other = self.cleaned_data.get(
-            "travel_expences_management_other", ""
-        )
-        if (
-            travel_expences_management == "other"
-            and not travel_expences_management_other
-        ):
+        travel_expences_management = self.cleaned_data.get("travel_expences_management", "")
+        travel_expences_management_other = self.cleaned_data.get("travel_expences_management_other", "")
+        if travel_expences_management == "other" and not travel_expences_management_other:
             errors["travel_expences_management"] = ValidationError(
                 'Please provide description if you selected "Other".'
             )
@@ -1067,13 +955,9 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
 
         # 5: require institution restrictions
         institution_restrictions = self.cleaned_data.get("institution_restrictions", "")
-        institution_restrictions_other = self.cleaned_data.get(
-            "institution_restrictions_other", ""
-        )
+        institution_restrictions_other = self.cleaned_data.get("institution_restrictions_other", "")
         if institution_restrictions == "other" and not institution_restrictions_other:
-            errors["institution_restrictions"] = ValidationError(
-                'Please provide description if you selected "Other".'
-            )
+            errors["institution_restrictions"] = ValidationError('Please provide description if you selected "Other".')
         elif institution_restrictions != "other" and institution_restrictions_other:
             errors["institution_restrictions"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
@@ -1083,9 +967,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         public_event = self.cleaned_data.get("public_event", "")
         public_event_other = self.cleaned_data.get("public_event_other", "")
         if public_event == "other" and not public_event_other:
-            errors["public_event"] = ValidationError(
-                'Please provide description if you selected "Other".'
-            )
+            errors["public_event"] = ValidationError('Please provide description if you selected "Other".')
         elif public_event != "other" and public_event_other:
             errors["public_event"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
@@ -1095,9 +977,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         # confirmation in `instructor_availability`:
         instructor_availability: bool = self.cleaned_data.get("instructor_availability")
         two_months_away = datetime.date.today() + datetime.timedelta(days=60)
-        if (
-            not preferred_dates or preferred_dates <= two_months_away
-        ) and not instructor_availability:
+        if (not preferred_dates or preferred_dates <= two_months_away) and not instructor_availability:
             errors["instructor_availability"] = ValidationError(
                 "Please confirm instructor availability, since the workshop is "
                 'planned for less than 2 months away or "Other" arrangements '
@@ -1129,9 +1009,7 @@ class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
 class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
-        queryset=Organization.objects.order_by("fullname").exclude(
-            fullname="self-organized"
-        ),
+        queryset=Organization.objects.order_by("fullname").exclude(fullname="self-organized"),
         widget=Select2Widget(fake_required=True),
         label=SelfOrganisedSubmission._meta.get_field("institution").verbose_name,
         help_text=SelfOrganisedSubmission._meta.get_field("institution").help_text,
@@ -1139,28 +1017,22 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
 
     data_privacy_agreement = forms.BooleanField(
         required=True,
-        label=SelfOrganisedSubmission._meta.get_field(
-            "data_privacy_agreement"
-        ).verbose_name,
+        label=SelfOrganisedSubmission._meta.get_field("data_privacy_agreement").verbose_name,
     )
     code_of_conduct_agreement = forms.BooleanField(
         required=True,
-        label=SelfOrganisedSubmission._meta.get_field(
-            "code_of_conduct_agreement"
-        ).verbose_name,
+        label=SelfOrganisedSubmission._meta.get_field("code_of_conduct_agreement").verbose_name,
     )
     host_responsibilities = forms.BooleanField(
         required=True,
-        label=SelfOrganisedSubmission._meta.get_field(
-            "host_responsibilities"
-        ).verbose_name,
+        label=SelfOrganisedSubmission._meta.get_field("host_responsibilities").verbose_name,
     )
 
     workshop_types = CurriculumModelMultipleChoiceField(
         required=True,
-        queryset=Curriculum.objects.default_order(
-            allow_other=False, allow_unknown=False, allow_mix_match=True
-        ).filter(active=True),
+        queryset=Curriculum.objects.default_order(allow_other=False, allow_unknown=False, allow_mix_match=True).filter(
+            active=True
+        ),
         label=SelfOrganisedSubmission._meta.get_field("workshop_types").verbose_name,
         help_text=SelfOrganisedSubmission._meta.get_field("workshop_types").help_text,
         widget=RadioSelectFakeMultiple(),
@@ -1204,9 +1076,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "country": Select2Widget,
             "online_inperson": forms.RadioSelect(),
             "language": Select2Widget,
-            "workshop_format": RadioSelectWithOther(
-                "workshop_format_other", fake_required=True
-            ),
+            "workshop_format": RadioSelectWithOther("workshop_format_other", fake_required=True),
             "workshop_listed": forms.RadioSelect(),
             "public_event": RadioSelectWithOther("public_event_other"),
             "additional_contact": Select2TagWidget,
@@ -1226,9 +1096,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
 
         # change institution object labels (originally Organization displays
         # domain as well)
-        self.fields[
-            "institution"
-        ].label_from_instance = self.institution_label_from_instance
+        self.fields["institution"].label_from_instance = self.institution_label_from_instance
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -1319,13 +1187,11 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             errors["institution"] = ValidationError("Institution is required.")
         elif institution and institution_other_name:
             errors["institution_other_name"] = ValidationError(
-                "You must select institution from the list, or enter its name "
-                "below the list. You can't do both."
+                "You must select institution from the list, or enter its name " "below the list. You can't do both."
             )
         elif institution and institution_other_URL:
             errors["institution_other_URL"] = ValidationError(
-                "You can't enter institution URL if you select institution "
-                "from the list above."
+                "You can't enter institution URL if you select institution " "from the list above."
             )
         elif (
             not institution
@@ -1344,16 +1210,13 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         workshop_url = self.cleaned_data.get("workshop_url", "")
         if workshop_format == "standard" and not workshop_url:
             errors["workshop_url"] = ValidationError(
-                "This field is required if workshop format is standard two-day"
-                " Carpentries workshop."
+                "This field is required if workshop format is standard two-day" " Carpentries workshop."
             )
 
         # 3: require "other" value for workshop format if it's selected
         workshop_format_other = self.cleaned_data.get("workshop_format_other", "")
         if workshop_format == "other" and not workshop_format_other:
-            errors["workshop_format"] = ValidationError(
-                'Please provide description if you selected "Other".'
-            )
+            errors["workshop_format"] = ValidationError('Please provide description if you selected "Other".')
         elif workshop_format != "other" and workshop_format_other:
             errors["workshop_format"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
@@ -1363,14 +1226,8 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         #    "Mix & Match" then additionally require
         #    `workshop_types_other_explain`
         workshop_types = self.cleaned_data.get("workshop_types", None)
-        workshop_types_other_explain = self.cleaned_data.get(
-            "workshop_types_other_explain", None
-        )
-        if (
-            workshop_types
-            and workshop_types.filter(mix_match=True)
-            and not workshop_types_other_explain
-        ):
+        workshop_types_other_explain = self.cleaned_data.get("workshop_types_other_explain", None)
+        if workshop_types and workshop_types.filter(mix_match=True) and not workshop_types_other_explain:
             errors["workshop_types_other_explain"] = ValidationError(
                 'This field is required if you select "Mix & Match".'
             )
@@ -1379,9 +1236,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         public_event = self.cleaned_data.get("public_event", "")
         public_event_other = self.cleaned_data.get("public_event_other", "")
         if public_event == "other" and not public_event_other:
-            errors["public_event"] = ValidationError(
-                'Please provide description if you selected "Other".'
-            )
+            errors["public_event"] = ValidationError('Please provide description if you selected "Other".')
         elif public_event != "other" and public_event_other:
             errors["public_event"] = ValidationError(
                 'If you entered data in "Other" field, please select that ' "option."
@@ -1453,9 +1308,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
             raise ValidationError(errors)
 
     @feature_flag_enabled("ENFORCE_MEMBER_CODES")
-    def validate_member_code(
-        self, request: HttpRequest
-    ) -> None | dict[str, ValidationError]:
+    def validate_member_code(self, request: HttpRequest) -> None | dict[str, ValidationError]:
         errors = dict()
         member_code = self.cleaned_data.get("member_code", "")
         member_code_override = self.cleaned_data.get("member_code_override", False)
@@ -1477,11 +1330,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         except MemberCodeValidationError as e:
             if not member_code_override:
                 # user must either correct the code or tick the override
-                error_msg = (
-                    "This code is invalid: "
-                    f"{e.message} "
-                    "Tick the checkbox below to ignore this message."
-                )
+                error_msg = "This code is invalid: " f"{e.message} " "Tick the checkbox below to ignore this message."
                 errors["member_code"] = ValidationError(error_msg)
 
         return errors
@@ -1513,13 +1362,9 @@ class TrainingRequestsMergeForm(forms.Form):
     THREE = TWO + (("combine", "Combine"),)
     DEFAULT = "obj_a"
 
-    trainingrequest_a = forms.ModelChoiceField(
-        queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput
-    )
+    trainingrequest_a = forms.ModelChoiceField(queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput)
 
-    trainingrequest_b = forms.ModelChoiceField(
-        queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput
-    )
+    trainingrequest_b = forms.ModelChoiceField(queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput)
 
     id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     state = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)

@@ -25,9 +25,7 @@ class TestCustomKeysField(TestBase):
         self.widget.apply_labels(custom_keys)
 
         # Act
-        context = self.widget.get_context(
-            name="communityroles-custom_keys", value=json.dumps(values), attrs={}
-        )
+        context = self.widget.get_context(name="communityroles-custom_keys", value=json.dumps(values), attrs={})
         subwidgets = context["widget"]["subwidgets"]
         subwidget_labels = [w["label"] for w in subwidgets]
         subwidget_values = [w["value"] for w in subwidgets]
@@ -42,9 +40,7 @@ class TestCustomKeysField(TestBase):
         self.widget.apply_labels(custom_keys)
 
         # Act
-        context = self.widget.get_context(
-            name="communityroles-custom_keys", value="null", attrs={}
-        )
+        context = self.widget.get_context(name="communityroles-custom_keys", value="null", attrs={})
         subwidget = context["widget"]["subwidgets"][0]
 
         # Assert
@@ -58,9 +54,7 @@ class TestCustomKeysField(TestBase):
         self.widget.apply_labels(custom_keys)
 
         # Act
-        context = self.widget.get_context(
-            name="communityroles-custom_keys", value=json.dumps(values), attrs={}
-        )
+        context = self.widget.get_context(name="communityroles-custom_keys", value=json.dumps(values), attrs={})
         subwidget = context["widget"]["subwidgets"][0]
 
         # Assert

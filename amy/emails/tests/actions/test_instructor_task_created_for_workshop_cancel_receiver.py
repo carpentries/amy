@@ -21,14 +21,10 @@ from workshops.tests.base import TestBase
 class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        self.event = Event.objects.create(
-            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
-        )
+        self.event = Event.objects.create(slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5))
         self.person = Person.objects.create(email="test@example.org")
         instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
-        )
+        self.task = Task.objects.create(role=instructor, person=self.person, event=self.event)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
@@ -50,21 +46,16 @@ class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
             instructor_task_created_for_workshop_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_task_created_for_workshop_cancel"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_task_created_for_workshop_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = (
-            instructor_task_created_for_workshop_cancel_signal.receivers[:]
-        )
+        original_receivers = instructor_task_created_for_workshop_cancel_signal.receivers[:]
 
         # Act
         # attempt to connect the receiver
-        instructor_task_created_for_workshop_cancel_signal.connect(
-            instructor_task_created_for_workshop_cancel_receiver
-        )
+        instructor_task_created_for_workshop_cancel_signal.connect(instructor_task_created_for_workshop_cancel_receiver)
         new_receivers = instructor_task_created_for_workshop_cancel_signal.receivers[:]
 
         # Assert
@@ -88,9 +79,7 @@ class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_cancelled"
-        ) as mock_messages_action_cancelled:
+        with patch("emails.actions.base_action.messages_action_cancelled") as mock_messages_action_cancelled:
             instructor_task_created_for_workshop_cancel_signal.send(
                 sender=self.task,
                 request=request,
@@ -128,9 +117,7 @@ class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             instructor_task_created_for_workshop_cancel_signal.send(
                 sender=self.task,
                 request=request,
@@ -177,9 +164,7 @@ class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             instructor_task_created_for_workshop_cancel_signal.send(
                 sender=self.task,
                 request=request,
@@ -224,12 +209,8 @@ class TestInstructorTaskCreatedForWorkshopCancelIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        host_organization = Organization.objects.create(
-            domain="example.com", fullname="Example"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
+        host_organization = Organization.objects.create(domain="example.com", fullname="Example")
         event = Event.objects.create(
             slug="2024-08-05-test-event",
             host=host_organization,
@@ -260,9 +241,7 @@ class TestInstructorTaskCreatedForWorkshopCancelIntegration(TestBase):
         task = Task.objects.create(event=event, person=instructor, role=instructor_role)
 
         request = RequestFactory().get("/")
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_task_created_for_workshop_strategy(
                 instructor_task_created_for_workshop_strategy(task),
                 request,

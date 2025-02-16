@@ -28,8 +28,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
             instructor_task_created_for_workshop_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_task_created_for_workshop"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_task_created_for_workshop"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -38,9 +37,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
 
         # Act
         # attempt to connect the receiver
-        instructor_task_created_for_workshop_signal.connect(
-            instructor_task_created_for_workshop_receiver
-        )
+        instructor_task_created_for_workshop_signal.connect(instructor_task_created_for_workshop_receiver)
         new_receivers = instructor_task_created_for_workshop_signal.receivers[:]
 
         # Assert
@@ -51,9 +48,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
     def test_action_triggered(self) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create(email="test@example.org")
         instructor_role = Role.objects.create(name="instructor")
         task = Task.objects.create(person=person, event=event, role=instructor_role)
@@ -69,9 +64,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_messages_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_messages_action_scheduled:
             instructor_task_created_for_workshop_signal.send(
                 sender=task,
                 request=request,
@@ -99,9 +92,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
     ) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create(email="test@example.org")
         instructor_role = Role.objects.create(name="instructor")
         task = Task.objects.create(person=person, event=event, role=instructor_role)
@@ -113,9 +104,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.schedule_email"
-        ) as mock_schedule_email:
+        with patch("emails.actions.base_action.EmailController.schedule_email") as mock_schedule_email:
             instructor_task_created_for_workshop_signal.send(
                 sender=task,
                 request=request,
@@ -151,14 +140,10 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create()  # no email will cause missing recipients error
         instructor_role = Role.objects.create(name="instructor")
         task = Task.objects.create(person=person, event=event, role=instructor_role)
@@ -182,9 +167,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create(email="test@example.org")
         instructor_role = Role.objects.create(name="instructor")
         task = Task.objects.create(person=person, event=event, role=instructor_role)
@@ -222,12 +205,8 @@ class TestInstructorTaskCreatedForWorkshopReceiverIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
-        host_organization = Organization.objects.create(
-            domain="example.com", fullname="Example"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
+        host_organization = Organization.objects.create(domain="example.com", fullname="Example")
         event = Event.objects.create(
             slug="2024-08-05-test-event",
             host=host_organization,

@@ -117,9 +117,7 @@ def verify_upload_person_task(data, match=False):
                 person = Person.objects.get(id=int(person_id))
             except (ValueError, TypeError, Person.DoesNotExist):
                 person = None
-                info.append(
-                    "Could not match selected person. New record will " "be created."
-                )
+                info.append("Could not match selected person. New record will " "be created.")
             else:
                 info.append("Existing record for person will be used.")
 
@@ -160,8 +158,7 @@ def verify_upload_person_task(data, match=False):
 
         # let's check if there's someone else named this way
         similar_persons = Person.objects.filter(
-            Q(personal=personal, family=family)
-            | Q(email=email) & ~Q(email="") & Q(email__isnull=False)
+            Q(personal=personal, family=family) | Q(email=email) & ~Q(email="") & Q(email__isnull=False)
         )
         # need to cast to list, otherwise it won't JSON-ify
         item["similar_persons"] = list(
@@ -175,9 +172,7 @@ def verify_upload_person_task(data, match=False):
             # person, their role and a corresponding event exist, so
             # let's check if the task exists
             try:
-                Task.objects.get(
-                    event=existing_event, person=person, role=existing_role
-                )
+                Task.objects.get(event=existing_event, person=person, role=existing_role)
             except Task.DoesNotExist:
                 info.append("Task will be created.")
             else:
@@ -185,9 +180,7 @@ def verify_upload_person_task(data, match=False):
 
         # let's check what Person model validators want to say
         try:
-            p = Person(
-                personal=personal, family=family, email=email, username=item["username"]
-            )
+            p = Person(personal=personal, family=family, email=email, username=item["username"])
             p.clean_fields(exclude=["password"])
         except ValidationError as e:
             if e.message_dict:  # to get rid of type error in line below
@@ -224,9 +217,7 @@ def create_uploaded_persons_tasks(data, request=None):
 
     with transaction.atomic():
         for row in data:
-            row_repr = (
-                "{personal} {family} {username} <{email}>, {role} at {event}"
-            ).format(**row)
+            row_repr = ("{personal} {family} {username} <{email}>, {role} at {event}").format(**row)
 
             try:
                 fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}

@@ -44,15 +44,9 @@ class TestAutoUpdateProfile(TestBase):
             TermEnum.PUBLIC_PROFILE,
         ]
         terms_by_term_slug = {
-            term.slug: term
-            for term in Term.objects.filter(slug__in=term_slugs)
-            .active()
-            .prefetch_active_options()
+            term.slug: term for term in Term.objects.filter(slug__in=term_slugs).active().prefetch_active_options()
         }
-        consent_data = {
-            f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk
-            for slug in term_slugs
-        }
+        consent_data = {f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk for slug in term_slugs}
         data = {
             "personal": "admin",
             "middle": "",
@@ -88,9 +82,7 @@ class TestAutoUpdateProfile(TestBase):
 
         updated_consents_by_term_slug = {
             consent.term.slug: consent
-            for consent in Consent.objects.filter(
-                term__slug__in=term_slugs, person=self.user
-            )
+            for consent in Consent.objects.filter(term__slug__in=term_slugs, person=self.user)
             .active()
             .select_related("term")
         }

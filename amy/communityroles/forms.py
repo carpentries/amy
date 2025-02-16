@@ -31,26 +31,16 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             "generic_relation_pk",
         )
         widgets = {
-            "config": HeavySelect2Widget(
-                data_view="api-v1:communityroleconfig-list", attrs=SELECT2_SIDEBAR
-            ),
-            "person": ModelSelect2Widget(
-                data_view="person-lookup", attrs=SELECT2_SIDEBAR
-            ),
-            "award": ModelSelect2Widget(
-                data_view="award-lookup", attrs=SELECT2_SIDEBAR
-            ),
-            "membership": ModelSelect2Widget(
-                data_view="membership-lookup", attrs=SELECT2_SIDEBAR
-            ),
+            "config": HeavySelect2Widget(data_view="api-v1:communityroleconfig-list", attrs=SELECT2_SIDEBAR),
+            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),
+            "award": ModelSelect2Widget(data_view="award-lookup", attrs=SELECT2_SIDEBAR),
+            "membership": ModelSelect2Widget(data_view="membership-lookup", attrs=SELECT2_SIDEBAR),
             "generic_relation_content_type": forms.Select(
                 # "disabled" means the browsers will not send the field during POST.
                 # See how it's handled in `clean()` method below.
                 attrs={"disabled": ""},
             ),
-            "generic_relation_pk": HeavySelect2Widget(
-                data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR
-            ),
+            "generic_relation_pk": HeavySelect2Widget(data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR),
         }
         labels = {
             "generic_relation_content_type": "Generic relation object type",
@@ -80,9 +70,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         config: Optional[CommunityRoleConfig] = cleaned_data.get("config")
         award: Optional[Award] = cleaned_data.get("award")
         person: Optional[Person] = cleaned_data.get("person")
-        inactivation: Optional[CommunityRoleInactivation] = cleaned_data.get(
-            "inactivation"
-        )
+        inactivation: Optional[CommunityRoleInactivation] = cleaned_data.get("inactivation")
         start_date: Optional[date] = cleaned_data.get("start")
         end_date: Optional[date] = cleaned_data.get("end")
         url: Optional[str] = cleaned_data.get("url")
@@ -94,9 +82,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
 
         # Award required?
         if config.link_to_award and not award:
-            errors["award"].append(
-                ValidationError(f"Award is required with community role {config}")
-            )
+            errors["award"].append(ValidationError(f"Award is required with community role {config}"))
 
         # Award should point at the same person the community role links to
         if award and award.person != person:
@@ -105,57 +91,35 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
         # Specific award badge required?
         if (badge := config.award_badge_limit) and award:
             if award.badge != badge:
-                errors["award"].append(
-                    ValidationError(
-                        f"Award badge must be {badge} for community role {config}"
-                    )
-                )
+                errors["award"].append(ValidationError(f"Award badge must be {badge} for community role {config}"))
 
         # Membership required?
         if config.link_to_membership and not cleaned_data.get("membership"):
-            errors["membership"].append(
-                ValidationError(f"Membership is required with community role {config}")
-            )
+            errors["membership"].append(ValidationError(f"Membership is required with community role {config}"))
 
         # Additional URL supported and required?
         if config.additional_url and not url:
-            errors["url"].append(
-                ValidationError(f"URL is required for community role {config}")
-            )
+            errors["url"].append(ValidationError(f"URL is required for community role {config}"))
 
         # Generic relation object must exist
-        if config.generic_relation_content_type and cleaned_data.get(
-            "generic_relation_pk"
-        ):
+        if config.generic_relation_content_type and cleaned_data.get("generic_relation_pk"):
             model_class = config.generic_relation_content_type.model_class()
             try:
-                model_class._base_manager.get(
-                    pk=cleaned_data.get("generic_relation_pk")
-                )
+                model_class._base_manager.get(pk=cleaned_data.get("generic_relation_pk"))
             except ObjectDoesNotExist:
                 errors["generic_relation_pk"].append(
-                    ValidationError(
-                        f"Generic relation object of model {model_class.__name__} "
-                        "doesn't exist"
-                    )
+                    ValidationError(f"Generic relation object of model {model_class.__name__} " "doesn't exist")
                 )
 
         # End date is required when any inactivation was selected.
         if inactivation is not None and end_date is None:
-            errors["end"].append(
-                ValidationError("Required when Reason for inactivation selected.")
-            )
+            errors["end"].append(ValidationError("Required when Reason for inactivation selected."))
 
         # Person should not have any concurrent Community Roles of the same type in the
         # same time.
-        if concurrent_roles := self.find_concurrent_roles(
-            config, person, start_date, end_date, url
-        ):
+        if concurrent_roles := self.find_concurrent_roles(config, person, start_date, end_date, url):
             errors["person"].append(
-                ValidationError(
-                    f"Person {person} has concurrent community roles: "
-                    f"{list(concurrent_roles)}."
-                )
+                ValidationError(f"Person {person} has concurrent community roles: " f"{list(concurrent_roles)}.")
             )
 
         if errors:
@@ -203,9 +167,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             if config.additional_url:
                 initial_conditions &= Q(url=url)
 
-            roles = CommunityRole.objects.filter(
-                initial_conditions, person=person, config=config
-            )
+            roles = CommunityRole.objects.filter(initial_conditions, person=person, config=config)
             return roles
         return None
 
@@ -224,9 +186,7 @@ class CommunityRoleUpdateForm(CommunityRoleForm):
     def __init__(self, *args, community_role_config: CommunityRoleConfig, **kwargs):
         self.config = community_role_config
         super().__init__(*args, **kwargs)
-        self.fields["custom_keys"].apply_labels(  # type: ignore
-            self.config.custom_key_labels
-        )
+        self.fields["custom_keys"].apply_labels(self.config.custom_key_labels)  # type: ignore
 
     @staticmethod
     def find_concurrent_roles(

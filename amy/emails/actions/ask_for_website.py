@@ -36,12 +36,10 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
     has_administrator = event.administrator
     no_url = not event.url
-    has_instructors = (
-        Task.objects.filter(event=event, role__name="instructor").count() >= 1
+    has_instructors = Task.objects.filter(event=event, role__name="instructor").count() >= 1
+    carpentries_tags = event.tags.filter(name__in=TagQuerySet.CARPENTRIES_TAG_NAMES).exclude(
+        name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES
     )
-    carpentries_tags = event.tags.filter(
-        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
-    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
 
     log_condition_elements(
         start_date_in_future=start_date_in_future,
@@ -53,12 +51,7 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
     )
 
     email_should_exist = (
-        start_date_in_future
-        and active
-        and has_administrator
-        and no_url
-        and has_instructors
-        and carpentries_tags
+        start_date_in_future and active and has_administrator and no_url and has_instructors and carpentries_tags
     )
     logger.debug(f"{email_should_exist=}")
 
@@ -79,13 +72,11 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"AskForWebsite strategy {result = }")
+    logger.debug(f"AskForWebsite strategy {result=}")
     return result
 
 
-def run_ask_for_website_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
-) -> None:
+def run_ask_for_website_strategy(strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: ask_for_website_signal,
         StrategyEnum.UPDATE: ask_for_website_update_signal,
@@ -112,10 +103,7 @@ def get_context(
     **kwargs: Unpack[AskForWebsiteKwargs],
 ) -> AskForWebsiteContext:
     event = kwargs["event"]
-    instructors = [
-        task.person
-        for task in Task.objects.filter(event=event, role__name="instructor")
-    ]
+    instructors = [task.person for task in Task.objects.filter(event=event, role__name="instructor")]
     return {
         "assignee": event.assigned_to if event.assigned_to else None,
         "event": event,
@@ -128,14 +116,10 @@ def get_context_json(context: AskForWebsiteContext) -> ContextModel:
     return ContextModel(
         {
             "assignee": (
-                api_model_url("person", context["assignee"].pk)
-                if context["assignee"]
-                else scalar_value_none()
+                api_model_url("person", context["assignee"].pk) if context["assignee"] else scalar_value_none()
             ),
             "event": api_model_url("event", event.pk),
-            "instructors": [
-                api_model_url("person", person.pk) for person in context["instructors"]
-            ],
+            "instructors": [api_model_url("person", person.pk) for person in context["instructors"]],
         },
     )
 
@@ -176,9 +160,7 @@ class AskForWebsiteReceiver(BaseAction):
     def get_scheduled_at(self, **kwargs: Unpack[AskForWebsiteKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[AskForWebsiteKwargs]
-    ) -> AskForWebsiteContext:
+    def get_context(self, **kwargs: Unpack[AskForWebsiteKwargs]) -> AskForWebsiteContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: AskForWebsiteContext) -> ContextModel:
@@ -212,9 +194,7 @@ class AskForWebsiteUpdateReceiver(BaseActionUpdate):
     def get_scheduled_at(self, **kwargs: Unpack[AskForWebsiteKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[AskForWebsiteKwargs]
-    ) -> AskForWebsiteContext:
+    def get_context(self, **kwargs: Unpack[AskForWebsiteKwargs]) -> AskForWebsiteContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: AskForWebsiteContext) -> ContextModel:
@@ -245,9 +225,7 @@ class AskForWebsiteUpdateReceiver(BaseActionUpdate):
 class AskForWebsiteCancelReceiver(BaseActionCancel):
     signal = ask_for_website_cancel_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[AskForWebsiteKwargs]
-    ) -> AskForWebsiteContext:
+    def get_context(self, **kwargs: Unpack[AskForWebsiteKwargs]) -> AskForWebsiteContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: AskForWebsiteContext) -> ContextModel:

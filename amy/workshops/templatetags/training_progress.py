@@ -33,16 +33,12 @@ def progress_description(progress: TrainingProgress):
         involvement = "<br />"
         involvement += progress.involvement_type.name
         if progress.involvement_type.name == "Other":
-            involvement += (
-                f": {escape(progress.trainee_notes) or 'No details provided'}"
-            )
+            involvement += f": {escape(progress.trainee_notes) or 'No details provided'}"
     else:
         involvement = ""
 
     day = (
-        progress.date.strftime("%A %d %B %Y")
-        if progress.date
-        else progress.created_at.strftime("%A %d %B %Y at %H:%M")
+        progress.date.strftime("%A %d %B %Y") if progress.date else progress.created_at.strftime("%A %d %B %Y at %H:%M")
     )
 
     text = "{state} {type}{involvement}<br />on {day}.{notes}".format(
@@ -50,9 +46,7 @@ def progress_description(progress: TrainingProgress):
         type=progress.requirement,
         involvement=involvement,
         day=day,
-        notes="<br />Notes: {}".format(escape(progress.notes))
-        if progress.notes
-        else "",
+        notes="<br />Notes: {}".format(escape(progress.notes)) if progress.notes else "",
     )
     text = text[0].upper() + text[1:]
     return text
@@ -77,16 +71,16 @@ def welcome_instructions(date: datetime | None = None):
     if date.month >= 11:
         text += (
             f"one of these Etherpads: "
-            f'<a href="https://pad.carpentries.org/welcome-sessions-{ date.year }">'
-            f"Welcome Sessions { date.year }</a>; "
-            f'<a href="https://pad.carpentries.org/welcome-sessions-{ date.year+1 }">'
-            f"Welcome Sessions { date.year+1 }</a>."
+            f'<a href="https://pad.carpentries.org/welcome-sessions-{date.year}">'
+            f"Welcome Sessions {date.year}</a>; "
+            f'<a href="https://pad.carpentries.org/welcome-sessions-{date.year+1}">'
+            f"Welcome Sessions {date.year+1}</a>."
         )
     else:
         text += (
             f"this Etherpad: "
-            f'<a href="https://pad.carpentries.org/welcome-sessions-{ date.year }">'
-            f"Welcome Sessions { date.year }</a>."
+            f'<a href="https://pad.carpentries.org/welcome-sessions-{date.year}">'
+            f"Welcome Sessions {date.year}</a>."
         )
     text += "</p>"
 

@@ -74,9 +74,7 @@ class TestTrainingRequestModel(TestBase):
         self.trainee = Person.objects.create_user(
             username="trainee", personal="Bob", family="Smith", email="bob@smith.com"
         )
-        org = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         training = Event.objects.create(slug="training", host=org)
         training.tags.add(Tag.objects.get(name="TTT"))
         learner = Role.objects.get(name="learner")
@@ -276,20 +274,14 @@ class TestTrainingRequestsListView(TestBase):
         self.first_req = create_training_request(state="d", person=self.spiderman)
         self.second_req = create_training_request(state="p", person=None)
         self.third_req = create_training_request(state="a", person=self.ironman)
-        self.org = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        self.org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         self.learner = Role.objects.get(name="learner")
         self.ttt = Tag.objects.get(name="TTT")
 
         self.first_training = Event.objects.create(slug="ttt-event", host=self.org)
         self.first_training.tags.add(self.ttt)
-        Task.objects.create(
-            person=self.spiderman, role=self.learner, event=self.first_training
-        )
-        self.second_training = Event.objects.create(
-            slug="second-ttt-event", host=self.org
-        )
+        Task.objects.create(person=self.spiderman, role=self.learner, event=self.first_training)
+        self.second_training = Event.objects.create(slug="second-ttt-event", host=self.org)
         self.second_training.tags.add(self.ttt)
 
     def test_view_loads(self):
@@ -375,19 +367,11 @@ class TestTrainingRequestsListView(TestBase):
         msg = "Successfully accepted and matched selected people to training."
         self.assertContains(rv, msg)
         self.assertEqual(
-            set(
-                Event.objects.filter(
-                    task__person=self.spiderman, task__role__name="learner"
-                )
-            ),
+            set(Event.objects.filter(task__person=self.spiderman, task__role__name="learner")),
             {self.first_training, self.second_training},
         )
         self.assertEqual(
-            set(
-                Event.objects.filter(
-                    task__person=self.ironman, task__role__name="learner"
-                )
-            ),
+            set(Event.objects.filter(task__person=self.ironman, task__role__name="learner")),
             set(),
         )
 
@@ -407,11 +391,7 @@ class TestTrainingRequestsListView(TestBase):
         msg = "Successfully accepted and matched selected people to training."
         self.assertContains(rv, msg)
         self.assertEqual(
-            set(
-                Event.objects.filter(
-                    task__person=self.spiderman, task__role__name="learner"
-                )
-            ),
+            set(Event.objects.filter(task__person=self.spiderman, task__role__name="learner")),
             {self.first_training},
         )
 
@@ -462,11 +442,7 @@ class TestTrainingRequestsListView(TestBase):
         # Check that Spiderman is not matched to second_training even though
         # he was selected.
         self.assertEqual(
-            set(
-                Event.objects.filter(
-                    task__person=self.spiderman, task__role__name="learner"
-                )
-            ),
+            set(Event.objects.filter(task__person=self.spiderman, task__role__name="learner")),
             {self.first_training},
         )
 
@@ -483,11 +459,7 @@ class TestTrainingRequestsListView(TestBase):
         self.assertContains(rv, msg)
 
         self.assertEqual(
-            set(
-                Event.objects.filter(
-                    task__person=self.spiderman, task__role__name="learner"
-                )
-            ),
+            set(Event.objects.filter(task__person=self.spiderman, task__role__name="learner")),
             set(),
         )
 
@@ -509,11 +481,7 @@ class TestTrainingRequestsListView(TestBase):
         # Check that Spiderman is still matched to first_training even though
         # he was selected.
         self.assertEqual(
-            set(
-                Event.objects.filter(
-                    task__person=self.spiderman, task__role__name="learner"
-                )
-            ),
+            set(Event.objects.filter(task__person=self.spiderman, task__role__name="learner")),
             {self.first_training},
         )
 
@@ -558,10 +526,7 @@ class TestTrainingRequestsListView(TestBase):
             "seat_membership": membership1.pk,
             "seat_public": True,
         }
-        msg1 = (
-            f"Membership &quot;{membership1}&quot; is using more training seats "
-            "than it&#x27;s been allowed."
-        )
+        msg1 = f"Membership &quot;{membership1}&quot; is using more training seats " "than it&#x27;s been allowed."
         self.second_req.person = self.blackwidow
         self.second_req.save()
         data2 = {
@@ -571,10 +536,7 @@ class TestTrainingRequestsListView(TestBase):
             "seat_membership": membership2.pk,
             "seat_public": True,
         }
-        msg2 = (
-            f"Membership &quot;{membership2}&quot; is using more training seats "
-            "than it&#x27;s been allowed."
-        )
+        msg2 = f"Membership &quot;{membership2}&quot; is using more training seats " "than it&#x27;s been allowed."
 
         # Act
         rv1 = self.client.post(reverse("all_trainingrequests"), data1, follow=True)
@@ -613,9 +575,7 @@ class TestTrainingRequestsListView(TestBase):
         self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
         # Assert
-        task = Task.objects.get(
-            person=self.first_req.person, event=self.second_training
-        )
+        task = Task.objects.get(person=self.first_req.person, event=self.second_training)
         self.assertEqual(task.seat_public, data["seat_public"])
 
     def test_auto_assign_membership_seats(self):
@@ -642,15 +602,9 @@ class TestTrainingRequestsListView(TestBase):
             public_instructor_training_seats=0,
         )
         # create some requests for these codes
-        req1 = create_training_request(
-            "p", self.blackwidow, open_review=False, reg_code="alpha44"
-        )
-        req2 = create_training_request(
-            "p", self.ironman, open_review=False, reg_code="beta55"
-        )
-        req3 = create_training_request(
-            "p", self.spiderman, open_review=False, reg_code="invalid"
-        )
+        req1 = create_training_request("p", self.blackwidow, open_review=False, reg_code="alpha44")
+        req2 = create_training_request("p", self.ironman, open_review=False, reg_code="beta55")
+        req3 = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
 
         data = {
             "match": "",
@@ -666,25 +620,16 @@ class TestTrainingRequestsListView(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
-        self.assertNotContains(
-            rv, "Successfully accepted and matched selected people to training"
-        )
+        self.assertNotContains(rv, "Successfully accepted and matched selected people to training")
         self.assertContains(rv, "Accepted and matched 2 people to training")
         self.assertContains(rv, "raised 1 warning")
         self.assertContains(rv, "2 request(s) were skipped due to errors")
-        self.assertEqual(
-            Task.objects.filter(seat_membership=membership_alpha).count(), 1
-        )
-        self.assertEqual(
-            Task.objects.filter(seat_membership=membership_beta).count(), 1
-        )
-        self.assertContains(
-            rv, "No membership found for registration code &quot;invalid&quot;"
-        )
+        self.assertEqual(Task.objects.filter(seat_membership=membership_alpha).count(), 1)
+        self.assertEqual(Task.objects.filter(seat_membership=membership_beta).count(), 1)
+        self.assertContains(rv, "No membership found for registration code &quot;invalid&quot;")
         self.assertContains(
             rv,
-            "Request does not include a member registration "
-            "code, so cannot be matched to a membership seat.",
+            "Request does not include a member registration " "code, so cannot be matched to a membership seat.",
         )
 
 
@@ -771,15 +716,11 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
             "country": req.country,
             "github": req.github or None,
             "affiliation": req.affiliation,
-            "occupation": req.get_occupation_display()
-            if req.occupation
-            else req.occupation_other,
+            "occupation": req.get_occupation_display() if req.occupation else req.occupation_other,
             "is_active": True,
         }
         for key, value in data_expected.items():
-            self.assertEqual(
-                getattr(self.ironman, key), value, "Attribute: {}".format(key)
-            )
+            self.assertEqual(getattr(self.ironman, key), value, "Attribute: {}".format(key))
 
         self.assertEqual(set(self.ironman.domains.all()), set(req.domains.all()))
 
@@ -803,15 +744,11 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
             "country": req.country,
             "github": req.github or None,
             "affiliation": req.affiliation,
-            "occupation": req.get_occupation_display()
-            if req.occupation
-            else req.occupation_other,
+            "occupation": req.get_occupation_display() if req.occupation else req.occupation_other,
             "is_active": True,
         }
         for key, value in data_expected.items():
-            self.assertEqual(
-                getattr(req.person, key), value, "Attribute: {}".format(key)
-            )
+            self.assertEqual(getattr(req.person, key), value, "Attribute: {}".format(key))
 
         self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
 
@@ -824,23 +761,17 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         TrainingRequestConsent.objects.create(
             training_request=req,
             term=may_contact_term,
-            term_option=TermOption.objects.filter(
-                term=may_contact_term
-            ).get_decline_term_option(),
+            term_option=TermOption.objects.filter(term=may_contact_term).get_decline_term_option(),
         )
         TrainingRequestConsent.objects.create(
             training_request=req,
             term=privacy_policy_term,
-            term_option=TermOption.objects.filter(
-                term=privacy_policy_term
-            ).get_agree_term_option(),
+            term_option=TermOption.objects.filter(term=privacy_policy_term).get_agree_term_option(),
         )
         TrainingRequestConsent.objects.create(
             training_request=req,
             term=public_profile_term,
-            term_option=TermOption.objects.filter(
-                term=public_profile_term
-            ).get_agree_term_option(),
+            term_option=TermOption.objects.filter(term=public_profile_term).get_agree_term_option(),
         )
 
         # Act
@@ -1000,109 +931,73 @@ class TestTrainingRequestMerging(TestBase):
         self.first_req_may_contact_consent = TrainingRequestConsent.objects.create(
             training_request=self.first_req,
             term=may_contact_term,
-            term_option=TermOption.objects.filter(
-                term=may_contact_term
-            ).get_decline_term_option(),
+            term_option=TermOption.objects.filter(term=may_contact_term).get_decline_term_option(),
         )
-        self.first_req_may_contact_consent.created_at = datetime(
-            2023, 4, 10, tzinfo=timezone.utc
-        )
+        self.first_req_may_contact_consent.created_at = datetime(2023, 4, 10, tzinfo=timezone.utc)
         self.first_req_may_contact_consent.save()
 
         self.second_req_may_contact_consent = TrainingRequestConsent.objects.create(
             training_request=self.second_req,
             term=may_contact_term,
-            term_option=TermOption.objects.filter(
-                term=may_contact_term
-            ).get_decline_term_option(),
+            term_option=TermOption.objects.filter(term=may_contact_term).get_decline_term_option(),
         )
-        self.second_req_may_contact_consent.created_at = datetime(
-            2023, 4, 11, tzinfo=timezone.utc
-        )
+        self.second_req_may_contact_consent.created_at = datetime(2023, 4, 11, tzinfo=timezone.utc)
         self.second_req_may_contact_consent.save()
 
         self.third_req_may_contact_consent = TrainingRequestConsent.objects.create(
             training_request=self.third_req,
             term=may_contact_term,
-            term_option=TermOption.objects.filter(
-                term=may_contact_term
-            ).get_agree_term_option(),
+            term_option=TermOption.objects.filter(term=may_contact_term).get_agree_term_option(),
         )
-        self.third_req_may_contact_consent.created_at = datetime(
-            2023, 4, 12, tzinfo=timezone.utc
-        )
+        self.third_req_may_contact_consent.created_at = datetime(2023, 4, 12, tzinfo=timezone.utc)
         self.third_req_may_contact_consent.save()
 
         self.first_req_privacy_policy_consent = TrainingRequestConsent.objects.create(
             training_request=self.first_req,
             term=privacy_policy_term,
-            term_option=TermOption.objects.filter(
-                term=privacy_policy_term
-            ).get_agree_term_option(),
+            term_option=TermOption.objects.filter(term=privacy_policy_term).get_agree_term_option(),
         )
-        self.first_req_privacy_policy_consent.created_at = datetime(
-            2023, 4, 12, tzinfo=timezone.utc
-        )
+        self.first_req_privacy_policy_consent.created_at = datetime(2023, 4, 12, tzinfo=timezone.utc)
         self.first_req_privacy_policy_consent.save()
 
         self.second_req_privacy_policy_consent = TrainingRequestConsent.objects.create(
             training_request=self.second_req,
             term=privacy_policy_term,
-            term_option=TermOption.objects.filter(
-                term=privacy_policy_term
-            ).get_agree_term_option(),
+            term_option=TermOption.objects.filter(term=privacy_policy_term).get_agree_term_option(),
         )
-        self.second_req_privacy_policy_consent.created_at = datetime(
-            2023, 4, 11, tzinfo=timezone.utc
-        )
+        self.second_req_privacy_policy_consent.created_at = datetime(2023, 4, 11, tzinfo=timezone.utc)
         self.second_req_privacy_policy_consent.save()
 
         self.third_req_privacy_policy_consent = TrainingRequestConsent.objects.create(
             training_request=self.third_req,
             term=privacy_policy_term,
-            term_option=TermOption.objects.filter(
-                term=privacy_policy_term
-            ).get_agree_term_option(),
+            term_option=TermOption.objects.filter(term=privacy_policy_term).get_agree_term_option(),
         )
-        self.third_req_privacy_policy_consent.created_at = datetime(
-            2023, 4, 10, tzinfo=timezone.utc
-        )
+        self.third_req_privacy_policy_consent.created_at = datetime(2023, 4, 10, tzinfo=timezone.utc)
         self.third_req_privacy_policy_consent.save()
 
         self.first_req_public_profile_consent = TrainingRequestConsent.objects.create(
             training_request=self.first_req,
             term=public_profile_term,
-            term_option=TermOption.objects.filter(
-                term=public_profile_term
-            ).get_decline_term_option(),
+            term_option=TermOption.objects.filter(term=public_profile_term).get_decline_term_option(),
         )
-        self.first_req_public_profile_consent.created_at = datetime(
-            2023, 4, 11, tzinfo=timezone.utc
-        )
+        self.first_req_public_profile_consent.created_at = datetime(2023, 4, 11, tzinfo=timezone.utc)
         self.first_req_public_profile_consent.save()
 
         self.second_req_public_profile_consent = TrainingRequestConsent.objects.create(
             training_request=self.second_req,
             term=public_profile_term,
-            term_option=TermOption.objects.filter(
-                term=public_profile_term
-            ).get_agree_term_option(),
+            term_option=TermOption.objects.filter(term=public_profile_term).get_agree_term_option(),
         )
-        self.second_req_public_profile_consent.created_at = datetime(
-            2023, 4, 10, tzinfo=timezone.utc
-        )
+        self.second_req_public_profile_consent.created_at = datetime(2023, 4, 10, tzinfo=timezone.utc)
         self.second_req_public_profile_consent.save()
 
         self.third_req_public_profile_consent = TrainingRequestConsent.objects.create(
             training_request=self.third_req,
             term=public_profile_term,
-            term_option=TermOption.objects.filter(
-                term=public_profile_term
-            ).get_decline_term_option(),
+            term_option=TermOption.objects.filter(term=public_profile_term).get_decline_term_option(),
         )
-        self.third_req_public_profile_consent.created_at = datetime(
-            2023, 4, 12, tzinfo=timezone.utc
-        )
+        self.third_req_public_profile_consent.created_at = datetime(2023, 4, 12, tzinfo=timezone.utc)
         self.third_req_public_profile_consent.save()
 
         # prepare merge strategies (POST data to be sent to the merging view)
@@ -1473,11 +1368,7 @@ class TestTrainingRequestMerging(TestBase):
 
         # There are exactly 3 active (non-archived) consents
         self.assertEqual(
-            len(
-                TrainingRequestConsent.objects.active().filter(
-                    training_request=self.third_req
-                )
-            ),
+            len(TrainingRequestConsent.objects.active().filter(training_request=self.third_req)),
             3,
         )
         with self.assertRaises(TrainingRequestConsent.DoesNotExist):
@@ -1501,10 +1392,6 @@ class TestTrainingRequestMerging(TestBase):
         # No consents linked to old requests
         self.third_req.refresh_from_db()
         self.assertEqual(
-            len(
-                TrainingRequestConsent.objects.filter(
-                    training_request__in=[self.first_req, self.second_req]
-                )
-            ),
+            len(TrainingRequestConsent.objects.filter(training_request__in=[self.first_req, self.second_req])),
             0,
         )

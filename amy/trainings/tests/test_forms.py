@@ -17,14 +17,10 @@ class TestTrainingProgressForm(TestBase):
         self._setUpTags()
         self._setUpRoles()
 
-        self.training, _ = TrainingRequirement.objects.get_or_create(
-            name="Training", defaults={"event_required": True}
-        )
+        self.training, _ = TrainingRequirement.objects.get_or_create(name="Training", defaults={"event_required": True})
 
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        self.person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        self.person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         self.ttt_event = Event.objects.create(slug="test-event", host=host)
         self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 

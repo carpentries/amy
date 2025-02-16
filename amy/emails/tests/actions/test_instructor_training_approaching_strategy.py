@@ -16,9 +16,7 @@ from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 class TestInstructorTrainingApproachingStrategy(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -38,12 +36,8 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
 
     def test_strategy_create(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
+        Task.objects.create(event=self.event, person=self.instructor2, role=self.instructor_role)
 
         # Act
         result = instructor_training_approaching_strategy(self.event)
@@ -52,12 +46,8 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
 
     def test_strategy_update(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
+        Task.objects.create(event=self.event, person=self.instructor2, role=self.instructor_role)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
             signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
@@ -84,9 +74,7 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
 
     def test_strategy_remove(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
             signal=INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
@@ -120,8 +108,7 @@ class TestInstructorTrainingApproachingStrategy(TestCase):
 
 class TestRunInstructorTrainingApproachingStrategy(TestCase):
     @patch(
-        "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_signal",
+        "emails.actions.instructor_training_approaching." "instructor_training_approaching_signal",
     )
     def test_strategy_calls_create_signal(
         self,
@@ -144,8 +131,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         )
 
     @patch(
-        "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_update_signal",
+        "emails.actions.instructor_training_approaching." "instructor_training_approaching_update_signal",
     )
     def test_strategy_calls_update_signal(
         self,
@@ -168,8 +154,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         )
 
     @patch(
-        "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_cancel_signal",
+        "emails.actions.instructor_training_approaching." "instructor_training_approaching_cancel_signal",
     )
     def test_strategy_calls_cancel_signal(
         self,
@@ -193,16 +178,13 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
 
     @patch("emails.actions.base_strategy.logger")
     @patch(
-        "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_signal",
+        "emails.actions.instructor_training_approaching." "instructor_training_approaching_signal",
     )
     @patch(
-        "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_update_signal",
+        "emails.actions.instructor_training_approaching." "instructor_training_approaching_update_signal",
     )
     @patch(
-        "emails.actions.instructor_training_approaching."
-        "instructor_training_approaching_cancel_signal",
+        "emails.actions.instructor_training_approaching." "instructor_training_approaching_cancel_signal",
     )
     def test_invalid_strategy_no_signal_called(
         self,
@@ -223,9 +205,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         mock_instructor_training_approaching_signal.send.assert_not_called()
         mock_instructor_training_approaching_update_signal.send.assert_not_called()
         mock_instructor_training_approaching_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {event} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {event} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -234,7 +214,5 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
         event = Event(start=datetime.today())
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_instructor_training_approaching_strategy(strategy, request, event)

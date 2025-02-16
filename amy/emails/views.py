@@ -72,9 +72,7 @@ class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
         context["body_context_annotations"] = {}
         if signal:
             context["body_context_type"] = signal.context_type
-            context["body_context_annotations"] = {
-                k: repr(v) for k, v in signal.context_type.__annotations__.items()
-            }
+            context["body_context_annotations"] = {k: repr(v) for k, v in signal.context_type.__annotations__.items()}
         return context
 
 
@@ -107,9 +105,7 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
         context["body_context_annotations"] = {}
         if signal:
             context["body_context_type"] = signal.context_type
-            context["body_context_annotations"] = {
-                k: repr(v) for k, v in signal.context_type.__annotations__.items()
-            }
+            context["body_context_annotations"] = {k: repr(v) for k, v in signal.context_type.__annotations__.items()}
         return context
 
 
@@ -161,30 +157,22 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
             context["rendered_context"] = f"Unable to render context: {exc}"
 
         try:
-            context["rendered_body"] = markdownify(
-                jinjanify(engine, self.object.body, body_context)
-            )
+            context["rendered_body"] = markdownify(jinjanify(engine, self.object.body, body_context))
         except (TemplateError, AttributeError, ValueError, TypeError) as exc:
             context["rendered_body"] = markdownify(f"Unable to render template: {exc}")
 
         try:
-            context["rendered_subject"] = jinjanify(
-                engine, self.object.subject, body_context
-            )
+            context["rendered_subject"] = jinjanify(engine, self.object.subject, body_context)
         except (TemplateError, AttributeError, ValueError, TypeError) as exc:
             context["rendered_subject"] = f"Unable to render template: {exc}"
 
         try:
-            to_header_context = build_context_from_list(
-                self.object.to_header_context_json
-            )
+            to_header_context = build_context_from_list(self.object.to_header_context_json)
             context["rendered_to_header_context"] = to_header_context
         except ValueError as exc:
             context["rendered_to_header_context"] = f"Unable to render context: {exc}"
 
-        context["status_explanation"] = ScheduledEmailStatusExplanation[
-            ScheduledEmailStatus(self.object.state)
-        ]
+        context["status_explanation"] = ScheduledEmailStatusExplanation[ScheduledEmailStatus(self.object.state)]
         context["ScheduledEmailStatusActions"] = ScheduledEmailStatusActions
         return context
 
@@ -203,9 +191,7 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
     # helps us make sure the data is consistent.
     # Additionally, we're limiting the queryset to only those objects that can be edited
     # (see ScheduledEmailStatusActions).
-    queryset = ScheduledEmail.objects.filter(
-        state__in=ScheduledEmailStatusActions["edit"]
-    ).select_for_update()
+    queryset = ScheduledEmail.objects.filter(state__in=ScheduledEmailStatusActions["edit"]).select_for_update()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -226,9 +212,7 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
         return result
 
 
-class ScheduledEmailReschedule(
-    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView
-):
+class ScheduledEmailReschedule(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView):
     flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_reschedule.html"
@@ -242,9 +226,7 @@ class ScheduledEmailReschedule(
     # helps us make sure the data is consistent.
     # Additionally, we're limiting the queryset to only those objects that can be edited
     # (see ScheduledEmailStatusActions).
-    queryset = ScheduledEmail.objects.filter(
-        state__in=ScheduledEmailStatusActions["reschedule"]
-    ).select_for_update()
+    queryset = ScheduledEmail.objects.filter(state__in=ScheduledEmailStatusActions["reschedule"]).select_for_update()
 
     def dispatch(self, request: HttpRequest, *args, **kwargs):
         self.request = request
@@ -273,9 +255,7 @@ class ScheduledEmailReschedule(
         return super().form_valid(form)
 
 
-class ScheduledEmailCancel(
-    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView
-):
+class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView):
     flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_cancel.html"
@@ -289,9 +269,7 @@ class ScheduledEmailCancel(
     # helps us make sure the data is consistent.
     # Additionally, we're limiting the queryset to only those objects that can be edited
     # (see ScheduledEmailStatusActions).
-    queryset = ScheduledEmail.objects.filter(
-        state__in=ScheduledEmailStatusActions["cancel"]
-    ).select_for_update()
+    queryset = ScheduledEmail.objects.filter(state__in=ScheduledEmailStatusActions["cancel"]).select_for_update()
 
     def dispatch(self, request: HttpRequest, *args, **kwargs):
         self.request = request

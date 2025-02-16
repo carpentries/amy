@@ -39,8 +39,7 @@ class EmailController:
     ) -> ScheduledEmail:
         if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
-                "Email must have at least one recipient, but `to_header` or "
-                "`to_header_context_json` are empty."
+                "Email must have at least one recipient, but `to_header` or " "`to_header_context_json` are empty."
             )
 
         # Try rendering the templates with empty context to see if there are any syntax
@@ -118,15 +117,12 @@ class EmailController:
     ) -> ScheduledEmail:
         if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
-                "Email must have at least one recipient, but `to_header` or "
-                "`to_header_context_json` are empty."
+                "Email must have at least one recipient, but `to_header` or " "`to_header_context_json` are empty."
             )
 
         template = scheduled_email.template
         if not template:
-            raise EmailControllerMissingTemplateException(
-                "Scheduled email must be linked to a template."
-            )
+            raise EmailControllerMissingTemplateException("Scheduled email must be linked to a template.")
 
         signal = template.signal
 
@@ -188,41 +184,27 @@ class EmailController:
         details: str = "Email was cancelled",
         author: Person | None = None,
     ) -> ScheduledEmail:
-        return EmailController.change_state_with_log(
-            scheduled_email, ScheduledEmailStatus.CANCELLED, details, author
-        )
+        return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.CANCELLED, details, author)
 
     @staticmethod
-    def lock_email(
-        scheduled_email: ScheduledEmail, details: str, author: Person | None = None
-    ) -> ScheduledEmail:
-        return EmailController.change_state_with_log(
-            scheduled_email, ScheduledEmailStatus.LOCKED, details, author
-        )
+    def lock_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
+        return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.LOCKED, details, author)
 
     @staticmethod
-    def fail_email(
-        scheduled_email: ScheduledEmail, details: str, author: Person | None = None
-    ) -> ScheduledEmail:
-        email = EmailController.change_state_with_log(
-            scheduled_email, ScheduledEmailStatus.FAILED, details, author
-        )
+    def fail_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
+        email = EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.FAILED, details, author)
 
         # Count the number of failures. If it's >= MAX_FAILED_ATTEMPTS, then cancel
         # the email.
-        latest_status_changes = ScheduledEmailLog.objects.filter(
-            scheduled_email=email
-        ).order_by("-created_at")[: 2 * settings.EMAIL_MAX_FAILED_ATTEMPTS]
+        latest_status_changes = ScheduledEmailLog.objects.filter(scheduled_email=email).order_by("-created_at")[
+            : 2 * settings.EMAIL_MAX_FAILED_ATTEMPTS
+        ]
         # 2* because the worker first locks the email, then it fails it.
         # We don't want to cancel an email which was cancelled, and then the user
         # decided to reschedule it.
 
         failed_attempts_count = len(
-            [
-                log
-                for log in latest_status_changes
-                if log.state_after == ScheduledEmailStatus.FAILED
-            ]
+            [log for log in latest_status_changes if log.state_after == ScheduledEmailStatus.FAILED]
         )
         if failed_attempts_count >= settings.EMAIL_MAX_FAILED_ATTEMPTS:
             email = EmailController.cancel_email(
@@ -234,9 +216,5 @@ class EmailController:
         return email
 
     @staticmethod
-    def succeed_email(
-        scheduled_email: ScheduledEmail, details: str, author: Person | None = None
-    ) -> ScheduledEmail:
-        return EmailController.change_state_with_log(
-            scheduled_email, ScheduledEmailStatus.SUCCEEDED, details, author
-        )
+    def succeed_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
+        return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.SUCCEEDED, details, author)

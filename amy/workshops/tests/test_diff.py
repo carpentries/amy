@@ -46,17 +46,13 @@ class TestRevisions(TestBase):
         # Red label for removed host
         self.assertContains(
             rv,
-            '<a class="label label-danger" href="{}">-{}</a>'.format(
-                self.org_alpha.get_absolute_url(), self.org_alpha
-            ),
+            '<a class="label label-danger" href="{}">-{}</a>'.format(self.org_alpha.get_absolute_url(), self.org_alpha),
             html=True,
         )
         # Green label for assigned host
         self.assertContains(
             rv,
-            '<a class="label label-success" href="{}">+{}</a>'.format(
-                self.org_beta.get_absolute_url(), self.org_beta
-            ),
+            '<a class="label label-success" href="{}">+{}</a>'.format(self.org_beta.get_absolute_url(), self.org_beta),
             html=True,
         )
         # Grey label for pre-assigned tag
@@ -78,12 +74,8 @@ class TestRevisions(TestBase):
         self.tag2.delete()
         # get newer revision page
         rv = self.client.get(reverse("object_changes", args=[self.newer.pk]))
-        self.assertContains(
-            rv, '<a class="label label-default" href="#">1</a>', html=True
-        )
-        self.assertContains(
-            rv, '<a class="label label-success" href="#">+2</a>', html=True
-        )
+        self.assertContains(rv, '<a class="label label-default" href="#">1</a>', html=True)
+        self.assertContains(rv, '<a class="label label-success" href="#">+2</a>', html=True)
 
 
 class TestRegression1083(TestBase):
@@ -100,9 +92,7 @@ class TestRegression1083(TestBase):
             )
 
         with reversion.create_revision():
-            bob = Person.objects.create_user(
-                username="bob", personal="Bob", family="Smith", email="bob@smith.pl"
-            )
+            bob = Person.objects.create_user(username="bob", personal="Bob", family="Smith", email="bob@smith.pl")
 
         with reversion.create_revision():
             alice.family = "Williams"

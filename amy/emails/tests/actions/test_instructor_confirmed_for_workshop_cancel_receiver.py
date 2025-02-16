@@ -23,16 +23,10 @@ from workshops.tests.base import TestBase
 class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        self.event = Event.objects.create(
-            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
-        )
+        self.event = Event.objects.create(slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5))
         self.person = Person.objects.create(email="test@example.org")
-        self.recruitment = InstructorRecruitment.objects.create(
-            event=self.event, notes="Test notes"
-        )
-        self.signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=self.recruitment, person=self.person
-        )
+        self.recruitment = InstructorRecruitment.objects.create(event=self.event, notes="Test notes")
+        self.signup = InstructorRecruitmentSignup.objects.create(recruitment=self.recruitment, person=self.person)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
@@ -54,21 +48,16 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
             instructor_confirmed_for_workshop_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_confirmed_for_workshop_cancel"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_confirmed_for_workshop_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
         # Arrange
-        original_receivers = instructor_confirmed_for_workshop_cancel_signal.receivers[
-            :
-        ]
+        original_receivers = instructor_confirmed_for_workshop_cancel_signal.receivers[:]
 
         # Act
         # attempt to connect the receiver
-        instructor_confirmed_for_workshop_cancel_signal.connect(
-            instructor_confirmed_for_workshop_cancel_receiver
-        )
+        instructor_confirmed_for_workshop_cancel_signal.connect(instructor_confirmed_for_workshop_cancel_receiver)
         new_receivers = instructor_confirmed_for_workshop_cancel_signal.receivers[:]
 
         # Assert
@@ -92,9 +81,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_cancelled"
-        ) as mock_messages_action_cancelled:
+        with patch("emails.actions.base_action.messages_action_cancelled") as mock_messages_action_cancelled:
             instructor_confirmed_for_workshop_cancel_signal.send(
                 sender=self.signup,
                 request=request,
@@ -132,9 +119,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             instructor_confirmed_for_workshop_cancel_signal.send(
                 sender=self.signup,
                 request=request,
@@ -179,9 +164,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             instructor_confirmed_for_workshop_cancel_signal.send(
                 sender=self.signup,
                 request=request,
@@ -247,9 +230,7 @@ class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
         )
         event.tags.add(Tag.objects.get(name="SWC"))
         recruitment = InstructorRecruitment.objects.create(status="o", event=event)
-        signup = InstructorRecruitmentSignup.objects.create(
-            recruitment=recruitment, person=person, state="a"
-        )
+        signup = InstructorRecruitmentSignup.objects.create(recruitment=recruitment, person=person, state="a")
 
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -262,9 +243,7 @@ class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
         )
 
         request = RequestFactory().get("/")
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_confirmed_for_workshop_strategy(
                 instructor_confirmed_for_workshop_strategy(signup),
                 request,

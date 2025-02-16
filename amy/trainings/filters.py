@@ -15,9 +15,7 @@ def filter_all_persons(queryset, name, all_persons):
     if all_persons:
         return queryset
     else:
-        return queryset.filter(
-            task__role__name="learner", task__event__tags__name="TTT"
-        ).distinct()
+        return queryset.filter(task__role__name="learner", task__event__tags__name="TTT").distinct()
 
 
 def filter_trainees_by_trainee_name_or_email(queryset, name, value):
@@ -28,9 +26,7 @@ def filter_trainees_by_trainee_name_or_email(queryset, name, value):
         # family name.
         for token in tokens:
             queryset = queryset.filter(
-                Q(personal__icontains=token)
-                | Q(family__icontains=token)
-                | Q(email__icontains=token)
+                Q(personal__icontains=token) | Q(family__icontains=token) | Q(email__icontains=token)
             )
         return queryset
     else:
@@ -71,15 +67,11 @@ def filter_trainees_by_training(queryset, name, training):
     if training is None:
         return queryset
     else:
-        return queryset.filter(
-            task__role__name="learner", task__event=training
-        ).distinct()
+        return queryset.filter(task__role__name="learner", task__event=training).distinct()
 
 
 class TraineeFilter(AMYFilterSet):
-    search = django_filters.CharFilter(
-        method=filter_trainees_by_trainee_name_or_email, label="Name or Email"
-    )
+    search = django_filters.CharFilter(method=filter_trainees_by_trainee_name_or_email, label="Name or Email")
 
     all_persons = django_filters.BooleanFilter(
         label="Include all people, not only trainees",

@@ -37,20 +37,13 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         and event.administrator.domain != "self-organized"
         and event.administrator.domain != "carpentries.org/community-lessons/"
     )
-    self_organised = (
-        event.administrator and event.administrator.domain == "self-organized"
-    )
-    not_cldt = (
-        event.administrator
-        and event.administrator.domain != "carpentries.org/community-lessons/"
-    )
+    self_organised = event.administrator and event.administrator.domain == "self-organized"
+    not_cldt = event.administrator and event.administrator.domain != "carpentries.org/community-lessons/"
     end_date_in_future = event.end and event.end >= timezone.now().date()
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
     carpentries_tag = event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
     at_least_1_host = Task.objects.filter(role__name="host", event=event).count() >= 1
-    at_least_1_instructor = (
-        Task.objects.filter(role__name="instructor", event=event).count() >= 1
-    )
+    at_least_1_instructor = Task.objects.filter(role__name="instructor", event=event).count() >= 1
 
     log_condition_elements(
         centrally_organised=centrally_organised,
@@ -94,13 +87,11 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"PostWorkshop7Days strategy {result = }")
+    logger.debug(f"PostWorkshop7Days strategy {result=}")
     return result
 
 
-def run_post_workshop_7days_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
-) -> None:
+def run_post_workshop_7days_strategy(strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: post_workshop_7days_signal,
         StrategyEnum.UPDATE: post_workshop_7days_update_signal,
@@ -121,25 +112,16 @@ def run_post_workshop_7days_strategy(
 def get_scheduled_at(**kwargs: Unpack[PostWorkshop7DaysKwargs]) -> datetime:
     # Should run 7 days after the event end date OR 7 days from now, whichever is later.
     event_end_date = kwargs["event_end_date"]
-    week_after_event = shift_date_and_apply_current_utc_time(
-        event_end_date, offset=timedelta(days=7)
-    )
+    week_after_event = shift_date_and_apply_current_utc_time(event_end_date, offset=timedelta(days=7))
     week_from_now = timezone.now() + timedelta(days=7)
     return max(week_after_event, week_from_now)
 
 
 def get_context(**kwargs: Unpack[PostWorkshop7DaysKwargs]) -> PostWorkshop7DaysContext:
     event = kwargs["event"]
-    hosts = [
-        task.person for task in Task.objects.filter(role__name="host", event=event)
-    ]
-    instructors = [
-        task.person
-        for task in Task.objects.filter(role__name="instructor", event=event)
-    ]
-    helpers = [
-        task.person for task in Task.objects.filter(role__name="helper", event=event)
-    ]
+    hosts = [task.person for task in Task.objects.filter(role__name="host", event=event)]
+    instructors = [task.person for task in Task.objects.filter(role__name="instructor", event=event)]
+    helpers = [task.person for task in Task.objects.filter(role__name="helper", event=event)]
     return {
         "assignee": event.assigned_to if event.assigned_to else None,
         "event": event,
@@ -154,33 +136,21 @@ def get_context_json(context: PostWorkshop7DaysContext) -> ContextModel:
     return ContextModel(
         {
             "assignee": (
-                api_model_url("person", context["assignee"].pk)
-                if context["assignee"]
-                else scalar_value_none()
+                api_model_url("person", context["assignee"].pk) if context["assignee"] else scalar_value_none()
             ),
             "event": api_model_url("event", event.pk),
-            "hosts": [
-                api_model_url("person", person.pk) for person in context["hosts"]
-            ],
-            "instructors": [
-                api_model_url("person", person.pk) for person in context["instructors"]
-            ],
-            "helpers": [
-                api_model_url("person", person.pk) for person in context["helpers"]
-            ],
+            "hosts": [api_model_url("person", person.pk) for person in context["hosts"]],
+            "instructors": [api_model_url("person", person.pk) for person in context["instructors"]],
+            "helpers": [api_model_url("person", person.pk) for person in context["helpers"]],
         },
     )
 
 
-def get_generic_relation_object(
-    context: PostWorkshop7DaysContext, **kwargs: Unpack[PostWorkshop7DaysKwargs]
-) -> Event:
+def get_generic_relation_object(context: PostWorkshop7DaysContext, **kwargs: Unpack[PostWorkshop7DaysKwargs]) -> Event:
     return context["event"]
 
 
-def get_recipients(
-    context: PostWorkshop7DaysContext, **kwargs: Unpack[PostWorkshop7DaysKwargs]
-) -> list[str]:
+def get_recipients(context: PostWorkshop7DaysContext, **kwargs: Unpack[PostWorkshop7DaysKwargs]) -> list[str]:
     return [host.email for host in context["hosts"] if host.email] + [
         instructor.email for instructor in context["instructors"] if instructor.email
     ]
@@ -213,9 +183,7 @@ class PostWorkshop7DaysReceiver(BaseAction):
     def get_scheduled_at(self, **kwargs: Unpack[PostWorkshop7DaysKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[PostWorkshop7DaysKwargs]
-    ) -> PostWorkshop7DaysContext:
+    def get_context(self, **kwargs: Unpack[PostWorkshop7DaysKwargs]) -> PostWorkshop7DaysContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: PostWorkshop7DaysContext) -> ContextModel:
@@ -249,9 +217,7 @@ class PostWorkshop7DaysUpdateReceiver(BaseActionUpdate):
     def get_scheduled_at(self, **kwargs: Unpack[PostWorkshop7DaysKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[PostWorkshop7DaysKwargs]
-    ) -> PostWorkshop7DaysContext:
+    def get_context(self, **kwargs: Unpack[PostWorkshop7DaysKwargs]) -> PostWorkshop7DaysContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: PostWorkshop7DaysContext) -> ContextModel:
@@ -282,9 +248,7 @@ class PostWorkshop7DaysUpdateReceiver(BaseActionUpdate):
 class PostWorkshop7DaysCancelReceiver(BaseActionCancel):
     signal = post_workshop_7days_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[PostWorkshop7DaysKwargs]
-    ) -> PostWorkshop7DaysContext:
+    def get_context(self, **kwargs: Unpack[PostWorkshop7DaysKwargs]) -> PostWorkshop7DaysContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: PostWorkshop7DaysContext) -> ContextModel:

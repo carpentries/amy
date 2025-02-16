@@ -92,9 +92,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         self.assertEqual(self.membership.member_set.count(), 1)
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
@@ -148,13 +146,9 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         self.assertEqual(self.membership.member_set.count(), 2)
-        self.assertEqual(
-            list(self.membership.organizations.all()), [self.org_alpha, self.org_beta]
-        )
+        self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha, self.org_beta])
 
     def test_removing_members_from_nonconsortium(self):
         """Ensure removing the only member from non-consortium membership is not
@@ -224,9 +218,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         self.assertEqual(list(self.membership.organizations.all()), [])
 
     def test_mix_adding_removing_members_from_consortium(self):
@@ -262,9 +254,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
 
         self.assertEqual(list(self.membership.organizations.all()), [self.org_beta])
 
@@ -327,9 +317,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
     def test_mix_adding_removing_members_leaves_comment(self):
@@ -365,9 +353,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[self.membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         comment = CommentModel.objects.first()
         self.assertEqual(
             comment.comment,

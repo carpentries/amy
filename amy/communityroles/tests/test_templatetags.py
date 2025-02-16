@@ -13,9 +13,7 @@ from workshops.models import Person
 class TestCommunityRolesTemplateTag(TestCase):
     def test_get_community_role(self):
         # Arrange
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         role_name = "instructor"
         config = CommunityRoleConfig.objects.create(
             name=role_name,
@@ -32,9 +30,7 @@ class TestCommunityRolesTemplateTag(TestCase):
 
     def test_get_community_role__config_not_found(self):
         # Arrange
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         role_name = "instructor"
         config = CommunityRoleConfig.objects.create(
             name=role_name,
@@ -51,9 +47,7 @@ class TestCommunityRolesTemplateTag(TestCase):
 
     def test_get_community_role__person_not_found(self):
         # Arrange
-        person = Person.objects.create(
-            personal="Test", family="User", email="test@user.com"
-        )
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         fake_person = Person.objects.create(
             personal="Fake",
             family="Person",
@@ -84,9 +78,7 @@ class TestCommunityRoleHumanDatesTemplateTag(TestCase):
             link_to_membership=False,
             additional_url=False,
         )
-        person = Person.objects.create(
-            username="test1", personal="Test1", family="User", email="test1@example.org"
-        )
+        person = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
         community_role = CommunityRole.objects.create(
             config=self.instructor_community_role_config,
             person=person,

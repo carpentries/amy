@@ -70,10 +70,7 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
             serializer = JSONSerializer()
             serializer.dumps(data)
         except TypeError:
-            self.fail(
-                "Dumping manual scores for Training Requests into JSON "
-                "unexpectedly failed!"
-            )
+            self.fail("Dumping manual scores for Training Requests into JSON " "unexpectedly failed!")
 
     def test_malformed_CSV_with_proper_header_row(self):
         csv = """request_id,score_manual,score_notes
@@ -193,9 +190,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
         self.assertTrue(has_errors)
         for i in range(4):
             self.assertTrue(cleaned[i]["errors"])
-            self.assertIn(
-                "Request ID is not an integer value.", cleaned[i]["errors"], i
-            )
+            self.assertIn("Request ID is not an integer value.", cleaned[i]["errors"], i)
 
     def test_score_manual_wrong_format(self):
         data = self.make_data()
@@ -208,9 +203,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
         self.assertTrue(has_errors)
         for i in range(3):
             self.assertTrue(cleaned[i]["errors"])
-            self.assertIn(
-                "Manual score is not an integer value.", cleaned[i]["errors"], i
-            )
+            self.assertIn("Manual score is not an integer value.", cleaned[i]["errors"], i)
 
         # last entry should be valid
         self.assertFalse(cleaned[3]["errors"])

@@ -14,14 +14,10 @@ from workshops.models import Event, Person
 class AdminSignsInstructorUpForWorkshopReceiver(BaseAction):
     signal = admin_signs_instructor_up_for_workshop_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[AdminSignsInstructorUpKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[AdminSignsInstructorUpKwargs]) -> datetime:
         return immediate_action()
 
-    def get_context(
-        self, **kwargs: Unpack[AdminSignsInstructorUpKwargs]
-    ) -> AdminSignsInstructorUpContext:
+    def get_context(self, **kwargs: Unpack[AdminSignsInstructorUpKwargs]) -> AdminSignsInstructorUpContext:
         person = Person.objects.get(pk=kwargs["person_id"])
         event = Event.objects.get(pk=kwargs["event_id"])
         instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
@@ -75,9 +71,5 @@ class AdminSignsInstructorUpForWorkshopReceiver(BaseAction):
         )
 
 
-admin_signs_instructor_up_for_workshop_receiver = (
-    AdminSignsInstructorUpForWorkshopReceiver()
-)
-admin_signs_instructor_up_for_workshop_signal.connect(
-    admin_signs_instructor_up_for_workshop_receiver
-)
+admin_signs_instructor_up_for_workshop_receiver = AdminSignsInstructorUpForWorkshopReceiver()
+admin_signs_instructor_up_for_workshop_signal.connect(admin_signs_instructor_up_for_workshop_receiver)

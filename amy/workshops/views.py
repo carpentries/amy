@@ -35,10 +35,16 @@ from django.db.models import (
     When,
 )
 from django.forms import BaseForm, HiddenInput
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.html import escape
 from github.GithubException import GithubException
 import requests
 from reversion.models import Revision, Version
@@ -148,6 +154,7 @@ from workshops.utils.person_upload import (
     upload_person_task_csv,
     verify_upload_person_task,
 )
+from workshops.utils.urls import safe_next_or_default_url, safe_url
 from workshops.utils.usernames import create_username
 from workshops.utils.views import failed_to_delete
 
@@ -162,12 +169,7 @@ def logout_then_login_with_msg(request):
 
 @admin_required
 def changes_log(request):
-    log = (
-        Revision.objects.all()
-        .select_related("user")
-        .prefetch_related("version_set")
-        .order_by("-date_created")
-    )
+    log = Revision.objects.all().select_related("user").prefetch_related("version_set").order_by("-date_created")
     log = get_pagination_items(request, log)
     context = {"log": log}
     return render(request, "workshops/changes_log.html", context)
@@ -265,9 +267,9 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
             Prefetch(
                 "task_set",
                 to_attr="training_tasks",
-                queryset=Task.objects.filter(
-                    role__name="learner", event__tags__name="TTT"
-                ).select_related("role", "event"),
+                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT").select_related(
+                    "role", "event"
+                ),
             ),
             "trainingrequest_set",
             "trainingprogress_set",
@@ -288,14 +290,8 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
 
         is_usersocialauth_in_sync = len(self.object.github_usersocialauth) > 0
         context["is_usersocialauth_in_sync"] = is_usersocialauth_in_sync
-        consents = (
-            Consent.objects.filter(person=self.object)
-            .active()
-            .select_related("term", "term_option")
-        )
-        consent_by_description = {
-            consent.term.short_description: consent for consent in consents
-        }
+        consents = Consent.objects.filter(person=self.object).active().select_related("term", "term_option")
+        consent_by_description = {consent.term.short_description: consent for consent in consents}
         context["consents"] = consent_by_description
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
@@ -314,9 +310,7 @@ def person_bulk_add_template(request):
 
 
 @admin_required
-@permission_required(
-    ["workshops.add_person", "workshops.change_person"], raise_exception=True
-)
+@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
 def person_bulk_add(request):
     if request.method == "POST":
         form = BulkUploadCSVForm(request.POST, request.FILES)
@@ -326,19 +320,12 @@ def person_bulk_add(request):
             try:
                 persons_tasks, empty_fields = upload_person_task_csv(stream)
             except csv.Error as e:
-                messages.error(
-                    request, "Error processing uploaded .CSV file: {}".format(e)
-                )
+                messages.error(request, "Error processing uploaded .CSV file: {}".format(e))
             except UnicodeDecodeError:
-                messages.error(
-                    request, "Please provide a file in {} encoding.".format(charset)
-                )
+                messages.error(request, "Please provide a file in {} encoding.".format(charset))
             else:
                 if empty_fields:
-                    msg_template = (
-                        "The following required fields were not"
-                        " found in the uploaded file: {}"
-                    )
+                    msg_template = "The following required fields were not" " found in the uploaded file: {}"
                     msg = msg_template.format(", ".join(empty_fields))
                     messages.error(request, msg)
                 else:
@@ -363,9 +350,7 @@ def person_bulk_add(request):
 
 
 @admin_required
-@permission_required(
-    ["workshops.add_person", "workshops.change_person"], raise_exception=True
-)
+@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
 def person_bulk_add_confirmation(request):
     """
     This view allows for manipulating and saving session-stored upload data.
@@ -413,9 +398,7 @@ def person_bulk_add_confirmation(request):
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
             if any_errors:
-                messages.error(
-                    request, "Please make sure to fix all errors " "listed below."
-                )
+                messages.error(request, "Please make sure to fix all errors " "listed below.")
 
         # there must be "confirm" and no "cancel" in POST in order to save
         elif request.POST.get("confirm", None) and not request.POST.get("cancel", None):
@@ -423,9 +406,7 @@ def person_bulk_add_confirmation(request):
                 # verification now makes something more than database
                 # constraints so we should call it first
                 verify_upload_person_task(persons_tasks)
-                persons_created, tasks_created = create_uploaded_persons_tasks(
-                    persons_tasks, request=request
-                )
+                persons_created, tasks_created = create_uploaded_persons_tasks(persons_tasks, request=request)
             except (IntegrityError, ObjectDoesNotExist, InternalError) as e:
                 messages.error(
                     request,
@@ -439,9 +420,7 @@ def person_bulk_add_confirmation(request):
                 request.session["bulk-add-people"] = None
                 messages.success(
                     request,
-                    "Successfully created {0} persons and {1} tasks.".format(
-                        len(persons_created), len(tasks_created)
-                    ),
+                    "Successfully created {0} persons and {1} tasks.".format(len(persons_created), len(tasks_created)),
                 )
                 return redirect("person_bulk_add")
 
@@ -467,9 +446,7 @@ def person_bulk_add_confirmation(request):
 
 
 @admin_required
-@permission_required(
-    ["workshops.add_person", "workshops.change_person"], raise_exception=True
-)
+@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
 def person_bulk_add_remove_entry(request, entry_id):
     "Remove specific entry from the session-saved list of people to be added."
     persons_tasks = request.session.get("bulk-add-people")
@@ -481,30 +458,22 @@ def person_bulk_add_remove_entry(request, entry_id):
             request.session["bulk-add-people"] = persons_tasks
 
         except IndexError:
-            messages.warning(
-                request, "Could not find specified entry #{}".format(entry_id)
-            )
+            messages.warning(request, "Could not find specified entry #{}".format(entry_id))
 
         return redirect(person_bulk_add_confirmation)
 
     else:
-        messages.warning(
-            request, "Could not locate CSV data, please try the " "upload again."
-        )
+        messages.warning(request, "Could not locate CSV data, please try the " "upload again.")
         return redirect("person_bulk_add")
 
 
 @admin_required
-@permission_required(
-    ["workshops.add_person", "workshops.change_person"], raise_exception=True
-)
+@permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
 def person_bulk_add_match_person(request, entry_id, person_id=None):
     """Save information about matched person in the session-saved data."""
     persons_tasks = request.session.get("bulk-add-people")
     if not persons_tasks:
-        messages.warning(
-            request, "Could not locate CSV data, please try the " "upload again."
-        )
+        messages.warning(request, "Could not locate CSV data, please try the " "upload again.")
         return redirect("person_bulk_add")
 
     if person_id is None:
@@ -519,15 +488,12 @@ def person_bulk_add_match_person(request, entry_id, person_id=None):
             # catches invalid argument for int()
             messages.warning(
                 request,
-                "Invalid entry ID ({}) or person ID "
-                "({}).".format(entry_id, person_id),
+                "Invalid entry ID ({}) or person ID " "({}).".format(entry_id, person_id),
             )
 
         except IndexError:
             # catches index out of bound
-            messages.warning(
-                request, "Could not find specified entry #{}".format(entry_id)
-            )
+            messages.warning(request, "Could not find specified entry #{}".format(entry_id))
 
         return redirect(person_bulk_add_confirmation)
 
@@ -544,15 +510,12 @@ def person_bulk_add_match_person(request, entry_id, person_id=None):
             # catches invalid argument for int()
             messages.warning(
                 request,
-                "Invalid entry ID ({}) or person ID "
-                "({}).".format(entry_id, person_id),
+                "Invalid entry ID ({}) or person ID " "({}).".format(entry_id, person_id),
             )
 
         except IndexError:
             # catches index out of bound
-            messages.warning(
-                request, "Could not find specified entry #{}".format(entry_id)
-            )
+            messages.warning(request, "Could not find specified entry #{}".format(entry_id))
 
         return redirect(person_bulk_add_confirmation)
 
@@ -615,18 +578,13 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
     template_name = "workshops/person_edit_form.html"
 
     def test_func(self):
-        if not (
-            self.request.user.has_perm("workshops.change_person")
-            or self.request.user == self.get_object()
-        ):
+        if not (self.request.user.has_perm("workshops.change_person") or self.request.user == self.get_object()):
             raise PermissionDenied
         return True
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        failed_trainings = TrainingProgress.objects.filter(
-            state="f", trainee=self.object
-        ).exists()
+        failed_trainings = TrainingProgress.objects.filter(state="f", trainee=self.object).exists()
         kwargs = {
             "initial": {"person": self.object},
             "widgets": {"person": HiddenInput()},
@@ -634,15 +592,9 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
 
         context.update(
             {
-                "awards": self.object.award_set.select_related(
-                    "event", "badge"
-                ).order_by("badge__name"),
-                "tasks": self.object.task_set.select_related("role", "event").order_by(
-                    "-event__slug"
-                ),
-                "consents": self.object.consent_set.select_related("term").order_by(
-                    "-archived_at"
-                ),
+                "awards": self.object.award_set.select_related("event", "badge").order_by("badge__name"),
+                "tasks": self.object.task_set.select_related("role", "event").order_by("-event__slug"),
+                "consents": self.object.consent_set.select_related("term").order_by("-archived_at"),
                 "consents_form": ActiveTermConsentsForm(
                     form_tag=False,
                     prefix="consents",
@@ -681,9 +633,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
             Qualification.objects.create(person=self.object, lesson=lesson)
         result = super().form_valid(form)
 
-        user_tasks = Task.objects.filter(
-            person=self.object, event__isnull=False
-        ).select_related("event")
+        user_tasks = Task.objects.filter(person=self.object, event__isnull=False).select_related("event")
         for task in user_tasks:
             run_ask_for_website_strategy(
                 ask_for_website_strategy(task.event),
@@ -775,9 +725,7 @@ def person_password(request, person_id):
 
     # Either the user requests change of their own password, or someone with
     # permission for changing person does.
-    if not (
-        (request.user == user) or (request.user.has_perm("workshops.change_person"))
-    ):
+    if not ((request.user == user) or (request.user.has_perm("workshops.change_person"))):
         raise PermissionDenied
 
     Form = PasswordChangeForm
@@ -812,10 +760,8 @@ def person_password(request, person_id):
 
 
 @admin_required
-@permission_required(
-    ["workshops.delete_person", "workshops.change_person"], raise_exception=True
-)
-def persons_merge(request):
+@permission_required(["workshops.delete_person", "workshops.change_person"], raise_exception=True)
+def persons_merge(request: HttpRequest) -> HttpResponse:
     """Display two persons side by side on GET and merge them on POST.
 
     If no persons are supplied via GET params, display person selection
@@ -828,8 +774,9 @@ def persons_merge(request):
             "title": "Merge Persons",
             "form": PersonsSelectionForm(),
         }
-        if "next" in request.GET:
-            return redirect(request.GET.get("next", "/"))
+        next_url = request.GET.get("next")
+        if next_url and safe_url(next_url):
+            return redirect(next_url)
         return render(request, "generic_form.html", context)
 
     elif obj_a_pk == obj_b_pk:
@@ -838,8 +785,9 @@ def persons_merge(request):
             "form": PersonsSelectionForm(),
         }
         messages.warning(request, "You cannot merge the same person with themself.")
-        if "next" in request.GET:
-            return redirect(request.GET.get("next", "/"))
+        next_url = request.GET.get("next")
+        if next_url and safe_url(next_url):
+            return redirect(next_url)
         return render(request, "generic_form.html", context)
 
     obj_a = get_object_or_404(Person, pk=obj_a_pk)
@@ -903,29 +851,19 @@ def persons_merge(request):
             )
 
             try:
-                _, integrity_errors = merge_objects(
-                    obj_a, obj_b, easy, difficult, choices=data, base_a=base_a
-                )
+                _, integrity_errors = merge_objects(obj_a, obj_b, easy, difficult, choices=data, base_a=base_a)
 
                 if integrity_errors:
-                    msg = (
-                        "There were integrity errors when merging related "
-                        "objects:\n"
-                        "\n".join(integrity_errors)
-                    )
+                    msg = "There were integrity errors when merging related " "objects:\n" "\n".join(integrity_errors)
                     messages.warning(request, msg)
 
             except ProtectedError as e:
-                return failed_to_delete(
-                    request, object=merging_obj, protected_objects=e.protected_objects
-                )
+                return failed_to_delete(request, object=merging_obj, protected_objects=e.protected_objects)
 
             else:
                 messages.success(
                     request,
-                    "Persons were merged successfully. "
-                    "You were redirected to the base "
-                    "person.",
+                    "Persons were merged successfully. " "You were redirected to the base " "person.",
                 )
                 persons_merged_signal.send(
                     sender=base_obj,
@@ -945,15 +883,11 @@ def persons_merge(request):
         "obj_b": obj_b,
         "obj_a_consents": {
             consent.term.key: consent
-            for consent in Consent.objects.active()
-            .select_related("term", "term_option")
-            .filter(person=obj_a)
+            for consent in Consent.objects.active().select_related("term", "term_option").filter(person=obj_a)
         },
         "obj_b_consents": {
             consent.term.key: consent
-            for consent in Consent.objects.active()
-            .select_related("term", "term_option")
-            .filter(person=obj_b)
+            for consent in Consent.objects.active().select_related("term", "term_option").filter(person=obj_b)
         },
     }
     return render(request, "workshops/persons_merge.html", context)
@@ -967,29 +901,24 @@ def sync_usersocialauth(request, person_id):
     except Person.DoesNotExist:
         messages.error(
             request,
-            "Cannot sync UserSocialAuth table for person #{} "
-            "-- there is no Person with such id.".format(person_id),
+            "Cannot sync UserSocialAuth table for person #{} " "-- there is no Person with such id.".format(person_id),
         )
         return redirect(reverse("persons"))
     else:
         try:
             result = person.synchronize_usersocialauth()
             if result:
-                messages.success(
-                    request, "Social account was successfully synchronized."
-                )
+                messages.success(request, "Social account was successfully synchronized.")
             else:
                 messages.error(
                     request,
-                    "It was not possible to synchronize this person "
-                    "with their social account.",
+                    "It was not possible to synchronize this person " "with their social account.",
                 )
 
         except GithubException:
             messages.error(
                 request,
-                "Cannot sync UserSocialAuth table for person #{} "
-                "due to errors with GitHub API.".format(person_id),
+                "Cannot sync UserSocialAuth table for person #{} " "due to errors with GitHub API.".format(person_id),
             )
 
         return redirect(reverse("person_details", args=(person_id,)))
@@ -1144,11 +1073,7 @@ def validate_event(request, slug):
         error_messages.append(f"URL error: {e.msg}")
 
     except requests.exceptions.HTTPError as e:
-        error_messages.append(
-            'Request for "{0}" returned status code {1}'.format(
-                page_url, e.response.status_code
-            )
-        )
+        error_messages.append('Request for "{0}" returned status code {1}'.format(page_url, e.response.status_code))
 
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
         error_messages.append("Network connection error.")
@@ -1217,9 +1142,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
                     Prefetch(
                         "person__consent_set",
                         to_attr="active_consents",
-                        queryset=Consent.objects.active().select_related(
-                            "term", "term_option"
-                        ),
+                        queryset=Consent.objects.active().select_related("term", "term_option"),
                     ),
                 )
                 .order_by("role__name"),
@@ -1308,7 +1231,7 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
 
 
 @admin_required
-def event_import(request):
+def event_import(request: HttpRequest) -> HttpResponse:
     """Read metadata from remote URL and return them as JSON.
 
     This is used to read metadata from workshop website and then fill up fields
@@ -1317,17 +1240,14 @@ def event_import(request):
     url = request.GET.get("url", "").strip()
 
     try:
-        metadata = fetch_workshop_metadata(url)
+        metadata_dict = fetch_workshop_metadata(url)
         # normalize the metadata
-        metadata = parse_workshop_metadata(metadata)
+        metadata = parse_workshop_metadata(metadata_dict)
         return JsonResponse(metadata)
 
     except requests.exceptions.HTTPError as e:
-        return HttpResponseBadRequest(
-            'Request for "{0}" returned status code {1}.'.format(
-                url, e.response.status_code
-            )
-        )
+        escaped_url = escape(url)
+        return HttpResponseBadRequest(f'Request for "{escaped_url}" returned status code {e.response.status_code}.')
 
     except requests.exceptions.RequestException:
         return HttpResponseBadRequest("Network connection error.")
@@ -1347,9 +1267,7 @@ class EventAssign(OnlyForAdminsMixin, AssignView):
 
 
 @admin_required
-@permission_required(
-    ["workshops.delete_event", "workshops.change_event"], raise_exception=True
-)
+@permission_required(["workshops.delete_event", "workshops.change_event"], raise_exception=True)
 def events_merge(request):
     """Display two events side by side on GET and merge them on POST.
 
@@ -1421,29 +1339,19 @@ def events_merge(request):
             difficult = ("tags", "task_set")
 
             try:
-                _, integrity_errors = merge_objects(
-                    obj_a, obj_b, easy, difficult, choices=data, base_a=base_a
-                )
+                _, integrity_errors = merge_objects(obj_a, obj_b, easy, difficult, choices=data, base_a=base_a)
 
                 if integrity_errors:
-                    msg = (
-                        "There were integrity errors when merging related "
-                        "objects:\n"
-                        "\n".join(integrity_errors)
-                    )
+                    msg = "There were integrity errors when merging related " "objects:\n" "\n".join(integrity_errors)
                     messages.warning(request, msg)
 
             except ProtectedError as e:
-                return failed_to_delete(
-                    request, object=merging_obj, protected_objects=e.protected_objects
-                )
+                return failed_to_delete(request, object=merging_obj, protected_objects=e.protected_objects)
 
             else:
                 messages.success(
                     request,
-                    "Events were merged successfully. "
-                    "You were redirected to the base "
-                    "event.",
+                    "Events were merged successfully. " "You were redirected to the base " "event.",
                 )
                 return redirect(base_obj.get_absolute_url())
         else:
@@ -1679,11 +1587,7 @@ class TaskCreate(
 
             today = datetime.date.today()
             # check if membership is active
-            if not (
-                seat_membership.agreement_start
-                <= today
-                <= seat_membership.agreement_end
-            ):
+            if not (seat_membership.agreement_start <= today <= seat_membership.agreement_end):
                 messages.warning(
                     self.request,
                     f'Membership "{seat_membership}" is not active.',
@@ -1959,18 +1863,11 @@ class MockAwardCreate(
                     url="",
                 )
                 for config in community_role_configs
-                if not CommunityRoleForm.find_concurrent_roles(
-                    config, person, start_date
-                )
+                if not CommunityRoleForm.find_concurrent_roles(config, person, start_date)
             ]
-            logger.debug(
-                f"Automatically creating community roles set up for badge {badge}"
-            )
+            logger.debug(f"Automatically creating community roles set up for badge {badge}")
             roles_result = CommunityRole.objects.bulk_create(roles)
-            logger.debug(
-                f"Created {len(roles_result)} Community Roles for badge {badge} and "
-                f"person {person}"
-            )
+            logger.debug(f"Created {len(roles_result)} Community Roles for badge {badge} and " f"person {person}")
 
         run_instructor_badge_awarded_strategy(
             instructor_badge_awarded_strategy(self.object, self.object.person),
@@ -1993,15 +1890,9 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
     object: Award
 
     def back_address(self) -> Optional[str]:
-        fallback_url = reverse(
-            "person_edit", args=[self.get_object().person.id]  # type: ignore
-        )
+        fallback_url = reverse("person_edit", args=[self.get_object().person.id])
         referrer = self.request.headers.get("Referer", fallback_url)
-        return (
-            referrer
-            if url_has_allowed_host_and_scheme(referrer, settings.ALLOWED_HOSTS)
-            else fallback_url
-        )
+        return safe_next_or_default_url(referrer, fallback_url)
 
     def before_delete(self, *args, **kwargs):
         """Save for use in `after_delete` method."""
@@ -2063,15 +1954,11 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         context["title"] = "Badge {0}".format(self.object)
         filter = BadgeAwardsFilter(
             self.request.GET,
-            queryset=self.object.award_set.select_related(
-                "event", "person", "badge"
-            ).prefetch_related(
+            queryset=self.object.award_set.select_related("event", "person", "badge").prefetch_related(
                 Prefetch(
                     "person__consent_set",
                     to_attr="active_consents",
-                    queryset=Consent.objects.active().select_related(
-                        "term", "term_option"
-                    ),
+                    queryset=Consent.objects.active().select_related("term", "term_option"),
                 ),
             ),
         )
@@ -2101,9 +1988,7 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
         .exclude(person__badges__in=instructor_badges)
     )
 
-    active_instructor_community_roles = CommunityRole.objects.active().filter(
-        config__name="instructor"
-    )
+    active_instructor_community_roles = CommunityRole.objects.active().filter(config__name="instructor")
 
     # we need to count number of specific roles users had
     # and if they are instructors
@@ -2137,12 +2022,10 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
 
     if lat and lng:
         # using Euclidean distance just because it's faster and easier
-        complex_F = (F("airport__latitude") - lat) ** 2 + (
-            F("airport__longitude") - lng
-        ) ** 2
-        people = people.annotate(
-            distance=ExpressionWrapper(complex_F, output_field=FloatField())
-        ).order_by("distance", "family")
+        complex_F = (F("airport__latitude") - lat) ** 2 + (F("airport__longitude") - lng) ** 2
+        people = people.annotate(distance=ExpressionWrapper(complex_F, output_field=FloatField())).order_by(
+            "distance", "family"
+        )
 
     return people
 
@@ -2266,9 +2149,7 @@ def object_changes(request, version_id):
 
     # retrieve previous version
     try:
-        previous_version = Version.objects.get_for_object(obj).filter(
-            pk__lt=current_version.pk
-        )[0]
+        previous_version = Version.objects.get_for_object(obj).filter(pk__lt=current_version.pk)[0]
     except IndexError:
         # first revision for an object
         previous_version = current_version
@@ -2287,9 +2168,7 @@ def object_changes(request, version_id):
     # get action list
     action_list = [
         {"version": version, "revision": version.revision}
-        for version in _order(
-            Version.objects.get_for_object(obj).select_related("revision__user")
-        )
+        for version in _order(Version.objects.get_for_object(obj).select_related("revision__user"))
     ]
 
     if len(action_list) >= 2:

@@ -16,9 +16,7 @@ from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 class TestHostInstructorsIntroductionStrategy(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -36,18 +34,12 @@ class TestHostInstructorsIntroductionStrategy(TestCase):
             personal="Test", family="Test", email="test2@example.org", username="test2"
         )
         self.host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test3@example.org", username="test3"
-        )
+        self.host = Person.objects.create(personal="Test", family="Test", email="test3@example.org", username="test3")
 
     def test_strategy_create(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
+        Task.objects.create(event=self.event, person=self.instructor2, role=self.instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
 
         # Act
@@ -58,12 +50,8 @@ class TestHostInstructorsIntroductionStrategy(TestCase):
 
     def test_strategy_update(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
+        Task.objects.create(event=self.event, person=self.instructor2, role=self.instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -92,12 +80,8 @@ class TestHostInstructorsIntroductionStrategy(TestCase):
 
     def test_strategy_remove(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=self.instructor_role
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=self.instructor_role)
+        Task.objects.create(event=self.event, person=self.instructor2, role=self.instructor_role)
         # Host Task intentionally not created
         # Task.objects.create(
         #     event=self.event, person=self.host, role=self.host_role
@@ -136,8 +120,7 @@ class TestHostInstructorsIntroductionStrategy(TestCase):
 
 class TestRunHostInstructorsIntroductionStrategy(TestCase):
     @patch(
-        "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_signal",
+        "emails.actions.host_instructors_introduction." "host_instructors_introduction_signal",
     )
     def test_strategy_calls_create_signal(
         self,
@@ -159,8 +142,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
         )
 
     @patch(
-        "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_update_signal",
+        "emails.actions.host_instructors_introduction." "host_instructors_introduction_update_signal",
     )
     def test_strategy_calls_update_signal(
         self,
@@ -182,8 +164,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
         )
 
     @patch(
-        "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_cancel_signal",
+        "emails.actions.host_instructors_introduction." "host_instructors_introduction_cancel_signal",
     )
     def test_strategy_calls_cancel_signal(
         self,
@@ -206,16 +187,13 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
 
     @patch("emails.actions.base_strategy.logger")
     @patch(
-        "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_signal",
+        "emails.actions.host_instructors_introduction." "host_instructors_introduction_signal",
     )
     @patch(
-        "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_update_signal",
+        "emails.actions.host_instructors_introduction." "host_instructors_introduction_update_signal",
     )
     @patch(
-        "emails.actions.host_instructors_introduction."
-        "host_instructors_introduction_cancel_signal",
+        "emails.actions.host_instructors_introduction." "host_instructors_introduction_cancel_signal",
     )
     def test_invalid_strategy_no_signal_called(
         self,
@@ -236,9 +214,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
         mock_host_instructors_introduction_signal.send.assert_not_called()
         mock_host_instructors_introduction_update_signal.send.assert_not_called()
         mock_host_instructors_introduction_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {event} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {event} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -247,7 +223,5 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
         event = Event(start=datetime.today())
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_host_instructors_introduction_strategy(strategy, request, event)
