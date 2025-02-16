@@ -63,9 +63,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     # email would be de-scheduled.
     # UPDATE 2025-02-15 (#2761):
     #      We're allowing scheduling only for bronze, silver, gold or platinum variants.
-    email_should_exist = bool(
-        membership.pk and task_count and membership_acceptable_variant
-    )
+    email_should_exist = bool(membership.pk and task_count and membership_acceptable_variant)
 
     if not email_exists and email_should_exist:
         result = StrategyEnum.CREATE
