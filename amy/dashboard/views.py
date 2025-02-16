@@ -16,7 +16,7 @@ from django.db.models import (
     When,
 )
 from django.forms.widgets import HiddenInput
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
@@ -561,7 +561,7 @@ class ResignFromRecruitment(
 
 @require_GET
 @admin_required
-def search(request):
+def search(request: HttpRequest) -> HttpResponse:
     """Search the database by term."""
 
     def multiple_Q_icontains(term: str, *args: str) -> Q:
@@ -614,7 +614,10 @@ def search(request):
 
             persons = (
                 Person.objects.annotate(search=SearchVector("personal", "middle", "family"))
-                .filter(Q(search=term) | multiple_Q_icontains(term, "email", "secondary_email", "github"))
+                .filter(
+                    Q(search=term)
+                    | multiple_Q_icontains(term, "personal", "middle", "family", "email", "secondary_email", "github")
+                )
                 .order_by("family")
             )
             results_combined += list(persons)
@@ -628,6 +631,9 @@ def search(request):
                     Q(search=term)
                     | multiple_Q_icontains(
                         term,
+                        "personal",
+                        "middle",
+                        "family",
                         "member_code",
                         "email",
                         "secondary_email",
