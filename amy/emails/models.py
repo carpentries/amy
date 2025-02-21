@@ -1,3 +1,4 @@
+from typing import Any
 import uuid
 
 from django.conf import settings
@@ -74,11 +75,11 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return engines[name or settings.EMAIL_TEMPLATE_ENGINE_BACKEND]
 
     @staticmethod
-    def render_template(engine: BaseEngine, template: str, context: dict) -> str:
+    def render_template(engine: BaseEngine, template: str, context: dict[str, Any]) -> str:
         tpl = engine.from_string(template)
         return tpl.render(context)
 
-    def validate_template(self, engine: BaseEngine, template: str, context: dict | None = None) -> bool:
+    def validate_template(self, engine: BaseEngine, template: str, context: dict[str, Any] | None = None) -> bool:
         try:
             self.render_template(engine, template, context or dict())
         except (DjangoTemplateSyntaxError, JinjaTemplateSyntaxError) as exp:
