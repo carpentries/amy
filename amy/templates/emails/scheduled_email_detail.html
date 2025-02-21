@@ -161,6 +161,20 @@
     </td>
   </tr>
   <tr>
+    <th>Attachments:</th>
+    <td colspan="2">
+      {% if scheduled_email.attachments %}
+      <ul>
+        {% for attachment in scheduled_email.attachments.all %}
+        {% comment %} TODO: construct actual link {% endcomment %}
+        <li><a href="" target="_blank">{{ attachment }} <i class="fas fa-external-link-alt"></i></a></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      No attachments.
+      {% endif %}
+    </td>
+  <tr>
     <th width="20%">ID:</th>
     <td colspan="2">{{ scheduled_email.id }}</td>
   </tr>

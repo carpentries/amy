@@ -45,6 +45,7 @@ env = environ.Env(
         "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
     ),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
+    AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME=(str, "carpentries-amy-email-attachments-staging"),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -71,9 +72,9 @@ USE_TZ = True
 FORMAT_MODULE_PATH = "amy.formats"
 # Secret key must be kept secret
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
-SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)  # type: ignore
+SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)
 if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
-    raise ImproperlyConfigured("You must specify non-default value for " "SECRET_KEY when running with Debug=FALSE.")
+    raise ImproperlyConfigured("You must specify non-default value for SECRET_KEY when running with Debug=FALSE.")
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = env("AMY_SITE_ID")
@@ -609,6 +610,7 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRE
 # This module is the next version of Autoemails.
 EMAIL_TEMPLATE_ENGINE_BACKEND = "email_jinja2_backend"
 EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed attempts
+EMAIL_ATTACHMENTS_BUCKET_NAME = env("AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME")
 
 # Reports
 # -----------------------------------------------------------------------------

@@ -255,3 +255,24 @@ class ScheduledEmailLog(CreatedMixin, models.Model):
 
     def __str__(self) -> str:
         return f"[{self.state_before}->{self.state_after}]: {self.details}"
+
+
+class Attachment(CreatedUpdatedMixin, models.Model):
+    # ID needed separately as we're using UUIDs for PKs in this module
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    email = models.ForeignKey(ScheduledEmail, on_delete=models.PROTECT, related_name="attachments")
+
+    filename = models.CharField(max_length=200, blank=False, null=False)
+    s3_path = models.CharField(
+        max_length=200,
+        blank=False,
+        null=False,
+        help_text="Path inside the bucket",
+    )
+
+    # Optional bucket name; by default all attachments should be placed in the same bucket.
+    s3_bucket = models.CharField(max_length=200, blank=True, null=False)
+
+    def __str__(self) -> str:
+        return f"{self.filename} ({self.s3_bucket}/{self.s3_path})"

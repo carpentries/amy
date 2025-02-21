@@ -3,7 +3,7 @@ from typing import TypeVar, cast
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
 
-from emails.models import MAX_LENGTH, EmailTemplate, ScheduledEmail
+from emails.models import MAX_LENGTH, Attachment, EmailTemplate, ScheduledEmail
 from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
@@ -259,12 +259,24 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
         )
 
 
+class AttachmentSerializer(serializers.ModelSerializer[Attachment]):
+    class Meta:
+        model = Attachment
+        fields = (
+            "pk",
+            "filename",
+            "s3_path",
+            "s3_bucket",
+        )
+
+
 class ScheduledEmailSerializer(serializers.ModelSerializer[ScheduledEmail]):
     template = serializers.SlugRelatedField[EmailTemplate](read_only=True, slug_field="name")
     generic_relation_content_type = serializers.SlugRelatedField[ContentType](
         read_only=True, slug_field="app_labeled_name"
     )
     state_verbose = serializers.CharField(source="get_state_display")
+    attachments = AttachmentSerializer(many=True)
 
     class Meta:
         model = ScheduledEmail
@@ -285,6 +297,7 @@ class ScheduledEmailSerializer(serializers.ModelSerializer[ScheduledEmail]):
             "template",
             "generic_relation_content_type",
             "generic_relation_pk",
+            "attachments",
             "created_at",
             "last_updated_at",
         )
