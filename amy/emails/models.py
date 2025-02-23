@@ -263,7 +263,7 @@ class Attachment(CreatedUpdatedMixin, models.Model):
 
     email = models.ForeignKey(ScheduledEmail, on_delete=models.PROTECT, related_name="attachments")
 
-    filename = models.CharField(max_length=200, blank=False, null=False)
+    filename = models.CharField(max_length=200, blank=True, null=False)
     s3_path = models.CharField(
         max_length=200,
         blank=False,

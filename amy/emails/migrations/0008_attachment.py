@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_updated_at', models.DateTimeField(auto_now=True, null=True)),
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('filename', models.CharField(max_length=200)),
+                ('filename', models.CharField(max_length=200, blank=True)),
                 ('s3_path', models.CharField(help_text='Path inside the bucket', max_length=200)),
                 ('s3_bucket', models.CharField(blank=True, max_length=200)),
                 (
