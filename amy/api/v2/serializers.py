@@ -259,7 +259,7 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
         )
 
 
-class AttachmentSerializer(serializers.ModelSerializer[Attachment]):
+class InlineAttachmentSerializer(serializers.ModelSerializer[Attachment]):
     class Meta:
         model = Attachment
         fields = (
@@ -276,7 +276,7 @@ class ScheduledEmailSerializer(serializers.ModelSerializer[ScheduledEmail]):
         read_only=True, slug_field="app_labeled_name"
     )
     state_verbose = serializers.CharField(source="get_state_display")
-    attachments = AttachmentSerializer(many=True)
+    attachments = InlineAttachmentSerializer(many=True)
 
     class Meta:
         model = ScheduledEmail
@@ -305,6 +305,24 @@ class ScheduledEmailSerializer(serializers.ModelSerializer[ScheduledEmail]):
 
 class ScheduledEmailLogDetailsSerializer(serializers.Serializer[_IN]):
     details = serializers.CharField(max_length=MAX_LENGTH)
+
+
+class AttachmentSerializer(serializers.ModelSerializer[Attachment]):
+    class Meta:
+        model = Attachment
+        fields = (
+            "pk",
+            "email",
+            "filename",
+            "s3_path",
+            "s3_bucket",
+            "presigned_url",
+            "presigned_url_expiration",
+        )
+
+
+class AttachmentPresignedUrlPayloadSerializer(serializers.Serializer[_IN]):
+    expiration_seconds = serializers.IntegerField(default=3600)
 
 
 class TaskSerializer(serializers.ModelSerializer[Task]):

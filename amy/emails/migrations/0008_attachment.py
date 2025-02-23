@@ -30,6 +30,8 @@ class Migration(migrations.Migration):
                         to='emails.scheduledemail',
                     ),
                 ),
+                ('presigned_url', models.URLField(max_length=5000, blank=True, default='')),
+                ('presigned_url_expiration', models.DateTimeField(null=True)),
             ],
             options={
                 'abstract': False,

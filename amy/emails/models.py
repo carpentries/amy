@@ -11,6 +11,7 @@ from django.template import TemplateSyntaxError as DjangoTemplateSyntaxError
 from django.template import engines
 from django.template.backends.base import BaseEngine
 from django.urls import reverse
+from django.utils.timezone import now
 import jinja2
 from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 from reversion import revisions as reversion
@@ -274,5 +275,14 @@ class Attachment(CreatedUpdatedMixin, models.Model):
     # Optional bucket name; by default all attachments should be placed in the same bucket.
     s3_bucket = models.CharField(max_length=200, blank=True, null=False)
 
+    presigned_url = models.CharField(max_length=5000, blank=True, null=False, default="")
+    presigned_url_expiration = models.DateTimeField(null=True)
+
     def __str__(self) -> str:
         return f"{self.filename} ({self.s3_bucket}/{self.s3_path})"
+
+    def expired_presigned_url(self) -> bool:
+        if self.presigned_url_expiration is None:
+            return True
+
+        return now() >= self.presigned_url_expiration

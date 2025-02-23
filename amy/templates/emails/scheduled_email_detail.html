@@ -1,6 +1,7 @@
 {% extends "base_nav.html" %}
 {% load emails %}
 {% load pprint %}
+{% load static %}
 
 {% block title %}
 <h1>
@@ -166,8 +167,14 @@
       {% if scheduled_email.attachments.all %}
       <ul>
         {% for attachment in scheduled_email.attachments.all %}
-        {% comment %} TODO: construct actual link {% endcomment %}
-        <li><a href="" target="_blank">{{ attachment }} <i class="fas fa-external-link-alt"></i></a></li>
+        <li>
+          {{ attachment.filename }}
+          {% if attachment.expired_presigned_url %}
+            ({{ attachment.s3_path }}) <button class="btn btn-sm btn-secondary" onclick="generatePresignedUrl('{{attachment.pk}}')">Generate download URL</button>
+          {% else %}
+            (<a href="{{ attachment.presigned_url }}">{{ attachment.s3_path }} <i class="fas fa-external-link-alt"></i></a>)
+          {% endif %}
+        </li>
         {% endfor %}
       </ul>
       {% else %}
@@ -230,4 +237,8 @@
   </tbody>
 </table>
 
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{% static 'attachment_generate_presigned_url.js' %}"></script>
 {% endblock %}

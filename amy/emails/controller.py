@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 import logging
 from uuid import UUID, uuid4
@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 import boto3
 from django.conf import settings
 from django.db.models import Model
+from django.utils.timezone import now
 import jinja2
 
 from emails.models import (
@@ -251,4 +252,25 @@ class EmailController:
             s3_path=s3_path,
             s3_bucket=bucket_name,
         )
+        return attachment
+
+    @staticmethod
+    def generate_presigned_url_for_attachment(attachment: Attachment, expiration_seconds: int = 3600) -> Attachment:
+        logging.debug(f"Requesting presigned URL for attachment: {attachment}")
+
+        expiration = now() + timedelta(seconds=expiration_seconds)
+        response = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": attachment.s3_bucket or settings.EMAIL_ATTACHMENTS_BUCKET_NAME,
+                "Key": attachment.s3_path,
+            },
+            ExpiresIn=expiration_seconds,
+        )
+
+        logging.debug(f"Presigned URL {response=}, {expiration=}")
+        attachment.presigned_url = response
+        attachment.presigned_url_expiration = expiration
+        attachment.save()
+
         return attachment

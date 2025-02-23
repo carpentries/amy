@@ -12,6 +12,8 @@ from rest_framework.response import Response
 
 from api.v2.permissions import ApiAccessPermission
 from api.v2.serializers import (
+    AttachmentPresignedUrlPayloadSerializer,
+    AttachmentSerializer,
     AwardSerializer,
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
@@ -26,7 +28,7 @@ from api.v2.serializers import (
     TrainingRequirementSerializer,
 )
 from emails.controller import EmailController
-from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.models import Attachment, ScheduledEmail, ScheduledEmailStatus
 from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
@@ -209,6 +211,34 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet[ScheduledEmail]):
 
         locked_email = EmailController.cancel_email(email, serializer.validated_data["details"], request.user)
         return Response(self.get_serializer(locked_email).data)
+
+
+class AttachmentViewSet(viewsets.ReadOnlyModelViewSet[Attachment]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = Attachment.objects.order_by("created_at").all()
+    serializer_class = AttachmentSerializer
+    pagination_class = StandardResultsSetPagination
+
+    @action(detail=True, methods=["post"])
+    def generate_presigned_url(self, request: Request, pk: str | None = None) -> Response:
+        serializer = AttachmentPresignedUrlPayloadSerializer[dict[str, Any]](data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        attachment = self.get_object()
+        attachment_with_presigned_url = EmailController.generate_presigned_url_for_attachment(
+            attachment,
+            expiration_seconds=serializer.validated_data["expiration_seconds"],
+        )
+        return Response(self.get_serializer(attachment_with_presigned_url).data)
 
 
 class TaskViewSet(viewsets.ReadOnlyModelViewSet[Task]):
