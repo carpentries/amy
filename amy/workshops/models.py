@@ -1,6 +1,7 @@
 from collections import defaultdict
 import datetime
 import re
+from typing import Any
 from urllib.parse import quote
 
 from django.contrib.auth.models import (
@@ -559,7 +560,7 @@ class Airport(models.Model):
 # ------------------------------------------------------------
 
 
-class PersonManager(BaseUserManager):
+class PersonManager(BaseUserManager["Person"]):
     """
     Create users and superusers from command line.
 
@@ -568,7 +569,9 @@ class PersonManager(BaseUserManager):
       $ python manage.py createsuperuser
     """
 
-    def create_user(self, username, personal, family, email, password=None):
+    def create_user(
+        self, username: str, personal: str, family: str, email: str, password: str | None = None
+    ) -> "Person":
         """
         Create and save a normal (not-super) user.
         """
@@ -584,7 +587,7 @@ class PersonManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, personal, family, email, password):
+    def create_superuser(self, username: str, personal: str, family: str, email: str, password: str) -> "Person":
         """
         Create and save a superuser.
         """
@@ -947,7 +950,7 @@ class Person(
         # lowercase the email
         self.email = self.email.lower() if self.email else None
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         # If GitHub username has changed, clear UserSocialAuth table for this
         # person.
         if self.pk is not None:
