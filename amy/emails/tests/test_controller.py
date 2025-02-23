@@ -1,5 +1,7 @@
 from datetime import UTC, datetime, timedelta
 import random
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 from django.conf import settings
 from django.db.models import Model
@@ -10,6 +12,7 @@ from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 
 from emails.controller import EmailController, EmailControllerException
 from emails.models import (
+    Attachment,
     EmailTemplate,
     ScheduledEmail,
     ScheduledEmailLog,
@@ -61,6 +64,17 @@ class TestEmailController(TestCase):
             generic_relation_obj=generic_relation_obj,
             author=author,
         )
+
+    def create_attachment(self, email: ScheduledEmail) -> Attachment:
+        attachment = Attachment.objects.create(
+            email=email,
+            filename="certificate.pdf",
+            s3_path="random/certificate.pdf",
+            s3_bucket="random-bucket",
+            presigned_url="",
+            presigned_url_expiration=None,
+        )
+        return attachment
 
     def test_schedule_email(self) -> None:
         # Arrange
@@ -510,3 +524,56 @@ class TestEmailController(TestCase):
         latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "Email was succeeded 123")
         self.assertEqual(latest_log.author, self.harry)
+
+    def test_s3_file_path(self) -> None:
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+        uuid = uuid4()
+        filename = "certificate.pdf"
+
+        # Act
+        result = EmailController.s3_file_path(scheduled_email, uuid, filename)
+
+        # Assert
+        self.assertEqual(result, f"{scheduled_email.pk}/{uuid}-{filename}")
+
+    @patch("emails.controller.s3_client")
+    def test_add_attachment(self, mock_s3_client: MagicMock) -> None:
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+        filename = "certificate.pdf"
+        content = b"Test"
+
+        # Act
+        attachment = EmailController.add_attachment(scheduled_email, filename, content)
+
+        # Assert
+        self.assertEqual(type(attachment), Attachment)
+        self.assertEqual(attachment.email, scheduled_email)
+        self.assertEqual(attachment.filename, filename)
+        # checking s3_path is pointless as it's composed of a side-effect: `uuid4()`
+
+        mock_s3_client.upload_fileobj.assert_called_once()
+
+    @patch("emails.controller.s3_client")
+    def test_generate_presigned_url_for_attachment(self, mock_s3_client: MagicMock) -> None:
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+        attachment = self.create_attachment(scheduled_email)
+        expiration_seconds = 7200  # 2 hours, different than the default value of 1 hour
+        mock_s3_client.generate_presigned_url.return_value = "fake-url"
+
+        # Act
+        result = EmailController.generate_presigned_url_for_attachment(attachment, expiration_seconds)
+
+        # Assert
+        self.assertEqual(result.pk, attachment.pk)
+        self.assertEqual(result.presigned_url, "fake-url")
+        self.assertIsNotNone(result.presigned_url_expiration)
+        assert result.presigned_url_expiration is not None  # for typing purposes
+        self.assertTrue(
+            abs(result.presigned_url_expiration - timezone.now() - timedelta(hours=2)) < timedelta(minutes=1)
+        )

@@ -546,6 +546,9 @@ LOGGING = {
     },
     "loggers": {
         # disable "Invalid HTTP_HOST" notifications
+        "django.request": {
+            "level": "ERROR",
+        },
         "django.security.DisallowedHost": {
             "handlers": ["null"],
             "propagate": False,
