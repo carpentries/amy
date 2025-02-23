@@ -163,7 +163,7 @@
   <tr>
     <th>Attachments:</th>
     <td colspan="2">
-      {% if scheduled_email.attachments %}
+      {% if scheduled_email.attachments.all %}
       <ul>
         {% for attachment in scheduled_email.attachments.all %}
         {% comment %} TODO: construct actual link {% endcomment %}
@@ -171,8 +171,9 @@
         {% endfor %}
       </ul>
       {% else %}
-      No attachments.
+      <p>No attachments.</p>
       {% endif %}
+      <a href="{% url 'scheduledemail_add_attachment' scheduled_email.id %}" class="btn btn-primary btn-sm">Add attachment</a>
     </td>
   <tr>
     <th width="20%">ID:</th>

@@ -1,10 +1,15 @@
 from datetime import datetime
+from io import BytesIO
+import logging
+from uuid import UUID, uuid4
 
+import boto3
 from django.conf import settings
 from django.db.models import Model
 import jinja2
 
 from emails.models import (
+    Attachment,
     EmailTemplate,
     ScheduledEmail,
     ScheduledEmailLog,
@@ -12,6 +17,9 @@ from emails.models import (
 )
 from emails.schemas import ContextModel, ToHeaderModel
 from workshops.models import Person
+
+s3_client = boto3.client("s3")
+logger = logging.getLogger("amy")
 
 
 class EmailControllerException(Exception):
@@ -218,3 +226,29 @@ class EmailController:
     @staticmethod
     def succeed_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
         return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.SUCCEEDED, details, author)
+
+    @staticmethod
+    def s3_file_path(scheduled_email: ScheduledEmail, filename_uuid: UUID, filename: str) -> str:
+        return f"{scheduled_email.pk}/{filename_uuid}-{filename}"
+
+    @staticmethod
+    def add_attachment(scheduled_email: ScheduledEmail, filename: str, content: bytes) -> Attachment:
+        bucket_name = settings.EMAIL_ATTACHMENTS_BUCKET_NAME
+
+        attachment_uuid = uuid4()
+        s3_path = EmailController.s3_file_path(scheduled_email, attachment_uuid, filename)
+        logging.debug(f"S3 Bucket for attachment upload: {bucket_name}")
+        logging.debug(f"Path for attachment upload: {s3_path}")
+
+        with BytesIO(content) as data:
+            s3_client.upload_fileobj(data, bucket_name, s3_path)
+            logging.info(f"File {s3_path} uploaded to S3 bucket {bucket_name}.")
+
+        attachment = Attachment.objects.create(
+            id=attachment_uuid,
+            email=scheduled_email,
+            filename=filename,
+            s3_path=s3_path,
+            s3_bucket=bucket_name,
+        )
+        return attachment
