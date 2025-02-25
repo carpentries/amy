@@ -1,10 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from io import BytesIO
+import logging
+from uuid import UUID, uuid4
 
+import boto3
 from django.conf import settings
 from django.db.models import Model
+from django.utils.timezone import now
 import jinja2
 
 from emails.models import (
+    Attachment,
     EmailTemplate,
     ScheduledEmail,
     ScheduledEmailLog,
@@ -12,6 +18,9 @@ from emails.models import (
 )
 from emails.schemas import ContextModel, ToHeaderModel
 from workshops.models import Person
+
+s3_client = boto3.client("s3")
+logger = logging.getLogger("amy")
 
 
 class EmailControllerException(Exception):
@@ -218,3 +227,50 @@ class EmailController:
     @staticmethod
     def succeed_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
         return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.SUCCEEDED, details, author)
+
+    @staticmethod
+    def s3_file_path(scheduled_email: ScheduledEmail, filename_uuid: UUID, filename: str) -> str:
+        return f"{scheduled_email.pk}/{filename_uuid}-{filename}"
+
+    @staticmethod
+    def add_attachment(scheduled_email: ScheduledEmail, filename: str, content: bytes) -> Attachment:
+        bucket_name = settings.EMAIL_ATTACHMENTS_BUCKET_NAME
+
+        attachment_uuid = uuid4()
+        s3_path = EmailController.s3_file_path(scheduled_email, attachment_uuid, filename)
+        logger.debug(f"S3 Bucket for attachment upload: {bucket_name}")
+        logger.debug(f"Path for attachment upload: {s3_path}")
+
+        with BytesIO(content) as data:
+            s3_client.upload_fileobj(data, bucket_name, s3_path)
+            logger.info(f"File {s3_path} uploaded to S3 bucket {bucket_name}.")
+
+        attachment = Attachment.objects.create(
+            id=attachment_uuid,
+            email=scheduled_email,
+            filename=filename,
+            s3_path=s3_path,
+            s3_bucket=bucket_name,
+        )
+        return attachment
+
+    @staticmethod
+    def generate_presigned_url_for_attachment(attachment: Attachment, expiration_seconds: int = 3600) -> Attachment:
+        logger.debug(f"Requesting presigned URL for attachment: {attachment}")
+
+        expiration = now() + timedelta(seconds=expiration_seconds)
+        response = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": attachment.s3_bucket or settings.EMAIL_ATTACHMENTS_BUCKET_NAME,
+                "Key": attachment.s3_path,
+            },
+            ExpiresIn=expiration_seconds,
+        )
+
+        logger.debug(f"Presigned URL {response=}, {expiration=}")
+        attachment.presigned_url = response
+        attachment.presigned_url_expiration = expiration
+        attachment.save()
+
+        return attachment

@@ -71,6 +71,11 @@ urlpatterns = [
                     views.ScheduledEmailCancel.as_view(),
                     name="scheduledemail_cancel",
                 ),
+                path(
+                    "add_attachment/",
+                    views.ScheduledEmailAddAttachment.as_view(),
+                    name="scheduledemail_add_attachment",
+                ),
             ]
         ),
     ),

@@ -10,7 +10,7 @@ repos:
 
       - id: flake8
         name: Python Flake8
-        entry: poetry run flake8 --help
+        entry: poetry run flake8
         require_serial: true
         language: system
         types: [python]

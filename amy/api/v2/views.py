@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.utils import timezone
 from knox.auth import TokenAuthentication
 from rest_framework import viewsets
@@ -5,10 +7,13 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from api.v2.permissions import ApiAccessPermission
 from api.v2.serializers import (
+    AttachmentPresignedUrlPayloadSerializer,
+    AttachmentSerializer,
     AwardSerializer,
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
@@ -23,7 +28,7 @@ from api.v2.serializers import (
     TrainingRequirementSerializer,
 )
 from emails.controller import EmailController
-from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.models import Attachment, ScheduledEmail, ScheduledEmailStatus
 from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
@@ -44,7 +49,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 1000
 
 
-class AwardViewSet(viewsets.ReadOnlyModelViewSet):
+class AwardViewSet(viewsets.ReadOnlyModelViewSet[Award]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -58,7 +63,7 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
+class OrganizationViewSet(viewsets.ReadOnlyModelViewSet[Organization]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -72,7 +77,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class EventViewSet(viewsets.ReadOnlyModelViewSet):
+class EventViewSet(viewsets.ReadOnlyModelViewSet[Event]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -91,7 +96,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
+class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet[InstructorRecruitmentSignup]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -109,7 +114,7 @@ class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class MembershipViewSet(viewsets.ReadOnlyModelViewSet):
+class MembershipViewSet(viewsets.ReadOnlyModelViewSet[Membership]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -123,7 +128,7 @@ class MembershipViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class PersonViewSet(viewsets.ReadOnlyModelViewSet):
+class PersonViewSet(viewsets.ReadOnlyModelViewSet[Person]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -137,7 +142,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
+class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet[ScheduledEmail]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -153,7 +158,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
     @action(detail=False)
-    def scheduled_to_run(self, request):
+    def scheduled_to_run(self, request: Request) -> Response:
         now = timezone.now()
         scheduled_emails = ScheduledEmail.objects.filter(
             state__in=[ScheduledEmailStatus.SCHEDULED, ScheduledEmailStatus.FAILED],
@@ -169,15 +174,15 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
-    def lock(self, request, pk=None):
+    def lock(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
         locked_email = EmailController.lock_email(email, "State changed by worker", request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def fail(self, request, pk=None):
+    def fail(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
-        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+        serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
@@ -186,9 +191,9 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def succeed(self, request, pk=None):
+    def succeed(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
-        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+        serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
@@ -197,9 +202,9 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def cancel(self, request, pk=None):
+    def cancel(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
-        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+        serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
@@ -208,7 +213,35 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(self.get_serializer(locked_email).data)
 
 
-class TaskViewSet(viewsets.ReadOnlyModelViewSet):
+class AttachmentViewSet(viewsets.ReadOnlyModelViewSet[Attachment]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = Attachment.objects.order_by("created_at").all()
+    serializer_class = AttachmentSerializer
+    pagination_class = StandardResultsSetPagination
+
+    @action(detail=True, methods=["post"])
+    def generate_presigned_url(self, request: Request, pk: str | None = None) -> Response:
+        serializer = AttachmentPresignedUrlPayloadSerializer[dict[str, Any]](data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        attachment = self.get_object()
+        attachment_with_presigned_url = EmailController.generate_presigned_url_for_attachment(
+            attachment,
+            expiration_seconds=serializer.validated_data["expiration_seconds"],
+        )
+        return Response(self.get_serializer(attachment_with_presigned_url).data)
+
+
+class TaskViewSet(viewsets.ReadOnlyModelViewSet[Task]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -222,7 +255,7 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
+class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet[TrainingProgress]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -240,7 +273,7 @@ class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet):
+class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet[TrainingRequirement]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -254,7 +287,7 @@ class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class SelfOrganisedSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
+class SelfOrganisedSubmissionViewSet(viewsets.ReadOnlyModelViewSet[SelfOrganisedSubmission]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,

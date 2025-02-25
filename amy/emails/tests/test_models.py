@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from emails.models import (
+    Attachment,
     EmailTemplate,
     ScheduledEmail,
     ScheduledEmailLog,
@@ -104,10 +105,8 @@ class TestEmailTemplate(TestCase):
             subject="Hello World!",
             body="Hi **Everyone**!",
         )
-        # Act
-        result = template.clean()
-        # Assert
-        self.assertIsNone(result)
+        # Act & Assert
+        template.clean()
 
     def test_object_create(self) -> None:
         # Act
@@ -255,3 +254,53 @@ class TestScheduledEmailLog(TestCase):
         self.assertIsNotNone(log.id)  # `id` should be UUID
         self.assertIsNone(log.state_before)
         self.assertEqual(str(log), "[None->scheduled]: Preparing scheduled email")
+
+
+class TestAttachment(TestCase):
+    def test_expired_presigned_url__no_url(self) -> None:
+        # Arrange
+        email = ScheduledEmail()
+        attachment = Attachment(
+            email=email,
+            filename="certificate.pdf",
+            s3_path="random/certificate.pdf",
+            s3_bucket="",
+            presigned_url="",
+            presigned_url_expiration=None,
+        )
+        # Act
+        result = attachment.expired_presigned_url()
+        # Assert
+        self.assertTrue(result)
+
+    def test_expired_presigned_url__past(self) -> None:
+        # Arrange
+        email = ScheduledEmail()
+        attachment = Attachment(
+            email=email,
+            filename="certificate.pdf",
+            s3_path="random/certificate.pdf",
+            s3_bucket="",
+            presigned_url="http://example.com/",
+            presigned_url_expiration=timezone.now() - timedelta(minutes=1),
+        )
+        # Act
+        result = attachment.expired_presigned_url()
+        # Assert
+        self.assertTrue(result)
+
+    def test_expired_presigned_url__future(self) -> None:
+        # Arrange
+        email = ScheduledEmail()
+        attachment = Attachment(
+            email=email,
+            filename="certificate.pdf",
+            s3_path="random/certificate.pdf",
+            s3_bucket="",
+            presigned_url="http://example.com/",
+            presigned_url_expiration=timezone.now() + timedelta(minutes=1),
+        )
+        # Act
+        result = attachment.expired_presigned_url()
+        # Assert
+        self.assertFalse(result)

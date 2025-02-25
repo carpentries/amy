@@ -101,3 +101,9 @@ class ScheduledEmailRescheduleForm(forms.Form):
 class ScheduledEmailCancelForm(forms.Form):
     confirm = forms.CharField(required=False)
     decline = forms.CharField(required=False)
+
+
+class ScheduledEmailAddAttachmentForm(forms.Form):
+    file = forms.FileField(required=True)
+
+    helper = BootstrapHelper(submit_label="Add file")

@@ -14,17 +14,17 @@ from workshops.mixins import CreatedUpdatedArchivedMixin
 from workshops.models import STR_LONG, STR_MED, Person, TrainingRequest
 
 
-class TermQuerySet(QuerySet):
-    def active(self):
+class TermQuerySet(QuerySet["Term"]):
+    def active(self) -> "TermQuerySet":
         return self.filter(archived_at=None)
 
-    def prefetch_active_options(self):
+    def prefetch_active_options(self) -> "TermQuerySet":
         return self._prefetch_options(TermOption.objects.active(), "active_options")
 
-    def prefetch_all_options(self):
+    def prefetch_all_options(self) -> "TermQuerySet":
         return self._prefetch_options(TermOption.objects.all(), "all_options")
 
-    def _prefetch_options(self, options_queryset, attr_name: str):
+    def _prefetch_options(self, options_queryset: QuerySet["TermOption"], attr_name: str) -> "TermQuerySet":
         return self.prefetch_related(
             Prefetch(
                 "termoption_set",
@@ -34,12 +34,12 @@ class TermQuerySet(QuerySet):
         )
 
 
-class TermManager(Manager):
+class TermManager(Manager["Term"]):
     def filter_by_key(self, key: str) -> QuerySet["Term"]:
         slug = Term.key_to_slug(key)
         return self.get_queryset().filter(slug=slug)
 
-    def get_by_key(self, key: str) -> QuerySet["Term"]:
+    def get_by_key(self, key: str) -> "Term":
         slug = Term.key_to_slug(key)
         return self.get_queryset().get(slug=slug)
 
@@ -126,8 +126,8 @@ class Term(CreatedUpdatedArchivedMixin, models.Model):
             )
 
 
-class TermOptionQuerySet(QuerySet):
-    def active(self):
+class TermOptionQuerySet(QuerySet["TermOption"]):
+    def active(self) -> "TermOptionQuerySet":
         return self.filter(archived_at=None)
 
     def get_agree_term_option(self) -> "TermOption":
@@ -148,7 +148,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     content = models.TextField(verbose_name="Content", blank=True)
     objects = Manager.from_queryset(TermOptionQuerySet)()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.content} ({self.option_type})"
 
     def archive(self) -> None:
@@ -212,8 +212,8 @@ class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
         return self.archived_at is None
 
 
-class ConsentQuerySet(QuerySet):
-    def active(self):
+class ConsentQuerySet(QuerySet["Consent"]):
+    def active(self) -> "ConsentQuerySet":
         return self.filter(archived_at=None)
 
 
