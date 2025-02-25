@@ -238,12 +238,12 @@ class EmailController:
 
         attachment_uuid = uuid4()
         s3_path = EmailController.s3_file_path(scheduled_email, attachment_uuid, filename)
-        logging.debug(f"S3 Bucket for attachment upload: {bucket_name}")
-        logging.debug(f"Path for attachment upload: {s3_path}")
+        logger.debug(f"S3 Bucket for attachment upload: {bucket_name}")
+        logger.debug(f"Path for attachment upload: {s3_path}")
 
         with BytesIO(content) as data:
             s3_client.upload_fileobj(data, bucket_name, s3_path)
-            logging.info(f"File {s3_path} uploaded to S3 bucket {bucket_name}.")
+            logger.info(f"File {s3_path} uploaded to S3 bucket {bucket_name}.")
 
         attachment = Attachment.objects.create(
             id=attachment_uuid,
@@ -256,7 +256,7 @@ class EmailController:
 
     @staticmethod
     def generate_presigned_url_for_attachment(attachment: Attachment, expiration_seconds: int = 3600) -> Attachment:
-        logging.debug(f"Requesting presigned URL for attachment: {attachment}")
+        logger.debug(f"Requesting presigned URL for attachment: {attachment}")
 
         expiration = now() + timedelta(seconds=expiration_seconds)
         response = s3_client.generate_presigned_url(
@@ -268,7 +268,7 @@ class EmailController:
             ExpiresIn=expiration_seconds,
         )
 
-        logging.debug(f"Presigned URL {response=}, {expiration=}")
+        logger.debug(f"Presigned URL {response=}, {expiration=}")
         attachment.presigned_url = response
         attachment.presigned_url_expiration = expiration
         attachment.save()
