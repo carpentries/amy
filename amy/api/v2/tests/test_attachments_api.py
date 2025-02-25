@@ -1,5 +1,6 @@
 from datetime import datetime
 from functools import partial
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from django.db.models import Model
@@ -86,12 +87,14 @@ class TestAttachmentsAPI(SuperuserMixin, TestCase):
         # Assert
         self.assertEqual(response.status_code, 401)
 
-    def test_generate_presigned_url__no_payload(self) -> None:
+    @patch("emails.controller.s3_client.generate_presigned_url")
+    def test_generate_presigned_url__no_payload(self, mock_generate_presigned_url: MagicMock) -> None:
         # Arrange
         now = timezone.now()
         scheduled_email = self.create_scheduled_email(now)
         attachment = self.create_attachment(scheduled_email)
         self._logSuperuserIn()
+        mock_generate_presigned_url.return_value = "TestPresignedUrl"
 
         # Act
         response = self.client.post(self.url(args=[attachment.pk]))
@@ -117,12 +120,14 @@ class TestAttachmentsAPI(SuperuserMixin, TestCase):
         # Assert
         self.assertEqual(response.status_code, 400)
 
-    def test_generate_presigned_url__empty_payload(self) -> None:
+    @patch("emails.controller.s3_client.generate_presigned_url")
+    def test_generate_presigned_url__empty_payload(self, mock_generate_presigned_url: MagicMock) -> None:
         # Arrange
         now = timezone.now()
         scheduled_email = self.create_scheduled_email(now)
         attachment = self.create_attachment(scheduled_email)
         self._logSuperuserIn()
+        mock_generate_presigned_url.return_value = "TestPresignedUrl"
 
         # Act
         response = self.client.post(self.url(args=[attachment.pk]))
@@ -130,12 +135,14 @@ class TestAttachmentsAPI(SuperuserMixin, TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
 
-    def test_generate_presigned_url__two_hours(self) -> None:
+    @patch("emails.controller.s3_client.generate_presigned_url")
+    def test_generate_presigned_url__two_hours(self, mock_generate_presigned_url: MagicMock) -> None:
         # Arrange
         now = timezone.now()
         scheduled_email = self.create_scheduled_email(now)
         attachment = self.create_attachment(scheduled_email)
         self._logSuperuserIn()
+        mock_generate_presigned_url.return_value = "TestPresignedUrl"
 
         # Act
         response = self.client.post(
