@@ -4,7 +4,6 @@ from urllib.parse import unquote
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.postgres.search import SearchVector
 from django.db.models import (
     Case,
     Count,
@@ -38,7 +37,12 @@ from dashboard.forms import (
     SearchForm,
     SignupForRecruitmentForm,
 )
-from dashboard.utils import get_passed_or_last_progress
+from dashboard.utils import (
+    get_passed_or_last_progress,
+    multiple_Q_icontains,
+    tokenize,
+    tokenized_multiple_Q_icontains,
+)
 from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
@@ -564,12 +568,6 @@ class ResignFromRecruitment(
 def search(request: HttpRequest) -> HttpResponse:
     """Search the database by term."""
 
-    def multiple_Q_icontains(term: str, *args: str) -> Q:
-        q = Q()
-        for arg in args:
-            q |= Q(**{f"{arg}__icontains": term})
-        return q
-
     term = ""
     organizations = None
     memberships = None
@@ -583,91 +581,80 @@ def search(request: HttpRequest) -> HttpResponse:
         form = SearchForm(request.GET)
         if form.is_valid():
             term = form.cleaned_data.get("term", "").strip()
+            tokens = tokenize(term)
             results_combined = []
 
-            organizations = list(
-                Organization.objects.filter(Q(domain__icontains=term) | Q(fullname__icontains=term)).order_by(
-                    "fullname"
-                )
+            organizations = Organization.objects.filter(multiple_Q_icontains(term, "domain", "fullname")).order_by(
+                "fullname"
             )
-            results_combined += organizations
+            results_combined += list(organizations)
 
-            memberships = list(
-                Membership.objects.filter(Q(name__icontains=term) | Q(registration_code__icontains=term)).order_by(
-                    "-agreement_start"
-                )
+            memberships = Membership.objects.filter(multiple_Q_icontains(term, "name", "registration_code")).order_by(
+                "-agreement_start"
             )
-            results_combined += memberships
+            results_combined += list(memberships)
 
-            events = list(
-                Event.objects.filter(
-                    Q(slug__icontains=term)
-                    | Q(host__domain__icontains=term)
-                    | Q(host__fullname__icontains=term)
-                    | Q(url__icontains=term)
-                    | Q(contact__icontains=term)
-                    | Q(venue__icontains=term)
-                    | Q(address__icontains=term)
-                ).order_by("-slug")
-            )
-            results_combined += events
-
-            persons = (
-                Person.objects.annotate(search=SearchVector("personal", "middle", "family"))
-                .filter(
-                    Q(search=term)
-                    | multiple_Q_icontains(term, "personal", "middle", "family", "email", "secondary_email", "github")
+            events = Event.objects.filter(
+                multiple_Q_icontains(
+                    term, "slug", "host__domain", "host__fullname", "url", "contact", "venue", "address"
                 )
-                .order_by("family")
-            )
+            ).order_by("-slug")
+            results_combined += list(events)
+
+            persons = Person.objects.filter(
+                multiple_Q_icontains(term, "personal", "middle", "family", "email", "secondary_email", "github")
+                | (
+                    tokenized_multiple_Q_icontains(tokens[0:3], "personal", "middle", "family")
+                    if 1 < len(tokens) <= 3
+                    else Q()
+                )
+            ).order_by("family")
             results_combined += list(persons)
 
-            airports = list(Airport.objects.filter(multiple_Q_icontains(term, "iata", "fullname")).order_by("iata"))
-            results_combined += airports
+            airports = Airport.objects.filter(multiple_Q_icontains(term, "iata", "fullname")).order_by("iata")
+            results_combined += list(airports)
 
-            training_requests = (
-                TrainingRequest.objects.annotate(search=SearchVector("personal", "middle", "family"))
-                .filter(
-                    Q(search=term)
-                    | multiple_Q_icontains(
-                        term,
-                        "personal",
-                        "middle",
-                        "family",
-                        "member_code",
-                        "email",
-                        "secondary_email",
-                        "github",
-                        "affiliation",
-                        "location",
-                        "user_notes",
-                    )
+            training_requests = TrainingRequest.objects.filter(
+                multiple_Q_icontains(
+                    term,
+                    "personal",
+                    "middle",
+                    "family",
+                    "member_code",
+                    "email",
+                    "secondary_email",
+                    "github",
+                    "affiliation",
+                    "location",
+                    "user_notes",
                 )
-                .order_by("family")
-            )
+                | (
+                    tokenized_multiple_Q_icontains(tokens[0:3], "personal", "middle", "family")
+                    if 1 < len(tokens) <= 3
+                    else Q()
+                )
+            ).order_by("family")
             results_combined += list(training_requests)
 
-            comments = list(
-                Comment.objects.filter(
-                    multiple_Q_icontains(
-                        term,
-                        "comment",
-                        "user_name",
-                        "user_email",
-                        "user__personal",
-                        "user__family",
-                        "user__email",
-                        "user__github",
-                    )
-                ).prefetch_related("content_object")
-            )
-            results_combined += comments
+            comments = Comment.objects.filter(
+                multiple_Q_icontains(
+                    term,
+                    "comment",
+                    "user_name",
+                    "user_email",
+                    "user__personal",
+                    "user__family",
+                    "user__email",
+                    "user__github",
+                )
+            ).prefetch_related("content_object")
+            results_combined += list(comments)
 
             # only 1 record found? Let's move to it immediately
             if len(results_combined) == 1 and not form.cleaned_data["no_redirect"]:
                 result = results_combined[0]
                 msg = format_html(
-                    "You were moved to this page, because your search <code>{}</code> " "yields only this result.",
+                    "You were moved to this page, because your search <code>{}</code> yields only this result.",
                     term,
                 )
                 if isinstance(result, Comment):
