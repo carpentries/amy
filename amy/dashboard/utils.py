@@ -16,11 +16,10 @@ def tokenize(term: str) -> list[str]:
     return [v for v in re.split(r"\s+", term) if v]
 
 
-def tokenized_multiple_Q_icontains(tokens: list[str], *args: str) -> Q:
-    q = Q()
-    for term in tokens:
-        for arg in args:
-            q |= Q(**{f"{arg}__icontains": term})
+def cross_multiple_Q_icontains(token1: str, token2: str, field1: str, field2: str) -> Q:
+    q = (Q(**{f"{field1}__icontains": token1}) & Q(**{f"{field2}__icontains": token2})) | (
+        Q(**{f"{field1}__icontains": token2}) & Q(**{f"{field2}__icontains": token1})
+    )
     return q
 
 
