@@ -38,10 +38,10 @@ from dashboard.forms import (
     SignupForRecruitmentForm,
 )
 from dashboard.utils import (
+    cross_multiple_Q_icontains,
     get_passed_or_last_progress,
     multiple_Q_icontains,
     tokenize,
-    tokenized_multiple_Q_icontains,
 )
 from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
@@ -603,11 +603,7 @@ def search(request: HttpRequest) -> HttpResponse:
 
             persons = Person.objects.filter(
                 multiple_Q_icontains(term, "personal", "middle", "family", "email", "secondary_email", "github")
-                | (
-                    tokenized_multiple_Q_icontains(tokens[0:3], "personal", "middle", "family")
-                    if 1 < len(tokens) <= 3
-                    else Q()
-                )
+                | (cross_multiple_Q_icontains(tokens[0], tokens[1], "personal", "family") if len(tokens) == 2 else Q())
             ).order_by("family")
             results_combined += list(persons)
 
@@ -628,11 +624,7 @@ def search(request: HttpRequest) -> HttpResponse:
                     "location",
                     "user_notes",
                 )
-                | (
-                    tokenized_multiple_Q_icontains(tokens[0:3], "personal", "middle", "family")
-                    if 1 < len(tokens) <= 3
-                    else Q()
-                )
+                | (cross_multiple_Q_icontains(tokens[0], tokens[1], "personal", "family") if len(tokens) == 2 else Q())
             ).order_by("family")
             results_combined += list(training_requests)
 
