@@ -12,7 +12,6 @@ class SilenceLogsRunner(DiscoverRunner):
 
     def __init__(self, **kwargs: Any) -> None:
         self.log_output = kwargs.pop("log_output", False)
-        print(self.log_output)
         super().__init__(**kwargs)
 
     @classmethod
