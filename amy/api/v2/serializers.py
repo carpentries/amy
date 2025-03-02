@@ -267,6 +267,8 @@ class InlineAttachmentSerializer(serializers.ModelSerializer[Attachment]):
             "filename",
             "s3_path",
             "s3_bucket",
+            "presigned_url",
+            "presigned_url_expiration",
         )
 
 
