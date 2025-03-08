@@ -67,9 +67,9 @@ class BaseAction(ABC):
     def get_recipients_context_json(self, context: Any, *args: Any, **kwargs: Any) -> ToHeaderModel:
         raise NotImplementedError()
 
-    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> None:
+    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
         if not feature_flag_enabled("EMAIL_MODULE", self.signal, **kwargs):
-            return
+            return None
 
         request = kwargs.pop("request")
         supress_messages = kwargs.pop("supress_messages", False)
@@ -83,7 +83,7 @@ class BaseAction(ABC):
         try:
             if dry_run:
                 logger.debug(f"Dry-run mode: email action for signal {self.signal}, " f"{generic_relation_obj}")
-                return
+                return None
 
             scheduled_email = EmailController.schedule_email(
                 signal=self.signal,
@@ -106,14 +106,16 @@ class BaseAction(ABC):
             logger.info(f"Action scheduled for signal {self.signal}")
             if not supress_messages:
                 messages_action_scheduled(request, self.signal, scheduled_email)
+            return scheduled_email
+        return None
 
 
 # TODO: turn into a generic class that combines BaseAction,
 #       BaseActionUpdate and BaseActionCancel for the complex signals.
 class BaseActionUpdate(BaseAction):
-    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> None:
+    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
         if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_update", **kwargs):
-            return
+            return None
 
         request = kwargs.pop("request")
         supress_messages = kwargs.pop("supress_messages", False)
@@ -140,19 +142,19 @@ class BaseActionUpdate(BaseAction):
 
         except ScheduledEmail.DoesNotExist:
             logger.warning(f"Scheduled email for signal {signal_name} and {generic_relation_obj=} " "does not exist.")
-            return
+            return None
 
         except ScheduledEmail.MultipleObjectsReturned:
             logger.warning(
                 f"Too many scheduled emails for signal {signal_name} and "
                 f"{generic_relation_obj=}. Can't update them."
             )
-            return
+            return None
 
         try:
             if dry_run:
                 logger.debug(f"Dry-run mode: email update action for signal {self.signal}, " f"{generic_relation_obj}")
-                return
+                return None
 
             scheduled_email = EmailController.update_scheduled_email(
                 scheduled_email=scheduled_email,
@@ -177,6 +179,8 @@ class BaseActionUpdate(BaseAction):
             logger.info(f"Action updated for signal {self.signal}")
             if not supress_messages:
                 messages_action_updated(request, signal_name, scheduled_email)
+            return scheduled_email
+        return None
 
 
 # TODO: turn into a generic class that combines BaseAction,
