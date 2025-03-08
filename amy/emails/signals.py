@@ -169,3 +169,6 @@ ASK_FOR_WEBSITE_SIGNAL_NAME = "ask_for_website"
 ) = triple_signals(ASK_FOR_WEBSITE_SIGNAL_NAME, AskForWebsiteContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
+
+# A regular Django signal used for chaining certificate creation after instructor badge action is scheduled.
+instructor_badge_awarded_signal_sent = DjangoSignal()
