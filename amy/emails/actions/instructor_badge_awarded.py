@@ -77,7 +77,7 @@ def instructor_badge_awarded_strategy(
 
 
 def run_instructor_badge_awarded_strategy(
-    strategy: StrategyEnum, request: HttpRequest, person: Person, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, person: Person, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_badge_awarded_signal,

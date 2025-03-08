@@ -99,5 +99,11 @@ show_error_codes = true
 strict = true
 mypy_path = "amy"
 
+[[tool.mypy.overrides]]
+module = [
+  "flags.*",
+]
+follow_untyped_imports = true
+
 [tool.django-stubs]
 django_settings_module = "config.settings"
