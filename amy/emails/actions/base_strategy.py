@@ -15,7 +15,7 @@ def run_strategy(
     signal_mapping: dict[StrategyEnum, Signal | None],
     request: HttpRequest,
     sender: Any,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     if strategy not in signal_mapping:
         raise EmailStrategyException(f"Unknown strategy {strategy}")

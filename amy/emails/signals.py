@@ -48,7 +48,7 @@ class Signal(DjangoSignal):
     signal_name: SignalNameEnum
     context_type: type[Mapping[str, Any]]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.signal_name = kwargs.pop("signal_name")
         self.context_type = kwargs.pop("context_type")
         super().__init__(*args, **kwargs)
