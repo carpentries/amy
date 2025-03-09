@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import instructor_badge_awarded_receiver
+from emails.actions.instructor_badge_awarded import instructor_badge_awarded_receiver
 from emails.models import EmailTemplate, ScheduledEmail
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import instructor_badge_awarded_signal
@@ -107,7 +107,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
                 {
                     "person": api_model_url("person", person.pk),
                     "award": api_model_url("award", award.pk),
-                    "award_id": scalar_value_url("int", award.pk),
+                    "award_id": scalar_value_url("int", str(award.pk)),
                 }
             ),
             scheduled_at=scheduled_at,

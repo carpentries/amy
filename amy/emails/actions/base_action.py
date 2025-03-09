@@ -30,7 +30,7 @@ logger = logging.getLogger("amy")
 def feature_flag_enabled(feature_flag: str, signal_name: str, **kwargs: Any) -> bool:
     request = kwargs.get("request")
     if not request:
-        logger.debug(f"Cannot check {feature_flag} feature flag, `request` parameter " f"to {signal_name} is missing")
+        logger.debug(f"Cannot check {feature_flag} feature flag, `request` parameter to {signal_name} is missing")
         return False
 
     if not flag_enabled(feature_flag, request=request):  # type: ignore[no-untyped-call]

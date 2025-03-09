@@ -287,6 +287,10 @@ def generate_certificate(file_path: str, replacements: dict[bytes, bytes]) -> by
 def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: Any, **kwargs: Any) -> None:
     logger.info(f"Generating certificate PDF strategy for {sender=}")
 
+    # `sender` is None also in case when the feature flag `EMAIL_MODULE` is not enabled.
+    # Unfortunately, it's not possible to check for feature flags in this function, because `request`
+    # kwarg is missing.
+
     if sender is None:
         logger.error(f"Failed to generate and attach certificate: sender is not a ScheduledEmail (it's {sender})")
         return
