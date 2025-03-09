@@ -40,8 +40,10 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         self.assertEqual(original_receivers, new_receivers)
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    def test_action_triggered(self) -> None:
+    @patch("emails.actions.instructor_badge_awarded.EmailController.add_attachment")
+    def test_action_triggered(self, mock_add_attachment: MagicMock) -> None:
         # Arrange
+        mock_add_attachment.return_value = None
         badge = Badge.objects.create(name="instructor")
         person = Person.objects.create(email="test@example.org")
         award = Award.objects.create(badge=badge, person=person)
@@ -169,8 +171,10 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
 
 class TestInstructorBadgeAwardedReceiverIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    def test_integration(self) -> None:
+    @patch("emails.actions.instructor_badge_awarded.EmailController.add_attachment")
+    def test_integration(self, mock_add_attachment: MagicMock) -> None:
         # Arrange
+        mock_add_attachment.return_value = None
         self._setUpUsersAndLogin()
         badge = Badge.objects.get(name="instructor")
         person = Person.objects.create(

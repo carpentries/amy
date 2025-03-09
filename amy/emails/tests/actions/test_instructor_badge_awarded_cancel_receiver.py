@@ -36,7 +36,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -181,8 +181,10 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
 
 class TestInstructorBadgeAwardedCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    def test_integration(self) -> None:
+    @patch("emails.actions.instructor_badge_awarded.EmailController.add_attachment")
+    def test_integration(self, mock_add_attachment: MagicMock) -> None:
         # Arrange
+        mock_add_attachment.return_value = None
         self._setUpRoles()
         self._setUpTags()
         self._setUpUsersAndLogin()
