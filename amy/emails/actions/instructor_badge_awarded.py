@@ -271,15 +271,17 @@ instructor_badge_awarded_cancel_receiver = InstructorBadgeAwardedCancelReceiver(
 instructor_badge_awarded_cancel_signal.connect(instructor_badge_awarded_cancel_receiver)
 
 
-def generate_certificate(file_path: str, replacements: dict[bytes, bytes]) -> bytes:
+def read_binary_file_and_replace_values(file_path: str, replacements: dict[bytes, bytes]) -> bytes:
     with open(file_path, "rb") as f:
         byte_content = f.read()
         for key, value in replacements.items():
             byte_content = byte_content.replace(key, value)
+    return byte_content
 
+
+def generate_pdf(svg_file: bytes) -> bytes:
     file_obj = BytesIO()
-    cairosvg.svg2pdf(byte_content, write_to=file_obj, dpi=90)  # type: ignore[no-untyped-call]
-
+    cairosvg.svg2pdf(svg_file, write_to=file_obj, dpi=90)  # type: ignore[no-untyped-call]
     file_obj.seek(0)
     return file_obj.read()
 
@@ -302,19 +304,26 @@ def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: An
         )
         return
 
-    # generate PDF
+    # Parameters for the SVG file
     full_name = sender.generic_relation.person.full_name
     award_date = date.strftime(sender.generic_relation.awarded, r"%d %B %Y")
-    content = generate_certificate(
-        file_path=str(settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.svg"),
+    signature = settings.CERTIFICATE_SIGNATURE
+    file_path = settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.svg"
+
+    # Prepare SVG file in memory.
+    svg_file = read_binary_file_and_replace_values(
+        file_path=str(file_path),
         replacements={
             b"{{name}}": bytes(full_name, encoding="utf-8"),
             b"{{date}}": bytes(award_date, encoding="utf-8"),
-            b"{{signature}}": bytes(settings.CERTIFICATE_SIGNATURE, encoding="utf-8"),
+            b"{{signature}}": bytes(signature, encoding="utf-8"),
         },
     )
 
-    # attach to email
+    # Generate PDF out of SVG (in memory).
+    content = generate_pdf(svg_file)
+
+    # Attach to email.
     EmailController.add_attachment(sender, filename="certificate.pdf", content=content)
 
 

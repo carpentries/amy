@@ -98,7 +98,7 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
     @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_signal")
     def test_strategy_calls_create_signal(
         self,
-        mock_instructor_badge_awarded_signal,
+        mock_instructor_badge_awarded_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
@@ -124,7 +124,7 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
     @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_update_signal")
     def test_strategy_calls_update_signal(
         self,
-        mock_instructor_badge_awarded_update_signal,
+        mock_instructor_badge_awarded_update_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -150,7 +150,7 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
     @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
-        mock_instructor_badge_awarded_cancel_signal,
+        mock_instructor_badge_awarded_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -179,10 +179,10 @@ class TestRunInstructorBadgeAwardedStrategy(TestCase):
     @patch("emails.actions.instructor_badge_awarded.instructor_badge_awarded_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_instructor_badge_awarded_cancel_signal,
-        mock_instructor_badge_awarded_update_signal,
-        mock_instructor_badge_awarded_signal,
-        mock_logger,
+        mock_instructor_badge_awarded_cancel_signal: MagicMock,
+        mock_instructor_badge_awarded_update_signal: MagicMock,
+        mock_instructor_badge_awarded_signal: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP
