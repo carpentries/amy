@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime, timedelta
 from functools import partial
 import logging
-from typing import Any, Callable, Iterable, Literal, cast
+from typing import Any, Callable, Iterable, Literal, TypeVar, cast
 from urllib.parse import ParseResult, urlparse
 
 from django.apps import apps
@@ -46,13 +46,14 @@ logger = logging.getLogger("amy")
 
 BasicTypes = str | int | float | bool | datetime | None
 SerializedData = dict[str, Any] | BasicTypes
+_MT = TypeVar("_MT", bound=Model)  # Model type
 
 
 @conditions.register("session")  # type: ignore
-def session_condition(value, request: HttpRequest, **kwargs):
+def session_condition(value: str, request: HttpRequest, **kwargs: Any) -> bool:
     """Additional condition for django-flags. It reads a specific value from
     request session."""
-    return request.session.get(value, False)
+    return cast(bool, request.session.get(value, False))
 
 
 def immediate_action() -> datetime:
@@ -157,7 +158,7 @@ def person_from_request(request: HttpRequest) -> Person | None:
     ):
         return None
 
-    return cast(Person, request.user)
+    return request.user
 
 
 def find_signal_by_name(signal_name: str, all_signals: Iterable[Signal]) -> Signal | None:
@@ -216,10 +217,10 @@ def find_model_class(model_name: str) -> type[Model]:
 
 def find_model_instance(model_class: type[Model], model_pk: Any) -> Model:
     try:
-        return model_class.objects.get(pk=model_pk)
+        return model_class.objects.get(pk=model_pk)  # type: ignore
     except ValueError as exc:
         raise ValueError(f"Failed to parse pk {model_pk!r} for model {model_class!r}: {exc}") from exc
-    except model_class.DoesNotExist as exc:
+    except model_class.DoesNotExist as exc:  # type: ignore
         raise ValueError(f"Model {model_class!r} with pk {model_pk!r} not found.") from exc
 
 
@@ -235,7 +236,7 @@ def map_single_api_uri_to_serialized_model(uri: str) -> dict[str, Any]:
     # to prevent circular import:
     from api.v2.serializers import ScheduledEmailSerializer
 
-    ModelToSerializerMapper: dict[type[Model], type[ModelSerializer]] = {
+    ModelToSerializerMapper: dict[type[_MT], type[ModelSerializer[_MT]]] = {  # type: ignore
         Award: AwardSerializer,
         Organization: OrganizationSerializer,
         Event: EventSerializer,

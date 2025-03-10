@@ -27,13 +27,13 @@ from emails.utils import (
 logger = logging.getLogger("amy")
 
 
-def feature_flag_enabled(feature_flag: str, signal_name: str, **kwargs) -> bool:
+def feature_flag_enabled(feature_flag: str, signal_name: str, **kwargs: Any) -> bool:
     request = kwargs.get("request")
     if not request:
-        logger.debug(f"Cannot check {feature_flag} feature flag, `request` parameter " f"to {signal_name} is missing")
+        logger.debug(f"Cannot check {feature_flag} feature flag, `request` parameter to {signal_name} is missing")
         return False
 
-    if not flag_enabled(feature_flag, request=request):
+    if not flag_enabled(feature_flag, request=request):  # type: ignore[no-untyped-call]
         logger.debug(f"{feature_flag} feature flag not set, skipping {signal_name}")
         return False
 
@@ -44,32 +44,32 @@ class BaseAction(ABC):
     signal: SignalNameEnum
 
     @abstractmethod
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(self, *args: Any, **kwargs: Any) -> datetime:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_context(self, **kwargs) -> dict[str, Any]:
+    def get_context(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_context_json(self, context: dict[str, Any]) -> ContextModel:
+    def get_context_json(self, context: Any) -> ContextModel:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
+    def get_generic_relation_object(self, context: Any, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
+    def get_recipients(self, context: Any, *args: Any, **kwargs: Any) -> list[str]:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: Any, *args: Any, **kwargs: Any) -> ToHeaderModel:
         raise NotImplementedError()
 
-    def __call__(self, sender: Any, **kwargs) -> None:
+    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
         if not feature_flag_enabled("EMAIL_MODULE", self.signal, **kwargs):
-            return
+            return None
 
         request = kwargs.pop("request")
         supress_messages = kwargs.pop("supress_messages", False)
@@ -83,7 +83,7 @@ class BaseAction(ABC):
         try:
             if dry_run:
                 logger.debug(f"Dry-run mode: email action for signal {self.signal}, " f"{generic_relation_obj}")
-                return
+                return None
 
             scheduled_email = EmailController.schedule_email(
                 signal=self.signal,
@@ -106,14 +106,16 @@ class BaseAction(ABC):
             logger.info(f"Action scheduled for signal {self.signal}")
             if not supress_messages:
                 messages_action_scheduled(request, self.signal, scheduled_email)
+            return scheduled_email
+        return None
 
 
 # TODO: turn into a generic class that combines BaseAction,
 #       BaseActionUpdate and BaseActionCancel for the complex signals.
 class BaseActionUpdate(BaseAction):
-    def __call__(self, sender: Any, **kwargs) -> None:
+    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
         if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_update", **kwargs):
-            return
+            return None
 
         request = kwargs.pop("request")
         supress_messages = kwargs.pop("supress_messages", False)
@@ -140,19 +142,19 @@ class BaseActionUpdate(BaseAction):
 
         except ScheduledEmail.DoesNotExist:
             logger.warning(f"Scheduled email for signal {signal_name} and {generic_relation_obj=} " "does not exist.")
-            return
+            return None
 
         except ScheduledEmail.MultipleObjectsReturned:
             logger.warning(
                 f"Too many scheduled emails for signal {signal_name} and "
                 f"{generic_relation_obj=}. Can't update them."
             )
-            return
+            return None
 
         try:
             if dry_run:
                 logger.debug(f"Dry-run mode: email update action for signal {self.signal}, " f"{generic_relation_obj}")
-                return
+                return None
 
             scheduled_email = EmailController.update_scheduled_email(
                 scheduled_email=scheduled_email,
@@ -177,26 +179,28 @@ class BaseActionUpdate(BaseAction):
             logger.info(f"Action updated for signal {self.signal}")
             if not supress_messages:
                 messages_action_updated(request, signal_name, scheduled_email)
+            return scheduled_email
+        return None
 
 
 # TODO: turn into a generic class that combines BaseAction,
 #       BaseActionUpdate and BaseActionCancel for the complex signals.
 class BaseActionCancel(BaseAction):
     # Method is not needed in this action.
-    def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
+    def get_recipients(self, context: Any, *args: Any, **kwargs: Any) -> list[str]:
         raise NotImplementedError()
 
     # Method is not needed in this action.
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(self, *args: Any, **kwargs: Any) -> datetime:
         raise NotImplementedError()
 
-    def get_generic_relation_content_type(self, context: dict[str, Any], generic_relation_obj: Any) -> ContentType:
+    def get_generic_relation_content_type(self, context: Any, generic_relation_obj: Any) -> ContentType:
         return ContentType.objects.get_for_model(generic_relation_obj)
 
-    def get_generic_relation_pk(self, context: dict[str, Any], generic_relation_obj: Any) -> int | Any:
+    def get_generic_relation_pk(self, context: Any, generic_relation_obj: Any) -> int | Any:
         return generic_relation_obj.pk
 
-    def __call__(self, sender: Any, **kwargs) -> None:
+    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> None:
         if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_cancel", **kwargs):
             return
 

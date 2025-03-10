@@ -669,3 +669,7 @@ FLAGS = {
         {"condition": "boolean", "value": True},
     ],
 }
+
+# Instructor Certificates
+# -----------------------------------------------------------------------------
+CERTIFICATE_SIGNATURE = "SherAaron Hurt (Director of Workshops and Instruction)"

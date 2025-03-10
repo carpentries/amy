@@ -252,6 +252,7 @@ class EmailController:
             s3_path=s3_path,
             s3_bucket=bucket_name,
         )
+        logger.info(f"Attachment {attachment_uuid} assigned to {scheduled_email=}")
         return attachment
 
     @staticmethod
