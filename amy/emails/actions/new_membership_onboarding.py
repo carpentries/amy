@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
@@ -33,13 +34,13 @@ from workshops.models import Membership
 logger = logging.getLogger("amy")
 
 MEMBERSHIP_TASK_ROLES_EXPECTED = ["billing_contact", "programmatic_contact"]
-MEMBERSHIP_ACCEPTABLE_VARIANTS = ["bronze", "silver", "gold", "platinum"]
+MEMBERSHIP_ACCEPTABLE_VARIANTS = ["bronze", "silver", "gold", "platinum", "titanium"]
 
 
 def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     logger.info(f"Running NewMembershipOnboarding strategy for {membership}")
 
-    ct = ContentType.objects.get_for_model(membership)  # type: ignore
+    ct = ContentType.objects.get_for_model(membership)
     email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=membership.pk,
@@ -49,6 +50,20 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
         membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
     ).count()
     membership_acceptable_variant = membership.variant in MEMBERSHIP_ACCEPTABLE_VARIANTS
+    titanium_variant = membership.variant == "titanium"
+    condition_for_titanium = (
+        not titanium_variant
+        or titanium_variant
+        and any(
+            [
+                membership.workshops_without_admin_fee_per_agreement,
+                membership.public_instructor_training_seats,
+                membership.additional_public_instructor_training_seats,
+                membership.inhouse_instructor_training_seats,
+                membership.additional_inhouse_instructor_training_seats,
+            ]
+        )
+    )
 
     log_condition_elements(
         **{
@@ -56,6 +71,8 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
             "task_count": task_count,
             "membership.variant": membership.variant,
             "membership_acceptable_variant": membership_acceptable_variant,
+            "titanium_variant": titanium_variant,
+            "condition_for_titanium": condition_for_titanium,
         }
     )
 
@@ -63,7 +80,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     # email would be de-scheduled.
     # UPDATE 2025-02-15 (#2761):
     #      We're allowing scheduling only for bronze, silver, gold or platinum variants.
-    email_should_exist = bool(membership.pk and task_count and membership_acceptable_variant)
+    email_should_exist = bool(membership.pk and task_count and membership_acceptable_variant and condition_for_titanium)
 
     if not email_exists and email_should_exist:
         result = StrategyEnum.CREATE
@@ -79,7 +96,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
 
 
 def run_new_membership_onboarding_strategy(
-    strategy: StrategyEnum, request: HttpRequest, membership: Membership, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, membership: Membership, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: new_membership_onboarding_signal,
@@ -153,9 +170,9 @@ def get_recipients_context_json(
             {
                 "api_uri": api_model_url("person", task.person.pk),
                 "property": "email",
-            }
+            }  # type: ignore
             for task in tasks
-        ],  # type: ignore
+        ],
     )
 
 
