@@ -18,7 +18,7 @@ FROM base AS dependencies
 RUN apt-get install -y --no-install-recommends libpq-dev gcc
 RUN python3 -m pip install pipx
 RUN python3 -m pipx ensurepath
-RUN pipx install poetry==2.0.1
+RUN pipx install poetry==2.0.0
 RUN mkdir /app
 RUN mkdir /venv
 
