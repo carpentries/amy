@@ -1,7 +1,7 @@
 from collections import defaultdict
 import datetime
 import re
-from typing import Any
+from typing import Annotated, Any, TypedDict
 from urllib.parse import quote
 
 from django.contrib.auth.models import (
@@ -25,12 +25,14 @@ from django.db.models import (
     Sum,
     When,
 )
+from django.db.models.aggregates import Aggregate
 from django.db.models.functions import Coalesce, Greatest
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
+from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
@@ -136,8 +138,14 @@ class Member(models.Model):
         ]
 
 
+class MembershipSeatUsage(TypedDict):
+    instructor_training_seats_total: int
+    instructor_training_seats_utilized: int
+    instructor_training_seats_remaining: int
+
+
 class MembershipManager(models.Manager["Membership"]):
-    def annotate_with_seat_usage(self):
+    def annotate_with_seat_usage(self) -> QuerySet[Annotated["Membership", Annotations[MembershipSeatUsage]]]:
         return self.get_queryset().annotate(
             instructor_training_seats_total=(
                 # Public
@@ -332,7 +340,7 @@ class Membership(models.Model):
 
     rolled_to_membership = models.OneToOneField(
         "Membership",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="rolled_from_membership",
         null=True,
     )
@@ -547,10 +555,10 @@ class Airport(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{0}: {1}".format(self.iata, self.fullname)
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("airport_details", args=[str(self.iata)])
 
     class Meta:
@@ -558,6 +566,14 @@ class Airport(models.Model):
 
 
 # ------------------------------------------------------------
+
+
+class PersonInstructorEligibility(TypedDict):
+    passed_training: int
+    passed_get_involved: int
+    passed_welcome: int
+    passed_demo: int
+    instructor_eligible: int
 
 
 class PersonManager(BaseUserManager["Person"]):
@@ -603,7 +619,7 @@ class PersonManager(BaseUserManager["Person"]):
         user.save(using=self._db)
         return user
 
-    def get_by_natural_key(self, username):
+    def get_by_natural_key(self, username: str | None) -> "Person":
         """Let's make this command so that it gets user by *either* username or
         email.  Original behavior is to get user by USERNAME_FIELD."""
         if isinstance(username, str) and "@" in username:
@@ -611,8 +627,10 @@ class PersonManager(BaseUserManager["Person"]):
         else:
             return super().get_by_natural_key(username)
 
-    def annotate_with_instructor_eligibility(self):
-        def passed(requirement):
+    def annotate_with_instructor_eligibility(
+        self,
+    ) -> QuerySet[Annotated["Person", Annotations[PersonInstructorEligibility]]]:
+        def passed(requirement: str) -> Aggregate:
             return Sum(
                 Case(
                     When(
@@ -625,7 +643,7 @@ class PersonManager(BaseUserManager["Person"]):
                 )
             )
 
-        def passed_either(*reqs):
+        def passed_either(*reqs: str) -> Aggregate:
             return Sum(
                 Case(
                     *[
@@ -678,7 +696,7 @@ class PersonManager(BaseUserManager["Person"]):
             num_organizer=Count("task", filter=Q(task__role__name="organizer"), distinct=True),
         )
 
-    def duplication_review_expired(self):
+    def duplication_review_expired(self) -> QuerySet["Person"]:
         return self.filter(
             Q(duplication_reviewed_on__isnull=True)
             | Q(last_updated_at__gte=F("duplication_reviewed_on") + datetime.timedelta(minutes=1))

@@ -1,3 +1,5 @@
+from typing import Any
+
 from django import forms
 from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
@@ -29,7 +31,7 @@ GHUSERNAME_REGEX_VALIDATOR = RegexValidator(
 
 
 class NullableGithubUsernameField(models.CharField):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("null", True)
         kwargs.setdefault("blank", True)
         kwargs.setdefault("default", "")
@@ -47,7 +49,7 @@ class NullableGithubUsernameField(models.CharField):
 
 
 class FakeRequiredMixin:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Intercept "fake_required" attribute that's used for marking field
         # with "*" (asterisk) even though it's not required.
         # Additionally `fake_required` doesn't trigger any validation.
@@ -66,7 +68,7 @@ class RadioSelectWithOther(FakeRequiredMixin, forms.RadioSelect):
 
     other_field = None  # to be bound later
 
-    def __init__(self, other_field_name, *args, **kwargs):
+    def __init__(self, other_field_name: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.other_field_name = other_field_name
 
@@ -82,7 +84,7 @@ class CheckboxSelectMultipleWithOthers(FakeRequiredMixin, forms.CheckboxSelectMu
 
     other_field = None  # to be bound later
 
-    def __init__(self, other_field_name, *args, **kwargs):
+    def __init__(self, other_field_name: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.other_field_name = other_field_name
 

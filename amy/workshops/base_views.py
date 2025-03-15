@@ -1,5 +1,5 @@
 from smtplib import SMTPException
-from typing import Optional
+from typing import Any, Optional, TypeVar
 
 from anymail.exceptions import AnymailRequestsAPIError
 from django.contrib import messages
@@ -7,8 +7,15 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives
-from django.db.models import Model, ProtectedError
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.core.paginator import Page
+from django.db.models import Model, ProtectedError, QuerySet
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseRedirect,
+    QueryDict,
+)
 from django.template.loader import get_template
 from django.views.generic import (
     CreateView,
@@ -21,11 +28,19 @@ from django.views.generic import (
 )
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormMixin
+from django_filters.filterset import FilterSet
 
 from workshops.forms import AdminLookupForm, BootstrapHelper
+from workshops.models import Person
 from workshops.utils.pagination import Paginator, get_pagination_items
 from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.views import assign, failed_to_delete
+
+_MT = TypeVar("_MT", bound=Model)  # Model type
+
+
+class AuthenticatedHttpRequest(HttpRequest):
+    user: Person
 
 
 class FormInvalidMessageMixin:
@@ -179,17 +194,17 @@ class AMYFormView(FormView):
         return context
 
 
-class AMYListView(ListView):
+class AMYListView(ListView[_MT]):
     paginator_class = Paginator
-    filter_class = None
-    queryset = None
-    title = None
+    filter_class: type[FilterSet] | None = None
+    queryset: QuerySet[_MT] | None = None
+    title: str | None = None
 
-    def get_filter_data(self):
+    def get_filter_data(self) -> QueryDict:
         """Datasource for the filter."""
         return self.request.GET
 
-    def get_queryset(self):
+    def get_queryset(self) -> Page[_MT]:  # type: ignore
         """Apply a filter to the queryset. Filter is compatible with pagination
         and queryset. Also, apply pagination."""
         if self.filter_class is None:
@@ -201,7 +216,7 @@ class AMYListView(ListView):
         paginated = get_pagination_items(self.request, self.qs)
         return paginated
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         """Enhance context by adding a filter to it. Add `title` to context."""
         context = super().get_context_data(**kwargs)
         context["filter"] = self.filter
