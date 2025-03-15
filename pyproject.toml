@@ -102,8 +102,12 @@ mypy_path = "amy"
 
 [[tool.mypy.overrides]]
 module = [
+  "anymail.*",
   "cairosvg.*",
+  "django_filters.*",
   "flags.*",
+  "reversion.*",
+  "social_django.*",
 ]
 follow_untyped_imports = true
 

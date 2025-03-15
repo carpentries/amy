@@ -1,7 +1,7 @@
 from collections import defaultdict
 import datetime
 import re
-from typing import Any
+from typing import Annotated, Any, TypedDict
 from urllib.parse import quote
 
 from django.contrib.auth.models import (
@@ -31,6 +31,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
+from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
@@ -136,8 +137,14 @@ class Member(models.Model):
         ]
 
 
+class MembershipSeatUsage(TypedDict):
+    instructor_training_seats_total: int
+    instructor_training_seats_utilized: int
+    instructor_training_seats_remaining: int
+
+
 class MembershipManager(models.Manager["Membership"]):
-    def annotate_with_seat_usage(self):
+    def annotate_with_seat_usage(self) -> QuerySet[Annotated["Membership", Annotations[MembershipSeatUsage]]]:
         return self.get_queryset().annotate(
             instructor_training_seats_total=(
                 # Public

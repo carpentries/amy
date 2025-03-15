@@ -3,9 +3,10 @@ from typing import Any, Dict
 
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Prefetch
+from django.db.models import Prefetch, QuerySet
 from django.db.models.functions import Now
-from django.forms import modelformset_factory
+from django.forms import BaseModelFormSet, modelformset_factory
+from django.http import HttpResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
 
@@ -40,6 +41,7 @@ from workshops.base_views import (
     AMYDetailView,
     AMYListView,
     AMYUpdateView,
+    AuthenticatedHttpRequest,
     RedirectSupportMixin,
 )
 from workshops.models import Award, Member, MemberRole, Membership, Organization, Task
@@ -50,7 +52,7 @@ from workshops.utils.access import OnlyForAdminsMixin
 # ------------------------------------------------------------
 
 
-class AllOrganizations(OnlyForAdminsMixin, AMYListView):
+class AllOrganizations(OnlyForAdminsMixin, AMYListView[Organization]):
     context_object_name = "all_organizations"
     template_name = "fiscal/all_organizations.html"
     filter_class = OrganizationFilter
@@ -73,8 +75,9 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
     template_name = "fiscal/organization.html"
     slug_field = "domain"
     slug_url_kwarg = "org_domain"
+    object: Organization
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Organization {0}".format(self.object)
         related = ["host", "sponsor", "membership"]
@@ -97,7 +100,7 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateV
     model = Organization
     form_class = OrganizationCreateForm
 
-    def get_initial(self):
+    def get_initial(self) -> dict[str, str]:
         initial = {
             "domain": self.request.GET.get("domain", ""),
             "fullname": self.request.GET.get("fullname", ""),
@@ -128,7 +131,7 @@ class OrganizationDelete(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequire
 # ------------------------------------------------------------
 
 
-class AllMemberships(OnlyForAdminsMixin, AMYListView):
+class AllMemberships(OnlyForAdminsMixin, AMYListView[Membership]):
     context_object_name = "all_memberships"
     template_name = "fiscal/all_memberships.html"
     filter_class = MembershipFilter
@@ -159,8 +162,9 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = "membership"
     template_name = "fiscal/membership.html"
     pk_url_kwarg = "membership_id"
+    object: Membership
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "{0}".format(self.object)
         context["membership_extensions_sum"] = sum(self.object.extensions)
@@ -180,13 +184,13 @@ class MembershipCreate(
     object: Membership
     form_class = MembershipCreateForm
 
-    def form_valid(self, form):
+    def form_valid(self, form: MembershipCreateForm) -> HttpResponse:
         start: date = form.cleaned_data["agreement_start"]
         next_year = start.replace(year=start.year + 1)
         if next_year != form.cleaned_data["agreement_end"]:
             messages.warning(
                 self.request,
-                "Membership agreement end is not full year from the start. " f"It should be: {next_year:%Y-%m-%d}.",
+                "Membership agreement end is not full year from the start. It should be: {next_year:%Y-%m-%d}.",
             )
 
         main_organization: Organization = form.cleaned_data["main_organization"]
@@ -209,7 +213,7 @@ class MembershipCreate(
 
         return return_data
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         path = "membership_members" if self.consortium else "membership_details"
         return reverse(path, args=[self.object.pk])
 
@@ -221,6 +225,7 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupp
     form_class = MembershipForm
     pk_url_kwarg = "membership_id"
     template_name = "generic_form_with_comments.html"
+    request: AuthenticatedHttpRequest
 
     def get_form_kwargs(self) -> Dict[str, Any]:
         kwargs = super().get_form_kwargs()
@@ -240,7 +245,7 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupp
         kwargs["show_rolled_from_previous"] = show_rolled_from_previous
         return kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form: MembershipForm) -> HttpResponse:
         result = super().form_valid(form)
         data = form.cleaned_data
 
@@ -285,7 +290,7 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupp
                     save_rolled_to = True
 
             if save_rolled_to:
-                self.object.rolled_to_membership.save()
+                self.object.rolled_to_membership.save()  # type: ignore
         except Membership.DoesNotExist:
             pass
 
@@ -326,7 +331,7 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
     permission_required = "workshops.delete_membership"
     pk_url_kwarg = "membership_id"
 
-    def before_delete(self, *args, **kwargs):
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
         """Save for use in `after_delete` method."""
         membership = self.object
 
@@ -357,22 +362,23 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
                 "still related objects in the database.",
             )
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("all_memberships")
 
 
-class MembershipMembers(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView):
+class MembershipMembers(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView[Member, MemberForm]):
     permission_required = (
         "workshops.change_membership",
         "workshops.add_member",
         "workshops.change_member",
         "workshops.delete_member",
     )
+    request: AuthenticatedHttpRequest
 
-    def get_formset(self, *args, **kwargs):
+    def get_formset(self, *args: Any, **kwargs: Any) -> type[BaseModelFormSet[Member, MemberForm]]:
         return modelformset_factory(Member, MemberForm, *args, **kwargs)
 
-    def get_formset_kwargs(self):
+    def get_formset_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_formset_kwargs()
         if not self.membership.consortium:
             kwargs["can_delete"] = False
@@ -380,10 +386,10 @@ class MembershipMembers(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipF
             kwargs["validate_max"] = True
         return kwargs
 
-    def get_formset_queryset(self, object):
+    def get_formset_queryset(self, object: Membership) -> QuerySet[Member]:
         return object.member_set.select_related("organization", "role", "membership").order_by("organization__fullname")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         if "title" not in kwargs:
             kwargs["title"] = "Change members for {}".format(self.membership)
         if not self.membership.consortium:
@@ -395,7 +401,7 @@ class MembershipMembers(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipF
             )
         return super().get_context_data(**kwargs)
 
-    def form_valid(self, formset):
+    def form_valid(self, formset: BaseModelFormSet[Member, MemberForm]) -> HttpResponse:
         result = super().form_valid(formset)
 
         # Figure out changes in members and add comment listing them.
@@ -426,23 +432,25 @@ class MembershipMembers(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipF
         return result
 
 
-class MembershipTasks(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView):
+class MembershipTasks(
+    OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFormsetView[MembershipTask, MembershipTaskForm]
+):
     permission_required = "workshops.change_membership"
 
-    def get_formset(self, *args, **kwargs):
+    def get_formset(self, *args: Any, **kwargs: Any) -> type[BaseModelFormSet[MembershipTask, MembershipTaskForm]]:
         return modelformset_factory(MembershipTask, MembershipTaskForm, *args, **kwargs)
 
-    def get_formset_queryset(self, object):
+    def get_formset_queryset(self, object: Membership) -> QuerySet[MembershipTask]:
         return object.membershiptask_set.select_related("person", "role", "membership").order_by(
             "person__family", "person__personal", "role__name"
         )
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         if "title" not in kwargs:
             kwargs["title"] = "Change person roles for {}".format(self.membership)
         return super().get_context_data(**kwargs)
 
-    def form_valid(self, formset):
+    def form_valid(self, formset: BaseModelFormSet[MembershipTask, MembershipTaskForm]) -> HttpResponse:
         result = super().form_valid(formset)
 
         try:
@@ -460,13 +468,16 @@ class MembershipTasks(OnlyForAdminsMixin, PermissionRequiredMixin, MembershipFor
         return result
 
 
-class MembershipExtend(OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, FormView):
+class MembershipExtend(
+    OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, FormView[MembershipExtensionForm]
+):
     form_class = MembershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "workshops.change_membership"
-    comment = "Extended membership by {days} days on {date} (new end date: {new_date})." "\n\n----\n\n{comment}"
+    comment = "Extended membership by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
+    request: AuthenticatedHttpRequest
 
-    def get_initial(self):
+    def get_initial(self) -> dict[str, Any]:
         return {
             "agreement_start": self.membership.agreement_start,
             "agreement_end": self.membership.agreement_end,
@@ -474,12 +485,12 @@ class MembershipExtend(OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershi
             "new_agreement_end": self.membership.agreement_end,
         }
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         if "title" not in kwargs:
             kwargs["title"] = f"Extend membership {self.membership}"
         return super().get_context_data(**kwargs)
 
-    def form_valid(self, form):
+    def form_valid(self, form: MembershipExtensionForm) -> HttpResponse:
         agreement_end = form.cleaned_data["agreement_end"]
         new_agreement_end = form.cleaned_data["new_agreement_end"]
         days = (new_agreement_end - agreement_end).days
@@ -515,11 +526,11 @@ class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetM
     pk_url_kwarg = "membership_id"
     success_message = 'Membership "{membership}" was successfully rolled-over to a new ' 'membership "{new_membership}"'
 
-    def membership_queryset_kwargs(self):
+    def membership_queryset_kwargs(self) -> dict[str, Any]:
         # Prevents already rolled-over memberships from rolling-over again.
         return dict(rolled_to_membership__isnull=True)
 
-    def get_success_message(self, cleaned_data):
+    def get_success_message(self, cleaned_data: dict[str, Any]) -> str:
         return self.success_message.format(
             cleaned_data,
             membership=str(self.membership),
@@ -569,11 +580,11 @@ class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetM
             **super().get_form_kwargs(),
         }
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         kwargs["title"] = f"Create new membership from {self.membership}"
         return super().get_context_data(**kwargs)
 
-    def form_valid(self, form):
+    def form_valid(self, form: MembershipRollOverForm) -> HttpResponse:
         # create new membership, available in self.object
         result = super().form_valid(form)
 
