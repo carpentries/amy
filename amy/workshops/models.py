@@ -339,7 +339,7 @@ class Membership(models.Model):
 
     rolled_to_membership = models.OneToOneField(
         "Membership",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="rolled_from_membership",
         null=True,
     )
@@ -554,10 +554,10 @@ class Airport(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{0}: {1}".format(self.iata, self.fullname)
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("airport_details", args=[str(self.iata)])
 
     class Meta:
