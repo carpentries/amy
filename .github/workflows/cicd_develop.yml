@@ -18,6 +18,5 @@ jobs:
     needs: lint
 
   build_deploy:
-    needs: test
-    environment: staging
     uses: ./.github/workflows/incl_build_and_deploy.yml
+    needs: test

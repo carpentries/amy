@@ -6,6 +6,7 @@ on:
 jobs:
   build:
     name: Build Docker image and push to ECR
+    environment: staging
     runs-on: ubuntu-latest
 
     outputs:
@@ -41,6 +42,7 @@ jobs:
 
   deploy:
     name: Deploy to ECS
+    environment: staging
     needs: build
     runs-on: ubuntu-latest
 
