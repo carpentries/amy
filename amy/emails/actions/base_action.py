@@ -73,7 +73,7 @@ class BaseAction(ABC):
             return None
 
         request: AuthenticatedHttpRequest = kwargs.pop("request")
-        supress_messages: bool = kwargs.pop("suppress_messages", False)
+        suppress_messages: bool = kwargs.pop("suppress_messages", False)
         dry_run: bool = kwargs.pop("dry_run", False)
 
         context = self.get_context(**kwargs)
@@ -97,15 +97,15 @@ class BaseAction(ABC):
             )
         except EmailControllerMissingRecipientsException:
             logger.warning(f"Missing recipients for signal {self.signal}")
-            if not supress_messages:
+            if not suppress_messages:
                 messages_missing_recipients(request, self.signal)
         except EmailTemplate.DoesNotExist:
             logger.warning(f"Missing template for signal {self.signal}")
-            if not supress_messages:
+            if not suppress_messages:
                 messages_missing_template(request, self.signal)
         else:
             logger.info(f"Action scheduled for signal {self.signal}")
-            if not supress_messages:
+            if not suppress_messages:
                 messages_action_scheduled(request, self.signal, scheduled_email)
             return scheduled_email
         return None
@@ -119,7 +119,7 @@ class BaseActionUpdate(BaseAction):
             return None
 
         request = kwargs.pop("request")
-        supress_messages = kwargs.pop("supress_messages", False)
+        suppress_messages = kwargs.pop("suppress_messages", False)
         dry_run = kwargs.pop("dry_run", False)
 
         context = self.get_context(**kwargs)
@@ -168,17 +168,17 @@ class BaseActionUpdate(BaseAction):
             )
         except EmailControllerMissingRecipientsException:
             logger.warning(f"Missing recipients for signal {self.signal}")
-            if not supress_messages:
+            if not suppress_messages:
                 messages_missing_recipients(request, signal_name)
         except EmailControllerMissingTemplateException:
             # Note: this is not realistically possible because the scheduled email
             # is looked up using a specific template signal.
             logger.warning(f"Template not linked to signal {self.signal}")
-            if not supress_messages:
+            if not suppress_messages:
                 messages_missing_template_link(request, scheduled_email)
         else:
             logger.info(f"Action updated for signal {self.signal}")
-            if not supress_messages:
+            if not suppress_messages:
                 messages_action_updated(request, signal_name, scheduled_email)
             return scheduled_email
         return None
@@ -206,7 +206,7 @@ class BaseActionCancel(BaseAction):
             return
 
         request = kwargs["request"]
-        supress_messages = kwargs.pop("supress_messages", False)
+        suppress_messages = kwargs.pop("suppress_messages", False)
         dry_run = kwargs.pop("dry_run", False)
 
         context = self.get_context(**kwargs)
@@ -232,5 +232,5 @@ class BaseActionCancel(BaseAction):
                 author=person_from_request(request),
             )
             logger.info(f"Action cancelled for signal {self.signal}")
-            if not supress_messages:
+            if not suppress_messages:
                 messages_action_cancelled(request, signal_name, scheduled_email)
