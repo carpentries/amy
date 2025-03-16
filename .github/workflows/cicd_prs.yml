@@ -2,9 +2,7 @@
 
 name: CI/CD (develop)
 
-on:
-  push:
-    branches: [ develop ]
+on: pull_request
 
 jobs:
   accessibility:
@@ -17,7 +15,7 @@ jobs:
     uses: ./.github/workflows/incl_test.yml
     needs: lint
 
-  build_deploy:
-    needs: test
-    environment: staging
-    uses: ./.github/workflows/incl_build_and_deploy.yml
+  # build_deploy:
+  #   needs: test
+  #   environment: staging
+  #   uses: ./.github/workflows/incl_build_and_deploy.yml
