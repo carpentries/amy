@@ -8,11 +8,11 @@ on:
 
 jobs:
   accessibility:
-    uses: ./.github/workflows/include/accessibility.yml
+    uses: ./.github/workflows/incl_accessibility.yml
 
   lint:
-    uses: ./.github/workflows/include/linter.yml
+    uses: ./.github/workflows/incl_linter.yml
 
   test:
-    uses: ./.github/workflows/include/test.yml
+    uses: ./.github/workflows/incl_test.yml
     needs: lint

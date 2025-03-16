@@ -8,16 +8,16 @@ on:
 
 jobs:
   accessibility:
-    uses: ./.github/workflows/include/accessibility.yml
+    uses: ./.github/workflows/incl_accessibility.yml
 
   lint:
-    uses: ./.github/workflows/include/linter.yml
+    uses: ./.github/workflows/incl_linter.yml
 
   test:
-    uses: ./.github/workflows/include/test.yml
+    uses: ./.github/workflows/incl_test.yml
     needs: lint
 
   build_deploy:
     needs: test
     environment: staging
-    uses: ./.github/workflows/include/build_and_deploy.yml
+    uses: ./.github/workflows/incl_build_and_deploy.yml
