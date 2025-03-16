@@ -38,7 +38,12 @@ nav:
                 - "Release-Specific Manual Deployment Steps": "manual_deployment_steps.md"
           - "Projects":
                 - "Projects": "./design/projects/README.md"
-                - "Automated emails": "./design/projects/2019_automated_emails.md"
+                - "Automated emails (2019)": "./design/projects/2019_automated_emails.md"
+                - "Automated emails (2023)":
+                  - "Design": "./design/projects/2023_automated_emails/index.md"
+                  - "New email action checklist": "./design/projects/2023_automated_emails/new_action_checklist.md"
+                  - "Email controller": "./design/projects/2023_automated_emails/email_controller.md"
+                  - "Base actions": "./design/projects/2023_automated_emails/base_actions.md"
                 - "Memberships": "./design/projects/2021_memberships.md"
                 - "Consents": "./design/projects/2021_consents.md"
                 - "Profile Archival": "./design/projects/2021_profile_archival.md"
@@ -59,12 +64,12 @@ markdown_extensions:
     - toc:
           permalink: True
     - admonition
-    - pymdownx.details  
+    - pymdownx.details
     - pymdownx.superfences:
           custom_fences:
             - name: mermaid
               class: mermaid
-              format: !!python/name:pymdownx.superfences.fence_code_format 
+              format: !!python/name:pymdownx.superfences.fence_code_format
 
 
 
