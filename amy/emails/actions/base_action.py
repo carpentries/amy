@@ -42,33 +42,78 @@ def feature_flag_enabled(feature_flag: str, signal_name: str, **kwargs: Any) -> 
 
 
 class BaseAction(ABC):
+    """
+    Base class for scheduling actions. Requires providing of the following methods:
+    * `get_scheduled_at`
+    * `get_context`
+    * `get_context_json`
+    * `get_generic_relation_object`
+    * `get_recipients`
+    * `get_recipients_context_json`
+
+    All those are used in `__call__()` method to prepare an email to be scheduled and add it to the queue.
+
+    The class instance needs to be callable (ie. define `__call__()`), because it's used in Django signal system.
+    """
+
     signal: SignalNameEnum
 
     @abstractmethod
     def get_scheduled_at(self, *args: Any, **kwargs: Any) -> datetime:
+        """
+        Provide a specific datetime when the scheduled email should be sent out.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def get_context(self, *args: Any, **kwargs: Any) -> Any:
+        """
+        Given action kwargs, provide a concrete action context object.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def get_context_json(self, context: Any) -> ContextModel:
+        """
+        Given action context object, provide a Pydantic model ContextModel, which will be turned into JSON later.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def get_generic_relation_object(self, context: Any, *args: Any, **kwargs: Any) -> Any:
+        """
+        Provide a single object that the scheduled email should be linked to (e.g. a person or an event
+        this email is most related to). Usually use an existing object from the `context` parameter.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def get_recipients(self, context: Any, *args: Any, **kwargs: Any) -> list[str]:
+        """
+        Provide a list of email addresses of the email's recipients. Usually use an existing object(s)
+        from the `context` parameter.
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def get_recipients_context_json(self, context: Any, *args: Any, **kwargs: Any) -> ToHeaderModel:
+        """
+        Given action recipients list, provide a Pydantic model ToHeaderModel, which will be turned into JSON later.
+        """
         raise NotImplementedError()
 
     def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
+        """
+        React to Django signal and schedule an email configured by `signal` class field and the abstract
+        methods.
+
+        If the `"EMAIL_MODULE"` feature flag is not enabled, stop early.
+        If `suppress_messages` bool flag is in `kwargs` and set to `True`, then no messages will be generated
+        for the Django messaging system to show in the templates.
+        If `dry_run` bool flag is in `kwargs` and set to `True`, then no scheduling will happen.
+
+        Otherwise, an email will be created and scheduled to run at the specific time.
+        """
         if not feature_flag_enabled("EMAIL_MODULE", self.signal, **kwargs):
             return None
 
@@ -83,7 +128,7 @@ class BaseAction(ABC):
 
         try:
             if dry_run:
-                logger.debug(f"Dry-run mode: email action for signal {self.signal}, " f"{generic_relation_obj}")
+                logger.debug(f"Dry-run mode: email action for signal {self.signal}, {generic_relation_obj}")
                 return None
 
             scheduled_email = EmailController.schedule_email(
@@ -111,10 +156,27 @@ class BaseAction(ABC):
         return None
 
 
-# TODO: turn into a generic class that combines BaseAction,
-#       BaseActionUpdate and BaseActionCancel for the complex signals.
 class BaseActionUpdate(BaseAction):
+    """
+    Base class for updating scheduled emails. The same requirements as in super class `BaseAction`.
+
+    `__call__()` method is used to update properties of a scheduled email.
+
+    The class instance needs to be callable (ie. define `__call__()`), because it's used in Django signal system.
+    """
+
     def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
+        """
+        React to Django signal and update a scheduled email configured by `signal` class field and the abstract
+        methods (as in the super class `BaseAction`).
+
+        If the `"EMAIL_MODULE"` feature flag is not enabled, stop early.
+        If `suppress_messages` bool flag is in `kwargs` and set to `True`, then no messages will be generated
+        for the Django messaging system to show in the templates.
+        If `dry_run` bool flag is in `kwargs` and set to `True`, then no scheduling will happen.
+
+        Otherwise, an email will be updated.
+        """
         if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_update", **kwargs):
             return None
 
@@ -142,7 +204,7 @@ class BaseActionUpdate(BaseAction):
             )
 
         except ScheduledEmail.DoesNotExist:
-            logger.warning(f"Scheduled email for signal {signal_name} and {generic_relation_obj=} " "does not exist.")
+            logger.warning(f"Scheduled email for signal {signal_name} and {generic_relation_obj=} does not exist.")
             return None
 
         except ScheduledEmail.MultipleObjectsReturned:
@@ -154,7 +216,7 @@ class BaseActionUpdate(BaseAction):
 
         try:
             if dry_run:
-                logger.debug(f"Dry-run mode: email update action for signal {self.signal}, " f"{generic_relation_obj}")
+                logger.debug(f"Dry-run mode: email update action for signal {self.signal}, {generic_relation_obj}")
                 return None
 
             scheduled_email = EmailController.update_scheduled_email(
@@ -184,24 +246,54 @@ class BaseActionUpdate(BaseAction):
         return None
 
 
-# TODO: turn into a generic class that combines BaseAction,
-#       BaseActionUpdate and BaseActionCancel for the complex signals.
 class BaseActionCancel(BaseAction):
-    # Method is not needed in this action.
+    """
+    Base class for cancelling scheduled emails. The same requirements as in super class `BaseAction`,
+    with the exception of some methods no longer being used: `get_recipients` and `get_scheduled_at`.
+
+    `__call__()` method is used to cancel multiple matching emails.
+
+    The class instance needs to be callable (ie. define `__call__()`), because it's used in Django signal system.
+    """
+
     def get_recipients(self, context: Any, *args: Any, **kwargs: Any) -> list[str]:
+        """Not used in BaseActionCancel."""
         raise NotImplementedError()
 
-    # Method is not needed in this action.
     def get_scheduled_at(self, *args: Any, **kwargs: Any) -> datetime:
+        """Not used in BaseActionCancel."""
         raise NotImplementedError()
 
     def get_generic_relation_content_type(self, context: Any, generic_relation_obj: Any) -> ContentType:
+        """
+        Get content type object for the model of the generic relation.
+        """
         return ContentType.objects.get_for_model(generic_relation_obj)
 
     def get_generic_relation_pk(self, context: Any, generic_relation_obj: Any) -> int | Any:
+        """
+        Get PK of the generic relation object.
+        """
         return generic_relation_obj.pk
 
     def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> None:
+        """
+        React to Django signal and cancel scheduled emails configured by `signal` class field and
+        generic relation object.
+        This is the only BaseAction* class that works on multiple emails.
+
+        Generic relation object retrieval is defined through two methods:
+        * `get_generic_relation_content_type`
+        * `get_generic_relation_pk`
+        Both can be overwritten in some rare cases.
+
+        If the `"EMAIL_MODULE"` feature flag is not enabled, stop early.
+        If `suppress_messages` bool flag is in `kwargs` and set to `True`, then no messages will be generated
+        for the Django messaging system to show in the templates.
+        If `dry_run` bool flag is in `kwargs` and set to `True`, then no scheduling will happen.
+
+        Otherwise, all matching emails will be cancelled.
+        """
         if not feature_flag_enabled("EMAIL_MODULE", f"{self.signal}_cancel", **kwargs):
             return
 
@@ -224,7 +316,7 @@ class BaseActionCancel(BaseAction):
 
         for scheduled_email in scheduled_emails:
             if dry_run:
-                logger.debug(f"Dry-run mode: email cancel action for signal {self.signal}, " f"{generic_relation_obj}")
+                logger.debug(f"Dry-run mode: email cancel action for signal {self.signal}, {generic_relation_obj}")
                 continue
 
             scheduled_email = EmailController.cancel_email(
