@@ -1,10 +1,10 @@
 from datetime import datetime
 import logging
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from django.utils import timezone
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -55,7 +55,7 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
     )
     logger.debug(f"{email_should_exist=}")
 
-    ct = ContentType.objects.get_for_model(event)  # type: ignore
+    ct = ContentType.objects.get_for_model(event)
     email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
@@ -76,7 +76,7 @@ def ask_for_website_strategy(event: Event) -> StrategyEnum:
     return result
 
 
-def run_ask_for_website_strategy(strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs) -> None:
+def run_ask_for_website_strategy(strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs: Any) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: ask_for_website_signal,
         StrategyEnum.UPDATE: ask_for_website_update_signal,
@@ -148,9 +148,9 @@ def get_recipients_context_json(
             {
                 "api_uri": api_model_url("person", instructor.pk),
                 "property": "email",
-            }
+            }  # type: ignore
             for instructor in context["instructors"]
-        ],  # type: ignore
+        ],
     )
 
 

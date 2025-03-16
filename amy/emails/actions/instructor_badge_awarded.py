@@ -1,13 +1,12 @@
 from datetime import date, datetime
 from io import BytesIO
 import logging
-from typing import Any
+from typing import Any, Unpack
 
 import cairosvg
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy

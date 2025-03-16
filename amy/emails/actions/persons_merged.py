@@ -1,6 +1,5 @@
 from datetime import datetime
-
-from typing_extensions import Unpack
+from typing import Unpack
 
 from emails.actions.base_action import BaseAction
 from emails.schemas import ContextModel, ToHeaderModel

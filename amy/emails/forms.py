@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from django import forms
 from markdownx.fields import MarkdownxFormField
@@ -8,7 +9,7 @@ from emails.signals import SignalNameEnum
 from workshops.forms import BootstrapHelper
 
 
-class EmailTemplateCreateForm(forms.ModelForm):
+class EmailTemplateCreateForm(forms.ModelForm[EmailTemplate]):
     body = MarkdownxFormField(
         label=EmailTemplate._meta.get_field("body").verbose_name,
         help_text=EmailTemplate._meta.get_field("body").help_text,
@@ -33,7 +34,7 @@ class EmailTemplateCreateForm(forms.ModelForm):
             "body",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         array_email_field_help_text = "Separate email addresses with a comma"
@@ -53,7 +54,7 @@ class EmailTemplateUpdateForm(EmailTemplateCreateForm):
         pass
 
 
-class ScheduledEmailUpdateForm(forms.ModelForm):
+class ScheduledEmailUpdateForm(forms.ModelForm[ScheduledEmail]):
     body = MarkdownxFormField(
         label=ScheduledEmail._meta.get_field("body").verbose_name,
         help_text=ScheduledEmail._meta.get_field("body").help_text,
@@ -72,7 +73,7 @@ class ScheduledEmailUpdateForm(forms.ModelForm):
             "body",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         array_email_field_help_text = "Separate email addresses with a comma"
@@ -89,8 +90,8 @@ class ScheduledEmailRescheduleForm(forms.Form):
 
     helper = BootstrapHelper(submit_label="Update")
 
-    def clean_scheduled_at(self):
-        scheduled_at = self.cleaned_data["scheduled_at"]
+    def clean_scheduled_at(self) -> datetime:
+        scheduled_at = cast(datetime, self.cleaned_data["scheduled_at"])
 
         if scheduled_at < datetime.now(tz=UTC):
             raise forms.ValidationError("Scheduled time cannot be in the past.")

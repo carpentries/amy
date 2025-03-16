@@ -36,6 +36,10 @@ class EmailControllerMissingTemplateException(EmailControllerException):
 
 
 class EmailController:
+    """
+    Controller providing useful methods for managing scheduled emails and their attachments.
+    """
+
     @staticmethod
     def schedule_email(
         signal: str,
@@ -46,6 +50,24 @@ class EmailController:
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
+        """Schedule a new email to be sent.
+
+        Args:
+            signal: The signal that triggers the email.
+            context_json: The context data for the email.
+            scheduled_at: The datetime at which the email should be sent.
+            to_header: A list of recipient email addresses.
+            to_header_context_json: The context data for the recipient email addresses.
+            generic_relation_obj: An optional related object.
+            author: The author of the email log entry.
+
+        Returns:
+            The created ScheduledEmail object.
+
+        Raises:
+            EmailControllerMissingRecipientsException: If the email has no recipients.
+        """
+
         if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
                 "Email must have at least one recipient, but `to_header` or " "`to_header_context_json` are empty."
@@ -97,6 +119,16 @@ class EmailController:
         new_scheduled_at: datetime,
         author: Person | None = None,
     ) -> ScheduledEmail:
+        """Reschedule a scheduled email at a new scheduled date.
+
+        Args:
+            scheduled_email: The ScheduledEmail object to reschedule.
+            new_scheduled_at: The new datetime at which the email should be sent.
+            author: The author of the email log entry.
+
+        Returns:
+            The updated ScheduledEmail object.
+        """
         scheduled_email.scheduled_at = new_scheduled_at
 
         # Rescheduling a cancelled email will make it scheduled again.
@@ -124,6 +156,20 @@ class EmailController:
         generic_relation_obj: Model | None = None,
         author: Person | None = None,
     ) -> ScheduledEmail:
+        """Update an existing scheduled email.
+
+        Args:
+            scheduled_email: The ScheduledEmail object to update.
+            context_json: The context data for the email.
+            scheduled_at: The datetime at which the email should be sent.
+            to_header: A list of recipient email addresses.
+            to_header_context_json: The context data for the recipient email addresses.
+            generic_relation_obj: An optional related object.
+            author: The author of the email log entry.
+
+        Returns:
+            The updated ScheduledEmail object.
+        """
         if not to_header or not to_header_context_json.root:
             raise EmailControllerMissingRecipientsException(
                 "Email must have at least one recipient, but `to_header` or " "`to_header_context_json` are empty."
@@ -175,6 +221,17 @@ class EmailController:
         details: str,
         author: Person | None = None,
     ) -> ScheduledEmail:
+        """Change the state of a scheduled email and logs the change.
+
+        Args:
+            scheduled_email: The ScheduledEmail object to update.
+            new_state: The new state of the email.
+            details: The details of the state change.
+            author: The author of the email log entry.
+
+        Returns:
+            The updated ScheduledEmail object.
+        """
         old_state = scheduled_email.state
         scheduled_email.state = new_state
         scheduled_email.save()
@@ -193,14 +250,44 @@ class EmailController:
         details: str = "Email was cancelled",
         author: Person | None = None,
     ) -> ScheduledEmail:
+        """Cancel a scheduled email.
+
+        Args:
+            scheduled_email: The ScheduledEmail object to cancel.
+            details: The details of the cancellation.
+            author: The author of the email log entry.
+
+        Returns:
+            The updated ScheduledEmail object.
+        """
         return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.CANCELLED, details, author)
 
     @staticmethod
     def lock_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
+        """Lock a scheduled email.
+
+        Args:
+            scheduled_email: The ScheduledEmail object to lock.
+            details: The details of the lock.
+            author: The author of the email log entry.
+
+        Returns:
+            The updated ScheduledEmail object.
+        """
         return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.LOCKED, details, author)
 
     @staticmethod
     def fail_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
+        """Set a scheduled email as failed.
+
+        Args:
+            scheduled_email: The ScheduledEmail object to fail.
+            details: The details of the failure.
+            author: The author of the email log entry.
+
+        Returns:
+            The updated ScheduledEmail object.
+        """
         email = EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.FAILED, details, author)
 
         # Count the number of failures. If it's >= MAX_FAILED_ATTEMPTS, then cancel
@@ -226,14 +313,44 @@ class EmailController:
 
     @staticmethod
     def succeed_email(scheduled_email: ScheduledEmail, details: str, author: Person | None = None) -> ScheduledEmail:
+        """Set a scheduled email as succeeded.
+
+        Args:
+            scheduled_email: The ScheduledEmail object to succeed.
+            details: The details of the success.
+            author: The author of the email log entry.
+
+        Returns:
+            The updated ScheduledEmail object.
+        """
         return EmailController.change_state_with_log(scheduled_email, ScheduledEmailStatus.SUCCEEDED, details, author)
 
     @staticmethod
     def s3_file_path(scheduled_email: ScheduledEmail, filename_uuid: UUID, filename: str) -> str:
+        """Generate the S3 path for an attachment.
+
+        Args:
+            scheduled_email: The ScheduledEmail object.
+            filename_uuid: The UUID of the attachment.
+            filename: The filename of the attachment.
+
+        Returns:
+            The S3 path for the attachment.
+        """
         return f"{scheduled_email.pk}/{filename_uuid}-{filename}"
 
     @staticmethod
     def add_attachment(scheduled_email: ScheduledEmail, filename: str, content: bytes) -> Attachment:
+        """Add an attachment to a scheduled email.
+
+        Args:
+            scheduled_email: The ScheduledEmail object.
+            filename: The filename of the attachment.
+            content: The content of the attachment.
+
+        Returns:
+            The created Attachment object.
+        """
         bucket_name = settings.EMAIL_ATTACHMENTS_BUCKET_NAME
 
         attachment_uuid = uuid4()
@@ -257,6 +374,16 @@ class EmailController:
 
     @staticmethod
     def generate_presigned_url_for_attachment(attachment: Attachment, expiration_seconds: int = 3600) -> Attachment:
+        """Generate a presigned URL for an attachment. It's needed for unauthorized users to
+        be able to download the attachment from S3.
+
+        Args:
+            attachment: The Attachment object.
+            expiration_seconds: The expiration time of the presigned URL in seconds.
+
+        Returns:
+            The updated Attachment object.
+        """
         logger.debug(f"Requesting presigned URL for attachment: {attachment}")
 
         expiration = now() + timedelta(seconds=expiration_seconds)
