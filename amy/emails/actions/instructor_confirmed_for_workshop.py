@@ -1,10 +1,10 @@
 from datetime import datetime
 import logging
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from django.utils import timezone
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -85,7 +85,7 @@ def run_instructor_confirmed_for_workshop_strategy(
     strategy: StrategyEnum,
     request: HttpRequest,
     signup: InstructorRecruitmentSignup,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_confirmed_for_workshop_signal,

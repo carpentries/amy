@@ -23,6 +23,7 @@ from emails.utils import (
     messages_missing_template_link,
     person_from_request,
 )
+from workshops.base_views import AuthenticatedHttpRequest
 
 logger = logging.getLogger("amy")
 
@@ -71,9 +72,9 @@ class BaseAction(ABC):
         if not feature_flag_enabled("EMAIL_MODULE", self.signal, **kwargs):
             return None
 
-        request = kwargs.pop("request")
-        supress_messages = kwargs.pop("supress_messages", False)
-        dry_run = kwargs.pop("dry_run", False)
+        request: AuthenticatedHttpRequest = kwargs.pop("request")
+        supress_messages: bool = kwargs.pop("suppress_messages", False)
+        dry_run: bool = kwargs.pop("dry_run", False)
 
         context = self.get_context(**kwargs)
         context_json = self.get_context_json(context)

@@ -1,9 +1,9 @@
 from datetime import date, datetime
 import logging
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -55,11 +55,11 @@ def find_training_completion_date(person: Person) -> date:
 def instructor_training_completed_not_badged_strategy(person: Person) -> StrategyEnum:
     logger.info(f"Running InstructorTrainingCompletedNotBadged strategy for {person}")
 
-    person_annotated = Person.objects.annotate_with_instructor_eligibility().get(pk=person.pk)  # type: ignore
+    person_annotated = Person.objects.annotate_with_instructor_eligibility().get(pk=person.pk)
 
     all_requirements_passed = bool(person_annotated.instructor_eligible)
 
-    ct = ContentType.objects.get_for_model(person)  # type: ignore
+    ct = ContentType.objects.get_for_model(person)
     email_scheduled = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=person.pk,
@@ -107,7 +107,7 @@ def run_instructor_training_completed_not_badged_strategy(
     request: HttpRequest,
     person: Person,
     training_completed_date: date | None,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_completed_not_badged_signal,

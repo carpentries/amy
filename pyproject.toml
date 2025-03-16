@@ -106,6 +106,7 @@ module = [
   "cairosvg.*",
   "django_filters.*",
   "flags.*",
+  "markdownx.*",
   "reversion.*",
   "social_django.*",
 ]

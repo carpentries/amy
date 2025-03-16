@@ -1,11 +1,10 @@
 from datetime import datetime
 import logging
-from typing import Any
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from django.utils import timezone
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -89,7 +88,7 @@ def instructor_task_created_for_workshop_strategy(task: Task, optional_task_pk: 
 
 
 def run_instructor_task_created_for_workshop_strategy(
-    strategy: StrategyEnum, request: HttpRequest, task: Task, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, task: Task, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_task_created_for_workshop_signal,
