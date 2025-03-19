@@ -1,6 +1,6 @@
 # CI/CD for main branch
 
-name: CI/CD (main)
+name: CI/CD (main - no deployment)
 
 on:
   push:
