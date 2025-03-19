@@ -1,4 +1,4 @@
-# reusable workflow
+# reusable workflow - `staging` environment
 
 on:
   workflow_call
