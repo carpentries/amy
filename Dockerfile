@@ -8,6 +8,8 @@ FROM python:3.12-slim AS base
 
 # security updates
 RUN apt-get update && apt-get -y upgrade && apt-get install -y --no-install-recommends libpq5 libcairo2
+# fonts for the SVG generation
+RUN apt-get install -y fonts-liberation
 
 
 # ----------------------------------
