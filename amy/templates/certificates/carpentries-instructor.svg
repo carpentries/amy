@@ -9,7 +9,7 @@
 	.st3{fill:#FFFFFF;}
 	.st4{fill:none;}
 	.st5{fill:#808285;}
-	.st6{font-family:'Arial';}
+	.st6{font-family:'Liberation Sans', 'Arial';}
 	.st7{font-size:14px;}
 	.st8{fill:#FF4955;}
 	.st9{fill:#001483;}
@@ -43,7 +43,7 @@
 
 <!-- Certificate text - description, awardee, date -->
 	<g id="g7030" transform="translate(-47,-11)">
-		<rect id="rect7032" x="137.1" y="316.3" class="st4" width="518.1" height="249"/>
+		<rect id="rect7032" x="137.1" y="316.3" class="st4" width="620" height="249"/>
 		<text transform="matrix(1 0 0 1 137.1107 326.2737)" class="st5 st6 st7">This certificate has been awarded for successfully completing The Carpentries Instructor Training</text>
 		<text transform="matrix(1 0 0 1 137.1107 351.8737)" class="st5 st6 st7">program. The recipient has demonstrated understanding of core evidence-based teaching practices </text>
 		<text transform="matrix(1 0 0 1 137.1107 377.4737)" class="st5 st6 st7">and pedagogical concepts, and is qualified to teach the core curriculum of Data Carpentry, Library </text>
