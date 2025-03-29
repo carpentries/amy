@@ -1,7 +1,4 @@
-from rq.job import Job as _Job
-
-
-class Job(_Job):
+class Job:
     def set_status(self, status, *args, **kwargs):
         from autoemails.models import RQJob
 

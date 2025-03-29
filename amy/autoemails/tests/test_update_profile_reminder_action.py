@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.utils import timezone
 
 import autoemails.actions
@@ -13,12 +13,11 @@ from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.models import Person
 
 
+@tag("autoemails")
 class TestUpdateProfileRepeatedAction(FakeRedisTestCaseMixin, TestCase):
     def setUp(self) -> None:
         super().setUp()
-        trigger = Trigger.objects.create(
-            action="profile-update", template=EmailTemplate.objects.create()
-        )
+        trigger = Trigger.objects.create(action="profile-update", template=EmailTemplate.objects.create())
         self.action = UpdateProfileReminderRepeatedAction(trigger=trigger)
 
         # save scheduler and connection data
@@ -31,9 +30,7 @@ class TestUpdateProfileRepeatedAction(FakeRedisTestCaseMixin, TestCase):
         autoemails.actions.scheduler = self._saved_scheduler
 
     def test_action(self) -> None:
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk", is_active=True
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk", is_active=True)
         p2 = Person.objects.create(
             personal="Hermione",
             family="Granger",

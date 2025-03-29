@@ -1,3 +1,4 @@
+# flake8: noqa
 import logging
 
 from django.contrib import messages
@@ -5,7 +6,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.decorators.http import require_POST
-import django_rq
 
 from workshops.models import WorkshopRequest
 from workshops.utils.access import admin_required
@@ -17,8 +17,6 @@ from .models import EmailTemplate, Trigger
 from .utils import check_status, scheduled_execution_time
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 @require_POST
@@ -73,9 +71,7 @@ def generic_schedule_email(request, pk):
 
         job = scheduler.enqueue_in(launch_at, action, meta=meta)
         logger.debug("%s: enqueueing", action_name)
-        scheduled_at = scheduled_execution_time(
-            job.get_id(), scheduler=scheduler, naive=False
-        )
+        scheduled_at = scheduled_execution_time(job.get_id(), scheduler=scheduler, naive=False)
         logger.debug("%s: job created [%r]", action_name, job)
 
         rqj = workshop_request.rq_jobs.create(

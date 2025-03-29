@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import DeclinedInstructorsAction
 from autoemails.models import EmailTemplate, Trigger
@@ -9,6 +9,7 @@ from workshops.models import Event, Organization, Person, Tag
 from workshops.utils.dates import human_daterange
 
 
+@tag("autoemails")
 class TestDeclinedInstructorsAction(TestCase):
     def setUp(self):
         # we're missing some tags
@@ -21,9 +22,7 @@ class TestDeclinedInstructorsAction(TestCase):
                 Tag(name="TTT", priority=40),
             ]
         )
-        Organization.objects.bulk_create(
-            [Organization(domain="carpentries.org", fullname="Instructor Training")]
-        )
+        Organization.objects.bulk_create([Organization(domain="carpentries.org", fullname="Instructor Training")])
 
         self.event = Event.objects.create(
             slug="test-event",
@@ -39,9 +38,7 @@ class TestDeclinedInstructorsAction(TestCase):
             family="Test1",
             email="test1@example.org",
         )
-        self.recruitment = InstructorRecruitment.objects.create(
-            event=self.event, status="o"
-        )
+        self.recruitment = InstructorRecruitment.objects.create(event=self.event, status="o")
 
         self.template = EmailTemplate.objects.create(
             slug="sample-template",
@@ -71,18 +68,10 @@ class TestDeclinedInstructorsAction(TestCase):
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
-        recruitment_closed = InstructorRecruitment.objects.create(
-            event=event, status="c"
-        )
-        signup1 = InstructorRecruitmentSignup(
-            person=self.person, recruitment=self.recruitment, state="a"
-        )
-        signup2 = InstructorRecruitmentSignup(
-            person=self.person, recruitment=recruitment_closed, state="a"
-        )
-        signup3 = InstructorRecruitmentSignup(
-            person=self.person, recruitment=self.recruitment, state="d"
-        )
+        recruitment_closed = InstructorRecruitment.objects.create(event=event, status="c")
+        signup1 = InstructorRecruitmentSignup(person=self.person, recruitment=self.recruitment, state="a")
+        signup2 = InstructorRecruitmentSignup(person=self.person, recruitment=recruitment_closed, state="a")
+        signup3 = InstructorRecruitmentSignup(person=self.person, recruitment=self.recruitment, state="d")
         # Act & Assert
         self.assertFalse(DeclinedInstructorsAction.check(signup1))
         self.assertFalse(DeclinedInstructorsAction.check(signup2))
@@ -97,12 +86,8 @@ class TestDeclinedInstructorsAction(TestCase):
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
-        recruitment_closed = InstructorRecruitment.objects.create(
-            event=event, status="c"
-        )
-        signup = InstructorRecruitmentSignup(
-            person=self.person, recruitment=recruitment_closed, state="d"
-        )
+        recruitment_closed = InstructorRecruitment.objects.create(event=event, status="c")
+        signup = InstructorRecruitmentSignup(person=self.person, recruitment=recruitment_closed, state="d")
         # Act &  Assert
         self.assertTrue(DeclinedInstructorsAction.check(signup))
 
@@ -125,9 +110,7 @@ class TestDeclinedInstructorsAction(TestCase):
             action.get_additional_context({"recruitment": self.recruitment})
         with self.assertRaises(KeyError):
             # missing person
-            action.get_additional_context(
-                {"recruitment": self.recruitment, "event": self.event}
-            )
+            action.get_additional_context({"recruitment": self.recruitment, "event": self.event})
 
         # OK
         action.get_additional_context(

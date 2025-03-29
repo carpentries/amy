@@ -1,8 +1,8 @@
 import logging
 
-from autoemails.actions import NewConsentRequiredAction
-from autoemails.bulk_email import send_bulk_email
-from autoemails.models import Trigger
+# from autoemails.actions import NewConsentRequiredAction
+# from autoemails.bulk_email import send_bulk_email
+# from autoemails.models import Trigger
 from consents.models import Consent, Term, TermEnum, TermOptionChoices
 from workshops.models import Person
 
@@ -14,11 +14,7 @@ def person_has_consented_to_required_terms(person: Person) -> bool:
     Check the Required terms in the database
     and return true if they have all been consented to.
     """
-    required_term_ids = (
-        Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-        .active()
-        .values_list("id")
-    )
+    required_term_ids = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active().values_list("id")
     term_ids_user_consented_to = (
         Consent.objects.filter(
             person=person,
@@ -37,22 +33,21 @@ def send_consent_email(request, term: Term) -> None:
     exposing email addresses.
     """
     emails = (
-        Consent.objects.filter(term=term, term_option__isnull=True)
-        .active()
-        .values_list("person__email", flat=True)
+        Consent.objects.filter(term=term, term_option__isnull=True).active().values_list("person__email", flat=True)
     )
-    triggers = Trigger.objects.filter(
-        active=True,
-        action="consent-required",
-    )
-    send_bulk_email(
-        request=request,
-        action_class=NewConsentRequiredAction,
-        triggers=triggers,
-        emails=emails,
-        additional_context_objects={"term": term},
-        object_=term,
-    )
+    len(emails)  # to make the `emails` used
+    # triggers = Trigger.objects.filter(
+    #     active=True,
+    #     action="consent-required",
+    # )
+    # send_bulk_email(
+    #     request=request,
+    #     action_class=NewConsentRequiredAction,
+    #     triggers=triggers,
+    #     emails=emails,
+    #     additional_context_objects={"term": term},
+    #     object_=term,
+    # )
 
 
 def reconsent_for_term_option_type(

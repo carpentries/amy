@@ -1,10 +1,10 @@
 from datetime import datetime
 import logging
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from django.utils import timezone
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -32,9 +32,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     logger.info(f"Running InstructorTrainingApproaching strategy for {event}")
 
     has_TTT = event.tags.filter(name="TTT").exists()
-    has_at_least_2_instructors = (
-        Task.objects.filter(event=event, role__name="instructor").count() >= 2
-    )
+    has_at_least_2_instructors = Task.objects.filter(event=event, role__name="instructor").count() >= 2
     start_date_in_future = event.start and event.start >= timezone.now().date()
 
     log_condition_elements(
@@ -46,7 +44,7 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     email_should_exist = has_TTT and has_at_least_2_instructors and start_date_in_future
     logger.debug(f"{email_should_exist=}")
 
-    ct = ContentType.objects.get_for_model(event)  # type: ignore
+    ct = ContentType.objects.get_for_model(event)
     email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
@@ -63,12 +61,12 @@ def instructor_training_approaching_strategy(event: Event) -> StrategyEnum:
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"InstructorTrainingApproaching strategy {result = }")
+    logger.debug(f"InstructorTrainingApproaching strategy {result=}")
     return result
 
 
 def run_instructor_training_approaching_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_approaching_signal,
@@ -96,10 +94,7 @@ def get_context(
     **kwargs: Unpack[InstructorTrainingApproachingKwargs],
 ) -> InstructorTrainingApproachingContext:
     event = kwargs["event"]
-    instructors = [
-        task.person
-        for task in Task.objects.filter(event=event, role__name="instructor")
-    ]
+    instructors = [task.person for task in Task.objects.filter(event=event, role__name="instructor")]
     return {
         "event": event,
         "instructors": instructors,
@@ -110,9 +105,7 @@ def get_context_json(context: InstructorTrainingApproachingContext) -> ContextMo
     return ContextModel(
         {
             "event": api_model_url("event", context["event"].pk),
-            "instructors": [
-                api_model_url("person", person.pk) for person in context["instructors"]
-            ],
+            "instructors": [api_model_url("person", person.pk) for person in context["instructors"]],
         },
     )
 
@@ -141,18 +134,16 @@ def get_recipients_context_json(
             {
                 "api_uri": api_model_url("person", instructor.pk),
                 "property": "email",
-            }
+            }  # type: ignore
             for instructor in context["instructors"]
-        ],  # type: ignore
+        ],
     )
 
 
 class InstructorTrainingApproachingReceiver(BaseAction):
     signal = instructor_training_approaching_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
     def get_context(
@@ -160,9 +151,7 @@ class InstructorTrainingApproachingReceiver(BaseAction):
     ) -> InstructorTrainingApproachingContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTrainingApproachingContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTrainingApproachingContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -190,9 +179,7 @@ class InstructorTrainingApproachingReceiver(BaseAction):
 class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
     signal = instructor_training_approaching_update_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorTrainingApproachingKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
     def get_context(
@@ -200,9 +187,7 @@ class InstructorTrainingApproachingUpdateReceiver(BaseActionUpdate):
     ) -> InstructorTrainingApproachingContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTrainingApproachingContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTrainingApproachingContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -235,9 +220,7 @@ class InstructorTrainingApproachingCancelReceiver(BaseActionCancel):
     ) -> InstructorTrainingApproachingContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTrainingApproachingContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTrainingApproachingContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -262,17 +245,9 @@ instructor_training_approaching_receiver = InstructorTrainingApproachingReceiver
 instructor_training_approaching_signal.connect(instructor_training_approaching_receiver)
 
 
-instructor_training_approaching_update_receiver = (
-    InstructorTrainingApproachingUpdateReceiver()
-)
-instructor_training_approaching_update_signal.connect(
-    instructor_training_approaching_update_receiver
-)
+instructor_training_approaching_update_receiver = InstructorTrainingApproachingUpdateReceiver()
+instructor_training_approaching_update_signal.connect(instructor_training_approaching_update_receiver)
 
 
-instructor_training_approaching_cancel_receiver = (
-    InstructorTrainingApproachingCancelReceiver()
-)
-instructor_training_approaching_cancel_signal.connect(
-    instructor_training_approaching_cancel_receiver
-)
+instructor_training_approaching_cancel_receiver = InstructorTrainingApproachingCancelReceiver()
+instructor_training_approaching_cancel_signal.connect(instructor_training_approaching_cancel_receiver)

@@ -9,23 +9,22 @@ from django.db.models import Manager, Prefetch, QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from autoemails.mixins import RQJobsMixin
 from consents.exceptions import TermOptionDoesNotBelongToTermException
 from workshops.mixins import CreatedUpdatedArchivedMixin
 from workshops.models import STR_LONG, STR_MED, Person, TrainingRequest
 
 
-class TermQuerySet(QuerySet):
-    def active(self):
+class TermQuerySet(QuerySet["Term"]):
+    def active(self) -> "TermQuerySet":
         return self.filter(archived_at=None)
 
-    def prefetch_active_options(self):
+    def prefetch_active_options(self) -> "TermQuerySet":
         return self._prefetch_options(TermOption.objects.active(), "active_options")
 
-    def prefetch_all_options(self):
+    def prefetch_all_options(self) -> "TermQuerySet":
         return self._prefetch_options(TermOption.objects.all(), "all_options")
 
-    def _prefetch_options(self, options_queryset, attr_name: str):
+    def _prefetch_options(self, options_queryset: QuerySet["TermOption"], attr_name: str) -> "TermQuerySet":
         return self.prefetch_related(
             Prefetch(
                 "termoption_set",
@@ -35,12 +34,12 @@ class TermQuerySet(QuerySet):
         )
 
 
-class TermManager(Manager):
+class TermManager(Manager["Term"]):
     def filter_by_key(self, key: str) -> QuerySet["Term"]:
         slug = Term.key_to_slug(key)
         return self.get_queryset().filter(slug=slug)
 
-    def get_by_key(self, key: str) -> QuerySet["Term"]:
+    def get_by_key(self, key: str) -> "Term":
         slug = Term.key_to_slug(key)
         return self.get_queryset().get(slug=slug)
 
@@ -57,7 +56,7 @@ class TermEnum(StrEnum):
     PRIVACY_POLICY = "privacy-policy"
 
 
-class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
+class Term(CreatedUpdatedArchivedMixin, models.Model):
     PROFILE_REQUIRE_TYPE = "profile"
     OPTIONAL_REQUIRE_TYPE = "optional"
     TERM_REQUIRE_TYPE = (
@@ -71,13 +70,10 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
         verbose_name="Content for Training Request Form",
         blank=True,
         help_text=(
-            "If set, the regular content will be replaced with this"
-            " text on the instructor training request form."
+            "If set, the regular content will be replaced with this" " text on the instructor training request form."
         ),
     )
-    required_type = models.CharField(
-        max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE
-    )
+    required_type = models.CharField(max_length=STR_MED, choices=TERM_REQUIRE_TYPE, default=OPTIONAL_REQUIRE_TYPE)
     help_text = models.TextField(verbose_name="Help Text", blank=True)
     short_description = models.CharField(max_length=STR_LONG)
     objects = TermManager.from_queryset(TermQuerySet)()
@@ -110,9 +106,7 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
         """
         self.archived_at = timezone.now()
         self.save()
-        TermOption.objects.filter(term=self).active().update(
-            archived_at=self.archived_at
-        )
+        TermOption.objects.filter(term=self).active().update(archived_at=self.archived_at)
         Consent.objects.filter(term=self).active().update(archived_at=self.archived_at)
 
     def __str__(self) -> str:
@@ -132,8 +126,8 @@ class Term(CreatedUpdatedArchivedMixin, RQJobsMixin, models.Model):
             )
 
 
-class TermOptionQuerySet(QuerySet):
-    def active(self):
+class TermOptionQuerySet(QuerySet["TermOption"]):
+    def active(self) -> "TermOptionQuerySet":
         return self.filter(archived_at=None)
 
     def get_agree_term_option(self) -> "TermOption":
@@ -150,13 +144,11 @@ class TermOptionChoices(models.TextChoices):
 
 class TermOption(CreatedUpdatedArchivedMixin, models.Model):
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    option_type = models.CharField(
-        max_length=STR_MED, choices=TermOptionChoices.choices
-    )
+    option_type = models.CharField(max_length=STR_MED, choices=TermOptionChoices.choices)
     content = models.TextField(verbose_name="Content", blank=True)
     objects = Manager.from_queryset(TermOptionQuerySet)()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.content} ({self.option_type})"
 
     def archive(self) -> None:
@@ -173,9 +165,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
         self._check_is_only_agree_option_for_required_term()
         self.archived_at = timezone.now()
         self.save()
-        Consent.objects.filter(term_option=self).active().update(
-            archived_at=self.archived_at
-        )
+        Consent.objects.filter(term_option=self).active().update(archived_at=self.archived_at)
 
     def _check_is_only_agree_option_for_required_term(self) -> None:
         """
@@ -191,11 +181,7 @@ class TermOption(CreatedUpdatedArchivedMixin, models.Model):
             and self.term.archived_at is None
         ):
             num_agree_options = len(
-                [
-                    option
-                    for option in self.term._fetch_options()
-                    if option.option_type == TermOptionChoices.AGREE
-                ]
+                [option for option in self.term._fetch_options() if option.option_type == TermOptionChoices.AGREE]
             )
             if num_agree_options == 1:
                 raise ValidationError(
@@ -226,8 +212,8 @@ class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
         return self.archived_at is None
 
 
-class ConsentQuerySet(QuerySet):
-    def active(self):
+class ConsentQuerySet(QuerySet["Consent"]):
+    def active(self) -> "ConsentQuerySet":
         return self.filter(archived_at=None)
 
 

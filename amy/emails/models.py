@@ -1,3 +1,4 @@
+from typing import Any
 import uuid
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.template import TemplateSyntaxError as DjangoTemplateSyntaxError
 from django.template import engines
 from django.template.backends.base import BaseEngine
 from django.urls import reverse
+from django.utils.timezone import now
 import jinja2
 from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 from reversion import revisions as reversion
@@ -49,12 +51,8 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default="",
         help_text="If empty, the default reply-to address will be 'from_header'.",
     )
-    cc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="CC (header)", blank=True
-    )
-    bcc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="BCC (header)", blank=True
-    )
+    cc_header = ArrayField(models.EmailField(blank=False), verbose_name="CC (header)", blank=True)
+    bcc_header = ArrayField(models.EmailField(blank=False), verbose_name="BCC (header)", blank=True)
     subject = models.CharField(
         max_length=MAX_LENGTH,
         blank=False,
@@ -78,13 +76,11 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return engines[name or settings.EMAIL_TEMPLATE_ENGINE_BACKEND]
 
     @staticmethod
-    def render_template(engine: BaseEngine, template: str, context: dict) -> str:
+    def render_template(engine: BaseEngine, template: str, context: dict[str, Any]) -> str:
         tpl = engine.from_string(template)
         return tpl.render(context)
 
-    def validate_template(
-        self, engine: BaseEngine, template: str, context: dict | None = None
-    ) -> bool:
+    def validate_template(self, engine: BaseEngine, template: str, context: dict[str, Any] | None = None) -> bool:
         try:
             self.render_template(engine, template, context or dict())
         except (DjangoTemplateSyntaxError, JinjaTemplateSyntaxError) as exp:
@@ -180,15 +176,9 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
     to_header_context_json = models.JSONField(blank=True, default=list)
 
     from_header = models.EmailField(blank=False, verbose_name="From (header)")
-    reply_to_header = models.EmailField(
-        blank=True, default="", verbose_name="Reply-To (header)"
-    )
-    cc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="CC (header)", blank=True
-    )
-    bcc_header = ArrayField(
-        models.EmailField(blank=False), verbose_name="BCC (header)", blank=True
-    )
+    reply_to_header = models.EmailField(blank=True, default="", verbose_name="Reply-To (header)")
+    cc_header = ArrayField(models.EmailField(blank=False), verbose_name="CC (header)", blank=True)
+    bcc_header = ArrayField(models.EmailField(blank=False), verbose_name="BCC (header)", blank=True)
     subject = models.CharField(
         max_length=MAX_LENGTH,
         blank=False,
@@ -221,9 +211,7 @@ class ScheduledEmail(CreatedUpdatedMixin, models.Model):
         blank=True,
     )
     generic_relation_pk = models.PositiveIntegerField(null=True, blank=True)
-    generic_relation = GenericForeignKey(
-        "generic_relation_content_type", "generic_relation_pk"
-    )
+    generic_relation = GenericForeignKey("generic_relation_content_type", "generic_relation_pk")
 
     class Meta:
         indexes = [models.Index(fields=["state", "scheduled_at"])]
@@ -268,3 +256,33 @@ class ScheduledEmailLog(CreatedMixin, models.Model):
 
     def __str__(self) -> str:
         return f"[{self.state_before}->{self.state_after}]: {self.details}"
+
+
+class Attachment(CreatedUpdatedMixin, models.Model):
+    # ID needed separately as we're using UUIDs for PKs in this module
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    email = models.ForeignKey(ScheduledEmail, on_delete=models.PROTECT, related_name="attachments")
+
+    filename = models.CharField(max_length=200, blank=True, null=False)
+    s3_path = models.CharField(
+        max_length=200,
+        blank=False,
+        null=False,
+        help_text="Path inside the bucket",
+    )
+
+    # Optional bucket name; by default all attachments should be placed in the same bucket.
+    s3_bucket = models.CharField(max_length=200, blank=True, null=False)
+
+    presigned_url = models.CharField(max_length=5000, blank=True, null=False, default="")
+    presigned_url_expiration = models.DateTimeField(null=True)
+
+    def __str__(self) -> str:
+        return f"{self.filename} ({self.s3_bucket}/{self.s3_path})"
+
+    def expired_presigned_url(self) -> bool:
+        if self.presigned_url_expiration is None:
+            return True
+
+        return now() >= self.presigned_url_expiration

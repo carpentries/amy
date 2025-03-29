@@ -36,7 +36,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -44,8 +44,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
             instructor_badge_awarded_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_badge_awarded_cancel"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_badge_awarded_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -54,9 +53,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
 
         # Act
         # attempt to connect the receiver
-        instructor_badge_awarded_cancel_signal.connect(
-            instructor_badge_awarded_cancel_receiver
-        )
+        instructor_badge_awarded_cancel_signal.connect(instructor_badge_awarded_cancel_receiver)
         new_receivers = instructor_badge_awarded_cancel_signal.receivers[:]
 
         # Assert
@@ -80,9 +77,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_cancelled"
-        ) as mock_messages_action_cancelled:
+        with patch("emails.actions.base_action.messages_action_cancelled") as mock_messages_action_cancelled:
             instructor_badge_awarded_cancel_signal.send(
                 sender=self.award,
                 request=request,
@@ -118,9 +113,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             instructor_badge_awarded_cancel_signal.send(
                 sender=self.award,
                 request=request,
@@ -163,9 +156,7 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.cancel_email"
-        ) as mock_cancel_email:
+        with patch("emails.actions.base_action.EmailController.cancel_email") as mock_cancel_email:
             instructor_badge_awarded_cancel_signal.send(
                 sender=self.person,
                 request=request,
@@ -190,8 +181,10 @@ class TestInstructorBadgeAwardedCancelReceiver(TestCase):
 
 class TestInstructorBadgeAwardedCancelIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    def test_integration(self) -> None:
+    @patch("emails.actions.instructor_badge_awarded.EmailController.add_attachment")
+    def test_integration(self, mock_add_attachment: MagicMock) -> None:
         # Arrange
+        mock_add_attachment.return_value = None
         self._setUpRoles()
         self._setUpTags()
         self._setUpUsersAndLogin()
@@ -228,9 +221,7 @@ class TestInstructorBadgeAwardedCancelIntegration(TestBase):
 
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_badge_awarded_strategy(
                 instructor_badge_awarded_strategy(award, person),
                 request,

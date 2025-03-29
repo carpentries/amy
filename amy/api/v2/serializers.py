@@ -1,26 +1,39 @@
+from typing import TypeVar, cast
+
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
 
-from emails.models import MAX_LENGTH, ScheduledEmail
+from emails.models import MAX_LENGTH, Attachment, EmailTemplate, ScheduledEmail
 from extrequests.models import SelfOrganisedSubmission
-from recruitment.models import InstructorRecruitmentSignup
+from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from trainings.models import Involvement
 from workshops.models import (
+    Airport,
     Award,
+    Badge,
+    Curriculum,
     Event,
+    Language,
+    Lesson,
     Membership,
     Organization,
     Person,
+    Role,
+    Tag,
     TagQuerySet,
     Task,
     TrainingProgress,
     TrainingRequirement,
 )
 
+_IN = TypeVar("_IN")  # Instance Type
 
-class AwardSerializer(serializers.ModelSerializer):
-    person = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    badge = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
-    awarded_by = serializers.SlugRelatedField(read_only=True, slug_field="username")
+
+class AwardSerializer(serializers.ModelSerializer[Award]):
+    person = serializers.SlugRelatedField[Person](read_only=True, slug_field="username")
+    badge = serializers.SlugRelatedField[Badge](read_only=True, slug_field="name")
+    event = serializers.SlugRelatedField[Event](read_only=True, slug_field="slug")
+    awarded_by = serializers.SlugRelatedField[Person](read_only=True, slug_field="username")
 
     class Meta:
         model = Award
@@ -34,9 +47,9 @@ class AwardSerializer(serializers.ModelSerializer):
         )
 
 
-class OrganizationSerializer(serializers.ModelSerializer):
+class OrganizationSerializer(serializers.ModelSerializer[Organization]):
     country = serializers.CharField()
-    affiliated_organizations = serializers.SlugRelatedField(
+    affiliated_organizations = serializers.SlugRelatedField[Organization](
         many=True, read_only=True, slug_field="domain"
     )
 
@@ -53,29 +66,25 @@ class OrganizationSerializer(serializers.ModelSerializer):
         )
 
 
-class EventSerializer(serializers.ModelSerializer):
-    host = serializers.SlugRelatedField(read_only=True, slug_field="domain")
-    sponsor = serializers.SlugRelatedField(read_only=True, slug_field="domain")
-    membership = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    administrator = serializers.SlugRelatedField(read_only=True, slug_field="domain")
-    tags = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
+class EventSerializer(serializers.ModelSerializer[Event]):
+    host = serializers.SlugRelatedField[Organization](read_only=True, slug_field="domain")
+    sponsor = serializers.SlugRelatedField[Organization](read_only=True, slug_field="domain")
+    membership = serializers.SlugRelatedField[Membership](read_only=True, slug_field="name")
+    administrator = serializers.SlugRelatedField[Organization](read_only=True, slug_field="domain")
+    tags = serializers.SlugRelatedField[Tag](many=True, read_only=True, slug_field="name")
 
-    language = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    language = serializers.SlugRelatedField[Language](read_only=True, slug_field="name")
     repository_url = serializers.URLField(read_only=True)
     website_url = serializers.URLField(read_only=True)
     # attendance = serializers.IntegerField()
     country = serializers.CharField()
-    assigned_to = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    curricula = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="slug"
-    )
-    lessons = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
+    assigned_to = serializers.SlugRelatedField[Person](read_only=True, slug_field="username")
+    curricula = serializers.SlugRelatedField[Curriculum](many=True, read_only=True, slug_field="slug")
+    lessons = serializers.SlugRelatedField[Lesson](many=True, read_only=True, slug_field="name")
 
     human_readable_date = serializers.CharField(read_only=True)
     eligible_for_instructor_recruitment = serializers.BooleanField(read_only=True)
-    workshop_reports_link = serializers.CharField(
-        read_only=True, source="instructors_pre"
-    )
+    workshop_reports_link = serializers.CharField(read_only=True, source="instructors_pre")
     main_tag = serializers.SerializerMethodField()
 
     class Meta:
@@ -118,19 +127,15 @@ class EventSerializer(serializers.ModelSerializer):
         try:
             # Iterating like that is faster than using qs.filter(name__in=[...]).first()
             # because it doesn't introduce new queries.
-            return next(
-                tag.name
-                for tag in obj.tags.all()
-                if tag.name in TagQuerySet.CARPENTRIES_TAG_NAMES
-            )
+            return cast(str, next(tag.name for tag in obj.tags.all() if tag.name in TagQuerySet.CARPENTRIES_TAG_NAMES))
         except (IndexError, AttributeError, StopIteration):
             return None
 
 
-class InstructorRecruitmentSignupSerializer(serializers.ModelSerializer):
-    recruitment = serializers.PrimaryKeyRelatedField(read_only=True)
+class InstructorRecruitmentSignupSerializer(serializers.ModelSerializer[InstructorRecruitmentSignup]):
+    recruitment = serializers.PrimaryKeyRelatedField[InstructorRecruitment](read_only=True)
     event = serializers.CharField(read_only=True, source="recruitment.event.slug")
-    person = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    person = serializers.SlugRelatedField[Person](read_only=True, slug_field="username")
     state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:
@@ -150,20 +155,12 @@ class InstructorRecruitmentSignupSerializer(serializers.ModelSerializer):
         )
 
 
-class MembershipSerializer(serializers.ModelSerializer):
+class MembershipSerializer(serializers.ModelSerializer[Membership]):
     # TODO: issue with intermediary model in M2M
-    organizations = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="domain"
-    )
-    persons = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="username"
-    )
-    rolled_from_membership = serializers.SlugRelatedField(
-        read_only=True, slug_field="name"
-    )
-    rolled_to_membership = serializers.SlugRelatedField(
-        read_only=True, slug_field="name"
-    )
+    organizations = serializers.SlugRelatedField[Organization](many=True, read_only=True, slug_field="domain")
+    persons = serializers.SlugRelatedField[Person](many=True, read_only=True, slug_field="username")
+    rolled_from_membership = serializers.SlugRelatedField[Membership](read_only=True, slug_field="name")
+    rolled_to_membership = serializers.SlugRelatedField[Membership](read_only=True, slug_field="name")
     workshops_without_admin_fee_total_allowed = serializers.IntegerField()
     workshops_without_admin_fee_available = serializers.IntegerField()
     workshops_without_admin_fee_completed = serializers.IntegerField()
@@ -228,8 +225,8 @@ class MembershipSerializer(serializers.ModelSerializer):
         )
 
 
-class PersonSerializer(serializers.ModelSerializer):
-    airport = serializers.SlugRelatedField(read_only=True, slug_field="iata")
+class PersonSerializer(serializers.ModelSerializer[Person]):
+    airport = serializers.SlugRelatedField[Airport](read_only=True, slug_field="iata")
     country = serializers.CharField()
 
     class Meta:
@@ -262,12 +259,26 @@ class PersonSerializer(serializers.ModelSerializer):
         )
 
 
-class ScheduledEmailSerializer(serializers.ModelSerializer):
-    template = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    generic_relation_content_type = serializers.SlugRelatedField(
+class InlineAttachmentSerializer(serializers.ModelSerializer[Attachment]):
+    class Meta:
+        model = Attachment
+        fields = (
+            "pk",
+            "filename",
+            "s3_path",
+            "s3_bucket",
+            "presigned_url",
+            "presigned_url_expiration",
+        )
+
+
+class ScheduledEmailSerializer(serializers.ModelSerializer[ScheduledEmail]):
+    template = serializers.SlugRelatedField[EmailTemplate](read_only=True, slug_field="name")
+    generic_relation_content_type = serializers.SlugRelatedField[ContentType](
         read_only=True, slug_field="app_labeled_name"
     )
     state_verbose = serializers.CharField(source="get_state_display")
+    attachments = InlineAttachmentSerializer(many=True)
 
     class Meta:
         model = ScheduledEmail
@@ -288,20 +299,39 @@ class ScheduledEmailSerializer(serializers.ModelSerializer):
             "template",
             "generic_relation_content_type",
             "generic_relation_pk",
+            "attachments",
             "created_at",
             "last_updated_at",
         )
 
 
-class ScheduledEmailLogDetailsSerializer(serializers.Serializer):
+class ScheduledEmailLogDetailsSerializer(serializers.Serializer[_IN]):
     details = serializers.CharField(max_length=MAX_LENGTH)
 
 
-class TaskSerializer(serializers.ModelSerializer):
-    event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
-    person = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    role = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    seat_membership = serializers.SlugRelatedField(read_only=True, slug_field="name")
+class AttachmentSerializer(serializers.ModelSerializer[Attachment]):
+    class Meta:
+        model = Attachment
+        fields = (
+            "pk",
+            "email",
+            "filename",
+            "s3_path",
+            "s3_bucket",
+            "presigned_url",
+            "presigned_url_expiration",
+        )
+
+
+class AttachmentPresignedUrlPayloadSerializer(serializers.Serializer[_IN]):
+    expiration_seconds = serializers.IntegerField(default=3600)
+
+
+class TaskSerializer(serializers.ModelSerializer[Task]):
+    event = serializers.SlugRelatedField[Event](read_only=True, slug_field="slug")
+    person = serializers.SlugRelatedField[Person](read_only=True, slug_field="username")
+    role = serializers.SlugRelatedField[Role](read_only=True, slug_field="name")
+    seat_membership = serializers.SlugRelatedField[Membership](read_only=True, slug_field="name")
 
     class Meta:
         model = Task
@@ -315,11 +345,11 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
 
-class TrainingProgressSerializer(serializers.ModelSerializer):
-    trainee = serializers.SlugRelatedField(read_only=True, slug_field="username")
-    requirement = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    involvement_type = serializers.SlugRelatedField(read_only=True, slug_field="name")
-    event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
+class TrainingProgressSerializer(serializers.ModelSerializer[TrainingProgress]):
+    trainee = serializers.SlugRelatedField[Person](read_only=True, slug_field="username")
+    requirement = serializers.SlugRelatedField[TrainingRequirement](read_only=True, slug_field="name")
+    involvement_type = serializers.SlugRelatedField[Involvement](read_only=True, slug_field="name")
+    event = serializers.SlugRelatedField[Event](read_only=True, slug_field="slug")
     state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:
@@ -341,7 +371,7 @@ class TrainingProgressSerializer(serializers.ModelSerializer):
         )
 
 
-class TrainingRequirementSerializer(serializers.ModelSerializer):
+class TrainingRequirementSerializer(serializers.ModelSerializer[TrainingRequirement]):
     class Meta:
         model = TrainingRequirement
         fields = (
@@ -353,13 +383,11 @@ class TrainingRequirementSerializer(serializers.ModelSerializer):
         )
 
 
-class SelfOrganisedSubmissionSerializer(serializers.ModelSerializer):
-    event = serializers.SlugRelatedField(read_only=True, slug_field="slug")
+class SelfOrganisedSubmissionSerializer(serializers.ModelSerializer[SelfOrganisedSubmission]):
+    event = serializers.SlugRelatedField[Event](read_only=True, slug_field="slug")
     additional_contact = serializers.CharField()
     country = serializers.CharField()
-    workshop_types = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="name"
-    )
+    workshop_types = serializers.SlugRelatedField[Curriculum](many=True, read_only=True, slug_field="name")
     state_verbose = serializers.CharField(source="get_state_display")
 
     class Meta:

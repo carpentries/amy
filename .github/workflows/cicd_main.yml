@@ -1,13 +1,18 @@
-# CI/CD for main branch - contains only test runs
+# CI/CD for main branch
 
-name: CI/CD (main)
+name: CI/CD (main - no deployment)
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
+  accessibility:
+    uses: ./.github/workflows/incl_accessibility.yml
+
+  lint:
+    uses: ./.github/workflows/incl_linter.yml
+
   test:
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/incl_test.yml
+    needs: lint

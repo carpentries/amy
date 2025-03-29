@@ -15,7 +15,6 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
-import django_rq
 from flags.views import FlaggedViewMixin
 
 from emails.actions.host_instructors_introduction import (
@@ -53,8 +52,6 @@ from workshops.utils.urls import safe_next_or_default_url
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
-redis_connection = django_rq.get_connection("default")
 
 
 # ------------------------------------------------------------
@@ -74,9 +71,7 @@ class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListVie
             Prefetch(
                 "signups",
                 queryset=(
-                    InstructorRecruitmentSignup.objects.select_related(
-                        "recruitment", "person"
-                    ).annotate(
+                    InstructorRecruitmentSignup.objects.select_related("recruitment", "person").annotate(
                         num_instructor=Count(
                             Case(
                                 When(
@@ -136,16 +131,12 @@ class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["personal_conflicts"] = (
-            Person.objects.filter(
-                instructorrecruitmentsignup__recruitment__in=self.get_queryset()
-            )
+            Person.objects.filter(instructorrecruitmentsignup__recruitment__in=self.get_queryset())
             .distinct()
             .prefetch_related(
                 Prefetch(
                     "task_set",
-                    Task.objects.select_related("event", "role").filter(
-                        role__name="instructor"
-                    ),
+                    Task.objects.select_related("event", "role").filter(role__name="instructor"),
                 )
             )
         )
@@ -175,15 +166,8 @@ class InstructorRecruitmentCreate(
 
         # this condition means: either venue, latitude and longitude are provided, or
         # the event has "online" tag
-        location = (
-            ~Q(venue="") & Q(latitude__isnull=False) & Q(longitude__isnull=False)
-        ) | Q(tags__name="online")
-        qs = (
-            Event.objects.filter(start__gte=today)
-            .filter(location)
-            .select_related("administrator")
-            .distinct()
-        )
+        location = (~Q(venue="") & Q(latitude__isnull=False) & Q(longitude__isnull=False)) | Q(tags__name="online")
+        qs = Event.objects.filter(start__gte=today).filter(location).select_related("administrator").distinct()
         return get_object_or_404(qs, pk=event_id)
 
     def get(self, request, *args, **kwargs):
@@ -207,21 +191,14 @@ class InstructorRecruitmentCreate(
         context = super().get_context_data(**kwargs)
         context["title"] = f"Begin Instructor Selection Process for {self.event}"
         context["event"] = self.event
-        context["event_dates"] = self.event.human_readable_date(
-            common_month_left=r"%B %d", separator="-"
-        )
+        context["event_dates"] = self.event.human_readable_date(common_month_left=r"%B %d", separator="-")
         context["priority"] = InstructorRecruitment.calculate_priority(self.event)
         return context
 
     def get_initial(self) -> dict:
         try:
             workshop_request = self.event.workshoprequest  # type: ignore
-            return {
-                "notes": (
-                    f"{workshop_request.audience_description}\n\n"
-                    f"{workshop_request.user_notes}"
-                )
-            }
+            return {"notes": (f"{workshop_request.audience_description}\n\n" f"{workshop_request.user_notes}")}
         except Event.workshoprequest.RelatedObjectDoesNotExist:  # type: ignore
             return {}
 
@@ -246,14 +223,10 @@ class InstructorRecruitmentDetails(
             Prefetch(
                 "signups",
                 queryset=(
-                    InstructorRecruitmentSignup.objects.select_related(
-                        "recruitment", "person"
-                    ).annotate(
+                    InstructorRecruitmentSignup.objects.select_related("recruitment", "person").annotate(
                         num_instructor=Count(
                             Case(
-                                When(
-                                    person__task__role__name="instructor", then=Value(1)
-                                ),
+                                When(person__task__role__name="instructor", then=Value(1)),
                                 output_field=IntegerField(),
                             )
                         ),
@@ -397,9 +370,7 @@ class InstructorRecruitmentSignupChangeState(
 
         state_to_method_action_mapping: dict[
             str,
-            Callable[
-                [HttpRequest, InstructorRecruitmentSignup, Person, Event], Task | None
-            ],
+            Callable[[HttpRequest, InstructorRecruitmentSignup, Person, Event], Task | None],
         ] = {
             "a": self.accept_signup,
             "d": self.decline_signup,
@@ -438,8 +409,7 @@ class InstructorRecruitmentSignupChangeState(
             messages.warning(
                 request,
                 format_html(
-                    "The signup was accepted, but instructor task already "
-                    '<a href="{}">exists</a>.',
+                    "The signup was accepted, but instructor task already " '<a href="{}">exists</a>.',
                     task.get_absolute_url(),
                 ),
             )
@@ -477,8 +447,7 @@ class InstructorRecruitmentSignupChangeState(
             messages.warning(
                 request,
                 format_html(
-                    "The signup was declined, but instructor task was "
-                    '<a href="{}">found</a>. ',
+                    "The signup was declined, but instructor task was " '<a href="{}">found</a>. ',
                     task.get_absolute_url(),
                 ),
             )
@@ -592,9 +561,7 @@ class InstructorRecruitmentChangeState(
         else:
             self.object.status = "o"
             self.object.save()
-            messages.success(
-                self.request, f"Successfully re-opened recruitment {self.object}."
-            )
+            messages.success(self.request, f"Successfully re-opened recruitment {self.object}.")
 
             run_host_instructors_introduction_strategy(
                 host_instructors_introduction_strategy(self.object.event),

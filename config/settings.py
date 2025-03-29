@@ -7,7 +7,7 @@ from typing import cast
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
-import environ
+import environ  # type: ignore
 import jinja2
 
 ROOT_DIR = Path(__file__).parent.parent  # amy/
@@ -30,7 +30,6 @@ env = environ.Env(
     AMY_SOCIAL_AUTH_GITHUB_KEY=(str, ""),
     AMY_SOCIAL_AUTH_GITHUB_SECRET=(str, ""),
     AMY_GITHUB_API_TOKEN=(str, "fakeToken"),
-    AMY_REDIS_URL=(str, "redis://localhost:6379/"),
     AMY_STATIC_HOST=(str, ""),
     AMY_LIVE_EMAIL=(bool, False),
     AMY_SERVER_EMAIL=(str, "root@localhost"),
@@ -46,6 +45,7 @@ env = environ.Env(
         "https://workshop-reports.carpentries.org/?key={hash}&slug={slug}",
     ),
     AMY_SITE_BANNER=(str, "local"),  # should be "local", "testing", or "production"
+    AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME=(str, "carpentries-amy-email-attachments-staging"),
 )
 
 # OS environment variables take precedence over variables from .env
@@ -69,15 +69,12 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-FORMAT_MODULE_PATH
-FORMAT_MODULE_PATH = ["amy.locale"]
+FORMAT_MODULE_PATH = "amy.formats"
 # Secret key must be kept secret
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
-SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)  # type: ignore
+SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)
 if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
-    raise ImproperlyConfigured(
-        "You must specify non-default value for "
-        "SECRET_KEY when running with Debug=FALSE."
-    )
+    raise ImproperlyConfigured("You must specify non-default value for SECRET_KEY when running with Debug=FALSE.")
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = env("AMY_SITE_ID")
@@ -125,7 +122,7 @@ RECAPTCHA_PRIVATE_KEY = env("AMY_RECAPTCHA_PRIVATE_KEY")
 RECAPTCHA_USE_SSL = True
 NOCAPTCHA = True
 if DEBUG:
-    SILENCED_SYSTEM_CHECKS = ["captcha.recaptcha_test_key_error"]
+    SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 # APPS
 # -----------------------------------------------------------------------------
@@ -136,7 +133,6 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
-    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     # Handy template tags
     "django.contrib.humanize",
@@ -147,6 +143,7 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
+    "crispy_bootstrap4",
     "django_select2",
     "django_countries",
     "django_filters",
@@ -154,14 +151,13 @@ THIRD_PARTY_APPS = [
     "reversion_compare",
     "rest_framework",
     "knox",
-    "captcha",
+    "django_recaptcha",
     "social_django",
     "debug_toolbar",
     "django_extensions",
     "anymail",
     "django_comments",  # this used to be in django.contrib
     "markdownx",
-    "django_rq",
     "djangoformsetjs",
     "django_better_admin_arrayfield",
     "flags",
@@ -176,7 +172,7 @@ LOCAL_APPS = [
     "amy.reports.apps.ReportsConfig",
     "amy.trainings.apps.TrainingsConfig",
     "amy.extcomments.apps.ExtcommentsConfig",
-    "amy.autoemails.apps.AutoemailsConfig",
+    "amy.autoemails.apps.AutoemailsConfig",  # TODO: eventually remove
     "amy.consents.apps.ConsentsConfig",
     "amy.communityroles.apps.CommunityRolesConfig",
     "amy.recruitment.apps.RecruitmentConfig",
@@ -242,9 +238,7 @@ VALIDATION = "django.contrib.auth.password_validation"
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": f"{VALIDATION}.UserAttributeSimilarityValidator",
-        "OPTIONS": {
-            "user_attributes": ("username", "personal", "middle", "family", "email")
-        },
+        "OPTIONS": {"user_attributes": ("username", "personal", "middle", "family", "email")},
     },
     {
         "NAME": f"{VALIDATION}.MinimumLengthValidator",
@@ -264,9 +258,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/2.2/topics/cache/#database-caching
 CACHES = {
-    # For Redis use:
-    # redis://127.0.0.1:6379/0?client_class=django_redis.client.DefaultClient
-    # redis://127.0.0.1:6379/1?client_class=django_redis.client.DefaultClient
     "default": env.cache_url(
         "AMY_CACHE_DEFAULT",
         cast(environ.NoValue, "dbcache://default_cache_table"),
@@ -422,6 +413,7 @@ TEMPLATES = [
     },
 ]
 # http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # EMAIL
@@ -450,12 +442,8 @@ ANYMAIL = {
         "tags": ["amy"],
     },
 }
-if not DEBUG and (
-    not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]
-):
-    raise ImproperlyConfigured(
-        "Mailgun settings are required when running with DEBUG=False."
-    )
+if not DEBUG and (not ANYMAIL["MAILGUN_API_KEY"] or not ANYMAIL["MAILGUN_SENDER_DOMAIN"]):
+    raise ImproperlyConfigured("Mailgun settings are required when running with DEBUG=False.")
 
 
 # NOTIFICATIONS
@@ -533,9 +521,7 @@ LOGGING = {
     "disable_existing_loggers": False,  # merge with default configuration
     "formatters": {
         "verbose": {
-            "format": (
-                "[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"
-            ),
+            "format": ("[{asctime}][{levelname}][{pathname}:{funcName}:{lineno}] {message}"),
             "style": "{",
         },
         "simple": {
@@ -560,15 +546,14 @@ LOGGING = {
     },
     "loggers": {
         # disable "Invalid HTTP_HOST" notifications
+        "django.request": {
+            "level": "ERROR",
+        },
         "django.security.DisallowedHost": {
             "handlers": ["null"],
             "propagate": False,
         },
         "amy": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-        },
-        "rq.worker": {
             "handlers": ["console"],
             "level": "DEBUG",
         },
@@ -610,28 +595,6 @@ SELECT2_CSS = ""  # the same for CSS
 SELECT2_I18N = "select2/js/i18n"
 SELECT2_CACHE_BACKEND = "select2"
 
-# Django-RQ (Redis Queueing) settings
-# -----------------------------------------------------------------------------
-# https://github.com/rq/django-rq
-RQ_QUEUES = {
-    "default": {
-        "URL": env("AMY_REDIS_URL") + "2",
-        "DEFAULT_TIMEOUT": 360,
-    },
-    "testing": {
-        "URL": env("AMY_REDIS_URL") + "15",
-        "DEFAULT_TIMEOUT": 360,
-    },
-}
-# Add link to admin
-RQ_SHOW_ADMIN_LINK = False
-# If you need custom exception handlers
-# RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
-
-RQ = {
-    "JOB_CLASS": "autoemails.job.Job",
-    "DEFAULT_RESULT_TTL": 31536000,  # 1 year in seconds for keeping job results
-}
 
 # Test runner
 # -----------------------------------------------------------------------------
@@ -650,6 +613,7 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRE
 # This module is the next version of Autoemails.
 EMAIL_TEMPLATE_ENGINE_BACKEND = "email_jinja2_backend"
 EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed attempts
+EMAIL_ATTACHMENTS_BUCKET_NAME = env("AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME")
 
 # Reports
 # -----------------------------------------------------------------------------
@@ -657,10 +621,7 @@ EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed 
 REPORTS_SALT_FRONT = env("AMY_REPORTS_SALT_FRONT")
 REPORTS_SALT_BACK = env("AMY_REPORTS_SALT_BACK")
 if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
-    raise ImproperlyConfigured(
-        "Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK"
-        " in settings."
-    )
+    raise ImproperlyConfigured("Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK" " in settings.")
 
 REPORTS_LINK = env("AMY_REPORTS_LINK")
 
@@ -670,9 +631,7 @@ REPORTS_LINK = env("AMY_REPORTS_LINK")
 # local/dev/test stage they are using.
 SITE_BANNER_STYLE = env("AMY_SITE_BANNER")
 if SITE_BANNER_STYLE not in ("local", "testing", "production"):
-    raise ImproperlyConfigured(
-        "SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'."
-    )
+    raise ImproperlyConfigured("SITE_BANNER_STYLE accepts only one of 'local', 'testing', 'production'.")
 
 PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
 
@@ -710,3 +669,7 @@ FLAGS = {
         {"condition": "boolean", "value": True},
     ],
 }
+
+# Instructor Certificates
+# -----------------------------------------------------------------------------
+CERTIFICATE_SIGNATURE = "SherAaron Hurt (Director of Workshops and Instruction)"

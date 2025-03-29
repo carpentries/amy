@@ -46,10 +46,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "location": "London",
             "country": "GB",
             "requested_workshop_types": [
-                Curriculum.objects.default_order(allow_unknown=False, allow_other=False)
-                .filter(active=True)
-                .first()
-                .pk,
+                Curriculum.objects.default_order(allow_unknown=False, allow_other=False).filter(active=True).first().pk,
             ],
             "preferred_dates": "{:%Y-%m-%d}".format(date.today()),
             "other_preferred_dates": "17-18 August, 2019",
@@ -570,25 +567,19 @@ class TestWorkshopRequestViews(TestBase):
         self.assertIn(self.wr2, rv.context["requests"])
 
     def test_set_state_pending_request_view(self):
-        rv = self.client.get(
-            reverse("workshoprequest_set_state", args=[self.wr1.pk, "discarded"])
-        )
+        rv = self.client.get(reverse("workshoprequest_set_state", args=[self.wr1.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wr1.refresh_from_db()
         self.assertEqual(self.wr1.state, "d")
 
     def test_set_state_discarded_request_view(self):
-        rv = self.client.get(
-            reverse("workshoprequest_set_state", args=[self.wr2.pk, "discarded"])
-        )
+        rv = self.client.get(reverse("workshoprequest_set_state", args=[self.wr2.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wr2.refresh_from_db()
         self.assertEqual(self.wr2.state, "d")
 
     def test_pending_request_accept(self):
-        rv = self.client.get(
-            reverse("workshoprequest_set_state", args=[self.wr1.pk, "accepted"])
-        )
+        rv = self.client.get(reverse("workshoprequest_set_state", args=[self.wr1.pk, "accepted"]))
         self.assertEqual(rv.status_code, 302)
 
     def test_pending_request_accepted_with_event(self):
@@ -601,9 +592,7 @@ class TestWorkshopRequestViews(TestBase):
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
         }
-        rv = self.client.post(
-            reverse("workshoprequest_accept_event", args=[self.wr1.pk]), data
-        )
+        rv = self.client.post(reverse("workshoprequest_accept_event", args=[self.wr1.pk]), data)
         self.assertEqual(rv.status_code, 302)
         request = Event.objects.get(slug="2018-10-28-test-event").workshoprequest
         self.assertEqual(request, self.wr1)
@@ -649,9 +638,7 @@ class TestWorkshopRequestViews(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertQuerySetEqual(
-            form_initial["curricula"].all(), wr.requested_workshop_types.all()
-        )
+        self.assertQuerySetEqual(form_initial["curricula"].all(), wr.requested_workshop_types.all())
         self.assertQuerySetEqual(form_initial["tags"], expected_tags)
         self.assertEqual(form_initial["public_status"], "private")
         self.assertEqual(form_initial["contact"], wr.additional_contact)
@@ -661,9 +648,7 @@ class TestWorkshopRequestViews(TestBase):
         self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
     def test_discarded_request_not_accepted_with_event(self):
-        rv = self.client.get(
-            reverse("workshoprequest_accept_event", args=[self.wr2.pk])
-        )
+        rv = self.client.get(reverse("workshoprequest_accept_event", args=[self.wr2.pk]))
         self.assertEqual(rv.status_code, 404)
 
     def test_pending_request_discard(self):
@@ -795,6 +780,4 @@ class TestAcceptingWorkshopRequest(TestBase):
         event = Event.objects.get(slug="2019-08-18-test-event")
 
         # check if Harry gained a task
-        Task.objects.get(
-            person=self.harry, event=event, role=Role.objects.get(name="host")
-        )
+        Task.objects.get(person=self.harry, event=event, role=Role.objects.get(name="host"))

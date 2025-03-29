@@ -47,9 +47,7 @@ class TestLookups(TestBase):
         # prepare urlpatterns; only include lookup views that are restricted
         # to logged-in users and/or admins
         self.patterns_nonrestricted = ("language-lookup",)
-        self.urlpatterns = filter(
-            lambda pattern: pattern.name not in self.patterns_nonrestricted, urlpatterns
-        )
+        self.urlpatterns = filter(lambda pattern: pattern.name not in self.patterns_nonrestricted, urlpatterns)
 
     def test_login_regression(self):
         """Make sure lookups are login-protected"""
@@ -165,17 +163,11 @@ class TestEventLookupView(TestBase):
         self._setUpTags()
 
         self.event = Event.objects.create(slug="queryset-test", host=self.org_alpha)
-        self.event_2 = Event.objects.create(
-            slug="different-slug-test", host=self.org_alpha
-        )
-        self.ttt_event = Event.objects.create(
-            slug="queryset-test-ttt", host=self.org_alpha
-        )
+        self.event_2 = Event.objects.create(slug="different-slug-test", host=self.org_alpha)
+        self.ttt_event = Event.objects.create(slug="queryset-test-ttt", host=self.org_alpha)
         self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 
-    def setUpView(
-        self, term: str = "", person: Optional[int] = None
-    ) -> EventLookupView:
+    def setUpView(self, term: str = "", person: Optional[int] = None) -> EventLookupView:
         # path doesn't matter
         request = RequestFactory().get("/" if person is None else f"/?person={person}")
         view = EventLookupView(request=request, term=term)
@@ -206,26 +198,18 @@ class TestEventLookupForAwardsView(TestBase):
         self._setUpTags()
 
         self.event = Event.objects.create(slug="queryset-test", host=self.org_alpha)
-        self.ttt_event = Event.objects.create(
-            slug="queryset-test-ttt", host=self.org_alpha
-        )
+        self.ttt_event = Event.objects.create(slug="queryset-test-ttt", host=self.org_alpha)
         self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
-        self.ttt_event.task_set.create(
-            person=self.blackwidow, role=Role.objects.get(name="learner")
-        )
+        self.ttt_event.task_set.create(person=self.blackwidow, role=Role.objects.get(name="learner"))
         TrainingProgress.objects.create(
             trainee=self.blackwidow,
             requirement=TrainingRequirement.objects.get(name="Training"),
             state="p",
             event=self.ttt_event,
         )
-        self.ttt_event_2 = Event.objects.create(
-            slug="different-slug-ttt", host=self.org_alpha
-        )
+        self.ttt_event_2 = Event.objects.create(slug="different-slug-ttt", host=self.org_alpha)
         self.ttt_event_2.tags.add(Tag.objects.get(name="TTT"))
-        self.ttt_event_2.task_set.create(
-            person=self.blackwidow, role=Role.objects.get(name="learner")
-        )
+        self.ttt_event_2.task_set.create(person=self.blackwidow, role=Role.objects.get(name="learner"))
         TrainingProgress.objects.create(
             trainee=self.blackwidow,
             requirement=TrainingRequirement.objects.get(name="Training"),
@@ -237,9 +221,7 @@ class TestEventLookupForAwardsView(TestBase):
         self, term: str = "", person: Optional[int] = None, badge: Optional[int] = None
     ) -> EventLookupForAwardsView:
         # path doesn't matter
-        request = RequestFactory().get(
-            f"/?person={person if person else ''}&badge={badge if badge else ''}"
-        )
+        request = RequestFactory().get(f"/?person={person if person else ''}&badge={badge if badge else ''}")
         view = EventLookupForAwardsView(request=request, term=term)
         return view
 
@@ -291,16 +273,12 @@ class TestEventLookupForAwardsView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerySetEqual(
-            queryset, [self.ttt_event, self.ttt_event_2], ordered=False
-        )
+        self.assertQuerySetEqual(queryset, [self.ttt_event, self.ttt_event_2], ordered=False)
 
     def test_get_queryset_person_and_non_instructor_badge(self):
         """Person and maintainer badge combined should not change results."""
         # Arrange
-        view = self.setUpView(
-            person=self.blackwidow.pk, badge=Badge.objects.get(name="maintainer").pk
-        )
+        view = self.setUpView(person=self.blackwidow.pk, badge=Badge.objects.get(name="maintainer").pk)
         # Act
         queryset = view.get_queryset()
         # Assert
@@ -312,9 +290,7 @@ class TestEventLookupForAwardsView(TestBase):
     def test_get_queryset_person_and_badge_and_term(self):
         # Arrange
         term = "query"
-        view = self.setUpView(
-            term=term, person=self.blackwidow.pk, badge=self.instructor_badge.pk
-        )
+        view = self.setUpView(term=term, person=self.blackwidow.pk, badge=self.instructor_badge.pk)
         # Act
         queryset = view.get_queryset()
         # Assert
@@ -332,22 +308,14 @@ class TestTTTEventLookupView(TestBase):
 
         self.event = Event.objects.create(slug="queryset-test", host=self.org_alpha)
         self.event.tags.add(Tag.objects.get(name="TTT"))
-        self.event.task_set.create(
-            person=self.blackwidow, role=Role.objects.get(name="learner")
-        )
+        self.event.task_set.create(person=self.blackwidow, role=Role.objects.get(name="learner"))
         self.event2 = Event.objects.create(slug="different-slug", host=self.org_alpha)
         self.event2.tags.add(Tag.objects.get(name="TTT"))
-        self.event2.task_set.create(
-            person=self.blackwidow, role=Role.objects.get(name="learner")
-        )
+        self.event2.task_set.create(person=self.blackwidow, role=Role.objects.get(name="learner"))
 
-    def setUpView(
-        self, term: str = "", trainee: Optional[int] = None
-    ) -> TTTEventLookupView:
+    def setUpView(self, term: str = "", trainee: Optional[int] = None) -> TTTEventLookupView:
         # path doesn't matter
-        request = RequestFactory().get(
-            "/" if trainee is None else f"/?trainee={trainee}"
-        )
+        request = RequestFactory().get("/" if trainee is None else f"/?trainee={trainee}")
         view = TTTEventLookupView(request=request, term=term)
         return view
 
@@ -468,9 +436,7 @@ class TestMembershipLookupView(TestBase):
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerySetEqual(
-            queryset, [self.membership_alpha, self.membership_beta], ordered=False
-        )
+        self.assertQuerySetEqual(queryset, [self.membership_alpha, self.membership_beta], ordered=False)
 
 
 class TestMembershipLookupForTasksView(TestMembershipLookupView):
@@ -484,12 +450,8 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
         self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 
         # create some training requests
-        TrainingRequest.objects.create(
-            person=self.blackwidow, member_code=self.membership_alpha.registration_code
-        )
-        TrainingRequest.objects.create(
-            person=self.blackwidow, member_code=self.membership_beta.registration_code
-        )
+        TrainingRequest.objects.create(person=self.blackwidow, member_code=self.membership_alpha.registration_code)
+        TrainingRequest.objects.create(person=self.blackwidow, member_code=self.membership_beta.registration_code)
 
     def setUpView(
         self,
@@ -500,9 +462,7 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
     ) -> MembershipLookupForTasksView:
         # path doesn't matter
         request = RequestFactory().get(
-            f"/?person={person if person else ''}"
-            f"&role={role if role else ''}"
-            f"&event={event if event else ''}"
+            f"/?person={person if person else ''}" f"&role={role if role else ''}" f"&event={event if event else ''}"
         )
         view = MembershipLookupForTasksView(request=request, term=term)
         return view
@@ -571,15 +531,11 @@ class TestMembershipLookupForTasksView(TestMembershipLookupView):
     def test_get_queryset_person_and_learner_role_and_ttt_event(self):
         """Person, role, and event combined should change results."""
         # Arrange
-        view = self.setUpView(
-            person=self.blackwidow.pk, role=self.role.pk, event=self.ttt_event.pk
-        )
+        view = self.setUpView(person=self.blackwidow.pk, role=self.role.pk, event=self.ttt_event.pk)
         # Act
         queryset = view.get_queryset()
         # Assert
-        self.assertQuerySetEqual(
-            queryset, [self.membership_alpha, self.membership_beta], ordered=False
-        )
+        self.assertQuerySetEqual(queryset, [self.membership_alpha, self.membership_beta], ordered=False)
 
     def test_get_queryset_person_and_learner_role_and_ttt_event_and_term(self):
         """Person, role, event, and term combined should change results."""
@@ -601,9 +557,7 @@ class TestGenericObjectLookupView(TestBase):
     def setUpRequest(self, path: str) -> WSGIRequest:
         return RequestFactory().get(path)
 
-    def setUpView(
-        self, content_type: Optional[ContentType] = None
-    ) -> GenericObjectLookupView:
+    def setUpView(self, content_type: Optional[ContentType] = None) -> GenericObjectLookupView:
         # path doesn't matter
         path = "/"
         if content_type:
@@ -625,9 +579,7 @@ class TestGenericObjectLookupView(TestBase):
 
     def test_get_queryset_invalid_content_type_raises_404(self):
         # Arrange
-        view = self.setUpView(
-            content_type=ContentType(pk=1000000, app_label="Test", model="Test")
-        )
+        view = self.setUpView(content_type=ContentType(pk=1000000, app_label="Test", model="Test"))
         # Act & Assert
         with self.assertRaises(Http404):
             view.get_queryset()
@@ -703,8 +655,6 @@ class TestGenericObjectLookupViewUserPermissions(TestViewPermissionsMixin, TestB
         self.permissions = ["view_badge"]
         self.methods = ["GET"]
         self.content_type = ContentType.objects.get_for_model(self.model)
-        self.view_url = (
-            reverse("generic-object-lookup") + f"?content_type={self.content_type.pk}"
-        )
+        self.view_url = reverse("generic-object-lookup") + f"?content_type={self.content_type.pk}"
         # prevent redirect to accept terms from middleware
         consent_to_all_required_consents(self.user)

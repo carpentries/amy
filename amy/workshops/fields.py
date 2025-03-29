@@ -1,3 +1,5 @@
+from typing import Any
+
 from django import forms
 from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
@@ -29,7 +31,7 @@ GHUSERNAME_REGEX_VALIDATOR = RegexValidator(
 
 
 class NullableGithubUsernameField(models.CharField):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("null", True)
         kwargs.setdefault("blank", True)
         kwargs.setdefault("default", "")
@@ -47,7 +49,7 @@ class NullableGithubUsernameField(models.CharField):
 
 
 class FakeRequiredMixin:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Intercept "fake_required" attribute that's used for marking field
         # with "*" (asterisk) even though it's not required.
         # Additionally `fake_required` doesn't trigger any validation.
@@ -66,7 +68,7 @@ class RadioSelectWithOther(FakeRequiredMixin, forms.RadioSelect):
 
     other_field = None  # to be bound later
 
-    def __init__(self, other_field_name, *args, **kwargs):
+    def __init__(self, other_field_name: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.other_field_name = other_field_name
 
@@ -82,7 +84,7 @@ class CheckboxSelectMultipleWithOthers(FakeRequiredMixin, forms.CheckboxSelectMu
 
     other_field = None  # to be bound later
 
-    def __init__(self, other_field_name, *args, **kwargs):
+    def __init__(self, other_field_name: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.other_field_name = other_field_name
 
@@ -104,9 +106,7 @@ class SafeModelChoiceField(SafeLabelFromInstanceMixin, forms.ModelChoiceField):
     pass
 
 
-class SafeModelMultipleChoiceField(
-    SafeLabelFromInstanceMixin, forms.ModelMultipleChoiceField
-):
+class SafeModelMultipleChoiceField(SafeLabelFromInstanceMixin, forms.ModelMultipleChoiceField):
     pass
 
 
@@ -117,9 +117,7 @@ class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
         # popover by clicking will automatically select the clicked item)
         data = (
             '<a tabindex="0" role="button" data-toggle="tooltip" '
-            'data-placement="top" title="{description}">{obj}</a>'.format(
-                obj=obj, description=obj.description
-            )
+            'data-placement="top" title="{description}">{obj}</a>'.format(obj=obj, description=obj.description)
         )
         return super().label_from_instance(data)
 
@@ -152,15 +150,11 @@ class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):
     pass
 
 
-class ModelSelect2Widget(
-    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2Widget
-):
+class ModelSelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2Widget):
     pass
 
 
-class ModelSelect2MultipleWidget(
-    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2MultipleWidget
-):
+class ModelSelect2MultipleWidget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2MultipleWidget):
     pass
 
 
@@ -204,15 +198,11 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
             values = []
 
         selected = set(values)
-        subgroup = [
-            self.create_option(name, v, v, selected, i) for i, v in enumerate(values)
-        ]
+        subgroup = [self.create_option(name, v, v, selected, i) for i, v in enumerate(values)]
         return [(None, subgroup, 0)]
 
 
-class HeavySelect2Widget(
-    Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget
-):
+class HeavySelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget):
     pass
 
 

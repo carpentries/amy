@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, override_settings
@@ -326,26 +327,16 @@ class TestScheduledEmailDetails(TestBase):
             rv.context["scheduled_email"],
             scheduled_email,
         )
-        self.assertEqual(
-            rv.context["title"], f'Scheduled email "{scheduled_email.subject}"'
-        )
+        self.assertEqual(rv.context["title"], f'Scheduled email "{scheduled_email.subject}"')
         self.assertEqual(
             list(rv.context["log_entries"]),
-            list(
-                ScheduledEmailLog.objects.filter(
-                    scheduled_email=scheduled_email
-                ).order_by("-created_at")
-            ),
+            list(ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")),
         )
         self.assertEqual(
             rv.context["status_explanation"],
-            ScheduledEmailStatusExplanation[
-                ScheduledEmailStatus(scheduled_email.state)
-            ],
+            ScheduledEmailStatusExplanation[ScheduledEmailStatus(scheduled_email.state)],
         )
-        self.assertEqual(
-            rv.context["ScheduledEmailStatusActions"], ScheduledEmailStatusActions
-        )
+        self.assertEqual(rv.context["ScheduledEmailStatusActions"], ScheduledEmailStatusActions)
         self.assertEqual(
             rv.context["rendered_context"],
             {
@@ -445,9 +436,7 @@ class TestScheduledEmailUpdate(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 302)
         scheduled_email.refresh_from_db()
-        email_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        email_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
 
         self.assertEqual(scheduled_email.to_header, ["hermione@granger.com"])
         self.assertEqual(scheduled_email.from_header, "noreply@carpentries.org")
@@ -746,3 +735,44 @@ class TestScheduledEmailCancel(TestBase):
 
         # Assert - none of the defined scheduled emails can be retrieved with this query
         self.assertEqual(results.count(), 0)
+
+
+class TestScheduledEmailAddAttachment(TestBase):
+    @patch("emails.controller.s3_client")
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    def test_view(self, mock_s3_client: MagicMock) -> None:
+        # Arrange
+        super()._setUpUsersAndLogin()
+        template = EmailTemplate.objects.create(
+            name="Test Email Template1",
+            signal="test_email_template1",
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        engine = EmailTemplate.get_engine()
+        context = {"name": "Harry"}
+        scheduled_email = ScheduledEmail.objects.create(
+            scheduled_at=timezone.now() + timedelta(hours=1),
+            to_header=["peter@spiderman.net"],
+            from_header=template.from_header,
+            reply_to_header=template.reply_to_header,
+            cc_header=template.cc_header,
+            bcc_header=template.bcc_header,
+            subject=template.render_template(engine, template.subject, context),
+            body=template.render_template(engine, template.body, context),
+            template=template,
+        )
+        url = reverse("scheduledemail_add_attachment", kwargs={"pk": scheduled_email.pk})
+        data = {"file": BytesIO(b"Test")}
+
+        # Act
+        rv = self.client.post(url, data)
+
+        # Assert
+        mock_s3_client.upload_fileobj.assert_called_once()
+        self.assertEqual(rv.status_code, 302)
+        scheduled_email.refresh_from_db()
+        self.assertEqual(scheduled_email.attachments.count(), 1)

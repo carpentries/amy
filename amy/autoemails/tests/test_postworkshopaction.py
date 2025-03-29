@@ -1,6 +1,7 @@
+# flake8: noqa
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import PostWorkshopAction
 from autoemails.models import EmailTemplate, Trigger
@@ -8,6 +9,7 @@ from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
+@tag("autoemails")
 class TestPostWorkshopAction(TestCase):
     def setUp(self):
         # we're missing some tags
@@ -25,9 +27,7 @@ class TestPostWorkshopAction(TestCase):
         Organization.objects.bulk_create(
             [
                 Organization(domain="carpentries.org", fullname="Instructor Training"),
-                Organization(
-                    domain="librarycarpentry.org", fullname="Library Carpentry"
-                ),
+                Organization(domain="librarycarpentry.org", fullname="Library Carpentry"),
             ]
         )
 
@@ -87,9 +87,7 @@ class TestPostWorkshopAction(TestCase):
             end=date.today() + timedelta(days=8),
         )
         e.tags.set(Tag.objects.filter(name__in=["LC", "TTT", "automated-email"]))
-        p = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         r = Role.objects.create(name="host")
         Task.objects.create(event=e, person=p, role=r)
 
@@ -157,9 +155,7 @@ class TestPostWorkshopAction(TestCase):
             end=date.today() + timedelta(days=8),
         )
         e.tags.set(Tag.objects.filter(name__in=["automated-email"]))
-        p = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         r = Role.objects.create(name="host")
         Task.objects.create(event=e, person=p, role=r)
 
@@ -172,9 +168,7 @@ class TestPostWorkshopAction(TestCase):
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
-        a = PostWorkshopAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = PostWorkshopAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):
@@ -195,18 +189,14 @@ class TestPostWorkshopAction(TestCase):
             contact=TAG_SEPARATOR.join(["peter@webslinger.net", ""]),
         )
         e.tags.set(Tag.objects.filter(name__in=["TTT", "SWC"]))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         p2 = Person.objects.create(
             personal="Hermione",
             family="Granger",
             username="hgranger",
             email="hg@magic.uk",
         )
-        p3 = Person.objects.create(
-            personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
-        )
+        p3 = Person.objects.create(personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk")
         p4 = Person.objects.create(
             personal="Draco",
             family="Malfoy",
@@ -268,18 +258,14 @@ class TestPostWorkshopAction(TestCase):
             venue="Ministry of Magic",
         )
         e.tags.set(Tag.objects.filter(name="LC"))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         p2 = Person.objects.create(
             personal="Hermione",
             family="Granger",
             username="hgranger",
             email="hg@magic.uk",
         )
-        p3 = Person.objects.create(
-            personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
-        )
+        p3 = Person.objects.create(personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk")
         p4 = Person.objects.create(
             personal="Draco",
             family="Malfoy",
@@ -330,9 +316,7 @@ class TestPostWorkshopAction(TestCase):
             venue="Ministry of Magic",
         )
         e.tags.set(Tag.objects.filter(name="LC"))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         t = Task.objects.create(event=e, person=p1, role=r)
 
@@ -353,18 +337,14 @@ class TestPostWorkshopAction(TestCase):
             venue="Ministry of Magic",
         )
         e.tags.set(Tag.objects.filter(name="LC"))
-        p1 = Person.objects.create(
-            personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
-        )
+        p1 = Person.objects.create(personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk")
         p2 = Person.objects.create(
             personal="Hermione",
             family="Granger",
             username="hgranger",
             email="hg@magic.uk",
         )
-        p3 = Person.objects.create(
-            personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
-        )
+        p3 = Person.objects.create(personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk")
         p4 = Person.objects.create(
             personal="Draco",
             family="Malfoy",

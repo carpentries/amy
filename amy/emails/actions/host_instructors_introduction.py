@@ -37,23 +37,15 @@ logger = logging.getLogger("amy")
 def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
     logger.info(f"Running HostInstructorsIntroduction strategy for {event}")
 
-    not_self_organised = (
-        event.administrator and event.administrator.domain != "self-organized"
-    )
-    no_open_recruitment = not InstructorRecruitment.objects.filter(
-        status="o", event=event
-    ).exists()
-    start_date_in_at_least_7days = event.start and event.start >= (
-        timezone.now().date() + timedelta(days=7)
-    )
+    not_self_organised = event.administrator and event.administrator.domain != "self-organized"
+    no_open_recruitment = not InstructorRecruitment.objects.filter(status="o", event=event).exists()
+    start_date_in_at_least_7days = event.start and event.start >= (timezone.now().date() + timedelta(days=7))
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
     host = Task.objects.filter(role__name="host", event=event).first()
-    at_least_2_instructors = (
-        Task.objects.filter(role__name="instructor", event=event).count() >= 2
+    at_least_2_instructors = Task.objects.filter(role__name="instructor", event=event).count() >= 2
+    carpentries_tags = event.tags.filter(name__in=TagQuerySet.CARPENTRIES_TAG_NAMES).exclude(
+        name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES
     )
-    carpentries_tags = event.tags.filter(
-        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
-    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
 
     log_condition_elements(
         not_self_organised=not_self_organised,
@@ -93,7 +85,7 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"HostInstructorsIntroduction strategy {result = }")
+    logger.debug(f"HostInstructorsIntroduction strategy {result=}")
     return result
 
 
@@ -130,10 +122,7 @@ def get_context(
     except IndexError:
         host = None
 
-    instructors = [
-        task.person
-        for task in Task.objects.filter(role__name="instructor", event=event)
-    ]
+    instructors = [task.person for task in Task.objects.filter(role__name="instructor", event=event)]
     return {
         "assignee": event.assigned_to if event.assigned_to else None,
         "event": event,
@@ -148,9 +137,7 @@ def get_context_json(context: HostInstructorsIntroductionContext) -> ContextMode
     return ContextModel(
         {
             "assignee": (
-                api_model_url("person", context["assignee"].pk)
-                if context["assignee"]
-                else scalar_value_none()
+                api_model_url("person", context["assignee"].pk) if context["assignee"] else scalar_value_none()
             ),
             "event": api_model_url("event", event.pk),
             "workshop_host": (
@@ -158,14 +145,8 @@ def get_context_json(context: HostInstructorsIntroductionContext) -> ContextMode
                 if context["workshop_host"]
                 else scalar_value_none()
             ),
-            "host": (
-                api_model_url("person", context["host"].pk)
-                if context["host"]
-                else scalar_value_none()
-            ),
-            "instructors": [
-                api_model_url("person", person.pk) for person in context["instructors"]
-            ],
+            "host": (api_model_url("person", context["host"].pk) if context["host"] else scalar_value_none()),
+            "instructors": [api_model_url("person", person.pk) for person in context["instructors"]],
         },
     )
 
@@ -183,9 +164,7 @@ def get_recipients(
 ) -> list[str]:
     host = context["host"]
     host_part = [host.email] if host and host.email else []
-    instructors_part = [
-        instructor.email for instructor in context["instructors"] if instructor.email
-    ]
+    instructors_part = [instructor.email for instructor in context["instructors"] if instructor.email]
     return host_part + instructors_part
 
 
@@ -218,19 +197,13 @@ def get_recipients_context_json(
 class HostInstructorsIntroductionReceiver(BaseAction):
     signal = host_instructors_introduction_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
-    ) -> HostInstructorsIntroductionContext:
+    def get_context(self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]) -> HostInstructorsIntroductionContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: HostInstructorsIntroductionContext
-    ) -> ContextModel:
+    def get_context_json(self, context: HostInstructorsIntroductionContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -258,19 +231,13 @@ class HostInstructorsIntroductionReceiver(BaseAction):
 class HostInstructorsIntroductionUpdateReceiver(BaseActionUpdate):
     signal = host_instructors_introduction_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
-    ) -> HostInstructorsIntroductionContext:
+    def get_context(self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]) -> HostInstructorsIntroductionContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: HostInstructorsIntroductionContext
-    ) -> ContextModel:
+    def get_context_json(self, context: HostInstructorsIntroductionContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -298,14 +265,10 @@ class HostInstructorsIntroductionUpdateReceiver(BaseActionUpdate):
 class HostInstructorsIntroductionCancelReceiver(BaseActionCancel):
     signal = host_instructors_introduction_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]
-    ) -> HostInstructorsIntroductionContext:
+    def get_context(self, **kwargs: Unpack[HostInstructorsIntroductionKwargs]) -> HostInstructorsIntroductionContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: HostInstructorsIntroductionContext
-    ) -> ContextModel:
+    def get_context_json(self, context: HostInstructorsIntroductionContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -326,16 +289,8 @@ class HostInstructorsIntroductionCancelReceiver(BaseActionCancel):
 host_instructors_introduction_receiver = HostInstructorsIntroductionReceiver()
 host_instructors_introduction_signal.connect(host_instructors_introduction_receiver)
 
-host_instructors_introduction_update_receiver = (
-    HostInstructorsIntroductionUpdateReceiver()
-)
-host_instructors_introduction_update_signal.connect(
-    host_instructors_introduction_update_receiver
-)
+host_instructors_introduction_update_receiver = HostInstructorsIntroductionUpdateReceiver()
+host_instructors_introduction_update_signal.connect(host_instructors_introduction_update_receiver)
 
-host_instructors_introduction_cancel_receiver = (
-    HostInstructorsIntroductionCancelReceiver()
-)
-host_instructors_introduction_cancel_signal.connect(
-    host_instructors_introduction_cancel_receiver
-)
+host_instructors_introduction_cancel_receiver = HostInstructorsIntroductionCancelReceiver()
+host_instructors_introduction_cancel_signal.connect(host_instructors_introduction_cancel_receiver)

@@ -71,9 +71,7 @@ class TestIssuesViews(TestBase):
             latitude=89,
             longitude=179,
         )
-        attendance.task_set.create(
-            person=Person.objects.first(), role=self.instructor_role
-        )
+        attendance.task_set.create(person=Person.objects.first(), role=self.instructor_role)
         no_attendance = Event.objects.create(
             slug="event-with-no-attendance",
             start=self.weekago,
@@ -86,9 +84,7 @@ class TestIssuesViews(TestBase):
             latitude=89,
             longitude=179,
         )
-        no_attendance.task_set.create(
-            person=Person.objects.first(), role=self.instructor_role
-        )
+        no_attendance.task_set.create(person=Person.objects.first(), role=self.instructor_role)
         no_attendance_unresponsive = Event.objects.create(
             slug="unresponsive-event-with-no-attendance",
             start=self.weekago,
@@ -101,9 +97,7 @@ class TestIssuesViews(TestBase):
             latitude=89,
             longitude=179,
         )
-        no_attendance_unresponsive.task_set.create(
-            person=Person.objects.first(), role=self.instructor_role
-        )
+        no_attendance_unresponsive.task_set.create(person=Person.objects.first(), role=self.instructor_role)
         no_attendance_unresponsive.tags.add(Tag.objects.get(name="unresponsive"))
 
         rv = self.client.get(self.url)
@@ -125,9 +119,7 @@ class TestIssuesViews(TestBase):
             latitude=89,
             longitude=179,
         )
-        location.task_set.create(
-            person=Person.objects.first(), role=self.instructor_role
-        )
+        location.task_set.create(person=Person.objects.first(), role=self.instructor_role)
         no_location = Event.objects.create(
             slug="event-with-no-location",
             start=self.weekago,
@@ -140,9 +132,7 @@ class TestIssuesViews(TestBase):
             latitude=89,
             longitude=179,
         )
-        no_location.task_set.create(
-            person=Person.objects.first(), role=self.instructor_role
-        )
+        no_location.task_set.create(person=Person.objects.first(), role=self.instructor_role)
 
         rv = self.client.get(self.url)
         self.assertNotIn(location, rv.context["events"])
@@ -175,9 +165,7 @@ class TestIssuesViews(TestBase):
             latitude=89,
             longitude=179,
         )
-        invalid_dates.task_set.create(
-            person=Person.objects.first(), role=self.instructor_role
-        )
+        invalid_dates.task_set.create(person=Person.objects.first(), role=self.instructor_role)
 
         rv = self.client.get(self.url)
         self.assertNotIn(okay, rv.context["events"])
@@ -197,9 +185,7 @@ class TestIssuesViews(TestBase):
             latitude=89,
             longitude=179,
         )
-        instructor.task_set.create(
-            person=Person.objects.first(), role=self.instructor_role
-        )
+        instructor.task_set.create(person=Person.objects.first(), role=self.instructor_role)
         no_instructors = Event.objects.create(
             slug="event-with-no-instructors",
             start=self.weekago,

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import GenericAction
 from autoemails.models import EmailTemplate, Trigger
@@ -15,6 +15,7 @@ from workshops.models import (
 )
 
 
+@tag("autoemails")
 class TestGenericAction(TestCase):
     def setUp(self):
         # we're missing some tags
@@ -54,9 +55,7 @@ class TestGenericAction(TestCase):
             GenericAction.check(e)
 
     def testContext(self):
-        a = GenericAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = GenericAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
         with self.assertRaises(KeyError):
             a.get_additional_context(dict())  # missing 'request' object
         with self.assertRaises(AttributeError):

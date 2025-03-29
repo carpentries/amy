@@ -1,6 +1,7 @@
 from collections import defaultdict
 import datetime
 import re
+from typing import Annotated, Any, TypedDict
 from urllib.parse import quote
 
 from django.contrib.auth.models import (
@@ -24,17 +25,18 @@ from django.db.models import (
     Sum,
     When,
 )
+from django.db.models.aggregates import Aggregate
 from django.db.models.functions import Coalesce, Greatest
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import CountryField
+from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
 
-from autoemails.mixins import RQJobsMixin
 from trainings.models import Involvement
 from workshops import github_auth
 from workshops.consts import (
@@ -69,7 +71,7 @@ from workshops.utils.reports import reports_link
 # ------------------------------------------------------------
 
 
-class OrganizationManager(models.Manager):
+class OrganizationManager(models.Manager["Organization"]):
     ADMIN_DOMAINS = [
         "self-organized",
         "software-carpentry.org",
@@ -81,7 +83,7 @@ class OrganizationManager(models.Manager):
         "carpentries.org/community-lessons/",
     ]
 
-    def administrators(self):
+    def administrators(self) -> QuerySet["Organization"]:
         return self.get_queryset().filter(domain__in=self.ADMIN_DOMAINS)
 
 
@@ -96,20 +98,18 @@ class Organization(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
-    affiliated_organizations = models.ManyToManyField(
-        "Organization", blank=True, symmetrical=True
-    )
+    affiliated_organizations = models.ManyToManyField["Organization", Any]("Organization", blank=True, symmetrical=True)
 
     objects = OrganizationManager()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} <{}>".format(self.fullname, self.domain)
 
     @property
-    def domain_quoted(self):
+    def domain_quoted(self) -> str:
         return quote(self.domain, safe="")
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("organization_details", args=[self.domain_quoted])
 
     class Meta:
@@ -120,7 +120,7 @@ class MemberRole(models.Model):
     name = models.CharField(max_length=STR_MED)
     verbose_name = models.CharField(max_length=STR_LONG, blank=True, default="")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.verbose_name if self.verbose_name else self.name
 
 
@@ -138,8 +138,14 @@ class Member(models.Model):
         ]
 
 
-class MembershipManager(models.Manager):
-    def annotate_with_seat_usage(self):
+class MembershipSeatUsage(TypedDict):
+    instructor_training_seats_total: int
+    instructor_training_seats_utilized: int
+    instructor_training_seats_remaining: int
+
+
+class MembershipManager(models.Manager["Membership"]):
+    def annotate_with_seat_usage(self) -> QuerySet[Annotated["Membership", Annotations[MembershipSeatUsage]]]:
         return self.get_queryset().annotate(
             instructor_training_seats_total=(
                 # Public
@@ -152,18 +158,14 @@ class MembershipManager(models.Manager):
                 + F("additional_inhouse_instructor_training_seats")
                 + Coalesce("inhouse_instructor_training_seats_rolled_from_previous", 0)
             ),
-            instructor_training_seats_utilized=(
-                Count("task", filter=Q(task__role__name="learner"))
-            ),
+            instructor_training_seats_utilized=(Count("task", filter=Q(task__role__name="learner"))),
             instructor_training_seats_remaining=(
                 # Public
                 F("public_instructor_training_seats")
                 + F("additional_public_instructor_training_seats")
                 # Coalesce returns first non-NULL value
                 + Coalesce("public_instructor_training_seats_rolled_from_previous", 0)
-                - Count(
-                    "task", filter=Q(task__role__name="learner", task__seat_public=True)
-                )
+                - Count("task", filter=Q(task__role__name="learner", task__seat_public=True))
                 - Coalesce("public_instructor_training_seats_rolled_over", 0)
                 # Inhouse
                 + F("inhouse_instructor_training_seats")
@@ -226,8 +228,7 @@ class Membership(models.Model):
     workshops_without_admin_fee_per_agreement = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Acceptable number of workshops without admin fee per "
-        "agreement duration",
+        help_text="Acceptable number of workshops without admin fee per " "agreement duration",
     )
     workshops_without_admin_fee_rolled_from_previous = models.PositiveIntegerField(
         null=True,
@@ -252,14 +253,12 @@ class Membership(models.Model):
         blank=False,
         default=0,
         verbose_name="Additional public instructor training seats",
-        help_text="Use this field if you want to grant more public seats than "
-        "the agreement provides for.",
+        help_text="Use this field if you want to grant more public seats than " "the agreement provides for.",
     )
     public_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text="Public instructor training seats rolled over from previous "
-        "membership.",
+        help_text="Public instructor training seats rolled over from previous " "membership.",
     )
     public_instructor_training_seats_rolled_over = models.PositiveIntegerField(
         null=True,
@@ -278,8 +277,7 @@ class Membership(models.Model):
         blank=False,
         default=0,
         verbose_name="Additional in-house instructor training seats",
-        help_text="Use this field if you want to grant more in-house seats than "
-        "the agreement provides for.",
+        help_text="Use this field if you want to grant more in-house seats than " "the agreement provides for.",
     )
     inhouse_instructor_training_seats_rolled_from_previous = models.PositiveIntegerField(  # noqa
         null=True,
@@ -304,8 +302,7 @@ class Membership(models.Model):
         blank=True,
         unique=True,
         verbose_name="Registration Code",
-        help_text="Unique registration code used for Eventbrite and trainee "
-        "application.",
+        help_text="Unique registration code used for Eventbrite and trainee " "application.",
     )
 
     agreement_link = models.URLField(
@@ -324,19 +321,17 @@ class Membership(models.Model):
         choices=PUBLIC_STATUS_CHOICES,
         default=PUBLIC_STATUS_CHOICES[1][0],
         verbose_name="Can this membership be publicized on The carpentries websites?",
-        help_text="Public memberships may be listed on any of The Carpentries "
-        "websites.",
+        help_text="Public memberships may be listed on any of The Carpentries " "websites.",
     )
 
     emergency_contact = models.TextField(blank=True)
 
     consortium = models.BooleanField(
         default=False,
-        help_text="Determines whether this is a group of organisations working "
-        "together under a consortium.",
+        help_text="Determines whether this is a group of organisations working " "together under a consortium.",
     )
 
-    persons = models.ManyToManyField(
+    persons = models.ManyToManyField["Person", Any](
         "Person",
         blank=True,
         related_name="memberships",
@@ -345,14 +340,14 @@ class Membership(models.Model):
 
     rolled_to_membership = models.OneToOneField(
         "Membership",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="rolled_from_membership",
         null=True,
     )
 
     objects = MembershipManager()
 
-    def __str__(self):
+    def __str__(self) -> str:
         dates = human_daterange(self.agreement_start, self.agreement_end)
         variant = self.variant.title()
 
@@ -361,12 +356,10 @@ class Membership(models.Model):
         else:
             return f"{self.name} {variant} membership {dates}"
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("membership_details", args=[self.id])
 
-    def active_on_date(
-        self, date: datetime.date, grace_before: int = 0, grace_after: int = 0
-    ) -> bool:
+    def active_on_date(self, date: datetime.date, grace_before: int = 0, grace_after: int = 0) -> bool:
         """Returns True if the date is within the membership agreement dates,
         with an optional grace period (in days) at the start and/or end of the
         agreement.
@@ -375,12 +368,12 @@ class Membership(models.Model):
         end_date = self.agreement_end + datetime.timedelta(days=grace_after)
         return start_date <= date <= end_date
 
-    def _base_queryset(self):
+    def _base_queryset(self) -> QuerySet["Event"]:
         """Provide universal queryset for looking up workshops for this membership."""
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
         return Event.objects.filter(membership=self).exclude(cancelled).distinct()
 
-    def _workshops_without_admin_fee_queryset(self):
+    def _workshops_without_admin_fee_queryset(self) -> QuerySet["Event"]:
         """Provide universal queryset for looking up centrally-organised workshops for
         this membership."""
         return (
@@ -389,15 +382,11 @@ class Membership(models.Model):
             .exclude(administrator__domain="self-organized")
         )
 
-    def _workshops_without_admin_fee_completed_queryset(self):
-        return self._workshops_without_admin_fee_queryset().filter(
-            start__lt=datetime.date.today()
-        )
+    def _workshops_without_admin_fee_completed_queryset(self) -> QuerySet["Event"]:
+        return self._workshops_without_admin_fee_queryset().filter(start__lt=datetime.date.today())
 
-    def _workshops_without_admin_fee_planned_queryset(self):
-        return self._workshops_without_admin_fee_queryset().filter(
-            start__gte=datetime.date.today()
-        )
+    def _workshops_without_admin_fee_planned_queryset(self) -> QuerySet["Event"]:
+        return self._workshops_without_admin_fee_queryset().filter(start__gte=datetime.date.today())
 
     @property
     def workshops_without_admin_fee_total_allowed(self) -> int:
@@ -448,8 +437,7 @@ class Membership(models.Model):
         Excess is counted towards discounted-fee planned workshops."""
         return min(
             self._workshops_without_admin_fee_planned_queryset().count(),
-            self.workshops_without_admin_fee_available
-            - self.workshops_without_admin_fee_completed,
+            self.workshops_without_admin_fee_available - self.workshops_without_admin_fee_completed,
         )
 
     @property
@@ -467,8 +455,7 @@ class Membership(models.Model):
         """Any centrally-organised workshops exceeding the workshops without fee allowed
         number - already completed."""
         return max(
-            self._workshops_without_admin_fee_completed_queryset().count()
-            - self.workshops_without_admin_fee_available,
+            self._workshops_without_admin_fee_completed_queryset().count() - self.workshops_without_admin_fee_available,
             0,
         )
 
@@ -477,38 +464,27 @@ class Membership(models.Model):
         """Any centrally-organised workshops exceeding the workshops without fee allowed
         number - to happen in future."""
         return max(
-            self._workshops_without_admin_fee_planned_queryset().count()
-            - self.workshops_without_admin_fee_available,
+            self._workshops_without_admin_fee_planned_queryset().count() - self.workshops_without_admin_fee_available,
             0,
         )
 
-    def _self_organized_workshops_queryset(self):
+    def _self_organized_workshops_queryset(self) -> QuerySet["Event"]:
         """Provide universal queryset for looking up self-organised events for this
         membership."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
+        self_organized = Q(administrator=None) | Q(administrator__domain="self-organized")
         return self._base_queryset().filter(self_organized)
 
     @cached_property
     def self_organized_workshops_completed(self) -> int:
         """Count self-organized workshops hosted the year agreement started (completed,
         ie. in past)."""
-        return (
-            self._self_organized_workshops_queryset()
-            .filter(start__lt=datetime.date.today())
-            .count()
-        )
+        return self._self_organized_workshops_queryset().filter(start__lt=datetime.date.today()).count()
 
     @cached_property
     def self_organized_workshops_planned(self) -> int:
         """Count self-organized workshops hosted the year agreement started (planned,
         ie. in future)."""
-        return (
-            self._self_organized_workshops_queryset()
-            .filter(start__gte=datetime.date.today())
-            .count()
-        )
+        return self._self_organized_workshops_queryset().filter(start__gte=datetime.date.today()).count()
 
     @property
     def public_instructor_training_seats_total(self) -> int:
@@ -574,17 +550,15 @@ class Airport(models.Model):
         verbose_name="IATA code",
         help_text='<a href="https://www.world-airport-codes.com/">Look up code</a>',
     )
-    fullname = models.CharField(
-        max_length=STR_LONG, unique=True, verbose_name="Airport name"
-    )
+    fullname = models.CharField(max_length=STR_LONG, unique=True, verbose_name="Airport name")
     country = CountryField()
     latitude = models.FloatField()
     longitude = models.FloatField()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{0}: {1}".format(self.iata, self.fullname)
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("airport_details", args=[str(self.iata)])
 
     class Meta:
@@ -594,7 +568,15 @@ class Airport(models.Model):
 # ------------------------------------------------------------
 
 
-class PersonManager(BaseUserManager):
+class PersonInstructorEligibility(TypedDict):
+    passed_training: int
+    passed_get_involved: int
+    passed_welcome: int
+    passed_demo: int
+    instructor_eligible: int
+
+
+class PersonManager(BaseUserManager["Person"]):
     """
     Create users and superusers from command line.
 
@@ -603,7 +585,9 @@ class PersonManager(BaseUserManager):
       $ python manage.py createsuperuser
     """
 
-    def create_user(self, username, personal, family, email, password=None):
+    def create_user(
+        self, username: str, personal: str, family: str, email: str, password: str | None = None
+    ) -> "Person":
         """
         Create and save a normal (not-super) user.
         """
@@ -619,7 +603,7 @@ class PersonManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, personal, family, email, password):
+    def create_superuser(self, username: str, personal: str, family: str, email: str, password: str) -> "Person":
         """
         Create and save a superuser.
         """
@@ -635,7 +619,7 @@ class PersonManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def get_by_natural_key(self, username):
+    def get_by_natural_key(self, username: str | None) -> "Person":
         """Let's make this command so that it gets user by *either* username or
         email.  Original behavior is to get user by USERNAME_FIELD."""
         if isinstance(username, str) and "@" in username:
@@ -643,8 +627,10 @@ class PersonManager(BaseUserManager):
         else:
             return super().get_by_natural_key(username)
 
-    def annotate_with_instructor_eligibility(self):
-        def passed(requirement):
+    def annotate_with_instructor_eligibility(
+        self,
+    ) -> QuerySet[Annotated["Person", Annotations[PersonInstructorEligibility]]]:
+        def passed(requirement: str) -> Aggregate:
             return Sum(
                 Case(
                     When(
@@ -657,7 +643,7 @@ class PersonManager(BaseUserManager):
                 )
             )
 
-        def passed_either(*reqs):
+        def passed_either(*reqs: str) -> Aggregate:
             return Sum(
                 Case(
                     *[
@@ -684,10 +670,7 @@ class PersonManager(BaseUserManager):
             # * means "AND"
             # + means "OR"
             instructor_eligible=(
-                F("passed_training")
-                * F("passed_welcome")
-                * F("passed_get_involved")
-                * F("passed_demo")
+                F("passed_training") * F("passed_welcome") * F("passed_get_involved") * F("passed_demo")
             )
         )
 
@@ -695,43 +678,28 @@ class PersonManager(BaseUserManager):
         return self.annotate(
             num_instructor=Count(
                 "task",
-                filter=(
-                    Q(task__role__name="instructor")
-                    & ~Q(task__event__administrator__domain="carpentries.org")
-                ),
+                filter=(Q(task__role__name="instructor") & ~Q(task__event__administrator__domain="carpentries.org")),
                 distinct=True,
             ),
             num_trainer=Count(
                 "task",
-                filter=(
-                    Q(task__role__name="instructor")
-                    & Q(task__event__administrator__domain="carpentries.org")
-                ),
+                filter=(Q(task__role__name="instructor") & Q(task__event__administrator__domain="carpentries.org")),
                 distinct=True,
             ),
-            num_helper=Count(
-                "task", filter=Q(task__role__name="helper"), distinct=True
-            ),
-            num_learner=Count(
-                "task", filter=Q(task__role__name="learner"), distinct=True
-            ),
+            num_helper=Count("task", filter=Q(task__role__name="helper"), distinct=True),
+            num_learner=Count("task", filter=Q(task__role__name="learner"), distinct=True),
             num_supporting=Count(
                 "task",
                 filter=Q(task__role__name="supporting-instructor"),
                 distinct=True,
             ),
-            num_organizer=Count(
-                "task", filter=Q(task__role__name="organizer"), distinct=True
-            ),
+            num_organizer=Count("task", filter=Q(task__role__name="organizer"), distinct=True),
         )
 
-    def duplication_review_expired(self):
+    def duplication_review_expired(self) -> QuerySet["Person"]:
         return self.filter(
             Q(duplication_reviewed_on__isnull=True)
-            | Q(
-                last_updated_at__gte=F("duplication_reviewed_on")
-                + datetime.timedelta(minutes=1)
-            )
+            | Q(last_updated_at__gte=F("duplication_reviewed_on") + datetime.timedelta(minutes=1))
         )
 
 
@@ -741,7 +709,6 @@ class Person(
     PermissionsMixin,
     CreatedUpdatedArchivedMixin,
     GenderMixin,
-    RQJobsMixin,
     SecondaryEmailMixin,
 ):
     """Represent a single person."""
@@ -835,13 +802,10 @@ class Person(
         max_length=STR_LONG,
         default="",
         blank=True,
-        help_text="What university, company, lab, or other organization are "
-        "you affiliated with (if any)?",
+        help_text="What university, company, lab, or other organization are " "you affiliated with (if any)?",
     )
 
-    badges = models.ManyToManyField(
-        "Badge", through="Award", through_fields=("person", "badge")
-    )
+    badges = models.ManyToManyField("Badge", through="Award", through_fields=("person", "badge"))
     lessons = models.ManyToManyField(
         "Lesson",
         through="Qualification",
@@ -881,8 +845,7 @@ class Person(
         null=True,
         blank=True,
         verbose_name="Timestamp of duplication review by admin",
-        help_text="Set this to a newer / actual timestamp when Person is "
-        "reviewed by admin.",
+        help_text="Set this to a newer / actual timestamp when Person is " "reviewed by admin.",
     )
 
     objects = PersonManager()
@@ -955,9 +918,7 @@ class Person(
 
         if github_uid is not None:
             self.github_usersocialauth.delete()
-            return UserSocialAuth.objects.create(
-                provider="github", user=self, uid=github_uid, extra_data={}
-            )
+            return UserSocialAuth.objects.create(provider="github", user=self, uid=github_uid, extra_data={})
         else:
             return False
 
@@ -977,10 +938,7 @@ class Person(
             if self.is_anonymous:
                 return False
             else:
-                return (
-                    self.is_superuser
-                    or self.groups.filter(name__in=self.ADMIN_GROUPS).exists()
-                )
+                return self.is_superuser or self.groups.filter(name__in=self.ADMIN_GROUPS).exists()
         except AttributeError:
             return False
 
@@ -997,16 +955,12 @@ class Person(
         try:
             return [name for field, name in fields if not getattr(self, field)]
         except AttributeError as e:
-            raise Exception(
-                "Did you forget to call annotate_with_instructor_eligibility()?"
-            ) from e
+            raise Exception("Did you forget to call annotate_with_instructor_eligibility()?") from e
 
     def get_training_tasks(self):
         """Returns Tasks related to Instuctor Training events at which this
         person was trained."""
-        return Task.objects.filter(
-            person=self, role__name="learner", event__tags__name="TTT"
-        )
+        return Task.objects.filter(person=self, role__name="learner", event__tags__name="TTT")
 
     def clean(self):
         """This will be called by the ModelForm.is_valid(). No saving to the
@@ -1014,7 +968,7 @@ class Person(
         # lowercase the email
         self.email = self.email.lower() if self.email else None
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         # If GitHub username has changed, clear UserSocialAuth table for this
         # person.
         if self.pk is not None:
@@ -1130,13 +1084,10 @@ class Language(models.Model):
     https://tools.ietf.org/html/rfc5646
     """
 
-    name = models.CharField(
-        max_length=STR_LONG, help_text="Description of this language tag in English"
-    )
+    name = models.CharField(max_length=STR_LONG, help_text="Description of this language tag in English")
     subtag = models.CharField(
         max_length=STR_SHORT,
-        help_text="Primary language subtag.  "
-        "https://tools.ietf.org/html/rfc5646#section-2.2.1",
+        help_text="Primary language subtag.  " "https://tools.ietf.org/html/rfc5646#section-2.2.1",
     )
 
     def __str__(self):
@@ -1163,12 +1114,7 @@ class EventQuerySet(QuerySet):
     def active(self):
         """Exclude inactive events (stalled, completed, cancelled or
         unresponsive)."""
-        return (
-            self.exclude(tags__name="stalled")
-            .exclude(completed=True)
-            .not_cancelled()
-            .not_unresponsive()
-        )
+        return self.exclude(tags__name="stalled").exclude(completed=True).not_cancelled().not_unresponsive()
 
     def past_events(self):
         """Return past events.
@@ -1195,11 +1141,7 @@ class EventQuerySet(QuerySet):
         Upcoming events are published events (see `published_events` below)
         that start after today."""
 
-        queryset = (
-            self.published_events()
-            .filter(start__gt=datetime.date.today())
-            .order_by("start")
-        )
+        queryset = self.published_events().filter(start__gt=datetime.date.today()).order_by("start")
         return queryset
 
     def ongoing_events(self):
@@ -1240,15 +1182,7 @@ class EventQuerySet(QuerySet):
         no_latitude = Q(latitude__isnull=True)
         no_longitude = Q(longitude__isnull=True)
         no_url = Q(url__isnull=True)
-        return (
-            unknown_start
-            | no_country
-            | no_venue
-            | no_address
-            | no_latitude
-            | no_longitude
-            | no_url
-        )
+        return unknown_start | no_country | no_venue | no_address | no_latitude | no_longitude | no_url
 
     def unpublished_events(self):
         """Return active events considered as unpublished (see
@@ -1260,12 +1194,7 @@ class EventQuerySet(QuerySet):
         """Return events considered as published (see `unpublished_conditional`
         above)."""
         conditional = self.unpublished_conditional()
-        return (
-            self.not_cancelled()
-            .exclude(conditional)
-            .order_by("-start", "id")
-            .distinct()
-        )
+        return self.not_cancelled().exclude(conditional).order_by("-start", "id").distinct()
 
     def metadata_changed(self):
         """Return events for which remote metatags have been updated."""
@@ -1289,24 +1218,18 @@ class EventQuerySet(QuerySet):
         `qs.query`), and resulted in SQLite error:
         django.db.utils.OperationalError: wrong number of arguments to function COUNT()
         """
-        return self.annotate(
-            learner_tasks_count=Count("task", filter=Q(task__role__name="learner"))
-        ).annotate(
+        return self.annotate(learner_tasks_count=Count("task", filter=Q(task__role__name="learner"))).annotate(
             attendance=Greatest("manual_attendance", "learner_tasks_count"),
         )
 
 
 @reversion.register
-class Event(AssignmentMixin, RQJobsMixin, models.Model):
+class Event(AssignmentMixin, models.Model):
     """Represent a single event."""
 
-    REPO_REGEX = re.compile(
-        r"https?://github\.com/(?P<name>[^/]+)/" r"(?P<repo>[^/]+)/?"
-    )
+    REPO_REGEX = re.compile(r"https?://github\.com/(?P<name>[^/]+)/" r"(?P<repo>[^/]+)/?")
     REPO_FORMAT = "https://github.com/{name}/{repo}"
-    WEBSITE_REGEX = re.compile(
-        r"https?://(?P<name>[^.]+)\.github\." r"(io|com)/(?P<repo>[^/]+)/?"
-    )
+    WEBSITE_REGEX = re.compile(r"https?://(?P<name>[^.]+)\.github\." r"(io|com)/(?P<repo>[^/]+)/?")
     WEBSITE_FORMAT = "https://{name}.github.io/{repo}/"
     PUBLISHED_HELP_TEXT = 'Required in order for this event to be "published".'
 
@@ -1316,8 +1239,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         null=False,
         blank=False,
         related_name="hosted_events",
-        help_text="The institution where the workshop is taking place (or would take "
-        "place for online workshops).",
+        help_text="The institution where the workshop is taking place (or would take " "place for online workshops).",
     )
     # Currently this is organiser
     sponsor = models.ForeignKey(
@@ -1326,8 +1248,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         null=True,
         blank=False,
         related_name="sponsored_events",
-        help_text="The institution responsible for organizing and funding the workshop "
-        "(often the same as Host).",
+        help_text="The institution responsible for organizing and funding the workshop " "(often the same as Host).",
     )
     membership = models.ForeignKey(
         Membership,
@@ -1380,14 +1301,10 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         null=True,
         blank=True,
         validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
-        help_text=PUBLISHED_HELP_TEXT
-        + "<br />Use link to the event's <b>website</b>, "
-        + "not repository.",
+        help_text=PUBLISHED_HELP_TEXT + "<br />Use link to the event's <b>website</b>, " + "not repository.",
         verbose_name="URL",
     )
-    reg_key = models.CharField(
-        max_length=STR_REG_KEY, blank=True, verbose_name="Eventbrite key"
-    )
+    reg_key = models.CharField(max_length=STR_REG_KEY, blank=True, verbose_name="Eventbrite key")
     manual_attendance = models.PositiveIntegerField(
         null=False,
         blank=True,
@@ -1462,9 +1379,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         default="",
         verbose_name="Post-workshop assessment survey for instructors",
     )
-    learners_longterm = models.URLField(
-        blank=True, default="", verbose_name="Long-term assessment survey for learners"
-    )
+    learners_longterm = models.URLField(blank=True, default="", verbose_name="Long-term assessment survey for learners")
 
     # used in getting metadata updates from GitHub
     repository_last_commit_hash = models.CharField(
@@ -1478,12 +1393,8 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         default="",
         help_text="JSON-serialized metadata from event's website",
     )
-    metadata_all_changes = models.TextField(
-        blank=True, default="", help_text="List of detected metadata changes"
-    )
-    metadata_changed = models.BooleanField(
-        default=False, help_text="Indicate if metadata changed since last check"
-    )
+    metadata_all_changes = models.TextField(blank=True, default="", help_text="List of detected metadata changes")
+    metadata_changed = models.BooleanField(default=False, help_text="Indicate if metadata changed since last check")
 
     # defines if people not associated with specific member sites can take part
     # in TTT event
@@ -1593,9 +1504,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
 
         It's useful e.g. in cases when we access a single object that wasn't
         annotated this way before."""
-        return max(
-            [self.manual_attendance, self.task_set.filter(role__name="learner").count()]
-        )
+        return max([self.manual_attendance, self.task_set.filter(role__name="learner").count()])
 
     def eligible_for_instructor_recruitment(self) -> bool:
         return bool(
@@ -1622,9 +1531,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             has_TTT = self.tags.filter(name="TTT")
 
             if self.open_TTT_applications and not has_TTT:
-                errors[
-                    "open_TTT_applications"
-                ] = "You cannot open applications on non-TTT event."
+                errors["open_TTT_applications"] = "You cannot open applications on non-TTT event."
 
             if errors:
                 raise ValidationError(errors)
@@ -1654,9 +1561,7 @@ class Role(models.Model):
     """Enumerate roles in workshops."""
 
     name = models.CharField(max_length=STR_MED)
-    verbose_name = models.CharField(
-        max_length=STR_LONG, null=False, blank=True, default=""
-    )
+    verbose_name = models.CharField(max_length=STR_LONG, null=False, blank=True, default="")
 
     def __str__(self):
         return self.verbose_name
@@ -1680,7 +1585,7 @@ class TaskManager(models.Manager):
 
 
 @reversion.register
-class Task(RQJobsMixin, models.Model):
+class Task(models.Model):
     """Represent who did what at events."""
 
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
@@ -1744,8 +1649,7 @@ class Task(RQJobsMixin, models.Model):
 
         if self.seat_membership is not None and self.seat_open_training:
             raise ValidationError(
-                "This Task cannot be simultaneously open training and use "
-                "a Membership instructor training seat."
+                "This Task cannot be simultaneously open training and use " "a Membership instructor training seat."
             )
 
         if not has_ttt and self.seat_membership is not None:
@@ -1756,8 +1660,7 @@ class Task(RQJobsMixin, models.Model):
 
         if not has_ttt and self.seat_open_training:
             errors["seat_open_training"] = ValidationError(
-                "Cannot mark this person as open applicant, because the event "
-                "has no TTT tag.",
+                "Cannot mark this person as open applicant, because the event " "has no TTT tag.",
                 code="invalid",
             )
         elif has_ttt and not is_open_app and self.seat_open_training:
@@ -1767,12 +1670,8 @@ class Task(RQJobsMixin, models.Model):
                 code="invalid",
             )
 
-        if (
-            self.seat_membership or self.seat_open_training
-        ) and self.role.name != "learner":
-            errors["role"] = ValidationError(
-                "Seat (open / membership) can be assigned only to a workshop learner."
-            )
+        if (self.seat_membership or self.seat_open_training) and self.role.name != "learner":
+            errors["role"] = ValidationError("Seat (open / membership) can be assigned only to a workshop learner.")
 
         if errors:
             raise ValidationError(errors)
@@ -1883,9 +1782,7 @@ class Award(models.Model):
         ordering = ["awarded"]
 
     def __str__(self):
-        return "{0}/{1}/{2}/{3}".format(
-            self.person, self.badge, self.awarded, self.event
-        )
+        return "{0}/{1}/{2}/{3}".format(self.person, self.badge, self.awarded, self.event)
 
     def get_absolute_url(self) -> str:
         return reverse("person_details", args=[self.person.pk])
@@ -1989,8 +1886,7 @@ class Curriculum(ActiveMixin, models.Model):
         default="",
         unique=True,
         verbose_name="Curriculum name",
-        help_text="Use user-friendly language, e.g. "
-        "'Data Carpentry (Ecology with R)'.",
+        help_text="Use user-friendly language, e.g. " "'Data Carpentry (Ecology with R)'.",
     )
     description = models.TextField(
         max_length=400,
@@ -1998,16 +1894,14 @@ class Curriculum(ActiveMixin, models.Model):
         blank=True,
         default="",
         verbose_name="Curriculum longer description",
-        help_text="You can enter Markdown. It will be shown as a hover or "
-        "popup over the curriculum entry on forms.",
+        help_text="You can enter Markdown. It will be shown as a hover or " "popup over the curriculum entry on forms.",
     )
     other = models.BooleanField(
         null=False,
         blank=True,
         default=False,
         verbose_name="Field marked as 'Other'",
-        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', "
-        "'DC Other', or simply 'Other')",
+        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', " "'DC Other', or simply 'Other')",
     )
     unknown = models.BooleanField(
         null=False,
@@ -2023,8 +1917,7 @@ class Curriculum(ActiveMixin, models.Model):
         blank=True,
         default=False,
         verbose_name="Mix & Match",
-        help_text="Mark this curriculum record as 'Mix & Match'."
-        "There can be only one such record in the database.",
+        help_text="Mark this curriculum record as 'Mix & Match'." "There can be only one such record in the database.",
     )
     website = models.URLField(
         blank=True,
@@ -2231,8 +2124,7 @@ class TrainingRequest(
     location = models.CharField(
         max_length=STR_LONG,
         verbose_name="Location",
-        help_text="Please give city, and province or state if applicable. Do "
-        "not share a full mailing address.",
+        help_text="Please give city, and province or state if applicable. Do " "not share a full mailing address.",
         blank=False,
     )
     country = CountryField()
@@ -2272,16 +2164,14 @@ class TrainingRequest(
         choices=UNDERREPRESENTED_CHOICES,
         verbose_name="I self-identify as a member of a group that is "
         "under-represented in research and/or computing.",
-        help_text="The Carpentries strives to increase opportunities for "
-        "underrepresented groups to join our team.",
+        help_text="The Carpentries strives to increase opportunities for " "underrepresented groups to join our team.",
     )
     underrepresented_details = models.CharField(
         max_length=STR_LONGEST,
         blank=True,
         default="",
         verbose_name="If you are comfortable doing so, please share more details.",
-        help_text="This response is optional and doesn't impact your "
-        "application's ranking.",
+        help_text="This response is optional and doesn't impact your " "application's ranking.",
     )
 
     # teaching-related experience in non-profit or volunteer org
@@ -2297,8 +2187,7 @@ class TrainingRequest(
 
     previous_involvement = models.ManyToManyField(
         "Role",
-        verbose_name="In which of the following ways have you been involved with "
-        "The Carpentries",
+        verbose_name="In which of the following ways have you been involved with " "The Carpentries",
         help_text="Please check all that apply.",
         blank=True,
     )
@@ -2338,8 +2227,7 @@ class TrainingRequest(
         choices=PREVIOUS_EXPERIENCE_CHOICES,
         default="none",
         verbose_name="Previous experience in teaching",
-        help_text="Please include teaching experience at any level from grade "
-        "school to post-secondary education.",
+        help_text="Please include teaching experience at any level from grade " "school to post-secondary education.",
     )
     previous_experience_explanation = models.TextField(
         verbose_name="Description of your previous experience in teaching",
@@ -2386,13 +2274,11 @@ class TrainingRequest(
     TEACHING_INTENT_CHOICES = (
         (
             "yes-local",
-            "Yes - I plan to teach Carpentries workshops "
-            "in my local community or personal networks",
+            "Yes - I plan to teach Carpentries workshops " "in my local community or personal networks",
         ),
         (
             "yes-central",
-            "Yes - I plan to volunteer with The Carpentries "
-            "to teach workshops for other communities",
+            "Yes - I plan to volunteer with The Carpentries " "to teach workshops for other communities",
         ),
         (
             "yes-either",
@@ -2404,8 +2290,7 @@ class TrainingRequest(
     teaching_intent = models.CharField(
         max_length=STR_MED,
         choices=TEACHING_INTENT_CHOICES,
-        verbose_name="Do you intend to teach Carpentries workshops "
-        "within the next 12 months?",
+        verbose_name="Do you intend to teach Carpentries workshops " "within the next 12 months?",
         null=False,
         blank=False,
         default="unsure",
@@ -2422,8 +2307,7 @@ class TrainingRequest(
         teaching_frequency_expectation_other,
     ) = choice_field_with_other(
         choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
-        verbose_name="How often would you expect to teach Carpentries workshops "
-        " (of any kind) after this training?",
+        verbose_name="How often would you expect to teach Carpentries workshops " " (of any kind) after this training?",
         default="not-at-all",
     )
 
@@ -2438,8 +2322,7 @@ class TrainingRequest(
         max_travelling_frequency_other,
     ) = choice_field_with_other(
         choices=MAX_TRAVELLING_FREQUENCY_CHOICES,
-        verbose_name="How frequently would you be able to travel to teach such "
-        "classes?",
+        verbose_name="How frequently would you be able to travel to teach such " "classes?",
         default="not-at-all",
     )
 
@@ -2485,17 +2368,8 @@ class TrainingRequest(
     def clean(self):
         super().clean()
 
-        if (
-            self.state == "p"
-            and self.person is not None
-            and self.person.get_training_tasks().exists()
-        ):
-            raise ValidationError(
-                {
-                    "state": "Pending training request cannot "
-                    "be matched with a training."
-                }
-            )
+        if self.state == "p" and self.person is not None and self.person.get_training_tasks().exists():
+            raise ValidationError({"state": "Pending training request cannot " "be matched with a training."})
 
     def recalculate_score_auto(self):
         """Calculate automatic score according to the rubric:
@@ -2654,9 +2528,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         null=True,
         blank=True,
     )
-    requirement = models.ForeignKey(
-        TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type"
-    )
+    requirement = models.ForeignKey(TrainingRequirement, on_delete=models.PROTECT, verbose_name="Type")
 
     STATES = (
         ("n", "Not evaluated yet"),
@@ -2724,11 +2596,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
             if requirement.url_required:
                 return self.get_required_error(requirement)
 
-            elif (
-                requirement.involvement_required
-                and involvement_type
-                and involvement_type.url_required
-            ):
+            elif requirement.involvement_required and involvement_type and involvement_type.url_required:
                 return self.get_required_error(involvement_type)
         else:
             if not requirement.url_required and not requirement.involvement_required:
@@ -2776,9 +2644,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
         # if other checks passed, verify that date is no later than today
         # (considering timezones ahead of UTC)
-        if self.date and self.date > timezone.localdate(
-            timezone=datetime.timezone(datetime.timedelta(hours=14))
-        ):
+        if self.date and self.date > timezone.localdate(timezone=datetime.timezone(datetime.timedelta(hours=14))):
             msg = "Date must be in the past."
             return ValidationError(msg)
 
@@ -2791,11 +2657,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         or by marking the state as failed."""
         errors = []
         if requirement.involvement_required and involvement_type:
-            if (
-                involvement_type.notes_required
-                and not self.trainee_notes
-                and not self.notes
-            ):
+            if involvement_type.notes_required and not self.trainee_notes and not self.notes:
                 msg = (
                     f'This field is required for activity "{involvement_type}" '
                     "if there are no notes from the trainee."
@@ -2926,16 +2788,14 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         blank=True,
         null=True,
         verbose_name="Institutional affiliation",
-        help_text="If your institution isn't on the list, enter its name "
-        "below the list.",
+        help_text="If your institution isn't on the list, enter its name " "below the list.",
     )
     institution_other_name = models.CharField(
         max_length=STR_LONGEST,
         blank=True,
         null=False,
         default="",
-        verbose_name="If your institutional affiliation is not listed, please "
-        "enter the name",
+        verbose_name="If your institutional affiliation is not listed, please " "enter the name",
         help_text="Please enter institution name if it's not on the list " "above.",
     )
     institution_other_URL = models.URLField(
@@ -2943,8 +2803,7 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         blank=True,
         null=False,
         default="",
-        verbose_name="If your institutional affiliation is not listed, please "
-        "enter the website",
+        verbose_name="If your institutional affiliation is not listed, please " "enter the website",
         help_text="Please provide URL.",
     )
     institution_department = models.CharField(
@@ -3041,9 +2900,7 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         (personal, family, email) attributes.
         """
         try:
-            return Person.objects.get(
-                personal=self.personal, family=self.family, email=self.email
-            )
+            return Person.objects.get(personal=self.personal, family=self.family, email=self.email)
         except Person.DoesNotExist:
             return None
 
@@ -3066,7 +2923,6 @@ class WorkshopRequest(
     HostResponsibilitiesMixin,
     InstructorAvailabilityMixin,
     EventLinkMixin,
-    RQJobsMixin,
     models.Model,
 ):
     location = models.CharField(
@@ -3093,18 +2949,9 @@ class WorkshopRequest(
     )
     # In form, this is limited to Curricula without "Other/SWC/LC/DC Other"
     # and "I don't know yet" options
-    SWC_LESSONS_LINK = (
-        '<a href="https://software-carpentry.org/lessons/">'
-        "Software Carpentry lessons page</a>"
-    )
-    DC_LESSONS_LINK = (
-        '<a href="http://www.datacarpentry.org/lessons/">'
-        "Data Carpentry lessons page</a>"
-    )
-    LC_LESSONS_LINK = (
-        '<a href="https://librarycarpentry.org/lessons/">'
-        "Library Carpentry lessons page</a>"
-    )
+    SWC_LESSONS_LINK = '<a href="https://software-carpentry.org/lessons/">' "Software Carpentry lessons page</a>"
+    DC_LESSONS_LINK = '<a href="http://www.datacarpentry.org/lessons/">' "Data Carpentry lessons page</a>"
+    LC_LESSONS_LINK = '<a href="https://librarycarpentry.org/lessons/">' "Library Carpentry lessons page</a>"
     INQUIRY_FORM = reverse_lazy("workshop_inquiry")
     requested_workshop_types = models.ManyToManyField(
         Curriculum,
@@ -3149,16 +2996,14 @@ class WorkshopRequest(
         blank=True,
         null=False,
         default="",
-        verbose_name="If your dates are not set, please provide more "
-        "information below",
+        verbose_name="If your dates are not set, please provide more " "information below",
     )
     language = models.ForeignKey(
         Language,
         on_delete=models.PROTECT,
         blank=False,
         null=False,
-        verbose_name="What is the preferred language of communication for the "
-        "workshop?",
+        verbose_name="What is the preferred language of communication for the " "workshop?",
         help_text="Our workshops are offered primarily in English, with a few "
         "of our lessons available in Spanish. While materials are "
         "mainly in English, we know it can be valuable to have an "
@@ -3197,8 +3042,7 @@ class WorkshopRequest(
     academic_levels = models.ManyToManyField(
         AcademicLevel,
         verbose_name="Attendees' academic level / career stage",
-        help_text="If you know the academic level(s) of your attendees, "
-        "indicate them here.",
+        help_text="If you know the academic level(s) of your attendees, " "indicate them here.",
     )
     # MISSING
     # This field is no longer needed, and should be hidden in the form and
@@ -3212,8 +3056,7 @@ class WorkshopRequest(
         "approximation.",
     )
     audience_description = models.TextField(
-        verbose_name="Please describe your anticipated audience, including "
-        "their experience, background, and goals",
+        verbose_name="Please describe your anticipated audience, including " "their experience, background, and goals",
     )
     FEE_CHOICES = (
         (
@@ -3245,13 +3088,10 @@ class WorkshopRequest(
         blank=False,
         null=False,
         default=None,
-        verbose_name="Which of the following applies to your payment for the "
-        "administrative fee?",
+        verbose_name="Which of the following applies to your payment for the " "administrative fee?",
         help_text=(
             "<b><a href='{}' target='_blank' rel='noreferrer nofollow'>"
-            "The Carpentries website workshop fee listing.</a></b>".format(
-                FEE_DETAILS_URL
-            )
+            "The Carpentries website workshop fee listing.</a></b>".format(FEE_DETAILS_URL)
         ),
     )
     scholarship_circumstances = models.TextField(
@@ -3270,8 +3110,7 @@ class WorkshopRequest(
         ),
         (
             "reimbursed",
-            "All expenses will be booked by instructors and "
-            "reimbursed within 60 days.",
+            "All expenses will be booked by instructors and " "reimbursed within 60 days.",
         ),
         ("other", "Other:"),
     )
@@ -3281,8 +3120,7 @@ class WorkshopRequest(
         blank=False,
         default="",
         choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
-        verbose_name="How will you manage travel expenses for Carpentries "
-        "Instructors?",
+        verbose_name="How will you manage travel expenses for Carpentries " "Instructors?",
     )
     travel_expences_management_other = models.CharField(
         max_length=STR_LONGEST,
@@ -3359,9 +3197,7 @@ class WorkshopRequest(
         ordering = ["created_at"]
 
     def __str__(self):
-        return (
-            "Workshop request ({institution}, {personal} {family}) - {state}"
-        ).format(
+        return ("Workshop request ({institution}, {personal} {family}) - {state}").format(
             institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
             family=self.family,

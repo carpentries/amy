@@ -1,33 +1,34 @@
----
-name: Lint Code Base
-# Documentation:
-# https://help.github.com/en/articles/workflow-syntax-for-github-actions
+# reusable workflow
 
 on:
-  pull_request:
-    branches: [ main, develop ]
+  workflow_call
 
 jobs:
-  build:
+  lint:
     name: Lint Code Base
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: read
+      # To report GitHub Actions status checks
+      statuses: write
+
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Lint Code Base
-        uses: github/super-linter@v5
+        uses: super-linter/super-linter/slim@v7
         env:
-          DEFAULT_BRANCH: develop
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINTER_RULES_PATH: /
           PYTHON_BLACK_CONFIG_FILE: pyproject.toml
           PYTHON_ISORT_CONFIG_FILE: pyproject.toml
           PYTHON_FLAKE8_CONFIG_FILE: .flake8
-          FILTER_REGEX_EXCLUDE: (.*/migrations/.*|urls\.py)
+          FILTER_REGEX_EXCLUDE: (.*/migrations/.*)
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_PYTHON_BLACK: true
           VALIDATE_PYTHON_FLAKE8: true

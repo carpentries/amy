@@ -178,9 +178,7 @@ class TestMembership(TestBase):
 
     def test_delete_membership(self):
         """Test that we can delete membership instance"""
-        response = self.client.post(
-            reverse("membership_delete", args=[self.current.pk])
-        )
+        response = self.client.post(reverse("membership_delete", args=[self.current.pk]))
         self.assertRedirects(response, reverse("all_memberships"))
 
         # self.assertEqual(self.org_beta.memberships.count(), 0)
@@ -198,14 +196,10 @@ class TestMembership(TestBase):
         self.assertEqual(self.current.public_instructor_training_seats_remaining, 23)
 
     def test_active_on_date(self):
-        self.assertFalse(
-            self.current.active_on_date(self.agreement_start - timedelta(days=1))
-        )
+        self.assertFalse(self.current.active_on_date(self.agreement_start - timedelta(days=1)))
         self.assertTrue(self.current.active_on_date(self.agreement_start))
         self.assertTrue(self.current.active_on_date(self.agreement_end))
-        self.assertFalse(
-            self.current.active_on_date(self.agreement_end + timedelta(days=1))
-        )
+        self.assertFalse(self.current.active_on_date(self.agreement_end + timedelta(days=1)))
 
     def test_active_on_date_with_grace_before(self):
         self.assertFalse(
@@ -225,14 +219,10 @@ class TestMembership(TestBase):
 
     def test_active_on_date_with_grace_after(self):
         self.assertTrue(
-            self.current.active_on_date(
-                self.agreement_end + timedelta(days=60), grace_before=90, grace_after=60
-            )
+            self.current.active_on_date(self.agreement_end + timedelta(days=60), grace_before=90, grace_after=60)
         )
         self.assertFalse(
-            self.current.active_on_date(
-                self.agreement_end + timedelta(days=61), grace_before=90, grace_after=60
-            )
+            self.current.active_on_date(self.agreement_end + timedelta(days=61), grace_before=90, grace_after=60)
         )
 
 
@@ -394,15 +384,11 @@ class TestMembershipConsortiumCountingBase(TestBase):
         return tasks
 
 
-class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
-    TestMembershipConsortiumCountingBase
-):
+class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(TestMembershipConsortiumCountingBase):
     def test_queryset(self):
         events = self.setUpWorkshops("completed", "planned", count=1)
         self.assertTrue(Event.objects.all())
-        self.assertEqual(
-            set(self.membership._workshops_without_admin_fee_queryset()), set(events)
-        )
+        self.assertEqual(set(self.membership._workshops_without_admin_fee_queryset()), set(events))
 
     def test_queryset_completed(self):
         events = self.setUpWorkshops("completed", count=1)
@@ -425,16 +411,12 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
     def test_cancelled_workshops_are_not_counted(self):
         self.setUpWorkshops("cancelled", count=2)
         self.assertTrue(Event.objects.all())
-        self.assertEqual(
-            list(self.membership._workshops_without_admin_fee_queryset()), []
-        )
+        self.assertEqual(list(self.membership._workshops_without_admin_fee_queryset()), [])
 
     def test_self_organised_workshops_are_not_counted(self):
         self.setUpWorkshops("self-organised", count=2)
         self.assertTrue(Event.objects.all())
-        self.assertEqual(
-            list(self.membership._workshops_without_admin_fee_queryset()), []
-        )
+        self.assertEqual(list(self.membership._workshops_without_admin_fee_queryset()), [])
 
     def test_total_allowed_workshops_count(self):
         # agreement: 10, rolled from previous: 2
@@ -475,9 +457,7 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
         self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 0)
 
     def test_remaining_workshops_count(self):
-        self.setUpWorkshops(
-            "cancelled", "self-organised", "completed", "planned", count=2
-        )
+        self.setUpWorkshops("cancelled", "self-organised", "completed", "planned", count=2)
         self.assertTrue(Event.objects.all())
         # number of available: 10 + 2 - 5 = 7
         # number of workshops counted: 2 * completed + 2 * planned
@@ -486,9 +466,7 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(
         self.assertEqual(self.membership.workshops_discounted_planned, 0)
 
 
-class TestMembershipConsortiumCountingSelfOrganisedWorkshops(
-    TestMembershipConsortiumCountingBase
-):
+class TestMembershipConsortiumCountingSelfOrganisedWorkshops(TestMembershipConsortiumCountingBase):
     def test_cancelled_workshops_are_not_counted(self):
         self.setUpWorkshops("cancelled", count=2, administrator=self.self_organized)
         self.assertTrue(Event.objects.all())
@@ -510,9 +488,7 @@ class TestMembershipConsortiumCountingSelfOrganisedWorkshops(
         self.assertEqual(self.membership.self_organized_workshops_planned, 4)
 
 
-class TestMembershipConsortiumCountingPublicInstructorTrainingSeats(
-    TestMembershipConsortiumCountingBase
-):
+class TestMembershipConsortiumCountingPublicInstructorTrainingSeats(TestMembershipConsortiumCountingBase):
     def test_seats_total(self):
         # rolled from previous are counted into the total
         self.assertEqual(self.membership.public_instructor_training_seats_total, 12)
@@ -530,9 +506,7 @@ class TestMembershipConsortiumCountingPublicInstructorTrainingSeats(
         self.assertEqual(self.membership.public_instructor_training_seats_remaining, 2)
 
 
-class TestMembershipConsortiumCountingInhouseInstructorTrainingSeats(
-    TestMembershipConsortiumCountingBase
-):
+class TestMembershipConsortiumCountingInhouseInstructorTrainingSeats(TestMembershipConsortiumCountingBase):
     def test_seats_total(self):
         # seats: 2
         # additional: 5
@@ -932,9 +906,7 @@ class TestNewMembershipWorkflow(TestBase):
         response = self.client.post(reverse("membership_add"), data=data)
         latest_membership = Membership.objects.order_by("-id").first()
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[latest_membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[latest_membership.pk]))
 
     def test_new_consortium_membership_redirects_to_members(self):
         """Ensure once created, new consortium membership redirects to member page
@@ -957,9 +929,7 @@ class TestNewMembershipWorkflow(TestBase):
         response = self.client.post(reverse("membership_add"), data=data)
         latest_membership = Membership.objects.order_by("-id").first()
 
-        self.assertRedirects(
-            response, reverse("membership_members", args=[latest_membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_members", args=[latest_membership.pk]))
 
     def test_new_nonconsortium_membership_has_main_member(self):
         """Ensure once created, new non-consortium membership will have a default member
@@ -1088,9 +1058,7 @@ class TestMembershipExtension(TestBase):
             follow=True,
         )
 
-        self.assertRedirects(
-            response, reverse("membership_details", args=[membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[membership.pk]))
         membership.refresh_from_db()
         self.assertEqual(membership.extensions, [30])
         self.assertEqual(membership.agreement_end, date(2021, 3, 31))
@@ -1146,9 +1114,7 @@ class TestMembershipExtension(TestBase):
         data = {"new_agreement_end": date(2021, 3, 31), "comment": comment}
         today = date.today()
         expected_comment = (
-            f"Extended membership by 30 days on {today} (new end date: 2021-03-31)."
-            "\n\n----\n\n"
-            f"{comment}"
+            f"Extended membership by 30 days on {today} (new end date: 2021-03-31)." "\n\n----\n\n" f"{comment}"
         )
 
         # Act
@@ -1390,18 +1356,12 @@ class TestMembershipCreateRollOver(TestBase):
         )
 
         last_membership = Membership.objects.order_by("pk").last()
-        self.assertRedirects(
-            response, reverse("membership_details", args=[last_membership.pk])
-        )
+        self.assertRedirects(response, reverse("membership_details", args=[last_membership.pk]))
         # main member should be copied over to the new membership when the
         # original membership is not a consortium
         self.assertEqual(last_membership.member_set.count(), 1)
-        self.assertEqual(
-            last_membership.member_set.first().organization, self.org_alpha
-        )
-        self.assertEqual(
-            last_membership.member_set.first().role, MemberRole.objects.first()
-        )
+        self.assertEqual(last_membership.member_set.first().organization, self.org_alpha)
+        self.assertEqual(last_membership.member_set.first().role, MemberRole.objects.first())
 
     def test_new_membership_consortium_created(self):
         test_data = [True, False]
@@ -1422,15 +1382,11 @@ class TestMembershipCreateRollOver(TestBase):
                 )
 
                 last_membership = Membership.objects.order_by("pk").last()
-                self.assertRedirects(
-                    response, reverse("membership_details", args=[last_membership.pk])
-                )
+                self.assertRedirects(response, reverse("membership_details", args=[last_membership.pk]))
 
                 if copy_members:
                     self.assertEqual(last_membership.member_set.count(), 1)
-                    self.assertEqual(
-                        last_membership.member_set.first().organization, self.org_alpha
-                    )
+                    self.assertEqual(last_membership.member_set.first().organization, self.org_alpha)
                     self.assertEqual(
                         last_membership.member_set.first().role,
                         MemberRole.objects.first(),
@@ -1457,15 +1413,11 @@ class TestMembershipCreateRollOver(TestBase):
                 )
 
                 last_membership = Membership.objects.order_by("pk").last()
-                self.assertRedirects(
-                    response, reverse("membership_details", args=[last_membership.pk])
-                )
+                self.assertRedirects(response, reverse("membership_details", args=[last_membership.pk]))
 
                 if copy_membership_tasks:
                     self.assertEqual(last_membership.membershiptask_set.count(), 1)
-                    self.assertEqual(
-                        last_membership.membershiptask_set.first().person, self.hermione
-                    )
+                    self.assertEqual(last_membership.membershiptask_set.first().person, self.hermione)
                     self.assertEqual(
                         last_membership.membershiptask_set.first().role,
                         MembershipPersonRole.objects.first(),
@@ -1496,59 +1448,33 @@ class TestMembershipCreateRollOver(TestBase):
         self.assertEqual(self.membership.public_instructor_training_seats, 12)
         self.assertEqual(self.membership.additional_public_instructor_training_seats, 0)
         self.assertEqual(self.membership.inhouse_instructor_training_seats, 9)
-        self.assertEqual(
-            self.membership.additional_inhouse_instructor_training_seats, 0
-        )
+        self.assertEqual(self.membership.additional_inhouse_instructor_training_seats, 0)
 
-        self.assertEqual(
-            self.membership.workshops_without_admin_fee_rolled_from_previous, None
-        )
-        self.assertEqual(
-            self.membership.public_instructor_training_seats_rolled_from_previous, None
-        )
-        self.assertEqual(
-            self.membership.inhouse_instructor_training_seats_rolled_from_previous, None
-        )
+        self.assertEqual(self.membership.workshops_without_admin_fee_rolled_from_previous, None)
+        self.assertEqual(self.membership.public_instructor_training_seats_rolled_from_previous, None)
+        self.assertEqual(self.membership.inhouse_instructor_training_seats_rolled_from_previous, None)
 
         self.assertEqual(self.membership.workshops_without_admin_fee_rolled_over, 3)
-        self.assertEqual(
-            self.membership.public_instructor_training_seats_rolled_over, 2
-        )
-        self.assertEqual(
-            self.membership.inhouse_instructor_training_seats_rolled_over, 1
-        )
+        self.assertEqual(self.membership.public_instructor_training_seats_rolled_over, 2)
+        self.assertEqual(self.membership.inhouse_instructor_training_seats_rolled_over, 1)
         self.assertEqual(self.membership.rolled_to_membership, last_membership)
 
         # Special behavior of OneToOneField: will throw exception upon access if
         # the related object is not set. This means simple for `is None` won't work.
-        with self.assertRaises(
-            Membership.rolled_from_membership.RelatedObjectDoesNotExist
-        ):
+        with self.assertRaises(Membership.rolled_from_membership.RelatedObjectDoesNotExist):
             self.membership.rolled_from_membership
 
         self.assertEqual(last_membership.workshops_without_admin_fee_per_agreement, 10)
         self.assertEqual(last_membership.public_instructor_training_seats, 12)
         self.assertEqual(last_membership.additional_public_instructor_training_seats, 0)
         self.assertEqual(last_membership.inhouse_instructor_training_seats, 9)
-        self.assertEqual(
-            last_membership.additional_inhouse_instructor_training_seats, 0
-        )
-        self.assertEqual(
-            last_membership.workshops_without_admin_fee_rolled_from_previous, 3
-        )
-        self.assertEqual(
-            last_membership.public_instructor_training_seats_rolled_from_previous, 2
-        )
-        self.assertEqual(
-            last_membership.inhouse_instructor_training_seats_rolled_from_previous, 1
-        )
+        self.assertEqual(last_membership.additional_inhouse_instructor_training_seats, 0)
+        self.assertEqual(last_membership.workshops_without_admin_fee_rolled_from_previous, 3)
+        self.assertEqual(last_membership.public_instructor_training_seats_rolled_from_previous, 2)
+        self.assertEqual(last_membership.inhouse_instructor_training_seats_rolled_from_previous, 1)
         self.assertEqual(last_membership.workshops_without_admin_fee_rolled_over, None)
-        self.assertEqual(
-            last_membership.public_instructor_training_seats_rolled_over, None
-        )
-        self.assertEqual(
-            last_membership.inhouse_instructor_training_seats_rolled_over, None
-        )
+        self.assertEqual(last_membership.public_instructor_training_seats_rolled_over, None)
+        self.assertEqual(last_membership.inhouse_instructor_training_seats_rolled_over, None)
         self.assertEqual(last_membership.rolled_from_membership, self.membership)
         self.assertEqual(last_membership.rolled_to_membership, None)
 
@@ -1623,12 +1549,8 @@ class TestMembershipCreateRollOver(TestBase):
 
                 # Assert
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(
-                    self.membership.public_instructor_training_seats_remaining, -1
-                )
-                self.assertEqual(
-                    self.membership.inhouse_instructor_training_seats_remaining, -1
-                )
+                self.assertEqual(self.membership.public_instructor_training_seats_remaining, -1)
+                self.assertEqual(self.membership.inhouse_instructor_training_seats_remaining, -1)
                 for field in (
                     "public_instructor_training_seats_rolled_from_previous",
                     "inhouse_instructor_training_seats_rolled_from_previous",
@@ -1667,9 +1589,7 @@ class TestMembershipCreateRollOver(TestBase):
         self.membership.save()
 
         # Act
-        response = self.client.get(
-            reverse("membership_create_roll_over", args=[self.membership.pk])
-        )
+        response = self.client.get(reverse("membership_create_roll_over", args=[self.membership.pk]))
 
         # Assert
         self.assertEqual(response.status_code, 404)

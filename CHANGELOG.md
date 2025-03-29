@@ -13,6 +13,26 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.7 - 2025-03-29
+
+### Features
+* [Emails] Render SVG with correct fonts - [#2788](https://github.com/carpentries/amy/pull/2788) by @pbanaszkiewicz
+* CI/CD for main branch - with deployment - [#2784](https://github.com/carpentries/amy/pull/2784) by @pbanaszkiewicz
+* [Emails] update emails developer documentation - [#2782](https://github.com/carpentries/amy/pull/2782) by @pbanaszkiewicz
+* Allow deleting rolled over membership - [#2781](https://github.com/carpentries/amy/pull/2781) by @pbanaszkiewicz
+* [Emails] Update membership onboarding condition - [#2780](https://github.com/carpentries/amy/pull/2780) by @pbanaszkiewicz
+* [Emails] Generate instructor certificate - [#2778](https://github.com/carpentries/amy/pull/2778) by @pbanaszkiewicz
+* chore(deps): Bump django from 4.2.17 to 4.2.20 - [#2777](https://github.com/carpentries/amy/pull/2777) by @dependabot[bot]
+* chore(deps): Bump jinja2 from 3.1.5 to 3.1.6 - [#2776](https://github.com/carpentries/amy/pull/2776) by @dependabot[bot]
+* feat(#2771): Update API serializer for inline Attachments - [#2775](https://github.com/carpentries/amy/pull/2775) by @pbanaszkiewicz
+* feat(#2758): Bring back the old-old search - [#2774](https://github.com/carpentries/amy/pull/2774) by @pbanaszkiewicz
+* feat(#2758): Bring back tokenized search - [#2773](https://github.com/carpentries/amy/pull/2773) by @pbanaszkiewicz
+* [Emails] Add attachments - [#2771](https://github.com/carpentries/amy/pull/2771) by @pbanaszkiewicz
+* feat(#2758): Improve search for persons by their names - [#2769](https://github.com/carpentries/amy/pull/2769) by @pbanaszkiewicz
+* Switch to Poetry - [#2756](https://github.com/carpentries/amy/pull/2756) by @pbanaszkiewicz
+* [Emails] Remove redis dependency - [#2753](https://github.com/carpentries/amy/pull/2753) by @pbanaszkiewicz
+
+
 ## v4.6.4 - 2025-02-15
 
 ### Bugfixes

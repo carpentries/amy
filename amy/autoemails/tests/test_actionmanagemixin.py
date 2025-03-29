@@ -1,9 +1,8 @@
+# flake8: noqa
 from datetime import date, datetime, timedelta
 from unittest.mock import MagicMock
 
-from django.test import RequestFactory, TestCase
-from rq.exceptions import NoSuchJobError
-from rq_scheduler.utils import to_unix
+from django.test import RequestFactory, TestCase, tag
 
 from autoemails.actions import NewInstructorAction
 from autoemails.base_views import ActionManageMixin
@@ -13,15 +12,14 @@ from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
+@tag("autoemails")
 class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()
 
         # prepare some necessary objects
         self.template = EmailTemplate.objects.create()
-        self.trigger = Trigger.objects.create(
-            action="test-action", template=self.template
-        )
+        self.trigger = Trigger.objects.create(action="test-action", template=self.template)
 
         # totally fake Task, Role and Event data
         Tag.objects.bulk_create(
@@ -44,13 +42,9 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
             url="https://test-event.example.com",
         )
         self.event.tags.set(Tag.objects.filter(name__in=["SWC", "DC", "LC"]))
-        self.person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        self.person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         self.role = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            event=self.event, person=self.person, role=self.role
-        )
+        self.task = Task.objects.create(event=self.event, person=self.person, role=self.role)
 
     def testNotImplementedMethods(self):
         a = ActionManageMixin()
@@ -155,9 +149,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         # job appeared in the queue with correct timestamp (we accept +- 1min)
         run_time = datetime.utcnow() + action.launch_at
         one_min = timedelta(minutes=1)
-        self.assertTrue(
-            (run_time + one_min) > enqueued_timestamp > (run_time - one_min)
-        )
+        self.assertTrue((run_time + one_min) > enqueued_timestamp > (run_time - one_min))
 
         # meta as expected
         self.assertEqual(

@@ -1,6 +1,7 @@
 {% extends "base_nav.html" %}
 {% load emails %}
 {% load pprint %}
+{% load static %}
 
 {% block title %}
 <h1>
@@ -161,6 +162,27 @@
     </td>
   </tr>
   <tr>
+    <th>Attachments:</th>
+    <td colspan="2">
+      {% if scheduled_email.attachments.all %}
+      <ul>
+        {% for attachment in scheduled_email.attachments.all %}
+        <li>
+          {{ attachment.filename }}
+          {% if attachment.expired_presigned_url %}
+            ({{ attachment.s3_path }}) <button class="btn btn-sm btn-secondary" onclick="generatePresignedUrl('{{attachment.pk}}')">Generate download URL</button>
+          {% else %}
+            (<a href="{{ attachment.presigned_url }}">{{ attachment.s3_path }} <i class="fas fa-external-link-alt"></i></a>)
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p>No attachments.</p>
+      {% endif %}
+      <a href="{% url 'scheduledemail_add_attachment' scheduled_email.id %}" class="btn btn-primary btn-sm">Add attachment</a>
+    </td>
+  <tr>
     <th width="20%">ID:</th>
     <td colspan="2">{{ scheduled_email.id }}</td>
   </tr>
@@ -215,4 +237,8 @@
   </tbody>
 </table>
 
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{% static 'attachment_generate_presigned_url.js' %}"></script>
 {% endblock %}

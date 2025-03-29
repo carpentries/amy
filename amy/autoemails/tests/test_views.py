@@ -1,32 +1,19 @@
 from datetime import date
 
 from django.shortcuts import reverse
-from django.test import TestCase
+from django.test import TestCase, tag
 
-from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import EmailTemplate, RQJob, Trigger
 from autoemails.tests.base import FakeRedisTestCaseMixin
-import autoemails.views
 from workshops.models import Event, Language, Organization, WorkshopRequest
 from workshops.tests.base import SuperuserMixin
 
 
+@tag("autoemails")
 class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
     def setUp(self):
         super().setUp()
         self._setUpSuperuser()
-
-        # save scheduler and connection data
-        self._saved_scheduler = autoemails.views.scheduler
-        self._saved_redis_connection = autoemails.views.redis_connection
-        # overwrite them
-        autoemails.views.scheduler = self.scheduler
-        autoemails.views.redis_connection = self.connection
-
-    def tearDown(self):
-        super().tearDown()
-        autoemails.views.scheduler = self._saved_scheduler
-        autoemails.views.redis_connection = self._saved_redis_connection
 
     def _setUpTemplateTrigger(self):
         self.template_slug = "test-template-slug"
@@ -37,9 +24,7 @@ class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase)
             from_header="amy@example.org",
             body_template="# Hello there",
         )
-        self.trigger = Trigger.objects.create(
-            action="workshop-request-response1", template=self.template, active=True
-        )
+        self.trigger = Trigger.objects.create(action="workshop-request-response1", template=self.template, active=True)
 
     def _setUpWorkshopRequest(self, create_event=False):
         kwargs = dict(
@@ -118,6 +103,8 @@ class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase)
         self.assertRedirects(response, self.wr.get_absolute_url())
 
     def test_valid_form(self):
+        from autoemails.forms import GenericEmailScheduleForm
+
         self._setUpTemplateTrigger()
         data = self._formData()
         form = GenericEmailScheduleForm(data, instance=self.template)

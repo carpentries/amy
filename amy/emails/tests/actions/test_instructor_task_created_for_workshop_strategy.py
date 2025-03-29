@@ -29,9 +29,7 @@ class TestInstructorTaskCreatedForWorkshopStrategy(TestCase):
         self.event.tags.set([swc_tag])
         self.person = Person.objects.create(email="test@example.org")
         instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
-        )
+        self.task = Task.objects.create(role=instructor, person=self.person, event=self.event)
 
     def test_strategy_create(self) -> None:
         # Arrange
@@ -103,19 +101,12 @@ class TestInstructorTaskCreatedForWorkshopStrategy(TestCase):
 class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
     def setUp(self) -> None:
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        self.event = Event.objects.create(
-            slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5)
-        )
+        self.event = Event.objects.create(slug="test-event", host=host, start=date(2024, 8, 5), end=date(2024, 8, 5))
         self.person = Person.objects.create(email="test@example.org")
         instructor = Role.objects.create(name="instructor")
-        self.task = Task.objects.create(
-            role=instructor, person=self.person, event=self.event
-        )
+        self.task = Task.objects.create(role=instructor, person=self.person, event=self.event)
 
-    @patch(
-        "emails.actions.instructor_task_created_for_workshop."
-        "instructor_task_created_for_workshop_signal"
-    )
+    @patch("emails.actions.instructor_task_created_for_workshop." "instructor_task_created_for_workshop_signal")
     def test_strategy_calls_create_signal(
         self,
         mock_instructor_task_created_for_workshop_signal,
@@ -142,10 +133,7 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
             event_id=self.task.event.pk,
         )
 
-    @patch(
-        "emails.actions.instructor_task_created_for_workshop."
-        "instructor_task_created_for_workshop_update_signal"
-    )
+    @patch("emails.actions.instructor_task_created_for_workshop." "instructor_task_created_for_workshop_update_signal")
     def test_strategy_calls_update_signal(
         self,
         mock_update_signal,
@@ -172,10 +160,7 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
             event_id=self.task.event.pk,
         )
 
-    @patch(
-        "emails.actions.instructor_task_created_for_workshop."
-        "instructor_task_created_for_workshop_cancel_signal"
-    )
+    @patch("emails.actions.instructor_task_created_for_workshop." "instructor_task_created_for_workshop_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
         mock_cancel_signal,
@@ -203,18 +188,9 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
         )
 
     @patch("emails.actions.base_strategy.logger")
-    @patch(
-        "emails.actions.instructor_task_created_for_workshop."
-        "instructor_task_created_for_workshop_signal"
-    )
-    @patch(
-        "emails.actions.instructor_task_created_for_workshop."
-        "instructor_task_created_for_workshop_update_signal"
-    )
-    @patch(
-        "emails.actions.instructor_task_created_for_workshop."
-        "instructor_task_created_for_workshop_cancel_signal"
-    )
+    @patch("emails.actions.instructor_task_created_for_workshop." "instructor_task_created_for_workshop_signal")
+    @patch("emails.actions.instructor_task_created_for_workshop." "instructor_task_created_for_workshop_update_signal")
+    @patch("emails.actions.instructor_task_created_for_workshop." "instructor_task_created_for_workshop_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
         mock_instructor_task_created_for_workshop_cancel_signal,
@@ -239,9 +215,7 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
         mock_instructor_task_created_for_workshop_signal.send.assert_not_called()
         mock_instructor_task_created_for_workshop_update_signal.send.assert_not_called()
         mock_instructor_task_created_for_workshop_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {self.task} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {self.task} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -249,9 +223,7 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
         request = RequestFactory().get("/")
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_instructor_task_created_for_workshop_strategy(
                 strategy,
                 request,

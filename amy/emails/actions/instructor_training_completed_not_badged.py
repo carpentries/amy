@@ -1,9 +1,9 @@
 from datetime import date, datetime
 import logging
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -40,20 +40,14 @@ class TrainingCompletionDateException(Exception):
 def find_training_completion_date(person: Person) -> date:
     """Given a person, find their passed training and related event.
     Return event end date."""
-    training = TrainingProgress.objects.get(
-        trainee=person, state="p", requirement__name="Training"
-    )
+    training = TrainingProgress.objects.get(trainee=person, state="p", requirement__name="Training")
     event = training.event
     if not event:
-        raise TrainingCompletionDateException(
-            "Training progress doesn't have an event."
-        )
+        raise TrainingCompletionDateException("Training progress doesn't have an event.")
 
     training_completed_date = event.end
     if not training_completed_date:
-        raise TrainingCompletionDateException(
-            "Training progress event doesn't have an end date."
-        )
+        raise TrainingCompletionDateException("Training progress event doesn't have an end date.")
 
     return training_completed_date
 
@@ -61,15 +55,11 @@ def find_training_completion_date(person: Person) -> date:
 def instructor_training_completed_not_badged_strategy(person: Person) -> StrategyEnum:
     logger.info(f"Running InstructorTrainingCompletedNotBadged strategy for {person}")
 
-    person_annotated = (
-        Person.objects.annotate_with_instructor_eligibility().get(  # type: ignore
-            pk=person.pk
-        )
-    )
+    person_annotated = Person.objects.annotate_with_instructor_eligibility().get(pk=person.pk)
 
     all_requirements_passed = bool(person_annotated.instructor_eligible)
 
-    ct = ContentType.objects.get_for_model(person)  # type: ignore
+    ct = ContentType.objects.get_for_model(person)
     email_scheduled = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=person.pk,
@@ -94,9 +84,7 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
         }
     )
 
-    email_should_exist = (
-        bool(person_annotated.passed_training) and not all_requirements_passed
-    )
+    email_should_exist = bool(person_annotated.passed_training) and not all_requirements_passed
 
     # Prevents running sending multiple emails.
     if email_running_or_succeeded:
@@ -110,7 +98,7 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"InstructorTrainingCompletedNotBadged strategy {result = }")
+    logger.debug(f"InstructorTrainingCompletedNotBadged strategy {result=}")
     return result
 
 
@@ -119,7 +107,7 @@ def run_instructor_training_completed_not_badged_strategy(
     request: HttpRequest,
     person: Person,
     training_completed_date: date | None,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_training_completed_not_badged_signal,
@@ -132,13 +120,11 @@ def run_instructor_training_completed_not_badged_strategy(
             training_completed_date = find_training_completion_date(person)
         except TrainingProgress.MultipleObjectsReturned as exc:
             raise EmailStrategyException(
-                "Unable to determine training completion date. Person has "
-                "multiple passed training progresses."
+                "Unable to determine training completion date. Person has " "multiple passed training progresses."
             ) from exc
         except TrainingProgress.DoesNotExist as exc:
             raise EmailStrategyException(
-                "Unable to determine training completion date. Person doesn't have "
-                "a passed training progress."
+                "Unable to determine training completion date. Person doesn't have " "a passed training progress."
             ) from exc
         except TrainingCompletionDateException as exc:
             raise EmailStrategyException(
@@ -169,16 +155,12 @@ def get_context(
     **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs],
 ) -> InstructorTrainingCompletedNotBadgedContext:
     person = kwargs["person"]
-    passed_requirements = list(
-        TrainingProgress.objects.filter(trainee=person, state="p")
-    )
-    not_passed_requirements = list(
-        TrainingProgress.objects.filter(trainee=person).exclude(state="p")
-    )
+    passed_requirements = list(TrainingProgress.objects.filter(trainee=person, state="p"))
+    not_passed_requirements = list(TrainingProgress.objects.filter(trainee=person).exclude(state="p"))
     not_graded_requirements = list(
-        TrainingRequirement.objects.filter(
-            name__in=["Training", "Get Involved", "Welcome Session", "Demo"]
-        ).exclude(trainingprogress__trainee=person)
+        TrainingRequirement.objects.filter(name__in=["Training", "Get Involved", "Welcome Session", "Demo"]).exclude(
+            trainingprogress__trainee=person
+        )
     )
     training_completed_date = kwargs["training_completed_date"]
 
@@ -199,20 +181,16 @@ def get_context_json(
         {
             "person": api_model_url("person", person.pk),
             "passed_requirements": [
-                api_model_url("trainingprogress", progress.pk)
-                for progress in context["passed_requirements"]
+                api_model_url("trainingprogress", progress.pk) for progress in context["passed_requirements"]
             ],
             "not_passed_requirements": [
-                api_model_url("trainingprogress", progress.pk)
-                for progress in context["not_passed_requirements"]
+                api_model_url("trainingprogress", progress.pk) for progress in context["not_passed_requirements"]
             ],
             "not_graded_requirements": [
                 api_model_url("trainingrequirement", requirement.pk)
                 for requirement in context["not_graded_requirements"]
             ],
-            "training_completed_date": scalar_value_url(
-                "date", context["training_completed_date"].isoformat()
-            ),
+            "training_completed_date": scalar_value_url("date", context["training_completed_date"].isoformat()),
         },
     )
 
@@ -249,9 +227,7 @@ def get_recipients_context_json(
 class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
     signal = instructor_training_completed_not_badged_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
     def get_context(
@@ -259,9 +235,7 @@ class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
     ) -> InstructorTrainingCompletedNotBadgedContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTrainingCompletedNotBadgedContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTrainingCompletedNotBadgedContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -289,9 +263,7 @@ class InstructorTrainingCompletedNotBadgedReceiver(BaseAction):
 class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
     signal = instructor_training_completed_not_badged_update_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorTrainingCompletedNotBadgedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
     def get_context(
@@ -299,9 +271,7 @@ class InstructorTrainingCompletedNotBadgedUpdateReceiver(BaseActionUpdate):
     ) -> InstructorTrainingCompletedNotBadgedContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTrainingCompletedNotBadgedContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTrainingCompletedNotBadgedContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -334,9 +304,7 @@ class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
     ) -> InstructorTrainingCompletedNotBadgedContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTrainingCompletedNotBadgedContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTrainingCompletedNotBadgedContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -357,25 +325,13 @@ class InstructorTrainingCompletedNotBadgedCancelReceiver(BaseActionCancel):
 # -----------------------------------------------------------------------------
 # Receivers
 
-instructor_training_completed_not_badged_receiver = (
-    InstructorTrainingCompletedNotBadgedReceiver()
-)
-instructor_training_completed_not_badged_signal.connect(
-    instructor_training_completed_not_badged_receiver
-)
+instructor_training_completed_not_badged_receiver = InstructorTrainingCompletedNotBadgedReceiver()
+instructor_training_completed_not_badged_signal.connect(instructor_training_completed_not_badged_receiver)
 
 
-instructor_training_completed_not_badged_update_receiver = (
-    InstructorTrainingCompletedNotBadgedUpdateReceiver()
-)
-instructor_training_completed_not_badged_update_signal.connect(
-    instructor_training_completed_not_badged_update_receiver
-)
+instructor_training_completed_not_badged_update_receiver = InstructorTrainingCompletedNotBadgedUpdateReceiver()
+instructor_training_completed_not_badged_update_signal.connect(instructor_training_completed_not_badged_update_receiver)
 
 
-instructor_training_completed_not_badged_cancel_receiver = (
-    InstructorTrainingCompletedNotBadgedCancelReceiver()
-)
-instructor_training_completed_not_badged_cancel_signal.connect(
-    instructor_training_completed_not_badged_cancel_receiver
-)
+instructor_training_completed_not_badged_cancel_receiver = InstructorTrainingCompletedNotBadgedCancelReceiver()
+instructor_training_completed_not_badged_cancel_signal.connect(instructor_training_completed_not_badged_cancel_receiver)

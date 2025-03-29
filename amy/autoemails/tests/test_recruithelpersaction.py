@@ -1,12 +1,14 @@
+# flake8: noqa
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import RecruitHelpersAction
 from autoemails.models import EmailTemplate, Trigger
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
+@tag("autoemails")
 class TestRecruitHelpersAction(TestCase):
     def setUp(self):
         # we're missing some tags
@@ -24,9 +26,7 @@ class TestRecruitHelpersAction(TestCase):
         Organization.objects.bulk_create(
             [
                 Organization(domain="carpentries.org", fullname="Instructor Training"),
-                Organization(
-                    domain="librarycarpentry.org", fullname="Library Carpentry"
-                ),
+                Organization(domain="librarycarpentry.org", fullname="Library Carpentry"),
             ]
         )
 
@@ -168,9 +168,7 @@ class TestRecruitHelpersAction(TestCase):
 
         # 6th case: no instructors nor hosts
         # result: FAIL
-        Task.objects.filter(
-            role__in=[self.host_role, self.instructor_role], event=e
-        ).delete()
+        Task.objects.filter(role__in=[self.host_role, self.instructor_role], event=e).delete()
         self.assertEqual(RecruitHelpersAction.check(e), False)
 
         # bring back one instructor task
@@ -179,9 +177,7 @@ class TestRecruitHelpersAction(TestCase):
 
         # 7th case: helper task
         # result: FAIL
-        helper = Task.objects.create(
-            event=e, person=self.person2, role=self.helper_role
-        )
+        helper = Task.objects.create(event=e, person=self.person2, role=self.helper_role)
         self.assertEqual(RecruitHelpersAction.check(e), False)
         helper.role = self.instructor_role
         helper.save()
@@ -202,9 +198,7 @@ class TestRecruitHelpersAction(TestCase):
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
-        a = RecruitHelpersAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = RecruitHelpersAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):

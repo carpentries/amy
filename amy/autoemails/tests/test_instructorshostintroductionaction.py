@@ -1,6 +1,7 @@
+# flake8: noqa
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import InstructorsHostIntroductionAction
 from autoemails.models import EmailTemplate, Trigger
@@ -9,6 +10,7 @@ from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 
+@tag("autoemails")
 class TestInstructorsHostIntroductionAction(TestCase):
     def setUp(self):
         # we're missing some tags
@@ -22,9 +24,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
             ]
         )
         # by default there's only self-organized organization
-        Organization.objects.bulk_create(
-            [Organization(domain="carpentries.org", fullname="Instructor Training")]
-        )
+        Organization.objects.bulk_create([Organization(domain="carpentries.org", fullname="Instructor Training")])
 
         self.host = Role.objects.create(name="host")
         self.instructor = Role.objects.create(name="instructor")
@@ -184,9 +184,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
-        a = InstructorsHostIntroductionAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = InstructorsHostIntroductionAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):

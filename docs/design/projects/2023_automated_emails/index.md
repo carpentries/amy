@@ -25,9 +25,10 @@ At the core of automated emails there are:
 At the core of the new system in AMY there are used:
 
 * Django signals for triggering actions,
-* a controller for managing scheduled emails (scheduling, rescheduling, updating,
+* a [controller for managing scheduled emails](email_controller.md) (scheduling, rescheduling, updating,
   cancelling, etc.),
 * types defined for improved type-safety,
+* [base actions](./base_actions.md) classes supporting common logic for scheduling, updating or cancelling emails,
 * management panel for viewing and managing scheduled emails.
 
 ## How it works
@@ -80,6 +81,8 @@ inheriting from `BaseAction` class (for scheduling emails). If a specific action
 could allow for updating or cancelling, it should consist of 2 additional classes
 inheriting from `BaseActionUpdate` and `BaseActionCancel` respectively.
 
+For details see [base actions documentation](./base_actions.md).
+
 Each action must implement the following required methods and fields:
 
 1. inheriting from `BaseAction`:
@@ -101,44 +104,9 @@ Each action must implement the following required methods and fields:
 
 3. inheriting from `BaseActionCancel`:
     * the same fields and methods as in `BaseAction` class, except for `get_recipients()`
-      and `get_scheduled_at()` methods, which are not needed for the cancelling action.
+      and `get_scheduled_at()` methods, which are not needed for the cancelling action,
+    * optionally custom methods for providing content type model and generic relation PK are available:
+      `get_generic_relation_content_type()`, `get_generic_relation_pk()`
 
 Each base class implements a `__call__()` method that in turn uses appropriate
 `EmailController` method to schedule, update, or cancel the email.
-
-### Implementing a new action - checklist
-
-1. Add new action signal name to `emails.signals.SignalNameEnum` enum.
-2. Define the context TypedDict in `emails.types` module. This should be a dictionary
-   with keys and types of values that will be passed to the email template as context.
-3. Define the kwargs TypedDict in `emails.types` module. This should be a dictionary
-   with keys and types of values that will be passed to the action's constructor (when
-   the signal for email is being sent).
-4. Define the action class in a new module in `emails.actions` package. This class should
-   inherit from `BaseAction` class and implement all required methods.
-5. If the action should allow for updating or cancelling, define additional classes
-   inheriting from `BaseActionUpdate` and `BaseActionCancel` respectively.
-6. Create receivers as instances of the action classes. Link the receivers to the
-   appropriate signals in `emails.signals` module:
-   ```python
-   receiver = MyAction()
-   signal.connect(receiver)
-   ```
-
-7. If the action consists of scheduling, updating, and cancelling, create `action_strategy` and `run_action_strategy` functions. Follow examples from other actions.
-
-
-### Using a new action
-
-If the action contains a strategy, then using it is quite simple:
-
-```python
-run_action_strategy(
-    action_strategy(object),
-    request,
-    object,
-)
-```
-
-Strategies may accept other parameters, but the selected strategy and request (as in
-Django view request) are required.

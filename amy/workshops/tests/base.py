@@ -1,10 +1,12 @@
 from contextlib import contextmanager
 import datetime
+import typing
 from typing import Iterable
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django_webtest import WebTest
 import webtest.forms
 
@@ -26,16 +28,17 @@ from workshops.models import (
 )
 from workshops.utils.dates import universal_date_format
 
+if typing.TYPE_CHECKING:
+    _T = TestCase
+else:
+    _T = object
+
 
 def consent_to_all_required_consents(person: Person) -> None:
     """
     Helper function shared by SuperuserMixin and TestBase
     """
-    terms = (
-        Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE)
-        .active()
-        .prefetch_active_options()
-    )
+    terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active().prefetch_active_options()
     old_consents = Consent.objects.filter(person=person, term__in=terms).active()
     old_consents_by_term_id = {consent.term_id: consent for consent in old_consents}
     for term in terms:
@@ -43,8 +46,8 @@ def consent_to_all_required_consents(person: Person) -> None:
         Consent.reconsent(old_consent, term.options[0])
 
 
-class SuperuserMixin:
-    def _setUpSuperuser(self):
+class SuperuserMixin(_T):
+    def _setUpSuperuser(self) -> None:
         """Set up admin account that can log into the website."""
         self.admin_password = "admin"
         self.admin = Person.objects.create_superuser(
@@ -57,21 +60,19 @@ class SuperuserMixin:
         self._superUserConsent()
         self.admin.save()
 
-    def _superUserConsent(self):
+    def _superUserConsent(self) -> None:
         """Super user consents to required Terms"""
         consent_to_all_required_consents(self.admin)
 
-    def _logSuperuserIn(self):
+    def _logSuperuserIn(self) -> None:
         """Log in superuser (administrator) account."""
         self.client.login(username=self.admin.username, password=self.admin_password)
 
 
-class TestBase(
-    SuperuserMixin, WebTest
-):  # Support for functional tests (django-webtest)
+class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django-webtest)
     """Base class for AMY test cases."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Create standard objects."""
 
         self._setUpOrganizations()
@@ -83,7 +84,7 @@ class TestBase(
         self._setUpPermissions()
         self._setUpSites()
 
-    def _setUpSites(self):
+    def _setUpSites(self) -> None:
         """Sometimes (depending on the test execution order) tests, using
         `Site.objects.get_current()`, would throw error:
 
@@ -102,7 +103,7 @@ class TestBase(
             defaults=dict(domain="amy.carpentries.org", name="AMY server"),
         )
 
-    def _setUpLessons(self):
+    def _setUpLessons(self) -> None:
         """Set up lesson objects."""
 
         # we have some lessons in the database because of the migration
@@ -112,18 +113,14 @@ class TestBase(
         self.matlab, _ = Lesson.objects.get_or_create(name="swc/matlab")
         self.r, _ = Lesson.objects.get_or_create(name="swc/r")
 
-    def _setUpOrganizations(self):
+    def _setUpOrganizations(self) -> None:
         """Set up organization objects."""
 
-        self.org_alpha = Organization.objects.create(
-            domain="alpha.edu", fullname="Alpha Organization", country="AZ"
-        )
+        self.org_alpha = Organization.objects.create(domain="alpha.edu", fullname="Alpha Organization", country="AZ")
 
-        self.org_beta = Organization.objects.create(
-            domain="beta.com", fullname="Beta Organization", country="BR"
-        )
+        self.org_beta = Organization.objects.create(domain="beta.com", fullname="Beta Organization", country="BR")
 
-    def _setUpAirports(self):
+    def _setUpAirports(self) -> None:
         """Set up airport objects."""
 
         self.airport_0_10 = Airport.objects.create(
@@ -161,14 +158,14 @@ class TestBase(
             longitude=105.0,
         )
 
-    def _setUpLanguages(self):
+    def _setUpLanguages(self) -> None:
         """Set up language objects."""
 
         self.english, _ = Language.objects.get_or_create(name="English")
         self.french, _ = Language.objects.get_or_create(name="French")
         self.latin, _ = Language.objects.get_or_create(name="Latin")
 
-    def _setUpDomains(self):
+    def _setUpDomains(self) -> None:
         """Set up knowledge domain objects."""
 
         self.chemistry, _ = KnowledgeDomain.objects.get_or_create(
@@ -181,20 +178,16 @@ class TestBase(
             name="Humanities",
         )
 
-    def _setUpBadges(self):
+    def _setUpBadges(self) -> None:
         """Set up badge objects."""
 
         self.swc_instructor, _ = Badge.objects.get_or_create(
             name="swc-instructor",
-            defaults=dict(
-                title="Software Carpentry Instructor", criteria="Worked hard for this"
-            ),
+            defaults=dict(title="Software Carpentry Instructor", criteria="Worked hard for this"),
         )
         self.dc_instructor, _ = Badge.objects.get_or_create(
             name="dc-instructor",
-            defaults=dict(
-                title="Data Carpentry Instructor", criteria="Worked hard for this"
-            ),
+            defaults=dict(title="Data Carpentry Instructor", criteria="Worked hard for this"),
         )
         # lc-instructor is provided via a migration
         self.lc_instructor = Badge.objects.get(name="lc-instructor")
@@ -204,7 +197,7 @@ class TestBase(
             defaults=dict(title="Instructor"),
         )
 
-    def _setUpInstructors(self):
+    def _setUpInstructors(self) -> None:
         """Set up person objects representing instructors."""
 
         self.hermione = Person.objects.create(
@@ -285,7 +278,7 @@ class TestBase(
         )
         Qualification.objects.create(person=self.ron, lesson=self.git)
 
-    def _setUpNonInstructors(self):
+    def _setUpNonInstructors(self) -> None:
         """Set up person objects representing non-instructors."""
 
         self.spiderman = Person.objects.create(
@@ -320,19 +313,17 @@ class TestBase(
             country="RU",
         )
 
-    def _setUpUsersAndLogin(self):
+    def _setUpUsersAndLogin(self) -> None:
         """Log superuser in."""
         self._setUpSuperuser()  # creates self.admin
         # log admin in
         # this user will be authenticated for all self.client requests
         return self._logSuperuserIn()
 
-    def _setUpPermissions(self):
+    def _setUpPermissions(self) -> None:
         """Set up permission objects for consistent form selection."""
         badge_admin = Group.objects.create(name="Badge Admin")
-        badge_admin.permissions.add(
-            *Permission.objects.filter(codename__endswith="_badge")
-        )
+        badge_admin.permissions.add(*Permission.objects.filter(codename__endswith="_badge"))
         add_badge = Permission.objects.get(codename="add_badge")
         self.ironman.groups.add(badge_admin)
         self.ironman.user_permissions.add(add_badge)
@@ -341,7 +332,7 @@ class TestBase(
         self.spiderman.groups.add(badge_admin)
         self.spiderman.user_permissions.add(add_badge)
 
-    def _setUpTags(self):
+    def _setUpTags(self) -> None:
         """Set up tags (the same as in production database, minus some added
         via migrations)."""
         Tag.objects.bulk_create(
@@ -354,15 +345,13 @@ class TestBase(
             ]
         )
 
-    def _setUpEvents(self):
+    def _setUpEvents(self) -> None:
         """Set up a bunch of events and record some statistics."""
 
         today = datetime.date.today()
 
         # Create a test host
-        test_host = Organization.objects.create(
-            domain="example.com", fullname="Test Organization"
-        )
+        test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
 
         # Create one new published event for each day in the next 10 days.
         for t in range(1, 11):
@@ -467,7 +456,7 @@ class TestBase(
             if e.url and (e.start > today):
                 self.num_upcoming += 1
 
-    def _setUpRoles(self):
+    def _setUpRoles(self) -> None:
         """Before #626, we don't have a migration that introduces roles that
         are currently in the database.  This is an auxiliary method for adding
         them to the tests, should one need them."""
@@ -479,9 +468,7 @@ class TestBase(
                 Role(name="learner", verbose_name="Learner"),
                 Role(name="organizer", verbose_name="Organizer"),
                 Role(name="tutor", verbose_name="Tutor"),
-                Role(
-                    name="supporting-instructor", verbose_name="Supporting Instructor"
-                ),
+                Role(name="supporting-instructor", verbose_name="Supporting Instructor"),
             ]
         )
 
@@ -555,9 +542,7 @@ class TestBase(
 
     @staticmethod
     def reconsent(person: Person, term: Term, term_option: TermOption) -> Consent:
-        consent = Consent.objects.get(
-            person=person, term=term, archived_at__isnull=True
-        )
+        consent = Consent.objects.get(person=person, term=term, archived_at__isnull=True)
         return Consent.reconsent(consent, term_option)
 
     def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
@@ -571,13 +556,13 @@ class TestBase(
     def person_consent_required_terms(self, person: Person) -> None:
         consent_to_all_required_consents(person)
 
-    def saveResponse(self, response, filename="error.html"):
+    def saveResponse(self, response, filename="error.html") -> None:
         content = response.content.decode("utf-8")
         with open(filename, "w") as f:
             f.write(content)
 
     # Web-test helpers
-    def assertSelected(self, field, expected):
+    def assertSelected(self, field, expected) -> None:
         if not isinstance(field, webtest.forms.Select):
             raise TypeError
 
@@ -590,12 +575,11 @@ class TestBase(
         self.assertEqual(
             expected_value,
             got_value,
-            msg='Expected "{}" to be selected '
-            "while {} is/are selected.".format(expected, selected),
+            msg='Expected "{}" to be selected ' "while {} is/are selected.".format(expected, selected),
         )
 
     @contextmanager
-    def assertValidationErrors(self, fields):
+    def assertValidationErrors(self, fields) -> None:
         """
         Assert that a validation error is raised, containing all the specified
         fields, and only the specified fields.
@@ -612,11 +596,9 @@ class TestBase(
         except ValidationError as e:
             self.assertEqual(set(fields), set(e.message_dict.keys()))
 
-    def passCaptcha(self, data_dictionary):
+    def passCaptcha(self, data_dictionary) -> None:
         """Extends provided `data_dictionary` with RECAPTCHA pass data."""
-        data_dictionary.update(
-            {"g-recaptcha-response": "PASSED"}  # to auto-pass RECAPTCHA
-        )
+        data_dictionary.update({"g-recaptcha-response": "PASSED"})  # to auto-pass RECAPTCHA
 
 
 class FormTestHelper:
@@ -631,7 +613,7 @@ class FormTestHelper:
         empty_other="",
         first_when_other="",
         blank=False,
-    ):
+    ) -> None:
         """Universal way of testing field `name` and it's "_other" counterpart
         `other_name`.
 
@@ -694,7 +676,7 @@ class TestViewPermissionsMixin:
     methods: list[str]
     user: Person
 
-    def test_view_admin_accessible(self):
+    def test_view_admin_accessible(self) -> None:
         # Arrange
         super()._setUpSuperuser()
         super()._logSuperuserIn()
@@ -706,7 +688,7 @@ class TestViewPermissionsMixin:
                 # Assert
                 self.assertEqual(result.status_code, 200)
 
-    def test_view_unauthenticated_user_inaccessible(self):
+    def test_view_unauthenticated_user_inaccessible(self) -> None:
         for method in self.methods:
             with self.subTest(method=method):
                 # Act
@@ -714,16 +696,13 @@ class TestViewPermissionsMixin:
                 # Assert
                 self.assertEqual(result.status_code, 403)
 
-    def test_view_required_permissions_accessible(self):
+    def test_view_required_permissions_accessible(self) -> None:
         for method in self.methods:
             with self.subTest(method=method):
                 # Arrange
                 self.user.user_permissions.clear()
                 self.user.user_permissions.add(
-                    *[
-                        Permission.objects.get(codename=permission)
-                        for permission in self.permissions
-                    ]
+                    *[Permission.objects.get(codename=permission) for permission in self.permissions]
                 )
                 # Act
                 self.client.force_login(self.user)
@@ -731,14 +710,12 @@ class TestViewPermissionsMixin:
                 # Assert
                 self.assertEqual(result.status_code, 200)
 
-    def test_view_other_permissions_inaccessible(self):
+    def test_view_other_permissions_inaccessible(self) -> None:
         for method in self.methods:
             with self.subTest(method=method):
                 # Arrange
                 self.user.user_permissions.clear()
-                self.user.user_permissions.set(
-                    Permission.objects.exclude(codename__in=self.permissions)
-                )
+                self.user.user_permissions.set(Permission.objects.exclude(codename__in=self.permissions))
                 # Act
                 self.client.force_login(self.user)
                 result = self.client.generic(method.upper(), self.view_url)

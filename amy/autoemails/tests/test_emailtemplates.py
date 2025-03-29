@@ -1,11 +1,12 @@
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.template.exceptions import TemplateDoesNotExist, TemplateSyntaxError
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.models import EmailTemplate
 
 
+@tag("autoemails")
 class TestEmailTemplate(TestCase):
     def prepare_template(self):
         """Create a sample email template."""
@@ -54,30 +55,21 @@ Sincerely,
         return self.objects
 
     def test_rendering_template(self):
-        template = (
-            "Hello, {{ name }} {% if last_name %}{{ last_name }}"
-            "{% else %}Smith{% endif %}"
-        )
+        template = "Hello, {{ name }} {% if last_name %}{{ last_name }}" "{% else %}Smith{% endif %}"
 
         data1 = {}
         # let's keep the hardcoded setting for missing variable in the template
         # system - just in case someone changes it unexpectedly
         expected_output1 = "Hello, XXX-unset-variable-XXX Smith"
-        self.assertEqual(
-            EmailTemplate.render_template(template, data1), expected_output1
-        )
+        self.assertEqual(EmailTemplate.render_template(template, data1), expected_output1)
 
         data2 = {"name": "Harry"}
         expected_output2 = "Hello, Harry Smith"
-        self.assertEqual(
-            EmailTemplate.render_template(template, data2), expected_output2
-        )
+        self.assertEqual(EmailTemplate.render_template(template, data2), expected_output2)
 
         data3 = {"name": "Harry", "last_name": "Potter"}
         expected_output3 = "Hello, Harry Potter"
-        self.assertEqual(
-            EmailTemplate.render_template(template, data3), expected_output3
-        )
+        self.assertEqual(EmailTemplate.render_template(template, data3), expected_output3)
 
     def test_rendering_invalid_template(self):
         """Invalid filter or template tag should raise TemplateSyntaxError,

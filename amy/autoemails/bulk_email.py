@@ -6,14 +6,12 @@ from typing import Any, Type
 from django.conf import settings
 from django.db.models.query import QuerySet
 from django.http.request import HttpRequest
-import django_rq
 
 from autoemails.actions import BaseAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 
 logger = logging.getLogger("amy")
-scheduler = django_rq.get_scheduler("default")
 
 
 def send_bulk_email(
@@ -25,14 +23,12 @@ def send_bulk_email(
     object_: Any,
 ):
     emails_to_send = [
-        emails[i : i + settings.BULK_EMAIL_LIMIT]  # noqa
-        for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)
+        emails[i : i + settings.BULK_EMAIL_LIMIT] for i in range(0, len(emails), settings.BULK_EMAIL_LIMIT)  # noqa
     ]
     for emails in emails_to_send:
         jobs, rqjobs = ActionManageMixin.add(
             action_class=action_class,
             logger=logger,
-            scheduler=scheduler,
             triggers=triggers,
             context_objects=dict(
                 person_emails=emails,
@@ -46,5 +42,4 @@ def send_bulk_email(
                 num_emails=len(emails),
                 trigger=triggers[0],
                 job=jobs[0],
-                scheduler=scheduler,
             )

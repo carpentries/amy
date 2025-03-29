@@ -1,6 +1,8 @@
+from argparse import ArgumentParser
 import io
 import logging
 import sys
+from typing import Any
 
 from django.test.runner import DiscoverRunner
 
@@ -8,12 +10,12 @@ from django.test.runner import DiscoverRunner
 class SilenceLogsRunner(DiscoverRunner):
     log_output: bool
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         self.log_output = kwargs.pop("log_output", False)
         super().__init__(**kwargs)
 
     @classmethod
-    def add_arguments(cls, parser):
+    def add_arguments(cls, parser: ArgumentParser) -> None:
         """New argument to CLI to output loggers at the end of the suite."""
         super().add_arguments(parser)
         parser.add_argument(
@@ -24,16 +26,14 @@ class SilenceLogsRunner(DiscoverRunner):
 
     def get_all_loggers(self) -> list[logging.Logger]:
         root_logger = logging.getLogger()
-        return [root_logger] + [
-            logging.getLogger(name) for name in logging.root.manager.loggerDict
-        ]
+        return [root_logger] + [logging.getLogger(name) for name in logging.root.manager.loggerDict]
 
-    def print_handler_stream_to_stderr(self, handler: logging.StreamHandler) -> None:
+    def print_handler_stream_to_stderr(self, handler: logging.StreamHandler[Any]) -> None:
         stream_value = handler.stream.getvalue()
         if stream_value:
             print(stream_value, file=sys.stderr)
 
-    def setup_test_environment(self, **kwargs) -> None:
+    def setup_test_environment(self, **kwargs: Any) -> None:
         loggers = self.get_all_loggers()
         for logger in loggers:
             for handler in logger.handlers:
@@ -44,11 +44,9 @@ class SilenceLogsRunner(DiscoverRunner):
 
         return super().setup_test_environment(**kwargs)
 
-    def teardown_test_environment(self, **kwargs) -> None:
+    def teardown_test_environment(self, **kwargs: Any) -> None:
         if self.log_output:
-            print(
-                "--------------------------- Logger output ----------------------------"
-            )
+            print("--------------------------- Logger output ----------------------------")
             loggers = self.get_all_loggers()
             for logger in loggers:
                 for handler in logger.handlers:

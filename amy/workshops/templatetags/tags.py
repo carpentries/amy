@@ -24,11 +24,7 @@ def bootstrap_tag_class(name):
 
     return mark_safe(
         next(
-            (
-                css_class
-                for prefix, css_class in mapping.items()
-                if name_low.startswith(prefix)
-            ),
+            (css_class for prefix, css_class in mapping.items() if name_low.startswith(prefix)),
             default,
         )
     )

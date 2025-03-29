@@ -1,14 +1,13 @@
+# flake8: noqa
 from datetime import UTC, datetime, timedelta
 
-from django.test import TestCase
-from rq.queue import Queue
-from rq.worker import SimpleWorker
-from rq_scheduler.utils import to_unix
+from django.test import TestCase, tag
 
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_fail_job, dummy_job
 from autoemails.utils import check_status, scheduled_execution_time
 
 
+@tag("autoemails")
 class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
     def test_time_for_nonexisting_job(self):
         job_id = "doesn't exists"
@@ -61,6 +60,7 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
         self.assertEqual(rv.tzinfo, UTC)
 
 
+@tag("autoemails")
 class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
     def test_status_nonexisting_job(self):
         job_id = "doesn't exists"

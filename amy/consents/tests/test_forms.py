@@ -10,9 +10,7 @@ from workshops.models import Person
 class TestActiveTermConsentsForm(ConsentTestBase):
     def setUp(self) -> None:
         super().setUp()
-        self.person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        self.person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
 
     def test_init_creates_term_fields(self) -> None:
         term1 = Term.objects.create(content="term1", slug="term1")
@@ -61,9 +59,7 @@ class TestActiveTermConsentsForm(ConsentTestBase):
         )
 
     def test_init_omits_archived_terms(self) -> None:
-        term1 = Term.objects.create(
-            content="term1", slug="term1", archived_at=timezone.now()
-        )
+        term1 = Term.objects.create(content="term1", slug="term1", archived_at=timezone.now())
         form = ActiveTermConsentsForm(initial={"person": self.person})
         self.assertNotIn(term1.slug, form.fields)
 
@@ -71,9 +67,7 @@ class TestActiveTermConsentsForm(ConsentTestBase):
 class TestRequiredConsentsForm(ConsentTestBase):
     def setUp(self) -> None:
         super().setUp()
-        self.person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        self.person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
 
     def test_required_consent_form(self) -> None:
         required_term = Term.objects.create(

@@ -30,9 +30,7 @@ class TestNewSelfOrganisedWorkshopCheck(TestCase):
             language=Language.objects.get(name="English"),
         )
         self.self_org = Organization.objects.get(domain="self-organized")
-        self.swc_org = Organization.objects.create(
-            domain="software-carpentry.org", fullname="Software Carpentry"
-        )
+        self.swc_org = Organization.objects.create(domain="software-carpentry.org", fullname="Software Carpentry")
         self.swc_tag = Tag.objects.create(name="SWC")
         self.event_start = date.today() + timedelta(days=30)
 
@@ -87,8 +85,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
             new_self_organised_workshop_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "new_self_organised_workshop"
+                "EMAIL_MODULE feature flag not set, skipping " "new_self_organised_workshop"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -108,9 +105,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
     def test_action_triggered(self) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",
             personal="Harry",
@@ -136,9 +131,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_messages_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_messages_action_scheduled:
             new_self_organised_workshop_signal.send(
                 sender=event,
                 request=request,
@@ -166,9 +159,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
         mock_immediate_action.return_value = NOW + timedelta(hours=1)
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",
             personal="Harry",
@@ -187,9 +178,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.schedule_email"
-        ) as mock_schedule_email:
+        with patch("emails.actions.base_action.EmailController.schedule_email") as mock_schedule_email:
             new_self_organised_workshop_signal.send(
                 sender=event,
                 request=request,
@@ -209,9 +198,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
                     ),
                     "event": api_model_url("event", event.pk),
                     "short_notice": scalar_value_url("bool", "False"),
-                    "self_organised_submission": api_model_url(
-                        "selforganisedsubmission", submission.pk
-                    ),
+                    "self_organised_submission": api_model_url("selforganisedsubmission", submission.pk),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -219,9 +206,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
             to_header_context_json=ToHeaderModel(
                 [
                     {
-                        "api_uri": api_model_url(
-                            "selforganisedsubmission", submission.pk
-                        ),
+                        "api_uri": api_model_url("selforganisedsubmission", submission.pk),
                         "property": "email",
                     }  # type: ignore
                 ]
@@ -232,14 +217,10 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",
             personal="Harry",
@@ -272,9 +253,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
         organization = Organization.objects.first()
-        event = Event.objects.create(
-            slug="test-event", host=organization, administrator=organization
-        )
+        event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",
             personal="Harry",
@@ -323,9 +302,7 @@ class TestNewSelfOrganisedWorkshopIntegration(TestBase):
             language=Language.objects.get(name="English"),
         )
         self_org = Organization.objects.get(domain="self-organized")
-        swc_org = Organization.objects.create(
-            domain="software-carpentry.org", fullname="Software Carpentry"
-        )
+        swc_org = Organization.objects.create(domain="software-carpentry.org", fullname="Software Carpentry")
         start = date.today() + timedelta(days=30)
         data = {
             "slug": "2024-05-31-test-event",

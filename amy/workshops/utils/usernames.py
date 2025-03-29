@@ -23,10 +23,7 @@ def create_username(personal: str, family: str, tries: int = NUM_TRIES) -> str:
         except Person.DoesNotExist:
             return username
 
-    raise InternalError(
-        "Cannot find a non-repeating username"
-        "(tried {} usernames): {}.".format(tries, username)
-    )
+    raise InternalError("Cannot find a non-repeating username" "(tried {} usernames): {}.".format(tries, username))
 
 
 def normalize_name(name):

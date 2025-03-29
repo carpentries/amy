@@ -1,23 +1,29 @@
 from itertools import chain
+from typing import Iterable, TypeVar
 
-from django.core.paginator import EmptyPage, PageNotAnInteger
+from django.core.paginator import EmptyPage, Page, PageNotAnInteger
 from django.core.paginator import Paginator as DjangoPaginator
+from django.db.models import Model, QuerySet
+from django.http import HttpRequest
+
+_T = TypeVar("_T")
+_MT = TypeVar("_MT", bound=Model)  # Model type
 
 ITEMS_PER_PAGE = 25
 
 
-class Paginator(DjangoPaginator):
+class Paginator(DjangoPaginator[_T]):
     """Everything should work as in django.core.paginator.Paginator, except
     this class provides additional generator for nicer set of pages."""
 
     _page_number = None
 
-    def page(self, number):
+    def page(self, number: int | str) -> Page[_T]:
         """Overridden to store retrieved page number somewhere."""
         self._page_number = number
         return super().page(number)
 
-    def paginate_sections(self):
+    def paginate_sections(self) -> Iterable[int | None]:
         """Divide pagination range into 3 sections.
 
         Each section should contain approx. 5 links.  If sections are
@@ -64,6 +70,8 @@ class Paginator(DjangoPaginator):
         D2 = M_s.isdisjoint(R_s)
         D3 = L_s.isdisjoint(R_s)
 
+        pagination: Iterable[int | None]
+
         if D1 and D2 and D3:
             # L…M…R
             pagination = chain(L, dots, M, dots, R)
@@ -84,7 +92,7 @@ class Paginator(DjangoPaginator):
         return pagination
 
 
-def get_pagination_items(request, all_objects):
+def get_pagination_items(request: HttpRequest, all_objects: QuerySet[_MT]) -> Page[_MT]:
     """Select paginated items."""
 
     # Get parameters.

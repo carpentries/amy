@@ -1,10 +1,10 @@
 from datetime import datetime
 import logging
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from django.utils import timezone
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -37,12 +37,10 @@ def instructor_confirmed_for_workshop_strategy(
     signup_is_accepted = signup.state == "a"
     person_email_exists = bool(signup.person.email)
     event = signup.recruitment.event
-    carpentries_tags = event.tags.filter(
-        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
-    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
-    centrally_organised = (
-        event.administrator and event.administrator.domain != "self-organized"
+    carpentries_tags = event.tags.filter(name__in=TagQuerySet.CARPENTRIES_TAG_NAMES).exclude(
+        name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES
     )
+    centrally_organised = event.administrator and event.administrator.domain != "self-organized"
     start_date_in_future = event.start and event.start >= timezone.now().date()
 
     log_condition_elements(
@@ -57,11 +55,7 @@ def instructor_confirmed_for_workshop_strategy(
     )
 
     email_should_exist = (
-        signup_is_accepted
-        and person_email_exists
-        and carpentries_tags
-        and centrally_organised
-        and start_date_in_future
+        signup_is_accepted and person_email_exists and carpentries_tags and centrally_organised and start_date_in_future
     )
     logger.debug(f"{email_should_exist=}")
 
@@ -83,7 +77,7 @@ def instructor_confirmed_for_workshop_strategy(
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"InstructorConfirmedForWorkshop strategy {result = }")
+    logger.debug(f"InstructorConfirmedForWorkshop strategy {result=}")
     return result
 
 
@@ -91,7 +85,7 @@ def run_instructor_confirmed_for_workshop_strategy(
     strategy: StrategyEnum,
     request: HttpRequest,
     signup: InstructorRecruitmentSignup,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_confirmed_for_workshop_signal,
@@ -147,9 +141,7 @@ def get_generic_relation_object(
     return context["instructor_recruitment_signup"]
 
 
-def get_recipients(
-    context: InstructorConfirmedContext, **kwargs: Unpack[InstructorConfirmedKwargs]
-) -> list[str]:
+def get_recipients(context: InstructorConfirmedContext, **kwargs: Unpack[InstructorConfirmedKwargs]) -> list[str]:
     person = context["person"]
     return [person.email] if person.email else []
 
@@ -174,9 +166,7 @@ class InstructorConfirmedForWorkshopReceiver(BaseAction):
     def get_scheduled_at(self, **kwargs: Unpack[InstructorConfirmedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorConfirmedKwargs]
-    ) -> InstructorConfirmedContext:
+    def get_context(self, **kwargs: Unpack[InstructorConfirmedKwargs]) -> InstructorConfirmedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorConfirmedContext) -> ContextModel:
@@ -210,9 +200,7 @@ class InstructorConfirmedForWorkshopUpdateReceiver(BaseActionUpdate):
     def get_scheduled_at(self, **kwargs: Unpack[InstructorConfirmedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorConfirmedKwargs]
-    ) -> InstructorConfirmedContext:
+    def get_context(self, **kwargs: Unpack[InstructorConfirmedKwargs]) -> InstructorConfirmedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorConfirmedContext) -> ContextModel:
@@ -243,9 +231,7 @@ class InstructorConfirmedForWorkshopUpdateReceiver(BaseActionUpdate):
 class InstructorConfirmedForWorkshopCancelReceiver(BaseActionCancel):
     signal = instructor_confirmed_for_workshop_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorConfirmedKwargs]
-    ) -> InstructorConfirmedContext:
+    def get_context(self, **kwargs: Unpack[InstructorConfirmedKwargs]) -> InstructorConfirmedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorConfirmedContext) -> ContextModel:
@@ -274,18 +260,8 @@ class InstructorConfirmedForWorkshopCancelReceiver(BaseActionCancel):
 
 
 instructor_confirmed_for_workshop_receiver = InstructorConfirmedForWorkshopReceiver()
-instructor_confirmed_for_workshop_signal.connect(
-    instructor_confirmed_for_workshop_receiver
-)
-instructor_confirmed_for_workshop_update_receiver = (
-    InstructorConfirmedForWorkshopUpdateReceiver()
-)
-instructor_confirmed_for_workshop_update_signal.connect(
-    instructor_confirmed_for_workshop_update_receiver
-)
-instructor_confirmed_for_workshop_cancel_receiver = (
-    InstructorConfirmedForWorkshopCancelReceiver()
-)
-instructor_confirmed_for_workshop_cancel_signal.connect(
-    instructor_confirmed_for_workshop_cancel_receiver
-)
+instructor_confirmed_for_workshop_signal.connect(instructor_confirmed_for_workshop_receiver)
+instructor_confirmed_for_workshop_update_receiver = InstructorConfirmedForWorkshopUpdateReceiver()
+instructor_confirmed_for_workshop_update_signal.connect(instructor_confirmed_for_workshop_update_receiver)
+instructor_confirmed_for_workshop_cancel_receiver = InstructorConfirmedForWorkshopCancelReceiver()
+instructor_confirmed_for_workshop_cancel_signal.connect(instructor_confirmed_for_workshop_cancel_receiver)

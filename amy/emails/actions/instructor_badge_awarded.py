@@ -1,13 +1,16 @@
-from datetime import datetime
+from datetime import date, datetime
+from io import BytesIO
 import logging
-from typing import Any
+from typing import Any, Unpack
 
+import cairosvg
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
+from emails.controller import EmailController
 from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, ToHeaderModel
 from emails.signals import (
@@ -15,6 +18,7 @@ from emails.signals import (
     Signal,
     instructor_badge_awarded_cancel_signal,
     instructor_badge_awarded_signal,
+    instructor_badge_awarded_signal_sent,
     instructor_badge_awarded_update_signal,
 )
 from emails.types import (
@@ -72,12 +76,12 @@ def instructor_badge_awarded_strategy(
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"InstructorBadgeAwarded strategy {result = }")
+    logger.debug(f"InstructorBadgeAwarded strategy {result=}")
     return result
 
 
 def run_instructor_badge_awarded_strategy(
-    strategy: StrategyEnum, request: HttpRequest, person: Person, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, person: Person, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_badge_awarded_signal,
@@ -154,14 +158,10 @@ def get_recipients_context_json(
 class InstructorBadgeAwardedReceiver(BaseAction):
     signal = instructor_badge_awarded_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> InstructorBadgeAwardedContext:
+    def get_context(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> InstructorBadgeAwardedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorBadgeAwardedContext) -> ContextModel:
@@ -188,18 +188,19 @@ class InstructorBadgeAwardedReceiver(BaseAction):
     ) -> ToHeaderModel:
         return get_recipients_context_json(context, **kwargs)
 
+    def __call__(self, sender: Any, *args: Any, **kwargs: Any) -> ScheduledEmail | None:
+        scheduled_email = super().__call__(sender, *args, **kwargs)
+        instructor_badge_awarded_signal_sent.send(sender=scheduled_email)
+        return scheduled_email
+
 
 class InstructorBadgeAwardedUpdateReceiver(BaseActionUpdate):
     signal = instructor_badge_awarded_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> InstructorBadgeAwardedContext:
+    def get_context(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> InstructorBadgeAwardedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorBadgeAwardedContext) -> ContextModel:
@@ -230,9 +231,7 @@ class InstructorBadgeAwardedUpdateReceiver(BaseActionUpdate):
 class InstructorBadgeAwardedCancelReceiver(BaseActionCancel):
     signal = instructor_badge_awarded_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]
-    ) -> InstructorBadgeAwardedContext:
+    def get_context(self, **kwargs: Unpack[InstructorBadgeAwardedKwargs]) -> InstructorBadgeAwardedContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: InstructorBadgeAwardedContext) -> ContextModel:
@@ -243,9 +242,7 @@ class InstructorBadgeAwardedCancelReceiver(BaseActionCancel):
     ) -> ContentType:
         return ContentType.objects.get_for_model(Award)
 
-    def get_generic_relation_pk(
-        self, context: InstructorBadgeAwardedContext, generic_relation_obj: Any
-    ) -> int | Any:
+    def get_generic_relation_pk(self, context: InstructorBadgeAwardedContext, generic_relation_obj: Any) -> int | Any:
         return context["award_id"]
 
     def get_generic_relation_object(
@@ -271,3 +268,62 @@ instructor_badge_awarded_update_signal.connect(instructor_badge_awarded_update_r
 
 instructor_badge_awarded_cancel_receiver = InstructorBadgeAwardedCancelReceiver()
 instructor_badge_awarded_cancel_signal.connect(instructor_badge_awarded_cancel_receiver)
+
+
+def read_binary_file_and_replace_values(file_path: str, replacements: dict[bytes, bytes]) -> bytes:
+    with open(file_path, "rb") as f:
+        byte_content = f.read()
+        for key, value in replacements.items():
+            byte_content = byte_content.replace(key, value)
+    return byte_content
+
+
+def generate_pdf(svg_file: bytes) -> bytes:
+    file_obj = BytesIO()
+    cairosvg.svg2pdf(svg_file, write_to=file_obj, dpi=90)  # type: ignore[no-untyped-call]
+    file_obj.seek(0)
+    return file_obj.read()
+
+
+def generate_and_attach_certificate_pdf(sender: ScheduledEmail | None, *args: Any, **kwargs: Any) -> None:
+    logger.info(f"Generating certificate PDF strategy for {sender=}")
+
+    # `sender` is None also in case when the feature flag `EMAIL_MODULE` is not enabled.
+    # Unfortunately, it's not possible to check for feature flags in this function, because `request`
+    # kwarg is missing.
+
+    if sender is None:
+        logger.error(f"Failed to generate and attach certificate: sender is not a ScheduledEmail (it's {sender})")
+        return
+
+    if not isinstance(sender.generic_relation, Award):
+        logger.error(
+            "Failed to generate and attach certificate: related object is not an Award "
+            f"(it's {sender.generic_relation})"
+        )
+        return
+
+    # Parameters for the SVG file
+    full_name = sender.generic_relation.person.full_name
+    award_date = date.strftime(sender.generic_relation.awarded, r"%d %B %Y")
+    signature = settings.CERTIFICATE_SIGNATURE
+    file_path = settings.APPS_DIR / "templates" / "certificates" / "carpentries-instructor.svg"
+
+    # Prepare SVG file in memory.
+    svg_file = read_binary_file_and_replace_values(
+        file_path=str(file_path),
+        replacements={
+            b"{{name}}": bytes(full_name, encoding="utf-8"),
+            b"{{date}}": bytes(award_date, encoding="utf-8"),
+            b"{{signature}}": bytes(signature, encoding="utf-8"),
+        },
+    )
+
+    # Generate PDF out of SVG (in memory).
+    content = generate_pdf(svg_file)
+
+    # Attach to email.
+    EmailController.add_attachment(sender, filename="certificate.pdf", content=content)
+
+
+instructor_badge_awarded_signal_sent.connect(generate_and_attach_certificate_pdf)

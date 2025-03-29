@@ -9,18 +9,14 @@ from workshops.models import Person
 class ConsentsUpdateTest(ConsentTestBase):
     def setUp(self):
         super().setUp()
-        self.person = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        self.person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
 
     def test_consents_update(self):
         """
         Ensures the ConsentsUpdate view is able to show
         and save all active terms.
         """
-        preexisting_required_terms = Term.objects.filter(
-            required_type=Term.PROFILE_REQUIRE_TYPE
-        ).active()
+        preexisting_required_terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).active()
 
         term1 = Term.objects.create(content="term1", slug="term1")
         term1_option1 = TermOption.objects.create(
@@ -75,17 +71,13 @@ class ConsentsUpdateTest(ConsentTestBase):
         # Adding the required terms because the form is bound
         # in the view and bound forms do not receive initial data.
         self.person_agree_to_terms(self.person, preexisting_required_terms)
-        for consent in Consent.objects.filter(
-            term__in=preexisting_required_terms
-        ).active():
+        for consent in Consent.objects.filter(term__in=preexisting_required_terms).active():
             data[f"consents-{consent.term.slug}"] = consent.term_option.pk
         consents_path = reverse("consents_add", kwargs={"person_id": self.person.pk})
         result = self.client.post(f"{consents_path}?next={person_edit_view}", data)
         self.assertEqual(result.status_code, status.HTTP_302_FOUND)
 
-        consents = Consent.objects.filter(
-            person=self.person, term__in=[term1, term2, term3]
-        ).active()
+        consents = Consent.objects.filter(person=self.person, term__in=[term1, term2, term3]).active()
         self.assertEqual(len(consents), 3)
         self.assertEqual(consents.filter(term=term1)[0].term_option, term1_option1)
         self.assertEqual(consents.filter(term=term2)[0].term_option, term2_option1)

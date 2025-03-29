@@ -1,6 +1,7 @@
+# flake8: noqa
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from autoemails.actions import SelfOrganisedRequestAction
 from autoemails.models import EmailTemplate, Trigger
@@ -9,6 +10,7 @@ from workshops.fields import TAG_SEPARATOR
 from workshops.models import Curriculum, Event, Language, Organization, Tag
 
 
+@tag("autoemails")
 class TestSelfOrganisedRequestAction(TestCase):
     def setUp(self):
         # we're missing some tags
@@ -26,9 +28,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         Organization.objects.bulk_create(
             [
                 Organization(domain="carpentries.org", fullname="Instructor Training"),
-                Organization(
-                    domain="librarycarpentry.org", fullname="Library Carpentry"
-                ),
+                Organization(domain="librarycarpentry.org", fullname="Library Carpentry"),
             ]
         )
 
@@ -119,9 +119,7 @@ class TestSelfOrganisedRequestAction(TestCase):
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
-        a = SelfOrganisedRequestAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
+        a = SelfOrganisedRequestAction(trigger=Trigger(action="test-action", template=EmailTemplate()))
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):
@@ -277,9 +275,7 @@ class TestSelfOrganisedRequestAction(TestCase):
             objects=dict(event=e, request=r),
         )
 
-        self.assertEqual(
-            a.all_recipients(), "harry@hogwarts.edu, hg@magic.uk, rw@magic.uk"
-        )
+        self.assertEqual(a.all_recipients(), "harry@hogwarts.edu, hg@magic.uk, rw@magic.uk")
 
     def test_drop_empty_contacts(self):
         e = Event.objects.create(
@@ -314,6 +310,4 @@ class TestSelfOrganisedRequestAction(TestCase):
         )
 
         self.assertEqual(a.all_recipients(), "")
-        self.assertEqual(
-            a.get_additional_context(dict(event=e, request=r))["all_emails"], []
-        )
+        self.assertEqual(a.get_additional_context(dict(event=e, request=r))["all_emails"], [])

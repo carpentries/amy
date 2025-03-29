@@ -16,9 +16,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         flag = Flag(name="TEST_FLAG", conditions=[condition1, condition2, condition3])
         flags = {"TEST_FLAG": flag}
         # Act
-        result = SaveSessionFeatureFlagMiddleware.conditions_of_type(
-            flags=flags, type="parameter"
-        )
+        result = SaveSessionFeatureFlagMiddleware.conditions_of_type(flags=flags, type="parameter")
         # Assert
         self.assertEqual(result, [condition2])
 
@@ -26,9 +24,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Arrange
         condition = Condition(condition="parameter", value="test=value")
         # Act
-        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(
-            condition
-        )
+        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(condition)
         # Assert
         self.assertEqual(result, "test")
 
@@ -36,9 +32,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Arrange
         condition = Condition(condition="parameter", value="test=")
         # Act
-        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(
-            condition
-        )
+        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(condition)
         # Assert
         self.assertEqual(result, "test")
 
@@ -46,9 +40,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Arrange
         condition = Condition(condition="parameter", value="=")
         # Act
-        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(
-            condition
-        )
+        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(condition)
         # Assert
         self.assertEqual(result, "")
 
@@ -56,9 +48,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Arrange
         condition = Condition(condition="parameter", value="=test")
         # Act
-        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(
-            condition
-        )
+        result = SaveSessionFeatureFlagMiddleware.get_parameter_name_from_condition(condition)
         # Assert
         self.assertEqual(result, "")
 

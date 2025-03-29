@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.test.testcases import TestCase
+from django.test import TestCase, tag
 
 from autoemails import admin
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
@@ -8,6 +8,7 @@ from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60
 
 
+@tag("autoemails")
 class TestJobResultsLongTTL(FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
         super().setUp()

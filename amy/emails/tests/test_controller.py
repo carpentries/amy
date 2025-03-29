@@ -1,5 +1,7 @@
 from datetime import UTC, datetime, timedelta
 import random
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 from django.conf import settings
 from django.db.models import Model
@@ -10,6 +12,7 @@ from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
 
 from emails.controller import EmailController, EmailControllerException
 from emails.models import (
+    Attachment,
     EmailTemplate,
     ScheduledEmail,
     ScheduledEmailLog,
@@ -62,6 +65,17 @@ class TestEmailController(TestCase):
             author=author,
         )
 
+    def create_attachment(self, email: ScheduledEmail) -> Attachment:
+        attachment = Attachment.objects.create(
+            email=email,
+            filename="certificate.pdf",
+            s3_path="random/certificate.pdf",
+            s3_bucket="random-bucket",
+            presigned_url="",
+            presigned_url_expiration=None,
+        )
+        return attachment
+
     def test_schedule_email(self) -> None:
         # Arrange
         now = timezone.now()
@@ -74,9 +88,7 @@ class TestEmailController(TestCase):
         self.assertEqual(self.template, scheduled_email.template)
         self.assertEqual(scheduled_email.subject, "Greetings {{ name }}")
         self.assertEqual(scheduled_email.context_json, {"name": "value:str#Harry"})
-        self.assertEqual(
-            scheduled_email.body, "Hello, {{ name }}! Nice to meet **you**."
-        )
+        self.assertEqual(scheduled_email.body, "Hello, {{ name }}! Nice to meet **you**.")
         self.assertEqual(scheduled_email.scheduled_at, now)
         self.assertEqual(scheduled_email.to_header, ["harry@potter.com"])
         self.assertEqual(
@@ -84,9 +96,7 @@ class TestEmailController(TestCase):
             [{"api_uri": f"api:person#{self.harry.pk}", "property": "email"}],
         )
         self.assertEqual(log.scheduled_email, scheduled_email)
-        self.assertEqual(
-            log.details, f"Scheduled {self.signal} to run at {now.isoformat()}"
-        )
+        self.assertEqual(log.details, f"Scheduled {self.signal} to run at {now.isoformat()}")
 
     def test_schedule_email__no_recipients(self) -> None:
         # Arrange
@@ -96,8 +106,7 @@ class TestEmailController(TestCase):
         # Act & Assert
         with self.assertRaisesMessage(
             EmailControllerException,
-            "Email must have at least one recipient, but `to_header` or "
-            "`to_header_context_json` are empty.",
+            "Email must have at least one recipient, but `to_header` or " "`to_header_context_json` are empty.",
         ):
             EmailController.schedule_email(
                 signal,
@@ -205,9 +214,7 @@ class TestEmailController(TestCase):
         scheduled_email = self.create_scheduled_email(old_scheduled_date)
 
         # Act
-        logs_count = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).count()
+        logs_count = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count()
         scheduled_email = EmailController.reschedule_email(
             scheduled_email,
             new_scheduled_date,
@@ -220,9 +227,7 @@ class TestEmailController(TestCase):
             ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
             logs_count + 1,
         )
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(
             latest_log.details,
             f"Rescheduled email to run at {new_scheduled_date.isoformat()}",
@@ -253,9 +258,7 @@ class TestEmailController(TestCase):
         scheduled_email = self.create_scheduled_email(now)
 
         # Act
-        logs_count = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).count()
+        logs_count = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count()
         scheduled_email = EmailController.update_scheduled_email(
             scheduled_email,
             context_json=ContextModel({"name": scalar_value_url("str", "James")}),
@@ -277,9 +280,7 @@ class TestEmailController(TestCase):
         self.assertEqual(self.template, scheduled_email.template)
         self.assertEqual(scheduled_email.subject, "Greetings {{ name }}")
         self.assertEqual(scheduled_email.context_json, {"name": "value:str#James"})
-        self.assertEqual(
-            scheduled_email.body, "Hello, {{ name }}! Nice to meet **you**."
-        )
+        self.assertEqual(scheduled_email.body, "Hello, {{ name }}! Nice to meet **you**.")
         self.assertEqual(scheduled_email.scheduled_at, now + timedelta(hours=1))
         self.assertEqual(scheduled_email.to_header, ["james@potter.com"])
         self.assertEqual(
@@ -292,9 +293,7 @@ class TestEmailController(TestCase):
             ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
             logs_count + 1,
         )
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, f"Updated {self.signal}")
         self.assertEqual(latest_log.author, self.harry)
 
@@ -306,8 +305,7 @@ class TestEmailController(TestCase):
         # Act & Assert
         with self.assertRaisesMessage(
             EmailControllerException,
-            "Email must have at least one recipient, but `to_header` or "
-            "`to_header_context_json` are empty.",
+            "Email must have at least one recipient, but `to_header` or " "`to_header_context_json` are empty.",
         ):
             EmailController.update_scheduled_email(
                 scheduled_email,
@@ -365,9 +363,7 @@ class TestEmailController(TestCase):
         scheduled_email = self.create_scheduled_email(now)
 
         # Act
-        logs_count = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).count()
+        logs_count = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count()
         scheduled_email = EmailController.change_state_with_log(
             scheduled_email,
             new_state=new_state,
@@ -381,9 +377,7 @@ class TestEmailController(TestCase):
             ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
             logs_count + 1,
         )
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "State changed 123")
         self.assertEqual(latest_log.author, self.harry)
 
@@ -393,9 +387,7 @@ class TestEmailController(TestCase):
         scheduled_email = self.create_scheduled_email(now)
 
         # Act
-        logs_count = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).count()
+        logs_count = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count()
         scheduled_email = EmailController.cancel_email(
             scheduled_email,
             author=self.harry,
@@ -407,9 +399,7 @@ class TestEmailController(TestCase):
             ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
             logs_count + 1,
         )
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "Email was cancelled")
         self.assertEqual(latest_log.author, self.harry)
 
@@ -419,9 +409,7 @@ class TestEmailController(TestCase):
         scheduled_email = self.create_scheduled_email(now)
 
         # Act
-        logs_count = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).count()
+        logs_count = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count()
         scheduled_email = EmailController.lock_email(
             scheduled_email,
             details="Email was locked 123",
@@ -434,9 +422,7 @@ class TestEmailController(TestCase):
             ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
             logs_count + 1,
         )
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "Email was locked 123")
         self.assertEqual(latest_log.author, self.harry)
 
@@ -446,9 +432,7 @@ class TestEmailController(TestCase):
         scheduled_email = self.create_scheduled_email(now)
 
         # Act
-        logs_count = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).count()
+        logs_count = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count()
         scheduled_email = EmailController.fail_email(
             scheduled_email,
             details="Email was failed 123",
@@ -461,9 +445,7 @@ class TestEmailController(TestCase):
             ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
             logs_count + 1,
         )
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "Email was failed 123")
         self.assertEqual(latest_log.author, self.harry)
 
@@ -526,9 +508,7 @@ class TestEmailController(TestCase):
         scheduled_email = self.create_scheduled_email(now)
 
         # Act
-        logs_count = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).count()
+        logs_count = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count()
         scheduled_email = EmailController.succeed_email(
             scheduled_email,
             details="Email was succeeded 123",
@@ -541,8 +521,59 @@ class TestEmailController(TestCase):
             ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).count(),
             logs_count + 1,
         )
-        latest_log = ScheduledEmailLog.objects.filter(
-            scheduled_email=scheduled_email
-        ).order_by("-created_at")[0]
+        latest_log = ScheduledEmailLog.objects.filter(scheduled_email=scheduled_email).order_by("-created_at")[0]
         self.assertEqual(latest_log.details, "Email was succeeded 123")
         self.assertEqual(latest_log.author, self.harry)
+
+    def test_s3_file_path(self) -> None:
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+        uuid = uuid4()
+        filename = "certificate.pdf"
+
+        # Act
+        result = EmailController.s3_file_path(scheduled_email, uuid, filename)
+
+        # Assert
+        self.assertEqual(result, f"{scheduled_email.pk}/{uuid}-{filename}")
+
+    @patch("emails.controller.s3_client")
+    def test_add_attachment(self, mock_s3_client: MagicMock) -> None:
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+        filename = "certificate.pdf"
+        content = b"Test"
+
+        # Act
+        attachment = EmailController.add_attachment(scheduled_email, filename, content)
+
+        # Assert
+        self.assertEqual(type(attachment), Attachment)
+        self.assertEqual(attachment.email, scheduled_email)
+        self.assertEqual(attachment.filename, filename)
+        # checking s3_path is pointless as it's composed of a side-effect: `uuid4()`
+
+        mock_s3_client.upload_fileobj.assert_called_once()
+
+    @patch("emails.controller.s3_client")
+    def test_generate_presigned_url_for_attachment(self, mock_s3_client: MagicMock) -> None:
+        # Arrange
+        now = timezone.now()
+        scheduled_email = self.create_scheduled_email(now)
+        attachment = self.create_attachment(scheduled_email)
+        expiration_seconds = 7200  # 2 hours, different than the default value of 1 hour
+        mock_s3_client.generate_presigned_url.return_value = "fake-url"
+
+        # Act
+        result = EmailController.generate_presigned_url_for_attachment(attachment, expiration_seconds)
+
+        # Assert
+        self.assertEqual(result.pk, attachment.pk)
+        self.assertEqual(result.presigned_url, "fake-url")
+        self.assertIsNotNone(result.presigned_url_expiration)
+        assert result.presigned_url_expiration is not None  # for typing purposes
+        self.assertTrue(
+            abs(result.presigned_url_expiration - timezone.now() - timedelta(hours=2)) < timedelta(minutes=1)
+        )

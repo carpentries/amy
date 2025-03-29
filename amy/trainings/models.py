@@ -24,9 +24,7 @@ class InvolvementManager(models.Manager):
 
 @reversion.register
 class Involvement(CreatedUpdatedArchivedMixin, models.Model):
-    display_name = models.CharField(
-        max_length=STR_LONG, help_text="This name will appear on community facing pages"
-    )
+    display_name = models.CharField(max_length=STR_LONG, help_text="This name will appear on community facing pages")
     name = models.CharField(
         max_length=STR_MED,
         help_text="A short descriptive name for internal use",

@@ -1,14 +1,13 @@
+# flake8: noqa
 from datetime import datetime
 import logging
 
 from django.core.management.base import BaseCommand
-import django_rq
 
 from autoemails.actions import BaseRepeatedAction, UpdateProfileReminderRepeatedAction
 from autoemails.models import RQJob, Trigger
 from autoemails.utils import check_status, scheduled_execution_time
 
-scheduler = django_rq.get_scheduler()
 logger = logging.getLogger("amy")
 REPEATED_JOBS_BY_TRIGGER = {
     "profile-update": UpdateProfileReminderRepeatedAction,
@@ -43,9 +42,7 @@ def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, scheduler)
         meta=meta,
     )
 
-    scheduled_at = scheduled_execution_time(
-        job.get_id(), scheduler=scheduler, naive=False
-    )
+    scheduled_at = scheduled_execution_time(job.get_id(), scheduler=scheduler, naive=False)
     logger.debug("%s: job created [%r]", action_name, job)
 
     # save job ID in the object
@@ -67,13 +64,9 @@ def schedule_repeating_job(trigger, action_class: BaseRepeatedAction, scheduler)
 
 
 def register_scheduled_jobs():
-    triggers = Trigger.objects.filter(
-        active=True, action__in=REPEATED_JOBS_BY_TRIGGER.keys()
-    )
+    triggers = Trigger.objects.filter(active=True, action__in=REPEATED_JOBS_BY_TRIGGER.keys())
     for trigger in triggers:
-        schedule_repeating_job(
-            trigger, REPEATED_JOBS_BY_TRIGGER[trigger.action], scheduler
-        )
+        schedule_repeating_job(trigger, REPEATED_JOBS_BY_TRIGGER[trigger.action], scheduler)
 
 
 class Command(BaseCommand):

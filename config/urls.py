@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -29,15 +30,12 @@ from workshops.views import logout_then_login_with_msg
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="dispatch")),
     path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
-    path("autoemails/", include("autoemails.urls")),
     path("api/v1/", include("api.v1.urls")),  # REST API v1
     path("api/v2/", include("api.v2.urls")),  # REST API v2
     path("api/auth/", include("knox.urls")),
     path("dashboard/", include("dashboard.urls")),
     path("requests/", include("extrequests.urls")),
-    path(
-        "forms/", include("extforms.urls")
-    ),  # external, anonymous user-accessible forms
+    path("forms/", include("extforms.urls")),  # external, anonymous user-accessible forms
     path("fiscal/", include("fiscal.urls")),
     path("reports/", include("reports.urls")),
     path("trainings/", include("trainings.urls")),
@@ -94,9 +92,7 @@ urlpatterns = [
         "comments/",
         include(
             [
-                path(
-                    "post/", login_required(post_comment), name="comments-post-comment"
-                ),
+                path("post/", login_required(post_comment), name="comments-post-comment"),
                 path(
                     "posted/",
                     login_required(comment_done),
@@ -162,9 +158,7 @@ redirect_urlpatterns = [
     ),
     path(
         "workshops/bulk_upload_training_request_scores/confirm",
-        RedirectView.as_view(
-            pattern_name="bulk_upload_training_request_scores_confirmation"
-        ),
+        RedirectView.as_view(pattern_name="bulk_upload_training_request_scores_confirmation"),
     ),
     path(
         "workshops/workshop_requests/",
@@ -174,9 +168,7 @@ redirect_urlpatterns = [
         "workshops/organizations/",
         RedirectView.as_view(pattern_name="all_organizations"),
     ),
-    path(
-        "workshops/memberships/", RedirectView.as_view(pattern_name="all_memberships")
-    ),
+    path("workshops/memberships/", RedirectView.as_view(pattern_name="all_memberships")),
     path(
         "workshops/reports/membership_trainings_stats/",
         RedirectView.as_view(pattern_name="membership_trainings_stats"),

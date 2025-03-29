@@ -11,18 +11,12 @@ from workshops.tests.base import consent_to_all_required_consents
 class TestFilter(APITestCase):
     def setUp(self):
         def get_option(term_slug: TermEnum, option_type: str) -> TermOption:
-            return [
-                option
-                for option in terms_dict[term_slug].options
-                if option.option_type == option_type
-            ][0]
+            return [option for option in terms_dict[term_slug].options if option.option_type == option_type][0]
 
         def get_consent(term_slug: TermEnum, person: Person) -> Consent:
-            return [
-                consent
-                for consent in old_consents
-                if consent.term.slug == term_slug and consent.person == person
-            ][0]
+            return [consent for consent in old_consents if consent.term.slug == term_slug and consent.person == person][
+                0
+            ]
 
         self.admin_1 = Person.objects.create_superuser(
             username="admin1",
@@ -47,23 +41,15 @@ class TestFilter(APITestCase):
         self.admin_2.save()
 
         terms = (
-            Term.objects.filter(
-                slug__in=[TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE]
-            )
+            Term.objects.filter(slug__in=[TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE])
             .active()
             .prefetch_active_options()
         )
         terms_dict = {term.slug: term for term in terms}
         may_contact_agree = get_option(TermEnum.MAY_CONTACT, TermOptionChoices.AGREE)
-        may_contact_decline = get_option(
-            TermEnum.MAY_CONTACT, TermOptionChoices.DECLINE
-        )
-        public_profile_agree = get_option(
-            TermEnum.PUBLIC_PROFILE, TermOptionChoices.AGREE
-        )
-        public_profile_decline = get_option(
-            TermEnum.PUBLIC_PROFILE, TermOptionChoices.DECLINE
-        )
+        may_contact_decline = get_option(TermEnum.MAY_CONTACT, TermOptionChoices.DECLINE)
+        public_profile_agree = get_option(TermEnum.PUBLIC_PROFILE, TermOptionChoices.AGREE)
+        public_profile_decline = get_option(TermEnum.PUBLIC_PROFILE, TermOptionChoices.DECLINE)
 
         old_consents = (
             Consent.objects.filter(
@@ -96,9 +82,7 @@ class TestFilter(APITestCase):
     def test_person_filter(self):
         def assert_data(data: Dict[str, Any], expected_people) -> None:
             usernames = [person_data["username"] for person_data in data["results"]]
-            self.assertCountEqual(
-                usernames, [person.username for person in expected_people]
-            )
+            self.assertCountEqual(usernames, [person.username for person in expected_people])
 
         person_api_url = reverse("api-v1:person-list")
 
@@ -121,12 +105,8 @@ class TestFilter(APITestCase):
         assert_data(people_response.data, [self.admin_1])
 
         # combined
-        people_response = self.client.get(
-            f"{person_api_url}?&may_contact=false&publish_profile=true"
-        )
+        people_response = self.client.get(f"{person_api_url}?&may_contact=false&publish_profile=true")
         assert_data(people_response.data, [])
 
-        people_response = self.client.get(
-            f"{person_api_url}?&may_contact=true&publish_profile=true"
-        )
+        people_response = self.client.get(f"{person_api_url}?&may_contact=true&publish_profile=true")
         assert_data(people_response.data, [self.admin_1])

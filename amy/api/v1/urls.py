@@ -14,12 +14,8 @@ awards_router.register("awards", views.AwardViewSet, basename="person-awards")
 person_task_router = routers.NestedSimpleRouter(router, "persons", lookup="person")
 person_task_router.register("tasks", views.PersonTaskViewSet, basename="person-tasks")
 person_consent_router = routers.NestedSimpleRouter(router, "persons", lookup="person")
-person_consent_router.register(
-    "consents", views.PersonConsentViewSet, basename="person-consents"
-)
-training_progress_router = routers.NestedSimpleRouter(
-    router, "persons", lookup="person"
-)
+person_consent_router.register("consents", views.PersonConsentViewSet, basename="person-consents")
+training_progress_router = routers.NestedSimpleRouter(router, "persons", lookup="person")
 training_progress_router.register(
     "trainingprogress",
     views.TrainingProgressViewSet,
@@ -30,7 +26,6 @@ tasks_router = routers.NestedSimpleRouter(router, "events", lookup="event")
 tasks_router.register("tasks", views.TaskViewSet, basename="event-tasks")
 router.register("organizations", views.OrganizationViewSet)
 router.register("airports", views.AirportViewSet)
-router.register("emailtemplates", views.EmailTemplateViewSet, basename="emailtemplate")
 router.register("terms", views.TermViewSet)
 router.register(
     "communityroleconfigs",
@@ -50,9 +45,7 @@ urlpatterns = [
         views.ExportPersonDataView.as_view(),
         name="export-person-data",
     ),
-    path(
-        "training_requests/", views.TrainingRequests.as_view(), name="training-requests"
-    ),
+    path("training_requests/", views.TrainingRequests.as_view(), name="training-requests"),
     path("", include(router.urls)),
     path("", include(awards_router.urls)),
     path("", include(person_task_router.urls)),

@@ -1,11 +1,10 @@
 from datetime import datetime
 import logging
-from typing import Any
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
 from django.utils import timezone
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -35,24 +34,16 @@ from workshops.models import Event, Person, TagQuerySet, Task
 logger = logging.getLogger("amy")
 
 
-def instructor_task_created_for_workshop_strategy(
-    task: Task, optional_task_pk: int | None = None
-) -> StrategyEnum:
-    logger.info(
-        f"Running InstructorTaskCreatedForWorkshopForWorkshop strategy for {task=}"
-    )
+def instructor_task_created_for_workshop_strategy(task: Task, optional_task_pk: int | None = None) -> StrategyEnum:
+    logger.info(f"Running InstructorTaskCreatedForWorkshopForWorkshop strategy for {task=}")
 
     instructor_role = task.role.name == "instructor"
     person_email_exists = bool(task.person.email)
-    carpentries_tags = task.event.tags.filter(
-        name__in=TagQuerySet.CARPENTRIES_TAG_NAMES
-    ).exclude(name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES)
-    centrally_organised = (
-        task.event.administrator and task.event.administrator.domain != "self-organized"
+    carpentries_tags = task.event.tags.filter(name__in=TagQuerySet.CARPENTRIES_TAG_NAMES).exclude(
+        name__in=TagQuerySet.NON_CARPENTRIES_TAG_NAMES
     )
-    start_date_in_future = (
-        task.event.start and task.event.start >= timezone.now().date()
-    )
+    centrally_organised = task.event.administrator and task.event.administrator.domain != "self-organized"
+    start_date_in_future = task.event.start and task.event.start >= timezone.now().date()
 
     log_condition_elements(
         task=task,
@@ -92,12 +83,12 @@ def instructor_task_created_for_workshop_strategy(
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"InstructorTaskCreatedForWorkshop strategy {result = }")
+    logger.debug(f"InstructorTaskCreatedForWorkshop strategy {result=}")
     return result
 
 
 def run_instructor_task_created_for_workshop_strategy(
-    strategy: StrategyEnum, request: HttpRequest, task: Task, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, task: Task, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: instructor_task_created_for_workshop_signal,
@@ -180,9 +171,7 @@ def get_recipients_context_json(
 class InstructorTaskCreatedForWorkshopReceiver(BaseAction):
     signal = instructor_task_created_for_workshop_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorTaskCreatedForWorkshopKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorTaskCreatedForWorkshopKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
     def get_context(
@@ -190,9 +179,7 @@ class InstructorTaskCreatedForWorkshopReceiver(BaseAction):
     ) -> InstructorTaskCreatedForWorkshopContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTaskCreatedForWorkshopContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTaskCreatedForWorkshopContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -220,9 +207,7 @@ class InstructorTaskCreatedForWorkshopReceiver(BaseAction):
 class InstructorTaskCreatedForWorkshopUpdateReceiver(BaseActionUpdate):
     signal = instructor_task_created_for_workshop_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[InstructorTaskCreatedForWorkshopKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[InstructorTaskCreatedForWorkshopKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
     def get_context(
@@ -230,9 +215,7 @@ class InstructorTaskCreatedForWorkshopUpdateReceiver(BaseActionUpdate):
     ) -> InstructorTaskCreatedForWorkshopContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTaskCreatedForWorkshopContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTaskCreatedForWorkshopContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_object(
@@ -265,9 +248,7 @@ class InstructorTaskCreatedForWorkshopCancelReceiver(BaseActionCancel):
     ) -> InstructorTaskCreatedForWorkshopContext:
         return get_context(**kwargs)
 
-    def get_context_json(
-        self, context: InstructorTaskCreatedForWorkshopContext
-    ) -> ContextModel:
+    def get_context_json(self, context: InstructorTaskCreatedForWorkshopContext) -> ContextModel:
         return get_context_json(context)
 
     def get_generic_relation_content_type(
@@ -299,21 +280,9 @@ class InstructorTaskCreatedForWorkshopCancelReceiver(BaseActionCancel):
         return get_recipients_context_json(context, **kwargs)
 
 
-instructor_task_created_for_workshop_receiver = (
-    InstructorTaskCreatedForWorkshopReceiver()
-)
-instructor_task_created_for_workshop_signal.connect(
-    instructor_task_created_for_workshop_receiver
-)
-instructor_task_created_for_workshop_update_receiver = (
-    InstructorTaskCreatedForWorkshopUpdateReceiver()
-)
-instructor_task_created_for_workshop_update_signal.connect(
-    instructor_task_created_for_workshop_update_receiver
-)
-instructor_task_created_for_workshop_cancel_receiver = (
-    InstructorTaskCreatedForWorkshopCancelReceiver()
-)
-instructor_task_created_for_workshop_cancel_signal.connect(
-    instructor_task_created_for_workshop_cancel_receiver
-)
+instructor_task_created_for_workshop_receiver = InstructorTaskCreatedForWorkshopReceiver()
+instructor_task_created_for_workshop_signal.connect(instructor_task_created_for_workshop_receiver)
+instructor_task_created_for_workshop_update_receiver = InstructorTaskCreatedForWorkshopUpdateReceiver()
+instructor_task_created_for_workshop_update_signal.connect(instructor_task_created_for_workshop_update_receiver)
+instructor_task_created_for_workshop_cancel_receiver = InstructorTaskCreatedForWorkshopCancelReceiver()
+instructor_task_created_for_workshop_cancel_signal.connect(instructor_task_created_for_workshop_cancel_receiver)

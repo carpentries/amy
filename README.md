@@ -1,8 +1,7 @@
 ![](amy/static/amy-logo.png)
 
-![develop branch](https://github.com/carpentries/amy/actions/workflows/python-test.yml/badge.svg?branch=develop)
-[![](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![](https://img.shields.io/badge/django-2.2+-blue.svg)](https://www.djangoproject.com/)
+[![](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![](https://img.shields.io/badge/django-4.2+-blue.svg)](https://www.djangoproject.com/)
 [![](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE.md)
 
 AMY is a web-based workshop administration application for [The Carpentries][tc]
@@ -49,22 +48,17 @@ sudo apt-get install python3-dev libpq-dev
     git config blame.ignoreRevsFile .git-blame-ignore-revs
     ~~~
 
-1. Install [Pipenv](https://pipenv.pypa.io/en/latest/):
-
-    ~~~
-    python -m pip install --user pipenv
-    ~~~
+1. Install [Poetry](https://python-poetry.org/docs/#installation).
 
 1. Install Python dependencies:
 
     ~~~
-    pipenv sync --dev
+    poetry install
     ~~~
 
     **Note:**
-    Pipenv will create a new virtual environment for this installation, so you don't
+    Poetry will create a new virtual environment for this installation, so you don't
     have to create one yourself.
-    The `--dev` flag installs development dependencies, required e.g. for testing.
 
 1. Install [node][nodejs] for front-end packages management.
 
@@ -75,46 +69,65 @@ sudo apt-get install python3-dev libpq-dev
     npm install
     ~~~
 
-1. Start running a local instance of Postgres and Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
+1. Create a local instance of Postgres (in a container). This requires Docker to be installed locally.
 
     ~~~
-    docker compose -f docker/docker-compose.yml -p amy up -d database redis
+    poetry run make database
     ~~~
+
+1. Note: if the database container already exists, the above command will error out. Use `docker start amy-database` instead to start the database container.
 
 1. Set up your local database with fake (development-ready) data.  This will create a superuser with "admin" as both the username and password.
 
     ~~~
-    pipenv run make dev_database
+    poetry run make dev_database
     ~~~
 
 1. Start a local Django development server by running:
 
     ~~~
-    pipenv run make serve
+    poetry run make serve
     ~~~
 
     **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
 
 1. Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking. Use the default "admin" as username and password.
 
-1. Shut down the local server by typing `Ctrl-C`.  Shut down the Docker Redis instance with:
+1. Shut down the local server by typing `Ctrl-C`.  Shut down the database instance with:
 
     ~~~
-    docker compose -f docker/docker-compose.yml -p amy down
+    docker stop amy-database
     ~~~
+
+## Running tests
+
+1. Set up the project using instructions above. Keep the database container running.
+
+1. Run this command:
+
+    ~~~
+    poetry run make test
+    ~~~
+
+1. To run tests intended for testing migrations:
+
+    ~~~
+    poetry run make test_migrations
+    ~~~
+
 
 ## How to build the docker image?
 
 ```shell
 LAST_COMMIT=`git rev-parse --short HEAD`
-docker build -t amy:latest -t amy:${LAST_COMMIT} --label commit=${LAST_COMMIT} -f docker/Dockerfile .
+docker build -t amy:latest -t amy:$LAST_COMMIT --label commit=$LAST_COMMIT .
 ```
 
 First command sets `LAST_COMMIT` environment variable to short commit hash of the
 last commit in the repository.
 
-Second command builds `docker/Dockerfile` in `.` as a context (should be your repository
-directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
+Second command builds `Dockerfile` in `.` as a context (should be your repository
+directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 
 ## Upgrading
 
@@ -138,53 +151,36 @@ directory) with tags `amy:latest` and `amy:LAST_COMMIT`.
         git checkout tags/<tag_name>
         ~~~~
 
-1. Update dependencies front-end and back-end dependencies:
+1. Update back-end dependencies:
 
     ~~~
-    pipenv run make upgrade
+    poetry sync
+    ~~~
+
+1. Update front-end dependencies:
+
+    ~~~
+    npm ci
     ~~~
 
 1. (Optional) make fresh development-ready database:
 
     ~~~
-    pipenv run make dev_database
+    poetry run make dev_database
     ~~~
 
-1. Run database migrations:
+1. Run database migrations (note: this is included in the `make dev_database` step above):
 
     ~~~~
-    pipenv run python manage.py migrate
+    poetry run python manage.py migrate
     ~~~~
 
 1. Enjoy your new version of AMY:
 
     ~~~
-    pipenv run make serve
+    poetry run make serve
     ~~~
 
-## Start hacking on email automation
-
-1. Make sure you have Redis running. See instructions above.
-
-1. Create dev database (it will add a super user and predefined database entries, too!):
-
-    ```shell
-    pipenv run make dev_database
-    ```
-
-1. Run the server:
-
-    ```shell
-    pipenv run python manage.py runserver
-    ```
-
-1. Run the RQ worker and scheduler (use separate terminals or processes for each
-   command):
-
-    ```shell
-    pipenv run python manage.py rqworker
-    pipenv run python manage.py rqscheduler
-    ```
 
 ## Run accessibility tests locally
 

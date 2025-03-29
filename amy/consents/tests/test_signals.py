@@ -7,9 +7,7 @@ from consents.tests.base import ConsentTestBase
 class TestTermModel(ConsentTestBase):
     def setUp(self) -> None:
         super().setUp()
-        self.person1 = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk"
-        )
+        self.person1 = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
         self.person2 = Person.objects.create(
             personal="Ron",
             family="Weasley",
@@ -93,9 +91,7 @@ class TestTermModel(ConsentTestBase):
         self.assertIsNone(consent3.archived_at)
 
     def test_unset_consents_are_created_on_person_create_archived_term(self) -> None:
-        term1 = Term.objects.create(
-            content="term1", slug="term1", archived_at=timezone.now()
-        )
+        term1 = Term.objects.create(content="term1", slug="term1", archived_at=timezone.now())
         person3 = Person.objects.create(
             personal="Hermione",
             family="Granger",

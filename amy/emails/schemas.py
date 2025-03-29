@@ -18,9 +18,7 @@ def uri_validator(uri: str, expected_scheme: str = "https") -> str:
 # custom URI for links to individual models in API, e.g. "api:person/1234"
 ApiUri = Annotated[str, AfterValidator(partial(uri_validator, expected_scheme="api"))]
 
-ValueUri = Annotated[
-    str, AfterValidator(partial(uri_validator, expected_scheme="value"))
-]
+ValueUri = Annotated[str, AfterValidator(partial(uri_validator, expected_scheme="value"))]
 
 
 class SinglePropertyLinkModel(BaseModel):

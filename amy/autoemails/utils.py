@@ -1,9 +1,6 @@
+# flake8: noqa
 from datetime import UTC
 from typing import Union
-
-from rq.exceptions import NoSuchJobError
-from rq.job import Job
-from rq_scheduler.utils import from_unix
 
 
 def scheduled_execution_time(job_id, scheduler, naive=True):
@@ -44,7 +41,7 @@ def compare_emails(a, b):
             return False
 
 
-def check_status(job: Union[str, Job], scheduler):
+def check_status(job: Union[str, "Job"], scheduler):
     if not isinstance(job, Job):
         try:
             job = Job.fetch(job, connection=scheduler.connection)

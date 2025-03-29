@@ -22,9 +22,7 @@ from workshops.tests.base import TestBase
 
 class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -40,12 +38,8 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         self.instructor2 = Person.objects.create(
             personal="Test", family="Test", email="test2@example.org", username="test2"
         )
-        Task.objects.create(
-            event=self.event, person=self.instructor1, role=instructor_role
-        )
-        Task.objects.create(
-            event=self.event, person=self.instructor2, role=instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor1, role=instructor_role)
+        Task.objects.create(event=self.event, person=self.instructor2, role=instructor_role)
 
     def setUpEmailTemplate(self) -> EmailTemplate:
         return EmailTemplate.objects.create(
@@ -67,8 +61,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
             instructor_training_approaching_update_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping "
-                "instructor_training_approaching_update"
+                "EMAIL_MODULE feature flag not set, skipping " "instructor_training_approaching_update"
             )
 
     def test_receiver_connected_to_signal(self) -> None:
@@ -77,9 +70,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
 
         # Act
         # attempt to connect the receiver
-        instructor_training_approaching_update_signal.connect(
-            instructor_training_approaching_update_receiver
-        )
+        instructor_training_approaching_update_signal.connect(instructor_training_approaching_update_receiver)
         new_receivers = instructor_training_approaching_update_signal.receivers[:]
 
         # Assert
@@ -103,9 +94,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         )
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_updated"
-        ) as mock_messages_action_updated:
+        with patch("emails.actions.base_action.messages_action_updated") as mock_messages_action_updated:
             instructor_training_approaching_update_signal.send(
                 sender=self.event,
                 request=request,
@@ -145,9 +134,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         mock_one_month_before.return_value = scheduled_at
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.update_scheduled_email"
-        ) as mock_update_scheduled_email:
+        with patch("emails.actions.base_action.EmailController.update_scheduled_email") as mock_update_scheduled_email:
             instructor_training_approaching_update_signal.send(
                 sender=self.event,
                 request=request,
@@ -207,8 +194,7 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Scheduled email for signal {signal} and generic_relation_obj={event!r} "
-            "does not exist."
+            f"Scheduled email for signal {signal} and generic_relation_obj={event!r} " "does not exist."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
@@ -252,15 +238,12 @@ class TestInstructorTrainingApproachingUpdateReceiver(TestCase):
         # Assert
         mock_email_controller.update_scheduled_email.assert_not_called()
         mock_logger.warning.assert_called_once_with(
-            f"Too many scheduled emails for signal {signal} and "
-            f"generic_relation_obj={event!r}. Can't update them."
+            f"Too many scheduled emails for signal {signal} and " f"generic_relation_obj={event!r}. Can't update them."
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         template = self.setUpEmailTemplate()
@@ -309,9 +292,7 @@ class TestInstructorTrainingApproachingReceiverUpdateIntegration(TestBase):
             body="Hello! Nice to meet **you**.",
         )
 
-        ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         event = Event.objects.create(
             slug="2023-09-14-test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -362,9 +343,7 @@ class TestInstructorTrainingApproachingReceiverUpdateIntegration(TestBase):
         Task.objects.create(event=event, person=instructor2, role=instructor_role)
         request = RequestFactory().get("/")
 
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
             run_instructor_training_approaching_strategy(
                 instructor_training_approaching_strategy(event),
                 request,

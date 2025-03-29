@@ -1,13 +1,22 @@
-from datetime import UTC, datetime, timedelta
-from unittest.mock import MagicMock, patch
+from datetime import UTC, date, datetime, timedelta
+import tempfile
+from unittest.mock import ANY, MagicMock, patch
 
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import instructor_badge_awarded_receiver
-from emails.models import EmailTemplate, ScheduledEmail
+from emails.actions.instructor_badge_awarded import (
+    generate_and_attach_certificate_pdf,
+    generate_pdf,
+    instructor_badge_awarded_receiver,
+    read_binary_file_and_replace_values,
+)
+from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, ToHeaderModel
-from emails.signals import instructor_badge_awarded_signal
+from emails.signals import (
+    INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
+    instructor_badge_awarded_signal,
+)
 from emails.utils import api_model_url, scalar_value_url
 from workshops.models import Award, Badge, Person
 from workshops.tests.base import TestBase
@@ -40,8 +49,10 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         self.assertEqual(original_receivers, new_receivers)
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    def test_action_triggered(self) -> None:
+    @patch("emails.actions.instructor_badge_awarded.EmailController.add_attachment")
+    def test_action_triggered(self, mock_add_attachment: MagicMock) -> None:
         # Arrange
+        mock_add_attachment.return_value = None
         badge = Badge.objects.create(name="instructor")
         person = Person.objects.create(email="test@example.org")
         award = Award.objects.create(badge=badge, person=person)
@@ -57,9 +68,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         request = RequestFactory().get("/")
 
         # Act
-        with patch(
-            "emails.actions.base_action.messages_action_scheduled"
-        ) as mock_messages_action_scheduled:
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_messages_action_scheduled:
             instructor_badge_awarded_signal.send(
                 sender=award,
                 request=request,
@@ -94,9 +103,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
         scheduled_at = NOW + timedelta(hours=1)
 
         # Act
-        with patch(
-            "emails.actions.base_action.EmailController.schedule_email"
-        ) as mock_schedule_email:
+        with patch("emails.actions.base_action.EmailController.schedule_email") as mock_schedule_email:
             instructor_badge_awarded_signal.send(
                 sender=award,
                 request=request,
@@ -111,7 +118,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
                 {
                     "person": api_model_url("person", person.pk),
                     "award": api_model_url("award", award.pk),
-                    "award_id": scalar_value_url("int", award.pk),
+                    "award_id": scalar_value_url("int", str(award.pk)),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -130,9 +137,7 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     @patch("emails.actions.base_action.messages_missing_recipients")
-    def test_missing_recipients(
-        self, mock_messages_missing_recipients: MagicMock
-    ) -> None:
+    def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
         badge = Badge.objects.create(name="instructor")
         person = Person.objects.create()  # no email will cause missing recipients error
@@ -175,8 +180,10 @@ class TestInstructorBadgeAwardedReceiver(TestCase):
 
 class TestInstructorBadgeAwardedReceiverIntegration(TestBase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
-    def test_integration(self) -> None:
+    @patch("emails.actions.instructor_badge_awarded.EmailController.add_attachment")
+    def test_integration(self, mock_add_attachment: MagicMock) -> None:
         # Arrange
+        mock_add_attachment.return_value = None
         self._setUpUsersAndLogin()
         badge = Badge.objects.get(name="instructor")
         person = Person.objects.create(
@@ -220,3 +227,100 @@ class TestInstructorBadgeAwardedReceiverIntegration(TestBase):
         # Assert
         self.assertEqual(rv.status_code, 302)
         ScheduledEmail.objects.get(template=template)
+
+
+class TestInstructorBadgeAwardedCertificates(TestCase):
+    def test_read_binary_file_and_replace_values(self) -> None:
+        # Arrange
+        with tempfile.NamedTemporaryFile(delete_on_close=False) as fp:
+            fp.write(b"<h1>Hello, {{personal}} {{family}}</h1>")
+            fp.close()
+
+            # Act
+            result = read_binary_file_and_replace_values(
+                fp.name,
+                {
+                    b"{{personal}}": b"John",
+                    b"{{family}}": b"Smith",
+                },
+            )
+
+        # Assert
+        self.assertEqual(result, b"<h1>Hello, John Smith</h1>")
+
+    @patch("emails.actions.instructor_badge_awarded.cairosvg.svg2pdf")
+    def test_generate_certificate(self, mock_svg2pdf: MagicMock) -> None:
+        # Arrange
+        svg_file = b"Test file"
+        # Act
+        generate_pdf(svg_file)
+        # Assert
+        mock_svg2pdf.assert_called_once_with(svg_file, write_to=ANY, dpi=90)
+
+    @patch("emails.actions.instructor_badge_awarded.logger")
+    def test_generate_and_attach_certificate_pdf__no_sender(self, mock_logger: MagicMock) -> None:
+        # Arrange
+        sender = None
+        # Act
+        generate_and_attach_certificate_pdf(sender)
+        # Assert - No action happens
+        mock_logger.error.assert_called_once_with(
+            "Failed to generate and attach certificate: sender is not a ScheduledEmail (it's None)"
+        )
+
+    @patch("emails.actions.instructor_badge_awarded.logger")
+    def test_generate_and_attach_certificate_pdf__generic_relation_not_award(self, mock_logger: MagicMock) -> None:
+        # Arrange
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        sender = ScheduledEmail.objects.create(
+            template=template,
+            scheduled_at=datetime.now(UTC),
+            to_header=[],
+            cc_header=[],
+            bcc_header=[],
+            state=ScheduledEmailStatus.SCHEDULED,
+            generic_relation=None,
+        )
+        # Act
+        generate_and_attach_certificate_pdf(sender)
+        # Assert - No action happens
+        mock_logger.error.assert_called_once_with(
+            "Failed to generate and attach certificate: related object is not an Award (it's None)"
+        )
+
+    @patch("emails.actions.instructor_badge_awarded.EmailController.add_attachment")
+    def test_generate_and_attach_certificate_pdf(self, mock_add_attachment: MagicMock) -> None:
+        # Arrange
+        self.badge = Badge.objects.create(name="instructor")
+        self.person = Person.objects.create(personal="John", family="Smith", email="test@example.org")
+        award = Award.objects.create(badge=self.badge, person=self.person, awarded=date(2025, 3, 10))
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings {{ name }}",
+            body="Hello, {{ name }}! Nice to meet **you**.",
+        )
+        sender = ScheduledEmail.objects.create(
+            template=template,
+            scheduled_at=datetime.now(UTC),
+            to_header=[],
+            cc_header=[],
+            bcc_header=[],
+            state=ScheduledEmailStatus.SCHEDULED,
+            generic_relation=award,
+        )
+        # Act
+        generate_and_attach_certificate_pdf(sender)
+        # Assert
+        mock_add_attachment.assert_called_once_with(sender, filename="certificate.pdf", content=ANY)

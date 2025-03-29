@@ -1,9 +1,9 @@
 from datetime import datetime
 import logging
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
-from typing_extensions import Unpack
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
@@ -33,13 +33,13 @@ from workshops.models import Membership
 logger = logging.getLogger("amy")
 
 MEMBERSHIP_TASK_ROLES_EXPECTED = ["billing_contact", "programmatic_contact"]
-MEMBERSHIP_ACCEPTABLE_VARIANTS = ["bronze", "silver", "gold", "platinum"]
+MEMBERSHIP_ACCEPTABLE_VARIANTS = ["bronze", "silver", "gold", "platinum", "titanium"]
 
 
 def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     logger.info(f"Running NewMembershipOnboarding strategy for {membership}")
 
-    ct = ContentType.objects.get_for_model(membership)  # type: ignore
+    ct = ContentType.objects.get_for_model(membership)
     email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=membership.pk,
@@ -49,6 +49,20 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
         membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
     ).count()
     membership_acceptable_variant = membership.variant in MEMBERSHIP_ACCEPTABLE_VARIANTS
+    titanium_variant = membership.variant == "titanium"
+    condition_for_titanium = (
+        not titanium_variant
+        or titanium_variant
+        and any(
+            [
+                membership.workshops_without_admin_fee_per_agreement,
+                membership.public_instructor_training_seats,
+                membership.additional_public_instructor_training_seats,
+                membership.inhouse_instructor_training_seats,
+                membership.additional_inhouse_instructor_training_seats,
+            ]
+        )
+    )
 
     log_condition_elements(
         **{
@@ -56,6 +70,8 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
             "task_count": task_count,
             "membership.variant": membership.variant,
             "membership_acceptable_variant": membership_acceptable_variant,
+            "titanium_variant": titanium_variant,
+            "condition_for_titanium": condition_for_titanium,
         }
     )
 
@@ -63,9 +79,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     # email would be de-scheduled.
     # UPDATE 2025-02-15 (#2761):
     #      We're allowing scheduling only for bronze, silver, gold or platinum variants.
-    email_should_exist = bool(
-        membership.pk and task_count and membership_acceptable_variant
-    )
+    email_should_exist = bool(membership.pk and task_count and membership_acceptable_variant and condition_for_titanium)
 
     if not email_exists and email_should_exist:
         result = StrategyEnum.CREATE
@@ -76,12 +90,12 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
     else:
         result = StrategyEnum.NOOP
 
-    logger.debug(f"NewMembershipOnboarding strategy {result = }")
+    logger.debug(f"NewMembershipOnboarding strategy {result=}")
     return result
 
 
 def run_new_membership_onboarding_strategy(
-    strategy: StrategyEnum, request: HttpRequest, membership: Membership, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, membership: Membership, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: new_membership_onboarding_signal,
@@ -100,9 +114,7 @@ def run_new_membership_onboarding_strategy(
 
 
 def get_scheduled_at(**kwargs: Unpack[NewMembershipOnboardingKwargs]) -> datetime:
-    return max(
-        one_month_before(kwargs["membership"].agreement_start), immediate_action()
-    )
+    return max(one_month_before(kwargs["membership"].agreement_start), immediate_action())
 
 
 def get_context(
@@ -157,23 +169,19 @@ def get_recipients_context_json(
             {
                 "api_uri": api_model_url("person", task.person.pk),
                 "property": "email",
-            }
+            }  # type: ignore
             for task in tasks
-        ],  # type: ignore
+        ],
     )
 
 
 class NewMembershipOnboardingReceiver(BaseAction):
     signal = new_membership_onboarding_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> NewMembershipOnboardingContext:
+    def get_context(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
@@ -204,14 +212,10 @@ class NewMembershipOnboardingReceiver(BaseAction):
 class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
     signal = new_membership_onboarding_update_signal.signal_name
 
-    def get_scheduled_at(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> datetime:
+    def get_scheduled_at(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> datetime:
         return get_scheduled_at(**kwargs)
 
-    def get_context(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> NewMembershipOnboardingContext:
+    def get_context(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
@@ -242,9 +246,7 @@ class NewMembershipOnboardingUpdateReceiver(BaseActionUpdate):
 class NewMembershipOnboardingCancelReceiver(BaseActionCancel):
     signal = new_membership_onboarding_cancel_signal.signal_name
 
-    def get_context(
-        self, **kwargs: Unpack[NewMembershipOnboardingKwargs]
-    ) -> NewMembershipOnboardingContext:
+    def get_context(self, **kwargs: Unpack[NewMembershipOnboardingKwargs]) -> NewMembershipOnboardingContext:
         return get_context(**kwargs)
 
     def get_context_json(self, context: NewMembershipOnboardingContext) -> ContextModel:
@@ -273,12 +275,8 @@ new_membership_onboarding_signal.connect(new_membership_onboarding_receiver)
 
 
 new_membership_onboarding_update_receiver = NewMembershipOnboardingUpdateReceiver()
-new_membership_onboarding_update_signal.connect(
-    new_membership_onboarding_update_receiver
-)
+new_membership_onboarding_update_signal.connect(new_membership_onboarding_update_receiver)
 
 
 new_membership_onboarding_cancel_receiver = NewMembershipOnboardingCancelReceiver()
-new_membership_onboarding_cancel_signal.connect(
-    new_membership_onboarding_cancel_receiver
-)
+new_membership_onboarding_cancel_signal.connect(new_membership_onboarding_cancel_receiver)

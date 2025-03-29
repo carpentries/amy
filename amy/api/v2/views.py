@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.utils import timezone
 from knox.auth import TokenAuthentication
 from rest_framework import viewsets
@@ -5,10 +7,13 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from api.v2.permissions import ApiAccessPermission
 from api.v2.serializers import (
+    AttachmentPresignedUrlPayloadSerializer,
+    AttachmentSerializer,
     AwardSerializer,
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
@@ -23,7 +28,7 @@ from api.v2.serializers import (
     TrainingRequirementSerializer,
 )
 from emails.controller import EmailController
-from emails.models import ScheduledEmail, ScheduledEmailStatus
+from emails.models import Attachment, ScheduledEmail, ScheduledEmailStatus
 from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
@@ -44,7 +49,7 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 1000
 
 
-class AwardViewSet(viewsets.ReadOnlyModelViewSet):
+class AwardViewSet(viewsets.ReadOnlyModelViewSet[Award]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -53,16 +58,12 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Award.objects.select_related("person", "badge", "event", "awarded_by")
-        .order_by("pk")
-        .all()
-    )
+    queryset = Award.objects.select_related("person", "badge", "event", "awarded_by").order_by("pk").all()
     serializer_class = AwardSerializer
     pagination_class = StandardResultsSetPagination
 
 
-class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
+class OrganizationViewSet(viewsets.ReadOnlyModelViewSet[Organization]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -71,16 +72,12 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Organization.objects.prefetch_related("affiliated_organizations")
-        .order_by("pk")
-        .all()
-    )
+    queryset = Organization.objects.prefetch_related("affiliated_organizations").order_by("pk").all()
     serializer_class = OrganizationSerializer
     pagination_class = StandardResultsSetPagination
 
 
-class EventViewSet(viewsets.ReadOnlyModelViewSet):
+class EventViewSet(viewsets.ReadOnlyModelViewSet[Event]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -90,9 +87,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        Event.objects.select_related(
-            "host", "sponsor", "membership", "administrator", "language", "assigned_to"
-        )
+        Event.objects.select_related("host", "sponsor", "membership", "administrator", "language", "assigned_to")
         .prefetch_related("tags", "curricula", "lessons")
         .order_by("pk")
         .all()
@@ -101,7 +96,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
+class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet[InstructorRecruitmentSignup]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -111,9 +106,7 @@ class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        InstructorRecruitmentSignup.objects.select_related(
-            "recruitment", "recruitment__event", "person"
-        )
+        InstructorRecruitmentSignup.objects.select_related("recruitment", "recruitment__event", "person")
         .order_by("pk")
         .all()
     )
@@ -121,7 +114,7 @@ class InstructorRecruitmentSignupViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class MembershipViewSet(viewsets.ReadOnlyModelViewSet):
+class MembershipViewSet(viewsets.ReadOnlyModelViewSet[Membership]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -130,16 +123,12 @@ class MembershipViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Membership.objects.prefetch_related("organizations", "persons")
-        .order_by("pk")
-        .all()
-    )
+    queryset = Membership.objects.prefetch_related("organizations", "persons").order_by("pk").all()
     serializer_class = MembershipSerializer
     pagination_class = StandardResultsSetPagination
 
 
-class PersonViewSet(viewsets.ReadOnlyModelViewSet):
+class PersonViewSet(viewsets.ReadOnlyModelViewSet[Person]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -153,7 +142,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
+class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet[ScheduledEmail]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -163,17 +152,13 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        ScheduledEmail.objects.select_related(
-            "template", "generic_relation_content_type"
-        )
-        .order_by("created_at")
-        .all()
+        ScheduledEmail.objects.select_related("template", "generic_relation_content_type").order_by("created_at").all()
     )
     serializer_class = ScheduledEmailSerializer
     pagination_class = StandardResultsSetPagination
 
     @action(detail=False)
-    def scheduled_to_run(self, request):
+    def scheduled_to_run(self, request: Request) -> Response:
         now = timezone.now()
         scheduled_emails = ScheduledEmail.objects.filter(
             state__in=[ScheduledEmailStatus.SCHEDULED, ScheduledEmailStatus.FAILED],
@@ -189,54 +174,46 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
-    def lock(self, request, pk=None):
+    def lock(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
-        locked_email = EmailController.lock_email(
-            email, "State changed by worker", request.user
-        )
+        locked_email = EmailController.lock_email(email, "State changed by worker", request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def fail(self, request, pk=None):
+    def fail(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
-        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+        serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        locked_email = EmailController.fail_email(
-            email, serializer.validated_data["details"], request.user
-        )
+        locked_email = EmailController.fail_email(email, serializer.validated_data["details"], request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def succeed(self, request, pk=None):
+    def succeed(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
-        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+        serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        locked_email = EmailController.succeed_email(
-            email, serializer.validated_data["details"], request.user
-        )
+        locked_email = EmailController.succeed_email(email, serializer.validated_data["details"], request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def cancel(self, request, pk=None):
+    def cancel(self, request: Request, pk: str | None = None) -> Response:
         email = self.get_object()
-        serializer = ScheduledEmailLogDetailsSerializer(data=request.data)
+        serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
-        locked_email = EmailController.cancel_email(
-            email, serializer.validated_data["details"], request.user
-        )
+        locked_email = EmailController.cancel_email(email, serializer.validated_data["details"], request.user)
         return Response(self.get_serializer(locked_email).data)
 
 
-class TaskViewSet(viewsets.ReadOnlyModelViewSet):
+class AttachmentViewSet(viewsets.ReadOnlyModelViewSet[Attachment]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -245,16 +222,40 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = (
-        Task.objects.select_related("person", "event", "role", "seat_membership")
-        .order_by("pk")
-        .all()
+    queryset = Attachment.objects.order_by("created_at").all()
+    serializer_class = AttachmentSerializer
+    pagination_class = StandardResultsSetPagination
+
+    @action(detail=True, methods=["post"])
+    def generate_presigned_url(self, request: Request, pk: str | None = None) -> Response:
+        serializer = AttachmentPresignedUrlPayloadSerializer[dict[str, Any]](data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        attachment = self.get_object()
+        attachment_with_presigned_url = EmailController.generate_presigned_url_for_attachment(
+            attachment,
+            expiration_seconds=serializer.validated_data["expiration_seconds"],
+        )
+        return Response(self.get_serializer(attachment_with_presigned_url).data)
+
+
+class TaskViewSet(viewsets.ReadOnlyModelViewSet[Task]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
     )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = Task.objects.select_related("person", "event", "role", "seat_membership").order_by("pk").all()
     serializer_class = TaskSerializer
     pagination_class = StandardResultsSetPagination
 
 
-class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
+class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet[TrainingProgress]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -264,9 +265,7 @@ class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
         ApiAccessPermission,
     )
     queryset = (
-        TrainingProgress.objects.select_related(
-            "trainee", "requirement", "involvement_type", "event"
-        )
+        TrainingProgress.objects.select_related("trainee", "requirement", "involvement_type", "event")
         .order_by("pk")
         .all()
     )
@@ -274,7 +273,7 @@ class TrainingProgressViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet):
+class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet[TrainingRequirement]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,
@@ -288,7 +287,7 @@ class TrainingRequirementViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StandardResultsSetPagination
 
 
-class SelfOrganisedSubmissionViewSet(viewsets.ReadOnlyModelViewSet):
+class SelfOrganisedSubmissionViewSet(viewsets.ReadOnlyModelViewSet[SelfOrganisedSubmission]):
     authentication_classes = (
         TokenAuthentication,
         SessionAuthentication,

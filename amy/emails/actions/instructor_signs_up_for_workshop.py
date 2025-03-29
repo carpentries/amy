@@ -1,6 +1,5 @@
 from datetime import datetime
-
-from typing_extensions import Unpack
+from typing import Unpack
 
 from emails.actions.base_action import BaseAction
 from emails.schemas import ContextModel, ToHeaderModel
@@ -17,9 +16,7 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
     def get_scheduled_at(self, **kwargs: Unpack[InstructorSignupKwargs]) -> datetime:
         return immediate_action()
 
-    def get_context(
-        self, **kwargs: Unpack[InstructorSignupKwargs]
-    ) -> InstructorSignupContext:
+    def get_context(self, **kwargs: Unpack[InstructorSignupKwargs]) -> InstructorSignupContext:
         person = Person.objects.get(pk=kwargs["person_id"])
         event = Event.objects.get(pk=kwargs["event_id"])
         instructor_recruitment_signup = InstructorRecruitmentSignup.objects.get(
@@ -48,9 +45,7 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
     ) -> InstructorRecruitmentSignup:
         return context["instructor_recruitment_signup"]
 
-    def get_recipients(
-        self, context: InstructorSignupContext, **kwargs: Unpack[InstructorSignupKwargs]
-    ) -> list[str]:
+    def get_recipients(self, context: InstructorSignupContext, **kwargs: Unpack[InstructorSignupKwargs]) -> list[str]:
         person = context["person"]
         return [person.email] if person.email else []
 
@@ -68,6 +63,4 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
 
 
 instructor_signs_up_for_workshop_receiver = InstructorSignsUpForWorkshopReceiver()
-instructor_signs_up_for_workshop_signal.connect(
-    instructor_signs_up_for_workshop_receiver
-)
+instructor_signs_up_for_workshop_signal.connect(instructor_signs_up_for_workshop_receiver)

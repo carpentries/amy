@@ -16,9 +16,7 @@ from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 class TestRecruitHelpersStrategy(TestCase):
     def setUp(self) -> None:
-        self.ttt_organization = Organization.objects.create(
-            domain="carpentries.org", fullname="Instructor Training"
-        )
+        self.ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
         self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.create(domain="example.com", fullname="Example"),
@@ -33,19 +31,13 @@ class TestRecruitHelpersStrategy(TestCase):
             personal="Test", family="Test", email="test1@example.org", username="test1"
         )
         self.host_role = Role.objects.create(name="host")
-        self.host = Person.objects.create(
-            personal="Test", family="Test", email="test2@example.org", username="test2"
-        )
+        self.host = Person.objects.create(personal="Test", family="Test", email="test2@example.org", username="test2")
         self.helper_role = Role.objects.create(name="helper")
-        self.helper = Person.objects.create(
-            personal="Test", family="Test", email="test3@example.org", username="test3"
-        )
+        self.helper = Person.objects.create(personal="Test", family="Test", email="test3@example.org", username="test3")
 
     def test_strategy_create(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor, role=self.instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
 
         # Act
@@ -56,9 +48,7 @@ class TestRecruitHelpersStrategy(TestCase):
 
     def test_strategy_update(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor, role=self.instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
         template = EmailTemplate.objects.create(
             name="Test Email Template",
@@ -87,9 +77,7 @@ class TestRecruitHelpersStrategy(TestCase):
 
     def test_strategy_remove(self) -> None:
         # Arrange
-        Task.objects.create(
-            event=self.event, person=self.instructor, role=self.instructor_role
-        )
+        Task.objects.create(event=self.event, person=self.instructor, role=self.instructor_role)
         Task.objects.create(event=self.event, person=self.host, role=self.host_role)
 
         # Helper Task purposedly created
@@ -214,9 +202,7 @@ class TestRunRecruitHelpersStrategy(TestCase):
         mock_recruit_helpers_signal.send.assert_not_called()
         mock_recruit_helpers_update_signal.send.assert_not_called()
         mock_recruit_helpers_cancel_signal.send.assert_not_called()
-        mock_logger.debug.assert_called_once_with(
-            f"Strategy {strategy} for {event} is a no-op"
-        )
+        mock_logger.debug.assert_called_once_with(f"Strategy {strategy} for {event} is a no-op")
 
     def test_invalid_strategy(self) -> None:
         # Arrange
@@ -225,7 +211,5 @@ class TestRunRecruitHelpersStrategy(TestCase):
         event = Event(start=datetime.today())
 
         # Act & Assert
-        with self.assertRaises(
-            EmailStrategyException, msg=f"Unknown strategy {strategy}"
-        ):
+        with self.assertRaises(EmailStrategyException, msg=f"Unknown strategy {strategy}"):
             run_recruit_helpers_strategy(strategy, request, event)
