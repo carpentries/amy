@@ -12,7 +12,7 @@ ViewFunction = Callable[..., HttpResponseBase]
 
 
 def access_control_decorator(
-    decorator: Callable[[ViewFunction], ViewFunction]
+    decorator: Callable[[ViewFunction], ViewFunction],
 ) -> Callable[[ViewFunction], ViewFunction]:
     """Every function-based view should be decorated with one of access control
     decorators, even if the view is accessible to everyone, including
