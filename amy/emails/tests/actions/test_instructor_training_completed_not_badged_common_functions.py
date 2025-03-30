@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
@@ -36,6 +36,7 @@ class TestInstructorTrainingCompletedNotBadgedCommonFunctions(TestCase):
             "not_passed_requirements": [self.progresses[1], self.progresses[2]],
             "not_graded_requirements": [self.requirements[3]],
             "training_completed_date": training_completed_date,
+            "certification_deadline": training_completed_date + timedelta(days=3 * 30),
         }
 
     @patch("emails.utils.datetime", wraps=datetime)
@@ -79,6 +80,7 @@ class TestInstructorTrainingCompletedNotBadgedCommonFunctions(TestCase):
                 "not_passed_requirements": [self.progresses[1], self.progresses[2]],
                 "not_graded_requirements": [self.requirements[3]],
                 "training_completed_date": training_completed_date,
+                "certification_deadline": training_completed_date + timedelta(days=3 * 30),
             },
         )
 
