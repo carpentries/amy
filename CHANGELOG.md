@@ -13,6 +13,12 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.7.1 - 2025-03-30
+
+### Features
+* [Emails] Add variable "certification_deadline" to email Instructor Training completed but not yet badged - [#2789](https://github.com/carpentries/amy/pull/2789) by @pbanaszkiewicz
+
+
 ## v4.7 - 2025-03-29
 
 ### Features
