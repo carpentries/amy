@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import logging
 from typing import Any, Unpack
 
@@ -164,12 +164,17 @@ def get_context(
     )
     training_completed_date = kwargs["training_completed_date"]
 
+    # Certification deadline is defined as training completion date + 3 months
+    # https://github.com/carpentries/amy/issues/2786
+    certification_deadline = training_completed_date + timedelta(days=3 * 30)
+
     return {
         "person": person,
         "passed_requirements": passed_requirements,
         "not_passed_requirements": not_passed_requirements,
         "not_graded_requirements": not_graded_requirements,
         "training_completed_date": training_completed_date,
+        "certification_deadline": certification_deadline,
     }
 
 
@@ -191,6 +196,7 @@ def get_context_json(
                 for requirement in context["not_graded_requirements"]
             ],
             "training_completed_date": scalar_value_url("date", context["training_completed_date"].isoformat()),
+            "certification_deadline": scalar_value_url("date", context["certification_deadline"].isoformat()),
         },
     )
 
