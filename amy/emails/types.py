@@ -134,6 +134,7 @@ class InstructorTrainingCompletedNotBadgedContext(TypedDict):
     not_passed_requirements: list[TrainingProgress]
     not_graded_requirements: list[TrainingRequirement]
     training_completed_date: date
+    certification_deadline: date
 
 
 class NewMembershipOnboardingKwargs(TypedDict):
