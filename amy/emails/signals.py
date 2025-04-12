@@ -14,6 +14,7 @@ from emails.types import (
     InstructorTaskCreatedForWorkshopContext,
     InstructorTrainingApproachingContext,
     InstructorTrainingCompletedNotBadgedContext,
+    MembershipQuarterlyContext,
     NewMembershipOnboardingContext,
     NewSelfOrganisedWorkshopContext,
     PersonsMergedContext,
@@ -38,6 +39,9 @@ class SignalNameEnum(StrEnum):
     post_workshop_7days = "post_workshop_7days"
     new_self_organised_workshop = "new_self_organised_workshop"
     ask_for_website = "ask_for_website"
+    membership_quarterly_3_months = "membership_quarterly_3_months"
+    membership_quarterly_6_months = "membership_quarterly_6_months"
+    membership_quarterly_9_months = "membership_quarterly_9_months"
 
     @staticmethod
     def choices() -> list[tuple[str, str]]:
@@ -167,6 +171,27 @@ ASK_FOR_WEBSITE_SIGNAL_NAME = "ask_for_website"
     ask_for_website_update_signal,
     ask_for_website_cancel_signal,
 ) = triple_signals(ASK_FOR_WEBSITE_SIGNAL_NAME, AskForWebsiteContext)
+
+MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME = "membership_quarterly_3_months"
+(
+    membership_quarterly_3_months_signal,
+    membership_quarterly_3_months_update_signal,
+    membership_quarterly_3_months_cancel_signal,
+) = triple_signals(MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME, MembershipQuarterlyContext)
+
+MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME = "membership_quarterly_6_months"
+(
+    membership_quarterly_6_months_signal,
+    membership_quarterly_6_months_update_signal,
+    membership_quarterly_6_months_cancel_signal,
+) = triple_signals(MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME, MembershipQuarterlyContext)
+
+MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME = "membership_quarterly_9_months"
+(
+    membership_quarterly_9_months_signal,
+    membership_quarterly_9_months_update_signal,
+    membership_quarterly_9_months_cancel_signal,
+) = triple_signals(MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME, MembershipQuarterlyContext)
 
 ALL_SIGNALS = [item for item in locals().values() if isinstance(item, Signal)]
 

@@ -207,6 +207,15 @@ class AskForWebsiteKwargs(TypedDict):
     event_start_date: date
 
 
+class MembershipQuarterlyKwargs(TypedDict):
+    request: HttpRequest
+    membership: Membership
+
+
+class MembershipQuarterlyContext(TypedDict):
+    membership: Membership
+
+
 class StrategyEnum(StrEnum):
     CREATE = "create"
     UPDATE = "update"
