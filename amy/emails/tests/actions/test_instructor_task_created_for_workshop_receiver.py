@@ -8,7 +8,7 @@ from emails.actions.instructor_task_created_for_workshop import (
     instructor_task_created_for_workshop_receiver,
 )
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
     instructor_task_created_for_workshop_signal,
@@ -47,7 +47,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create(email="test@example.org")
         instructor_role = Role.objects.create(name="instructor")
@@ -91,7 +91,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
         mock_messages_action_scheduled: MagicMock,
     ) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create(email="test@example.org")
         instructor_role = Role.objects.create(name="instructor")
@@ -128,10 +128,10 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
             to_header=[person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", person.pk),
-                        "property": "email",
-                    }  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", person.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=task,
@@ -142,7 +142,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_recipients")
     def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create()  # no email will cause missing recipients error
         instructor_role = Role.objects.create(name="instructor")
@@ -166,7 +166,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_template")
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         person = Person.objects.create(email="test@example.org")
         instructor_role = Role.objects.create(name="instructor")

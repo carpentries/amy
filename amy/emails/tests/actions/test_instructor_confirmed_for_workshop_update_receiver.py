@@ -16,7 +16,7 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_CONFIRMED_FOR_WORKSHOP_SIGNAL_NAME,
     instructor_confirmed_for_workshop_update_signal,
@@ -47,7 +47,7 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -154,10 +154,10 @@ class TestInstructorConfirmedForWorkshopUpdateReceiver(TestCase):
             to_header=[self.person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", self.person.pk),
-                        "property": "email",
-                    },  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.person.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=self.signup,
@@ -284,7 +284,7 @@ class TestInstructorConfirmedForWorkshopUpdateIntegration(TestBase):
         self._setUpAdministrators()
         self._setUpUsersAndLogin()
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create_user(  # type: ignore
+        person = Person.objects.create_user(
             username="test_test",
             personal="Test",
             family="User",

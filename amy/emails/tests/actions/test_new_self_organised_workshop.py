@@ -4,10 +4,12 @@ from unittest.mock import MagicMock, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import new_self_organised_workshop_receiver
-from emails.actions.new_self_organised_workshop import new_self_organised_workshop_check
+from emails.actions.new_self_organised_workshop import (
+    new_self_organised_workshop_check,
+    new_self_organised_workshop_receiver,
+)
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import new_self_organised_workshop_signal
 from emails.utils import api_model_url, scalar_value_none, scalar_value_url
 from extrequests.models import SelfOrganisedSubmission
@@ -65,7 +67,7 @@ class TestNewSelfOrganisedWorkshopCheck(TestCase):
             start=self.event_start,
         )
         event.tags.add(self.swc_tag)
-        self.submission.event = event  # type: ignore
+        self.submission.event = event
         self.submission.save()
 
         # Act
@@ -104,7 +106,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",
@@ -158,7 +160,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
         # Arrange
         NOW = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
         mock_immediate_action.return_value = NOW + timedelta(hours=1)
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",
@@ -192,10 +194,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
             context_json=ContextModel(
                 {
                     "assignee": scalar_value_none(),
-                    "workshop_host": api_model_url(
-                        "organization",
-                        organization.pk,  # type: ignore
-                    ),
+                    "workshop_host": api_model_url("organization", organization.pk),
                     "event": api_model_url("event", event.pk),
                     "short_notice": scalar_value_url("bool", "False"),
                     "self_organised_submission": api_model_url("selforganisedsubmission", submission.pk),
@@ -205,10 +204,10 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
             to_header=[submission.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("selforganisedsubmission", submission.pk),
-                        "property": "email",
-                    }  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("selforganisedsubmission", submission.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=event,
@@ -219,7 +218,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_recipients")
     def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",
@@ -252,7 +251,7 @@ class TestNewSelfOrganisedWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_template")
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         submission = SelfOrganisedSubmission.objects.create(
             state="p",

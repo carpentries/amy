@@ -4,13 +4,13 @@ from unittest.mock import MagicMock, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import recruit_helpers_update_receiver
 from emails.actions.recruit_helpers import (
     recruit_helpers_strategy,
+    recruit_helpers_update_receiver,
     run_recruit_helpers_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import RECRUIT_HELPERS_SIGNAL_NAME, recruit_helpers_update_signal
 from emails.utils import api_model_url, scalar_value_none
 from workshops.models import Event, Organization, Person, Role, Tag, Task
@@ -49,7 +49,7 @@ class TestRecruitHelpersUpdateReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -153,15 +153,15 @@ class TestRecruitHelpersUpdateReceiver(TestCase):
             to_header=[self.instructor.email, self.host.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", self.instructor.pk),
-                        "property": "email",
-                    },
-                    {
-                        "api_uri": api_model_url("person", self.host.pk),
-                        "property": "email",
-                    },
-                ]  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.instructor.pk),
+                        property="email",
+                    ),
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.host.pk),
+                        property="email",
+                    ),
+                ]
             ),
             generic_relation_obj=self.event,
             author=None,

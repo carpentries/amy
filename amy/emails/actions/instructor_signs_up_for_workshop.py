@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Unpack
 
 from emails.actions.base_action import BaseAction
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import instructor_signs_up_for_workshop_signal
 from emails.types import InstructorSignupContext, InstructorSignupKwargs
 from emails.utils import api_model_url, immediate_action
@@ -54,10 +54,10 @@ class InstructorSignsUpForWorkshopReceiver(BaseAction):
     ) -> ToHeaderModel:
         return ToHeaderModel(
             [
-                {
-                    "api_uri": api_model_url("person", context["person"].pk),
-                    "property": "email",
-                },  # type: ignore
+                SinglePropertyLinkModel(
+                    api_uri=api_model_url("person", context["person"].pk),
+                    property="email",
+                )
             ],
         )
 

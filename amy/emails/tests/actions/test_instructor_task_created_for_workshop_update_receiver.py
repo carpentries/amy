@@ -10,7 +10,7 @@ from emails.actions.instructor_task_created_for_workshop import (
     run_instructor_task_created_for_workshop_strategy,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TASK_CREATED_FOR_WORKSHOP_SIGNAL_NAME,
     instructor_task_created_for_workshop_update_signal,
@@ -41,7 +41,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -151,10 +151,10 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
             to_header=[self.person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", self.person.pk),
-                        "property": "email",
-                    },  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.person.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=task,
@@ -331,7 +331,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateIntegration(TestBase):
 
         url = reverse("person_edit", args=[instructor.pk])
         new_email = "fake_email@example.org"
-        data = PersonForm(instance=instructor).initial
+        data = dict(PersonForm(instance=instructor).initial)
         data.update({"email": new_email, "github": "", "twitter": ""})
 
         # Act

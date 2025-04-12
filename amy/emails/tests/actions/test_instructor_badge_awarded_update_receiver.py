@@ -7,7 +7,7 @@ from emails.actions.instructor_badge_awarded import (
     instructor_badge_awarded_update_receiver,
 )
 from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
     instructor_badge_awarded_update_signal,
@@ -35,7 +35,7 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -131,17 +131,17 @@ class TestInstructorBadgeAwardedUpdateReceiver(TestCase):
                 {
                     "person": api_model_url("person", self.person.pk),
                     "award": api_model_url("award", self.award.pk),
-                    "award_id": scalar_value_url("int", self.award.pk),
+                    "award_id": scalar_value_url("int", str(self.award.pk)),
                 }
             ),
             scheduled_at=scheduled_at,
             to_header=[self.person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", self.person.pk),
-                        "property": "email",
-                    },  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.person.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=self.award,

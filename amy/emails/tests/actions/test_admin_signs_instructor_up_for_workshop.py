@@ -5,9 +5,11 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
-from emails.actions import admin_signs_instructor_up_for_workshop_receiver
+from emails.actions.admin_signs_instructor_up_for_workshop import (
+    admin_signs_instructor_up_for_workshop_receiver,
+)
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import admin_signs_instructor_up_for_workshop_signal
 from emails.utils import api_model_url
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
@@ -44,7 +46,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="text@example.org")
@@ -88,7 +90,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
         mock_messages_action_scheduled: MagicMock,
     ) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="test@example.org")
@@ -125,10 +127,10 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
             to_header=[person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", person.pk),
-                        "property": "email",
-                    }  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", person.pk),
+                        property="email",
+                    )
                 ]
             ),
             generic_relation_obj=signup,
@@ -139,7 +141,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_recipients")
     def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create()  # no email will cause missing recipients error
@@ -164,7 +166,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_template")
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="test@example.org")
@@ -202,7 +204,7 @@ class TestAdminSignsInstructorUpForWorkshopReceiverIntegration(TestBase):
     ) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create_user(  # type: ignore
+        person = Person.objects.create_user(
             username="test_test",
             personal="Test",
             family="User",

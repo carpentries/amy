@@ -26,9 +26,9 @@ class TestFeatureFlagEnabled(TestCase):
     signal_name = "test_signal_name"
 
     @patch("emails.actions.base_action.logger")
-    def test_feature_flag_enabled__missing_request(self, mock_logger: MagicMock):
+    def test_feature_flag_enabled__missing_request(self, mock_logger: MagicMock) -> None:
         # Arrange
-        kwargs = {}
+        kwargs: dict[Any, Any] = {}
 
         # Act
         result = feature_flag_enabled(self.feature_flag, self.signal_name, **kwargs)
@@ -41,7 +41,7 @@ class TestFeatureFlagEnabled(TestCase):
 
     @override_settings(FLAGS={feature_flag: [("boolean", False)]})
     @patch("emails.actions.base_action.logger")
-    def test_feature_flag_enabled__feature_flag_disabled(self, mock_logger: MagicMock):
+    def test_feature_flag_enabled__feature_flag_disabled(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
 
@@ -56,7 +56,7 @@ class TestFeatureFlagEnabled(TestCase):
 
     @override_settings(FLAGS={feature_flag: [("boolean", True)]})
     @patch("emails.actions.base_action.logger")
-    def test_feature_flag_enabled(self, mock_logger: MagicMock):
+    def test_feature_flag_enabled(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
 
@@ -70,38 +70,38 @@ class TestFeatureFlagEnabled(TestCase):
 class BaseActionForTesting(BaseAction):
     signal = SignalNameEnum.persons_merged
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(self, **kwargs: Any) -> datetime:
         return datetime(2023, 10, 18, 23, 00, tzinfo=timezone.utc)
 
-    def get_context(self, **kwargs) -> dict[str, Any]:
+    def get_context(self, **kwargs: Any) -> dict[str, Any]:
         return {}
 
     def get_context_json(self, context: dict[str, Any]) -> ContextModel:
         return ContextModel({})
 
-    def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
+    def get_generic_relation_object(self, context: dict[str, Any], **kwargs: Any) -> Any:
         return 0
 
-    def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
+    def get_recipients(self, context: dict[str, Any], **kwargs: Any) -> list[str]:
         return []
 
-    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: dict[str, Any], **kwargs: Any) -> ToHeaderModel:
         return ToHeaderModel([])
 
 
 class BaseActionUpdateForTesting(BaseActionUpdate):
     signal = SignalNameEnum.persons_merged
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(self, **kwargs: Any) -> datetime:
         return datetime(2023, 10, 18, 23, 00, tzinfo=timezone.utc)
 
-    def get_context(self, **kwargs) -> dict[str, Any]:
+    def get_context(self, **kwargs: Any) -> dict[str, Any]:
         return {}
 
     def get_context_json(self, context: dict[str, Any]) -> ContextModel:
         return ContextModel({})
 
-    def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
+    def get_generic_relation_object(self, context: dict[str, Any], **kwargs: Any) -> Any:
         return Event.objects.get_or_create(
             defaults=dict(
                 host=Organization.objects.first(),
@@ -110,26 +110,26 @@ class BaseActionUpdateForTesting(BaseActionUpdate):
             slug="test-event",
         )[0]
 
-    def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
+    def get_recipients(self, context: dict[str, Any], **kwargs: Any) -> list[str]:
         return []
 
-    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: dict[str, Any], **kwargs: Any) -> ToHeaderModel:
         return ToHeaderModel([])
 
 
 class BaseActionCancelForTesting(BaseActionCancel):
     signal = SignalNameEnum.persons_merged
 
-    def get_scheduled_at(self, **kwargs) -> datetime:
+    def get_scheduled_at(self, **kwargs: Any) -> datetime:
         return datetime(2023, 10, 18, 23, 00, tzinfo=timezone.utc)
 
-    def get_context(self, **kwargs) -> dict[str, Any]:
+    def get_context(self, **kwargs: Any) -> dict[str, Any]:
         return {}
 
     def get_context_json(self, context: dict[str, Any]) -> ContextModel:
         return ContextModel({})
 
-    def get_generic_relation_object(self, context: dict[str, Any], **kwargs) -> Any:
+    def get_generic_relation_object(self, context: dict[str, Any], **kwargs: Any) -> Any:
         return Event.objects.get_or_create(
             defaults=dict(
                 host=Organization.objects.first(),
@@ -138,10 +138,10 @@ class BaseActionCancelForTesting(BaseActionCancel):
             slug="test-event",
         )[0]
 
-    def get_recipients(self, context: dict[str, Any], **kwargs) -> list[str]:
+    def get_recipients(self, context: dict[str, Any], **kwargs: Any) -> list[str]:
         return []
 
-    def get_recipients_context_json(self, context: dict[str, Any], **kwargs) -> ToHeaderModel:
+    def get_recipients_context_json(self, context: dict[str, Any], **kwargs: Any) -> ToHeaderModel:
         return ToHeaderModel([])
 
 
@@ -550,7 +550,7 @@ class TestBaseActionCancel(TestCase):
         sender = MagicMock()
         request = RequestFactory().get("/")
         kwargs = {"request": request}
-        result = instance(sender, **kwargs)
+        result = instance(sender, **kwargs)  # type: ignore[func-returns-value]
 
         # Assert
         mock_feature_flag_enabled.assert_called_once_with("EMAIL_MODULE", f"{instance.signal}_cancel", **kwargs)
