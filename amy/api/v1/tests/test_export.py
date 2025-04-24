@@ -298,6 +298,7 @@ class TestExportingPersonData(BaseExportingTest):
             "github",
             "twitter",
             "bluesky",
+            "mastodon",
             "url",
             "user_notes",
             "affiliation",
