@@ -172,6 +172,7 @@ def get_recipients_context_json(
                 property="email",
             )
             for task in tasks
+            if task.person.email
         ],
     )
 

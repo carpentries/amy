@@ -38,7 +38,7 @@ class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -46,7 +46,7 @@ class TestInstructorTaskCreatedForWorkshopCancelReceiver(TestCase):
             instructor_task_created_for_workshop_cancel_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping " "instructor_task_created_for_workshop_cancel"
+                "EMAIL_MODULE feature flag not set, skipping instructor_task_created_for_workshop_cancel"
             )
 
     def test_receiver_connected_to_signal(self) -> None:

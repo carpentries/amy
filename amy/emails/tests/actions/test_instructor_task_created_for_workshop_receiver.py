@@ -28,7 +28,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
             instructor_task_created_for_workshop_receiver(None, request=request)
             # Assert
             mock_logger.debug.assert_called_once_with(
-                "EMAIL_MODULE feature flag not set, skipping " "instructor_task_created_for_workshop"
+                "EMAIL_MODULE feature flag not set, skipping instructor_task_created_for_workshop"
             )
 
     def test_receiver_connected_to_signal(self) -> None:

@@ -412,6 +412,42 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
                     self.request,
                     f"Error when running new membership - onboarding strategy. {exc}",
                 )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    StrategyEnum.CANCEL,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running membership quarterly 3 months strategy. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    StrategyEnum.CANCEL,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running membership quarterly 6 months strategy. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    StrategyEnum.CANCEL,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running membership quarterly 9 months strategy. {exc}",
+                )
         else:
             messages.warning(
                 self.request,
