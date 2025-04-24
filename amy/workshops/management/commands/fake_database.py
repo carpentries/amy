@@ -417,6 +417,7 @@ class Command(BaseCommand):
         github = social_username
         twitter = social_username
         bluesky = f"@{social_username}.bsky.social"
+        mastodon = self.faker.url() if randbool(0.5) else ""
         url = self.faker.url() if randbool(0.5) else ""
 
         person = Person.objects.create(
@@ -428,6 +429,7 @@ class Command(BaseCommand):
             airport=airport,
             twitter=twitter,
             bluesky=bluesky,
+            mastodon=mastodon,
             github=github,
             url=url,
             username=username,
