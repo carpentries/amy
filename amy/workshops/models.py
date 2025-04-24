@@ -816,6 +816,13 @@ class Person(
         blank=True,
         verbose_name="BlueSky username",
     )
+
+    mastodon = models.URLField(
+        blank=True,
+        default="",
+        verbose_name="Mastodon profile URL",
+    )
+
     url = models.CharField(
         max_length=STR_LONG,
         blank=True,
