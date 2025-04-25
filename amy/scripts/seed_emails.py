@@ -1,5 +1,5 @@
 import logging
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 from uuid import UUID
 
 from emails.models import EmailTemplate
@@ -28,6 +28,7 @@ EmailTemplateDef = TypedDict(
         "body": str,
     },
 )
+
 
 EMAIL_TEMPLATES: list[EmailTemplateDef] = [
     EmailTemplateDef(
@@ -203,7 +204,7 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         cc_header=[],
         bcc_header=[],
         subject="Instructors for workshop at {{ event.venue }} on {{ event.start }}",
-        body=("Hey {{ host }}, this is {{ instructors.0 }} and {{ instructors.1 }} for " "event {{ event }}."),
+        body="Hey {{ host }}, this is {{ instructors.0 }} and {{ instructors.1 }} for event {{ event }}.",
     ),
     EmailTemplateDef(
         active=True,
@@ -229,8 +230,8 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         reply_to_header="",
         cc_header=[],
         bcc_header=[],
-        subject=("Completed workshop at {{ event.venue }} on {{ event.human_dates }} " "({{ event.slug }})"),
-        body=("Thank you for hosting and teaching the workshop at {{ event.venue }} " "(({{ event.slug }})!"),
+        subject="Completed workshop at {{ event.venue }} on {{ event.human_dates }} ({{ event.slug }})",
+        body="Thank you for hosting and teaching the workshop at {{ event.venue }} (({{ event.slug }})!",
     ),
     EmailTemplateDef(
         active=True,
@@ -257,19 +258,19 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         reply_to_header="",
         cc_header=[],
         bcc_header=[],
-        subject=("Workshop Website needed for workshop at {{ event.venue }} on " "{{ event.human_readable_date }}"),
+        subject="Workshop Website needed for workshop at {{ event.venue }} on {{ event.human_readable_date }}",
         body=(
-            "This is a friendly reminder to please share with me the workshop " "website once it has been completed."
+            "This is a friendly reminder to please share with me the workshop website once it has been completed."
         ),
     ),
 ]
 
 
-def email_template_transform(email_template_def: dict) -> EmailTemplate:
+def email_template_transform(email_template_def: dict[str, Any]) -> EmailTemplate:
     return EmailTemplate(**email_template_def)
 
 
 def run() -> None:
-    seed_models(EmailTemplate, EMAIL_TEMPLATES, "signal", email_template_transform, logger)
+    seed_models(EmailTemplate, cast(list[dict[str, Any]], EMAIL_TEMPLATES), "signal", email_template_transform, logger)
 
     deprecate_models(EmailTemplate, DEPRECATED_EMAIL_TEMPLATES, "id", logger)

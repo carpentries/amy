@@ -1,5 +1,5 @@
 import logging
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 from trainings.models import Involvement
 from workshops.utils.seeding import deprecate_models, seed_models
@@ -18,6 +18,7 @@ InvolvementDef = TypedDict(
         "name": str,
         "url_required": bool,
         "date_required": bool,
+        "notes_required": bool,
     },
 )
 
@@ -56,7 +57,7 @@ INVOLVEMENTS: list[InvolvementDef] = [
 
 
 def involvement_transform(
-    involvement_def: dict,
+    involvement_def: dict[str, Any],
 ) -> Involvement:
     return Involvement(**involvement_def)
 
@@ -64,7 +65,7 @@ def involvement_transform(
 def run() -> None:
     seed_models(
         Involvement,
-        INVOLVEMENTS,
+        cast(list[dict[str, Any]], INVOLVEMENTS),
         "name",
         involvement_transform,
         logger,

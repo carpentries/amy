@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, TypedDict, cast
+from typing import Any, Callable, TypedDict, cast
 
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Model
@@ -188,21 +188,21 @@ def config_transform(config_def: CommunityRoleConfigDef) -> CommunityRoleConfig:
     )
 
 
-def inactivation_transform(inactivation_def: dict) -> CommunityRoleInactivation:
+def inactivation_transform(inactivation_def: dict[str, Any]) -> CommunityRoleInactivation:
     return CommunityRoleInactivation(**inactivation_def)
 
 
 def run() -> None:
     seed_models(
         CommunityRoleConfig,
-        COMMUNITY_ROLE_CONFIGS,
+        cast(list[dict[str, Any]], COMMUNITY_ROLE_CONFIGS),
         "name",
-        cast(Callable[[dict], Model], config_transform),
+        cast(Callable[[dict[str, Any]], Model], config_transform),
         logger,
     )
     seed_models(
         CommunityRoleInactivation,
-        COMMUNITY_ROLE_INACTIVATIONS,
+        cast(list[dict[str, Any]], COMMUNITY_ROLE_INACTIVATIONS),
         "name",
         inactivation_transform,
         logger,

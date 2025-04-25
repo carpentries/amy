@@ -1,14 +1,14 @@
 from logging import Logger
-from typing import Callable, Sequence, Type, TypedDict, cast
+from typing import Any, Callable, Sequence, Type
 
 from django.db.models import Model
 
 
 def seed_models(
     model_class: Type[Model],
-    model_definition_list: Sequence[TypedDict],
+    model_definition_list: Sequence[dict[str, Any]],
     lookup_field: str,
-    model_definition_transformation: Callable[[dict], Model],
+    model_definition_transformation: Callable[[dict[str, Any]], Model],
     logger: Logger | None = None,
 ) -> None:
     def _info(msg: str) -> None:
@@ -28,7 +28,7 @@ def seed_models(
 
         _info(f"{i} {class_name} <{model_id}> doesn't exist, creating.")
         _info(f"{i} {class_name} <{model_id}> calling model definition transform.")
-        model = model_definition_transformation(cast(dict, model_definition))
+        model = model_definition_transformation(model_definition)
         model.save()
 
     _info(f"End of {class_name} seeding.")
