@@ -20,7 +20,7 @@ from emails.signals import (
 from emails.types import MembershipQuarterlyContext
 from emails.utils import api_model_url
 from fiscal.models import MembershipPersonRole, MembershipTask
-from workshops.models import Membership, Person
+from workshops.models import Event, Membership, Organization, Person, Role, Task
 
 
 class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
@@ -39,6 +39,22 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             membership=membership,
             person=person,
             role=billing_contact_role,
+        )
+
+    def set_up_event_for_membership(self, membership: Membership) -> Event:
+        return Event.objects.create(
+            slug="test-event",
+            membership=membership,
+            host=Organization.objects.all()[0],
+        )
+
+    def set_up_learner_task(self, membership: Membership, person: Person, event: Event) -> Task:
+        learner, _ = Role.objects.get_or_create(name="learner")
+        return Task.objects.create(
+            event=event,
+            seat_membership=membership,
+            person=person,
+            role=learner,
         )
 
     @patch("emails.utils.datetime", wraps=datetime)
@@ -81,25 +97,65 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
         # Arrange
         request = RequestFactory().get("/")
         membership = self.set_up_membership()
+        person = Person.objects.create(username="test1", email="test1@example.com")
+        self.set_up_membership_task(membership, person)
+        event = self.set_up_event_for_membership(membership)
+        task = self.set_up_learner_task(membership, person, event)
         # Act
         result = get_context(request=request, membership=membership)
         # Assert
-        self.assertEqual(result, {"membership": membership})
+        self.assertEqual(
+            result,
+            {
+                "membership": membership,
+                "member_contacts": [person],
+                "events": [event],
+                "trainee_tasks": [task],
+            },
+        )
 
     def test_get_context_json(self) -> None:
         # Arrange
         membership = self.set_up_membership()
-        context: MembershipQuarterlyContext = {"membership": membership}
+        person = Person.objects.create(username="test1", email="test1@example.com")
+        self.set_up_membership_task(membership, person)
+        event = self.set_up_event_for_membership(membership)
+        task = self.set_up_learner_task(membership, person, event)
+        context: MembershipQuarterlyContext = {
+            "membership": membership,
+            "member_contacts": [person],
+            "events": [event],
+            "trainee_tasks": [task],
+        }
         # Act
         result = get_context_json(context)
         # Assert
-        self.assertEqual(result, ContextModel({"membership": api_model_url("membership", membership.pk)}))
+        self.assertEqual(
+            result,
+            ContextModel(
+                {
+                    "membership": api_model_url("membership", membership.pk),
+                    "member_contacts": [api_model_url("person", person.pk)],
+                    "events": [api_model_url("event", event.pk)],
+                    "trainee_tasks": [api_model_url("task", task.pk)],
+                }
+            ),
+        )
 
     def test_get_generic_relation_object(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         membership = self.set_up_membership()
-        context: MembershipQuarterlyContext = {"membership": membership}
+        person = Person.objects.create(username="test1", email="test1@example.com")
+        self.set_up_membership_task(membership, person)
+        event = self.set_up_event_for_membership(membership)
+        task = self.set_up_learner_task(membership, person, event)
+        context: MembershipQuarterlyContext = {
+            "membership": membership,
+            "member_contacts": [person],
+            "events": [event],
+            "trainee_tasks": [task],
+        }
         # Act
         result = get_generic_relation_object(context, request=request, membership=membership)
         # Assert
@@ -113,7 +169,14 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
         person2 = Person.objects.create(username="test2")
         self.set_up_membership_task(membership, person1)
         self.set_up_membership_task(membership, person2)
-        context: MembershipQuarterlyContext = {"membership": membership}
+        event = self.set_up_event_for_membership(membership)
+        task = self.set_up_learner_task(membership, person1, event)
+        context: MembershipQuarterlyContext = {
+            "membership": membership,
+            "member_contacts": [person1, person2],
+            "events": [event],
+            "trainee_tasks": [task],
+        }
         # Act
         result = get_recipients(context, request=request, membership=membership)
         # Assert
@@ -127,7 +190,14 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
         person2 = Person.objects.create(username="test2")
         self.set_up_membership_task(membership, person1)
         self.set_up_membership_task(membership, person2)
-        context: MembershipQuarterlyContext = {"membership": membership}
+        event = self.set_up_event_for_membership(membership)
+        task = self.set_up_learner_task(membership, person1, event)
+        context: MembershipQuarterlyContext = {
+            "membership": membership,
+            "member_contacts": [person1, person2],
+            "events": [event],
+            "trainee_tasks": [task],
+        }
         # Act
         result = get_recipients_context_json(context, request=request, membership=membership)
         # Assert

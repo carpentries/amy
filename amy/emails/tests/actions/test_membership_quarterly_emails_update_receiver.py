@@ -22,7 +22,7 @@ from emails.signals import (
 )
 from emails.utils import api_model_url
 from fiscal.models import MembershipPersonRole, MembershipTask
-from workshops.models import Membership, Person
+from workshops.models import Event, Membership, Organization, Person, Role, Task
 from workshops.tests.base import TestBase
 
 
@@ -44,6 +44,18 @@ class TestMembershipQuarterlyEmailUpdateReceiver(TestCase):
             person=self.person,
             membership=self.membership,
             role=self.billing_contact_role,
+        )
+        self.event = Event.objects.create(
+            slug="test-event",
+            membership=self.membership,
+            host=Organization.objects.all()[0],
+        )
+        learner, _ = Role.objects.get_or_create(name="learner")
+        self.task = Task.objects.create(
+            event=self.event,
+            seat_membership=self.membership,
+            person=self.person,
+            role=learner,
         )
 
     def setUpEmailTemplate(self) -> EmailTemplate:
@@ -151,6 +163,9 @@ class TestMembershipQuarterlyEmailUpdateReceiver(TestCase):
             context_json=ContextModel(
                 {
                     "membership": api_model_url("membership", self.membership.pk),
+                    "member_contacts": [api_model_url("person", self.person.pk)],
+                    "events": [api_model_url("event", self.event.pk)],
+                    "trainee_tasks": [api_model_url("task", self.task.pk)],
                 }
             ),
             scheduled_at=scheduled_at,

@@ -128,9 +128,20 @@ def get_scheduled_at(signal_name: str, **kwargs: Unpack[MembershipQuarterlyKwarg
 
 def get_context(**kwargs: Unpack[MembershipQuarterlyKwargs]) -> MembershipQuarterlyContext:
     membership = kwargs["membership"]
+    contacts = [
+        task.person
+        for task in MembershipTask.objects.filter(
+            membership=membership,
+        ).select_related("person")
+    ]
+    events = list(membership.event_set.all())
+    tasks = list(membership.task_set.all())
 
     return {
         "membership": membership,
+        "member_contacts": contacts,
+        "events": events,
+        "trainee_tasks": tasks,
     }
 
 
@@ -138,6 +149,9 @@ def get_context_json(context: MembershipQuarterlyContext) -> ContextModel:
     return ContextModel(
         {
             "membership": api_model_url("membership", context["membership"].pk),
+            "member_contacts": [api_model_url("person", person.pk) for person in context["member_contacts"]],
+            "events": [api_model_url("event", event.pk) for event in context["events"]],
+            "trainee_tasks": [api_model_url("task", task.pk) for task in context["trainee_tasks"]],
         },
     )
 

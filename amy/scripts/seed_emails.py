@@ -259,9 +259,157 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
         cc_header=[],
         bcc_header=[],
         subject="Workshop Website needed for workshop at {{ event.venue }} on {{ event.human_readable_date }}",
-        body=(
-            "This is a friendly reminder to please share with me the workshop website once it has been completed."
-        ),
+        body=("This is a friendly reminder to please share with me the workshop website once it has been completed."),
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("c176fd82-67bc-4ea7-bd0f-f28a368325ae"),
+        name="Membership Quarterly Email (3 months after start)",
+        signal=SignalNameEnum.membership_quarterly_3_months,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="Membership Quarterly Email (3 months after start)",
+        body="""Dear {% for contact in members_contacts %} {{ contact.personal }},{% endfor %}
+
+You are now 3 months into your Carpentries membership which runs from {{ membership.agreement_start }}
+to {{ membership.agreement_end }}. We would like to share this update with you.
+
+{% if membership.workshops_without_admin_fee_total_allowed > 0 %}
+**Workshops**
+To date you have used {{ membership.workshops_without_admin_fee_completed +
+membership.workshops_without_admin_fee_planned }} of your
+{{ membership.workshops_without_admin_fee_total_allowed }} workshops.  You have
+{{ membership.workshops_without_admin_fee_remaining }} workshops left.
+Include other general workshops text here.
+{% endif %}
+{% if membership.workshops_without_admin_fee_completed +
+membership.workshops_without_admin_fee_planned >= 1 %}
+{% for event in events %}
+* [{{ event.slug }}]({{ event.url }})
+{% endfor %}
+{% endif %}
+
+{% if membership.public_instructor_training_seats_total + membership.inhouse_instructor_training_seats_total >= 1%}
+**Instructor Training**
+To date you have used
+{{ membership.public_instructor_training_seats_utilized + membership.inhouse_instructor_training_seats_utilized }} of
+your {{ membership.public_instructor_training_seats_total + membership.inhouse_instructor_training_seats_total }}
+instructor training seats and have
+{{ membership.public_instructor_training_seats_remaining + membership.inhouse_instructor_training_seats_remaining }}
+instructor training seats remaining.  Include other general instructor training text here.
+{% endif %}
+
+{% if membership.public_instructor_training_seats_utilized + membership.inhouse_instructor_training_seats_utilized >= 1 %}
+{% for task in trainee_tasks %}
+* {{ task.person.full_name }}
+{% endfor %}
+{% endif %}
+
+Here is a closing paragraph with other general information.  Please contact us with any questions.
+The Carpentries Membership Team
+""",  # noqa: E501
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("9876ff94-74fa-4bd8-ae47-df697c3f3826"),
+        name="Membership Quarterly Email (6 months after start)",
+        signal=SignalNameEnum.membership_quarterly_6_months,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="Membership Quarterly Email (6 months after start)",
+        body="""Dear {% for contact in members_contacts %} {{ contact.personal }},{% endfor %}
+
+You are now 6 months into your Carpentries membership which runs from {{ membership.agreement_start }}
+to {{ membership.agreement_end }}. We would like to share this update with you.
+
+{% if membership.workshops_without_admin_fee_total_allowed > 0 %}
+**Workshops**
+To date you have used {{ membership.workshops_without_admin_fee_completed +
+membership.workshops_without_admin_fee_planned }} of your
+{{ membership.workshops_without_admin_fee_total_allowed }} workshops.  You have
+{{ membership.workshops_without_admin_fee_remaining }} workshops left.
+Include other general workshops text here.
+{% endif %}
+{% if membership.workshops_without_admin_fee_completed +
+membership.workshops_without_admin_fee_planned >= 1 %}
+{% for event in events %}
+* [{{ event.slug }}]({{ event.url }})
+{% endfor %}
+{% endif %}
+
+{% if membership.public_instructor_training_seats_total + membership.inhouse_instructor_training_seats_total >= 1%}
+**Instructor Training**
+To date you have used
+{{ membership.public_instructor_training_seats_utilized + membership.inhouse_instructor_training_seats_utilized }} of
+your {{ membership.public_instructor_training_seats_total + membership.inhouse_instructor_training_seats_total }}
+instructor training seats and have
+{{ membership.public_instructor_training_seats_remaining + membership.inhouse_instructor_training_seats_remaining }}
+instructor training seats remaining.  Include other general instructor training text here.
+{% endif %}
+
+{% if membership.public_instructor_training_seats_utilized + membership.inhouse_instructor_training_seats_utilized >= 1 %}
+{% for task in trainee_tasks %}
+* {{ task.person.full_name }}
+{% endfor %}
+{% endif %}
+
+Here is a closing paragraph with other general information.  Please contact us with any questions.
+The Carpentries Membership Team
+""",  # noqa: E501
+    ),
+    EmailTemplateDef(
+        active=True,
+        id=UUID("7a943d4f-7cd1-480e-80f5-9febd25a47b5"),
+        name="Membership Quarterly Email (3 months before end)",
+        signal=SignalNameEnum.membership_quarterly_9_months,
+        from_header="workshops@carpentries.org",
+        reply_to_header="",
+        cc_header=[],
+        bcc_header=[],
+        subject="Membership Quarterly Email (3 months before end)",
+        body="""Dear {% for contact in members_contacts %} {{ contact.personal }},{% endfor %}
+
+Your Carpentries membership which runs from {{ membership.agreement_start }} to {{ membership.agreement_end }} will be
+expiring soon. Here is an update and information on how to renew.  Include general renewal information here.
+
+{% if membership.workshops_without_admin_fee_total_allowed > 0 %}
+**Workshops**
+To date you have used {{ membership.workshops_without_admin_fee_completed +
+membership.workshops_without_admin_fee_planned }} of your
+{{ membership.workshops_without_admin_fee_total_allowed }} workshops.  You have
+{{ membership.workshops_without_admin_fee_remaining }} workshops left.
+Include other general workshops text here.
+{% endif %}
+{% if membership.workshops_without_admin_fee_completed +
+membership.workshops_without_admin_fee_planned >= 1 %}
+{% for event in events %}
+* [{{ event.slug }}]({{ event.url }})
+{% endfor %}
+{% endif %}
+
+{% if membership.public_instructor_training_seats_total + membership.inhouse_instructor_training_seats_total >= 1%}
+**Instructor Training**
+To date you have used
+{{ membership.public_instructor_training_seats_utilized + membership.inhouse_instructor_training_seats_utilized }} of
+your {{ membership.public_instructor_training_seats_total + membership.inhouse_instructor_training_seats_total }}
+instructor training seats and have
+{{ membership.public_instructor_training_seats_remaining + membership.inhouse_instructor_training_seats_remaining }}
+instructor training seats remaining.  Include other general instructor training text here.
+{% endif %}
+
+{% if membership.public_instructor_training_seats_utilized + membership.inhouse_instructor_training_seats_utilized >= 1 %}
+{% for task in trainee_tasks %}
+* {{ task.person.full_name }}
+{% endfor %}
+{% endif %}
+
+Here is a closing paragraph with other general information.  Please contact us with any questions.
+The Carpentries Membership Team
+""",  # noqa: E501
     ),
 ]
 

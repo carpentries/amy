@@ -15,7 +15,7 @@ from emails.signals import (
 )
 from emails.utils import api_model_url
 from fiscal.models import MembershipPersonRole, MembershipTask
-from workshops.models import Membership, Person
+from workshops.models import Event, Membership, Organization, Person, Role, Task
 from workshops.tests.base import TestBase
 
 
@@ -119,6 +119,18 @@ class TestMembershipQuarterlyEmailReceiver(TestCase):
             membership=membership,
             role=billing_contact_role,
         )
+        event = Event.objects.create(
+            slug="test-event",
+            membership=membership,
+            host=Organization.objects.all()[0],
+        )
+        learner, _ = Role.objects.get_or_create(name="learner")
+        task = Task.objects.create(
+            event=event,
+            seat_membership=membership,
+            person=person,
+            role=learner,
+        )
         request = RequestFactory().get("/")
 
         scheduled_at = datetime(2023, 6, 1, 10, 0, 0, tzinfo=UTC)
@@ -139,6 +151,9 @@ class TestMembershipQuarterlyEmailReceiver(TestCase):
             context_json=ContextModel(
                 {
                     "membership": api_model_url("membership", membership.pk),
+                    "member_contacts": [api_model_url("person", person.pk)],
+                    "events": [api_model_url("event", event.pk)],
+                    "trainee_tasks": [api_model_url("task", task.pk)],
                 }
             ),
             scheduled_at=scheduled_at,
