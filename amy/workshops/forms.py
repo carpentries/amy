@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timezone
 import re
+from typing import Any
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Button, Div, Field, Layout, Submit
@@ -711,7 +712,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         return result
 
 
-class PersonForm(forms.ModelForm):
+class PersonForm(forms.ModelForm[Person]):
     airport = forms.ModelChoiceField(
         label="Airport",
         required=False,
@@ -761,7 +762,7 @@ class PersonForm(forms.ModelForm):
             "gender": RadioSelectWithOther("gender_other"),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # set up a layout object for the helper
@@ -774,7 +775,7 @@ class PersonForm(forms.ModelForm):
         # remove additional fields
         self.helper.layout.fields.remove("gender_other")
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 

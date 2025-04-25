@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import logging
-from typing import Unpack
+from typing import Any, Unpack
 
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest
@@ -9,7 +9,7 @@ from django.utils import timezone
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
 from emails.models import ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME,
     Signal,
@@ -68,7 +68,7 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
     )
     logger.debug(f"{email_should_exist=}")
 
-    ct = ContentType.objects.get_for_model(event)  # type: ignore
+    ct = ContentType.objects.get_for_model(event)
     email_exists = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
         generic_relation_pk=event.pk,
@@ -90,7 +90,7 @@ def host_instructors_introduction_strategy(event: Event) -> StrategyEnum:
 
 
 def run_host_instructors_introduction_strategy(
-    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs
+    strategy: StrategyEnum, request: HttpRequest, event: Event, **kwargs: Any
 ) -> None:
     signal_mapping: dict[StrategyEnum, Signal | None] = {
         StrategyEnum.CREATE: host_instructors_introduction_signal,
@@ -176,21 +176,21 @@ def get_recipients_context_json(
     return ToHeaderModel(
         (
             [
-                {
-                    "api_uri": api_model_url("person", host.pk),
-                    "property": "email",
-                }
+                SinglePropertyLinkModel(
+                    api_uri=api_model_url("person", host.pk),
+                    property="email",
+                )
             ]
             if host and host.email
             else []
         )
         + [
-            {
-                "api_uri": api_model_url("person", instructor.pk),
-                "property": "email",
-            }
+            SinglePropertyLinkModel(
+                api_uri=api_model_url("person", instructor.pk),
+                property="email",
+            )
             for instructor in context["instructors"]
-        ],  # type: ignore
+        ]
     )
 
 

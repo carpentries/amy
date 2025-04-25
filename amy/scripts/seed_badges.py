@@ -1,5 +1,5 @@
 import logging
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 from workshops.models import Badge
 from workshops.utils.seeding import deprecate_models, seed_models
@@ -81,11 +81,11 @@ BADGES: list[BadgeDef] = [
 # --------------------------------------------------------------------------------------
 
 
-def badge_transform(badge_def: dict) -> Badge:
+def badge_transform(badge_def: dict[str, Any]) -> Badge:
     return Badge(**badge_def)
 
 
 def run() -> None:
-    seed_models(Badge, BADGES, "name", badge_transform, logger)
+    seed_models(Badge, cast(list[dict[str, Any]], BADGES), "name", badge_transform, logger)
 
     deprecate_models(Badge, DEPRECATED_BADGES, "name", logger)

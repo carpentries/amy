@@ -9,7 +9,7 @@ from django.utils import timezone
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
 from emails.models import ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     ASK_FOR_WEBSITE_SIGNAL_NAME,
     Signal,
@@ -145,10 +145,10 @@ def get_recipients_context_json(
 ) -> ToHeaderModel:
     return ToHeaderModel(
         [
-            {
-                "api_uri": api_model_url("person", instructor.pk),
-                "property": "email",
-            }  # type: ignore
+            SinglePropertyLinkModel(
+                api_uri=api_model_url("person", instructor.pk),
+                property="email",
+            )
             for instructor in context["instructors"]
         ],
     )

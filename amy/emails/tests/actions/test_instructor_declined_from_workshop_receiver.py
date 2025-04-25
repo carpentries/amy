@@ -5,9 +5,11 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
-from emails.actions import instructor_declined_from_workshop_receiver
+from emails.actions.instructor_declined_from_workshop import (
+    instructor_declined_from_workshop_receiver,
+)
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_DECLINED_FROM_WORKSHOP_SIGNAL_NAME,
     instructor_declined_from_workshop_signal,
@@ -47,7 +49,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
     def test_action_triggered(self) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="test@example.org")
@@ -91,7 +93,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
         mock_messages_action_scheduled: MagicMock,
     ) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="test@example.org")
@@ -128,10 +130,10 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
             to_header=[person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", person.pk),
-                        "property": "email",
-                    }  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", person.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=signup,
@@ -142,7 +144,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_recipients")
     def test_missing_recipients(self, mock_messages_missing_recipients: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create()  # no email will cause missing recipients error
@@ -167,7 +169,7 @@ class TestInstructorDeclinedFromWorkshopReceiver(TestCase):
     @patch("emails.actions.base_action.messages_missing_template")
     def test_missing_template(self, mock_messages_missing_template: MagicMock) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=organization, administrator=organization)
         recruitment = InstructorRecruitment.objects.create(event=event, notes="Test notes")
         person = Person.objects.create(email="test@example.org")
@@ -202,7 +204,7 @@ class TestInstructorDeclinedFromWorkshopReceiverIntegration(TestBase):
         self._setUpTags()
         self._setUpAdministrators()
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create_user(  # type: ignore
+        person = Person.objects.create_user(
             username="test_test",
             personal="Test",
             family="User",

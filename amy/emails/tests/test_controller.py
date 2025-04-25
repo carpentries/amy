@@ -18,7 +18,7 @@ from emails.models import (
     ScheduledEmailLog,
     ScheduledEmailStatus,
 )
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.utils import api_model_url, scalar_value_url
 from workshops.models import Person
 
@@ -55,10 +55,10 @@ class TestEmailController(TestCase):
             to_header=["harry@potter.com"],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", self.harry.pk),
-                        "property": "email",
-                    }  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.harry.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=generic_relation_obj,
@@ -130,10 +130,10 @@ class TestEmailController(TestCase):
                 to_header=["harry@potter.com"],
                 to_header_context_json=ToHeaderModel(
                     [
-                        {
-                            "api_uri": api_model_url("person", self.harry.pk),
-                            "property": "email",
-                        }  # type: ignore
+                        SinglePropertyLinkModel(
+                            api_uri=api_model_url("person", self.harry.pk),
+                            property="email",
+                        ),
                     ]
                 ),
             )
@@ -153,10 +153,10 @@ class TestEmailController(TestCase):
                 to_header=["harry@potter.com"],
                 to_header_context_json=ToHeaderModel(
                     [
-                        {
-                            "api_uri": api_model_url("person", self.harry.pk),
-                            "property": "email",
-                        }  # type: ignore
+                        SinglePropertyLinkModel(
+                            api_uri=api_model_url("person", self.harry.pk),
+                            property="email",
+                        ),
                     ]
                 ),
             )
@@ -176,10 +176,10 @@ class TestEmailController(TestCase):
                 to_header=["harry@potter.com"],
                 to_header_context_json=ToHeaderModel(
                     [
-                        {
-                            "api_uri": api_model_url("person", self.harry.pk),
-                            "property": "email",
-                        }  # type: ignore
+                        SinglePropertyLinkModel(
+                            api_uri=api_model_url("person", self.harry.pk),
+                            property="email",
+                        ),
                     ]
                 ),
             )
@@ -266,10 +266,10 @@ class TestEmailController(TestCase):
             to_header=["james@potter.com"],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", self.harry.pk),
-                        "property": "secondary_email",
-                    }  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.harry.pk),
+                        property="secondary_email",
+                    ),
                 ]
             ),
             generic_relation_obj=None,
@@ -338,10 +338,10 @@ class TestEmailController(TestCase):
                 to_header=["james@potter.com"],
                 to_header_context_json=ToHeaderModel(
                     [
-                        {
-                            "api_uri": api_model_url("person", self.harry.pk),
-                            "property": "secondary_email",
-                        }  # type: ignore
+                        SinglePropertyLinkModel(
+                            api_uri=api_model_url("person", self.harry.pk),
+                            property="secondary_email",
+                        ),
                     ]
                 ),
                 generic_relation_obj=None,

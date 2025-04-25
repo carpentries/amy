@@ -9,7 +9,7 @@ class MembershipPersonRole(models.Model):
     name = models.CharField(max_length=40)
     verbose_name = models.CharField(max_length=100, null=False, blank=True, default="")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.verbose_name
 
 
@@ -22,5 +22,5 @@ class MembershipTask(models.Model):
         unique_together = ("membership", "person", "role")
         ordering = ("role__name", "membership")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.role} {self.person} ({self.membership})"

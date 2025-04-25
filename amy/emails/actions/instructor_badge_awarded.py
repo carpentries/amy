@@ -12,7 +12,7 @@ from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionU
 from emails.actions.base_strategy import run_strategy
 from emails.controller import EmailController
 from emails.models import ScheduledEmail, ScheduledEmailStatus
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_BADGE_AWARDED_SIGNAL_NAME,
     Signal,
@@ -147,10 +147,10 @@ def get_recipients_context_json(
 ) -> ToHeaderModel:
     return ToHeaderModel(
         [
-            {
-                "api_uri": api_model_url("person", context["person"].pk),
-                "property": "email",
-            },  # type: ignore
+            SinglePropertyLinkModel(
+                api_uri=api_model_url("person", context["person"].pk),
+                property="email",
+            )
         ],
     )
 

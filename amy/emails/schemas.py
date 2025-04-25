@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Annotated
+from typing import Annotated, Sequence
 from urllib.parse import urlparse
 
 from pydantic import AfterValidator, BaseModel, RootModel
@@ -30,6 +30,6 @@ class SingleValueLinkModel(BaseModel):
     value_uri: ValueUri
 
 
-ToHeaderModel = RootModel[list[SinglePropertyLinkModel | SingleValueLinkModel]]
+ToHeaderModel = RootModel[Sequence[SinglePropertyLinkModel | SingleValueLinkModel]]
 
 ContextModel = RootModel[dict[str, ApiUri | list[ApiUri] | ValueUri]]

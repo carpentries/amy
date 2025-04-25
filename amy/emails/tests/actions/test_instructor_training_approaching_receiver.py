@@ -4,9 +4,11 @@ from unittest.mock import MagicMock, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import instructor_training_approaching_receiver
+from emails.actions.instructor_training_approaching import (
+    instructor_training_approaching_receiver,
+)
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     INSTRUCTOR_TRAINING_APPROACHING_SIGNAL_NAME,
     instructor_training_approaching_signal,
@@ -47,7 +49,7 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
         Task.objects.create(event=self.event, person=self.instructor2, role=instructor_role)
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -132,15 +134,15 @@ class TestInstructorTrainingApproachingReceiver(TestCase):
             to_header=[self.instructor1.email, self.instructor2.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", self.instructor1.pk),
-                        "property": "email",
-                    },
-                    {
-                        "api_uri": api_model_url("person", self.instructor2.pk),
-                        "property": "email",
-                    },
-                ]  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.instructor1.pk),
+                        property="email",
+                    ),
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", self.instructor2.pk),
+                        property="email",
+                    ),
+                ]
             ),
             generic_relation_obj=self.event,
             author=None,

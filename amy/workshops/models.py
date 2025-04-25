@@ -1563,23 +1563,23 @@ class Role(models.Model):
     name = models.CharField(max_length=STR_MED)
     verbose_name = models.CharField(max_length=STR_LONG, null=False, blank=True, default="")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.verbose_name
 
 
 # ------------------------------------------------------------
 
 
-class TaskManager(models.Manager):
-    def instructors(self):
+class TaskManager(models.Manager["Task"]):
+    def instructors(self) -> QuerySet["Task"]:
         """Fetch tasks with role 'instructor'."""
         return self.get_queryset().filter(role__name="instructor")
 
-    def learners(self):
+    def learners(self) -> QuerySet["Task"]:
         """Fetch tasks with role 'learner'."""
         return self.get_queryset().filter(role__name="learner")
 
-    def helpers(self):
+    def helpers(self) -> QuerySet["Task"]:
         """Fetch tasks with role 'helper'."""
         return self.get_queryset().filter(role__name="helper")
 

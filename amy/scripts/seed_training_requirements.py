@@ -1,5 +1,5 @@
 import logging
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 from workshops.models import TrainingRequirement
 from workshops.utils.seeding import deprecate_models, seed_models
@@ -59,7 +59,7 @@ TRAINING_REQUIREMENTS: list[TrainingRequirementDef] = [
 
 
 def training_requirement_transform(
-    training_requirement_def: dict,
+    training_requirement_def: dict[str, Any],
 ) -> TrainingRequirement:
     return TrainingRequirement(**training_requirement_def)
 
@@ -67,7 +67,7 @@ def training_requirement_transform(
 def run() -> None:
     seed_models(
         TrainingRequirement,
-        TRAINING_REQUIREMENTS,
+        cast(list[dict[str, Any]], TRAINING_REQUIREMENTS),
         "name",
         training_requirement_transform,
         logger,

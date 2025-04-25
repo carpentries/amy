@@ -5,9 +5,9 @@ from urllib.parse import urlencode
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import persons_merged_receiver
+from emails.actions.persons_merged import persons_merged_receiver
 from emails.models import EmailTemplate, ScheduledEmail
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import persons_merged_signal
 from emails.utils import api_model_url
 from workshops.models import Person
@@ -105,10 +105,10 @@ class TestPersonsMergedReceiver(TestCase):
             to_header=[person.email],
             to_header_context_json=ToHeaderModel(
                 [
-                    {
-                        "api_uri": api_model_url("person", person.pk),
-                        "property": "email",
-                    }  # type: ignore
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("person", person.pk),
+                        property="email",
+                    ),
                 ]
             ),
             generic_relation_obj=person,

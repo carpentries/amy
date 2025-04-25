@@ -5,7 +5,12 @@ from typing import Unpack
 from django.utils import timezone
 
 from emails.actions.base_action import BaseAction
-from emails.schemas import ContextModel, ToHeaderModel
+from emails.schemas import (
+    ContextModel,
+    SinglePropertyLinkModel,
+    SingleValueLinkModel,
+    ToHeaderModel,
+)
 from emails.signals import new_self_organised_workshop_signal
 from emails.types import NewSelfOrganisedWorkshopContext, NewSelfOrganisedWorkshopKwargs
 from emails.utils import (
@@ -58,7 +63,7 @@ class NewSelfOrganisedWorkshopReceiver(BaseAction):
             "assignee": self_organised_submission.assigned_to or event.assigned_to or None,
             "workshop_host": event.host,
             "event": event,
-            "short_notice": bool(event.start) and event.start <= (timezone.now().date() + timedelta(days=10)),
+            "short_notice": bool(event.start and event.start <= (timezone.now().date() + timedelta(days=10))),
             "self_organised_submission": self_organised_submission,
         }
 
@@ -106,20 +111,22 @@ class NewSelfOrganisedWorkshopReceiver(BaseAction):
         return ToHeaderModel(
             (
                 [
-                    {
-                        "api_uri": api_model_url("selforganisedsubmission", self_organised_submission.pk),
-                        "property": "email",
-                    }
+                    SinglePropertyLinkModel(
+                        api_uri=api_model_url("selforganisedsubmission", self_organised_submission.pk),
+                        property="email",
+                    )
                 ]
                 if self_organised_submission.email
                 else []
             )
             + [
                 # Note: this won't update automatically
-                {"value_uri": scalar_value_url("str", email)}
+                SingleValueLinkModel(
+                    value_uri=scalar_value_url("str", email),
+                )
                 for email in self_organised_submission.additional_contact.split(TAG_SEPARATOR)
                 if email
-            ],  # type: ignore
+            ],
         )
 
 

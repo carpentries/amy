@@ -12,9 +12,18 @@ from django.views.generic import FormView
 
 from communityroles.models import CommunityRole
 from emails.actions.exceptions import EmailStrategyException
+from emails.actions.membership_quarterly_emails import (
+    membership_quarterly_email_strategy,
+    run_membership_quarterly_email_strategy,
+)
 from emails.actions.new_membership_onboarding import (
     new_membership_onboarding_strategy,
     run_new_membership_onboarding_strategy,
+)
+from emails.signals import (
+    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
 )
 from emails.types import StrategyEnum
 from extcomments.utils import add_comment_for_object
@@ -322,6 +331,54 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupp
                 f"Error when creating or updating scheduled email. {exc}",
             )
 
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    self.object,
+                ),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    self.object,
+                ),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    self.object,
+                ),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
         return result
 
 
@@ -354,6 +411,42 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
                 messages.error(
                     self.request,
                     f"Error when running new membership - onboarding strategy. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    StrategyEnum.CANCEL,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running membership quarterly 3 months strategy. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    StrategyEnum.CANCEL,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running membership quarterly 6 months strategy. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    StrategyEnum.CANCEL,  # choosing the strategy manually
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when running membership quarterly 9 months strategy. {exc}",
                 )
         else:
             messages.warning(
@@ -456,6 +549,54 @@ class MembershipTasks(
         try:
             run_new_membership_onboarding_strategy(
                 new_membership_onboarding_strategy(self.membership),
+                request=self.request,
+                membership=self.membership,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    self.membership,
+                ),
+                request=self.request,
+                membership=self.membership,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    self.membership,
+                ),
+                request=self.request,
+                membership=self.membership,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    self.membership,
+                ),
                 request=self.request,
                 membership=self.membership,
             )
@@ -621,6 +762,54 @@ class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetM
         try:
             run_new_membership_onboarding_strategy(
                 new_membership_onboarding_strategy(self.object),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    self.object,
+                ),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    self.object,
+                ),
+                request=self.request,
+                membership=self.object,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when creating or updating scheduled email. {exc}",
+            )
+
+        try:
+            run_membership_quarterly_email_strategy(
+                MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    self.object,
+                ),
                 request=self.request,
                 membership=self.object,
             )
