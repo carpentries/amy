@@ -3,7 +3,7 @@ import datetime
 from functools import partial
 import io
 import logging
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -1801,7 +1801,7 @@ class TaskDelete(
 class MockAwardCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
-    PrepopulationSupportMixin,
+    PrepopulationSupportMixin[AwardForm],
     AMYCreateView,
 ):
     permission_required = "workshops.add_award"
@@ -1809,12 +1809,12 @@ class MockAwardCreate(
     form_class = AwardForm
     populate_fields = ["badge", "person"]
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "award"})
         return kwargs
 
-    def get_initial(self, **kwargs):
+    def get_initial(self, **kwargs: Any) -> dict[str, Any]:
         initial = super().get_initial(**kwargs)
 
         # Determine initial event in AwardForm
@@ -1835,7 +1835,7 @@ class MockAwardCreate(
 
         return initial
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("badge_details", args=[self.object.badge.name])
 
     def form_valid(self, form: BaseForm) -> HttpResponse:

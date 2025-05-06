@@ -1749,10 +1749,10 @@ class Badge(models.Model):
 
     objects = Manager.from_queryset(BadgeQuerySet)()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("badge_details", args=[self.name])
 
 
@@ -1781,7 +1781,7 @@ class Award(models.Model):
         )
         ordering = ["awarded"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{0}/{1}/{2}/{3}".format(self.person, self.badge, self.awarded, self.event)
 
     def get_absolute_url(self) -> str:
