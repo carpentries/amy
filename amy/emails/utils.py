@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from functools import partial
 import logging
 from typing import Any, Callable, Iterable, Literal, TypeVar, cast
@@ -62,11 +62,26 @@ def immediate_action() -> datetime:
     return timezone.now() + timedelta(hours=1)
 
 
+def combine_date_with_set_time(date: date, time_: time) -> datetime:
+    """Return timezone-aware datetime object combining set time with a given date."""
+    if time_.tzinfo is None:
+        raise ValueError("time parameter must not be naive")
+    return datetime.combine(date, time_)
+
+
 def combine_date_with_current_utc_time(date: date) -> datetime:
     """Return timezone-aware datetime object combining current time in UTC
     with a given date."""
     current_time_utc = datetime.now(UTC).timetz()
-    return datetime.combine(date, current_time_utc)
+    return combine_date_with_set_time(date, current_time_utc)
+
+
+def shift_date_and_apply_set_time(date: date, offset: timedelta, time_: time) -> datetime:
+    """Return timezone-aware datetime object combining current time in UTC
+    with a given date shifted by offset (timedelta).
+    Time component of the offset is discarded."""
+    date_shifted = date + offset
+    return combine_date_with_set_time(date_shifted, time_)
 
 
 def shift_date_and_apply_current_utc_time(date: date, offset: timedelta) -> datetime:
