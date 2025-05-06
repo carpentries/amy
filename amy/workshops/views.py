@@ -76,6 +76,10 @@ from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
 )
+from emails.actions.instructor_training_completed_not_badged import (
+    instructor_training_completed_not_badged_strategy,
+    run_instructor_training_completed_not_badged_strategy,
+)
 from emails.actions.post_workshop_7days import (
     post_workshop_7days_strategy,
     run_post_workshop_7days_strategy,
@@ -1845,6 +1849,7 @@ class MockAwardCreate(
         # Check for CommunityRoles that should automatically be created.
         badge = self.object.badge
         person = self.object.person
+        event = self.object.event
         community_role_configs = CommunityRoleConfig.objects.filter(
             award_badge_limit=badge,
             autoassign_when_award_created=True,
@@ -1876,6 +1881,19 @@ class MockAwardCreate(
             award_id=self.object.pk,
             person_id=person.pk,
         )
+
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor training completed strategy. {exc}",
+            )
 
         return result
 
