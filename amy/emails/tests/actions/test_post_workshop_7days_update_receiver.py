@@ -378,3 +378,109 @@ class TestPostWorkshop7DaysUpdateIntegration(TestBase):
             scheduled_email.scheduled_at.date(),
             date.today() + timedelta(days=61 + 7),
         )
+
+    @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", True)]})
+    @patch("emails.actions.post_workshop_7days.timezone", wraps=datetime)
+    def test_integration_during_7_days_after_the_workshop(self, mock_timezone: MagicMock) -> None:
+        # Arrange
+        mock_timezone.now.return_value = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
+        self._setUpRoles()
+        self._setUpTags()
+        self._setUpUsersAndLogin()
+
+        template = EmailTemplate.objects.create(
+            name="Test Email Template",
+            signal=POST_WORKSHOP_7DAYS_SIGNAL_NAME,
+            from_header="workshops@carpentries.org",
+            cc_header=["team@carpentries.org"],
+            bcc_header=[],
+            subject="Greetings",
+            body="Hello! Nice to meet **you**.",
+        )
+
+        ttt_organization = Organization.objects.create(domain="carpentries.org", fullname="Instructor Training")
+        host_organization = Organization.objects.create(domain="example.com", fullname="Example")
+        event = Event.objects.create(
+            slug="2025-01-01-test-event",
+            host=host_organization,
+            administrator=ttt_organization,
+            sponsor=ttt_organization,
+            start=date(2025, 2, 1),
+            end=date(2025, 2, 2),
+        )
+        swc_tag = Tag.objects.get(name="SWC")
+        event.tags.add(swc_tag)
+
+        instructor1 = Person.objects.create(
+            personal="Kelsi",
+            middle="",
+            family="Purdy",
+            username="purdy_kelsi",
+            email="purdy.kelsi@example.com",
+            secondary_email="notused@amy.org",
+            gender="F",
+            airport=self.airport_0_0,
+            github="purdy_kelsi",
+            twitter="purdy_kelsi",
+            bluesky="@purdy_kelsi.bsky.social",
+            url="http://kelsipurdy.com/",
+            affiliation="University of Arizona",
+            occupation="TA at Biology Department",
+            orcid="0000-0000-0000",
+            is_active=True,
+        )
+        host = Person.objects.create(
+            personal="Jayden",
+            middle="",
+            family="Deckow",
+            username="deckow_jayden",
+            email="deckow.jayden@example.com",
+            secondary_email="notused@example.org",
+            gender="M",
+            airport=self.airport_0_50,
+            github="deckow_jayden",
+            twitter="deckow_jayden",
+            bluesky="@deckow_jayden.bsky.social",
+            url="http://jaydendeckow.com/",
+            affiliation="UFlo",
+            occupation="Staff",
+            orcid="0000-0000-0001",
+            is_active=True,
+        )
+        instructor_role = Role.objects.get(name="instructor")
+        Task.objects.create(event=event, person=instructor1, role=instructor_role)
+        host_role = Role.objects.get(name="host")
+        Task.objects.create(event=event, person=host, role=host_role)
+
+        request = RequestFactory().get("/")
+        with patch("emails.actions.base_action.messages_action_scheduled") as mock_action_scheduled:
+            run_post_workshop_7days_strategy(
+                post_workshop_7days_strategy(event),
+                request,
+                event,
+            )
+        scheduled_email = ScheduledEmail.objects.get(template=template)
+        scheduled_date = scheduled_email.scheduled_at
+
+        mock_timezone.now.return_value = datetime(2025, 2, 3, 12, 0, 0, tzinfo=UTC)
+        url = reverse("event_edit", args=[event.slug])
+        data = {
+            "slug": event.slug + "123",
+            "host": event.host.pk,
+            "sponsor": event.host.pk,
+            "administrator": event.administrator.pk,  # type: ignore
+            "start": event.start,
+            "end": event.end,  # no change
+            "tags": [swc_tag.pk],
+        }
+
+        # Act
+        rv = self.client.post(url, data)
+
+        # Arrange
+        mock_action_scheduled.assert_called_once()
+        self.assertEqual(rv.status_code, 302)
+        scheduled_email.refresh_from_db()
+        # Dates stay the same, and the event is not cancelled
+        self.assertEqual(scheduled_email.state, ScheduledEmailStatus.SCHEDULED)
+        self.assertEqual(scheduled_email.scheduled_at, scheduled_date)

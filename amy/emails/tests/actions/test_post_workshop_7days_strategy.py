@@ -117,7 +117,7 @@ class TestRunPostWorkshop7DaysStrategy(TestCase):
     @patch("emails.actions.post_workshop_7days.post_workshop_7days_signal")
     def test_strategy_calls_create_signal(
         self,
-        mock_post_workshop_7days_signal,
+        mock_post_workshop_7days_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
@@ -138,7 +138,7 @@ class TestRunPostWorkshop7DaysStrategy(TestCase):
     @patch("emails.actions.post_workshop_7days.post_workshop_7days_update_signal")
     def test_strategy_calls_update_signal(
         self,
-        mock_post_workshop_7days_update_signal,
+        mock_post_workshop_7days_update_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -159,7 +159,7 @@ class TestRunPostWorkshop7DaysStrategy(TestCase):
     @patch("emails.actions.post_workshop_7days.post_workshop_7days_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
-        mock_post_workshop_7days_cancel_signal,
+        mock_post_workshop_7days_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -183,10 +183,10 @@ class TestRunPostWorkshop7DaysStrategy(TestCase):
     @patch("emails.actions.post_workshop_7days.post_workshop_7days_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_post_workshop_7days_cancel_signal,
-        mock_post_workshop_7days_update_signal,
-        mock_post_workshop_7days_signal,
-        mock_logger,
+        mock_post_workshop_7days_cancel_signal: MagicMock,
+        mock_post_workshop_7days_update_signal: MagicMock,
+        mock_post_workshop_7days_signal: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP

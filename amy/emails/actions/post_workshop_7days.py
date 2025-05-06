@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 import logging
 from typing import Any, Unpack
 
@@ -22,11 +22,13 @@ from emails.utils import (
     api_model_url,
     log_condition_elements,
     scalar_value_none,
-    shift_date_and_apply_current_utc_time,
+    shift_date_and_apply_set_time,
 )
 from workshops.models import Event, Task
 
 logger = logging.getLogger("amy")
+
+WEEK_OFFSET = timedelta(days=7)
 
 
 def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
@@ -39,7 +41,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
     )
     self_organised = event.administrator and event.administrator.domain == "self-organized"
     not_cldt = event.administrator and event.administrator.domain != "carpentries.org/community-lessons/"
-    end_date_in_future = event.end and event.end >= timezone.now().date()
+    end_date_plus_7days_in_future = event.end and (event.end + WEEK_OFFSET) >= timezone.now().date()
     active = not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
     carpentries_tag = event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
     at_least_1_host = Task.objects.filter(role__name="host", event=event).count() >= 1
@@ -49,7 +51,7 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         centrally_organised=centrally_organised,
         self_organised=self_organised,
         not_cldt=not_cldt,
-        end_date_in_future=end_date_in_future,
+        end_date_in_future=end_date_plus_7days_in_future,
         active=active,
         carpentries_tag=carpentries_tag,
         at_least_1_host=at_least_1_host,
@@ -62,7 +64,10 @@ def post_workshop_7days_strategy(event: Event) -> StrategyEnum:
         #      and self-organised workshops.
         (centrally_organised or self_organised)
         and not_cldt
-        and end_date_in_future
+        # UPDATE 2025-05-06 (#2792):
+        #      Allow editing the event during 7 days after the workshop end date
+        #      instead of cancelling it.
+        and end_date_plus_7days_in_future
         and active
         and carpentries_tag
         and at_least_1_host
@@ -110,11 +115,12 @@ def run_post_workshop_7days_strategy(strategy: StrategyEnum, request: HttpReques
 
 
 def get_scheduled_at(**kwargs: Unpack[PostWorkshop7DaysKwargs]) -> datetime:
-    # Should run 7 days after the event end date OR 7 days from now, whichever is later.
+    # Should run 7 days after the event end date.
     event_end_date = kwargs["event_end_date"]
-    week_after_event = shift_date_and_apply_current_utc_time(event_end_date, offset=timedelta(days=7))
-    week_from_now = timezone.now() + timedelta(days=7)
-    return max(week_after_event, week_from_now)
+    week_after_event = shift_date_and_apply_set_time(
+        event_end_date, offset=WEEK_OFFSET, time_=time(12, 0, 0, tzinfo=UTC)
+    )
+    return week_after_event
 
 
 def get_context(**kwargs: Unpack[PostWorkshop7DaysKwargs]) -> PostWorkshop7DaysContext:
