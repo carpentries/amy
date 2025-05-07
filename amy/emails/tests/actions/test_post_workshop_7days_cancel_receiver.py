@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import post_workshop_7days_cancel_receiver
 from emails.actions.post_workshop_7days import (
+    post_workshop_7days_cancel_receiver,
     post_workshop_7days_strategy,
     run_post_workshop_7days_strategy,
 )
@@ -52,7 +52,7 @@ class TestPostWorkshop7DaysCancelReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):

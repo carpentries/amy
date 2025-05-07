@@ -15,6 +15,7 @@ from emails.utils import (
     build_context_from_dict,
     build_context_from_list,
     combine_date_with_current_utc_time,
+    combine_date_with_set_time,
     find_model_class,
     find_model_instance,
     find_signal_by_name,
@@ -33,6 +34,7 @@ from emails.utils import (
     scalar_value_from_type,
     session_condition,
     shift_date_and_apply_current_utc_time,
+    shift_date_and_apply_set_time,
     two_months_after,
 )
 from workshops.models import Person
@@ -66,7 +68,7 @@ class TestImmediateAction(TestCase):
 
 class TestCombineDateWithCurrentUtcTime(TestCase):
     @patch("emails.utils.datetime", wraps=datetime)
-    def test_combine_date_with_current_utc_time(self, mock_datetime) -> None:
+    def test_combine_date_with_current_utc_time(self, mock_datetime: MagicMock) -> None:
         # Arrange
         mock_datetime.now.return_value = datetime(2020, 1, 31, 12, 1, 2, tzinfo=UTC)
         date_to_combine = date(1999, 12, 31)
@@ -80,9 +82,26 @@ class TestCombineDateWithCurrentUtcTime(TestCase):
         self.assertEqual(calculated.timetz(), time(12, 1, 2, tzinfo=UTC))
 
 
+class TestCombineDateWithSetTime(TestCase):
+    @patch("emails.utils.datetime", wraps=datetime)
+    def test_combine_date_with_set_time(self, mock_datetime: MagicMock) -> None:
+        # Arrange
+        mock_datetime.now.return_value = datetime(2020, 1, 31, 12, 1, 2, tzinfo=UTC)
+        date_to_combine = date(1999, 12, 31)
+        time_ = time(12, 59, 59, tzinfo=UTC)
+
+        # Act
+        calculated = combine_date_with_set_time(date_to_combine, time_)
+
+        # Assert
+        self.assertEqual(calculated.tzinfo, UTC)
+        self.assertEqual(calculated.date(), date(1999, 12, 31))
+        self.assertEqual(calculated.timetz(), time(12, 59, 59, tzinfo=UTC))
+
+
 class TestShiftDateAndApplyCurrentUtcTime(TestCase):
     @patch("emails.utils.datetime", wraps=datetime)
-    def test_shift_date_and_apply_current_utc_time(self, mock_datetime) -> None:
+    def test_shift_date_and_apply_current_utc_time(self, mock_datetime: MagicMock) -> None:
         # Arrange
         mocked_datetime = datetime(2020, 1, 31, 12, 0, 0, tzinfo=UTC)
         mock_datetime.now.return_value = mocked_datetime
@@ -98,9 +117,28 @@ class TestShiftDateAndApplyCurrentUtcTime(TestCase):
         self.assertEqual(shifted.timetz(), time(12, 0, 0, tzinfo=UTC))
 
 
+class TestShiftDateAndApplySetTime(TestCase):
+    @patch("emails.utils.datetime", wraps=datetime)
+    def test_shift_date_and_apply_set_time(self, mock_datetime: MagicMock) -> None:
+        # Arrange
+        mocked_datetime = datetime(2020, 1, 31, 12, 0, 0, tzinfo=UTC)
+        mock_datetime.now.return_value = mocked_datetime
+        date_to_shift = date(1999, 12, 31)
+        offset = timedelta(days=1, hours=1, minutes=2, seconds=3)
+        time_ = time(12, 59, 59, tzinfo=UTC)
+
+        # Act
+        shifted = shift_date_and_apply_set_time(date_to_shift, offset, time_)
+
+        # Assert
+        self.assertEqual(shifted.tzinfo, UTC)
+        self.assertEqual(shifted.date(), date(2000, 1, 1))
+        self.assertEqual(shifted.timetz(), time(12, 59, 59, tzinfo=UTC))
+
+
 class TestOneMonthBefore(TestCase):
     @patch("emails.utils.datetime", wraps=datetime)
-    def test_one_month_before(self, mock_datetime) -> None:
+    def test_one_month_before(self, mock_datetime: MagicMock) -> None:
         # Arrange
         mock_datetime.now.return_value = datetime(2020, 1, 31, 12, 0, 0, tzinfo=UTC)
         start_date = date(2020, 1, 31)
@@ -116,7 +154,7 @@ class TestOneMonthBefore(TestCase):
 
 class TestTwoMonthsAfter(TestCase):
     @patch("emails.utils.datetime", wraps=datetime)
-    def test_two_months_after(self, mock_datetime) -> None:
+    def test_two_months_after(self, mock_datetime: MagicMock) -> None:
         # Arrange
         mock_datetime.now.return_value = datetime(2020, 1, 31, 12, 0, 0, tzinfo=UTC)
         start_date = date(2020, 1, 31)
@@ -132,7 +170,7 @@ class TestTwoMonthsAfter(TestCase):
 
 class TestMessagesMissingRecipients(TestCase):
     @patch("emails.utils.messages.warning")
-    def test_messages_missing_recipients(self, mock_messages_warning) -> None:
+    def test_messages_missing_recipients(self, mock_messages_warning: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         signal = "test_signal"
@@ -152,7 +190,7 @@ class TestMessagesMissingRecipients(TestCase):
 
 class TestMessagesMissingTemplate(TestCase):
     @patch("emails.utils.messages.warning")
-    def test_messages_missing_template(self, mock_messages_warning) -> None:
+    def test_messages_missing_template(self, mock_messages_warning: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         signal = "test_signal"
@@ -170,7 +208,7 @@ class TestMessagesMissingTemplate(TestCase):
 
 class TestMessagesMissingTemplateLink(TestCase):
     @patch("emails.utils.messages.warning")
-    def test_messages_missing_template(self, mock_messages_warning) -> None:
+    def test_messages_missing_template(self, mock_messages_warning: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         scheduled_email = ScheduledEmail()
@@ -190,7 +228,7 @@ class TestMessagesMissingTemplateLink(TestCase):
 
 class TestMessagesActionScheduled(TestCase):
     @patch("emails.utils.messages.info")
-    def test_messages_action_scheduled(self, mock_messages_info) -> None:
+    def test_messages_action_scheduled(self, mock_messages_info: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         signal_name = "test_signal"
@@ -214,7 +252,7 @@ class TestMessagesActionScheduled(TestCase):
 
 class TestMessagesActionUpdated(TestCase):
     @patch("emails.utils.messages.info")
-    def test_messages_action_updated(self, mock_messages_info) -> None:
+    def test_messages_action_updated(self, mock_messages_info: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         signal_name = "test_signal"
@@ -235,7 +273,7 @@ class TestMessagesActionUpdated(TestCase):
 
 class TestMessagesActionCancelled(TestCase):
     @patch("emails.utils.messages.warning")
-    def test_messages_action_cancelled(self, mock_messages_warning) -> None:
+    def test_messages_action_cancelled(self, mock_messages_warning: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         signal_name = "test_signal"
@@ -286,7 +324,7 @@ class TestPersonFromRequest(TestCase):
 class TestFindSignalByName(TestCase):
     def test_find_signal_by_name__empty_signal_list(self) -> None:
         # Arrange
-        all_signals = []
+        all_signals: list[Signal] = []
 
         # Act
         result = find_signal_by_name("test", all_signals)
@@ -353,12 +391,12 @@ class TestScalarValueFromType(TestCase):
             (
                 "date",
                 "2020-01-01T12:01:03Z",
-                datetime(2020, 1, 1, 12, 1, 3, tzinfo=timezone.utc),
+                datetime(2020, 1, 1, 12, 1, 3, tzinfo=UTC),
             ),
             (
                 "date",
                 "2020-01-01T12:01:03+00:00",
-                datetime(2020, 1, 1, 12, 1, 3, tzinfo=timezone.utc),
+                datetime(2020, 1, 1, 12, 1, 3, tzinfo=UTC),
             ),
             ("none", "", None),
             ("none", "whatever", None),
@@ -543,7 +581,7 @@ class TestBuildContextFromDict(TestCase):
     @patch("emails.utils.map_api_uri_to_serialized_model_or_value")
     def test_build_context_from_dict(self, mock_map_api_uri_to_serialized_model_or_value: MagicMock) -> None:
         # Arrange
-        context = {"key1": "uri1", "key2": "uri2", "key3": ["uri3", "uri4"]}
+        context: dict[str, str | list[str]] = {"key1": "uri1", "key2": "uri2", "key3": ["uri3", "uri4"]}
         # Act
         build_context_from_dict(context)
         # Assert
@@ -557,7 +595,7 @@ class TestBuildContextFromDict(TestCase):
         person2 = Person.objects.create(username="test2", email="test2@example.org")
         person1_serialized = PersonSerializer(person1).data
         person2_serialized = PersonSerializer(person2).data
-        context = {
+        context: dict[str, str | list[str]] = {
             "person1": f"api:person#{person1.pk}",
             "list": [f"api:person#{person2.pk}", "value:str#test"],
         }
