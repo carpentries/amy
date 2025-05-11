@@ -1393,18 +1393,18 @@ django51 = ["django (>=5.1,<5.2)"]
 
 [[package]]
 name = "django-select2"
-version = "8.2.3"
+version = "8.4.0"
 description = "This is a Django_ integration of Select2_."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "django_select2-8.2.3-py3-none-any.whl", hash = "sha256:a3bc3f3bfb21d73791be1bc0dd8cc674d11e167129d605847c257942e7a2143b"},
-    {file = "django_select2-8.2.3.tar.gz", hash = "sha256:1de547c89ee2f005f1d461f76db89b440897939fcea894db8ba756b6f1ad36c1"},
+    {file = "django_select2-8.4.0-py3-none-any.whl", hash = "sha256:769429f4300db9a24d029e2e2f90fceb825eef6c012d772af90d12a318fb2438"},
+    {file = "django_select2-8.4.0.tar.gz", hash = "sha256:25eb56a6c024750898ea45cb90d24164c42b85c4673f5052612ce39042d81151"},
 ]
 
 [package.dependencies]
-django = ">=3.2"
+django = ">=4.2"
 django-appconf = ">=0.6.0"
 
 [package.extras]
