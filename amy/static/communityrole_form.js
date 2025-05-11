@@ -8,19 +8,6 @@ jQuery(function () {
   let award_badge; // hold badge filter for award selection
   let content_type;
   let person = $("#id_communityrole-person").val();
-  $("#id_communityrole-config").select2({
-    ajax: {
-      processResults: (data) => {
-        return {
-          results: data.map(({ id, display_name, ...other }) => ({
-            id,
-            text: display_name,
-            ...other,
-          })),
-        };
-      },
-    },
-  });
   $("#id_communityrole-award").select2({
     ajax: {
       data: (params) => {
@@ -53,6 +40,7 @@ jQuery(function () {
     person = data.id;
   });
   $("#id_communityrole-config").on("select2:select", (e) => {
+    console.log("asdasdasd");
     const data = e.params.data;
     $("#id_communityrole-award").prop("required", data.link_to_award);
     award_badge = data.award_badge_limit;

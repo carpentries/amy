@@ -14,6 +14,7 @@ from django.http.response import Http404
 from django.urls import path
 from django_select2.views import AutoResponseView
 
+from communityroles.models import CommunityRoleConfig
 from fiscal.models import MembershipPersonRole
 from workshops import models
 from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
@@ -235,6 +236,17 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
             # this is brilliant: it applies OR to all search filters
             results = results.filter(reduce(operator.or_, filters))
 
+        return results
+
+
+class CommunityRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    """Lookup view for community roles."""
+
+    def get_queryset(self) -> QuerySet[CommunityRoleConfig]:
+        results = CommunityRoleConfig.objects.all()
+
+        if self.term:
+            results = results.filter(Q(name__icontains=self.term) | Q(display_name__icontains=self.term))
         return results
 
 
@@ -465,6 +477,7 @@ urlpatterns = [
     path("persons/", PersonLookupView.as_view(), name="person-lookup"),
     path("admins/", AdminLookupView.as_view(), name="admin-lookup"),
     # uses community role
+    path("communityroles/", CommunityRoleLookupView.as_view(), name="community-role-lookup"),
     path("instructors/", InstructorLookupView.as_view(), name="instructor-lookup"),
     path("airports/", AirportLookupView.as_view(), name="airport-lookup"),
     path("languages/", LanguageLookupView.as_view(), name="language-lookup"),
