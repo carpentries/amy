@@ -3,7 +3,7 @@ import datetime
 from functools import partial
 import io
 import logging
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -75,6 +75,10 @@ from emails.actions.instructor_task_created_for_workshop import (
 from emails.actions.instructor_training_approaching import (
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
+)
+from emails.actions.instructor_training_completed_not_badged import (
+    instructor_training_completed_not_badged_strategy,
+    run_instructor_training_completed_not_badged_strategy,
 )
 from emails.actions.post_workshop_7days import (
     post_workshop_7days_strategy,
@@ -1801,7 +1805,7 @@ class TaskDelete(
 class MockAwardCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
-    PrepopulationSupportMixin,
+    PrepopulationSupportMixin[AwardForm],
     AMYCreateView,
 ):
     permission_required = "workshops.add_award"
@@ -1809,12 +1813,12 @@ class MockAwardCreate(
     form_class = AwardForm
     populate_fields = ["badge", "person"]
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "award"})
         return kwargs
 
-    def get_initial(self, **kwargs):
+    def get_initial(self, **kwargs: Any) -> dict[str, Any]:
         initial = super().get_initial(**kwargs)
 
         # Determine initial event in AwardForm
@@ -1835,7 +1839,7 @@ class MockAwardCreate(
 
         return initial
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("badge_details", args=[self.object.badge.name])
 
     def form_valid(self, form: BaseForm) -> HttpResponse:
@@ -1845,6 +1849,7 @@ class MockAwardCreate(
         # Check for CommunityRoles that should automatically be created.
         badge = self.object.badge
         person = self.object.person
+        event = self.object.event
         community_role_configs = CommunityRoleConfig.objects.filter(
             award_badge_limit=badge,
             autoassign_when_award_created=True,
@@ -1876,6 +1881,19 @@ class MockAwardCreate(
             award_id=self.object.pk,
             person_id=person.pk,
         )
+
+        try:
+            run_instructor_training_completed_not_badged_strategy(
+                instructor_training_completed_not_badged_strategy(person),
+                request=self.request,
+                person=person,
+                training_completed_date=event.end if event else None,
+            )
+        except EmailStrategyException as exc:
+            messages.error(
+                self.request,
+                f"Error when running instructor training completed strategy. {exc}",
+            )
 
         return result
 

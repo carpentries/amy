@@ -28,7 +28,7 @@ from emails.utils import (
     scalar_value_url,
     two_months_after,
 )
-from workshops.models import Person, TrainingProgress, TrainingRequirement
+from workshops.models import Award, Person, TrainingProgress, TrainingRequirement
 
 logger = logging.getLogger("amy")
 
@@ -59,6 +59,8 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
 
     all_requirements_passed = bool(person_annotated.instructor_eligible)
 
+    instructor_badge_not_awarded = not Award.objects.filter(person=person, badge__name="instructor").exists()
+
     ct = ContentType.objects.get_for_model(person)
     email_scheduled = ScheduledEmail.objects.filter(
         generic_relation_content_type=ct,
@@ -81,10 +83,13 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
         **{
             "person_annotated.passed_training": person_annotated.passed_training,
             "all_requirements_passed": all_requirements_passed,
+            "instructor_badge_not_awarded": instructor_badge_not_awarded,
         }
     )
 
-    email_should_exist = bool(person_annotated.passed_training) and not all_requirements_passed
+    email_should_exist = (
+        bool(person_annotated.passed_training) and not all_requirements_passed and instructor_badge_not_awarded
+    )
 
     # Prevents running sending multiple emails.
     if email_running_or_succeeded:
@@ -120,11 +125,11 @@ def run_instructor_training_completed_not_badged_strategy(
             training_completed_date = find_training_completion_date(person)
         except TrainingProgress.MultipleObjectsReturned as exc:
             raise EmailStrategyException(
-                "Unable to determine training completion date. Person has " "multiple passed training progresses."
+                "Unable to determine training completion date. Person has multiple passed training progresses."
             ) from exc
         except TrainingProgress.DoesNotExist as exc:
             raise EmailStrategyException(
-                "Unable to determine training completion date. Person doesn't have " "a passed training progress."
+                "Unable to determine training completion date. Person doesn't have a passed training progress."
             ) from exc
         except TrainingCompletionDateException as exc:
             raise EmailStrategyException(

@@ -14,6 +14,8 @@ from emails.models import EmailTemplate, ScheduledEmail, ScheduledEmailStatus
 from emails.signals import INSTRUCTOR_TRAINING_COMPLETED_NOT_BADGED_SIGNAL_NAME
 from emails.types import StrategyEnum
 from workshops.models import (
+    Award,
+    Badge,
     Event,
     Organization,
     Person,
@@ -141,6 +143,10 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
             generic_relation=person,
         )
 
+    def setUpInstructorAward(self, person: Person) -> Award:
+        instructor_badge, _ = Badge.objects.get_or_create(name="instructor")
+        return Award.objects.create(badge=instructor_badge, person=person)
+
     def test_strategy_create(self) -> None:
         # Arrange
         self.setUpPassedTrainingProgress(self.person, self.training_requirement, self.event)
@@ -158,9 +164,19 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         # Assert
         self.assertEqual(result, StrategyEnum.UPDATE)
 
-    def test_strategy_remove(self) -> None:
+    def test_strategy_cancel(self) -> None:
         # Arrange
         self.setUpScheduledEmail(self.person)
+        # Act
+        result = instructor_training_completed_not_badged_strategy(self.person)
+        # Assert
+        self.assertEqual(result, StrategyEnum.CANCEL)
+
+    def test_strategy_cancel_2(self) -> None:
+        # Arrange
+        self.setUpPassedTrainingProgress(self.person, self.training_requirement, self.event)
+        self.setUpScheduledEmail(self.person)
+        self.setUpInstructorAward(self.person)
         # Act
         result = instructor_training_completed_not_badged_strategy(self.person)
         # Assert

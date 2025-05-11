@@ -1,5 +1,5 @@
 from smtplib import SMTPException
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional, TypeVar, cast
 
 from anymail.exceptions import AnymailRequestsAPIError
 from django.contrib import messages
@@ -9,6 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Page
 from django.db.models import Model, ProtectedError, QuerySet
+from django.forms import BaseForm
 from django.http import (
     Http404,
     HttpRequest,
@@ -273,13 +274,19 @@ class RedirectSupportMixin:
         return safe_next_or_default_url(next_url, default_url)
 
 
-class PrepopulationSupportMixin:
-    def get_initial(self):
+class PrepopulationSupportMixin[_FormT: BaseForm]:
+    request: HttpRequest
+    populate_fields: list[str]
+
+    def get_initial(self) -> dict[str, Any]:
         return {field: self.request.GET.get(field) for field in self.populate_fields}
 
-    def get_form(self, *args, **kwargs):
+    def get_form(self, form_class: type[_FormT] | None = None) -> _FormT:
         """Disable fields that are pre-populated."""
-        form = super().get_form(*args, **kwargs)
+        form = cast(
+            _FormT,
+            super().get_form(form_class),  # type: ignore
+        )
         for field in self.populate_fields:
             if field in self.request.GET:
                 form.fields[field].disabled = True
