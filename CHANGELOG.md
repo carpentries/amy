@@ -13,6 +13,12 @@ Then paste output from that script here.
 
 -----------------------------------------------------------------
 
+## v4.7.2 - 2025-05-11
+
+### Bugfixes
+* [#2799] empty autocomplete dropdown - [#2804](https://github.com/carpentries/amy/pull/2804) by @pbanaszkiewicz
+
+
 ## v4.7.1 - 2025-03-30
 
 ### Features
