@@ -80,6 +80,10 @@ from emails.actions.instructor_training_completed_not_badged import (
     instructor_training_completed_not_badged_strategy,
     run_instructor_training_completed_not_badged_strategy,
 )
+from emails.actions.membership_quarterly_emails import (
+    membership_quarterly_email_strategy,
+    run_membership_quarterly_email_strategy,
+)
 from emails.actions.post_workshop_7days import (
     post_workshop_7days_strategy,
     run_post_workshop_7days_strategy,
@@ -88,7 +92,12 @@ from emails.actions.recruit_helpers import (
     recruit_helpers_strategy,
     run_recruit_helpers_strategy,
 )
-from emails.signals import persons_merged_signal
+from emails.signals import (
+    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+    persons_merged_signal,
+)
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.base_views import (
@@ -98,6 +107,7 @@ from workshops.base_views import (
     AMYListView,
     AMYUpdateView,
     AssignView,
+    AuthenticatedHttpRequest,
     PrepopulationSupportMixin,
     RedirectSupportMixin,
 )
@@ -1092,14 +1102,15 @@ def validate_event(request, slug):
     return render(request, "workshops/validate_event.html", context)
 
 
-class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
+class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[EventCreateForm, Event]):
     permission_required = "workshops.add_event"
     model = Event
     form_class = EventCreateForm
     template_name = "workshops/event_create_form.html"
     object: Event
+    request: AuthenticatedHttpRequest
 
-    def form_valid(self, form):
+    def form_valid(self, form: EventCreateForm) -> HttpResponse:
         """Additional functions for validating Event Create form:
         * maybe adding a mail job, if conditions are met
         """
@@ -1112,11 +1123,58 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
             self.object,
         )
 
+        if membership := cast(Membership, form.cleaned_data["membership"]):
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                        membership,
+                    ),
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                        membership,
+                    ),
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                        membership,
+                    ),
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+
         # return remembered results
         return res
 
 
-class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[EventForm, Event]):
     permission_required = [
         "workshops.change_event",
         "workshops.add_task",
@@ -1132,7 +1190,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     template_name = "workshops/event_edit_form.html"
     object: Event
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         kwargs = {
             "initial": {"event": self.object},
@@ -1155,10 +1213,10 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
         )
         return context
 
-    def get_form_class(self):
-        return partial(EventForm, show_lessons=True, add_comment=True)
+    def get_form_class(self) -> type[EventForm]:
+        return partial(EventForm, show_lessons=True, add_comment=True)  # type: ignore
 
-    def form_valid(self, form):
+    def form_valid(self, form: EventForm) -> HttpResponse:
         """Check if RQ job conditions changed, and add/delete jobs if
         necessary."""
         res = super().form_valid(form)
@@ -1193,16 +1251,68 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
             self.object,
         )
 
+        if membership := cast(Membership, form.cleaned_data["membership"]):
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                        membership,
+                    ),
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                        membership,
+                    ),
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                        membership,
+                    ),
+                    request=self.request,
+                    membership=membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+
         return res
 
 
-class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Event, EventForm]):
     model = Event
     permission_required = "workshops.delete_event"
     success_url = reverse_lazy("all_events")
     object: Event
 
-    def before_delete(self, *args, **kwargs):
+    def __init__(self) -> None:
+        self._membership: Membership | None = None
+
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
+        self._membership = self.object.membership
+
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object),
             self.request,
@@ -1232,6 +1342,54 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
             self.request,
             self.object,
         )
+
+    def after_delete(self, *args: Any, **kwargs: Any) -> None:
+        if self._membership:
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                        self._membership,
+                    ),
+                    request=self.request,
+                    membership=self._membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                        self._membership,
+                    ),
+                    request=self.request,
+                    membership=self._membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
+            try:
+                run_membership_quarterly_email_strategy(
+                    MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                    membership_quarterly_email_strategy(
+                        MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                        self._membership,
+                    ),
+                    request=self.request,
+                    membership=self._membership,
+                )
+            except EmailStrategyException as exc:
+                messages.error(
+                    self.request,
+                    f"Error when creating or updating scheduled email. {exc}",
+                )
 
 
 @admin_required
