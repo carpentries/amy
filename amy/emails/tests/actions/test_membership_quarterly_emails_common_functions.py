@@ -111,6 +111,7 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
                 "member_contacts": [person],
                 "events": [event],
                 "trainee_tasks": [task],
+                "trainees": [person],
             },
         )
 
@@ -126,6 +127,7 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             "member_contacts": [person],
             "events": [event],
             "trainee_tasks": [task],
+            "trainees": [person],
         }
         # Act
         result = get_context_json(context)
@@ -138,6 +140,7 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
                     "member_contacts": [api_model_url("person", person.pk)],
                     "events": [api_model_url("event", event.pk)],
                     "trainee_tasks": [api_model_url("task", task.pk)],
+                    "trainees": [api_model_url("person", person.pk)],
                 }
             ),
         )
@@ -155,6 +158,7 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             "member_contacts": [person],
             "events": [event],
             "trainee_tasks": [task],
+            "trainees": [person],
         }
         # Act
         result = get_generic_relation_object(context, request=request, membership=membership)
@@ -176,6 +180,7 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             "member_contacts": [person1, person2],
             "events": [event],
             "trainee_tasks": [task],
+            "trainees": [person1],
         }
         # Act
         result = get_recipients(context, request=request, membership=membership)
@@ -197,6 +202,7 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             "member_contacts": [person1, person2],
             "events": [event],
             "trainee_tasks": [task],
+            "trainees": [person1],
         }
         # Act
         result = get_recipients_context_json(context, request=request, membership=membership)

@@ -136,12 +136,14 @@ def get_context(**kwargs: Unpack[MembershipQuarterlyKwargs]) -> MembershipQuarte
     ]
     events = list(membership.event_set.all())
     tasks = list(membership.task_set.all())
+    persons = [task.person for task in membership.task_set.all()]
 
     return {
         "membership": membership,
         "member_contacts": contacts,
         "events": events,
         "trainee_tasks": tasks,
+        "trainees": persons,
     }
 
 
@@ -152,6 +154,7 @@ def get_context_json(context: MembershipQuarterlyContext) -> ContextModel:
             "member_contacts": [api_model_url("person", person.pk) for person in context["member_contacts"]],
             "events": [api_model_url("event", event.pk) for event in context["events"]],
             "trainee_tasks": [api_model_url("task", task.pk) for task in context["trainee_tasks"]],
+            "trainees": [api_model_url("person", task.pk) for task in context["trainees"]],
         },
     )
 
