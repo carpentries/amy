@@ -7,7 +7,7 @@ from django.http import HttpRequest
 
 from emails.actions.base_action import BaseAction, BaseActionCancel, BaseActionUpdate
 from emails.actions.base_strategy import run_strategy
-from emails.models import ScheduledEmail
+from emails.models import ScheduledEmail, ScheduledEmailStatus
 from emails.schemas import ContextModel, SinglePropertyLinkModel, ToHeaderModel
 from emails.signals import (
     MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
@@ -136,12 +136,14 @@ def get_context(**kwargs: Unpack[MembershipQuarterlyKwargs]) -> MembershipQuarte
     ]
     events = list(membership.event_set.all())
     tasks = list(membership.task_set.all())
+    persons = [task.person for task in membership.task_set.all()]
 
     return {
         "membership": membership,
         "member_contacts": contacts,
         "events": events,
         "trainee_tasks": tasks,
+        "trainees": persons,
     }
 
 
@@ -152,6 +154,7 @@ def get_context_json(context: MembershipQuarterlyContext) -> ContextModel:
             "member_contacts": [api_model_url("person", person.pk) for person in context["member_contacts"]],
             "events": [api_model_url("event", event.pk) for event in context["events"]],
             "trainee_tasks": [api_model_url("task", task.pk) for task in context["trainee_tasks"]],
+            "trainees": [api_model_url("person", task.pk) for task in context["trainees"]],
         },
     )
 
@@ -189,6 +192,30 @@ def get_recipients_context_json(
             if task.person.email
         ],
     )
+
+
+def update_context_json_and_to_header_json(
+    signal_name: str,
+    request: HttpRequest,
+    membership: Membership,
+) -> ScheduledEmail | None:
+    ct = ContentType.objects.get_for_model(membership)
+    email = ScheduledEmail.objects.filter(
+        generic_relation_content_type=ct,
+        generic_relation_pk=membership.pk,
+        template__signal=signal_name,
+        state=ScheduledEmailStatus.SCHEDULED,
+    ).first()
+    if not email:
+        return None
+
+    context = get_context(request=request, membership=membership)
+    context_json = get_context_json(context)
+    to_header_context_json = get_recipients_context_json(context, request=request, membership=membership)
+    email.context_json = context_json
+    email.to_header_context_json = to_header_context_json
+    email.save()
+    return email
 
 
 # -----------------------------------------------------------------------------

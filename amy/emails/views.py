@@ -1,7 +1,7 @@
-from typing import Any, cast
+from typing import Any
 
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import reverse
 from django.views.generic.detail import SingleObjectMixin
 from flags.views import FlaggedViewMixin
@@ -34,6 +34,7 @@ from emails.utils import (
     jinjanify,
     person_from_request,
 )
+from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -45,8 +46,8 @@ from workshops.base_views import (
 from workshops.utils.access import OnlyForAdminsMixin
 
 
-class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
-    flag_name = "EMAIL_MODULE"
+class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[EmailTemplate]):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_templates"
     template_name = "emails/email_template_list.html"
@@ -55,18 +56,17 @@ class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
     filter_class = EmailTemplateFilter
 
 
-class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
-    flag_name = "EMAIL_MODULE"
+class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[EmailTemplate]):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_detail.html"
     model = EmailTemplate
-    object: EmailTemplate
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
-        context["rendered_body"] = markdownify(self.object.body)
+        context["rendered_body"] = markdownify(self.object.body)  # type: ignore
 
         signal = find_signal_by_name(self.object.signal, ALL_SIGNALS)
 
@@ -78,8 +78,8 @@ class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
         return context
 
 
-class EmailTemplateCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView):
-    flag_name = "EMAIL_MODULE"
+class EmailTemplateCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[EmailTemplateCreateForm, EmailTemplate]):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.add_emailtemplate"]
     template_name = "emails/email_template_create.html"
     form_class = EmailTemplateCreateForm
@@ -88,8 +88,8 @@ class EmailTemplateCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView):
     title = "Create a new email template"
 
 
-class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
-    flag_name = "EMAIL_MODULE"
+class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[EmailTemplateCreateForm, EmailTemplate]):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_edit.html"
@@ -97,7 +97,7 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
     model = EmailTemplate
     object: EmailTemplate
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = f'Email template "{self.object}"'
 
@@ -111,8 +111,10 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
         return context
 
 
-class EmailTemplateDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView):
-    flag_name = "EMAIL_MODULE"
+class EmailTemplateDelete(
+    OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[EmailTemplate, GenericDeleteForm[EmailTemplate]]
+):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.delete_emailtemplate"]
     model = EmailTemplate
 
@@ -123,8 +125,8 @@ class EmailTemplateDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView):
 # -------------------------------------------------------------------------------
 
 
-class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
-    flag_name = "EMAIL_MODULE"
+class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[ScheduledEmail]):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_emails"
     template_name = "emails/scheduled_email_list.html"
@@ -133,15 +135,15 @@ class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
     filter_class = ScheduledEmailFilter
 
 
-class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView):
-    flag_name = "EMAIL_MODULE"
+class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[ScheduledEmail]):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_detail.html"
     model = ScheduledEmail
     object: ScheduledEmail
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
         context["log_entries"] = (
@@ -159,9 +161,9 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
             context["rendered_context"] = f"Unable to render context: {exc}"
 
         try:
-            context["rendered_body"] = markdownify(jinjanify(engine, self.object.body, body_context))
+            context["rendered_body"] = markdownify(jinjanify(engine, self.object.body, body_context))  # type: ignore
         except (TemplateError, AttributeError, ValueError, TypeError) as exc:
-            context["rendered_body"] = markdownify(f"Unable to render template: {exc}")
+            context["rendered_body"] = markdownify(f"Unable to render template: {exc}")  # type: ignore
 
         try:
             context["rendered_subject"] = jinjanify(engine, self.object.subject, body_context)
@@ -179,8 +181,10 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView)
         return context
 
 
-class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
-    flag_name = "EMAIL_MODULE"
+class ScheduledEmailUpdate(
+    OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[ScheduledEmailUpdateForm, ScheduledEmail]
+):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_edit.html"
@@ -195,7 +199,7 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
     # (see ScheduledEmailStatusActions).
     queryset = ScheduledEmail.objects.filter(state__in=ScheduledEmailStatusActions["edit"]).select_for_update()
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = f'Scheduled email "{self.object.subject}"'
         return context
@@ -214,8 +218,10 @@ class ScheduledEmailUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView):
         return result
 
 
-class ScheduledEmailReschedule(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView):
-    flag_name = "EMAIL_MODULE"
+class ScheduledEmailReschedule(
+    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin[ScheduledEmail], AMYFormView[ScheduledEmailRescheduleForm]
+):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_reschedule.html"
     form_class = ScheduledEmailRescheduleForm
@@ -230,12 +236,12 @@ class ScheduledEmailReschedule(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjec
     # (see ScheduledEmailStatusActions).
     queryset = ScheduledEmail.objects.filter(state__in=ScheduledEmailStatusActions["reschedule"]).select_for_update()
 
-    def dispatch(self, request: HttpRequest, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         self.request = request
-        self.object = cast(ScheduledEmail, self.get_object())
+        self.object = self.get_object()
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs) -> dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         self.title = f'Scheduled email "{self.object.subject}"'
         kwargs["scheduled_email"] = self.object
         return super().get_context_data(**kwargs)
@@ -257,8 +263,10 @@ class ScheduledEmailReschedule(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjec
         return super().form_valid(form)
 
 
-class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView):
-    flag_name = "EMAIL_MODULE"
+class ScheduledEmailCancel(
+    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin[ScheduledEmail], AMYFormView[ScheduledEmailCancelForm]
+):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_cancel.html"
     form_class = ScheduledEmailCancelForm
@@ -273,12 +281,12 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMix
     # (see ScheduledEmailStatusActions).
     queryset = ScheduledEmail.objects.filter(state__in=ScheduledEmailStatusActions["cancel"]).select_for_update()
 
-    def dispatch(self, request: HttpRequest, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         self.request = request
-        self.object = cast(ScheduledEmail, self.get_object())
+        self.object = self.get_object()
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs) -> dict[str, Any]:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         self.title = f'Scheduled email "{self.object.subject}"'
         kwargs["scheduled_email"] = self.object
         return super().get_context_data(**kwargs)
@@ -286,7 +294,7 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMix
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()
 
-    def form_valid(self, form: ScheduledEmailCancelForm):
+    def form_valid(self, form: ScheduledEmailCancelForm) -> HttpResponse:
         if form.cleaned_data.get("confirm"):
             EmailController.cancel_email(
                 self.object,
@@ -296,8 +304,13 @@ class ScheduledEmailCancel(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMix
         return super().form_valid(form)
 
 
-class ScheduledEmailAddAttachment(OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin, AMYFormView):
-    flag_name = "EMAIL_MODULE"
+class ScheduledEmailAddAttachment(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,
+    SingleObjectMixin[ScheduledEmail],
+    AMYFormView[ScheduledEmailAddAttachmentForm],
+):
+    flag_name = "EMAIL_MODULE"  # type: ignore
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail", "emails.add_attachment"]
     template_name = "emails/scheduled_email_add_attachment.html"
     form_class = ScheduledEmailAddAttachmentForm
@@ -318,7 +331,7 @@ class ScheduledEmailAddAttachment(OnlyForAdminsMixin, FlaggedViewMixin, SingleOb
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         self.title = f'Scheduled email "{self.object.subject}"'
         kwargs["scheduled_email"] = self.object
-        return super().get_context_data(**kwargs)  # type: ignore
+        return super().get_context_data(**kwargs)
 
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()

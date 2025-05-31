@@ -217,6 +217,7 @@ class MembershipQuarterlyContext(TypedDict):
     member_contacts: list[Person]
     events: list[Event]
     trainee_tasks: list[Task]
+    trainees: list[Person]
 
 
 class StrategyEnum(StrEnum):

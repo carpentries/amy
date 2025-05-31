@@ -9,7 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives
 from django.core.paginator import Page
 from django.db.models import Model, ProtectedError, QuerySet
-from django.forms import BaseForm
+from django.forms import BaseForm, BaseModelForm
 from django.http import (
     Http404,
     HttpRequest,
@@ -37,36 +37,40 @@ from workshops.utils.pagination import Paginator, get_pagination_items
 from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.views import assign, failed_to_delete
 
-_MT = TypeVar("_MT", bound=Model)  # Model type
+_M = TypeVar("_M", bound=Model)
+_ModelFormT = TypeVar("_ModelFormT", bound=BaseModelForm)
+_F = TypeVar("_F", bound=BaseForm)
 
 
 class AuthenticatedHttpRequest(HttpRequest):
     user: Person
 
 
-class FormInvalidMessageMixin:
+class FormInvalidMessageMixin[_F]:
     """
     Add an error message on invalid form submission.
     """
 
     form_invalid_message = ""
 
-    def form_invalid(self, form):
+    def form_invalid(self, form: _F) -> HttpResponse:
         response = super().form_invalid(form)
         message = self.get_form_invalid_message(form.cleaned_data)
         if message:
             messages.error(self.request, message)
         return response
 
-    def get_form_invalid_message(self, cleaned_data):
+    def get_form_invalid_message(self, cleaned_data: dict[str, str]) -> str:
         return self.form_invalid_message % cleaned_data
 
 
-class AMYDetailView(DetailView):
-    object: Model
+class AMYDetailView(DetailView[_M]):
+    object: _M
 
 
-class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
+class AMYCreateView(
+    SuccessMessageMixin[_ModelFormT], FormInvalidMessageMixin[_ModelFormT], CreateView[_M, _ModelFormT]
+):
     """
     Class-based view for creating objects that extends default template context
     by adding model class used in objects creation.
@@ -77,14 +81,14 @@ class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
 
     template_name = "generic_form.html"
 
-    def get_form(self, form_class=None):
+    def get_form(self, form_class: type[_ModelFormT] | None = None) -> _ModelFormT:
         form = super().get_form(form_class=form_class)
         if not hasattr(form, "helper"):
             # This is a default helper if no other is available.
             form.helper = BootstrapHelper(submit_label="Add")
         return form
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         # self.model is available in CreateView as the model class being
         # used to create new model instance
         kwargs["model"] = self.model
@@ -97,12 +101,14 @@ class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
 
         return super().get_context_data(**kwargs)
 
-    def get_success_message(self, cleaned_data):
+    def get_success_message(self, cleaned_data: dict[str, str]) -> str:
         "Format self.success_message, used by messages framework from Django."
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-class AMYUpdateView(SuccessMessageMixin, FormInvalidMessageMixin, UpdateView):
+class AMYUpdateView(
+    SuccessMessageMixin[_ModelFormT], FormInvalidMessageMixin[_ModelFormT], UpdateView[_M, _ModelFormT]
+):
     """
     Class-based view for updating objects that extends default template context
     by adding proper page title.
@@ -114,14 +120,14 @@ class AMYUpdateView(SuccessMessageMixin, FormInvalidMessageMixin, UpdateView):
 
     template_name = "generic_form.html"
 
-    def get_form(self, form_class=None):
+    def get_form(self, form_class: type[_ModelFormT] | None = None) -> _ModelFormT:
         form = super().get_form(form_class=form_class)
         if not hasattr(form, "helper"):
             # This is a default helper if no other is available.
             form.helper = BootstrapHelper(submit_label="Update")
         return form
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         # self.model is available in UpdateView as the model class being
         # used to update model instance
         kwargs["model"] = self.model
@@ -135,12 +141,12 @@ class AMYUpdateView(SuccessMessageMixin, FormInvalidMessageMixin, UpdateView):
 
         return super().get_context_data(**kwargs)
 
-    def get_success_message(self, cleaned_data):
+    def get_success_message(self, cleaned_data: dict[str, str]) -> str:
         "Format self.success_message, used by messages framework from Django."
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-class AMYDeleteView(DeleteView):
+class AMYDeleteView(DeleteView[_M, _ModelFormT]):
     """
     Class-based view for deleting objects that extends default template context
     by adding proper page title.
@@ -152,16 +158,16 @@ class AMYDeleteView(DeleteView):
 
     success_message = "{} was deleted successfully."
 
-    def before_delete(self, *args, **kwargs):
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
         return None
 
-    def after_delete(self, *args, **kwargs):
+    def after_delete(self, *args: Any, **kwargs: Any) -> None:
         return None
 
     def back_address(self) -> Optional[str]:
         return None
 
-    def form_valid(self, form) -> HttpResponse:
+    def form_valid(self, form: _ModelFormT) -> HttpResponse:
         # Workaround for https://code.djangoproject.com/ticket/21926
         # Replicates the `delete` method of DeleteMixin
         self.object = self.get_object()
@@ -177,35 +183,37 @@ class AMYDeleteView(DeleteView):
             back = self.back_address()
             return failed_to_delete(self.request, self.object, e.protected_objects, back=back)
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         return self.http_method_not_allowed(request, *args, **kwargs)
 
-    def perform_destroy(self, *args, **kwargs):
+    def perform_destroy(self, *args: Any, **kwargs: Any) -> None:
         self.object.delete()
 
 
-class AMYFormView(FormView):
+class AMYFormView(FormView[_F]):
     """
     Class-based view to allow displaying of forms with bootstrap form helper.
     """
 
-    def get_context_data(self, **kwargs):
+    title: str
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = self.title
         return context
 
 
-class AMYListView(ListView[_MT]):
+class AMYListView(ListView[_M]):
     paginator_class = Paginator
     filter_class: type[FilterSet] | None = None
-    queryset: QuerySet[_MT] | None = None
+    queryset: QuerySet[_M] | None = None
     title: str | None = None
 
     def get_filter_data(self) -> QueryDict:
         """Datasource for the filter."""
         return self.request.GET
 
-    def get_queryset(self) -> Page[_MT]:  # type: ignore
+    def get_queryset(self) -> Page[_M]:  # type: ignore
         """Apply a filter to the queryset. Filter is compatible with pagination
         and queryset. Also, apply pagination."""
         if self.filter_class is None:
@@ -227,26 +235,26 @@ class AMYListView(ListView[_MT]):
         return context
 
 
-class EmailSendMixin:
+class EmailSendMixin[_ModelFormT]:
     email_fail_silently = True
     email_kwargs = None
 
-    def get_subject(self):
+    def get_subject(self) -> str:
         """Generate email subject."""
         return ""
 
-    def get_body(self):
+    def get_body(self) -> tuple[str, str]:
         """Generate email body (in TXT and HTML versions)."""
         return "", ""
 
-    def get_email_kwargs(self):
+    def get_email_kwargs(self) -> dict[str, Any]:
         """Use this method to define email sender arguments, like:
         * `to`: recipient address(es)
         * `reply_to`: reply-to address
         etc."""
         return self.email_kwargs
 
-    def prepare_email(self):
+    def prepare_email(self) -> EmailMultiAlternatives:
         """Set up email contents."""
         subject = self.get_subject()
         body_txt, body_html = self.get_body()
@@ -255,11 +263,11 @@ class EmailSendMixin:
         email.attach_alternative(body_html, "text/html")
         return email
 
-    def send_email(self, email):
+    def send_email(self, email: EmailMultiAlternatives) -> int:
         """Send a prepared email out."""
         return email.send(fail_silently=self.email_fail_silently)
 
-    def form_valid(self, form):
+    def form_valid(self, form: _ModelFormT) -> HttpResponse:
         """Once form is valid, send the email."""
         results = super().form_valid(form)
         email = self.prepare_email()
@@ -293,42 +301,42 @@ class PrepopulationSupportMixin[_FormT: BaseForm]:
         return form
 
 
-class AutoresponderMixin:
+class AutoresponderMixin[_ModelFormT]:
     """Automatically emails the form sender."""
 
     @property
-    def autoresponder_subject(self):
+    def autoresponder_subject(self) -> str:
         """Autoresponder email subject."""
         raise NotImplementedError
 
     @property
-    def autoresponder_body_template_txt(self):
+    def autoresponder_body_template_txt(self) -> str:
         """Autoresponder email body template (TXT)."""
         raise NotImplementedError
 
     @property
-    def autoresponder_body_template_html(self):
+    def autoresponder_body_template_html(self) -> str:
         """Autoresponder email body template (HTML)."""
         raise NotImplementedError
 
     @property
-    def autoresponder_form_field(self):
+    def autoresponder_form_field(self) -> str:
         """Form field's name that contains autoresponder recipient email."""
         return "email"
 
-    def autoresponder_email_context(self, form):
+    def autoresponder_email_context(self, form: _ModelFormT) -> dict[str, Any]:
         """Context for"""
         # list of fields allowed to show to the user
         whitelist = []
         form_data = [v for k, v in form.cleaned_data.items() if k in whitelist]
         return dict(form_data=form_data)
 
-    def autoresponder_kwargs(self, form):
+    def autoresponder_kwargs(self, form: _ModelFormT) -> dict[str, list[str]]:
         """Arguments passed to EmailMultiAlternatives."""
         recipient = form.cleaned_data.get(self.autoresponder_form_field, None) or ""
         return dict(to=[recipient])
 
-    def autoresponder_prepare_email(self, form):
+    def autoresponder_prepare_email(self, form: _ModelFormT) -> EmailMultiAlternatives:
         """Prepare EmailMultiAlternatives object with message."""
         # get message subject
         subject = self.autoresponder_subject
@@ -349,7 +357,7 @@ class AutoresponderMixin:
         email.attach_alternative(body_html, "text/html")
         return email
 
-    def autoresponder(self, form, fail_silently=True):
+    def autoresponder(self, form: _ModelFormT, fail_silently: bool = True) -> None:
         """Get email from `self.autoresponder_prepare_email`, then send it."""
         email = self.autoresponder_prepare_email(form)
 
@@ -359,7 +367,7 @@ class AutoresponderMixin:
             if not fail_silently:
                 raise e
 
-    def form_valid(self, form):
+    def form_valid(self, form: _ModelFormT) -> HttpResponse:
         """Send email to form sender if the form is valid."""
         retval = super().form_valid(form)
         self.autoresponder(form, fail_silently=True)
@@ -375,7 +383,9 @@ class StateFilterMixin:
         return data
 
 
-class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
+class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin[_M], RedirectView):
+    object: _M
+
     # State URL argument to state model value mapping.
     # Here 'a' and 'accepted' both match to 'a' (recognizable by model's state
     # field), similarly for 'd' (discarded) and 'p' (pending).
@@ -397,28 +407,28 @@ class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, Redirec
     # Message shown upon successful state change
     success_message = '%(name)s state was changed to "%(requested_state)s" ' "successfully."
 
-    def get_states(self):
+    def get_states(self) -> dict[str, str]:
         """Return state-state mapping; keys are URL values, and items are
         model-recognizable field values."""
         return self.states
 
-    def get_incorrect_state_message(self):
+    def get_incorrect_state_message(self) -> str:
         return self.incorrect_state_message
 
-    def incorrect_state(self):
+    def incorrect_state(self) -> HttpResponse:
         msg = self.get_incorrect_state_message()
         raise Http404(msg)
 
-    def get_success_message(self):
+    def get_success_message(self) -> str:
         return self.success_message % dict(
             name=str(self.object),
             requested_state=self.object.get_state_display(),
         )
 
-    def get_redirect_url(self, *args, **kwargs):
+    def get_redirect_url(self, *args: Any, **kwargs: Any) -> str:
         return self.object.get_absolute_url()
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         states = self.get_states()
         requested_state = self.kwargs.get(self.state_url_kwarg)
 
@@ -438,16 +448,17 @@ class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, Redirec
         return super().get(request, *args, **kwargs)
 
 
-class AssignView(PermissionRequiredMixin, SingleObjectMixin, FormMixin, RedirectView):
+class AssignView(PermissionRequiredMixin, SingleObjectMixin[_M], FormMixin[AdminLookupForm], RedirectView):
     # URL keyword argument for requested person.
     permanent = False
     person_url_kwarg = "person_id"
     form_class = AdminLookupForm
+    object: _M
 
-    def get_redirect_url(self, *args, **kwargs):
+    def get_redirect_url(self, *args: Any, **kwargs: Any) -> str:
         return self.object.get_absolute_url()
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         self.object = self.get_object()
         form = self.get_form()
         if form.is_valid():
@@ -460,10 +471,10 @@ class ConditionallyEnabledMixin:
 
     view_enabled: Optional[bool] = None
 
-    def get_view_enabled(self, request) -> bool:
+    def get_view_enabled(self, request: HttpRequest) -> bool:
         return self.view_enabled is True
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         if self.get_view_enabled(request) is not True:
             raise Http404("Page not found")
 
