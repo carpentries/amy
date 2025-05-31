@@ -83,6 +83,7 @@ from emails.actions.instructor_training_completed_not_badged import (
 from emails.actions.membership_quarterly_emails import (
     membership_quarterly_email_strategy,
     run_membership_quarterly_email_strategy,
+    update_context_json_and_to_header_json,
 )
 from emails.actions.post_workshop_7days import (
     post_workshop_7days_strategy,
@@ -1696,23 +1697,23 @@ class TaskCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    AMYCreateView,
+    AMYCreateView[TaskForm, Task],
 ):
     permission_required = "workshops.add_task"
     model = Task
     form_class = TaskForm
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, str]:
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "task"})
         return kwargs
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Save request in `self.request`."""
         self.request = request
         return super().post(request, *args, **kwargs)
 
-    def form_valid(self, form):
+    def form_valid(self, form: TaskForm) -> HttpResponse:
         """Additional functions for validating Task Create form:
 
         * checking membership seats, availability
@@ -1811,6 +1812,23 @@ class TaskCreate(
             task_id=self.object.pk,
         )
 
+        if seat_membership:
+            update_context_json_and_to_header_json(
+                signal_name=MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME,
+                request=self.request,
+                membership=seat_membership,
+            )
+            update_context_json_and_to_header_json(
+                signal_name=MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME,
+                request=self.request,
+                membership=seat_membership,
+            )
+            update_context_json_and_to_header_json(
+                signal_name=MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME,
+                request=self.request,
+                membership=seat_membership,
+            )
+
         # return remembered results
         return res
 
@@ -1818,7 +1836,7 @@ class TaskCreate(
 class TaskUpdate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
-    AMYUpdateView,
+    AMYUpdateView[TaskForm, Task],
 ):
     permission_required = "workshops.change_task"
     model = Task
@@ -1827,7 +1845,7 @@ class TaskUpdate(
     pk_url_kwarg = "task_id"
     object: Task
 
-    def form_valid(self, form):
+    def form_valid(self, form: TaskForm) -> HttpResponse:
         """Check if RQ job conditions changed, and add/delete jobs if
         necessary."""
         res = super().form_valid(form)
