@@ -747,6 +747,7 @@ class PersonForm(forms.ModelForm):
             "github",
             "twitter",
             "bluesky",
+            "mastodon",
             "url",
             "occupation",
             "orcid",
@@ -922,6 +923,11 @@ class PersonsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     bluesky = forms.ChoiceField(
+        choices=TWO,
+        initial=DEFAULT,
+        widget=forms.RadioSelect,
+    )
+    mastodon = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
         widget=forms.RadioSelect,
