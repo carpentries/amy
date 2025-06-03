@@ -135,7 +135,7 @@ def get_context(**kwargs: Unpack[MembershipQuarterlyKwargs]) -> MembershipQuarte
         ).select_related("person")
     ]
     events = list(membership.event_set.all())
-    tasks = list(membership.task_set.all())
+    tasks = list(membership.task_set.select_related("person").all())
     persons = [task.person for task in membership.task_set.all()]
 
     return {
@@ -154,7 +154,7 @@ def get_context_json(context: MembershipQuarterlyContext) -> ContextModel:
             "member_contacts": [api_model_url("person", person.pk) for person in context["member_contacts"]],
             "events": [api_model_url("event", event.pk) for event in context["events"]],
             "trainee_tasks": [api_model_url("task", task.pk) for task in context["trainee_tasks"]],
-            "trainees": [api_model_url("person", task.pk) for task in context["trainees"]],
+            "trainees": [api_model_url("person", person.pk) for person in context["trainees"]],
         },
     )
 
@@ -211,9 +211,11 @@ def update_context_json_and_to_header_json(
 
     context = get_context(request=request, membership=membership)
     context_json = get_context_json(context)
+    to_header = get_recipients(context, request=request, membership=membership)
     to_header_context_json = get_recipients_context_json(context, request=request, membership=membership)
-    email.context_json = context_json
-    email.to_header_context_json = to_header_context_json
+    email.context_json = context_json.model_dump()
+    email.to_header = to_header
+    email.to_header_context_json = to_header_context_json.model_dump()
     email.save()
     return email
 
