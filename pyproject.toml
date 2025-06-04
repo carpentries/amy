@@ -108,6 +108,7 @@ module = [
   "flags.*",
   "markdownx.*",
   "reversion.*",
+  "reversion_compare.*",
   "social_django.*",
 ]
 follow_untyped_imports = true

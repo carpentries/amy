@@ -629,7 +629,7 @@ class EventCreateForm(EventForm):
     )
 
 
-class TaskForm(WidgetOverrideMixin, forms.ModelForm):
+class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
     SEAT_MEMBERSHIP_HELP_TEXT = (
         "{}<br><b>Hint:</b> you can use input format YYYY-MM-DD to display "
         "memberships available on that date.".format(Task._meta.get_field("seat_membership").help_text)
@@ -664,7 +664,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
     class Media:
         js = ("task_form.js",)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         form_tag = kwargs.pop("form_tag", True)
         failed_trainings = kwargs.pop("failed_trainings", False)
         super().__init__(*args, **kwargs)
@@ -678,7 +678,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             )
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         result = super().clean()
         errors = dict()
         person: Person = self.cleaned_data["person"]

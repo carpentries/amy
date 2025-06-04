@@ -199,7 +199,7 @@ class MembershipCreate(
         if next_year != form.cleaned_data["agreement_end"]:
             messages.warning(
                 self.request,
-                "Membership agreement end is not full year from the start. It should be: {next_year:%Y-%m-%d}.",
+                f"Membership agreement end is not full year from the start. It should be: {next_year:%Y-%m-%d}.",
             )
 
         main_organization: Organization = form.cleaned_data["main_organization"]

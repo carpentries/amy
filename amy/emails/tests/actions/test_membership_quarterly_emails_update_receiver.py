@@ -166,6 +166,7 @@ class TestMembershipQuarterlyEmailUpdateReceiver(TestCase):
                     "member_contacts": [api_model_url("person", self.person.pk)],
                     "events": [api_model_url("event", self.event.pk)],
                     "trainee_tasks": [api_model_url("task", self.task.pk)],
+                    "trainees": [api_model_url("person", self.person.pk)],
                 }
             ),
             scheduled_at=scheduled_at,
