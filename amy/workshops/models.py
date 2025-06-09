@@ -1012,6 +1012,7 @@ class Person(
         self.github = None
         self.twitter = None
         self.bluesky = None
+        self.mastodon = None
         self.url = ""
         self.user_notes = ""
         self.affiliation = ""
