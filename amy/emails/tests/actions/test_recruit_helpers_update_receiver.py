@@ -329,7 +329,7 @@ class TestRecruitHelpersUpdateIntegration(TestBase):
             github="deckow_jayden",
             twitter="deckow_jayden",
             bluesky="@deckow_jayden.bsky.social",
-            mastodon="",
+            mastodon="http://jaydendeckow.com/",
             url="http://jaydendeckow.com/",
             affiliation="UFlo",
             occupation="Staff",
