@@ -936,6 +936,7 @@ class TestPersonMerging(TestBase):
             "github": "combine",
             "twitter": "combine",
             "bluesky": "combine",
+            "mastodon": "combine",
             "url": "combine",
             "affiliation": "combine",
             "occupation": "combine",

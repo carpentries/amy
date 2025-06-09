@@ -57,6 +57,7 @@ class TestAutoUpdateProfile(TestBase):
             "github": "changed",
             "twitter": "",
             "bluesky": "",
+            "mastodon": "",
             "url": "",
             "username": "changed",
             "affiliation": "",
