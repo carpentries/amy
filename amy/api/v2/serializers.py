@@ -245,6 +245,7 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
             "github",
             "twitter",
             "bluesky",
+            "mastodon",
             "url",
             "user_notes",
             "affiliation",
