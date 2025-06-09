@@ -85,6 +85,7 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
             "github",
             "twitter",
             "bluesky",
+            "mastodon",
             "url",
             "username",
             "affiliation",
