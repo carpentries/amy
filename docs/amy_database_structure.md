@@ -52,6 +52,7 @@ The primary tables used in AMY (that will appear in most queries) are those that
 * `github` Individual's GitHub user id
 * `twitter` Individual's Twitter user id
 * `bluesky` Individual's Bluesky user id
+* `mastodon` Individual's Mastodon url
 * `orcid` Individual's ORCID iD
 * `url` Link to the individual's personal website
 * `airport_id` An integer representing the person's self identified nearest.  This is linked to the `workshops_airport` table
