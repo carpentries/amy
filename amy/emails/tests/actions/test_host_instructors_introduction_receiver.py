@@ -237,7 +237,7 @@ class TestHostInstructorsIntroductionReceiverIntegration(TestBase):
             github="purdy_kelsi",
             twitter="purdy_kelsi",
             bluesky="@purdy_kelsi.bsky.social",
-            mastodon="",
+            mastodon="http://kelsipurdy.com/",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",
