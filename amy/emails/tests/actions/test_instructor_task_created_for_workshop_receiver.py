@@ -227,6 +227,7 @@ class TestInstructorTaskCreatedForWorkshopReceiverIntegration(TestBase):
             github="",
             twitter="",
             bluesky="@purdy_kelsi.bsky.social",
+            mastodon="",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",
