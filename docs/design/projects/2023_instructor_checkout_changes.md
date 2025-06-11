@@ -46,7 +46,7 @@ A summary of the trainee's Get Involved submission (if present) was added.
 
 The Get Involved submission form (which replaced the Lesson Contribution submission form) was moved to a separate view. This allowed edit and delete functionality to be added to un-evaluated submissions. Checks were also added to prevent a trainee from making multiple submissions unless requested to do so.
 
-Finally, validation was added to ensure submissions of GitHub contributions include a URL associated with a [Carpentries GitHub repository](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html).
+Finally, validation was added to ensure submissions of GitHub contributions include a URL associated with a Carpentries GitHub repository.
 
 ## Other changes
 

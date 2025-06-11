@@ -208,7 +208,7 @@ bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 class PrivacyConsentMixin(forms.Form):
     privacy_consent = forms.BooleanField(
         label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
+        '"https://docs.carpentries.org/policies/privacy.html"'
         ' target="_blank" rel="noreferrer">'
         "the data privacy policy of The Carpentries</a>.",
         required=True,

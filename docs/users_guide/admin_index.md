@@ -136,7 +136,7 @@ AMY asks all users for the following consents:
 
 **Mandatory consents:**
 
-* I have read and agree to the [privacy policy of The Carpentries](https://docs.carpentries.org/topic_folders/policies/privacy.html).
+* I have read and agree to the [privacy policy of The Carpentries](https://docs.carpentries.org/policies/privacy.html).
 * I acknowledge that I am at least 16 years old.
 * Do you agree to the transfer of your data outside of the European Economic Area/United Kingdom?
 
