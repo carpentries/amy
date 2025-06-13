@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("autoemails", "0019_alter_trigger_action"),
+        ("workshops", "0277_merge_20250206_0536"),
     ]
 
     operations = [
