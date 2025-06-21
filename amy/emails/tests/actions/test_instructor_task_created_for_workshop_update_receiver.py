@@ -308,6 +308,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateIntegration(TestBase):
             github="",
             twitter="",
             bluesky="@purdy_kelsi.bsky.social",
+            mastodon="http://kelsipurdy.com/",
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",

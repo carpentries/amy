@@ -83,6 +83,11 @@
     <th>{% include "includes/merge_radio.html" with field=form.bluesky %}</th>
   </tr>
   <tr>
+    <th>Mastodon</th>
+    <td>{{ obj_a.mastodon|default:"—" }}</td><td>{{ obj_b.mastodon|default:"—" }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.mastodon %}</th>
+  </tr>
+  <tr>
     <th>URL</th>
     <td>{{ obj_a.url|default:"—"|urlize_newtab }}</td><td>{{ obj_b.url|default:"—"|urlize_newtab }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.url %}</th>

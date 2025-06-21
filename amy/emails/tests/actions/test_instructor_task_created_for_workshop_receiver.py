@@ -121,7 +121,7 @@ class TestInstructorTaskCreatedForWorkshopReceiver(TestCase):
                     "person": api_model_url("person", person.pk),
                     "event": api_model_url("event", event.pk),
                     "task": api_model_url("task", task.pk),
-                    "task_id": scalar_value_url("int", task.pk),
+                    "task_id": scalar_value_url("int", str(task.pk)),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -227,6 +227,7 @@ class TestInstructorTaskCreatedForWorkshopReceiverIntegration(TestBase):
             github="",
             twitter="",
             bluesky="@purdy_kelsi.bsky.social",
+            mastodon=None,
             url="http://kelsipurdy.com/",
             affiliation="University of Arizona",
             occupation="TA at Biology Department",
