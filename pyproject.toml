@@ -104,6 +104,8 @@ mypy_path = "amy"
 module = [
   "anymail.*",
   "cairosvg.*",
+  "crispy_forms.*",
+  "django_comments.*",
   "django_filters.*",
   "flags.*",
   "markdownx.*",

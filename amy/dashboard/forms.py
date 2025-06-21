@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -12,9 +14,9 @@ from workshops.fields import (
     Select2Widget,
 )
 from workshops.forms import BootstrapHelper
+from workshops.mixins import GenderMixin
 from workshops.models import (
     Event,
-    GenderMixin,
     Language,
     Person,
     Task,
@@ -39,7 +41,7 @@ class AssignmentForm(forms.Form):
     )
 
 
-class AutoUpdateProfileForm(forms.ModelForm):
+class AutoUpdateProfileForm(forms.ModelForm[Person]):
     username = forms.CharField(disabled=True, required=False)
     email = forms.CharField(
         disabled=True,
@@ -59,7 +61,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
         required=False,
         help_text="Your country of residence.",
         widget=Select2Widget,
-    )
+    )  # type: ignore
 
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
@@ -103,7 +105,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             "airport": Select2Widget,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         form_tag = kwargs.pop("form_tag", True)
         add_submit_button = kwargs.pop("add_submit_button", True)
         super().__init__(*args, **kwargs)
@@ -114,7 +116,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
         )
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
@@ -123,7 +125,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
         # remove additional fields
         self.helper.layout.fields.remove("gender_other")
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 
@@ -141,14 +143,14 @@ class AutoUpdateProfileForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class GetInvolvedForm(forms.ModelForm):
+class GetInvolvedForm(forms.ModelForm[TrainingProgress]):
     """Trainee-facing form for submitting training progress.
 
     All fields have required=False to prevent confusion, as required fields change
     based on the involvement choice.
     """
 
-    involvement_type = forms.ModelChoiceField(
+    involvement_type = forms.ModelChoiceField[Involvement](
         label="Activity",
         help_text="If your activity is not included in this list, please select "
         '"Other" and provide details under "Additional information" below.',
@@ -165,7 +167,8 @@ class GetInvolvedForm(forms.ModelForm):
         label="URL",
         help_text="A link to the activity, if there is one. If you served "
         "at a workshop, enter the workshop website. "
-        "If you made a GitHub contribution, enter that link and ensure it is to a" "Carpentries GitHub repository (not a fork).",
+        "If you made a GitHub contribution, enter that link and ensure it is to a"
+        "Carpentries GitHub repository (not a fork).",
         required=False,
     )
     trainee_notes = forms.CharField(
@@ -219,10 +222,10 @@ class GetInvolvedForm(forms.ModelForm):
             else:
                 return False
 
-    def clean_url(self):
+    def clean_url(self) -> str:
         """Check if URL is associated with a Carpentries GitHub organisation"""
         involvement_type = self.cleaned_data["involvement_type"]
-        url = self.cleaned_data["url"]
+        url = cast(str, self.cleaned_data["url"])
         if involvement_type and involvement_type.name == "GitHub Contribution":
             if not url:
                 # This check is part of model validation, but form validation runs
@@ -245,14 +248,14 @@ class GetInvolvedForm(forms.ModelForm):
 
         return url
 
-    def clean_trainee_notes(self):
+    def clean_trainee_notes(self) -> str:
         """Raise an error if the trainee has not provided notes where required.
 
         All other fields are cleaned in the TrainingProgress model itself.
         This field is different as it should only show an error on this specific form.
         """
         involvement_type = self.cleaned_data["involvement_type"]
-        trainee_notes = self.cleaned_data["trainee_notes"]
+        trainee_notes = cast(str, self.cleaned_data["trainee_notes"])
         if involvement_type and involvement_type.notes_required and not trainee_notes:
             raise ValidationError(f'This field is required for activity "{involvement_type}".')
 
@@ -281,7 +284,7 @@ class SearchForm(forms.Form):
     helper = BootstrapHelper(add_cancel_button=False, use_get_method=True)
 
 
-class SignupForRecruitmentForm(forms.ModelForm):
+class SignupForRecruitmentForm(forms.ModelForm[InstructorRecruitmentSignup]):
     user_notes = forms.CharField(
         required=False,
         widget=forms.Textarea,
@@ -301,20 +304,20 @@ class SignupForRecruitmentForm(forms.ModelForm):
             "user_notes",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.person: Person = kwargs.pop("person")
         self.recruitment: InstructorRecruitment = kwargs.pop("recruitment")
         super().__init__(*args, **kwargs)
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
 
         try:
-            (CommunityRole.objects.active().get(person=self.person, config__name="instructor"))  # type: ignore
+            (CommunityRole.objects.active().get(person=self.person, config__name="instructor"))
         except CommunityRole.DoesNotExist:
             raise ValidationError("You don't have an active Instructor Community Role")
 
-        signups_exist = self.recruitment.signups.filter(person=self.person).exists()  # type: ignore
+        signups_exist = self.recruitment.signups.filter(person=self.person).exists()
         if signups_exist:
             raise ValidationError("You are already signed up for this recruitment")
 

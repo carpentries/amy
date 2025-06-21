@@ -164,7 +164,7 @@ class StateMixin(models.Model):
         abstract = True
 
     @cached_property
-    def active(self):
+    def active(self) -> bool:
         # after changing ActiveMixin to StateMixin, this should help in some
         # cases with code refactoring; will be removed later
         return self.state == "p"
@@ -185,7 +185,7 @@ class StateExtendedMixin(models.Model):
         abstract = True
 
     @property
-    def active(self):
+    def active(self) -> bool:
         return self.state == "p"
 
 
