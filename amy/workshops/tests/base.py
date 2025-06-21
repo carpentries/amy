@@ -209,6 +209,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
             github="herself",
             twitter="herself",
             bluesky="@herself.bsky.social",
+            mastodon="",
             url="http://hermione.org",
             username="granger_hermione",
             country="GB",

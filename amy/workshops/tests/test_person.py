@@ -40,11 +40,11 @@ from workshops.tests.base import TestBase
 class TestPerson(TestBase):
     """Test cases for persons."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
 
-    def test_family_name_notnull(self):
+    def test_family_name_notnull(self) -> None:
         """This is a regression test against #1682
         (https://github.com/carpentries/amy/issues/1682).
 
@@ -57,7 +57,7 @@ class TestPerson(TestBase):
         self.assertEqual(p1.family, "")
         self.assertEqual(p2.family, "")
 
-    def test_login_with_email(self):
+    def test_login_with_email(self) -> None:
         """Make sure we can login with user's email too, not only with the
         username."""
         self.client.logout()
@@ -65,35 +65,35 @@ class TestPerson(TestBase):
         user = authenticate(username=email, password="admin")
         self.assertEqual(user, self.admin)
 
-    def test_display_person_correctly_with_all_fields(self):
+    def test_display_person_correctly_with_all_fields(self) -> None:
         response = self.client.get(reverse("person_details", args=[str(self.hermione.id)]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["person"], self.hermione)
 
-    def test_display_person_correctly_with_some_fields(self):
+    def test_display_person_correctly_with_some_fields(self) -> None:
         response = self.client.get(reverse("person_details", args=[str(self.ironman.id)]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["person"], self.ironman)
 
-    def test_edit_person_email_when_all_fields_set(self):
+    def test_edit_person_email_when_all_fields_set(self) -> None:
         data = PersonForm(instance=self.ron).initial
         form = PersonForm(data, instance=self.ron)
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_edit_person_email_when_airport_not_set(self):
+    def test_edit_person_email_when_airport_not_set(self) -> None:
         data = PersonForm(instance=self.spiderman).initial
         data["airport"] = ""
         form = PersonForm(data, instance=self.spiderman)
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_edit_person_empty_family_name(self):
+    def test_edit_person_empty_family_name(self) -> None:
         data = {
             "family": "",  # family name cannot be empty
         }
         f = PersonForm(data)
         self.assertNotIn("family", f.errors)
 
-    def test_1185_regression(self):
+    def test_1185_regression(self) -> None:
         """Ensure that admins without superuser privileges,
         but with 'change_person' permission can edit other people.
 
@@ -123,7 +123,7 @@ class TestPerson(TestBase):
         res = self.app.get(bob_edit_url, user="manager")
         self.assertEqual(res.status_code, 200)
 
-    def test_person_award_badge(self):
+    def test_person_award_badge(self) -> None:
         """Ensure that we can add an award from `person_edit` view"""
         url = reverse("person_edit", args=[self.spiderman.pk])
         person_edit = self.app.get(url, user="admin")
@@ -135,7 +135,7 @@ class TestPerson(TestBase):
         self.assertEqual(self.spiderman.award_set.count(), 1)
         self.assertEqual(self.spiderman.award_set.first().badge, self.instructor_badge)
 
-    def test_person_failed_training_warning(self):
+    def test_person_failed_training_warning(self) -> None:
         """
         Ensure that the form warns the admin if the person
         has a failed training, and an award or task is added
@@ -163,7 +163,7 @@ class TestPerson(TestBase):
         self.assertEqual(award_form.fields["submit"][0].attrs["onclick"], warning_popup)
         self.assertEqual(task_form.fields["submit"][0].attrs["onclick"], warning_popup)
 
-    def test_person_add_task(self):
+    def test_person_add_task(self) -> None:
         """Ensure that we can add a task from `person_edit` view"""
         self._setUpEvents()  # set up some events for us
         role = Role.objects.create(name="test_role")
@@ -179,7 +179,7 @@ class TestPerson(TestBase):
         self.assertEqual(self.spiderman.task_set.count(), 1)
         self.assertEqual(self.spiderman.task_set.first().role, role)
 
-    def test_edit_person_permissions(self):
+    def test_edit_person_permissions(self) -> None:
         """Make sure we can set up user permissions correctly."""
 
         # make sure Hermione does not have any perms, nor groups
@@ -211,7 +211,7 @@ class TestPerson(TestBase):
         assert set(self.hermione.user_permissions.all()) == set(user_permissions)
         assert set(self.hermione.groups.all()) == set(groups)
 
-    def test_delete_person(self):
+    def test_delete_person(self) -> None:
         """Make sure deleted person is longer accessible.
 
         Additionally check on_delete behavior for Task, Qualification, and
@@ -251,7 +251,7 @@ class TestPerson(TestBase):
                 with self.assertRaises(Task.DoesNotExist):
                     Task.objects.get(pk=task.pk)
 
-    def test_editing_qualifications(self):
+    def test_editing_qualifications(self) -> None:
         """Make sure we can edit user lessons without any issues."""
         assert set(self.hermione.lessons.all()) == {self.git, self.sql}
 
@@ -263,7 +263,7 @@ class TestPerson(TestBase):
         assert response.status_code == 302
         assert set(self.hermione.lessons.all()) == {self.git}
 
-    def test_person_add_lessons(self):
+    def test_person_add_lessons(self) -> None:
         """Check if it's still possible to add lessons via PersonCreate
         view."""
         data = {
@@ -287,7 +287,7 @@ class TestPerson(TestBase):
         rv = self.client.post(reverse("person_add"), data)
         assert rv.status_code == 302
 
-    def test_person_success_message(self):
+    def test_person_success_message(self) -> None:
         """Since PersonCreate view simulates SuccessMessageMixin, check if it
         does it correctly."""
         data = {
@@ -302,7 +302,7 @@ class TestPerson(TestBase):
         content = rv.content.decode("utf-8")
         assert "Test Test was created successfully." in content
 
-    def test_person_username_validation(self):
+    def test_person_username_validation(self) -> None:
         """Ensure username doesn't allow for non-ASCII characters."""
         invalid_usernames = ["Zażółć gęślą jaźń", "chrząszcz"]
         for username in invalid_usernames:
@@ -324,7 +324,7 @@ class TestPerson(TestBase):
         )
         person.clean_fields(exclude=["password"])
 
-    def test_new_person_auto_username(self):
+    def test_new_person_auto_username(self) -> None:
         """Ensure after adding a new person, they're automatically assigned
         a unique username."""
         url = reverse("person_add")
@@ -336,7 +336,7 @@ class TestPerson(TestBase):
         self.client.post(url, data)
         Person.objects.get(personal="Albert", family="Einstein", username="einstein_albert")
 
-    def test_person_email_auto_lowercase(self):
+    def test_person_email_auto_lowercase(self) -> None:
         """Make sure PersonForm/PersonCreateForm lowercases user's email."""
         data = {
             "personal": "Marie",
@@ -354,7 +354,7 @@ class TestPerson(TestBase):
         person.refresh_from_db()
         self.assertEqual(person.email, "m.sklodowska-curie@sorbonne.fr")
 
-    def test_edit_permission_of_person_without_email(self):
+    def test_edit_permission_of_person_without_email(self) -> None:
         """
         Creating a person without email id and then changing
         the permissions for that person.
@@ -381,7 +381,7 @@ class TestPerson(TestBase):
         )
         assert response.status_code == 302
 
-    def test_get_training_tasks(self):
+    def test_get_training_tasks(self) -> None:
         p1 = Person.objects.create(username="p1")
         p2 = Person.objects.create(username="p2")
         org = Organization.objects.create(domain="example.com", fullname="Test Organization")
@@ -407,7 +407,7 @@ class TestPerson(TestBase):
 
         self.assertEqual(set(p1.get_training_tasks()), {t1})
 
-    def test_awarding_instructor_badge_workflow(self):
+    def test_awarding_instructor_badge_workflow(self) -> None:
         """Test that you can click "instructor badge" label in "eligible"
         column in trainees list view. When you click them, you're moved to
         the view where you can edit person's awards. "Award", "Badge", and "Event"
@@ -450,7 +450,7 @@ class TestPerson(TestBase):
         self.assertRedirects(res, reverse("all_trainees"))
         self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)
 
-    def test_person_github_username_validation(self):
+    def test_person_github_username_validation(self) -> None:
         """Ensure GitHub username doesn't allow for spaces or commas."""
         invalid_usernames = ["Harry James Potter", "Harry, Hermione, Ron"]
         for key, username in enumerate(invalid_usernames):
@@ -474,7 +474,7 @@ class TestPerson(TestBase):
         )
         person.clean_fields(exclude=["password"])
 
-    def test_creating_person_with_no_comment(self):
+    def test_creating_person_with_no_comment(self) -> None:
         """Ensure that no comment is added when PersonCreateForm without comment
         content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -491,7 +491,7 @@ class TestPerson(TestBase):
         Person.objects.get(username="curie_marie")
         self.assertEqual(Comment.objects.count(), 0)
 
-    def test_creating_person_with_comment(self):
+    def test_creating_person_with_comment(self) -> None:
         """Ensure that a comment is added when PersonCreateForm with comment
         content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -582,7 +582,7 @@ class TestPersonPassword(TestBase):
     self._setUpUsersAndLogin().
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         admins, _ = Group.objects.get_or_create(name="administrators")
 
         # create a superuser
@@ -606,7 +606,7 @@ class TestPersonPassword(TestBase):
         self.person_consent_required_terms(self.user)
         self.user.groups.add(admins)
 
-    def test_edit_password_by_superuser(self):
+    def test_edit_password_by_superuser(self) -> None:
         self.client.login(username="admin", password="admin")
         user = self.admin
         url = reverse("person_password", args=[user.pk])
@@ -636,7 +636,7 @@ class TestPersonPassword(TestBase):
         user.refresh_from_db()
         assert user.check_password(new_password) is True
 
-    def test_edit_other_user_password_by_superuser(self):
+    def test_edit_other_user_password_by_superuser(self) -> None:
         self.client.login(username="admin", password="admin")
         user = self.user
         url = reverse("person_password", args=[user.pk])
@@ -666,7 +666,7 @@ class TestPersonPassword(TestBase):
         user.refresh_from_db()
         assert user.check_password(new_password) is True
 
-    def test_edit_password_by_normal_user(self):
+    def test_edit_password_by_normal_user(self) -> None:
         self.client.login(username="user", password="user")
         user = self.user
         url = reverse("person_password", args=[user.pk])
@@ -702,7 +702,7 @@ class TestPersonPassword(TestBase):
         user.refresh_from_db()
         assert user.check_password(new_password) is True
 
-    def test_edit_other_user_password_by_normal_user(self):
+    def test_edit_other_user_password_by_normal_user(self) -> None:
         self.client.login(username="user", password="user")
         user = self.admin
         rv = self.client.get(reverse("person_password", args=[user.pk]))
@@ -710,7 +710,7 @@ class TestPersonPassword(TestBase):
 
 
 class TestPersonMerging(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpAirports()
         self._setUpBadges()
         self._setUpLessons()
@@ -896,6 +896,7 @@ class TestPersonMerging(TestBase):
             "github": "obj_b",
             "twitter": "obj_a",
             "bluesky": "obj_a",
+            "mastodon": "obj_a",
             "url": "obj_b",
             "affiliation": "obj_b",
             "occupation": "obj_a",
@@ -915,7 +916,7 @@ class TestPersonMerging(TestBase):
         query = urlencode({"person_a": self.person_a.pk, "person_b": self.person_b.pk})
         self.url = "{}?{}".format(base_url, query)
 
-    def test_form_invalid_values(self):
+    def test_form_invalid_values(self) -> None:
         """Make sure only a few fields accept third option ("combine")."""
         hidden = {
             "person_a": self.person_a.pk,
@@ -970,7 +971,7 @@ class TestPersonMerging(TestBase):
         # make sure no fields are added without this test being updated
         self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
 
-    def test_merging_base_person(self):
+    def test_merging_base_person(self) -> None:
         """Merging: ensure the base person is selected based on ID form
         field.
 
@@ -984,7 +985,7 @@ class TestPersonMerging(TestBase):
         with self.assertRaises(Person.DoesNotExist):
             self.person_a.refresh_from_db()
 
-    def test_merging_basic_attributes(self):
+    def test_merging_basic_attributes(self) -> None:
         """Merging: ensure basic (non-relationships) attributes are properly
         saved."""
         assertions = {
@@ -1014,7 +1015,7 @@ class TestPersonMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(getattr(self.person_b, key), value, key)
 
-    def test_merging_relational_attributes(self):
+    def test_merging_relational_attributes(self) -> None:
         """Merging: ensure M2M-related fields are properly saved/combined."""
         assertions = {
             # instead testing awards, let's simply test badges
@@ -1040,7 +1041,7 @@ class TestPersonMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.person_b, key).all()), value, key)
 
-    def test_merging_m2m_attributes(self):
+    def test_merging_m2m_attributes(self) -> None:
         """Merging: ensure M2M-related fields are properly saved/combined.
         This is a regression test; we have to ensure that M2M objects aren't
         removed from the database."""
@@ -1063,7 +1064,7 @@ class TestPersonMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.person_b, key).all()), value, key)
 
-    def test_merging_m2m_with_similar_attributes(self):
+    def test_merging_m2m_with_similar_attributes(self) -> None:
         """Regression test: merging people with the same M2M objects, e.g. when
         both people have task 'learner' in event 'ABCD', would result in unique
         constraint violation and cause IntegrityError."""
@@ -1077,7 +1078,7 @@ class TestPersonMerging(TestBase):
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
 
-    def test_merging_comments_strategy1(self):
+    def test_merging_comments_strategy1(self) -> None:
         """Ensure comments regarding persons are correctly merged using
         `merge_objects`.
         This test uses strategy 1 (combine)."""
@@ -1091,7 +1092,7 @@ class TestPersonMerging(TestBase):
             set(comments),
         )
 
-    def test_merging_comments_strategy2(self):
+    def test_merging_comments_strategy2(self) -> None:
         """Ensure comments regarding persons are correctly merged using
         `merge_objects`.
         This test uses strategy 2 (object a)."""
@@ -1105,7 +1106,7 @@ class TestPersonMerging(TestBase):
             set(comments),
         )
 
-    def test_merging_comments_strategy3(self):
+    def test_merging_comments_strategy3(self) -> None:
         """Ensure comments regarding persons are correctly merged using
         `merge_objects`.
         This test uses strategy 3 (object b)."""
@@ -1119,7 +1120,7 @@ class TestPersonMerging(TestBase):
             set(comments),
         )
 
-    def test_merging_consents_most_recent(self):
+    def test_merging_consents_most_recent(self) -> None:
         """Ensure consents regarding persons are correctly merged using
         `merge_objects`.
         This test uses "most_recent" strategy."""
@@ -1179,7 +1180,7 @@ def github_username_to_uid_mock(username):
 class TestPersonAndUserSocialAuth(TestBase):
     """Test Person.synchronize_usersocialauth and Person.save."""
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         user = Person.objects.create_user(
             username="user",
             personal="Typical",
@@ -1234,7 +1235,7 @@ class TestPersonAndUserSocialAuth(TestBase):
         expected = [("github", "3", user.pk)]
         self.assertSequenceEqual(got, expected)
 
-    def test_errors_are_not_hidden(self):
+    def test_errors_are_not_hidden(self) -> None:
         """Test that errors occuring in synchronize_usersocialauth are not
         hidden, that is you're not redirected to any other view. Regression
         for #890."""
@@ -1246,7 +1247,7 @@ class TestPersonAndUserSocialAuth(TestBase):
 
 
 class TestGetMissingInstructorRequirements(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.person = Person.objects.create(username="person")
         self.training = TrainingRequirement.objects.get(name="Training")
         self.get_involved, _ = TrainingRequirement.objects.get_or_create(
@@ -1256,7 +1257,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo", defaults={})
         self.involvement, _ = Involvement.objects.get_or_create(name="Test Involvement", defaults={})
 
-    def test_all_requirements_satisfied(self):
+    def test_all_requirements_satisfied(self) -> None:
         TrainingProgress.objects.create(trainee=self.person, state="p", requirement=self.training)
         TrainingProgress.objects.create(
             trainee=self.person,
@@ -1271,7 +1272,7 @@ class TestGetMissingInstructorRequirements(TestBase):
         person = Person.objects.annotate_with_instructor_eligibility().get(username="person")
         self.assertEqual(person.get_missing_instructor_requirements(), [])
 
-    def test_some_requirements_are_fulfilled(self):
+    def test_some_requirements_are_fulfilled(self) -> None:
         # Get Involved was accepted, the second time.
         TrainingProgress.objects.create(
             trainee=self.person,
@@ -1297,7 +1298,7 @@ class TestGetMissingInstructorRequirements(TestBase):
             ["Training", "Welcome Session", "Demo"],
         )
 
-    def test_none_requirement_is_fulfilled(self):
+    def test_none_requirement_is_fulfilled(self) -> None:
         person = Person.objects.annotate_with_instructor_eligibility().get(username="person")
         self.assertEqual(
             person.get_missing_instructor_requirements(),
@@ -1306,7 +1307,7 @@ class TestGetMissingInstructorRequirements(TestBase):
 
 
 class TestFilterTaughtWorkshops(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpAirports()
         self._setUpBadges()
         self._setUpLessons()
@@ -1315,7 +1316,7 @@ class TestFilterTaughtWorkshops(TestBase):
         self._setUpInstructors()
         self._setUpNonInstructors()
 
-    def test_bug_975(self):
+    def test_bug_975(self) -> None:
         test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt = Tag.objects.get(name="TTT")
         swc = Tag.objects.get(name="SWC")
@@ -1348,25 +1349,25 @@ class TestFilterTaughtWorkshops(TestBase):
 
 
 class TestPersonUpdateViewPermissions(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.trainee = Person.objects.create_user("trainee", "Harry", "Potter", "hp@mail.com", "hp")
         self.trainer = Person.objects.create_user("trainer", "Severus", "Snape", "ss@mail.com", "ss")
         self.person_consent_required_terms(self.trainer)
         trainer_group, _ = Group.objects.get_or_create(name="trainers")
         self.trainer.groups.add(trainer_group)
 
-    def test_correct_permissions(self):
+    def test_correct_permissions(self) -> None:
         self.assertTrue(self.trainer.is_admin)
         self.assertFalse(self.trainee.is_admin)
 
-    def test_trainer_can_edit_self_profile(self):
+    def test_trainer_can_edit_self_profile(self) -> None:
         profile_edit = self.app.get(
             reverse("person_edit", args=[self.trainer.pk]),
             user=self.trainer,
         )
         self.assertEqual(profile_edit.status_code, 200)
 
-    def test_trainer_cannot_edit_stray_profile(self):
+    def test_trainer_cannot_edit_stray_profile(self) -> None:
         with self.assertRaises(webtest.app.AppError):
             self.app.get(
                 reverse("person_edit", args=[self.trainee.pk]),
@@ -1377,17 +1378,17 @@ class TestPersonUpdateViewPermissions(TestBase):
 class TestRegression1076(TestBase):
     """Family name should be optional."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpRoles()
         self._setUpEvents()
 
-    def test_family_name_is_optional(self):
+    def test_family_name_is_optional(self) -> None:
         self.admin.family = ""
         self.admin.save()  # no error should be raised
         self.admin.full_clean()  # no error should be raised
 
-    def test_bulk_upload(self):
+    def test_bulk_upload(self) -> None:
         event_slug = Event.objects.first().slug
         csv = ("personal,family,email,event,role\n" "John,,john@smith.com,{0},learner\n").format(event_slug)
 
@@ -1408,7 +1409,7 @@ class TestArchivePerson(TestBase):
     """Test cases for person archive endpoint."""
 
     @patch("workshops.github_auth.github_username_to_uid", github_username_to_uid_mock)
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
         self.role = Role.objects.create(name="instructor")
@@ -1531,7 +1532,7 @@ class TestArchivePerson(TestBase):
         # social auth should be removed
         self.assertEqual(len(archived_profile.social_auth.all()), 0)
 
-    def test_archive_by_super_user(self):
+    def test_archive_by_super_user(self) -> None:
         """
         Superusers should be able to archive any user.
         """
@@ -1551,7 +1552,7 @@ class TestArchivePerson(TestBase):
         self.assert_person_archive(self.admin)
         self.assertFalse(self.client.login(username=self.admin.username, password="admin"))
 
-    def test_archive_by_non_admin(self):
+    def test_archive_by_non_admin(self) -> None:
         """
         Non-Admin users should be able to archive their own profiles.
         """
@@ -1608,7 +1609,7 @@ class TestArchivePerson(TestBase):
         versions_after_archive = Version.objects.get_for_object(archived_profile)
         self.assertEqual(len(versions_after_archive), 1)
 
-    def test_permissions_removed_when_archived(self):
+    def test_permissions_removed_when_archived(self) -> None:
         # add permissions to the admin user
         groups = Group.objects.all()
         permissions = Permission.objects.filter(content_type__app_label="admin")
