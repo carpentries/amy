@@ -1,15 +1,15 @@
 from django.db import models
-from django.db.models import Case, When
+from django.db.models import Case, QuerySet, When
 from reversion import revisions as reversion
 
 from workshops.consts import STR_LONG, STR_MED
 from workshops.mixins import CreatedUpdatedArchivedMixin
 
 
-class InvolvementManager(models.Manager):
+class InvolvementManager(models.Manager["Involvement"]):
     def default_order(
         self,
-    ):
+    ) -> QuerySet["Involvement"]:
         # Always have 'Other' option at the end of the list, don't worry about the rest
         qs = self.order_by(
             Case(

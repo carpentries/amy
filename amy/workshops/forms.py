@@ -1,7 +1,7 @@
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import re
-from typing import Any
+from typing import Any, cast
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Button, Div, Field, Layout, Submit
@@ -9,8 +9,9 @@ from django import forms
 from django.contrib.auth.models import Permission
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
+from django.db.models import QuerySet
 from django.dispatch import receiver
-from django.forms import CheckboxSelectMultiple, SelectMultiple, TextInput
+from django.forms import CheckboxSelectMultiple, Form, SelectMultiple, TextInput
 from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
@@ -29,12 +30,13 @@ from workshops.fields import (
     Select2TagWidget,
     Select2Widget,
 )
+from workshops.mixins import GenderMixin
 from workshops.models import (
     Airport,
     Award,
     Badge,
+    Curriculum,
     Event,
-    GenderMixin,
     KnowledgeDomain,
     Language,
     Lesson,
@@ -62,23 +64,23 @@ class BootstrapHelper(FormHelper):
 
     def __init__(
         self,
-        form=None,
-        duplicate_buttons_on_top=False,
-        submit_label="Submit",
-        submit_name="submit",
-        submit_onclick=None,
-        use_get_method=False,
-        wider_labels=False,
-        add_submit_button=True,
-        add_delete_button=False,
-        add_cancel_button=True,
-        additional_form_class="",
-        form_tag=True,
-        display_labels=True,
-        form_action=None,
-        form_id=None,
-        include_media=True,
-    ):
+        form: Form | None = None,
+        duplicate_buttons_on_top: bool = False,
+        submit_label: str = "Submit",
+        submit_name: str = "submit",
+        submit_onclick: str | None = None,
+        use_get_method: bool = False,
+        wider_labels: bool = False,
+        add_submit_button: bool = True,
+        add_delete_button: bool = False,
+        add_cancel_button: bool = True,
+        additional_form_class: str = "",
+        form_tag: bool = True,
+        display_labels: bool = True,
+        form_action: str | None = None,
+        form_id: str | None = None,
+        include_media: bool = True,
+    ) -> None:
         """
         `duplicate_buttons_on_top` -- Whether submit buttons should be
         displayed on both top and bottom of the form.
@@ -105,7 +107,7 @@ class BootstrapHelper(FormHelper):
         buttons and you want these buttons to be aligned to left.
         """
 
-        super().__init__(form)
+        super().__init__(form)  # type: ignore
 
         self.attrs["role"] = "form"
 
@@ -128,33 +130,33 @@ class BootstrapHelper(FormHelper):
             self.field_class = "col-lg-12"
 
         if add_submit_button:
-            self.add_input(
+            self.add_input(  # type: ignore
                 Submit(
                     submit_name,
                     submit_label,
                     onclick=submit_onclick,
-                )
+                )  # type: ignore
             )
 
         if add_delete_button:
-            self.add_input(
+            self.add_input(  # type: ignore
                 Submit(
                     "delete",
                     "Delete",
-                    onclick="return " 'confirm("Are you sure you want to delete it?");',
+                    onclick='return confirm("Are you sure you want to delete it?");',
                     form="delete-form",
                     css_class="btn-danger float-right",
-                )
+                )  # type: ignore
             )
 
         if add_cancel_button:
-            self.add_input(
+            self.add_input(  # type: ignore
                 Button(
                     "cancel",
                     "Cancel",
                     css_class="btn-secondary float-right",
                     onclick="window.history.back()",
-                )
+                )  # type: ignore
             )
 
         # offset here adds horizontal centering for all these forms
@@ -171,7 +173,7 @@ class BootstrapHelper(FormHelper):
         # don't prevent from loading media by default
         self.include_media = include_media
 
-    def hr(self):
+    def hr(self) -> str:
         """Horizontal line as a separator in forms is used very often. But
         since from time to time the forms are changed (in terms of columns
         width), we should rather use one global <hr>..."""
@@ -185,16 +187,18 @@ class BootstrapHelperFilter(FormHelper):
     form_method = "get"
     form_id = "filter-form"
 
-    def __init__(self, form=None):
-        super().__init__(form)
+    def __init__(self, form: Form | None = None) -> None:
+        super().__init__(form)  # type: ignore
         self.attrs["role"] = "form"
-        self.inputs.append(Submit("", "Submit"))
+        self.inputs.append(
+            Submit("", "Submit"),  # type: ignore
+        )
 
 
 class BootstrapHelperFormsetInline(BootstrapHelper):
     """For use in inline formsets."""
 
-    template = "bootstrap/table_inline_formset.html"
+    template = "bootstrap/table_inline_formset.html"  # type: ignore
 
 
 bootstrap_helper_filter = BootstrapHelperFilter()
@@ -208,7 +212,7 @@ bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 class PrivacyConsentMixin(forms.Form):
     privacy_consent = forms.BooleanField(
         label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
+        '"https://docs.carpentries.org/policies/privacy.html"'
         ' target="_blank" rel="noreferrer">'
         "the data privacy policy of The Carpentries</a>.",
         required=True,
@@ -216,18 +220,18 @@ class PrivacyConsentMixin(forms.Form):
 
 
 class WidgetOverrideMixin:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         widgets = kwargs.pop("widgets", {})
         super().__init__(*args, **kwargs)
         for field, widget in widgets.items():
-            self.fields[field].widget = widget
+            self.fields[field].widget = widget  # type: ignore
 
 
 # ----------------------------------------------------------
 # Forms
 
 
-def continent_list():
+def continent_list() -> list[tuple[str | int, str]]:
     """This has to be as a callable, because otherwise Django evaluates this
     query and, if the database doesn't exist yet (e.g. during Travis-CI
     tests)."""
@@ -291,22 +295,22 @@ class WorkshopStaffForm(forms.Form):
     was_organizer = forms.BooleanField(required=False, label="Was organizer at least once before")
     is_in_progress_trainee = forms.BooleanField(required=False, label="Is an in-progress instructor trainee")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Build form layout dynamically."""
         super().__init__(*args, **kwargs)
 
-        self.helper = FormHelper(self)
+        self.helper = FormHelper(self)  # type: ignore
         self.helper.form_method = "get"
-        self.helper.layout = Layout(
-            Div(
-                Div(
-                    HTML('<h5 class="card-title">Location</h5>'),
+        self.helper.layout = Layout(  # type: ignore
+            Div(  # type: ignore
+                Div(  # type: ignore
+                    HTML('<h5 class="card-title">Location</h5>'),  # type: ignore
                     "airport",
-                    HTML("<hr>"),
+                    HTML("<hr>"),  # type: ignore
                     "country",
-                    HTML("<hr>"),
+                    HTML("<hr>"),  # type: ignore
                     "continent",
-                    HTML("<hr>"),
+                    HTML("<hr>"),  # type: ignore
                     "latitude",
                     "longitude",
                     css_class="card-body",
@@ -315,7 +319,7 @@ class WorkshopStaffForm(forms.Form):
             ),
             "is_instructor",
             "is_trainer",
-            HTML("<hr>"),
+            HTML("<hr>"),  # type: ignore
             "was_helper",
             "was_organizer",
             "is_in_progress_trainee",
@@ -323,11 +327,11 @@ class WorkshopStaffForm(forms.Form):
             "domains",
             "gender",
             "lessons",
-            Submit("", "Submit"),
+            Submit("", "Submit"),  # type: ignore
         )
 
-    def clean(self):
-        cleaned_data = super().clean()
+    def clean(self) -> dict[str, Any] | None:
+        cleaned_data = cast(dict[str, Any], super().clean())
         lat = bool(cleaned_data.get("latitude"))
         lng = bool(cleaned_data.get("longitude"))
         airport = bool(cleaned_data.get("airport"))
@@ -337,13 +341,13 @@ class WorkshopStaffForm(forms.Form):
         # if searching by coordinates, then there must be both lat & lng
         # present
         if lat ^ lng:
-            raise ValidationError("Must specify both latitude and longitude if searching by " "coordinates")
+            raise ValidationError("Must specify both latitude and longitude if searching by coordinates")
 
         # User must search by airport, or country, or coordinates, or none
         # of them. Sum of boolean elements must be equal 0 (if general search)
         # or 1 (if searching by airport OR country OR lat/lng).
         if sum([airport, country, latlng]) not in [0, 1]:
-            raise ValidationError("Must specify an airport OR a country, OR use coordinates, OR " "none of them.")
+            raise ValidationError("Must specify an airport OR a country, OR use coordinates, OR none of them.")
         return cleaned_data
 
 
@@ -354,7 +358,7 @@ class BulkUploadCSVForm(forms.Form):
     file = forms.FileField()
 
 
-class EventForm(forms.ModelForm):
+class EventForm(forms.ModelForm[Event]):
     host = forms.ModelChoiceField(
         label="Host Site",
         required=True,
@@ -397,14 +401,14 @@ class EventForm(forms.ModelForm):
         required=False,
         help_text=Event._meta.get_field("country").help_text,
         widget=Select2Widget,
-    )
+    )  # type: ignore
 
     comment = MarkdownxFormField(
         label="Comment",
         help_text="Any content in here will be added to comments after this " "event is saved.",
         widget=forms.Textarea,
         required=False,
-    )
+    )  # type: ignore
 
     instructors_pre = forms.URLField(
         label="Assessment survey for instructors:",
@@ -462,16 +466,16 @@ class EventForm(forms.ModelForm):
             "online_country.js",
         )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         show_lessons = kwargs.pop("show_lessons", False)
         add_comment = kwargs.pop("add_comment", True)
         super().__init__(*args, **kwargs)
 
-        self.helper.layout = Layout(
-            Field("slug", placeholder="YYYY-MM-DD-location"),
+        self.helper.layout = Layout(  # type: ignore
+            Field("slug", placeholder="YYYY-MM-DD-location"),  # type: ignore
             "completed",
-            Field("start", placeholder="YYYY-MM-DD"),
-            Field("end", placeholder="YYYY-MM-DD"),
+            Field("start", placeholder="YYYY-MM-DD"),  # type: ignore
+            Field("end", placeholder="YYYY-MM-DD"),  # type: ignore
             "host",
             "sponsor",
             "membership",
@@ -487,9 +491,9 @@ class EventForm(forms.ModelForm):
             "manual_attendance",
             "contact",
             "instructors_pre",
-            Div(
-                Div(HTML("Location details"), css_class="card-header"),
-                Div(
+            Div(  # type: ignore
+                Div(HTML("Location details"), css_class="card-header"),  # type: ignore
+                Div(  # type: ignore
                     "country",
                     "venue",
                     "address",
@@ -517,9 +521,9 @@ class EventForm(forms.ModelForm):
         else:
             del self.fields["comment"]
 
-    def clean_slug(self):
+    def clean_slug(self) -> str:
         # Ensure slug is in "YYYY-MM-DD-location" format
-        data = self.cleaned_data["slug"]
+        data = cast(str, self.cleaned_data["slug"])
         match = re.match(r"(\d{4}|x{4})-(\d{2}|x{2})-(\d{2}|x{2})-.+", data)
         if not match:
             raise ValidationError(
@@ -529,20 +533,20 @@ class EventForm(forms.ModelForm):
             )
         return data
 
-    def clean_end(self):
+    def clean_end(self) -> date:
         """Ensure end >= start."""
-        start = self.cleaned_data["start"]
-        end = self.cleaned_data["end"]
+        start = cast(date, self.cleaned_data["start"])
+        end = cast(date, self.cleaned_data["end"])
 
         if start and end and end < start:
             raise ValidationError("Must not be earlier than start date.")
         return end
 
-    def clean_open_TTT_applications(self):
+    def clean_open_TTT_applications(self) -> bool:
         """Ensure there's a TTT tag applied to the event, if the
         `open_TTT_applications` is True."""
-        open_TTT_applications = self.cleaned_data["open_TTT_applications"]
-        tags = self.cleaned_data.get("tags", None)
+        open_TTT_applications = cast(bool, self.cleaned_data["open_TTT_applications"])
+        tags = cast(QuerySet[Tag] | None, self.cleaned_data.get("tags", None))
         error_msg = "You cannot open applications on a non-TTT event."
 
         if open_TTT_applications and tags:
@@ -561,12 +565,12 @@ class EventForm(forms.ModelForm):
 
         return open_TTT_applications
 
-    def get_missing_tags(self):
+    def get_missing_tags(self) -> set[str]:
         """Validate tags when some curricula are selected.
 
         Called during clean(), not during individual field validation."""
-        curricula = self.cleaned_data["curricula"]
-        tags = self.cleaned_data["tags"]
+        curricula = cast(QuerySet[Curriculum], self.cleaned_data["curricula"])
+        tags = cast(QuerySet[Tag], self.cleaned_data["tags"])
         try:
             expected_tags = set()
             for c in curricula:
@@ -580,12 +584,12 @@ class EventForm(forms.ModelForm):
         missing_tags = expected_tags - set(tags.values_list("name", flat=True))
         return missing_tags
 
-    def clean_manual_attendance(self):
+    def clean_manual_attendance(self) -> int:
         """Regression: #1608 - fix 500 server error when field is cleared."""
-        manual_attendance = self.cleaned_data["manual_attendance"] or 0
+        manual_attendance = cast(int | None, self.cleaned_data["manual_attendance"]) or 0
         return manual_attendance
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> Event:
         res = super().save(*args, **kwargs)
 
         comment = self.cleaned_data.get("comment")
@@ -599,7 +603,7 @@ class EventForm(forms.ModelForm):
 
         return res
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
         if not cleaned_data:
             return cleaned_data
@@ -626,7 +630,7 @@ class EventCreateForm(EventForm):
         help_text="This will be added to comments after the event is created.",
         widget=forms.Textarea,
         required=False,
-    )
+    )  # type: ignore
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
@@ -766,7 +770,7 @@ class PersonForm(forms.ModelForm[Person]):
         super().__init__(*args, **kwargs)
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
@@ -786,7 +790,7 @@ class PersonForm(forms.ModelForm[Person]):
         if gender == GenderMixin.OTHER and not gender_other:
             errors["gender"] = ValidationError("This field is required.")
         elif gender != GenderMixin.OTHER and gender_other:
-            errors["gender"] = ValidationError('If you entered data in "Other" field, please select that ' "option.")
+            errors["gender"] = ValidationError('If you entered data in "Other" field, please select that option.')
 
         # raise errors if any present
         if errors:
@@ -799,7 +803,7 @@ class PersonCreateForm(PersonForm):
         help_text="This will be added to comments after the person is " "created.",
         widget=forms.Textarea,
         required=False,
-    )
+    )  # type: ignore
 
     class Meta(PersonForm.Meta):
         # remove 'username' field as it's being populated after form save
@@ -809,7 +813,7 @@ class PersonCreateForm(PersonForm):
         fields.append("comment")
 
 
-class PersonPermissionsForm(forms.ModelForm):
+class PersonPermissionsForm(forms.ModelForm[Person]):
     helper = BootstrapHelper(add_cancel_button=False)
 
     user_permissions = forms.ModelMultipleChoiceField(
@@ -1000,7 +1004,7 @@ class PersonsMergeForm(forms.Form):
     )
 
 
-class AwardForm(WidgetOverrideMixin, forms.ModelForm):
+class AwardForm(WidgetOverrideMixin, forms.ModelForm[Award]):
     badge = forms.ModelChoiceField(
         queryset=Badge.objects.exclude(name__in=["lc-instructor", "dc-instructor", "swc-instructor"]).order_by(
             "title", "name"
@@ -1021,7 +1025,7 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
     class Media:
         js = ("award_form.js",)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         form_tag = kwargs.pop("form_tag", True)
         failed_trainings = kwargs.pop("failed_trainings", False)
         super().__init__(*args, **kwargs)
@@ -1207,7 +1211,7 @@ class EventsMergeForm(forms.Form):
 @receiver(create_comment_signal, sender=EventForm)
 @receiver(create_comment_signal, sender=EventCreateForm)
 @receiver(create_comment_signal, sender=PersonCreateForm)
-def form_saved_add_comment(sender, **kwargs):
+def form_saved_add_comment(sender: Any, **kwargs: Any) -> None:
     """A receiver for custom form.save() signal. This is intended to save
     comment, entered as a form field, when creating a new object, and present
     it as automatic system Comment (from django_comments app)."""

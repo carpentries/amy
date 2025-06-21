@@ -33,7 +33,7 @@ The Carpentries can maintain the following information about individuals in our 
 
     **Mandatory consents:**
 
-    * I have read and agree to the [privacy policy of The Carpentries](https://docs.carpentries.org/topic_folders/policies/privacy.html).
+    * I have read and agree to the [privacy policy of The Carpentries](https://docs.carpentries.org/policies/privacy.html).
     * I acknowledge that I am at least 16 years old.
     * Do you agree to the transfer of your data outside of the European Economic Area/United Kingdom?
 
@@ -82,7 +82,7 @@ This will take you to a page where you can select what type of activity you are 
 | Activity | Date required? | URL required? | Additional information required? |
 | --- | --- | --- | --- |
 | Attended a regional meetup, skill-up, or other community meeting | yes | no | yes, description of event |
-| Submitted a contribution to a Carpentries repository on GitHub | yes | yes, to a contribution to a repo in a [Carpentries organisation](https://docs.carpentries.org/topic_folders/communications/tools/github_organisations.html) | no |
+| Submitted a contribution to a Carpentries repository on GitHub | yes | yes, to a contribution to a repo in a Carpentries organisation | no |
 | Served as an Instructor or a helper at a Carpentries workshop | yes | yes, to a workshop website | no |
 | Other | yes | no | yes, description of contribution |
 
