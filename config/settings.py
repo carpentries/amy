@@ -655,6 +655,7 @@ PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
 #  }
 # ------------
 FLAGS = {
+    # ------------
     # Enable instructor recruitment views.
     "INSTRUCTOR_RECRUITMENT": [
         {"condition": "boolean", "value": True},
@@ -664,9 +665,17 @@ FLAGS = {
     "EMAIL_MODULE": [
         {"condition": "boolean", "value": True},
     ],
+    # ------------
     # Always enabled.
     "ENFORCE_MEMBER_CODES": [
         {"condition": "boolean", "value": True},
+    ],
+    # ------------
+    # Enable the Service Offering module.
+    "SERVICE_OFFERING": [
+        {"condition": "anonymous", "value": False, "required": True},
+        {"condition": "parameter", "value": "enable_service_offering=true"},
+        {"condition": "session", "value": "enable_service_offering"},
     ],
 }
 
