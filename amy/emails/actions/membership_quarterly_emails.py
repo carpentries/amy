@@ -209,10 +209,10 @@ def update_context_json_and_to_header_json(
     if not email:
         return None
 
-    context = get_context(request=request, membership=membership)
+    context = get_context(membership=membership)
     context_json = get_context_json(context)
-    to_header = get_recipients(context, request=request, membership=membership)
-    to_header_context_json = get_recipients_context_json(context, request=request, membership=membership)
+    to_header = get_recipients(context, membership=membership)
+    to_header_context_json = get_recipients_context_json(context, membership=membership)
     email.context_json = context_json.model_dump()
     email.to_header = to_header
     email.to_header_context_json = to_header_context_json.model_dump()
