@@ -2,8 +2,6 @@ from datetime import date
 from enum import StrEnum
 from typing import TypedDict
 
-from django.http import HttpRequest
-
 from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitmentSignup
 from workshops.models import (
@@ -19,7 +17,6 @@ from workshops.models import (
 
 
 class InstructorBadgeAwardedKwargs(TypedDict):
-    request: HttpRequest
     person_id: int
     award_id: int
 
@@ -31,7 +28,6 @@ class InstructorBadgeAwardedContext(TypedDict):
 
 
 class InstructorConfirmedKwargs(TypedDict):
-    request: HttpRequest
     person_id: int
     event_id: int
     instructor_recruitment_id: int
@@ -45,7 +41,6 @@ class InstructorConfirmedContext(TypedDict):
 
 
 class InstructorDeclinedKwargs(TypedDict):
-    request: HttpRequest
     person_id: int
     event_id: int
     instructor_recruitment_id: int
@@ -59,7 +54,6 @@ class InstructorDeclinedContext(TypedDict):
 
 
 class InstructorSignupKwargs(TypedDict):
-    request: HttpRequest
     person_id: int
     event_id: int
     instructor_recruitment_id: int
@@ -73,7 +67,6 @@ class InstructorSignupContext(TypedDict):
 
 
 class AdminSignsInstructorUpKwargs(TypedDict):
-    request: HttpRequest
     person_id: int
     event_id: int
     instructor_recruitment_id: int
@@ -87,7 +80,6 @@ class AdminSignsInstructorUpContext(TypedDict):
 
 
 class PersonsMergedKwargs(TypedDict):
-    request: HttpRequest
     person_a_id: int
     person_b_id: int
     selected_person_id: int
@@ -98,7 +90,6 @@ class PersonsMergedContext(TypedDict):
 
 
 class InstructorTaskCreatedForWorkshopKwargs(TypedDict):
-    request: HttpRequest
     person_id: int
     event_id: int
     task_id: int
@@ -112,7 +103,6 @@ class InstructorTaskCreatedForWorkshopContext(TypedDict):
 
 
 class InstructorTrainingApproachingKwargs(TypedDict):
-    request: HttpRequest
     event: Event
     event_start_date: date
 
@@ -123,7 +113,6 @@ class InstructorTrainingApproachingContext(TypedDict):
 
 
 class InstructorTrainingCompletedNotBadgedKwargs(TypedDict):
-    request: HttpRequest
     person: Person
     training_completed_date: date
 
@@ -138,7 +127,6 @@ class InstructorTrainingCompletedNotBadgedContext(TypedDict):
 
 
 class NewMembershipOnboardingKwargs(TypedDict):
-    request: HttpRequest
     membership: Membership
 
 
@@ -208,7 +196,6 @@ class AskForWebsiteKwargs(TypedDict):
 
 
 class MembershipQuarterlyKwargs(TypedDict):
-    request: HttpRequest
     membership: Membership
 
 
