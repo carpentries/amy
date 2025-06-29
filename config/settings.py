@@ -177,6 +177,7 @@ LOCAL_APPS = [
     "amy.communityroles.apps.CommunityRolesConfig",
     "amy.recruitment.apps.RecruitmentConfig",
     "amy.emails.apps.EmailsConfig",
+    "amy.offering.apps.OfferingConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
