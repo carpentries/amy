@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Sequence
 
 from django import forms
 from django.core.validators import MaxLengthValidator, RegexValidator
@@ -206,7 +206,9 @@ class HeavySelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2
     pass
 
 
-def choice_field_with_other(choices, default, verbose_name=None, help_text=None):
+def choice_field_with_other(
+    choices: Sequence[tuple[str, str]], default: str, verbose_name: str | None = None, help_text: str | None = None
+) -> tuple[models.CharField, models.CharField]:
     assert default in [c[0] for c in choices]
     assert all(c[0] != "" for c in choices)
 
