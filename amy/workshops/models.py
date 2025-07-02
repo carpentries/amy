@@ -2,6 +2,7 @@ import datetime
 import re
 from typing import Annotated, Any, Collection, TypedDict, cast
 from urllib.parse import quote
+import uuid
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -1111,6 +1112,17 @@ class Language(models.Model):
 # ------------------------------------------------------------
 
 
+class EventCategory(models.Model):
+    """Describe category of event or account benefit. Part of Service Offering Model 2025."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=STR_LONG)
+    description = models.CharField(max_length=STR_LONGEST)
+
+
+# ------------------------------------------------------------
+
+
 class EventAttendance(TypedDict):
     learner_tasks_count: int
     attendance: int
@@ -1818,6 +1830,18 @@ class KnowledgeDomain(models.Model):
 
     class Meta:
         ordering = ["name"]
+
+
+# ------------------------------------------------------------
+
+
+class CurriculumType(models.Model):
+    """Describe category of curriculum. Part of Service Offering Model 2025."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    program_category = models.CharField(max_length=STR_LONG)
+    name = models.CharField(max_length=STR_LONG)
+    description = models.CharField(max_length=STR_LONGEST)
 
 
 # ------------------------------------------------------------
