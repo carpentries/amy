@@ -70,7 +70,6 @@ package-mode = false
 
 [tool.black]
 line-length = 120
-force-exclude = "migrations"
 
 [tool.isort]
 profile = "black"
