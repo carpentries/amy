@@ -1,0 +1,34 @@
+{% extends "base_nav.html" %}
+
+{% block content %}
+
+<div class="edit-object">
+  {% if perms.offering.change_eventcategory %}
+    <a class="btn btn-primary" href="{% url 'event-category-update' object.pk %}">Edit</a>
+  {% else %}
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+  {% endif %}
+  <div class="float-right">
+    {% if perms.offering.delete_emailtemplate %}
+    <form action="{% url 'event-category-delete' object.pk %}" onsubmit='return confirm("Are you sure you wish to remove event category \"{{ object }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <a class="btn btn-danger disabled" disabled href="#">Delete</a>
+    {% endif %}
+  </div>
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th>Name:</th>
+    <td>{{ object.name }}</td>
+  </tr>
+  <tr>
+    <th>Description:</th>
+    <td>{{ object.description }}</td>
+  </tr>
+</table>
+
+{% endblock %}

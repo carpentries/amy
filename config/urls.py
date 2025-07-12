@@ -45,6 +45,7 @@ urlpatterns = [
     path("communityroles/", include("communityroles.urls")),
     path("recruitment/", include("recruitment.urls")),
     path("emails/", include("emails.urls")),
+    path("offering/", include("offering.urls")),
     # for webhooks from Mailgun
     # path('mail_hooks/', include('anymail.urls')),
     # django views for authentication

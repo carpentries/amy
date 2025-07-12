@@ -105,6 +105,7 @@ module = [
   "anymail.*",
   "cairosvg.*",
   "crispy_forms.*",
+  "debug_toolbar.*",
   "django_comments.*",
   "django_filters.*",
   "flags.*",
