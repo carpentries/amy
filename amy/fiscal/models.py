@@ -1,5 +1,6 @@
 from django.db import models
 
+from workshops.consts import STR_LONG, STR_LONGEST
 from workshops.models import Membership, Person
 
 
@@ -24,3 +25,14 @@ class MembershipTask(models.Model):
 
     def __str__(self) -> str:
         return f"{self.role} {self.person} ({self.membership})"
+
+
+class Consortium(models.Model):
+    """New model representing a consortium of multiple organisations.
+    Part of Service Offering 2025 project."""
+
+    name = models.CharField(max_length=STR_LONG)
+    description = models.CharField(max_length=STR_LONGEST)
+
+    def __str__(self) -> str:
+        return self.name
