@@ -4,8 +4,24 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 
-from workshops.models import Curriculum, EventCategory, Membership, Person
+from workshops.consts import STR_LONG, STR_LONGEST
+from workshops.models import Curriculum, Membership, Person
+
+
+class EventCategory(models.Model):
+    """Describe category of event or account benefit. Part of Service Offering Model 2025."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=STR_LONG)
+    description = models.CharField(max_length=STR_LONGEST)
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_absolute_url(self) -> str:
+        return reverse("event-category-details", kwargs={"pk": self.pk})
 
 
 class Account(models.Model):
@@ -18,18 +34,23 @@ class Account(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPE_CHOICES)
+    account_type = models.CharField(max_length=30, choices=ACCOUNT_TYPE_CHOICES)
 
     generic_relation_content_type = models.ForeignKey(
         ContentType,
         on_delete=models.PROTECT,
-        limit_choices_to=(Q(app_label="workshops", model="person") | Q(app_label="workshops", model="organization")),
+        limit_choices_to=(
+            Q(app_label="workshops", model="person")
+            | Q(app_label="workshops", model="organization")
+            | Q(app_label="fiscal", model="consortium")
+        ),
     )
     generic_relation_pk = models.PositiveBigIntegerField()
     generic_relation = GenericForeignKey("generic_relation_content_type", "generic_relation_pk")
 
     class Meta:
         constraints = [
+            # One account matches one generic relation object (defined by the pair above)
             models.UniqueConstraint(
                 fields=["generic_relation_content_type", "generic_relation_pk"],
                 name="unique_account_relation",
@@ -48,7 +69,7 @@ class AccountOwner(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     person = models.ForeignKey(Person, on_delete=models.PROTECT)
-    permission_type = models.CharField(max_length=20, choices=PERMISSION_TYPE_CHOICES)
+    permission_type = models.CharField(max_length=30, choices=PERMISSION_TYPE_CHOICES)
 
 
 class Benefit(models.Model):
@@ -56,14 +77,15 @@ class Benefit(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account = models.ForeignKey(Account, on_delete=models.PROTECT)
+
     event_category = models.ForeignKey(EventCategory, on_delete=models.PROTECT)
 
-    # null if a'la carte or open training
+    # null if event category is a'la carte or open training
     membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True)
 
-    # null if workshop, defined if skillup
+    # null if event category is workshop, defined if skillup
     curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True)
 
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
     allocation = models.PositiveIntegerField()

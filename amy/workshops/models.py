@@ -905,9 +905,9 @@ class Person(
         if self.github and self.is_active:
             try:
                 # if the username is incorrect, this will throw ValidationError
-                github_auth.validate_github_username(self.github)
+                github_auth.validate_github_username(self.github)  # type: ignore
 
-                github_uid = github_auth.github_username_to_uid(self.github)
+                github_uid = github_auth.github_username_to_uid(self.github)  # type: ignore
             except (ValidationError, ValueError):
                 github_uid = None
         else:
@@ -1107,17 +1107,6 @@ class Language(models.Model):
 
     class Meta:
         ordering = ["name"]
-
-
-# ------------------------------------------------------------
-
-
-class EventCategory(models.Model):
-    """Describe category of event or account benefit. Part of Service Offering Model 2025."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=STR_LONG)
-    description = models.CharField(max_length=STR_LONGEST)
 
 
 # ------------------------------------------------------------
