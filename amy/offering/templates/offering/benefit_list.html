@@ -1,0 +1,37 @@
+{% extends "base_nav_sidebar.html" %}
+
+
+{% block content %}
+  {% if perms.offering.add_benefit %}
+  <p><a href="{% url 'benefit-create' %}" class="btn btn-success">New benefit</a></p>
+  {% else %}
+  <p><a href="#" class="btn btn-success disabled">New benefit</a></p>
+  {% endif %}
+
+  {% if object_list %}
+    <table class="table table-striped">
+      <tr>
+        <th>Account for</th>
+        <th>Event Category</th>
+        <th>Membership</th>
+        <th>Curriculum</th>
+        <th>Start date</th>
+        <th>End date</th>
+        <th>Allocation</th>
+      </tr>
+      {% for object in object_list %}
+      <tr>
+        <td><a href="{% url 'benefit-details' object.pk %}">{{ object.account.generic_relation }}</a></td>
+        <td>{{ object.event_category }}</td>
+        <td>{{ object.membership|default_if_none:"&mdash;" }}</td>
+        <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
+        <td>{{ object.start_date }}</td>
+        <td>{{ object.end_date }}</td>
+        <td>{{ object.allocation }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No benefits.</p>
+  {% endif %}
+{% endblock %}

@@ -3,9 +3,9 @@ from typing import Any
 from django.urls import reverse
 from flags.views import FlaggedViewMixin
 
-from offering.filters import AccountFilter, EventCategoryFilter
-from offering.forms import AccountForm, EventCategoryForm
-from offering.models import Account, EventCategory
+from offering.filters import AccountFilter, BenefitFilter, EventCategoryFilter
+from offering.forms import AccountForm, BenefitForm, EventCategoryForm
+from offering.models import Account, Benefit, EventCategory
 from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
@@ -74,6 +74,63 @@ class AccountDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Account,
 
     def get_success_url(self) -> str:
         return reverse("account-list")
+
+
+# -----------------------------------------------------------------
+
+
+class BenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Benefit]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["offering.view_benefit"]
+    template_name = "offering/benefit_list.html"
+    queryset = Benefit.objects.select_related("event_category", "membership", "curriculum").order_by("-created_at")
+    title = "Benefits"
+    filter_class = BenefitFilter
+
+
+class BenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Benefit]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["offering.view_benefit"]
+    template_name = "offering/benefit_details.html"
+    model = Benefit
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class BenefitCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[BenefitForm, Benefit]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["offering.add_benefit"]
+    template_name = "offering/benefit_create.html"
+    form_class = BenefitForm
+    model = Benefit
+    object: Benefit
+    title = "Create a new benefit"
+
+
+class BenefitUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[BenefitForm, Benefit]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["offering.view_benefit", "offering.change_benefit"]
+    template_name = "offering/benefit_edit.html"
+    form_class = BenefitForm
+    model = Benefit
+    object: Benefit
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class BenefitDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Benefit, GenericDeleteForm[Benefit]]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["offering.delete_benefit"]
+    model = Benefit
+
+    def get_success_url(self) -> str:
+        return reverse("benefit-list")
 
 
 # -----------------------------------------------------------------

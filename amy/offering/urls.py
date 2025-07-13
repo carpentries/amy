@@ -43,6 +43,45 @@ urlpatterns = [
         ),
     ),
     path(
+        "benefits/",
+        include(
+            [
+                path(
+                    "",
+                    views.BenefitList.as_view(),  # type: ignore
+                    name="benefit-list",
+                ),
+                path(
+                    "create/",
+                    views.BenefitCreate.as_view(),  # type: ignore
+                    name="benefit-create",
+                ),
+            ]
+        ),
+    ),
+    path(
+        "benefits/<uuid:pk>/",
+        include(
+            [
+                path(
+                    "",
+                    views.BenefitDetails.as_view(),  # type: ignore
+                    name="benefit-details",
+                ),
+                path(
+                    "edit/",
+                    views.BenefitUpdate.as_view(),  # type: ignore
+                    name="benefit-update",
+                ),
+                path(
+                    "delete/",
+                    views.BenefitDelete.as_view(),  # type: ignore
+                    name="benefit-delete",
+                ),
+            ]
+        ),
+    ),
+    path(
         "event-categories/",
         include(
             [

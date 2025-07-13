@@ -1,6 +1,6 @@
 import django_filters
 
-from offering.models import Account
+from offering.models import Account, EventCategory
 from workshops.filters import AMYFilterSet
 
 
@@ -11,6 +11,17 @@ class AccountFilter(AMYFilterSet):
             "account_type",
             "generic_relation_content_type",
             "generic_relation",
+        )
+    )  # type: ignore
+
+
+class BenefitFilter(AMYFilterSet):
+    event_category = django_filters.ModelChoiceFilter(queryset=EventCategory.objects.all())  # type: ignore
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            "event_category",
+            "start",
+            "end",
         )
     )  # type: ignore
 

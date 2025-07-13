@@ -88,11 +88,17 @@ class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
     event_category = models.ForeignKey(EventCategory, on_delete=models.PROTECT)
 
     # null if event category is a'la carte or open training
-    membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True)
+    membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True, blank=True)
 
     # null if event category is workshop, defined if skillup
-    curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True)
+    curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True, blank=True)
 
     start_date = models.DateField()
     end_date = models.DateField()
     allocation = models.PositiveIntegerField()
+
+    def __str__(self) -> str:
+        return f'Benefit {self.event_category} for "{self.account.generic_relation}" (allocation: {self.allocation})'
+
+    def get_absolute_url(self) -> str:
+        return reverse("benefit-details", kwargs={"pk": self.pk})
