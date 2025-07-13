@@ -7,10 +7,11 @@ from django.db.models import Q
 from django.urls import reverse
 
 from workshops.consts import STR_LONG, STR_LONGEST
+from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
 from workshops.models import Curriculum, Membership, Person
 
 
-class EventCategory(models.Model):
+class EventCategory(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Describe category of event or account benefit. Part of Service Offering Model 2025."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -24,7 +25,7 @@ class EventCategory(models.Model):
         return reverse("event-category-details", kwargs={"pk": self.pk})
 
 
-class Account(models.Model):
+class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """The individual or organisation that purchases benefits."""
 
     ACCOUNT_TYPE_CHOICES = (
@@ -58,7 +59,7 @@ class Account(models.Model):
         ]
 
 
-class AccountOwner(models.Model):
+class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""
 
     PERMISSION_TYPE_CHOICES = (
@@ -72,7 +73,7 @@ class AccountOwner(models.Model):
     permission_type = models.CharField(max_length=30, choices=PERMISSION_TYPE_CHOICES)
 
 
-class Benefit(models.Model):
+class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """A single good purchased for an account."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
