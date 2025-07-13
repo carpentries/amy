@@ -58,6 +58,12 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
             )
         ]
 
+    def __str__(self) -> str:
+        return f'Account {self.account_type} for "{self.generic_relation}"'
+
+    def get_absolute_url(self) -> str:
+        return reverse("account-details", kwargs={"pk": self.pk})
+
 
 class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""

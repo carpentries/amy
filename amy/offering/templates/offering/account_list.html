@@ -1,0 +1,27 @@
+{% extends "base_nav_sidebar.html" %}
+
+
+{% block content %}
+  {% if perms.offering.add_account %}
+  <p><a href="{% url 'account-create' %}" class="btn btn-success">New account</a></p>
+  {% else %}
+  <p><a href="#" class="btn btn-success disabled">New account</a></p>
+  {% endif %}
+
+  {% if object_list %}
+    <table class="table table-striped">
+      <tr>
+        <th>Account for</th>
+        <th>Type</th>
+      </tr>
+      {% for object in object_list %}
+      <tr>
+        <td><a href="{% url 'account-details' object.pk %}">{{ object.generic_relation }}</a></td>
+        <td>{{ object.account_type }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>No accounts.</p>
+  {% endif %}
+{% endblock %}

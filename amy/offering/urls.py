@@ -4,6 +4,45 @@ from offering import views
 
 urlpatterns = [
     path(
+        "accounts/",
+        include(
+            [
+                path(
+                    "",
+                    views.AccountList.as_view(),  # type: ignore
+                    name="account-list",
+                ),
+                path(
+                    "create/",
+                    views.AccountCreate.as_view(),  # type: ignore
+                    name="account-create",
+                ),
+            ]
+        ),
+    ),
+    path(
+        "accounts/<uuid:pk>/",
+        include(
+            [
+                path(
+                    "",
+                    views.AccountDetails.as_view(),  # type: ignore
+                    name="account-details",
+                ),
+                path(
+                    "edit/",
+                    views.AccountUpdate.as_view(),  # type: ignore
+                    name="account-update",
+                ),
+                path(
+                    "delete/",
+                    views.AccountDelete.as_view(),  # type: ignore
+                    name="account-delete",
+                ),
+            ]
+        ),
+    ),
+    path(
         "event-categories/",
         include(
             [
