@@ -1574,6 +1574,23 @@ class Event(AssignmentMixin, models.Model):
 # ------------------------------------------------------------
 
 
+class EventCategory(ActiveMixin, CreatedUpdatedMixin, models.Model):
+    """Describe category of event. Part of Service Offering Model 2025."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=STR_LONG)
+    description = models.CharField(max_length=STR_LONGEST)
+
+    def __str__(self) -> str:
+        return self.name
+
+    def get_absolute_url(self) -> str:
+        return reverse("event-category-details", kwargs={"pk": self.pk})
+
+
+# ------------------------------------------------------------
+
+
 class Role(models.Model):
     """Enumerate roles in workshops."""
 

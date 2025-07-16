@@ -9,20 +9,7 @@ from django.urls import reverse
 from workshops.consts import STR_LONG, STR_LONGEST
 from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
 from workshops.models import Curriculum, Membership, Person
-
-
-class EventCategory(ActiveMixin, CreatedUpdatedMixin, models.Model):
-    """Describe category of event or account benefit. Part of Service Offering Model 2025."""
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=STR_LONG)
-    description = models.CharField(max_length=STR_LONGEST)
-
-    def __str__(self) -> str:
-        return self.name
-
-    def get_absolute_url(self) -> str:
-        return reverse("event-category-details", kwargs={"pk": self.pk})
+from workshops.utils.dates import human_daterange
 
 
 class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
@@ -80,15 +67,32 @@ class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
 
 class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
-    """A single good purchased for an account."""
+    """A single good available to be purchased for an account."""
+
+    UNIT_TYPE_CHOICES = (
+        ("seat", "seat"),
+        ("event", "event"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=STR_LONG)
+    description = models.CharField(max_length=STR_LONGEST)
+    unit_type = models.CharField(max_length=20, choices=UNIT_TYPE_CHOICES)
+
+    def __str__(self) -> str:
+        return f'Benefit "{self.name}" ({self.unit_type})'
+
+    def get_absolute_url(self) -> str:
+        return reverse("benefit-details", kwargs={"pk": self.pk})
+
+
+class AccountBenefit(CreatedUpdatedMixin, models.Model):
+    """A single benefit purchased for an account."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account = models.ForeignKey(Account, on_delete=models.PROTECT)
-
-    event_category = models.ForeignKey(EventCategory, on_delete=models.PROTECT)
-
-    # null if event category is a'la carte or open training
     membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True, blank=True)
+    benefit = models.ForeignKey(Benefit, on_delete=models.PROTECT)
 
     # null if event category is workshop, defined if skillup
     curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True, blank=True)
@@ -98,7 +102,11 @@ class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
     allocation = models.PositiveIntegerField()
 
     def __str__(self) -> str:
-        return f'Benefit {self.event_category} for "{self.account.generic_relation}" (allocation: {self.allocation})'
+        validity_dates = human_daterange(self.start_date, self.end_date)
+        return (
+            f'{self.benefit} for "{self.membership or self.account.generic_relation}" '
+            f"(allocation: {self.allocation}, valid: {validity_dates})"
+        )
 
     def get_absolute_url(self) -> str:
-        return reverse("benefit-details", kwargs={"pk": self.pk})
+        return reverse("account-benefit-details", kwargs={"pk": self.pk})

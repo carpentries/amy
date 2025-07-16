@@ -37,6 +37,7 @@ from workshops.models import (
     Badge,
     Curriculum,
     Event,
+    EventCategory,
     KnowledgeDomain,
     Language,
     Lesson,
@@ -631,6 +632,16 @@ class EventCreateForm(EventForm):
         widget=forms.Textarea,
         required=False,
     )  # type: ignore
+
+
+class EventCategoryForm(forms.ModelForm[EventCategory]):
+    class Meta:
+        model = EventCategory
+        fields = [
+            "name",
+            "description",
+            "active",
+        ]
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):

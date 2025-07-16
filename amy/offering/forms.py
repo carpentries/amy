@@ -1,6 +1,6 @@
 from django import forms
 
-from offering.models import Account, Benefit, EventCategory
+from offering.models import Account, AccountBenefit, Benefit
 
 
 class AccountForm(forms.ModelForm[Account]):
@@ -15,26 +15,30 @@ class AccountForm(forms.ModelForm[Account]):
         # TODO: select2 for selecting specific relation object
 
 
+class AccountOwnerForm:
+    pass
+
+
 class BenefitForm(forms.ModelForm[Benefit]):
     class Meta:
         model = Benefit
         fields = [
             "active",
+            "name",
+            "description",
+            "unit_type",
+        ]
+
+
+class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
+    class Meta:
+        model = AccountBenefit
+        fields = [
             "account",
-            "event_category",
             "membership",
+            "benefit",
             "curriculum",
             "start_date",
             "end_date",
             "allocation",
-        ]
-
-
-class EventCategoryForm(forms.ModelForm[EventCategory]):
-    class Meta:
-        model = EventCategory
-        fields = [
-            "name",
-            "description",
-            "active",
         ]

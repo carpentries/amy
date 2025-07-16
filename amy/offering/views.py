@@ -3,9 +3,9 @@ from typing import Any
 from django.urls import reverse
 from flags.views import FlaggedViewMixin
 
-from offering.filters import AccountFilter, BenefitFilter, EventCategoryFilter
-from offering.forms import AccountForm, BenefitForm, EventCategoryForm
-from offering.models import Account, Benefit, EventCategory
+from offering.filters import AccountFilter, BenefitFilter
+from offering.forms import AccountForm, BenefitForm
+from offering.models import Account, Benefit
 from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
@@ -14,6 +14,9 @@ from workshops.base_views import (
     AMYListView,
     AMYUpdateView,
 )
+from workshops.filters import EventCategoryFilter
+from workshops.forms import EventCategoryForm
+from workshops.models import EventCategory
 from workshops.utils.access import OnlyForAdminsMixin
 
 REQUIRED_FLAG_NAME = "SERVICE_OFFERING"

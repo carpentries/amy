@@ -1,10 +1,12 @@
 import django_filters
 
-from offering.models import Account, EventCategory
+from offering.models import Account, Benefit
 from workshops.filters import AMYFilterSet
+from workshops.models import Curriculum, Membership
 
 
 class AccountFilter(AMYFilterSet):
+    active = django_filters.BooleanFilter("active")  # type: ignore
     account_type = django_filters.ChoiceFilter(choices=Account.ACCOUNT_TYPE_CHOICES)  # type: ignore
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -16,21 +18,30 @@ class AccountFilter(AMYFilterSet):
 
 
 class BenefitFilter(AMYFilterSet):
-    event_category = django_filters.ModelChoiceFilter(queryset=EventCategory.objects.all())  # type: ignore
-    order_by = django_filters.OrderingFilter(
-        fields=(
-            "event_category",
-            "start",
-            "end",
-        )
-    )  # type: ignore
-
-
-class EventCategoryFilter(AMYFilterSet):
+    active = django_filters.BooleanFilter("active")  # type: ignore
+    unit_type = django_filters.ChoiceFilter(choices=Benefit.UNIT_TYPE_CHOICES)  # type: ignore
     order_by = django_filters.OrderingFilter(
         fields=(
             "name",
             "description",
+            "created_at",
+            "last_modified_at",
+        )
+    )  # type: ignore
+
+
+class AccountBenefitFilter(AMYFilterSet):
+    account = django_filters.ModelChoiceFilter(queryset=Account.objects.all())  # type: ignore
+    membership = django_filters.ModelChoiceFilter(queryset=Membership.objects.all())  # type: ignore
+    benefit = django_filters.ModelChoiceFilter(queryset=Benefit.objects.all())  # type: ignore
+    curriculum = django_filters.ModelChoiceFilter(queryset=Curriculum.objects.all())  # type: ignore
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            "account",
+            "benefit",
+            "start_date",
+            "end_date",
+            "allocation",
             "created_at",
             "last_modified_at",
         )

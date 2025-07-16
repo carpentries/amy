@@ -2,7 +2,7 @@ import logging
 from typing import Any, TypedDict, cast
 from uuid import UUID
 
-from offering.models import EventCategory
+from workshops.models import EventCategory
 from workshops.utils.seeding import deprecate_models, seed_models
 
 logger = logging.getLogger("amy")
