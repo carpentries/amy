@@ -27,4 +27,11 @@ class BenefitFilter(AMYFilterSet):
 
 
 class EventCategoryFilter(AMYFilterSet):
-    order_by = django_filters.OrderingFilter(fields=("name",))  # type: ignore
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            "name",
+            "description",
+            "created_at",
+            "last_modified_at",
+        )
+    )  # type: ignore

@@ -34,7 +34,7 @@ class EventCategoryForm(forms.ModelForm[EventCategory]):
     class Meta:
         model = EventCategory
         fields = [
-            "active",
             "name",
             "description",
+            "active",
         ]
