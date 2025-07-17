@@ -22,32 +22,28 @@
 
 <table class="table table-striped">
   <tr>
-    <th>Account:</th>
-    <td><a href="{{ object.account.get_absolute_url }}">{{ object.account }}</a></td>
+    <th>Name:</th>
+    <td>{{ object.name }}</td>
   </tr>
   <tr>
-    <th>Event Category:</th>
-    <td>{{ object.event_category }}</td>
+    <th>Description:</th>
+    <td>{{ object.description }}</td>
   </tr>
   <tr>
-    <th>Membership:</th>
-    <td>{{ object.membership|default_if_none:"&mdash;" }}</td>
+    <th>Unit type:</th>
+    <td>{{ object.get_unit_type_display }}</td>
   </tr>
   <tr>
-    <th>Curriculum:</th>
-    <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
+    <th>Active:</th>
+    <td>{{ object.active|yesno }}</td>
   </tr>
   <tr>
-    <th>Start date:</th>
-    <td>{{ object.start_date }}</td>
+    <th>Created at:</th>
+    <td>{{ object.created_at }}</td>
   </tr>
   <tr>
-    <th>End date:</th>
-    <td>{{ object.end_date }}</td>
-  </tr>
-  <tr>
-    <th>Allocation:</th>
-    <td>{{ object.allocation }}</td>
+    <th>Last updated at:</th>
+    <td>{{ object.last_updated_at }}</td>
   </tr>
 </table>
 

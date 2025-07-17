@@ -86,7 +86,7 @@ class BenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Benefit]):
     flag_name = REQUIRED_FLAG_NAME  # type: ignore
     permission_required = ["offering.view_benefit"]
     template_name = "offering/benefit_list.html"
-    queryset = Benefit.objects.select_related("event_category", "membership", "curriculum").order_by("-created_at")
+    queryset = Benefit.objects.order_by("-created_at")
     title = "Benefits"
     filter_class = BenefitFilter
 

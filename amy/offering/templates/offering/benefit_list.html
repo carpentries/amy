@@ -11,23 +11,21 @@
   {% if object_list %}
     <table class="table table-striped">
       <tr>
-        <th>Account for</th>
-        <th>Event Category</th>
-        <th>Membership</th>
-        <th>Curriculum</th>
-        <th>Start date</th>
-        <th>End date</th>
-        <th>Allocation</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Unit type</th>
+        <th>Active</th>
+        <th>Created at</th>
+        <th>Last updated at</th>
       </tr>
       {% for object in object_list %}
       <tr>
-        <td><a href="{% url 'benefit-details' object.pk %}">{{ object.account.generic_relation }}</a></td>
-        <td>{{ object.event_category }}</td>
-        <td>{{ object.membership|default_if_none:"&mdash;" }}</td>
-        <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
-        <td>{{ object.start_date }}</td>
-        <td>{{ object.end_date }}</td>
-        <td>{{ object.allocation }}</td>
+        <td><a href="{% url 'benefit-details' object.pk %}">{{ object.name }}</a></td>
+        <td>{{ object.description }}</td>
+        <td>{{ object.get_unit_type_display }}</td>
+        <td>{{ object.active|yesno }}</td>
+        <td>{{ object.created_at }}</td>
+        <td>{{ object.last_updated_at }}</td>
       </tr>
       {% endfor %}
     </table>

@@ -23,10 +23,10 @@ class BenefitForm(forms.ModelForm[Benefit]):
     class Meta:
         model = Benefit
         fields = [
-            "active",
             "name",
             "description",
             "unit_type",
+            "active",
         ]
 
 
