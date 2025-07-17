@@ -7,10 +7,10 @@ class AccountForm(forms.ModelForm[Account]):
     class Meta:
         model = Account
         fields = [
-            "active",
             "account_type",
             "generic_relation_content_type",
             "generic_relation_pk",
+            "active",
         ]
         # TODO: select2 for selecting specific relation object
 

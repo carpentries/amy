@@ -1,3 +1,4 @@
+from datetime import date
 import uuid
 
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -5,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 
 from workshops.consts import STR_LONG, STR_LONGEST
 from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
@@ -101,11 +103,17 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     end_date = models.DateField()
     allocation = models.PositiveIntegerField()
 
+    @property
+    def human_daterange(self) -> str:
+        return human_daterange(self.start_date, self.end_date)
+
+    def active(self, current_date: date | None = None) -> bool:
+        return self.start_date <= (current_date or timezone.now().date()) <= self.end_date
+
     def __str__(self) -> str:
-        validity_dates = human_daterange(self.start_date, self.end_date)
         return (
             f'{self.benefit} for "{self.membership or self.account.generic_relation}" '
-            f"(allocation: {self.allocation}, valid: {validity_dates})"
+            f"(allocation: {self.allocation}, valid: {self.human_daterange})"
         )
 
     def get_absolute_url(self) -> str:

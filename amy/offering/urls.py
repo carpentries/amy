@@ -82,6 +82,45 @@ urlpatterns = [
         ),
     ),
     path(
+        "account-benefits/",
+        include(
+            [
+                path(
+                    "",
+                    views.AccountBenefitList.as_view(),  # type: ignore
+                    name="account-benefit-list",
+                ),
+                path(
+                    "create/",
+                    views.AccountBenefitCreate.as_view(),  # type: ignore
+                    name="account-benefit-create",
+                ),
+            ]
+        ),
+    ),
+    path(
+        "account-benefits/<uuid:pk>/",
+        include(
+            [
+                path(
+                    "",
+                    views.AccountBenefitDetails.as_view(),  # type: ignore
+                    name="account-benefit-details",
+                ),
+                path(
+                    "edit/",
+                    views.AccountBenefitUpdate.as_view(),  # type: ignore
+                    name="account-benefit-update",
+                ),
+                path(
+                    "delete/",
+                    views.AccountBenefitDelete.as_view(),  # type: ignore
+                    name="account-benefit-delete",
+                ),
+            ]
+        ),
+    ),
+    path(
         "event-categories/",
         include(
             [
