@@ -238,6 +238,7 @@ class EventFilter(AMYFilterSet):
             "completed",
             "country",
             "continent",
+            "event_category",
         ]
 
 

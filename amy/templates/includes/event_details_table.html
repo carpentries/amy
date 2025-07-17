@@ -14,6 +14,7 @@
   <tr><th>Administrator:</th><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Is this workshop public?<br><small>Public workshops will show up in public Carpentries feeds.</small></th><td colspan="2">{{ event.get_public_status_display|default:"&mdash;" }}</td></tr>
   <tr><th>Tags:</th><td colspan="2">{% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}</td></tr>
+  <tr><th>Event category:</th><td colspan="2">{{ event.event_category }}</td></tr>
   <tr><th>Curricula:</th><td colspan="2">{% for curriculum in event.curricula.all %}{% include "includes/curriculum.html" with curriculum=curriculum %}{% empty %}&mdash;{% endfor %}</td></tr>
   <tr><th>Member sites:<br><small>gathered from associated tasks</small></th><td colspan="2">{% if member_sites %}<ul>{% for site in member_sites %}<li><a href="{{ site.get_absolute_url }}">{{ site }}</a></li>{% endfor %}</ul>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Open applications <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:</th><td colspan="2">{{ event.open_TTT_applications|yesno }}</td></tr>

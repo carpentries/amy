@@ -1453,6 +1453,8 @@ class Event(AssignmentMixin, models.Model):
         help_text="Public workshops will show up in public Carpentries feeds.",
     )
 
+    event_category = models.ForeignKey("EventCategory", on_delete=models.PROTECT, null=True, blank=True)
+
     objects = Manager.from_queryset(EventQuerySet)()
 
     class Meta:
