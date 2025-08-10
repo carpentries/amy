@@ -22,6 +22,7 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ("individual", "individual"),
         ("organisation", "organisation"),
         ("consortium", "consortium"),
+        ("partnership", "partnership"),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

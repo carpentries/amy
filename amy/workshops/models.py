@@ -1851,6 +1851,9 @@ class CurriculumType(models.Model):
     name = models.CharField(max_length=STR_LONG)
     description = models.CharField(max_length=STR_LONGEST)
 
+    def __str__(self) -> str:
+        return self.name
+
 
 # ------------------------------------------------------------
 

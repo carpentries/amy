@@ -32,6 +32,7 @@ class Migration(migrations.Migration):
                             ("individual", "individual"),
                             ("organisation", "organisation"),
                             ("consortium", "consortium"),
+                            ("partnership", "partnership"),
                         ],
                         max_length=30,
                     ),

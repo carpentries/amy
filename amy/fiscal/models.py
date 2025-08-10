@@ -47,3 +47,4 @@ class Partnership(models.Model):
         help_text="If an extension is being granted, do not manually edit the end date."
         ' Use the "Extend" button on membership details page instead.'
     )
+    # TODO: tbc
