@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Any
 
 from django import forms
 from django.http import QueryDict
@@ -11,14 +12,14 @@ logger = logging.getLogger("amy")
 class CustomKeysWidget(forms.TextInput):
     template_name = "widgets/custom_keys_widget.html"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.subwidget_form = kwargs.pop("subwidget_form", forms.TextInput)
         super().__init__(*args, **kwargs)
 
     def apply_labels(self, labels: list[str]) -> None:
         self.labels = labels[:]
 
-    def get_context(self, name: str, value: str, attrs: dict):
+    def get_context(self, name: str, value: str, attrs: dict[str, Any] | None) -> dict[str, Any]:
         value_deserialized = json.loads(value)
         try:
             value_deserialized_dict = dict(value_deserialized)
@@ -66,7 +67,7 @@ class CustomKeysWidget(forms.TextInput):
 
 
 class CustomKeysJSONField(forms.JSONField):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("widget", CustomKeysWidget)
         super().__init__(**kwargs)
 

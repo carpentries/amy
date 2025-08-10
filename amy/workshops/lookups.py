@@ -3,11 +3,12 @@ from functools import partial, reduce
 import logging
 import operator
 import re
+from typing import Any, Callable
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count, Q
+from django.db.models import Count, Model, Q
 from django.db.models.query import QuerySet
 from django.http import JsonResponse
 from django.http.response import Http404
@@ -17,6 +18,7 @@ from django_select2.views import AutoResponseView
 from communityroles.models import CommunityRoleConfig
 from fiscal.models import MembershipPersonRole
 from workshops import models
+from workshops.base_views import AuthenticatedHttpRequest
 from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 logger = logging.getLogger("amy")
@@ -395,20 +397,26 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class GenericObjectLookupView(LoginRequiredMixin, UserPassesTestMixin, AutoResponseView):
+class GenericObjectLookupView(
+    LoginRequiredMixin,
+    UserPassesTestMixin,
+    AutoResponseView,  # type: ignore
+):
+    content_type: ContentType | None
+    request: AuthenticatedHttpRequest
     raise_exception = True  # prevent redirect to login page on unauthenticated user
 
-    def get_test_func(self):
+    def get_test_func(self) -> Callable[[], bool]:
         content_type = self.request.GET.get("content_type", "")
-        return partial(self.test_func, content_type=content_type)
+        return partial(self.test_func, content_type=int(content_type))
 
-    def test_func(self, content_type: str):
+    def test_func(self, content_type: int) -> bool:  # type: ignore
         # Get the ContentType.
         try:
             self.content_type = ContentType.objects.get(pk=int(content_type))
         except (ContentType.DoesNotExist, ValueError):
             self.content_type = None
-            logger.error("GenericObjectLookup tried to look up non-existing ContentType " f"pk={content_type}")
+            logger.error(f"GenericObjectLookup tried to look up non-existing ContentType pk={content_type}")
             return False
 
         # Find "view" permission name for model of type ContentType.
@@ -420,17 +428,17 @@ class GenericObjectLookupView(LoginRequiredMixin, UserPassesTestMixin, AutoRespo
         # Check is user has view permissions for that ContentType.
         return self.request.user.has_perm(permission_name)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Model]:
         if not self.content_type:
             return QuerySet()
 
         try:
-            return self.content_type.model_class()._default_manager.all()
+            return self.content_type.model_class()._default_manager.all()  # type: ignore
         except AttributeError as e:
-            logger.error(f"ContentType {self.content_type} may be stale " f"(model class doesn't exist). Error: {e}")
+            logger.error(f"ContentType {self.content_type} may be stale (model class doesn't exist). Error: {e}")
             raise Http404("ContentType not found.")
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
         self.object_list = self.get_queryset()
         return JsonResponse(
             {

@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Any, Sequence, cast
 
 from django import forms
 from django.core.validators import MaxLengthValidator, RegexValidator
@@ -126,19 +126,19 @@ class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
 
 
 class Select2BootstrapMixin:
-    def build_attrs(self, *args, **kwargs):
-        attrs = super().build_attrs(*args, **kwargs)
-        attrs.setdefault("data-theme", "bootstrap4")
+    def build_attrs(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        self.attrs.setdefault("data-theme", "bootstrap4")  # type: ignore
+        attrs = cast(dict[str, Any], super().build_attrs(*args, **kwargs))  # type: ignore
         return attrs
 
 
 class Select2NoMinimumInputLength:
-    def build_attrs(self, *args, **kwargs):
+    def build_attrs(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         # Let's set up the minimum input length first!
         # It will overwrite `setdefault('data-minimum-input-length')` from
         # other mixins.
-        self.attrs.setdefault("data-minimum-input-length", 0)
-        attrs = super().build_attrs(*args, **kwargs)
+        self.attrs.setdefault("data-minimum-input-length", 0)  # type: ignore
+        attrs = cast(dict[str, Any], super().build_attrs(*args, **kwargs))  # type: ignore
         return attrs
 
 

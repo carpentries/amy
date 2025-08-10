@@ -1,11 +1,11 @@
 from collections import defaultdict
 from datetime import date
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, cast
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Q, QuerySet
+from django.db.models import Model, Q, QuerySet
 
 from workshops.fields import HeavySelect2Widget, ModelSelect2Widget
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, WidgetOverrideMixin
@@ -15,7 +15,7 @@ from .fields import CustomKeysJSONField
 from .models import CommunityRole, CommunityRoleConfig, CommunityRoleInactivation
 
 
-class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
+class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm[CommunityRole]):
     class Meta:
         model = CommunityRole
         fields = (
@@ -50,7 +50,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
     class Media:
         js = ("communityrole_form.js",)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         form_tag = kwargs.pop("form_tag", True)
         super().__init__(*args, **kwargs)
         bootstrap_kwargs = {
@@ -103,12 +103,12 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
 
         # Generic relation object must exist
         if config.generic_relation_content_type and cleaned_data.get("generic_relation_pk"):
-            model_class = config.generic_relation_content_type.model_class()
+            model_class = cast(type[Model], config.generic_relation_content_type.model_class())
             try:
                 model_class._base_manager.get(pk=cleaned_data.get("generic_relation_pk"))
             except ObjectDoesNotExist:
                 errors["generic_relation_pk"].append(
-                    ValidationError(f"Generic relation object of model {model_class.__name__} " "doesn't exist")
+                    ValidationError(f"Generic relation object of model {model_class.__name__} doesn't exist")
                 )
 
         # End date is required when any inactivation was selected.
@@ -123,17 +123,17 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm):
             )
 
         if errors:
-            raise ValidationError(errors)  # type: ignore
+            raise ValidationError(errors)
 
         return cleaned_data
 
-    def clean_end(self):
+    def clean_end(self) -> date | None:
         """Validate that end >= start"""
-        start = self.cleaned_data.get("start")
-        end = self.cleaned_data.get("end")
+        start = cast(date | None, self.cleaned_data.get("start"))
+        end = cast(date | None, self.cleaned_data.get("end"))
         if start and end and end < start:
             raise ValidationError("Must not be earlier than start date.")
-        return end
+        return end or None
 
     def clean_generic_relation_content_type(self) -> Optional[ContentType]:
         """Copy content type from the Community Role Configuration."""
@@ -181,10 +181,10 @@ class CommunityRoleUpdateForm(CommunityRoleForm):
     custom_keys = CustomKeysJSONField(required=False)
 
     class Meta(CommunityRoleForm.Meta):
-        fields = CommunityRoleForm.Meta.fields + ("custom_keys",)
+        fields = CommunityRoleForm.Meta.fields + ("custom_keys",)  # type: ignore
 
-    def __init__(self, *args, community_role_config: CommunityRoleConfig, **kwargs):
-        self.config = community_role_config
+    def __init__(self, *args: Any, community_role_config: CommunityRoleConfig, **kwargs: Any) -> None:
+        self.config = community_role_config  # type: ignore
         super().__init__(*args, **kwargs)
         self.fields["custom_keys"].apply_labels(self.config.custom_key_labels)  # type: ignore
 
