@@ -44,6 +44,7 @@ class Migration(migrations.Migration):
                             models.Q(("app_label", "workshops"), ("model", "person")),
                             models.Q(("app_label", "workshops"), ("model", "organization")),
                             models.Q(("app_label", "fiscal"), ("model", "consortium")),
+                            models.Q(("app_label", "fiscal"), ("model", "partnership")),
                             _connector="OR",
                         ),
                         on_delete=django.db.models.deletion.PROTECT,
@@ -106,9 +107,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "membership",
+                    "partnership",
                     models.ForeignKey(
-                        blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="workshops.membership"
+                        blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="fiscal.partnership"
                     ),
                 ),
             ],

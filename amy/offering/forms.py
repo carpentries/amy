@@ -35,7 +35,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         model = AccountBenefit
         fields = [
             "account",
-            "membership",
+            "partnership",
             "benefit",
             "curriculum",
             "start_date",

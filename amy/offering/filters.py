@@ -1,8 +1,9 @@
 import django_filters
 
+from fiscal.models import Partnership
 from offering.models import Account, Benefit
 from workshops.filters import AMYFilterSet
-from workshops.models import Curriculum, Membership
+from workshops.models import Curriculum
 
 
 class AccountFilter(AMYFilterSet):
@@ -32,7 +33,7 @@ class BenefitFilter(AMYFilterSet):
 
 class AccountBenefitFilter(AMYFilterSet):
     account = django_filters.ModelChoiceFilter(queryset=Account.objects.all())  # type: ignore
-    membership = django_filters.ModelChoiceFilter(queryset=Membership.objects.all())  # type: ignore
+    partnership = django_filters.ModelChoiceFilter(queryset=Partnership.objects.all())  # type: ignore
     benefit = django_filters.ModelChoiceFilter(queryset=Benefit.objects.all())  # type: ignore
     curriculum = django_filters.ModelChoiceFilter(queryset=Curriculum.objects.all())  # type: ignore
     order_by = django_filters.OrderingFilter(

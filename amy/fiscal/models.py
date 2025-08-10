@@ -36,3 +36,14 @@ class Consortium(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Partnership(models.Model):
+    """A follow-up to "Membership" model, part of 2025 project "Service Offering Model"."""
+
+    name = models.CharField(max_length=STR_LONG)
+    agreement_start = models.DateField()
+    agreement_end = models.DateField(
+        help_text="If an extension is being granted, do not manually edit the end date."
+        ' Use the "Extend" button on membership details page instead.'
+    )

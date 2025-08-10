@@ -26,10 +26,10 @@
     <td><a href="{{ object.account.get_absolute_url }}">{{ object.account }}</a></td>
   </tr>
   <tr>
-    <th>Membership:</th>
+    <th>Partnership:</th>
     <td>
-      {% if object.membership %}
-      <a href="{{ object.membership.get_absolute_url }}">{{ object.membership }}</a>
+      {% if object.partnership %}
+      <a href="{{ object.partnership.get_absolute_url }}">{{ object.partnership }}</a>
       {% else %}
       &mdash;
       {% endif %}

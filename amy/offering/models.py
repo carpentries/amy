@@ -8,9 +8,10 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
+from fiscal.models import Partnership
 from workshops.consts import STR_LONG, STR_LONGEST
 from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
-from workshops.models import Curriculum, Membership, Person
+from workshops.models import Curriculum, Person
 from workshops.utils.dates import human_daterange
 
 
@@ -33,6 +34,7 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
             Q(app_label="workshops", model="person")
             | Q(app_label="workshops", model="organization")
             | Q(app_label="fiscal", model="consortium")
+            | Q(app_label="fiscal", model="partnership")
         ),
     )
     generic_relation_pk = models.PositiveBigIntegerField()
@@ -93,7 +95,7 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account = models.ForeignKey(Account, on_delete=models.PROTECT)
-    membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True, blank=True)
+    partnership = models.ForeignKey(Partnership, on_delete=models.PROTECT, null=True, blank=True)
     benefit = models.ForeignKey(Benefit, on_delete=models.PROTECT)
 
     # null if event category is workshop, defined if skillup
@@ -112,7 +114,7 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
 
     def __str__(self) -> str:
         return (
-            f'{self.benefit} for "{self.membership or self.account.generic_relation}" '
+            f'{self.benefit} for "{self.partnership or self.account.generic_relation}" '
             f"(allocation: {self.allocation}, valid: {self.human_daterange})"
         )
 

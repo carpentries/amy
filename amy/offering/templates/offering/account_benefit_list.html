@@ -12,7 +12,7 @@
     <table class="table table-striped">
       <tr>
         <th>Account</th>
-        <th>Membership</th>
+        <th>Partnership</th>
         <th>Benefit</th>
         <th>Curriculum</th>
         <th>Dates</th>
@@ -24,7 +24,7 @@
       {% for object in object_list %}
       <tr>
         <td><a href="{% url 'account-benefit-details' object.pk %}">{{ object.account.generic_relation }}</a></td>
-        <td>{{ object.membership|default_if_none:"&mdash;" }}</td>
+        <td>{{ object.partnership|default_if_none:"&mdash;" }}</td>
         <td>{{ object.benefit }}</td>
         <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
         <td>{{ object.human_daterange }}</td>
