@@ -32,7 +32,6 @@ class Migration(migrations.Migration):
                             ("individual", "individual"),
                             ("organisation", "organisation"),
                             ("consortium", "consortium"),
-                            ("partnership", "partnership"),
                         ],
                         max_length=30,
                     ),
@@ -101,6 +100,7 @@ class Migration(migrations.Migration):
                 ("allocation", models.PositiveIntegerField()),
                 ("account", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="offering.account")),
                 ("benefit", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="offering.benefit")),
+                ("discount", models.CharField(blank=True, max_length=100)),
                 (
                     "curriculum",
                     models.ForeignKey(
@@ -113,6 +113,7 @@ class Migration(migrations.Migration):
                         blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="fiscal.partnership"
                     ),
                 ),
+                ("frozen", models.BooleanField(default=False)),
             ],
             options={
                 "abstract": False,

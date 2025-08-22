@@ -22,14 +22,12 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ("individual", "individual"),
         ("organisation", "organisation"),
         ("consortium", "consortium"),
-        ("partnership", "partnership"),
     )
 
     ACCOUNT_TYPE_MAPPING = {
         "individual": ("workshops", "person"),
         "organisation": ("workshops", "organization"),
         "consortium": ("fiscal", "consortium"),
-        "partnership": ("fiscal", "partnership"),  # nie!
     }
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -42,7 +40,7 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
             Q(app_label="workshops", model="person")
             | Q(app_label="workshops", model="organization")
             | Q(app_label="fiscal", model="consortium")
-            | Q(app_label="fiscal", model="partnership")
+            | Q(app_label="fiscal", model="partnership")  # nie!
         ),
     )
     generic_relation_pk = models.PositiveBigIntegerField()
@@ -105,6 +103,7 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     account = models.ForeignKey(Account, on_delete=models.PROTECT)
     partnership = models.ForeignKey(Partnership, on_delete=models.PROTECT, null=True, blank=True)
     benefit = models.ForeignKey(Benefit, on_delete=models.PROTECT)
+    discount = models.CharField(max_length=STR_LONG, blank=True)
 
     # null if event category is workshop, defined if skillup
     curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True, blank=True)
@@ -112,6 +111,7 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     allocation = models.PositiveIntegerField()
+    frozen = models.BooleanField(default=False)
 
     @property
     def human_daterange(self) -> str:
