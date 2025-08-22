@@ -16,7 +16,8 @@ from django.urls import path
 from django_select2.views import AutoResponseView
 
 from communityroles.models import CommunityRoleConfig
-from fiscal.models import MembershipPersonRole
+from fiscal.models import Consortium, MembershipPersonRole, Partnership
+from offering.models import Account
 from workshops import models
 from workshops.base_views import AuthenticatedHttpRequest
 from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
@@ -453,6 +454,46 @@ class GenericObjectLookupView(
         )
 
 
+class OfferingAccountRelation(GenericObjectLookupView):
+    content_type: ContentType | None
+    content_type_name: str
+    term: str
+    request: AuthenticatedHttpRequest
+    raise_exception = True  # prevent redirect to login page on unauthenticated user
+
+    def get_test_func(self) -> Callable[[], bool]:
+        self.content_type_name = self.request.GET.get("content_type_name", "")
+        mapped = Account.ACCOUNT_TYPE_MAPPING.get(self.content_type_name)
+        if not mapped:
+            return partial(self.test_func, content_type=0)
+
+        self.content_type = ContentType.objects.get(app_label=mapped[0], model=mapped[1])
+        return partial(self.test_func, content_type=self.content_type.pk)
+
+    def get_queryset(
+        self,
+    ) -> QuerySet[models.Person] | QuerySet[models.Organization] | QuerySet[Consortium] | QuerySet[Partnership]:
+        qs = super().get_queryset()
+
+        term = self.request.GET.get("term", "")
+        if not term:
+            return qs  # type: ignore
+
+        if self.content_type_name == "individual":
+            qs = qs.filter(Q(personal__icontains=term) | Q(family__icontains=term) | Q(email__icontains=term))
+
+        if self.content_type_name == "organization":
+            qs = qs.filter(Q(domain__icontains=term) | Q(fullname__icontains=term))
+
+        if self.content_type_name == "consortium":
+            qs = qs.filter(Q(name__icontains=term) | Q(description__icontains=term))
+
+        if self.content_type_name == "partnership":
+            qs = qs.filter(Q(name__icontains=term))
+
+        return qs  # type: ignore
+
+
 urlpatterns = [
     path("tags/", TagLookupView.as_view(), name="tag-lookup"),
     path("badges/", BadgeLookupView.as_view(), name="badge-lookup"),
@@ -501,4 +542,5 @@ urlpatterns = [
     ),
     path("awards/", AwardLookupView.as_view(), name="award-lookup"),
     path("generic/", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
+    path("offering-account-relation/", OfferingAccountRelation.as_view(), name="offering-account-relation-lookup"),
 ]

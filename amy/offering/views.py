@@ -1,5 +1,7 @@
 from typing import Any
 
+from django.contrib.contenttypes.models import ContentType
+from django.http import HttpResponse
 from django.urls import reverse
 from flags.views import FlaggedViewMixin
 
@@ -54,6 +56,13 @@ class AccountCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountF
     model = Account
     object: Account
     title = "Create a new account"
+
+    def form_valid(self, form: AccountForm) -> HttpResponse:
+        obj = form.save(commit=False)
+        mapped = Account.ACCOUNT_TYPE_MAPPING[form.cleaned_data["account_type"]]
+        obj.generic_relation_content_type = ContentType.objects.get(app_label=mapped[0], model=mapped[1])
+        obj.save()
+        return super().form_valid(form)
 
 
 class AccountUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountForm, Account]):

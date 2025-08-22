@@ -25,6 +25,13 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ("partnership", "partnership"),
     )
 
+    ACCOUNT_TYPE_MAPPING = {
+        "individual": ("workshops", "person"),
+        "organisation": ("workshops", "organization"),
+        "consortium": ("fiscal", "consortium"),
+        "partnership": ("fiscal", "partnership"),  # nie!
+    }
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account_type = models.CharField(max_length=30, choices=ACCOUNT_TYPE_CHOICES)
 

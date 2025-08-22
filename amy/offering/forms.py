@@ -1,6 +1,7 @@
 from django import forms
 
 from offering.models import Account, AccountBenefit, Benefit
+from workshops.fields import HeavySelect2Widget
 
 
 class AccountForm(forms.ModelForm[Account]):
@@ -8,11 +9,22 @@ class AccountForm(forms.ModelForm[Account]):
         model = Account
         fields = [
             "account_type",
-            "generic_relation_content_type",
             "generic_relation_pk",
             "active",
         ]
-        # TODO: select2 for selecting specific relation object
+        widgets = {
+            "generic_relation_pk": HeavySelect2Widget(
+                data_view="offering-account-relation-lookup",
+            ),
+        }
+
+    class Media:
+        # The order below is important, as `django_select2.js` is being imported by the Select2 widgets, and
+        # it may overwrite `.djangoSelect2()` calls in custom JS media files, like `offering_account_form.js` below.
+        js = (
+            "django_select2/django_select2.js",
+            "offering_account_form.js",
+        )
 
 
 class AccountOwnerForm:
