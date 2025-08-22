@@ -1,7 +1,12 @@
-from django.db import models
+import uuid
 
-from workshops.consts import STR_LONG, STR_LONGEST
-from workshops.models import Membership, Person
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.db.models import Q
+
+from workshops.consts import STR_LONG, STR_LONGEST, STR_MED
+from workshops.models import Membership, Organization, Person
+from workshops.utils.dates import human_daterange
 
 
 class MembershipPersonRole(models.Model):
@@ -39,12 +44,78 @@ class Consortium(models.Model):
 
 
 class Partnership(models.Model):
-    """A follow-up to "Membership" model, part of 2025 project "Service Offering Model"."""
+    """A follow-up to "Membership" model, part of Service Offering 2025 project."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     name = models.CharField(max_length=STR_LONG)
+    TIER_CHOICES = ()  # TODO: will be completed later once the tiers are decided on
+    tier = models.CharField(max_length=STR_MED)
+
     agreement_start = models.DateField()
     agreement_end = models.DateField(
         help_text="If an extension is being granted, do not manually edit the end date."
-        ' Use the "Extend" button on membership details page instead.'
+        ' Use the "Extend" button on partnership details page instead.'
     )
-    # TODO: tbc
+    extensions = ArrayField(
+        models.PositiveIntegerField(),
+        help_text="Number of days the agreement was extended. The field stores "
+        "multiple extensions. The agreement end date has been moved by a cumulative "
+        "number of days from this field.",
+        default=list,
+    )
+    rolled_to_partnership = models.OneToOneField(
+        "Partnership",
+        on_delete=models.SET_NULL,
+        related_name="rolled_from_partnership",
+        null=True,
+    )
+
+    agreement_link = models.URLField(
+        blank=False,
+        default="",
+        verbose_name="Link to partnership agreement",
+        help_text="Link to partnership agreement document or folder in Google Drive",
+    )
+
+    registration_code = models.CharField(
+        max_length=STR_MED,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name="Registration Code",
+        help_text="Unique registration code used for Eventbrite and trainee application.",
+    )
+
+    PUBLIC_STATUS_CHOICES = (
+        ("public", "Public"),
+        ("private", "Private"),
+    )
+    public_status = models.CharField(
+        max_length=20,
+        choices=PUBLIC_STATUS_CHOICES,
+        default=PUBLIC_STATUS_CHOICES[1][0],
+        verbose_name="Can this partnership be publicized on The carpentries websites?",
+        help_text="Public partnerships may be listed on any of The Carpentries websites.",
+    )
+
+    partner_consortium = models.ForeignKey(Consortium, null=True, blank=True, on_delete=models.PROTECT)
+    partner_organization = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.PROTECT)
+
+    class Meta:
+        # Ensure only 1 partner is selected, either consortium or organization.
+        constraints = [
+            models.CheckConstraint(
+                check=Q(partner_consortium__isnull=True) ^ Q(partner_organization__isnull=True),
+                name="check_only_one_partner",
+            )
+        ]
+
+    def __str__(self) -> str:
+        dates = human_daterange(self.agreement_start, self.agreement_end)
+        tier = self.tier.title()
+
+        if self.partner_consortium:
+            return f"{self.name} {tier} partnership {dates} (consortium)"
+        else:
+            return f"{self.name} {tier} partnership {dates}"
