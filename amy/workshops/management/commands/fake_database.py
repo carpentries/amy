@@ -19,7 +19,7 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
-from fiscal.models import MembershipPersonRole
+from fiscal.models import Consortium, MembershipPersonRole, Partnership
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.models import (
@@ -156,22 +156,22 @@ class Command(BaseCommand):
             (
                 "private-event",
                 120,
-                "Workshops with this tag will not be displayed in our feeds and " "websites",
+                "Workshops with this tag will not be displayed in our feeds and websites",
             ),
             (
                 "cancelled",
                 130,
-                "Events that were supposed to happen but due to some circumstances got " "cancelled",
+                "Events that were supposed to happen but due to some circumstances got cancelled",
             ),
             (
                 "unresponsive",
                 140,
-                "Events whose hosts and/or organizers aren't going to send attendance " "data",
+                "Events whose hosts and/or organizers aren't going to send attendance data",
             ),
             (
                 "stalled",
                 150,
-                "Events with lost contact with the host or TTT events that aren't " "running.",
+                "Events with lost contact with the host or TTT events that aren't running.",
             ),
             ("LMO", 160, "Lesson Maintainer Onboarding"),
             ("LSO", 170, "Lesson Specific Onboarding"),
@@ -217,7 +217,7 @@ class Command(BaseCommand):
 
     def fake_trainees(self, count: int = 30) -> None:
         self.stdout.write(
-            "Generating {} fake trainees (and their training " "progresses and training requests)...".format(count)
+            "Generating {} fake trainees (and their training progresses and training requests)...".format(count)
         )
         for _ in range(count):
             try:
@@ -589,13 +589,13 @@ class Command(BaseCommand):
             )
 
     def fake_unmatched_training_requests(self, count: int = 20) -> None:
-        self.stdout.write("Generating {} fake unmatched " "training requests...".format(count))
+        self.stdout.write("Generating {} fake unmatched training requests...".format(count))
 
         for _ in range(count):
             self.fake_training_request(None)
 
     def fake_duplicated_people(self, count: int = 5) -> None:
-        self.stdout.write("Generating {} fake " "people duplications...".format(count))
+        self.stdout.write("Generating {} fake people duplications...".format(count))
 
         for _ in range(count):
             person = Person.objects.order_by("?")[0]
@@ -701,7 +701,7 @@ class Command(BaseCommand):
             req.save()
 
     def fake_workshop_inquiries(self, count: int = 10) -> None:
-        self.stdout.write("Generating {} fake " "workshop inquiries...".format(count))
+        self.stdout.write("Generating {} fake workshop inquiries...".format(count))
 
         curricula = Curriculum.objects.filter(active=True)
         organizations = Organization.objects.all()
@@ -777,7 +777,7 @@ class Command(BaseCommand):
             req.save()
 
     def fake_selforganised_submissions(self, count: int = 10) -> None:
-        self.stdout.write("Generating {} fake " "self-organised submissions...".format(count))
+        self.stdout.write("Generating {} fake self-organised submissions...".format(count))
 
         curricula = Curriculum.objects.filter(active=True)
         organizations = Organization.objects.all()
@@ -916,6 +916,79 @@ class Command(BaseCommand):
                 notes=self.faker.paragraph(nb_sentences=1),
             )
 
+    def fake_consortiums(self) -> None:
+        self.stdout.write("Generating 5 fake consortiums...")
+
+        for _ in range(5):
+            Consortium.objects.create(name=self.faker.company(), description=self.faker.paragraph())
+
+    def fake_partnerships(self) -> None:
+        self.stdout.write("Generating 4 fake partnerships...")
+
+        partner_consortium = Consortium.objects.all()[0]
+        start = self.faker.date_time_between(start_date="-1y").date()
+        Partnership.objects.create(
+            name=partner_consortium.name,
+            tier="First tier",  # TODO: may become FK in future
+            agreement_start=start,
+            agreement_end=start + timedelta(days=365),
+            extensions=[],
+            rolled_to_partnership=None,
+            agreement_link=self.faker.url(),
+            registration_code=self.faker.slug(),
+            public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[0],
+            partner_consortium=partner_consortium,
+            partner_organization=None,
+        )
+
+        partner_organization = Organization.objects.all()[0]
+        start = self.faker.date_time_between(start_date="-1y").date()
+        Partnership.objects.create(
+            name=partner_organization.fullname,
+            tier="First tier",  # TODO: may become FK in future
+            agreement_start=start,
+            agreement_end=start + timedelta(days=365),
+            extensions=[],
+            rolled_to_partnership=None,
+            agreement_link=self.faker.url(),
+            registration_code=self.faker.slug(),
+            public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[1],
+            partner_consortium=None,
+            partner_organization=partner_organization,
+        )
+
+        partner_organization = Organization.objects.all()[1]
+        start1 = self.faker.date_time_between(start_date="-2y").date()
+        start2 = start1 + timedelta(days=366)
+
+        newer = Partnership.objects.create(
+            name=partner_organization.fullname,
+            tier="First tier",  # TODO: may become FK in future
+            agreement_start=start2,
+            agreement_end=start2 + timedelta(days=365),
+            extensions=[],
+            rolled_to_partnership=None,
+            agreement_link=self.faker.url(),
+            registration_code=self.faker.slug(),
+            public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[1],
+            partner_consortium=None,
+            partner_organization=partner_organization,
+        )
+
+        Partnership.objects.create(
+            name=partner_organization.fullname,
+            tier="First tier",  # TODO: may become FK in future
+            agreement_start=start1,
+            agreement_end=start1 + timedelta(days=365),
+            extensions=[],
+            rolled_to_partnership=newer,
+            agreement_link=self.faker.url(),
+            registration_code=self.faker.slug(),
+            public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[1],
+            partner_consortium=None,
+            partner_organization=partner_organization,
+        )
+
     def handle(self, *args: Any, **options: Any) -> None:
         seed = options["seed"]
         if seed is not None:
@@ -947,6 +1020,14 @@ class Command(BaseCommand):
             self.fake_consents()
             recruitments = self.fake_instructor_recruitments()
             self.fake_instructor_recruitment_signups(recruitments)
+
+            self.fake_consortiums()
+            self.fake_partnerships()
+
+            # self.fake_accounts()
+            # self.fake_account_owners()
+            # self.fake_benefits()
+            # self.fake_account_benefits()
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")
