@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 import itertools
 from random import choice, randint, random
 from random import sample as random_sample
@@ -6,6 +6,7 @@ from random import uniform
 from typing import Any, List, Sequence
 
 from django.contrib.auth.models import Group
+from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand, CommandParser
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -19,7 +20,8 @@ from extrequests.models import (
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
-from fiscal.models import Consortium, MembershipPersonRole, Partnership
+from fiscal.models import Consortium, MembershipPersonRole, Partnership, PartnershipTier
+from offering.models import Account, AccountBenefit, AccountBenefitDiscount, Benefit
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.models import (
@@ -916,6 +918,12 @@ class Command(BaseCommand):
                 notes=self.faker.paragraph(nb_sentences=1),
             )
 
+    def fake_partnership_tiers(self) -> None:
+        self.stdout.write("Generating 4 fake partnership tiers...")
+
+        for name in ["bronze", "silver", "gold", "platinum"]:
+            PartnershipTier.objects.create(name=name)
+
     def fake_consortiums(self) -> None:
         self.stdout.write("Generating 5 fake consortiums...")
 
@@ -925,11 +933,13 @@ class Command(BaseCommand):
     def fake_partnerships(self) -> None:
         self.stdout.write("Generating 4 fake partnerships...")
 
+        all_tiers = PartnershipTier.objects.all()
+
         partner_consortium = Consortium.objects.all()[0]
         start = self.faker.date_time_between(start_date="-1y").date()
         Partnership.objects.create(
             name=partner_consortium.name,
-            tier="First tier",  # TODO: may become FK in future
+            tier=all_tiers[0],
             agreement_start=start,
             agreement_end=start + timedelta(days=365),
             extensions=[],
@@ -938,14 +948,14 @@ class Command(BaseCommand):
             registration_code=self.faker.slug(),
             public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[0],
             partner_consortium=partner_consortium,
-            partner_organization=None,
+            partner_organisation=None,
         )
 
-        partner_organization = Organization.objects.all()[0]
+        partner_organisation = Organization.objects.all()[0]
         start = self.faker.date_time_between(start_date="-1y").date()
         Partnership.objects.create(
-            name=partner_organization.fullname,
-            tier="First tier",  # TODO: may become FK in future
+            name=partner_organisation.fullname,
+            tier=all_tiers[1],
             agreement_start=start,
             agreement_end=start + timedelta(days=365),
             extensions=[],
@@ -954,16 +964,16 @@ class Command(BaseCommand):
             registration_code=self.faker.slug(),
             public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[1],
             partner_consortium=None,
-            partner_organization=partner_organization,
+            partner_organisation=partner_organisation,
         )
 
-        partner_organization = Organization.objects.all()[1]
+        partner_organisation = Organization.objects.all()[1]
         start1 = self.faker.date_time_between(start_date="-2y").date()
         start2 = start1 + timedelta(days=366)
 
         newer = Partnership.objects.create(
-            name=partner_organization.fullname,
-            tier="First tier",  # TODO: may become FK in future
+            name=partner_organisation.fullname,
+            tier=all_tiers[2],
             agreement_start=start2,
             agreement_end=start2 + timedelta(days=365),
             extensions=[],
@@ -972,12 +982,12 @@ class Command(BaseCommand):
             registration_code=self.faker.slug(),
             public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[1],
             partner_consortium=None,
-            partner_organization=partner_organization,
+            partner_organisation=partner_organisation,
         )
 
         Partnership.objects.create(
-            name=partner_organization.fullname,
-            tier="First tier",  # TODO: may become FK in future
+            name=partner_organisation.fullname,
+            tier=all_tiers[3],
             agreement_start=start1,
             agreement_end=start1 + timedelta(days=365),
             extensions=[],
@@ -986,7 +996,122 @@ class Command(BaseCommand):
             registration_code=self.faker.slug(),
             public_status=choice(Partnership.PUBLIC_STATUS_CHOICES)[1],
             partner_consortium=None,
-            partner_organization=partner_organization,
+            partner_organisation=partner_organisation,
+        )
+
+    def fake_accounts(self) -> None:
+        self.stdout.write("Generating 3 fake accounts...")
+
+        partnership1 = Partnership.objects.filter(partner_consortium__isnull=False)[0]
+        partnership2 = Partnership.objects.filter(partner_organisation__isnull=False)[0]
+        person = Person.objects.all()[0]
+
+        Account.objects.create(
+            account_type="consortium",
+            generic_relation=partnership1.partner_consortium,
+        )
+        Account.objects.create(
+            account_type="organisation",
+            generic_relation=partnership2.partner_organisation,
+        )
+        Account.objects.create(
+            account_type="individual",
+            generic_relation=person,
+        )
+
+    def fake_benefits(self) -> None:
+        n = len(Benefit.UNIT_TYPE_CHOICES) * 2
+        self.stdout.write(f"Generating {n} fake benefits...")
+
+        for unit_type, _ in Benefit.UNIT_TYPE_CHOICES:
+            Benefit.objects.create(
+                name=self.faker.word(part_of_speech="noun"),
+                description=self.faker.paragraph(),
+                unit_type=unit_type,
+            )
+            Benefit.objects.create(
+                name=self.faker.word(part_of_speech="noun"),
+                description=self.faker.paragraph(),
+                unit_type=unit_type,
+            )
+
+    def fake_account_benefit_discounts(self) -> None:
+        self.stdout.write("Generating 4 fake account benefits...")
+
+        for name in ["no discount", "10% discount", "50% discount", "for free"]:
+            AccountBenefitDiscount.objects.create(name=name)
+
+    def fake_account_benefits(self) -> None:
+        self.stdout.write("Generating 5 fake account benefits...")
+
+        partnership1 = Partnership.objects.filter(partner_consortium__isnull=False)[0]
+        partnership2 = Partnership.objects.filter(partner_organisation__isnull=False)[0]
+        person = Person.objects.all()[0]
+
+        all_benefits = Benefit.objects.all()
+        all_discounts = AccountBenefitDiscount.objects.all()
+
+        AccountBenefit.objects.create(
+            account=Account.objects.filter(
+                generic_relation_content_type=ContentType.objects.get_for_model(Consortium),
+                generic_relation_pk=partnership1.partner_consortium.pk,  # type: ignore
+            )[0],
+            partnership=partnership1,
+            benefit=all_benefits[0],
+            discount=all_discounts[0],
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            allocation=1 if all_benefits[0].unit_type == "seat" else 5,
+        )
+        AccountBenefit.objects.create(
+            account=Account.objects.filter(
+                generic_relation_content_type=ContentType.objects.get_for_model(Consortium),
+                generic_relation_pk=partnership1.partner_consortium.pk,  # type: ignore
+            )[0],
+            partnership=partnership1,
+            benefit=all_benefits[1],
+            discount=all_discounts[1],
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            allocation=1 if all_benefits[1].unit_type == "seat" else 5,
+        )
+
+        AccountBenefit.objects.create(
+            account=Account.objects.filter(
+                generic_relation_content_type=ContentType.objects.get_for_model(Organization),
+                generic_relation_pk=partnership2.partner_organisation.pk,  # type: ignore
+            )[0],
+            partnership=partnership2,
+            benefit=all_benefits[2],
+            discount=all_discounts[2],
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            allocation=1 if all_benefits[2].unit_type == "seat" else 5,
+        )
+        AccountBenefit.objects.create(
+            account=Account.objects.filter(
+                generic_relation_content_type=ContentType.objects.get_for_model(Organization),
+                generic_relation_pk=partnership2.partner_organisation.pk,  # type: ignore
+            )[0],
+            partnership=partnership2,
+            benefit=all_benefits[3],
+            discount=all_discounts[3],
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            allocation=1 if all_benefits[3].unit_type == "seat" else 5,
+        )
+
+        AccountBenefit.objects.create(
+            account=Account.objects.filter(
+                generic_relation_content_type=ContentType.objects.get_for_model(Person),
+                generic_relation_pk=person.pk,
+            )[0],
+            partnership=None,
+            benefit=all_benefits[0],
+            discount=all_discounts[0],
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            allocation=1 if all_benefits[0].unit_type == "seat" else 5,
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
@@ -1021,13 +1146,15 @@ class Command(BaseCommand):
             recruitments = self.fake_instructor_recruitments()
             self.fake_instructor_recruitment_signups(recruitments)
 
+            self.fake_partnership_tiers()
             self.fake_consortiums()
             self.fake_partnerships()
 
-            # self.fake_accounts()
+            self.fake_accounts()
             # self.fake_account_owners()
-            # self.fake_benefits()
-            # self.fake_account_benefits()
+            self.fake_benefits()
+            self.fake_account_benefit_discounts()
+            self.fake_account_benefits()
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")
