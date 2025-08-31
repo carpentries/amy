@@ -44,7 +44,6 @@ class Migration(migrations.Migration):
                             models.Q(("app_label", "workshops"), ("model", "person")),
                             models.Q(("app_label", "workshops"), ("model", "organization")),
                             models.Q(("app_label", "fiscal"), ("model", "consortium")),
-                            models.Q(("app_label", "fiscal"), ("model", "partnership")),
                             _connector="OR",
                         ),
                         on_delete=django.db.models.deletion.PROTECT,
@@ -90,6 +89,18 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+            name="AccountBenefitDiscount",
+            fields=[
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("last_updated_at", models.DateTimeField(auto_now=True, null=True)),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ("name", models.CharField(max_length=100)),
+            ],
+            options={
+                "abstract": False,
+            },
+        ),
+        migrations.CreateModel(
             name="AccountBenefit",
             fields=[
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -100,7 +111,15 @@ class Migration(migrations.Migration):
                 ("allocation", models.PositiveIntegerField()),
                 ("account", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="offering.account")),
                 ("benefit", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="offering.benefit")),
-                ("discount", models.CharField(blank=True, max_length=100)),
+                (
+                    "discount",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="offering.accountbenefitdiscount",
+                    ),
+                ),
                 (
                     "curriculum",
                     models.ForeignKey(

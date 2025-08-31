@@ -40,7 +40,6 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
             Q(app_label="workshops", model="person")
             | Q(app_label="workshops", model="organization")
             | Q(app_label="fiscal", model="consortium")
-            | Q(app_label="fiscal", model="partnership")  # nie!
         ),
     )
     generic_relation_pk = models.PositiveBigIntegerField()
@@ -96,6 +95,11 @@ class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return reverse("benefit-details", kwargs={"pk": self.pk})
 
 
+class AccountBenefitDiscount(CreatedUpdatedMixin, models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=STR_LONG, blank=False, null=False)
+
+
 class AccountBenefit(CreatedUpdatedMixin, models.Model):
     """A single benefit purchased for an account."""
 
@@ -103,7 +107,7 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     account = models.ForeignKey(Account, on_delete=models.PROTECT)
     partnership = models.ForeignKey(Partnership, on_delete=models.PROTECT, null=True, blank=True)
     benefit = models.ForeignKey(Benefit, on_delete=models.PROTECT)
-    discount = models.CharField(max_length=STR_LONG, blank=True)
+    discount = models.ForeignKey(AccountBenefitDiscount, on_delete=models.SET_NULL, null=True, blank=True)
 
     # null if event category is workshop, defined if skillup
     curriculum = models.ForeignKey(Curriculum, on_delete=models.PROTECT, null=True, blank=True)

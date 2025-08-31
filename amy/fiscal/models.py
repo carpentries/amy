@@ -3,8 +3,10 @@ import uuid
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 
 from workshops.consts import STR_LONG, STR_LONGEST, STR_MED
+from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import Membership, Organization, Person
 from workshops.utils.dates import human_daterange
 
@@ -32,25 +34,33 @@ class MembershipTask(models.Model):
         return f"{self.role} {self.person} ({self.membership})"
 
 
-class Consortium(models.Model):
+class Consortium(CreatedUpdatedMixin, models.Model):
     """New model representing a consortium of multiple organisations.
     Part of Service Offering 2025 project."""
 
     name = models.CharField(max_length=STR_LONG)
     description = models.CharField(max_length=STR_LONGEST)
+    organisations = models.ManyToManyField(Organization)
 
     def __str__(self) -> str:
         return self.name
 
+    def get_absolute_url(self) -> str:
+        return reverse("consortium-details", kwargs={"pk": self.pk})
 
-class Partnership(models.Model):
+
+class PartnershipTier(CreatedUpdatedMixin, models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=STR_LONG, blank=False, null=False)
+
+
+class Partnership(CreatedUpdatedMixin, models.Model):
     """A follow-up to "Membership" model, part of Service Offering 2025 project."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     name = models.CharField(max_length=STR_LONG)
-    TIER_CHOICES = ()  # TODO: will be completed later once the tiers are decided on
-    tier = models.CharField(max_length=STR_MED)
+    tier = models.ForeignKey(PartnershipTier, on_delete=models.SET_NULL, null=True, blank=True)
 
     agreement_start = models.DateField()
     agreement_end = models.DateField(
@@ -100,20 +110,21 @@ class Partnership(models.Model):
     )
 
     partner_consortium = models.ForeignKey(Consortium, null=True, blank=True, on_delete=models.PROTECT)
-    partner_organization = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.PROTECT)
+    partner_organisation = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.PROTECT)
 
     class Meta:
         # Ensure only 1 partner is selected, either consortium or organization.
+        # TODO: different arguments in Django 5.2
         constraints = [
             models.CheckConstraint(
-                check=Q(partner_consortium__isnull=True) ^ Q(partner_organization__isnull=True),
+                check=Q(partner_consortium__isnull=True) ^ Q(partner_organisation__isnull=True),
                 name="check_only_one_partner",
             )
         ]
 
     def __str__(self) -> str:
         dates = human_daterange(self.agreement_start, self.agreement_end)
-        tier = self.tier.title()
+        tier = (self.tier.name if self.tier else "(no tier)").title()
 
         if self.partner_consortium:
             return f"{self.name} {tier} partnership {dates} (consortium)"
