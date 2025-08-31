@@ -9,6 +9,7 @@ from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
+from flags.views import FlaggedViewMixin
 
 from communityroles.models import CommunityRole
 from emails.actions.exceptions import EmailStrategyException
@@ -32,8 +33,9 @@ from fiscal.base_views import (
     MembershipFormsetView,
     UnquoteSlugMixin,
 )
-from fiscal.filters import MembershipFilter, OrganizationFilter
+from fiscal.filters import ConsortiumFilter, MembershipFilter, OrganizationFilter
 from fiscal.forms import (
+    ConsortiumForm,
     MemberForm,
     MembershipCreateForm,
     MembershipExtensionForm,
@@ -43,7 +45,8 @@ from fiscal.forms import (
     OrganizationCreateForm,
     OrganizationForm,
 )
-from fiscal.models import MembershipTask
+from fiscal.models import Consortium, MembershipTask
+from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -55,6 +58,9 @@ from workshops.base_views import (
 )
 from workshops.models import Award, Member, MemberRole, Membership, Organization, Task
 from workshops.utils.access import OnlyForAdminsMixin
+
+REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
+
 
 # ------------------------------------------------------------
 # Organization related views
@@ -78,7 +84,7 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView[Organization]):
     title = "All Organizations"
 
 
-class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
+class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView[Organization]):
     queryset = Organization.objects.prefetch_related("memberships")
     context_object_name = "organization"
     template_name = "fiscal/organization.html"
@@ -104,7 +110,9 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
+class OrganizationCreate(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[OrganizationCreateForm, Organization]
+):
     permission_required = "workshops.add_organization"
     model = Organization
     form_class = OrganizationCreateForm
@@ -118,7 +126,9 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateV
         return initial
 
 
-class OrganizationUpdate(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class OrganizationUpdate(
+    UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[OrganizationForm, Organization]
+):
     permission_required = "workshops.change_organization"
     model = Organization
     form_class = OrganizationForm
@@ -127,7 +137,12 @@ class OrganizationUpdate(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequire
     template_name = "generic_form_with_comments.html"
 
 
-class OrganizationDelete(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class OrganizationDelete(
+    UnquoteSlugMixin,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYDeleteView[Organization, GenericDeleteForm[Organization]],
+):
     model = Organization
     slug_field = "domain"
     slug_url_kwarg = "org_domain"
@@ -148,7 +163,7 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView[Membership]):
     title = "All Memberships"
 
 
-class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
+class MembershipDetails(OnlyForAdminsMixin, AMYDetailView[Membership]):
     prefetch_awards = Prefetch("person__award_set", queryset=Award.objects.select_related("badge"))
     queryset = Membership.objects.prefetch_related(
         Prefetch(
@@ -183,7 +198,7 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
 class MembershipCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
-    AMYCreateView,
+    AMYCreateView[MembershipCreateForm, Membership],
 ):
     permission_required = [
         "workshops.add_membership",
@@ -227,7 +242,9 @@ class MembershipCreate(
         return reverse(path, args=[self.object.pk])
 
 
-class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView):
+class MembershipUpdate(
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView[MembershipForm, Membership]
+):
     permission_required = "workshops.change_membership"
     model = Membership
     object: Membership
@@ -382,7 +399,9 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupp
         return result
 
 
-class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class MembershipDelete(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Membership, GenericDeleteForm[Membership]]
+):
     model = Membership
     object: Membership
     permission_required = "workshops.delete_membership"
@@ -658,7 +677,9 @@ class MembershipExtend(
         return self.membership.get_absolute_url()
 
 
-class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView):
+class MembershipCreateRollOver(
+    OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView[MembershipRollOverForm, Membership]
+):
     permission_required = ["workshops.create_membership", "workshops.change_membership"]
     template_name = "generic_form.html"
     model = Membership
@@ -823,3 +844,60 @@ class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetM
 
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()
+
+
+# -----------------------------------------------------------------
+
+
+class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_consortium"]
+    template_name = "fiscal/consortium_list.html"
+    queryset = Consortium.objects.order_by("-created_at")
+    title = "Consortiums"
+    filter_class = ConsortiumFilter
+
+
+class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_consortium"]
+    template_name = "fiscal/consortium_details.html"
+    model = Consortium
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class ConsortiumCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[ConsortiumForm, Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.add_consortium"]
+    template_name = "fiscal/consortium_create.html"
+    form_class = ConsortiumForm
+    model = Consortium
+    object: Consortium
+    title = "Create a new consortium"
+
+
+class ConsortiumUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[ConsortiumForm, Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_consortium", "fiscal.change_consortium"]
+    template_name = "fiscal/consortium_edit.html"
+    form_class = ConsortiumForm
+    model = Consortium
+    object: Consortium
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class ConsortiumDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Consortium, GenericDeleteForm[Consortium]]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.delete_consortium"]
+    model = Consortium
+
+    def get_success_url(self) -> str:
+        return reverse("consortium-list")

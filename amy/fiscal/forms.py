@@ -9,7 +9,7 @@ from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from fiscal.fields import FlexibleSplitArrayField
-from fiscal.models import MembershipTask
+from fiscal.models import Consortium, MembershipTask
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -505,3 +505,16 @@ form_saved_add_comment = receiver(
     create_comment_signal,
     sender=MembershipCreateForm,
 )(form_saved_add_comment)
+
+
+# ----------------------------------------------------------
+# Consortiums
+
+
+class ConsortiumForm(forms.ModelForm[Consortium]):
+    class Meta:
+        model = Consortium
+        fields = [
+            "name",
+            "description",
+        ]

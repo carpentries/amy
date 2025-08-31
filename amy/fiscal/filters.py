@@ -6,13 +6,14 @@ from django.forms import widgets
 import django_filters
 from django_stubs_ext import Annotations
 
+from fiscal.models import Consortium
 from workshops.fields import Select2MultipleWidget, Select2Widget
 from workshops.filters import AllCountriesFilter, AMYFilterSet
 from workshops.models import Membership, MembershipSeatUsage, Organization
 
 
 class OrganizationFilter(AMYFilterSet):
-    country = AllCountriesFilter(widget=Select2Widget)  # type: ignore
+    country = AllCountriesFilter(widget=Select2Widget)
 
     memberships__variant = django_filters.MultipleChoiceFilter(  # type: ignore
         label="Memberships (current or past)",
@@ -154,3 +155,26 @@ class MembershipTrainingsFilter(AMYFilterSet):
         fields = [
             "organization_name",
         ]
+
+
+def filter_consortium_organisation_contain(
+    queryset: QuerySet[Consortium], name: str, organisations: list[Organization]
+) -> QuerySet[Consortium]:
+    print(type(organisations))
+    if organisations:
+        return queryset.filter(organisations=organisations)
+    else:
+        return queryset
+
+
+class ConsortiumFilter(AMYFilterSet):
+    contains_organisations = django_filters.ModelMultipleChoiceFilter(
+        queryset=Organization.objects.all(),
+        method=filter_consortium_organisation_contain,
+    )  # type: ignore
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            "name",
+            "description",
+        )
+    )  # type: ignore
