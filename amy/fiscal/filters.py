@@ -160,9 +160,8 @@ class MembershipTrainingsFilter(AMYFilterSet):
 def filter_consortium_organisation_contain(
     queryset: QuerySet[Consortium], name: str, organisations: list[Organization]
 ) -> QuerySet[Consortium]:
-    print(type(organisations))
     if organisations:
-        return queryset.filter(organisations=organisations)
+        return queryset.filter(organisations__in=organisations)
     else:
         return queryset
 
@@ -171,6 +170,7 @@ class ConsortiumFilter(AMYFilterSet):
     contains_organisations = django_filters.ModelMultipleChoiceFilter(
         queryset=Organization.objects.all(),
         method=filter_consortium_organisation_contain,
+        label="Contains organisations",
     )  # type: ignore
     order_by = django_filters.OrderingFilter(
         fields=(

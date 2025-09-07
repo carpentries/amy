@@ -1,0 +1,48 @@
+{% extends "base_nav.html" %}
+
+{% block content %}
+
+<div class="edit-object">
+  {% if perms.fiscal.change_consortium %}
+    <a class="btn btn-primary" href="{% url 'consortium-update' object.pk %}">Edit</a>
+  {% else %}
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+  {% endif %}
+  <div class="float-right">
+    {% if perms.fiscal.delete_consortium %}
+    <form action="{% url 'consortium-delete' object.pk %}" onsubmit='return confirm("Are you sure you wish to remove this consortium?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <a class="btn btn-danger disabled" disabled href="#">Delete</a>
+    {% endif %}
+  </div>
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th>Name:</th>
+    <td>{{ object.name }}</td>
+  </tr>
+  <tr>
+    <th>Description:</th>
+    <td>{{ object.description }}</td>
+  </tr>
+  <tr>
+    <th>Organisations:</th>
+    <td>
+        {% if object.organisations.all %}
+            <ul>
+            {% for organisation in object.organisations.all %}
+            <li><a href="{{ organisation.get_absolute_url }}">{{ organisation }}</a></li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            &mdash;
+        {% endif %}
+    </td>
+  </tr>
+</table>
+
+{% endblock %}

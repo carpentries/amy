@@ -14,7 +14,7 @@ from fiscal.models import Consortium, MembershipTask
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import ModelSelect2MultipleWidget, ModelSelect2Widget
-from workshops.forms import BootstrapHelper, form_saved_add_comment
+from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, form_saved_add_comment
 from workshops.models import Member, Membership, Organization
 from workshops.signals import create_comment_signal
 
@@ -512,9 +512,20 @@ form_saved_add_comment = receiver(
 
 
 class ConsortiumForm(forms.ModelForm[Consortium]):
+    organisations = forms.ModelMultipleChoiceField(
+        label="Organisations",
+        required=False,
+        queryset=Organization.objects.all(),
+        widget=ModelSelect2MultipleWidget(
+            data_view="organization-lookup",
+            attrs=SELECT2_SIDEBAR,
+        ),
+    )
+
     class Meta:
         model = Consortium
         fields = [
             "name",
             "description",
+            "organisations",
         ]

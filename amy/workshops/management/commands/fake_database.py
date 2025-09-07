@@ -928,7 +928,8 @@ class Command(BaseCommand):
         self.stdout.write("Generating 5 fake consortiums...")
 
         for _ in range(5):
-            Consortium.objects.create(name=self.faker.company(), description=self.faker.paragraph())
+            consortium = Consortium.objects.create(name=self.faker.company(), description=self.faker.paragraph())
+            consortium.organisations.set(Organization.objects.order_by("?")[0:2])
 
     def fake_partnerships(self) -> None:
         self.stdout.write("Generating 4 fake partnerships...")
