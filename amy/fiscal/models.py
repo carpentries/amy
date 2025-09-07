@@ -53,6 +53,9 @@ class PartnershipTier(CreatedUpdatedMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=STR_LONG, blank=False, null=False)
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class Partnership(CreatedUpdatedMixin, models.Model):
     """A follow-up to "Membership" model, part of Service Offering 2025 project."""
@@ -109,8 +112,20 @@ class Partnership(CreatedUpdatedMixin, models.Model):
         help_text="Public partnerships may be listed on any of The Carpentries websites.",
     )
 
-    partner_consortium = models.ForeignKey(Consortium, null=True, blank=True, on_delete=models.PROTECT)
-    partner_organisation = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.PROTECT)
+    partner_consortium = models.ForeignKey(
+        Consortium,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        help_text="Only consortium or organisation can be selected, never both.",
+    )
+    partner_organisation = models.ForeignKey(
+        Organization,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        help_text="Only consortium or organisation can be selected, never both.",
+    )
 
     class Meta:
         # Ensure only 1 partner is selected, either consortium or organization.
@@ -119,6 +134,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
             models.CheckConstraint(
                 check=Q(partner_consortium__isnull=True) ^ Q(partner_organisation__isnull=True),
                 name="check_only_one_partner",
+                violation_error_message="Select only partner consortium OR partner organisation, never both.",
             )
         ]
 
@@ -130,3 +146,6 @@ class Partnership(CreatedUpdatedMixin, models.Model):
             return f"{self.name} {tier} partnership {dates} (consortium)"
         else:
             return f"{self.name} {tier} partnership {dates}"
+
+    def get_absolute_url(self) -> str:
+        return reverse("partnership-details", kwargs={"pk": self.pk})

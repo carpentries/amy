@@ -33,7 +33,12 @@ from fiscal.base_views import (
     MembershipFormsetView,
     UnquoteSlugMixin,
 )
-from fiscal.filters import ConsortiumFilter, MembershipFilter, OrganizationFilter
+from fiscal.filters import (
+    ConsortiumFilter,
+    MembershipFilter,
+    OrganizationFilter,
+    PartnershipFilter,
+)
 from fiscal.forms import (
     ConsortiumForm,
     MemberForm,
@@ -44,8 +49,11 @@ from fiscal.forms import (
     MembershipTaskForm,
     OrganizationCreateForm,
     OrganizationForm,
+    PartnershipExtensionForm,
+    PartnershipForm,
+    PartnershipRollOverForm,
 )
-from fiscal.models import Consortium, MembershipTask
+from fiscal.models import Consortium, MembershipTask, Partnership
 from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
@@ -901,3 +909,72 @@ class ConsortiumDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Conso
 
     def get_success_url(self) -> str:
         return reverse("consortium-list")
+
+
+# -----------------------------------------------------------------
+
+
+class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_partnership"]
+    template_name = "fiscal/partnership_list.html"
+    queryset = Partnership.objects.order_by("-created_at")
+    title = "Partnerships"
+    filter_class = PartnershipFilter
+
+
+class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_partnership"]
+    template_name = "fiscal/partnership_details.html"
+    model = Partnership
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[PartnershipForm, Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.add_partnership"]
+    template_name = "fiscal/partnership_create.html"
+    form_class = PartnershipForm
+    model = Partnership
+    object: Partnership
+    title = "Create a new partnership"
+
+
+class PartnershipUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[PartnershipForm, Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_partnership", "fiscal.change_partnership"]
+    template_name = "fiscal/partnership_edit.html"
+    form_class = PartnershipForm
+    model = Partnership
+    object: Partnership
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class PartnershipDelete(
+    OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Partnership, GenericDeleteForm[Partnership]]
+):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.delete_partnership"]
+    model = Partnership
+
+    def get_success_url(self) -> str:
+        return reverse("partnership-list")
+
+
+class PartnershipExtend(OnlyForAdminsMixin, FlaggedViewMixin, FormView[PartnershipExtensionForm]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    pass
+
+
+class PartnershipRollOver(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[PartnershipRollOverForm, Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    pass

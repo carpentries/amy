@@ -69,25 +69,25 @@ urlpatterns = [
         ),
     ),
     # partnerships
-    # path(
-    #     "partnerships/",
-    #     include(
-    #         [
-    #             path("", views.PartnershipList.as_view(), name="partnership-list"),
-    #             path("create/", views.PartnershipCreate.as_view(), name="partnership-create"),
-    #         ]
-    #     ),
-    # ),
-    # path(
-    #     "partnerships/<uuid:pk>/",
-    #     include(
-    #         [
-    #             path("", views.PartnershipDetails.as_view(), name="partnership-details"),
-    #             path("edit/", views.PartnershipUpdate.as_view(), name="partnership-update"),
-    #             path("delete/", views.PartnershipDelete.as_view(), name="partnership-delete"),
-    #             path("extend/", views.PartnershipExtend.as_view(), name="partnership-extend"),
-    #             path("roll-over/", views.PartnershipRollOver.as_view(), name="partnership-roll-over"),
-    #         ]
-    #     ),
-    # ),
+    path(
+        "partnerships/",
+        include(
+            [
+                path("", views.PartnershipList.as_view(), name="partnership-list"),  # type: ignore
+                path("create/", views.PartnershipCreate.as_view(), name="partnership-create"),  # type: ignore
+            ]
+        ),
+    ),
+    path(
+        "partnerships/<uuid:pk>/",
+        include(
+            [
+                path("", views.PartnershipDetails.as_view(), name="partnership-details"),  # type: ignore
+                path("edit/", views.PartnershipUpdate.as_view(), name="partnership-update"),  # type: ignore
+                path("delete/", views.PartnershipDelete.as_view(), name="partnership-delete"),  # type: ignore
+                path("extend/", views.PartnershipExtend.as_view(), name="partnership-extend"),  # type: ignore
+                path("roll-over/", views.PartnershipRollOver.as_view(), name="partnership-roll-over"),  # type: ignore
+            ]
+        ),
+    ),
 ]

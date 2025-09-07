@@ -178,3 +178,7 @@ class ConsortiumFilter(AMYFilterSet):
             "description",
         )
     )  # type: ignore
+
+
+class PartnershipFilter(AMYFilterSet):
+    pass
