@@ -79,7 +79,7 @@ urlpatterns = [
         ),
     ),
     path(
-        "partnerships/<uuid:pk>/",
+        "partnerships/<int:pk>/",
         include(
             [
                 path("", views.PartnershipDetails.as_view(), name="partnership-details"),  # type: ignore

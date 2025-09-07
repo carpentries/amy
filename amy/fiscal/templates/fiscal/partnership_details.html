@@ -58,6 +58,16 @@
     </td>
   </tr>
   <tr>
+    <th>Account:</th>
+    <td>
+      {% if account %}
+      <a href="{{ account.get_absolute_url }}">{{ account }}</a>
+      {% else %}
+      <a href="{% url 'account-create' %}">Create account</a>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
     <th>Tier:</th>
     <td>{{ object.tier }}</td>
   </tr>

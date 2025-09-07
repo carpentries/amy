@@ -60,8 +60,6 @@ class PartnershipTier(CreatedUpdatedMixin, models.Model):
 class Partnership(CreatedUpdatedMixin, models.Model):
     """A follow-up to "Membership" model, part of Service Offering 2025 project."""
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     name = models.CharField(max_length=STR_LONG)
     tier = models.ForeignKey(PartnershipTier, on_delete=models.SET_NULL, null=True, blank=True)
 

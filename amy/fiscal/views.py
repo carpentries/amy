@@ -1,8 +1,9 @@
 from datetime import date, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch, QuerySet
 from django.db.models.functions import Now
 from django.forms import BaseModelFormSet, modelformset_factory
@@ -55,6 +56,7 @@ from fiscal.forms import (
     PartnershipRollOverForm,
 )
 from fiscal.models import Consortium, MembershipTask, Partnership
+from offering.models import Account
 from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
@@ -933,6 +935,14 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
+        related_object = cast(
+            Organization | Consortium, self.object.partner_organisation or self.object.partner_consortium
+        )
+        content_type = ContentType.objects.get_for_model(related_object)
+        context["account"] = Account.objects.filter(
+            generic_relation_content_type=content_type,
+            generic_relation_pk=related_object.pk,
+        ).first()
         return context
 
 
