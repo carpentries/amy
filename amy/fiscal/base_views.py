@@ -7,6 +7,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.shortcuts import get_object_or_404
 from django.views.generic import FormView
 
+from fiscal.models import Partnership
 from workshops.models import Membership
 
 _M = TypeVar("_M", bound=Model)
@@ -66,3 +67,22 @@ class UnquoteSlugMixin:
         slug_url = self.kwargs.get(self.slug_url_kwarg)  # type: ignore
         if slug_url is not None:
             self.kwargs[self.slug_url_kwarg] = unquote(slug_url)  # type: ignore
+
+
+class GetPartnershipMixin:
+    partnership: Partnership
+
+    def partnership_queryset_kwargs(self) -> dict[str, str]:
+        return {}
+
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+        self.partnership = get_object_or_404(
+            Partnership,
+            pk=self.kwargs["pk"],  # type: ignore
+            **self.partnership_queryset_kwargs(),
+        )
+        return super().dispatch(request, *args, **kwargs)  # type: ignore
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        kwargs["partnership"] = self.partnership
+        return super().get_context_data(**kwargs)  # type: ignore

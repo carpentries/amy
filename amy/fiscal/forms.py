@@ -473,15 +473,15 @@ class MembershipExtensionForm(forms.Form):
     helper = BootstrapHelper()
 
     class Media:
-        js = ("membership_extend.js", "date_yyyymmdd.js")
+        js = ("agreement_extension.js", "date_yyyymmdd.js")
 
     def clean(self) -> None:
         super().clean()
         errors = dict()
 
         # validate new agreement end date is later than original agreement end date
-        agreement_end = self.cleaned_data.get("agreement_end")
-        new_agreement_end = self.cleaned_data.get("new_agreement_end")
+        agreement_end = self.cleaned_data["agreement_end"]
+        new_agreement_end = self.cleaned_data["new_agreement_end"]
         try:
             if new_agreement_end <= agreement_end:
                 errors["new_agreement_end"] = ValidationError(
@@ -577,7 +577,7 @@ class PartnershipExtensionForm(forms.Form):
     helper = BootstrapHelper()
 
     class Media:
-        js = ("partnership_extend.js", "date_yyyymmdd.js")
+        js = ("agreement_extension.js", "date_yyyymmdd.js")
 
     def clean(self) -> None:
         super().clean()

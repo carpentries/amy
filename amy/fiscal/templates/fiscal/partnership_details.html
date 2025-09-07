@@ -75,7 +75,13 @@
   </tr>
   <tr>
     <th>Registration code:</th>
-    <td><code>{{ object.registration_code }}</code></td>
+    <td>
+      {% if object.registration_code %}
+      <code>{{ object.registration_code }}</code>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
   </tr>
   <tr>
     <th>Extensions:</th>
@@ -96,6 +102,8 @@
     <td>{{ object.get_public_status_display }}</td>
   </tr>
 </table>
+
+{% comment %} Add comment list {% endcomment %}
 
 <div class="clearfix">
   <div class="edit-object float-left">

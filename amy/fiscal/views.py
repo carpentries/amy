@@ -30,6 +30,7 @@ from emails.types import StrategyEnum
 from extcomments.utils import add_comment_for_object
 from fiscal.base_views import (
     GetMembershipMixin,
+    GetPartnershipMixin,
     MembershipFormsetView,
     UnquoteSlugMixin,
 )
@@ -970,9 +971,52 @@ class PartnershipDelete(
         return reverse("partnership-list")
 
 
-class PartnershipExtend(OnlyForAdminsMixin, FlaggedViewMixin, FormView[PartnershipExtensionForm]):
+class PartnershipExtend(OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixin, FormView[PartnershipExtensionForm]):
     flag_name = REQUIRED_FLAG_NAME  # type: ignore
-    pass
+    form_class = PartnershipExtensionForm
+    template_name = "generic_form.html"
+    permission_required = "fiscal.change_partnership"
+    comment = "Extended partnership by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
+    request: AuthenticatedHttpRequest
+
+    def get_initial(self) -> dict[str, Any]:
+        return {
+            "agreement_start": self.partnership.agreement_start,
+            "agreement_end": self.partnership.agreement_end,
+            "extension": 0,
+            "new_agreement_end": self.partnership.agreement_end,
+        }
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        if "title" not in kwargs:
+            kwargs["title"] = f"Extend partnership {self.partnership}"
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form: PartnershipExtensionForm) -> HttpResponse:
+        agreement_end = form.cleaned_data["agreement_end"]
+        new_agreement_end = form.cleaned_data["new_agreement_end"]
+        days = (new_agreement_end - agreement_end).days
+        comment = form.cleaned_data["comment"]
+        self.partnership.agreement_end = new_agreement_end
+        self.partnership.extensions.append(days)
+        self.partnership.save()
+
+        # Add a comment "Extended partnership by X days on DATE" on user's behalf.
+        add_comment_for_object(
+            self.partnership,
+            self.request.user,
+            self.comment.format(
+                days=days,
+                date=date.today(),
+                new_date=new_agreement_end,
+                comment=comment,
+            ),
+        )
+
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        return self.partnership.get_absolute_url()
 
 
 class PartnershipRollOver(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[PartnershipRollOverForm, Partnership]):
