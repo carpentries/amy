@@ -1,5 +1,7 @@
+from typing import Optional, cast
 import uuid
 
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Q
@@ -149,3 +151,25 @@ class Partnership(CreatedUpdatedMixin, models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("partnership-details", kwargs={"pk": self.pk})
+
+    def account(self) -> Optional["Account"]:  # type: ignore  # noqa
+        from offering.models import Account
+
+        related_object = cast(Organization | Consortium, self.partner_organisation or self.partner_consortium)
+        content_type = ContentType.objects.get_for_model(related_object)
+        return Account.objects.filter(
+            generic_relation_content_type=content_type,
+            generic_relation_pk=related_object.pk,
+        ).first()
+
+    def credits_used(self) -> int:
+        from offering.models import AccountBenefit
+
+        account = self.account()
+        if not account:
+            return 0
+
+        return sum(
+            account_benefit.benefit.credits
+            for account_benefit in AccountBenefit.objects.filter(account=account).select_related("benefit")
+        )

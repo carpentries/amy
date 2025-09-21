@@ -72,6 +72,16 @@
     <td>{{ object.tier }}</td>
   </tr>
   <tr>
+    <th>Credits (used / allowed):</th>
+    <td>
+      {% if not self.account %}
+        No account
+      {% else %}
+        {{ object.credits_used }} / {{ object.credits }}
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
     <th>Agreement start:</th>
     <td>{{ object.agreement_start }}</td>
   </tr>
@@ -95,7 +105,13 @@
   </tr>
   <tr>
     <th>Extensions:</th>
-    <td>{{ object.extensions }}</td>
+    <td>
+      {% if not object.extensions %}
+        None
+      {% else %}
+        By {% for days in object.extensions %}{{ days }}{% if not forloop.last %}, {% endif %}{% endfor %} days
+      {% endif %}
+    </td>
   </tr>
   <tr>
     <th>Rolled to partnership:</th>

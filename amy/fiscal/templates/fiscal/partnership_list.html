@@ -14,6 +14,7 @@
         <th>Name</th>
         <th>Organisation / Consortium</th>
         <th>Tier</th>
+        <th>Credits (used / allowed)</th>
         <th>Dates</th>
       </tr>
       {% for object in object_list %}
@@ -29,6 +30,13 @@
           {% endif %}
         </td>
         <td>{{ object.tier }}</td>
+        <td>
+          {% if not object.account %}
+            No account
+          {% else %}
+            {{ object.credits_used }} / {{ object.credits }}
+          {% endif %}
+        </td>
         <td>{{ object.agreement_start|date:"Y-m-d" }} &mdash; {{ object.agreement_end|date:"Y-m-d" }}</td>
       </tr>
       {% endfor %}
