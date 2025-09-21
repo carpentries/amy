@@ -87,9 +87,10 @@ class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
     name = models.CharField(max_length=STR_LONG)
     description = models.CharField(max_length=STR_LONGEST)
     unit_type = models.CharField(max_length=20, choices=UNIT_TYPE_CHOICES)
+    credits = models.IntegerField()
 
     def __str__(self) -> str:
-        return f'Benefit "{self.name}" ({self.unit_type})'
+        return f'Benefit "{self.name}" ({self.unit_type}, {self.credits} credits)'
 
     def get_absolute_url(self) -> str:
         return reverse("benefit-details", kwargs={"pk": self.pk})

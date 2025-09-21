@@ -921,8 +921,8 @@ class Command(BaseCommand):
     def fake_partnership_tiers(self) -> None:
         self.stdout.write("Generating 4 fake partnership tiers...")
 
-        for name in ["bronze", "silver", "gold", "platinum"]:
-            PartnershipTier.objects.create(name=name)
+        for name, credits in [("bronze", 16), ("silver", 32), ("gold", 64), ("platinum", 128)]:
+            PartnershipTier.objects.create(name=name, credits=credits)
 
     def fake_consortiums(self) -> None:
         self.stdout.write("Generating 5 fake consortiums...")
@@ -941,6 +941,7 @@ class Command(BaseCommand):
         Partnership.objects.create(
             name=partner_consortium.name,
             tier=all_tiers[0],
+            credits=all_tiers[0].credits,
             agreement_start=start,
             agreement_end=start + timedelta(days=365),
             extensions=[],
@@ -957,6 +958,7 @@ class Command(BaseCommand):
         Partnership.objects.create(
             name=partner_organisation.fullname,
             tier=all_tiers[1],
+            credits=all_tiers[1].credits,
             agreement_start=start,
             agreement_end=start + timedelta(days=365),
             extensions=[],
@@ -975,6 +977,7 @@ class Command(BaseCommand):
         newer = Partnership.objects.create(
             name=partner_organisation.fullname,
             tier=all_tiers[2],
+            credits=all_tiers[2].credits,
             agreement_start=start2,
             agreement_end=start2 + timedelta(days=365),
             extensions=[],
@@ -989,6 +992,7 @@ class Command(BaseCommand):
         Partnership.objects.create(
             name=partner_organisation.fullname,
             tier=all_tiers[3],
+            credits=all_tiers[3].credits,
             agreement_start=start1,
             agreement_end=start1 + timedelta(days=365),
             extensions=[],
@@ -1023,17 +1027,20 @@ class Command(BaseCommand):
     def fake_benefits(self) -> None:
         n = len(Benefit.UNIT_TYPE_CHOICES) * 2
         self.stdout.write(f"Generating {n} fake benefits...")
+        credits_choices = [2, 4, 6, 8]
 
         for unit_type, _ in Benefit.UNIT_TYPE_CHOICES:
             Benefit.objects.create(
                 name=self.faker.word(part_of_speech="noun"),
                 description=self.faker.paragraph(),
                 unit_type=unit_type,
+                credits=choice(credits_choices),
             )
             Benefit.objects.create(
                 name=self.faker.word(part_of_speech="noun"),
                 description=self.faker.paragraph(),
                 unit_type=unit_type,
+                credits=choice(credits_choices),
             )
 
     def fake_account_benefit_discounts(self) -> None:

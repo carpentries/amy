@@ -52,9 +52,10 @@ class Consortium(CreatedUpdatedMixin, models.Model):
 class PartnershipTier(CreatedUpdatedMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=STR_LONG, blank=False, null=False)
+    credits = models.IntegerField()
 
     def __str__(self) -> str:
-        return self.name
+        return f"{self.name} ({self.credits} credits)"
 
 
 class Partnership(CreatedUpdatedMixin, models.Model):
@@ -62,6 +63,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
 
     name = models.CharField(max_length=STR_LONG)
     tier = models.ForeignKey(PartnershipTier, on_delete=models.SET_NULL, null=True, blank=True)
+    credits = models.IntegerField()
 
     agreement_start = models.DateField()
     agreement_end = models.DateField(
