@@ -133,3 +133,14 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("account-benefit-details", kwargs={"pk": self.pk})
+
+    def allocation_used(self) -> int:
+        from workshops.models import Event, Task
+
+        if self.benefit.unit_type == "seat":
+            return Task.objects.filter(allocated_benefit=self).count()
+
+        elif self.benefit.unit_type == "event":
+            return Event.objects.filter(allocated_benefit=self).count()
+
+        return 0

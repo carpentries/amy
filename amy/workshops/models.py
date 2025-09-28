@@ -1457,6 +1457,15 @@ class Event(AssignmentMixin, models.Model):
 
     objects = Manager.from_queryset(EventQuerySet)()
 
+    allocated_benefit = models.ForeignKey(
+        "offering.AccountBenefit",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name="Allocated account benefit (of type 'event')",
+    )
+
     class Meta:
         ordering = ("-start",)
 
@@ -1657,6 +1666,14 @@ class Task(models.Model):
         verbose_name="Open training seat",
         help_text="Some TTT events allow for open training; check this field "
         "to count this person into open applications.",
+    )
+    allocated_benefit = models.ForeignKey(
+        "offering.AccountBenefit",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name="Allocated account benefit (of type 'seat')",
     )
 
     objects = TaskManager()
