@@ -38,6 +38,7 @@ class BenefitForm(forms.ModelForm[Benefit]):
             "name",
             "description",
             "unit_type",
+            "credits",
             "active",
         ]
 

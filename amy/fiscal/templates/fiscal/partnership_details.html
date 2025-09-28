@@ -60,8 +60,8 @@
   <tr>
     <th>Account:</th>
     <td>
-      {% if account %}
-      <a href="{{ account.get_absolute_url }}">{{ account }}</a>
+      {% if object.account %}
+      <a href="{{ object.account.get_absolute_url }}">{{ object.account }}</a>
       {% else %}
       <a href="{% url 'account-create' %}">Create account</a>
       {% endif %}
@@ -74,7 +74,7 @@
   <tr>
     <th>Credits (used / allowed):</th>
     <td>
-      {% if not self.account %}
+      {% if not object.account %}
         No account
       {% else %}
         {{ object.credits_used }} / {{ object.credits }}
