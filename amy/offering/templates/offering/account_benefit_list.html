@@ -28,7 +28,10 @@
         <td>{{ object.benefit }}</td>
         <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
         <td>{{ object.human_daterange }}</td>
-        <td>{{ object.active|yesno }}</td>
+        <td>
+          {{ object.active|yesno }}
+          {% if object.frozen %}(frozen){% endif %}
+        </td>
         <td>{{ object.allocation }}</td>
         <td>{{ object.created_at }}</td>
         <td>{{ object.last_updated_at }}</td>

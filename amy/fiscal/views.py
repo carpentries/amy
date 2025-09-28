@@ -55,6 +55,7 @@ from fiscal.forms import (
     PartnershipRollOverForm,
 )
 from fiscal.models import Consortium, MembershipTask, Partnership, PartnershipTier
+from offering.models import Account, AccountBenefit
 from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
@@ -689,13 +690,13 @@ class MembershipExtend(
 class MembershipCreateRollOver(
     OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView[MembershipRollOverForm, Membership]
 ):
-    permission_required = ["workshops.create_membership", "workshops.change_membership"]
+    permission_required = ["workshops.add_membership", "workshops.change_membership"]
     template_name = "generic_form.html"
     model = Membership
     object: Membership
     form_class = MembershipRollOverForm
     pk_url_kwarg = "membership_id"
-    success_message = 'Membership "{membership}" was successfully rolled-over to a new ' 'membership "{new_membership}"'
+    success_message = 'Membership "{membership}" was successfully rolled-over to a new membership "{new_membership}"'
 
     def membership_queryset_kwargs(self) -> dict[str, Any]:
         # Prevents already rolled-over memberships from rolling-over again.
@@ -1026,6 +1027,72 @@ class PartnershipExtend(OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixi
         return self.partnership.get_absolute_url()
 
 
-class PartnershipRollOver(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[PartnershipRollOverForm, Partnership]):
+class PartnershipRollOver(
+    OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixin, AMYCreateView[PartnershipRollOverForm, Partnership]
+):
     flag_name = REQUIRED_FLAG_NAME  # type: ignore
-    pass
+    permission_required = ["fiscal.add_partnership", "fiscal.change_partnership"]
+    template_name = "generic_form.html"
+    model = Partnership
+    object: Partnership
+    form_class = PartnershipRollOverForm
+    success_message = (
+        'Partnership "{partnership}" was successfully rolled-over to a new partnership "{new_partnership}"'
+    )
+
+    def partnership_queryset_kwargs(self) -> dict[str, Any]:
+        # Prevents already rolled-over partnerships from rolling-over again.
+        return dict(rolled_to_partnership__isnull=True)
+
+    def get_success_message(self, cleaned_data: dict[str, Any]) -> str:
+        return self.success_message.format(
+            cleaned_data,
+            partnership=str(self.partnership),
+            new_partnership=str(self.object),
+        )
+
+    def get_initial(self) -> Dict[str, Any]:
+        return {
+            "name": self.partnership.name,
+            "tier": self.partnership.tier,
+            "agreement_start": self.partnership.agreement_end + timedelta(days=1),
+            "agreement_end": date(
+                self.partnership.agreement_end.year + 1,
+                self.partnership.agreement_end.month,
+                self.partnership.agreement_end.day,
+            ),
+            "agreement_link": self.partnership.agreement_link,
+            "registration_code": self.partnership.registration_code,
+            "public_status": self.partnership.public_status,
+            "partner_consortium": self.partnership.partner_consortium,
+            "partner_organisation": self.partnership.partner_organisation,
+        }
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        kwargs["title"] = f"Create new partnership from {self.partnership}"
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form: PartnershipRollOverForm) -> HttpResponse:
+        # Rewrite credits from "parent" partnership
+        self.object = form.save(commit=False)
+        self.object.credits = self.partnership.credits or 0
+        self.object.save()
+
+        # Create a new account for the new partnership
+        account_type = "organisation" if self.partnership.partner_organisation else "consortium"
+        Account.objects.create(
+            account_type=account_type,
+            generic_relation=self.object,
+        )
+
+        # Freeze benefits for "parent" partnership
+        if partnership_account := cast(Account | None, self.partnership.account()):
+            AccountBenefit.objects.filter(account=partnership_account).update(frozen=True)
+
+        self.partnership.rolled_to_partnership = self.object
+        self.partnership.save()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self) -> str:
+        return self.object.get_absolute_url()

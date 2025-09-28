@@ -1,10 +1,11 @@
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 from urllib.parse import urlparse, urlunparse
 
 from crispy_forms.layout import HTML, Div
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import Model
 from django.dispatch import receiver
 from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
@@ -133,7 +134,7 @@ class MembershipForm(forms.ModelForm[Membership]):
 
         if instance and "extensions" in self.fields:
             # Recalculate number of subwidgets for each of the extensions.
-            self.fields["extensions"].change_size(len(instance.extensions))
+            self.fields["extensions"].change_size(len(instance.extensions))  # type: ignore
 
         # When editing membership, allow to edit rolled_over or rolled_from_previous
         # values when membership was rolled over or rolled from other membership.
@@ -147,7 +148,7 @@ class MembershipForm(forms.ModelForm[Membership]):
             del self.fields["inhouse_instructor_training_seats_rolled_from_previous"]
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
 
         # add warning alert for dates falling within next 2-3 months
         INVALID_AGREEMENT_DURATION_WARNING = (
@@ -156,9 +157,9 @@ class MembershipForm(forms.ModelForm[Membership]):
         pos_index = self.helper.layout.fields.index("agreement_end")
         self.helper.layout.insert(
             pos_index + 1,
-            Div(
-                Div(
-                    HTML(INVALID_AGREEMENT_DURATION_WARNING),
+            Div(  # type: ignore
+                Div(  # type: ignore
+                    HTML(INVALID_AGREEMENT_DURATION_WARNING),  # type: ignore
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="agreement_duration_warning",
@@ -174,7 +175,7 @@ class MembershipForm(forms.ModelForm[Membership]):
         agreement_start = self.cleaned_data.get("agreement_start")
         agreement_end = self.cleaned_data.get("agreement_end")
         try:
-            if agreement_end < agreement_start:
+            if agreement_end < agreement_start:  # type: ignore
                 errors["agreement_end"] = ValidationError("Agreement end date can't be sooner than the start date.")
         except TypeError:
             pass
@@ -195,7 +196,7 @@ class MembershipForm(forms.ModelForm[Membership]):
 
 
 class MembershipCreateForm(MembershipForm):
-    comment = MarkdownxFormField(
+    comment = MarkdownxFormField(  # type: ignore
         label="Comment",
         help_text="This will be added to comments after the membership is created.",
         widget=forms.Textarea,
@@ -245,7 +246,8 @@ class MembershipCreateForm(MembershipForm):
 
 
 class MembershipRollOverForm(MembershipCreateForm):
-    main_organization = None  # remove the additional field
+    # remove the additional field
+    main_organization = None  # type: ignore
 
     copy_members = forms.BooleanField(
         label="Do you want to automatically copy member organisations from existing " "membership?",
@@ -295,14 +297,14 @@ class MembershipRollOverForm(MembershipCreateForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
         ]
         for field in fields:
-            self[field].field.min_value = 0
-            self[field].field.max_value = max_values.get(field, 0)
+            self[field].field.min_value = 0  # type: ignore
+            self[field].field.max_value = max_values.get(field, 0)  # type: ignore
             # widget is already set up at this point, so alter it's attributes
-            self[field].field.widget.attrs["max"] = self[field].field.max_value
+            self[field].field.widget.attrs["max"] = self[field].field.max_value  # type: ignore
             # overwrite any existing validators
             self[field].field.validators = [
-                MinValueValidator(self[field].field.min_value),
-                MaxValueValidator(self[field].field.max_value),
+                MinValueValidator(self[field].field.min_value),  # type: ignore
+                MaxValueValidator(self[field].field.max_value),  # type: ignore
             ]
 
         # disable editing consortium
@@ -313,7 +315,10 @@ class MembershipRollOverForm(MembershipCreateForm):
             self["copy_members"].field.disabled = True
 
 
-class EditableFormsetFormMixin(forms.ModelForm):
+_M = TypeVar("_M", bound=Model)
+
+
+class EditableFormsetFormMixin(forms.ModelForm[_M]):
     EDITABLE = forms.BooleanField(
         label="Change",
         required=False,
@@ -326,7 +331,7 @@ class EditableFormsetFormMixin(forms.ModelForm):
         return super().clean()
 
 
-class MemberForm(EditableFormsetFormMixin, forms.ModelForm[Member]):
+class MemberForm(EditableFormsetFormMixin[Member], forms.ModelForm[Member]):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -373,28 +378,28 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm[Member]):
 
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper.layout.append("id")
 
-        self.helper_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_deletable.layout.append("id")
         self.helper_deletable.layout.append("DELETE")  # visible; formset adds it
 
-        self.helper_empty_form.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form.layout.append("id")
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
 
-        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form_deletable.layout.append("id")
-        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # hidden
+        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # type: ignore
         # remove EDITABLE checkbox from empty helper deletable form
         pos_index = self.helper_empty_form_deletable.layout.fields.index("EDITABLE")
         self.helper_empty_form_deletable.layout.pop(pos_index)
 
 
-class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
+class MembershipTaskForm(EditableFormsetFormMixin[Membership], forms.ModelForm[Membership]):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(add_cancel_button=False, form_tag=False, add_submit_button=False)
@@ -430,24 +435,24 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
 
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper.layout.append("id")
         self.helper.layout.append("DELETE")  # visible; formset adds it
 
-        self.helper_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_deletable.layout.append("id")
         self.helper_deletable.layout.append("DELETE")  # visible; formset adds it
 
-        self.helper_empty_form.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form.layout.append("id")
-        self.helper_empty_form.layout.append(Div("DELETE", css_class="d-none"))  # hidden
+        self.helper_empty_form.layout.append(Div("DELETE", css_class="d-none"))  # type: ignore
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
 
-        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form_deletable.layout.append("id")
-        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # hidden
+        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # type: ignore
 
 
 class MembershipExtensionForm(forms.Form):
@@ -600,6 +605,15 @@ class PartnershipExtensionForm(forms.Form):
 
 class PartnershipRollOverForm(PartnershipForm):
     class Meta(PartnershipForm.Meta):
+        model = Partnership
         fields = [
             "name",
+            "tier",
+            "agreement_start",
+            "agreement_end",
+            "agreement_link",
+            "registration_code",
+            "public_status",
+            "partner_consortium",
+            "partner_organisation",
         ]

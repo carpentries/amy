@@ -117,7 +117,7 @@
     <th>Rolled to partnership:</th>
     <td>
       {% if object.rolled_to_partnership %}
-        <a href="object.rolled_to_partnership.get_absolute_url">{{ object.rolled_to_partnership }}</a>
+        <a href="{{ object.rolled_to_partnership.get_absolute_url }}">{{ object.rolled_to_partnership }}</a>
       {% else%}
         &mdash;
       {% endif %}
