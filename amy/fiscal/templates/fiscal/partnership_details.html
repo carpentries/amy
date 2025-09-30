@@ -41,7 +41,7 @@
     <th>Organisation:</th>
     <td>
       {% if object.partner_organisation %}
-        <a href="object.partner_organisation.get_absolute_url">{{ object.partner_organisation }}</a>
+        <a href="{{ object.partner_organisation.get_absolute_url }}">{{ object.partner_organisation }}</a>
       {% else%}
         &mdash;
       {% endif %}
@@ -51,7 +51,7 @@
     <th>Consortium:</th>
     <td>
       {% if object.partner_consortium %}
-        <a href="object.partner_consortium.get_absolute_url">{{ object.partner_consortium }}</a>
+        <a href="{{ object.partner_consortium.get_absolute_url }}">{{ object.partner_consortium }}</a>
       {% else%}
         &mdash;
       {% endif %}
