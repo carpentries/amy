@@ -3,6 +3,7 @@ from typing import Any, Dict, cast
 
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch, QuerySet
 from django.db.models.functions import Now
 from django.forms import BaseModelFormSet, modelformset_factory
@@ -134,6 +135,22 @@ class OrganizationCreate(
             "comment": self.request.GET.get("comment", ""),
         }
         return initial
+
+    def form_valid(self, form: OrganizationCreateForm) -> HttpResponse:
+        result = super().form_valid(form)
+
+        # Create accompanying Account. This is part of Service Offering 2025 project, but
+        # it doesn't need to be behind a feature flag: Account can be created w/o feature flag,
+        # but it won't show up for the user.
+        content_type = ContentType.objects.get_for_model(Organization)
+        assert self.object  # for mypy
+        Account.objects.get_or_create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation_content_type=content_type,
+            generic_relation_pk=self.object.pk,
+        )
+
+        return result
 
 
 class OrganizationUpdate(
@@ -951,6 +968,23 @@ class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Part
         self.object = form.save(commit=False)
         self.object.credits = tier.credits
         self.object.save()
+
+        # Create a new account for the new partnership, if needed
+        account_type = (
+            Account.AccountTypeChoices.ORGANISATION
+            if self.object.partner_organisation
+            else Account.AccountTypeChoices.CONSORTIUM
+        )
+        account_object = self.object.partner_organisation or self.object.partner_consortium
+        assert account_object  # for mypy
+        content_type = ContentType.objects.get_for_model(account_object)
+        # Most likely this account already exists
+        Account.objects.get_or_create(
+            account_type=account_type,
+            generic_relation_content_type=content_type,
+            generic_relation_pk=account_object.pk,
+        )
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -1073,16 +1107,25 @@ class PartnershipRollOver(
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form: PartnershipRollOverForm) -> HttpResponse:
-        # Rewrite credits from "parent" partnership
+        # Rewrite credits from "parent" partnership because it's the same tier
         self.object = form.save(commit=False)
         self.object.credits = self.partnership.credits or 0
         self.object.save()
 
-        # Create a new account for the new partnership
-        account_type = "organisation" if self.partnership.partner_organisation else "consortium"
-        Account.objects.create(
+        # Create a new account for the new partnership, if needed
+        account_type = (
+            Account.AccountTypeChoices.ORGANISATION
+            if self.partnership.partner_organisation
+            else Account.AccountTypeChoices.CONSORTIUM
+        )
+        account_object = self.partnership.partner_organisation or self.partnership.partner_consortium
+        assert account_object  # for mypy
+        content_type = ContentType.objects.get_for_model(account_object)
+        # Most likely this account already exists
+        Account.objects.get_or_create(
             account_type=account_type,
-            generic_relation=self.object,
+            generic_relation_content_type=content_type,
+            generic_relation_pk=account_object.pk,
         )
 
         # Freeze benefits for "parent" partnership
