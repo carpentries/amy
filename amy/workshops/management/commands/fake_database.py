@@ -1012,15 +1012,15 @@ class Command(BaseCommand):
         person = Person.objects.all()[0]
 
         Account.objects.create(
-            account_type="consortium",
+            account_type=Account.AccountTypeChoices.CONSORTIUM,
             generic_relation=partnership1.partner_consortium,
         )
         Account.objects.create(
-            account_type="organisation",
+            account_type=Account.AccountTypeChoices.ORGANISATION,
             generic_relation=partnership2.partner_organisation,
         )
         Account.objects.create(
-            account_type="individual",
+            account_type=Account.AccountTypeChoices.INDIVIDUAL,
             generic_relation=person,
         )
 

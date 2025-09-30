@@ -18,11 +18,10 @@ from workshops.utils.dates import human_daterange
 class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """The individual or organisation that purchases benefits."""
 
-    ACCOUNT_TYPE_CHOICES = (
-        ("individual", "individual"),
-        ("organisation", "organisation"),
-        ("consortium", "consortium"),
-    )
+    class AccountTypeChoices(models.TextChoices):
+        INDIVIDUAL = ("individual", "individual")
+        ORGANISATION = ("organisation", "organisation")
+        CONSORTIUM = ("consortium", "consortium")
 
     ACCOUNT_TYPE_MAPPING = {
         "individual": ("workshops", "person"),
@@ -31,7 +30,7 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
     }
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    account_type = models.CharField(max_length=30, choices=ACCOUNT_TYPE_CHOICES)
+    account_type = models.CharField(max_length=30, choices=AccountTypeChoices.choices)
 
     generic_relation_content_type = models.ForeignKey(
         ContentType,

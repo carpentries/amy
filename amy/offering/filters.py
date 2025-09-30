@@ -8,7 +8,7 @@ from workshops.models import Curriculum
 
 class AccountFilter(AMYFilterSet):
     active = django_filters.BooleanFilter("active")  # type: ignore
-    account_type = django_filters.ChoiceFilter(choices=Account.ACCOUNT_TYPE_CHOICES)  # type: ignore
+    account_type = django_filters.ChoiceFilter(choices=Account.AccountTypeChoices.choices)  # type: ignore
     order_by = django_filters.OrderingFilter(
         fields=(
             "account_type",
