@@ -170,6 +170,6 @@ class Partnership(CreatedUpdatedMixin, models.Model):
             return 0
 
         return sum(
-            account_benefit.benefit.credits
+            account_benefit.benefit.credits * account_benefit.allocation
             for account_benefit in AccountBenefit.objects.filter(account=account).select_related("benefit")
         )
