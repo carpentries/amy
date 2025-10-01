@@ -145,9 +145,9 @@ class OrganizationCreate(
         content_type = ContentType.objects.get_for_model(Organization)
         assert self.object  # for mypy
         Account.objects.get_or_create(
-            account_type=Account.AccountTypeChoices.ORGANISATION,
             generic_relation_content_type=content_type,
             generic_relation_pk=self.object.pk,
+            defaults=dict(account_type=Account.AccountTypeChoices.ORGANISATION),
         )
 
         return result
@@ -980,9 +980,9 @@ class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Part
         content_type = ContentType.objects.get_for_model(account_object)
         # Most likely this account already exists
         Account.objects.get_or_create(
-            account_type=account_type,
             generic_relation_content_type=content_type,
             generic_relation_pk=account_object.pk,
+            defaults=dict(account_type=account_type),
         )
 
         return HttpResponseRedirect(self.get_success_url())
@@ -1123,9 +1123,9 @@ class PartnershipRollOver(
         content_type = ContentType.objects.get_for_model(account_object)
         # Most likely this account already exists
         Account.objects.get_or_create(
-            account_type=account_type,
             generic_relation_content_type=content_type,
             generic_relation_pk=account_object.pk,
+            defaults=dict(account_type=account_type),
         )
 
         # Freeze benefits for "parent" partnership
