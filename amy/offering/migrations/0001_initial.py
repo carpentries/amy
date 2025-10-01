@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
                 (
                     "permission_type",
                     models.CharField(
-                        choices=[("account_contact", "account_contact"), ("billing_contact", "billing_contact")],
+                        choices=[("account_contact", "Account Contact"), ("billing_contact", "Billing Contact")],
                         max_length=30,
                     ),
                 ),

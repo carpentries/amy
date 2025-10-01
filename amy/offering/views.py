@@ -1,13 +1,22 @@
 from typing import Any
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import QuerySet
+from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
 from django.urls import reverse
 from flags.views import FlaggedViewMixin
 
+from offering.base_views import AccountFormsetView
 from offering.filters import AccountBenefitFilter, AccountFilter, BenefitFilter
-from offering.forms import AccountBenefitForm, AccountForm, BenefitForm
-from offering.models import Account, AccountBenefit, Benefit
+from offering.forms import (
+    AccountBenefitForm,
+    AccountForm,
+    AccountOwnerForm,
+    BenefitForm,
+)
+from offering.models import Account, AccountBenefit, AccountOwner, Benefit
 from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
@@ -15,6 +24,7 @@ from workshops.base_views import (
     AMYDetailView,
     AMYListView,
     AMYUpdateView,
+    AuthenticatedHttpRequest,
 )
 from workshops.filters import EventCategoryFilter
 from workshops.forms import EventCategoryForm
@@ -45,6 +55,7 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
+        context["owners"] = AccountOwner.objects.filter(account=self.object).select_related("person")
         return context
 
 
@@ -86,6 +97,40 @@ class AccountDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Account,
 
     def get_success_url(self) -> str:
         return reverse("account-list")
+
+
+# -----------------------------------------------------------------
+
+
+class AccountOwnersUpdate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,
+    PermissionRequiredMixin,
+    AccountFormsetView[AccountOwner, AccountOwnerForm],
+):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = [
+        "offering.change_account",
+        "offering.add_accountowner",
+        "offering.change_accountowner",
+        "offering.delete_accountowner",
+    ]
+    request: AuthenticatedHttpRequest
+
+    def get_formset(self, *args: Any, **kwargs: Any) -> type[BaseModelFormSet[AccountOwner, AccountOwnerForm]]:
+        return modelformset_factory(AccountOwner, AccountOwnerForm, *args, **kwargs)
+
+    def get_formset_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_formset_kwargs()
+        return kwargs
+
+    def get_formset_queryset(self, object: Account) -> QuerySet[AccountOwner]:
+        return object.accountowner_set.select_related("account", "person")
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        if "title" not in kwargs:
+            kwargs["title"] = "Change owners for {}".format(self.account)
+        return super().get_context_data(**kwargs)
 
 
 # -----------------------------------------------------------------

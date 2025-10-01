@@ -39,6 +39,11 @@ urlpatterns = [
                     views.AccountDelete.as_view(),  # type: ignore
                     name="account-delete",
                 ),
+                path(
+                    "owners/",
+                    views.AccountOwnersUpdate.as_view(),  # type: ignore
+                    name="account-owners-update",
+                ),
             ]
         ),
     ),

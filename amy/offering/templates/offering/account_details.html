@@ -29,6 +29,21 @@
     <th>Object:</th>
     <td><a href="{{ object.generic_relation.get_absolute_url }}">{{ object.generic_relation }}</a></td>
   </tr>
+  <tr>
+    <th>Account owners:</th>
+    <td>
+      {% if owners %}
+        <ol>
+        {% for owner in owners %}
+          <li>{{ owner.get_permission_type_display }}: <a href="{{ owner.person.get_absolute_url }}">{{ owner.person }}</a></li>
+        {% endfor %}
+        </ol>
+      {% else %}
+        <p>&mdash;</p>
+      {% endif %}
+      <a href="{% url 'account-owners-update' object.pk %}">Edit</a>
+    </td>
+  </tr>
 </table>
 
 {% endblock %}

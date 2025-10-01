@@ -64,8 +64,8 @@ class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""
 
     PERMISSION_TYPE_CHOICES = (
-        ("account_contact", "account_contact"),
-        ("billing_contact", "billing_contact"),
+        ("account_contact", "Account Contact"),
+        ("billing_contact", "Billing Contact"),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
