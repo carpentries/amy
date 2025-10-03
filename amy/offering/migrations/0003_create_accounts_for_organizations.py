@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
     """Data migration that creates account for every organization in the system."""
 
     dependencies = [
-        ("offering", "0002_benefit_credits"),
+        ("offering", "0002_benefit_credits_accountbenefitdiscount_accountbenefit"),
     ]
 
     operations = [

@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("workshops", "0282_event_event_category"),
         ("fiscal", "0001_initial"),
+        ("offering", "0001_initial"),
     ]
 
     operations = [
@@ -36,6 +37,7 @@ class Migration(migrations.Migration):
                 ("last_updated_at", models.DateTimeField(auto_now=True, null=True)),
                 ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ("name", models.CharField(max_length=100)),
+                ("credits", models.IntegerField()),
             ],
             options={
                 "abstract": False,
@@ -44,10 +46,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Partnership",
             fields=[
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("last_updated_at", models.DateTimeField(auto_now=True, null=True)),
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("name", models.CharField(max_length=100)),
+                ("credits", models.IntegerField()),
                 ("agreement_start", models.DateField()),
                 (
                     "agreement_end",
@@ -96,15 +99,31 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
+                    "account",
+                    models.ForeignKey(
+                        help_text="Field that helps in some calculations, e.g. credits used.",
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="offering.account",
+                    ),
+                ),
+                (
                     "partner_consortium",
                     models.ForeignKey(
-                        blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="fiscal.consortium"
+                        blank=True,
+                        help_text="Only consortium or organisation can be selected, never both.",
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="fiscal.consortium",
                     ),
                 ),
                 (
                     "partner_organisation",
                     models.ForeignKey(
-                        blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="workshops.organization"
+                        blank=True,
+                        help_text="Only consortium or organisation can be selected, never both.",
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="workshops.organization",
                     ),
                 ),
                 (
@@ -131,6 +150,7 @@ class Migration(migrations.Migration):
                     ("partner_consortium__isnull", True), ("partner_organisation__isnull", True), _connector="XOR"
                 ),
                 name="check_only_one_partner",
+                violation_error_message="Select only partner consortium OR partner organisation, never both.",
             ),
         ),
     ]
