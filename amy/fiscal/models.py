@@ -9,7 +9,7 @@ from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django_stubs_ext import Annotations
 
-from offering.models import Account, AccountBenefit
+from offering.models import Account
 from workshops.consts import STR_LONG, STR_LONGEST, STR_MED
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import Membership, Organization, Person
@@ -162,9 +162,15 @@ class Partnership(CreatedUpdatedMixin, models.Model):
         ]
 
     def clean(self) -> None:
-        if (
-            self.account.generic_relation != self.partner_consortium
-            or self.account.generic_relation != self.partner_organisation
+        # In some cases (e.g. PartnershipCreate view) the account does not exist at the moment of
+        # `self.clean()`. Perhaps this validation should be handled differently.
+        try:
+            account = self.account
+        except Account.DoesNotExist:
+            return
+
+        if account and (
+            account.generic_relation != self.partner_consortium or account.generic_relation != self.partner_organisation
         ):
             raise ValidationError(
                 {
@@ -183,9 +189,3 @@ class Partnership(CreatedUpdatedMixin, models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("partnership-details", kwargs={"pk": self.pk})
-
-    def credits_used(self) -> int:
-        return sum(
-            account_benefit.benefit.credits * account_benefit.allocation
-            for account_benefit in AccountBenefit.objects.filter(account=self.account).select_related("benefit")
-        )

@@ -937,7 +937,7 @@ class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partners
     flag_name = REQUIRED_FLAG_NAME  # type: ignore
     permission_required = ["fiscal.view_partnership"]
     template_name = "fiscal/partnership_list.html"
-    queryset = Partnership.objects.order_by("-created_at")
+    queryset = Partnership.objects.credits_usage_annotation().order_by("-created_at")
     title = "Partnerships"
     filter_class = PartnershipFilter
 
@@ -964,10 +964,7 @@ class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Part
     title = "Create a new partnership"
 
     def form_valid(self, form: PartnershipForm) -> HttpResponse:
-        tier = cast(PartnershipTier, form.cleaned_data["tier"])
         self.object = form.save(commit=False)
-        self.object.credits = tier.credits
-        self.object.save()
 
         # Create a new account for the new partnership, if needed
         account_type = (
@@ -978,12 +975,17 @@ class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Part
         account_object = self.object.partner_organisation or self.object.partner_consortium
         assert account_object  # for mypy
         content_type = ContentType.objects.get_for_model(account_object)
-        # Most likely this account already exists
-        Account.objects.get_or_create(
+        # Quite likely this account already exists
+        account, _ = Account.objects.get_or_create(
             generic_relation_content_type=content_type,
             generic_relation_pk=account_object.pk,
             defaults=dict(account_type=account_type),
         )
+
+        tier = cast(PartnershipTier, form.cleaned_data["tier"])
+        self.object.credits = tier.credits
+        self.object.account = account
+        self.object.save()
 
         return HttpResponseRedirect(self.get_success_url())
 
@@ -1107,30 +1109,15 @@ class PartnershipRollOver(
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form: PartnershipRollOverForm) -> HttpResponse:
-        # Rewrite credits from "parent" partnership because it's the same tier
         self.object = form.save(commit=False)
+        # Rewrite credits from "parent" partnership because it's the same tier
         self.object.credits = self.partnership.credits or 0
+        # Rewrite account from "parent" partnership
+        self.object.account = self.partnership.account
         self.object.save()
 
-        # Create a new account for the new partnership, if needed
-        account_type = (
-            Account.AccountTypeChoices.ORGANISATION
-            if self.partnership.partner_organisation
-            else Account.AccountTypeChoices.CONSORTIUM
-        )
-        account_object = self.partnership.partner_organisation or self.partnership.partner_consortium
-        assert account_object  # for mypy
-        content_type = ContentType.objects.get_for_model(account_object)
-        # Most likely this account already exists
-        Account.objects.get_or_create(
-            generic_relation_content_type=content_type,
-            generic_relation_pk=account_object.pk,
-            defaults=dict(account_type=account_type),
-        )
-
         # Freeze benefits for "parent" partnership
-        if partnership_account := cast(Account | None, self.partnership.account()):
-            AccountBenefit.objects.filter(account=partnership_account).update(frozen=True)
+        AccountBenefit.objects.filter(account=self.partnership.account).update(frozen=True)
 
         self.partnership.rolled_to_partnership = self.object
         self.partnership.save()
