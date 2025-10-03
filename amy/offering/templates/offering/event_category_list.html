@@ -1,5 +1,5 @@
 {% extends "base_nav_sidebar.html" %}
-
+{% load pagination %}
 
 {% block content %}
   {% if perms.offering.add_eventcategory %}
@@ -27,6 +27,7 @@
       </tr>
       {% endfor %}
     </table>
+    {% pagination object_list %}
   {% else %}
     <p>No event categories.</p>
   {% endif %}
