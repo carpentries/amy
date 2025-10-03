@@ -932,16 +932,21 @@ class Command(BaseCommand):
             consortium.organisations.set(Organization.objects.order_by("?")[0:2])
 
     def fake_partnerships(self) -> None:
-        self.stdout.write("Generating 4 fake partnerships...")
+        self.stdout.write("Generating 4 fake partnerships with accounts...")
 
         all_tiers = PartnershipTier.objects.all()
 
         partner_consortium = Consortium.objects.all()[0]
+        partner_consortium_account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.CONSORTIUM,
+            generic_relation=partner_consortium,
+        )
         start = self.faker.date_time_between(start_date="-1y").date()
         Partnership.objects.create(
             name=partner_consortium.name,
             tier=all_tiers[0],
             credits=all_tiers[0].credits,
+            account=partner_consortium_account,
             agreement_start=start,
             agreement_end=start + timedelta(days=365),
             extensions=[],
@@ -954,11 +959,16 @@ class Command(BaseCommand):
         )
 
         partner_organisation = Organization.objects.all()[0]
+        partner_organisation_account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=partner_organisation,
+        )
         start = self.faker.date_time_between(start_date="-1y").date()
         Partnership.objects.create(
             name=partner_organisation.fullname,
             tier=all_tiers[1],
             credits=all_tiers[1].credits,
+            account=partner_organisation_account,
             agreement_start=start,
             agreement_end=start + timedelta(days=365),
             extensions=[],
@@ -971,6 +981,10 @@ class Command(BaseCommand):
         )
 
         partner_organisation = Organization.objects.all()[1]
+        partner_organisation_account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=partner_organisation,
+        )
         start1 = self.faker.date_time_between(start_date="-2y").date()
         start2 = start1 + timedelta(days=366)
 
@@ -978,6 +992,7 @@ class Command(BaseCommand):
             name=partner_organisation.fullname,
             tier=all_tiers[2],
             credits=all_tiers[2].credits,
+            account=partner_organisation_account,
             agreement_start=start2,
             agreement_end=start2 + timedelta(days=365),
             extensions=[],
@@ -993,6 +1008,7 @@ class Command(BaseCommand):
             name=partner_organisation.fullname,
             tier=all_tiers[3],
             credits=all_tiers[3].credits,
+            account=partner_organisation_account,
             agreement_start=start1,
             agreement_end=start1 + timedelta(days=365),
             extensions=[],
@@ -1005,23 +1021,23 @@ class Command(BaseCommand):
         )
 
     def fake_accounts(self) -> None:
-        self.stdout.write("Generating 3 fake accounts...")
+        self.stdout.write("Generating 3 fake accounts for individuals...")
 
-        partnership1 = Partnership.objects.filter(partner_consortium__isnull=False)[0]
-        partnership2 = Partnership.objects.filter(partner_organisation__isnull=False)[0]
-        person = Person.objects.all()[0]
+        person1 = Person.objects.all()[0]
+        person2 = Person.objects.all()[1]
+        person3 = Person.objects.all()[2]
 
         Account.objects.create(
-            account_type=Account.AccountTypeChoices.CONSORTIUM,
-            generic_relation=partnership1.partner_consortium,
-        )
-        Account.objects.create(
-            account_type=Account.AccountTypeChoices.ORGANISATION,
-            generic_relation=partnership2.partner_organisation,
+            account_type=Account.AccountTypeChoices.INDIVIDUAL,
+            generic_relation=person1,
         )
         Account.objects.create(
             account_type=Account.AccountTypeChoices.INDIVIDUAL,
-            generic_relation=person,
+            generic_relation=person2,
+        )
+        Account.objects.create(
+            account_type=Account.AccountTypeChoices.INDIVIDUAL,
+            generic_relation=person3,
         )
 
     def fake_benefits(self) -> None:
