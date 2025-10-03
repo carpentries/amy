@@ -1,12 +1,12 @@
-from typing import Optional, cast
 import uuid
 
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 
+from offering.models import Account, AccountBenefit
 from workshops.consts import STR_LONG, STR_LONGEST, STR_MED
 from workshops.mixins import CreatedUpdatedMixin
 from workshops.models import Membership, Organization, Person
@@ -66,6 +66,11 @@ class Partnership(CreatedUpdatedMixin, models.Model):
     name = models.CharField(max_length=STR_LONG)
     tier = models.ForeignKey(PartnershipTier, on_delete=models.SET_NULL, null=True, blank=True)
     credits = models.IntegerField()
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.PROTECT,
+        help_text="Field that helps in some calculations, e.g. credits used.",
+    )
 
     agreement_start = models.DateField()
     agreement_end = models.DateField(
@@ -137,8 +142,19 @@ class Partnership(CreatedUpdatedMixin, models.Model):
                 check=Q(partner_consortium__isnull=True) ^ Q(partner_organisation__isnull=True),
                 name="check_only_one_partner",
                 violation_error_message="Select only partner consortium OR partner organisation, never both.",
-            )
+            ),
         ]
+
+    def clean(self) -> None:
+        if (
+            self.account.generic_relation != self.partner_consortium
+            or self.account.generic_relation != self.partner_organisation
+        ):
+            raise ValidationError(
+                {
+                    "account": "Selected account does not point to partner organisation or consortium.",
+                }
+            )
 
     def __str__(self) -> str:
         dates = human_daterange(self.agreement_start, self.agreement_end)
@@ -152,24 +168,8 @@ class Partnership(CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self) -> str:
         return reverse("partnership-details", kwargs={"pk": self.pk})
 
-    def account(self) -> Optional["Account"]:  # type: ignore  # noqa
-        from offering.models import Account
-
-        related_object = cast(Organization | Consortium, self.partner_organisation or self.partner_consortium)
-        content_type = ContentType.objects.get_for_model(related_object)
-        return Account.objects.filter(
-            generic_relation_content_type=content_type,
-            generic_relation_pk=related_object.pk,
-        ).first()
-
     def credits_used(self) -> int:
-        from offering.models import AccountBenefit
-
-        account = self.account()
-        if not account:
-            return 0
-
         return sum(
             account_benefit.benefit.credits * account_benefit.allocation
-            for account_benefit in AccountBenefit.objects.filter(account=account).select_related("benefit")
+            for account_benefit in AccountBenefit.objects.filter(account=self.account).select_related("benefit")
         )

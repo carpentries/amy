@@ -8,7 +8,6 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
-from fiscal.models import Partnership
 from workshops.consts import STR_LONG, STR_LONGEST
 from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
 from workshops.models import Curriculum, Person
@@ -105,7 +104,7 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account = models.ForeignKey(Account, on_delete=models.PROTECT)
-    partnership = models.ForeignKey(Partnership, on_delete=models.PROTECT, null=True, blank=True)
+    partnership = models.ForeignKey("fiscal.Partnership", on_delete=models.PROTECT, null=True, blank=True)
     benefit = models.ForeignKey(Benefit, on_delete=models.PROTECT)
     discount = models.ForeignKey(AccountBenefitDiscount, on_delete=models.SET_NULL, null=True, blank=True)
 
