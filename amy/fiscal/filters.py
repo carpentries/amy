@@ -1,12 +1,12 @@
 from datetime import date
 from typing import Annotated
 
-from django.db.models import QuerySet
+from django.db.models import F, QuerySet
 from django.forms import widgets
 import django_filters
 from django_stubs_ext import Annotations
 
-from fiscal.models import Consortium
+from fiscal.models import Consortium, Partnership, PartnershipCreditsUsage
 from workshops.fields import Select2MultipleWidget, Select2Widget
 from workshops.filters import AllCountriesFilter, AMYFilterSet
 from workshops.models import Membership, MembershipSeatUsage, Organization
@@ -180,5 +180,49 @@ class ConsortiumFilter(AMYFilterSet):
     )  # type: ignore
 
 
+def filter_currently_active_partnership(
+    queryset: QuerySet[Partnership], name: str, active: bool
+) -> QuerySet[Partnership]:
+    if not active:
+        return queryset
+
+    today = date.today()
+    return queryset.filter(agreement_start__lte=today, agreement_end__gte=today)
+
+
+def filter_partnership_credits(
+    queryset: QuerySet[Annotated["Partnership", Annotations[PartnershipCreditsUsage]]],
+    name: str,
+    selection: str,
+) -> QuerySet[Partnership]:
+    match selection:
+        case "under_limit":
+            return queryset.filter(credits_used__lt=F("credits"))
+        case "over_limit":
+            return queryset.filter(credits_used__gte=F("credits"))
+    return queryset
+
+
 class PartnershipFilter(AMYFilterSet):
-    pass
+    active_only = django_filters.BooleanFilter(  # type: ignore
+        label="Show active only (current date between (start, end) dates)",
+        method=filter_currently_active_partnership,
+        widget=widgets.CheckboxInput,
+    )
+
+    credits = django_filters.ChoiceFilter(  # type: ignore
+        label="Credits",
+        choices=[
+            ("under_limit", "under limit"),
+            ("over_limit", "over limit"),
+        ],
+        method=filter_partnership_credits,
+    )
+
+    order_by = django_filters.OrderingFilter(fields=["name"])  # type: ignore
+
+    class Meta:
+        model = Partnership
+        fields = [
+            "tier",
+        ]

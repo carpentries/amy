@@ -1,10 +1,13 @@
+from typing import Annotated, TypedDict
 import uuid
 
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q, QuerySet, Sum
+from django.db.models.functions import Coalesce
 from django.urls import reverse
+from django_stubs_ext import Annotations
 
 from offering.models import Account, AccountBenefit
 from workshops.consts import STR_LONG, STR_LONGEST, STR_MED
@@ -58,6 +61,17 @@ class PartnershipTier(CreatedUpdatedMixin, models.Model):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.credits} credits)"
+
+
+class PartnershipCreditsUsage(TypedDict):
+    credits_used: int
+
+
+class PartnershipManager(models.Manager["Partnership"]):
+    def credits_usage_annotation(self) -> QuerySet[Annotated["Partnership", Annotations[PartnershipCreditsUsage]]]:
+        return self.get_queryset().annotate(
+            credits_used=Coalesce(Sum(F("accountbenefit__benefit__credits") * F("accountbenefit__allocation")), 0),
+        )
 
 
 class Partnership(CreatedUpdatedMixin, models.Model):
@@ -133,6 +147,8 @@ class Partnership(CreatedUpdatedMixin, models.Model):
         on_delete=models.PROTECT,
         help_text="Only consortium or organisation can be selected, never both.",
     )
+
+    objects = PartnershipManager()
 
     class Meta:
         # Ensure only 1 partner is selected, either consortium or organization.
