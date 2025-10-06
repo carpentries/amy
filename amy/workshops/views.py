@@ -45,6 +45,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
+from flags.state import flag_enabled
 from github.GithubException import GithubException
 import requests
 from reversion.models import Revision, Version
@@ -1219,7 +1220,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
         return context
 
     def get_form_class(self) -> type[EventForm]:
-        return partial(EventForm, show_lessons=True, add_comment=True)  # type: ignore
+        return partial(
+            EventForm,
+            show_lessons=True,
+            add_comment=True,
+            show_allocated_benefit=flag_enabled("SERVICE_OFFERING", request=self.request)  # type: ignore
+        )
 
     def form_valid(self, form: EventForm) -> HttpResponse:
         """Check if RQ job conditions changed, and add/delete jobs if

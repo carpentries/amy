@@ -429,6 +429,7 @@ class EventForm(forms.ModelForm[Event]):
             "host",
             "sponsor",
             "membership",
+            "allocated_benefit",
             "administrator",
             "assigned_to",
             "tags",
@@ -471,6 +472,7 @@ class EventForm(forms.ModelForm[Event]):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         show_lessons = kwargs.pop("show_lessons", False)
         add_comment = kwargs.pop("add_comment", True)
+        show_allocated_benefit = kwargs.pop("show_allocated_benefit", False)
         super().__init__(*args, **kwargs)
 
         self.helper.layout = Layout(  # type: ignore
@@ -481,6 +483,7 @@ class EventForm(forms.ModelForm[Event]):
             "host",
             "sponsor",
             "membership",
+            "allocated_benefit" if show_allocated_benefit else None,
             "administrator",
             "public_status",
             "assigned_to",
