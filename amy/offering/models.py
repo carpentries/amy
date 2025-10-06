@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from workshops.consts import STR_LONG, STR_LONGEST
 from workshops.mixins import ActiveMixin, CreatedUpdatedMixin
-from workshops.models import Curriculum, Person
+from workshops.models import Curriculum, Event, Person, Task
 from workshops.utils.dates import human_daterange
 
 
@@ -133,8 +133,6 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
         return reverse("account-benefit-details", kwargs={"pk": self.pk})
 
     def allocation_used(self) -> int:
-        from workshops.models import Event, Task
-
         if self.benefit.unit_type == "seat":
             return Task.objects.filter(allocated_benefit=self).count()
 

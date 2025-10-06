@@ -974,6 +974,7 @@ def event_details(request, slug):
             "sponsor",
             "membership",
             "instructorrecruitment",
+            "allocated_benefit",
         ),
         slug=slug,
     )
