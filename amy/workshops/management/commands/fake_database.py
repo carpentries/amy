@@ -563,6 +563,7 @@ class Command(BaseCommand):
             url=self.faker.unique_url(),
             host=org,
             administrator=administrator,
+            sponsor=org,
             # needed in order for event to be published
             country=choice(Countries)[0] if location_data else None,
             venue=self.faker.word().title() if location_data else "",
