@@ -674,6 +674,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
             "seat_membership",
             "seat_public",
             "seat_open_training",
+            "allocated_benefit",
         ]
         widgets = {
             "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),
@@ -694,7 +695,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
         }
         if failed_trainings:
             bootstrap_kwargs["submit_onclick"] = (
-                'return confirm("Warning: Trainee failed previous training(s).' ' Are you sure you want to continue?");'
+                'return confirm("Warning: Trainee failed previous training(s). Are you sure you want to continue?");'
             )
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 

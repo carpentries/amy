@@ -125,7 +125,8 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
 
     def __str__(self) -> str:
         return (
-            f'{self.benefit} for "{self.partnership or self.account.generic_relation}" '
+            f'{"(FROZEN) " if self.frozen else ""}{self.benefit} for '
+            f'"{self.partnership or self.account.generic_relation}" '
             f"(allocation: {self.allocation}, valid: {self.human_daterange})"
         )
 

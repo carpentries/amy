@@ -946,7 +946,7 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
     flag_name = REQUIRED_FLAG_NAME  # type: ignore
     permission_required = ["fiscal.view_partnership"]
     template_name = "fiscal/partnership_details.html"
-    model = Partnership
+    queryset = Partnership.objects.credits_usage_annotation()
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
