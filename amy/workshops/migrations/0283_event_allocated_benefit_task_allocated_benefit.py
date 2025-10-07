@@ -18,6 +18,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 blank=True,
                 default=None,
+                limit_choices_to=models.Q(("benefit__unit_type", "event")),
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 to="offering.accountbenefit",
@@ -30,6 +31,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 blank=True,
                 default=None,
+                limit_choices_to=models.Q(("benefit__unit_type", "seat")),
                 null=True,
                 on_delete=django.db.models.deletion.PROTECT,
                 to="offering.accountbenefit",

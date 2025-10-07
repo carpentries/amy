@@ -1464,6 +1464,7 @@ class Event(AssignmentMixin, models.Model):
         blank=True,
         default=None,
         verbose_name="Allocated account benefit (of type 'event')",
+        limit_choices_to=Q(benefit__unit_type="event"),
     )
 
     class Meta:
@@ -1674,6 +1675,7 @@ class Task(models.Model):
         blank=True,
         default=None,
         verbose_name="Allocated account benefit (of type 'seat')",
+        limit_choices_to=Q(benefit__unit_type="seat"),
     )
 
     objects = TaskManager()
