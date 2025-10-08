@@ -1224,7 +1224,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
             EventForm,
             show_lessons=True,
             add_comment=True,
-            show_allocated_benefit=flag_enabled("SERVICE_OFFERING", request=self.request)  # type: ignore
+            show_allocated_benefit=flag_enabled("SERVICE_OFFERING", request=self.request),  # type: ignore
         )
 
     def form_valid(self, form: EventForm) -> HttpResponse:
