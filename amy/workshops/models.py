@@ -2662,15 +2662,15 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         Where an Involvement is required, URLs are always permitted, even if the
         specific Involvement chosen does not require one.
         """
-        if not self.url:
+        if self.url:
+            if not requirement.url_required and not requirement.involvement_required and involvement_type:
+                return self.get_not_required_error(involvement_type)
+        else:
             if requirement.url_required:
                 return self.get_required_error(requirement)
 
             elif requirement.involvement_required and involvement_type and involvement_type.url_required:
                 return self.get_required_error(involvement_type)
-        else:
-            if not requirement.url_required and not requirement.involvement_required and involvement_type:
-                return self.get_not_required_error(involvement_type)
         return None
 
     def clean_event(

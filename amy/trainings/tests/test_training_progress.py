@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Literal
 
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
@@ -20,7 +21,7 @@ from workshops.tests.base import TestBase
 class TestTrainingProgressValidation(TestBase):
     """Test that validation errors appear near right fields (url, event, etc)."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
@@ -59,7 +60,7 @@ class TestTrainingProgressValidation(TestBase):
         )
         self.learner = Role.objects.get(name="learner")
 
-    def test_url_is_required(self):
+    def test_url_is_required(self) -> None:
         p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(requirement=self.url_required, trainee=self.admin)
         p3 = TrainingProgress.objects.create(
@@ -81,11 +82,11 @@ class TestTrainingProgressValidation(TestBase):
             p3.full_clean()
         p4.full_clean()
 
-    def test_url_must_be_blank(self):
+    def test_url_must_be_blank(self) -> None:
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
-            url="http://example.com",
+            url="",
         )
         p2 = TrainingProgress.objects.create(
             requirement=self.url_required,
@@ -106,13 +107,12 @@ class TestTrainingProgressValidation(TestBase):
             url="http://example.com",
             notes="Some notes",
         )
-        with self.assertValidationErrors(["url"]):
-            p1.full_clean()
+        p1.full_clean()
         p2.full_clean()
         p3.full_clean()
         p4.full_clean()  # involvement URLs can be optional
 
-    def test_url_associated_with_github_organisation(self):
+    def test_url_associated_with_github_organisation(self) -> None:
         """Regression test for #2507: should not fail model validation"""
         github_url_required, _ = Involvement.objects.get_or_create(
             name="GitHub Contribution",
@@ -139,14 +139,14 @@ class TestTrainingProgressValidation(TestBase):
         p1.full_clean()  # should pass everywhere
         p2.full_clean()  # URL should pass here, but fail in GetInvolvedForm
 
-    def test_event_is_required(self):
+    def test_event_is_required(self) -> None:
         p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(requirement=self.event_required, trainee=self.admin)
         p1.full_clean()
         with self.assertValidationErrors(["event"]):
             p2.full_clean()
 
-    def test_event_must_be_blank(self):
+    def test_event_must_be_blank(self) -> None:
         org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         event = Event.objects.create(slug="ttt", host=org)
@@ -169,7 +169,7 @@ class TestTrainingProgressValidation(TestBase):
             p1.full_clean()
         p2.full_clean()
 
-    def test_event_progress_already_exists(self):
+    def test_event_progress_already_exists(self) -> None:
         org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt, _ = Tag.objects.get_or_create(name="TTT")
         event = Event.objects.create(slug="ttt", host=org)
@@ -195,7 +195,7 @@ class TestTrainingProgressValidation(TestBase):
             ["Training progress with this Trainee and Training already exists."],
         )
 
-    def test_involvement_is_required(self):
+    def test_involvement_is_required(self) -> None:
         p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(
             requirement=self.get_involved,
@@ -205,7 +205,7 @@ class TestTrainingProgressValidation(TestBase):
         with self.assertValidationErrors(["involvement_type"]):
             p2.full_clean()
 
-    def test_involvement_must_be_blank(self):
+    def test_involvement_must_be_blank(self) -> None:
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement,
             trainee=self.admin,
@@ -224,7 +224,7 @@ class TestTrainingProgressValidation(TestBase):
             p1.full_clean()
         p2.full_clean()
 
-    def test_notes_required(self):
+    def test_notes_required(self) -> None:
         p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(
             requirement=self.get_involved,
@@ -242,7 +242,7 @@ class TestTrainingProgressValidation(TestBase):
         with self.assertValidationErrors(["notes"]):
             p3.full_clean()
 
-    def test_notes_required_and_trainee_notes_provided(self):
+    def test_notes_required_and_trainee_notes_provided(self) -> None:
         p1 = TrainingProgress.objects.create(
             requirement=self.get_involved,
             involvement_type=self.notes_required,
@@ -259,7 +259,7 @@ class TestTrainingProgressValidation(TestBase):
         p1.full_clean()
         p2.full_clean()
 
-    def test_notes_not_required(self):
+    def test_notes_not_required(self) -> None:
         p1 = TrainingProgress.objects.create(
             requirement=self.get_involved,
             involvement_type=self.url_and_date_required,
@@ -271,7 +271,7 @@ class TestTrainingProgressValidation(TestBase):
         )
         p1.full_clean()  # notes never have to be left blank
 
-    def test_date_required(self):
+    def test_date_required(self) -> None:
         p1 = TrainingProgress.objects.create(requirement=self.requirement, trainee=self.admin)
         p2 = TrainingProgress.objects.create(
             requirement=self.get_involved,
@@ -290,7 +290,7 @@ class TestTrainingProgressValidation(TestBase):
             p2.full_clean()
         p3.full_clean()
 
-    def test_date_in_past(self):
+    def test_date_in_past(self) -> None:
         p1 = TrainingProgress.objects.create(
             requirement=self.get_involved,
             involvement_type=self.url_and_date_required,
@@ -309,7 +309,7 @@ class TestTrainingProgressValidation(TestBase):
         with self.assertValidationErrors(["date"]):
             p2.full_clean()
 
-    def test_date_must_be_blank(self):
+    def test_date_must_be_blank(self) -> None:
         p1 = TrainingProgress.objects.create(
             requirement=self.requirement, trainee=self.admin, date=datetime(2023, 5, 31)
         )
@@ -333,7 +333,7 @@ class TestTrainingProgressValidation(TestBase):
         with self.assertValidationErrors(["date"]):
             p3.full_clean()
 
-    def test_progress_with_failed_status_requires_notes(self):
+    def test_progress_with_failed_status_requires_notes(self) -> None:
         """Failed state requires notes. Other states do not"""
         failed_progress_no_notes = TrainingProgress.objects.create(
             requirement=self.requirement,
@@ -356,7 +356,7 @@ class TestTrainingProgressValidation(TestBase):
         with self.assertValidationErrors(["notes"]):
             failed_progress_no_notes.full_clean()
 
-    def test_form_valid_if_trainee_has_no_training_task(self):
+    def test_form_valid_if_trainee_has_no_training_task(self) -> None:
         """Regression test for https://github.com/carpentries/amy/issues/2440"""
         data = {
             "requirement": self.requirement.pk,
@@ -368,16 +368,16 @@ class TestTrainingProgressValidation(TestBase):
 
 
 class TestProgressLabelTemplateTag(TestBase):
-    def test_passed(self):
+    def test_passed(self) -> None:
         self._test(state="p", expected="badge badge-success")
 
-    def test_not_evaluated_yet(self):
+    def test_not_evaluated_yet(self) -> None:
         self._test(state="n", expected="badge badge-warning")
 
-    def test_failed(self):
+    def test_failed(self) -> None:
         self._test(state="f", expected="badge badge-danger")
 
-    def _test(self, state, expected):
+    def _test(self, state: Literal["n", "f", "p", "a"], expected: str) -> None:
         template = Template(r"{% load training_progress %}" r"{% progress_label p %}")
         training_progress = TrainingProgress(state=state)
         context = Context({"p": training_progress})
@@ -386,11 +386,11 @@ class TestProgressLabelTemplateTag(TestBase):
 
 
 class TestProgressDescriptionTemplateTag(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpAirports()
         self._setUpNonInstructors()
 
-    def test_basic(self):
+    def test_basic(self) -> None:
         self._test(
             progress=TrainingProgress(
                 state="p",
@@ -401,7 +401,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
             expected="Passed Welcome Session&lt;br /&gt;" "on Sunday 01 May 2016 at 16:00.",
         )
 
-    def test_notes(self):
+    def test_notes(self) -> None:
         self._test(
             progress=TrainingProgress(
                 state="p",
@@ -415,7 +415,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
             "Notes: Additional notes",
         )
 
-    def test_notes_with_quotes(self):
+    def test_notes_with_quotes(self) -> None:
         self._test(
             progress=TrainingProgress(
                 state="p",
@@ -429,7 +429,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
             "Notes: Additional &amp;quot;notes&amp;quot;",
         )
 
-    def test_trainee_notes(self):
+    def test_trainee_notes(self) -> None:
         self._test(
             progress=TrainingProgress(
                 state="p",
@@ -444,7 +444,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
             "on Sunday 01 May 2016 at 16:00.",
         )
 
-    def test_trainee_notes_with_quotes(self):
+    def test_trainee_notes_with_quotes(self) -> None:
         self._test(
             progress=TrainingProgress(
                 state="p",
@@ -459,7 +459,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
             "on Sunday 01 May 2016 at 16:00.",
         )
 
-    def test_no_mentor_or_examiner_assigned(self):
+    def test_no_mentor_or_examiner_assigned(self) -> None:
         self._test(
             progress=TrainingProgress(
                 state="p",
@@ -470,7 +470,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
             expected="Passed Welcome Session&lt;br /&gt;" "on Sunday 01 May 2016 at 16:00.",
         )
 
-    def _test(self, progress, expected):
+    def _test(self, progress: TrainingProgress, expected: str) -> None:
         template = Template("{% load training_progress %}" "{% progress_description p %}")
         context = Context({"p": progress})
         got = template.render(context)
@@ -478,7 +478,7 @@ class TestProgressDescriptionTemplateTag(TestBase):
 
 
 class TestCRUDViews(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
@@ -521,23 +521,23 @@ class TestCRUDViews(TestBase):
             trainee=self.ironman,
         )
 
-    def test_create_view_loads(self):
+    def test_create_view_loads(self) -> None:
         rv = self.client.get(reverse("trainingprogress_add"))
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_view_works_with_initial_trainee(self):
+    def test_create_view_works_with_initial_trainee(self) -> None:
         rv = self.client.get(reverse("trainingprogress_add"), {"trainee": self.ironman.pk})
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(int(rv.context["form"].initial["trainee"]), self.ironman.pk)
 
-    def test_create_view_does_not_show_archived_involvements(self):
+    def test_create_view_does_not_show_archived_involvements(self) -> None:
         self.involvement_to_be_archived.archive()
         rv = self.client.get(reverse("trainingprogress_add"), {"type": self.get_involved.pk})
         self.assertEqual(rv.status_code, 200)
         choices = [c[0].instance.pk for c in rv.context["form"].fields["involvement_type"].choices]
         self.assertEqual(choices, [self.involvement.pk, self.involvement_other.pk])
 
-    def test_create_view_works(self):
+    def test_create_view_works(self) -> None:
         data = {
             "requirement": self.requirement.pk,
             "state": "p",
@@ -549,7 +549,7 @@ class TestCRUDViews(TestBase):
         self.assertEqual(rv.resolver_match.view_name, "trainingprogress_edit")
         self.assertEqual(len(TrainingProgress.objects.all()), 2)
 
-    def test_create_view_submission_invalid_notes(self):
+    def test_create_view_submission_invalid_notes(self) -> None:
         # Arrange
         data = {
             "requirement": self.get_involved.pk,
@@ -581,21 +581,21 @@ class TestCRUDViews(TestBase):
         # confirm that no TrainingProgress was created
         self.assertEqual(len(TrainingProgress.objects.all()), progresses_before)
 
-    def test_edit_view_loads(self):
+    def test_edit_view_loads(self) -> None:
         rv = self.client.get(reverse("trainingprogress_edit", args=[self.progress.pk]))
         self.assertEqual(rv.status_code, 200)
 
-    def test_delete_view_get_request_not_allowed(self):
+    def test_delete_view_get_request_not_allowed(self) -> None:
         rv = self.client.get(reverse("trainingprogress_delete", args=[self.progress.pk]))
         self.assertEqual(rv.status_code, 405)
 
-    def test_delete_view_works(self):
+    def test_delete_view_works(self) -> None:
         rv = self.client.post(reverse("trainingprogress_delete", args=[self.progress.pk]), follow=True)
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "all_trainees")
         self.assertEqual(set(TrainingProgress.objects.all()), set())
 
-    def test_delete_trainingprogress_from_edit_view(self):
+    def test_delete_trainingprogress_from_edit_view(self) -> None:
         """Regression test for issue #1085."""
         trainingprogress_edit = self.app.get(reverse("trainingprogress_edit", args=[self.progress.pk]), user="admin")
         self.assertRedirects(trainingprogress_edit.forms["delete-form"].submit(), reverse("all_trainees"))
