@@ -1117,27 +1117,23 @@ class EventAttendance(TypedDict):
     attendance: int
 
 
-class EventManager(models.Manager["Event"]):
+class EventQuerySet(QuerySet["Event"]):
     """Handles finding past, ongoing and upcoming events"""
 
-    def not_cancelled(self) -> QuerySet["Event"]:
+    def not_cancelled(self) -> "EventQuerySet":
         """Exclude cancelled events."""
         return self.exclude(tags__name="cancelled")
 
-    def active_QS(self, qs: QuerySet["Event"]) -> QuerySet["Event"]:
-        return (
-            qs.exclude(tags__name="cancelled")
-            .exclude(tags__name="stalled")
-            .exclude(completed=True)
-            .exclude(tags__name="unresponsive")
-        )
+    def not_unresponsive(self) -> "EventQuerySet":
+        """Exclude unresponsive events."""
+        return self.exclude(tags__name="unresponsive")
 
-    def active(self) -> QuerySet["Event"]:
+    def active(self) -> "EventQuerySet":
         """Exclude inactive events (stalled, completed, cancelled or
         unresponsive)."""
-        return self.active_QS(self.get_queryset())
+        return self.exclude(tags__name="stalled").exclude(completed=True).not_cancelled().not_unresponsive()
 
-    def past_events(self) -> QuerySet["Event"]:
+    def past_events(self) -> "EventQuerySet":
         """Return past events.
 
         Past events are those which started before today, and
@@ -1156,7 +1152,7 @@ class EventManager(models.Manager["Event"]):
 
         return queryset
 
-    def upcoming_events(self) -> QuerySet["Event"]:
+    def upcoming_events(self) -> "EventQuerySet":
         """Return published upcoming events.
 
         Upcoming events are published events (see `published_events` below)
@@ -1165,7 +1161,7 @@ class EventManager(models.Manager["Event"]):
         queryset = self.published_events().filter(start__gt=datetime.date.today()).order_by("start")
         return queryset
 
-    def ongoing_events(self) -> QuerySet["Event"]:
+    def ongoing_events(self) -> "EventQuerySet":
         """Return ongoing events.
 
         Ongoing events are published events (see `published_events` below)
@@ -1183,14 +1179,14 @@ class EventManager(models.Manager["Event"]):
 
         return queryset
 
-    def current_events(self) -> QuerySet["Event"]:
+    def current_events(self) -> "EventQuerySet":
         """Return current events.
 
         Current events are active ongoing events and active upcoming events
         (see `ongoing_events` and `upcoming_events` above).
         """
         queryset = self.upcoming_events() | self.ongoing_events()  # SQL UNION
-        return self.active_QS(queryset)
+        return queryset.active()
 
     def unpublished_conditional(self) -> Q:
         """Return conditional for events without: start OR country OR venue OR
@@ -1205,23 +1201,23 @@ class EventManager(models.Manager["Event"]):
         no_url = Q(url__isnull=True)
         return unknown_start | no_country | no_venue | no_address | no_latitude | no_longitude | no_url
 
-    def unpublished_events(self) -> QuerySet["Event"]:
+    def unpublished_events(self) -> "EventQuerySet":
         """Return active events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
         return self.active().filter(conditional).order_by("slug", "id").distinct()
 
-    def published_events(self) -> QuerySet["Event"]:
+    def published_events(self) -> "EventQuerySet":
         """Return events considered as published (see `unpublished_conditional`
         above)."""
         conditional = self.unpublished_conditional()
         return self.not_cancelled().exclude(conditional).order_by("-start", "id").distinct()
 
-    def metadata_changed(self) -> QuerySet["Event"]:
+    def metadata_changed(self) -> "EventQuerySet":
         """Return events for which remote metatags have been updated."""
         return self.filter(metadata_changed=True)
 
-    def ttt(self) -> QuerySet["Event"]:
+    def ttt(self) -> "EventQuerySet":
         """Return only TTT events."""
         return self.filter(tags__name="TTT").distinct()
 
@@ -1241,7 +1237,7 @@ class EventManager(models.Manager["Event"]):
         """
         return self.annotate(learner_tasks_count=Count("task", filter=Q(task__role__name="learner"))).annotate(
             attendance=Greatest("manual_attendance", "learner_tasks_count"),
-        )
+        )  # type: ignore
 
 
 @reversion.register
@@ -1459,7 +1455,7 @@ class Event(AssignmentMixin, models.Model):
 
     event_category = models.ForeignKey("EventCategory", on_delete=models.PROTECT, null=True, blank=True)
 
-    objects = EventManager()
+    objects = EventQuerySet.as_manager()
 
     allocated_benefit = models.ForeignKey(
         "offering.AccountBenefit",

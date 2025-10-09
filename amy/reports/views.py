@@ -48,7 +48,8 @@ def workshop_issues(request):
         assigned_to = assignment_form.cleaned_data["assigned_to"]
 
     events = (
-        Event.objects.active()
+        Event.objects.attendance()
+        .active()
         .past_events()
         .annotate(
             num_instructors=Count(
@@ -58,7 +59,6 @@ def workshop_issues(request):
                 )
             )
         )
-        .attendance()
         .order_by("-start")
     )
 

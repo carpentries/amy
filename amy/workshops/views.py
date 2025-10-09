@@ -971,7 +971,7 @@ class AllEvents(OnlyForAdminsMixin, AMYListView[Event]):
 def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     """List details of a particular event."""
     event = get_object_or_404(
-        Event.objects.select_related(
+        Event.objects.attendance().select_related(
             "assigned_to",
             "host",
             "administrator",
@@ -979,7 +979,7 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
             "membership",
             "instructorrecruitment",
             "allocated_benefit",
-        ).attendance(),
+        ),
         slug=slug,
     )
 
