@@ -26,7 +26,7 @@ from workshops.utils.metadata import metadata_serialize
 class TestEvent(TestBase):
     "Tests for the event model and its manager."
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpUsersAndLogin()
@@ -46,29 +46,29 @@ class TestEvent(TestBase):
         # Set up generic events.
         self._setUpEvents()
 
-    def test_online_country_enforced_values(self):
+    def test_online_country_enforced_values(self) -> None:
         """Ensure that events from 'Online' country (W3) get some location data
         forced upon `save()`."""
-        e = Event.objects.create(slug="online-event", country="W3", host=Organization.objects.first())
+        e = Event.objects.create(slug="online-event", country="W3", host=Organization.objects.all()[0])
         self.assertEqual(e.venue, "Internet")
         self.assertEqual(e.address, "Internet")
         self.assertEqual(e.latitude, None)
         self.assertEqual(e.longitude, None)
 
-        e = Event.objects.create(slug="offline-event", country="US", host=Organization.objects.first())
+        e = Event.objects.create(slug="offline-event", country="US", host=Organization.objects.all()[0])
         self.assertNotEqual(e.venue, "Internet")
         self.assertNotEqual(e.address, "Internet")
         self.assertIsNone(e.latitude)
         self.assertIsNone(e.longitude)
 
-    def test_get_upcoming_events(self):
+    def test_get_upcoming_events(self) -> None:
         """Test that the events manager can find upcoming events"""
 
         upcoming_events = Event.objects.upcoming_events()
         expected = Event.objects.filter(slug__endswith="upcoming")
         self.assertEqual(set(upcoming_events), set(expected))
 
-    def test_get_past_events(self):
+    def test_get_past_events(self) -> None:
         """Test that the events manager can find past events"""
 
         past_events = Event.objects.past_events()
@@ -78,7 +78,7 @@ class TestEvent(TestBase):
         # They should all start with past
         assert all(["past" in e.slug for e in past_events])
 
-    def test_get_ongoing_events(self):
+    def test_get_ongoing_events(self) -> None:
         """Test the events manager can find all events overlapping today.
 
         Include events that (according to the timestamp) are not ongoing,
@@ -91,7 +91,7 @@ class TestEvent(TestBase):
 
         self.assertCountEqual(event_slugs, correct_slugs)
 
-    def test_unpublished_events(self):
+    def test_unpublished_events(self) -> None:
         """Ensure that events manager finds unpublished events correctly."""
         expected = (
             Event.objects.exclude(slug__endswith="upcoming")
@@ -110,19 +110,19 @@ class TestEvent(TestBase):
             venue="University",
             address="Phenomenal Street",
             url="http://url/",
-            host=Organization.objects.all().first(),
+            host=Organization.objects.all()[0],
         )
         self.assertNotIn(event_considered_published, Event.objects.unpublished_events())
 
-    def test_unpublished_events_displayed_once(self):
+    def test_unpublished_events_displayed_once(self) -> None:
         """Regression test: unpublished events can't be displayed more than
         once on the dashboard.  Refer to #977."""
         unpublished_event = Event.objects.create(
             slug="2016-10-20-unpublished",
             start=date(2016, 10, 20),
             end=date(2016, 10, 21),
-            host=Organization.objects.first(),
-            administrator=Organization.objects.first(),
+            host=Organization.objects.all()[0],
+            administrator=Organization.objects.all()[0],
         )
         unpublished_event.tags.set(Tag.objects.filter(name__in=["TTT", "online"]))
 
@@ -130,15 +130,15 @@ class TestEvent(TestBase):
         self.assertIn(unpublished_event, unpublished)
         self.assertEqual(1, len(unpublished.filter(slug="2016-10-20-unpublished")))
 
-    def test_cancelled_events(self):
+    def test_cancelled_events(self) -> None:
         """Regression test: make sure that cancelled events don't show up in
         the unpublished, or published events."""
         cancelled_event = Event.objects.create(
             slug="2017-01-07-cancelled",
             start=date(2017, 1, 7),
             end=date(2017, 1, 8),
-            host=Organization.objects.first(),
-            administrator=Organization.objects.first(),
+            host=Organization.objects.all()[0],
+            administrator=Organization.objects.all()[0],
         )
         cancelled_event.tags.set(Tag.objects.filter(name="cancelled"))
 
@@ -147,7 +147,7 @@ class TestEvent(TestBase):
         self.assertNotIn(cancelled_event, published)
         self.assertNotIn(cancelled_event, unpublished)
 
-    def test_delete_event(self):
+    def test_delete_event(self) -> None:
         """Make sure deleted event without any tasks is no longer accessible."""
         event = Event.objects.get(slug="starts-today-ongoing")
 
@@ -157,7 +157,7 @@ class TestEvent(TestBase):
         with self.assertRaises(Event.DoesNotExist):
             Event.objects.get(slug="starts-today-ongoing")
 
-    def test_delete_event_with_tasks_and_awards(self):
+    def test_delete_event_with_tasks_and_awards(self) -> None:
         """Ensure we cannot delete an event with related tasks and awards.
 
         Deletion is prevented via Award.event's on_delete=PROTECT
@@ -183,7 +183,7 @@ class TestEvent(TestBase):
         Task.objects.get(pk=task.pk)
         Award.objects.get(pk=award.pk)
 
-    def test_repository_website_url(self):
+    def test_repository_website_url(self) -> None:
         test_host = Organization.objects.all()[0]
         links = [
             "http://user-name.github.com/repo-name",
@@ -206,14 +206,14 @@ class TestEvent(TestBase):
             assert event.repository_url == REPO
             assert event.website_url == WEBSITE
 
-    def test_wrong_repository_website_urls(self):
+    def test_wrong_repository_website_urls(self) -> None:
         test_host = Organization.objects.all()[0]
         link = "http://en.wikipedia.org/"
         event = Event.objects.create(slug="test-event", host=test_host, url=link)
         assert event.repository_url == link
         assert event.website_url == link
 
-    def test_open_TTT_applications_validation(self):
+    def test_open_TTT_applications_validation(self) -> None:
         event = Event.objects.create(
             slug="test-event",
             host=self.org_alpha,
@@ -234,7 +234,7 @@ class TestEvent(TestBase):
 
     def test_eligible_for_instructor_recruitment(self) -> None:
         # Arrange
-        host = Organization.objects.first()
+        host = Organization.objects.all()[0]
         online_tag = Tag.objects.get(name="online")
         data = [
             (Event(slug="test1", host=host, start=date(2000, 1, 1)), False),
@@ -284,11 +284,11 @@ class TestEvent(TestBase):
 class TestEventFormComments(TestBase):
     form = EventForm
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpOrganizations()
         self.test_tag = Tag.objects.create(name="Test Tag", details="For testing")
 
-    def test_creating_event_with_no_comment(self):
+    def test_creating_event_with_no_comment(self) -> None:
         """Ensure that no comment is added when the form without comment
         content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -296,7 +296,7 @@ class TestEventFormComments(TestBase):
             "slug": "2018-12-28-test-event",
             "host": self.org_alpha.id,
             "sponsor": self.org_alpha.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "comment": "",
         }
@@ -304,7 +304,7 @@ class TestEventFormComments(TestBase):
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
-    def test_creating_event_with_comment(self):
+    def test_creating_event_with_comment(self) -> None:
         """Ensure that a comment is added when the form with comment
         content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -312,16 +312,16 @@ class TestEventFormComments(TestBase):
             "slug": "2018-12-28-test-event",
             "host": self.org_alpha.id,
             "sponsor": self.org_alpha.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "comment": "This is a test comment.",
         }
         form = EventForm(data)
         obj = form.save()
         self.assertEqual(Comment.objects.count(), 1)
-        comment = Comment.objects.first()
+        comment = Comment.objects.all()[0]
         self.assertEqual(comment.comment, "This is a test comment.")
-        self.assertIn(comment, Comment.objects.for_model(obj))
+        self.assertIn(comment, Comment.objects.for_model(obj))  # type: ignore
 
 
 class TestEventCreateFormComments(TestEventFormComments):
@@ -329,7 +329,7 @@ class TestEventCreateFormComments(TestEventFormComments):
 
 
 class TestEventManager(TestBase):
-    def test_ttt(self):
+    def test_ttt(self) -> None:
         org = Organization.objects.create(domain="example.com", fullname="Test Organization")
         ttt_tag = Tag.objects.create(name="TTT")
         _ = Event.objects.create(slug="first", host=org)
@@ -346,7 +346,7 @@ class TestEventManager(TestBase):
 class TestEventViews(TestBase):
     "Tests for the event views"
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
@@ -371,7 +371,7 @@ class TestEventViews(TestBase):
                 sponsor=self.test_host,
             )
 
-    def test_events_view_paginated(self):
+    def test_events_view_paginated(self) -> None:
         events_url = reverse("all_events")
         events_url += "?items_per_page=10"
         response = self.client.get(events_url)
@@ -381,7 +381,7 @@ class TestEventViews(TestBase):
 
         assert len(view_events) == 10
 
-    def test_can_request_all_events(self):
+    def test_can_request_all_events(self) -> None:
         events_url = reverse("all_events")
         events_url += "?items_per_page=all"
         response = self.client.get(events_url)
@@ -392,7 +392,7 @@ class TestEventViews(TestBase):
 
         self.assertCountEqual(view_events, all_events)
 
-    def test_invalid_items_per_page_gives_default_pagination(self):
+    def test_invalid_items_per_page_gives_default_pagination(self) -> None:
         events_url = reverse("all_events")
         events_url += "?items_per_page=not_an_integer"
         response = self.client.get(events_url)
@@ -402,7 +402,7 @@ class TestEventViews(TestBase):
 
         assert len(view_events) < 50
 
-    def test_non_integer_page_no_returns_first_page(self):
+    def test_non_integer_page_no_returns_first_page(self) -> None:
         events_url = reverse("all_events")
         events_url += "?items_per_page=10&page=not_an_integer"
         response = self.client.get(events_url)
@@ -416,7 +416,7 @@ class TestEventViews(TestBase):
         # This should be the first page
         assert view_events.number == 1
 
-    def test_page_no_too_large_returns_last_page(self):
+    def test_page_no_too_large_returns_last_page(self) -> None:
         events_url = reverse("all_events")
         events_url += "?items_per_page=10&page=999"
         response = self.client.get(events_url)
@@ -430,10 +430,10 @@ class TestEventViews(TestBase):
         # This should be the first page
         assert view_events.number == 5
 
-    def test_add_minimal_event(self):
+    def test_add_minimal_event(self) -> None:
         host = Organization.objects.get(fullname="Test Organization")
         # administrator can only be selected from `administrators`
-        admin = Organization.objects.administrators().first()
+        admin = Organization.objects.administrators().all()[0]
         response = self.client.post(
             reverse("event_add"),
             {
@@ -461,7 +461,7 @@ class TestEventViews(TestBase):
             "New event has wrong tags: {} != {}".format(tags, [self.test_tag]),
         )
 
-    def test_unique_slug(self):
+    def test_unique_slug(self) -> None:
         """Ensure events with the same slugs are prohibited.
 
         This is a regression test for
@@ -470,14 +470,14 @@ class TestEventViews(TestBase):
         with self.assertRaises(IntegrityError):
             Event.objects.create(host=self.test_host, sponsor=self.test_host, slug="testing-unique-slug")
 
-    def test_assign_to_field_populated(self):
+    def test_assign_to_field_populated(self) -> None:
         """Ensure that we can assign an admin to an event
         from the `event_add` view."""
         data = {
             "slug": "2016-07-09-test",
             "host": self.test_host.id,
             "sponsor": self.test_host.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "assigned_to": self.admin.pk,
         }
@@ -489,7 +489,7 @@ class TestEventViews(TestBase):
         )
         self.assertEqual(event.assigned_to, self.admin)
 
-    def test_unique_non_empty_slug(self):
+    def test_unique_non_empty_slug(self) -> None:
         """Ensure events with no slugs are *not* saved to the DB."""
         data = {
             "host": self.test_host.id,
@@ -500,7 +500,7 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse("event_add"), data)
         assert response.status_code == 200
 
-    def test_start_date_gte_end_date(self):
+    def test_start_date_gte_end_date(self) -> None:
         """Ensure event's start date is earlier than it's end date.
 
         This is a regression test for
@@ -508,7 +508,7 @@ class TestEventViews(TestBase):
         data = {
             "host": self.test_host.id,
             "sponsor": self.test_host.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
             "start": date(2015, 7, 20),
@@ -522,7 +522,7 @@ class TestEventViews(TestBase):
         data = {
             "host": self.test_host.id,
             "sponsor": self.test_host.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
             "start": date(2015, 7, 20),
@@ -534,7 +534,7 @@ class TestEventViews(TestBase):
         data = {
             "host": self.test_host.id,
             "sponsor": self.test_host.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event2",
             "start": date(2015, 7, 20),
@@ -543,7 +543,7 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse("event_add"), data)
         assert response.status_code == 302
 
-    def test_negative_manual_attendance(self):
+    def test_negative_manual_attendance(self) -> None:
         """Ensure we disallow negative manual attendance.
 
         This is a regression test for
@@ -553,7 +553,7 @@ class TestEventViews(TestBase):
         data = {
             "host": self.test_host.id,
             "sponsor": self.test_host.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
             "manual_attendance": -36,
@@ -573,7 +573,7 @@ class TestEventViews(TestBase):
         f = EventForm(data)
         self.assertTrue(f.is_valid())
 
-    def test_empty_manual_attendance(self):
+    def test_empty_manual_attendance(self) -> None:
         """Ensure we don't get 500 server error when field is left with empty
         value.
 
@@ -584,7 +584,7 @@ class TestEventViews(TestBase):
             "slug": "2016-06-30-test-event",
             "host": self.test_host.id,
             "sponsor": self.test_host.id,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [self.test_tag.id],
             "manual_attendance": "",
         }
@@ -593,7 +593,7 @@ class TestEventViews(TestBase):
         event = f.save()
         self.assertEqual(event.manual_attendance, 0)
 
-    def test_number_of_attendees_increasing(self):
+    def test_number_of_attendees_increasing(self) -> None:
         """Ensure event.attendance gets bigger after adding new learners."""
         event = Event.objects.get(slug="test_event_0")
         event.manual_attendance = 0  # testing for numeric case
@@ -612,7 +612,7 @@ class TestEventViews(TestBase):
         event = Event.objects.get(slug="test_event_0")
         self.assertEqual(event.attendance, 1)
 
-    def test_slug_illegal_characters(self):
+    def test_slug_illegal_characters(self) -> None:
         """Disallow slugs with wrong characters.
 
         Slug allows only: latin characters, numbers, dashes and underscores.
@@ -633,7 +633,7 @@ class TestEventViews(TestBase):
                 self.assertEqual(f.is_valid(), False)
                 self.assertIn("slug", f.errors)
 
-    def test_slug_illegal_formats(self):
+    def test_slug_illegal_formats(self) -> None:
         """Disallow slugs with wrong formats.
 
         Slug format should follow: YYYY-MM-DD-location, where YYYY, MM, DD can
@@ -642,7 +642,7 @@ class TestEventViews(TestBase):
             "slug": "",
             "host": Organization.objects.all()[0].pk,
             "sponsor": Organization.objects.all()[0].pk,
-            "tags": [Tag.objects.first().pk],
+            "tags": [Tag.objects.all()[0].pk],
         }
 
         # disallow invalid formats
@@ -669,7 +669,7 @@ class TestEventViews(TestBase):
                 self.assertEqual(f.is_valid(), False)
                 self.assertIn("slug", f.errors)
 
-    def test_slug_valid_formats(self):
+    def test_slug_valid_formats(self) -> None:
         """Allow slugs with wrong formats.
 
         Slug format should follow: YYYY-MM-DD-location, where YYYY, MM, DD can
@@ -678,8 +678,8 @@ class TestEventViews(TestBase):
             "slug": "",
             "host": Organization.objects.all()[0].pk,
             "sponsor": Organization.objects.all()[0].pk,
-            "administrator": Organization.objects.administrators().first().id,
-            "tags": [Tag.objects.first().pk],
+            "administrator": Organization.objects.administrators().all()[0].id,
+            "tags": [Tag.objects.all()[0].pk],
         }
 
         # allow correct formats
@@ -708,7 +708,7 @@ class TestEventViews(TestBase):
                 self.assertEqual(f.is_valid(), True)
                 self.assertNotIn("slug", f.errors)
 
-    def test_display_of_event_without_start_date(self):
+    def test_display_of_event_without_start_date(self) -> None:
         """A bug prevented events without start date to throw a 404.
 
         This is a regression test against that bug.
@@ -718,13 +718,13 @@ class TestEventViews(TestBase):
         rv = self.client.get(reverse("event_details", args=[event.slug]))
         assert rv.status_code == 200
 
-    def test_open_TTT_applications_form_validation(self):
+    def test_open_TTT_applications_form_validation(self) -> None:
         """Ensure validation of `open_TTT_applications` field."""
         data = {
             "slug": "2018-09-02-open-applications",
             "host": self.org_alpha.pk,
             "sponsor": self.org_alpha.pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "administrator": Organization.objects.administrators().all()[0].id,
             "tags": [Tag.objects.get(name="SWC").pk],
             "open_TTT_applications": True,
         }
@@ -736,7 +736,7 @@ class TestEventViews(TestBase):
         form = EventForm(data)
         self.assertTrue(form.is_valid())
 
-    def test_curricula_and_tags_validation(self):
+    def test_curricula_and_tags_validation(self) -> None:
         """Ensure validation of `curricula` and `tags` fields."""
         # missing tags
         data = {
@@ -759,21 +759,21 @@ class TestEventViews(TestBase):
         self.assertIn("tags", form.errors)
 
         # try adding SWC tag
-        data["tags"].append(Tag.objects.get(name="SWC").pk)
+        data["tags"].append(Tag.objects.get(name="SWC").pk)  # type: ignore
         form = EventForm(data)
         self.assertIn("tags", form.errors)
 
         # try adding DC tag
-        data["tags"].append(Tag.objects.get(name="DC").pk)
+        data["tags"].append(Tag.objects.get(name="DC").pk)  # type: ignore
         form = EventForm(data)
         self.assertIn("tags", form.errors)
 
         # try adding LC tag
-        data["tags"].append(Tag.objects.get(name="LC").pk)
+        data["tags"].append(Tag.objects.get(name="LC").pk)  # type: ignore
         form = EventForm(data)
         self.assertNotIn("tags", form.errors)
 
-    def test_curricula_circuits_tag(self):
+    def test_curricula_circuits_tag(self) -> None:
         """Ensure validation of `curricula` and `tags` fields."""
         # missing tags
         data = {
@@ -792,17 +792,17 @@ class TestEventViews(TestBase):
         self.assertIn("tags", form.errors)
 
         # try adding SWC tag
-        data["tags"].append(Tag.objects.get(name="SWC").pk)
+        data["tags"].append(Tag.objects.get(name="SWC").pk)  # type: ignore
         form = EventForm(data)
         self.assertIn("tags", form.errors)
         # now we're missing only circuits
 
         # try adding Circuits tag
-        data["tags"].append(Tag.objects.get(name="Circuits").pk)
+        data["tags"].append(Tag.objects.get(name="Circuits").pk)  # type: ignore
         form = EventForm(data)
         self.assertNotIn("tags", form.errors)
 
-    def test_event_recruitment_statistics(self):
+    def test_event_recruitment_statistics(self) -> None:
         # Arrange
         host = Organization.objects.get(fullname="Test Organization")
         admin = Organization.objects.administrators().first()
@@ -858,7 +858,7 @@ class TestEventViews(TestBase):
 
 
 class TestEventMerging(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpBadges()
@@ -976,6 +976,10 @@ class TestEventMerging(TestBase):
             "instructors_pre": "obj_b",
             "instructors_post": "obj_a",
             "learners_longterm": "obj_b",
+            "open_TTT_applications": "obj_a",
+            "curricula": "obj_b",
+            "lessons": "obj_a",
+            "event_category": "obj_b",
             "contact": "obj_a",
             "venue": "obj_b",
             "address": "combine",
@@ -987,7 +991,7 @@ class TestEventMerging(TestBase):
         query = urlencode({"event_a": self.event_a.pk, "event_b": self.event_b.pk})
         self.url = "{}?{}".format(base_url, query)
 
-    def test_form_invalid_values(self):
+    def test_form_invalid_values(self) -> None:
         """Make sure only a few fields accept third option ("combine")."""
         hidden = {
             "event_a": self.event_a.pk,
@@ -1017,6 +1021,8 @@ class TestEventMerging(TestBase):
             "instructors_pre": "combine",
             "instructors_post": "combine",
             "learners_longterm": "combine",
+            "open_TTT_applications": "combine",
+            "event_category": "combine",
         }
         # fields additionally accepting "combine"
         passing = {
@@ -1026,10 +1032,12 @@ class TestEventMerging(TestBase):
             "address": "combine",
             "task_set": "combine",
             "comments": "combine",
+            "curricula": "combine",
+            "lessons": "combine",
         }
         data = hidden.copy()
-        data.update(failing)
-        data.update(passing)
+        data.update(failing)  # type: ignore
+        data.update(passing)  # type: ignore
 
         form = EventsMergeForm(data)
         self.assertFalse(form.is_valid())
@@ -1042,7 +1050,7 @@ class TestEventMerging(TestBase):
         # make sure no fields are added without this test being updated
         self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
 
-    def test_merging_base_event(self):
+    def test_merging_base_event(self) -> None:
         """Merging: ensure the base event is selected based on ID form
         field.
 
@@ -1056,7 +1064,7 @@ class TestEventMerging(TestBase):
         with self.assertRaises(Event.DoesNotExist):
             self.event_a.refresh_from_db()
 
-    def test_merging_basic_attributes(self):
+    def test_merging_basic_attributes(self) -> None:
         """Merging: ensure basic (non-relationships) attributes are properly
         saved."""
         assertions = {
@@ -1095,7 +1103,7 @@ class TestEventMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(getattr(self.event_b, key), value, key)
 
-    def test_merging_relational_attributes(self):
+    def test_merging_relational_attributes(self) -> None:
         """Merging: ensure relational fields are properly saved/combined."""
         assertions = {
             "tags": set(Tag.objects.filter(name__in=["SWC", "DC", "LC"])),
@@ -1111,7 +1119,7 @@ class TestEventMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.event_b, key).all()), value, key)
 
-    def test_merging_m2m_attributes(self):
+    def test_merging_m2m_attributes(self) -> None:
         """Merging: ensure M2M-related fields are properly saved/combined.
         This is a regression test; we have to ensure that M2M objects aren't
         removed from the database."""
@@ -1127,7 +1135,7 @@ class TestEventMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.event_a, key).all()), value, key)
 
-    def test_merging_m2m_not_removed(self):
+    def test_merging_m2m_not_removed(self) -> None:
         """Regression test: merging events could result in M2M fields being
         removed, for example this could happen to Tags.
         This tests makes sure no M2M relation objects are being removed."""
@@ -1140,7 +1148,7 @@ class TestEventMerging(TestBase):
         # ensure no Tags were removed
         self.assertEqual(Tag.objects.filter(name__in=["LC", "DC", "SWC"]).count(), 3)
 
-    def test_merging_comments_strategy1(self):
+    def test_merging_comments_strategy1(self) -> None:
         """Ensure comments are correctly merged using `merge_objects`.
         This test uses strategy 1 (combine)."""
         self.strategy["comments"] = "combine"
@@ -1149,11 +1157,11 @@ class TestEventMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.event_b.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.event_b).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.event_b).filter(is_removed=False)),  # type: ignore
             set(comments),
         )
 
-    def test_merging_comments_strategy2(self):
+    def test_merging_comments_strategy2(self) -> None:
         """Ensure comments are correctly merged using `merge_objects`.
         This test uses strategy 2 (object a)."""
         self.strategy["comments"] = "obj_a"
@@ -1162,11 +1170,11 @@ class TestEventMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.event_b.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.event_b).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.event_b).filter(is_removed=False)),  # type: ignore
             set(comments),
         )
 
-    def test_merging_comments_strategy3(self):
+    def test_merging_comments_strategy3(self) -> None:
         """Ensure comments are correctly merged using `merge_objects`.
         This test uses strategy 3 (object b)."""
         self.strategy["comments"] = "obj_b"
@@ -1175,16 +1183,16 @@ class TestEventMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.event_b.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.event_b).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.event_b).filter(is_removed=False)),  # type: ignore
             set(comments),
         )
 
 
 class TestEventImport(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
 
-    def test_no_exception_when_empty_url(self):
+    def test_no_exception_when_empty_url(self) -> None:
         """Regression test: ensure no exceptions are raised when accessing
         `event_import` view without `url` GET param."""
         url = reverse("event_import")
@@ -1196,7 +1204,7 @@ class TestEventReviewingRepoChanges(TestBase):
     """Ensure views used for reviewing, accepting and dismissing changes made
     to event's metadata work correctly."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpOrganizations()
 
@@ -1222,7 +1230,7 @@ class TestEventReviewingRepoChanges(TestBase):
             slug="event-for-changes",
             start=date(2016, 4, 20),
             end=date(2016, 4, 22),
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             metadata_changed=True,
         )
 
@@ -1231,7 +1239,7 @@ class TestEventReviewingRepoChanges(TestBase):
         session["metadata_from_event_website"] = self.metadata_serialized
         session.save()
 
-    def test_showing_all_events_with_changed_metadata(self):
+    def test_showing_all_events_with_changed_metadata(self) -> None:
         """Ensure `events_metadata_changed` only shows events with changed
         metadata."""
         url = reverse("events_metadata_changed")
@@ -1240,7 +1248,7 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.assertEqual(list(rv.context["events"]), [self.event])
 
-    def test_accepting_changes(self):
+    def test_accepting_changes(self) -> None:
         """Ensure `event_review_repo_changes_accept`:
         * updates changed values in event
         * dismisses notification about changed metadata
@@ -1261,7 +1269,7 @@ class TestEventReviewingRepoChanges(TestBase):
             if key not in ("slug", "instructors", "helpers", "language"):
                 self.assertEqual(getattr(self.event, key), value)
 
-    def test_accepting_changes_no_session_data(self):
+    def test_accepting_changes_no_session_data(self) -> None:
         """Ensure `event_review_repo_changes_accept` throws 404 when specific
         session key 'metadata_from_event_website' is unavailable."""
         session = self.client.session
@@ -1272,7 +1280,7 @@ class TestEventReviewingRepoChanges(TestBase):
         rv = self.client.get(url, follow=False)
         self.assertEqual(rv.status_code, 404)
 
-    def test_dismissing_changes(self):
+    def test_dismissing_changes(self) -> None:
         url = reverse("event_dismiss_metadata_changes", args=[self.event.slug])
         rv = self.client.get(url, follow=False)
 
@@ -1295,7 +1303,7 @@ class TestEventAttendance(TestBase):
 
     _db_engine = connection.settings_dict["ENGINE"]
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpTags()
@@ -1305,13 +1313,13 @@ class TestEventAttendance(TestBase):
         self.event = Event.objects.create(
             slug=self.slug,
             country="US",
-            host=Organization.objects.first(),
-            sponsor=Organization.objects.first(),
-            administrator=Organization.objects.first(),
+            host=Organization.objects.all()[0],
+            sponsor=Organization.objects.all()[0],
+            administrator=Organization.objects.all()[0],
         )
         self.event.tags.set(Tag.objects.filter(name__in=["LC", "DC"]))
 
-    def test_correct_values_for_manual_attendance(self):
+    def test_correct_values_for_manual_attendance(self) -> None:
         # `manual_attendance` doesn't accept anything below 0
         with self.assertRaises(ValidationError):
             self.event.manual_attendance = -2
@@ -1320,7 +1328,7 @@ class TestEventAttendance(TestBase):
         self.event.manual_attendance = 0
         self.event.full_clean()  # manually trigger validation
 
-    def test_zero_attendance(self):
+    def test_zero_attendance(self) -> None:
         # manual_attendance = 0
         # some tasks, but none of them is learner
         # attendance == 0
@@ -1330,19 +1338,19 @@ class TestEventAttendance(TestBase):
         self.event.task_set.create(person=self.ron, role=Role.objects.get(name="helper"))
         self.assertEqual(Event.objects.attendance().get(slug=self.slug).attendance, 0)
 
-    def test_single_manual_attendance(self):
+    def test_single_manual_attendance(self) -> None:
         self.event.manual_attendance = 1
         self.event.save()
         self.assertEqual(self.event.task_set.count(), 0)
         self.assertEqual(self.event.attendance, 1)
 
-    def test_single_learner_task(self):
+    def test_single_learner_task(self) -> None:
         self.event.manual_attendance = 0
         self.event.save()
         self.event.task_set.create(person=self.harry, role=Role.objects.get(name="learner"))
         self.assertEqual(self.event.attendance, 1)
 
-    def test_equal_manual_attendance_and_learner_tasks(self):
+    def test_equal_manual_attendance_and_learner_tasks(self) -> None:
         # manual_attendance = 2
         # 2 learner tasks
         # attendance = 2
