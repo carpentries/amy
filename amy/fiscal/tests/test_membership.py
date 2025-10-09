@@ -3,6 +3,7 @@ from typing import List
 
 from django.urls import reverse
 import django_comments
+from django_comments.models import Comment
 
 from fiscal.forms import (
     MembershipCreateForm,
@@ -23,11 +24,11 @@ from workshops.models import (
 )
 from workshops.tests.base import TestBase
 
-CommentModel = django_comments.get_model()
+CommentModel: Comment = django_comments.get_model()  # type: ignore
 
 
 class TestMembership(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
         self._setUpRoles()
@@ -64,17 +65,17 @@ class TestMembership(TestBase):
         Member.objects.create(
             membership=self.current,
             organization=self.org_beta,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
 
-    def setUpTasks(self):
+    def setUpTasks(self) -> None:
         # create a couple of workshops that span outside of agreement duration
         self_organized_admin = Organization.objects.get(domain="self-organized")
-        data = [
-            [self.agreement_start - timedelta(days=180), self_organized_admin],
-            [self.agreement_start - timedelta(days=1), self.dc],
-            [self.agreement_start - timedelta(days=1), self_organized_admin],
-            [self.agreement_end + timedelta(days=1), self.dc],
+        data: list[tuple[date, Organization]] = [
+            (self.agreement_start - timedelta(days=180), self_organized_admin),
+            (self.agreement_start - timedelta(days=1), self.dc),
+            (self.agreement_start - timedelta(days=1), self_organized_admin),
+            (self.agreement_end + timedelta(days=1), self.dc),
         ]
         events = [
             Event(
@@ -149,7 +150,7 @@ class TestMembership(TestBase):
         ]
         Task.objects.bulk_create(tasks)
 
-    def test_multiple_memberships(self):
+    def test_multiple_memberships(self) -> None:
         """Ensure we can have multiple memberships (even overlapping)."""
         overlapping = Membership.objects.create(
             variant="partner",
@@ -161,13 +162,13 @@ class TestMembership(TestBase):
         Member.objects.create(
             membership=overlapping,
             organization=self.org_beta,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
 
         self.assertIn(self.current, self.org_beta.memberships.all())
         self.assertIn(overlapping, self.org_beta.memberships.all())
 
-    def test_workshops_without_admin_fee(self):
+    def test_workshops_without_admin_fee(self) -> None:
         """Ensure we calculate properly number of workshops per year."""
         self.setUpTasks()
         self.assertEqual(self.current.workshops_without_admin_fee_per_agreement, 10)
@@ -176,7 +177,7 @@ class TestMembership(TestBase):
         self.assertEqual(self.current.workshops_without_admin_fee_planned, 3)
         self.assertEqual(self.current.workshops_without_admin_fee_remaining, 0)
 
-    def test_delete_membership(self):
+    def test_delete_membership(self) -> None:
         """Test that we can delete membership instance"""
         response = self.client.post(reverse("membership_delete", args=[self.current.pk]))
         self.assertRedirects(response, reverse("all_memberships"))
@@ -185,7 +186,7 @@ class TestMembership(TestBase):
         with self.assertRaises(Membership.DoesNotExist):
             self.current.refresh_from_db()
 
-    def test_number_of_instructor_training_seats(self):
+    def test_number_of_instructor_training_seats(self) -> None:
         """Ensure calculation of seats in the instructor training events is
         correct."""
         self.setUpTasks()
@@ -195,13 +196,13 @@ class TestMembership(TestBase):
         self.assertEqual(self.current.public_instructor_training_seats_utilized, 5)
         self.assertEqual(self.current.public_instructor_training_seats_remaining, 23)
 
-    def test_active_on_date(self):
+    def test_active_on_date(self) -> None:
         self.assertFalse(self.current.active_on_date(self.agreement_start - timedelta(days=1)))
         self.assertTrue(self.current.active_on_date(self.agreement_start))
         self.assertTrue(self.current.active_on_date(self.agreement_end))
         self.assertFalse(self.current.active_on_date(self.agreement_end + timedelta(days=1)))
 
-    def test_active_on_date_with_grace_before(self):
+    def test_active_on_date_with_grace_before(self) -> None:
         self.assertFalse(
             self.current.active_on_date(
                 self.agreement_start - timedelta(days=91),
@@ -217,7 +218,7 @@ class TestMembership(TestBase):
             )
         )
 
-    def test_active_on_date_with_grace_after(self):
+    def test_active_on_date_with_grace_after(self) -> None:
         self.assertTrue(
             self.current.active_on_date(self.agreement_end + timedelta(days=60), grace_before=90, grace_after=60)
         )
@@ -227,7 +228,7 @@ class TestMembership(TestBase):
 
 
 class TestMembershipConsortiumCountingBase(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
         self._setUpRoles()
@@ -246,7 +247,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
 
         self.setUpMembership()
 
-    def setUpMembership(self):
+    def setUpMembership(self) -> None:
         self.agreement_start = date.today() - timedelta(days=180)
         self.agreement_end = date.today() + timedelta(days=180)
         self.membership = Membership.objects.create(
@@ -284,10 +285,10 @@ class TestMembershipConsortiumCountingBase(TestBase):
 
     def setUpWorkshops(
         self,
-        *categories,
+        *categories: str,
         count: int = 1,
-        administrator: Organization = None,
-    ) -> List[Event]:
+        administrator: Organization | None = None,
+    ) -> list[Event]:
         if not categories:
             return []
 
@@ -385,12 +386,12 @@ class TestMembershipConsortiumCountingBase(TestBase):
 
 
 class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(TestMembershipConsortiumCountingBase):
-    def test_queryset(self):
+    def test_queryset(self) -> None:
         events = self.setUpWorkshops("completed", "planned", count=1)
         self.assertTrue(Event.objects.all())
         self.assertEqual(set(self.membership._workshops_without_admin_fee_queryset()), set(events))
 
-    def test_queryset_completed(self):
+    def test_queryset_completed(self) -> None:
         events = self.setUpWorkshops("completed", count=1)
         self.setUpWorkshops("planned", count=1)
         self.assertTrue(Event.objects.all())
@@ -399,7 +400,7 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(TestMembership
             set(events),
         )
 
-    def test_queryset_planned(self):
+    def test_queryset_planned(self) -> None:
         self.setUpWorkshops("completed", count=1)
         events = self.setUpWorkshops("planned", count=1)
         self.assertTrue(Event.objects.all())
@@ -408,55 +409,55 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(TestMembership
             set(events),
         )
 
-    def test_cancelled_workshops_are_not_counted(self):
+    def test_cancelled_workshops_are_not_counted(self) -> None:
         self.setUpWorkshops("cancelled", count=2)
         self.assertTrue(Event.objects.all())
         self.assertEqual(list(self.membership._workshops_without_admin_fee_queryset()), [])
 
-    def test_self_organised_workshops_are_not_counted(self):
+    def test_self_organised_workshops_are_not_counted(self) -> None:
         self.setUpWorkshops("self-organised", count=2)
         self.assertTrue(Event.objects.all())
         self.assertEqual(list(self.membership._workshops_without_admin_fee_queryset()), [])
 
-    def test_total_allowed_workshops_count(self):
+    def test_total_allowed_workshops_count(self) -> None:
         # agreement: 10, rolled from previous: 2
         # 10 + 2 = 12
         self.assertEqual(self.membership.workshops_without_admin_fee_total_allowed, 12)
 
-    def test_available_workshops_count(self):
+    def test_available_workshops_count(self) -> None:
         # agreement: 10, rolled from previous: 2, rolled over: 5
         # 10 + 2 - 5 = 7
         self.assertEqual(self.membership.workshops_without_admin_fee_available, 7)
 
-    def test_completed_workshops_count(self):
+    def test_completed_workshops_count(self) -> None:
         self.setUpWorkshops("completed", count=3)
         self.assertTrue(Event.objects.all())
         self.assertEqual(self.membership.workshops_without_admin_fee_completed, 3)
         self.assertEqual(self.membership.workshops_discounted_completed, 0)
         self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 4)
 
-    def test_completed_workshops_count_maxed_out(self):
+    def test_completed_workshops_count_maxed_out(self) -> None:
         self.setUpWorkshops("completed", count=10)
         self.assertTrue(Event.objects.all())
         self.assertEqual(self.membership.workshops_without_admin_fee_completed, 7)
         self.assertEqual(self.membership.workshops_discounted_completed, 3)
         self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 0)
 
-    def test_planned_workshops_count(self):
+    def test_planned_workshops_count(self) -> None:
         self.setUpWorkshops("planned", count=4)
         self.assertTrue(Event.objects.all())
         self.assertEqual(self.membership.workshops_without_admin_fee_planned, 4)
         self.assertEqual(self.membership.workshops_discounted_planned, 0)
         self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 3)
 
-    def test_planned_workshops_count_maxed_out(self):
+    def test_planned_workshops_count_maxed_out(self) -> None:
         self.setUpWorkshops("planned", count=10)
         self.assertTrue(Event.objects.all())
         self.assertEqual(self.membership.workshops_without_admin_fee_planned, 7)
         self.assertEqual(self.membership.workshops_discounted_planned, 3)
         self.assertEqual(self.membership.workshops_without_admin_fee_remaining, 0)
 
-    def test_remaining_workshops_count(self):
+    def test_remaining_workshops_count(self) -> None:
         self.setUpWorkshops("cancelled", "self-organised", "completed", "planned", count=2)
         self.assertTrue(Event.objects.all())
         # number of available: 10 + 2 - 5 = 7
@@ -467,37 +468,37 @@ class TestMembershipConsortiumCountingCentrallyOrganisedWorkshops(TestMembership
 
 
 class TestMembershipConsortiumCountingSelfOrganisedWorkshops(TestMembershipConsortiumCountingBase):
-    def test_cancelled_workshops_are_not_counted(self):
+    def test_cancelled_workshops_are_not_counted(self) -> None:
         self.setUpWorkshops("cancelled", count=2, administrator=self.self_organized)
         self.assertTrue(Event.objects.all())
         self.assertEqual(list(self.membership._self_organized_workshops_queryset()), [])
 
-    def test_centrally_organised_workshops_are_not_counted(self):
+    def test_centrally_organised_workshops_are_not_counted(self) -> None:
         self.setUpWorkshops("completed", count=2, administrator=self.dc)
         self.assertTrue(Event.objects.all())
         self.assertEqual(list(self.membership._self_organized_workshops_queryset()), [])
 
-    def test_completed_workshops(self):
+    def test_completed_workshops(self) -> None:
         self.setUpWorkshops("completed", count=3, administrator=self.self_organized)
         self.assertTrue(Event.objects.all())
         self.assertEqual(self.membership.self_organized_workshops_completed, 3)
 
-    def test_planned_workshops(self):
+    def test_planned_workshops(self) -> None:
         self.setUpWorkshops("planned", count=4, administrator=self.self_organized)
         self.assertTrue(Event.objects.all())
         self.assertEqual(self.membership.self_organized_workshops_planned, 4)
 
 
 class TestMembershipConsortiumCountingPublicInstructorTrainingSeats(TestMembershipConsortiumCountingBase):
-    def test_seats_total(self):
+    def test_seats_total(self) -> None:
         # rolled from previous are counted into the total
         self.assertEqual(self.membership.public_instructor_training_seats_total, 12)
 
-    def test_seats_utilized(self):
+    def test_seats_utilized(self) -> None:
         self.setUpTasks(count=5)
         self.assertEqual(self.membership.public_instructor_training_seats_utilized, 5)
 
-    def test_seats_remaining(self):
+    def test_seats_remaining(self) -> None:
         self.setUpTasks(count=5)
         # total and rolled over from previous: 10 + 2
         # utilized: 5
@@ -507,18 +508,18 @@ class TestMembershipConsortiumCountingPublicInstructorTrainingSeats(TestMembersh
 
 
 class TestMembershipConsortiumCountingInhouseInstructorTrainingSeats(TestMembershipConsortiumCountingBase):
-    def test_seats_total(self):
+    def test_seats_total(self) -> None:
         # seats: 2
         # additional: 5
         # rolled from previous: 3
         # total: 10
         self.assertEqual(self.membership.inhouse_instructor_training_seats_total, 10)
 
-    def test_seats_utilized(self):
+    def test_seats_utilized(self) -> None:
         self.setUpTasks(count=5, public=False)
         self.assertEqual(self.membership.inhouse_instructor_training_seats_utilized, 5)
 
-    def test_seats_remaining(self):
+    def test_seats_remaining(self) -> None:
         self.setUpTasks(count=5, public=False)
         # total and rolled over from previous: 10
         # utilized: 5
@@ -528,13 +529,13 @@ class TestMembershipConsortiumCountingInhouseInstructorTrainingSeats(TestMembers
 
 
 class TestMembershipForms(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
         self._setUpRoles()
         self._setUpTags()
 
-    def test_creating_membership_with_no_comment(self):
+    def test_creating_membership_with_no_comment(self) -> None:
         """Ensure that no comment is added when MembershipCreateForm without
         comment content is saved."""
         self.assertEqual(CommentModel.objects.count(), 0)
@@ -558,7 +559,7 @@ class TestMembershipForms(TestBase):
         form.save()
         self.assertEqual(CommentModel.objects.count(), 0)
 
-    def test_creating_membership_with_comment(self):
+    def test_creating_membership_with_comment(self) -> None:
         """Ensure that a comment is added when MembershipCreateForm with
         comment content is saved."""
         self.assertEqual(CommentModel.objects.count(), 0)
@@ -581,11 +582,11 @@ class TestMembershipForms(TestBase):
         form = MembershipCreateForm(data)
         obj = form.save()
         self.assertEqual(CommentModel.objects.count(), 1)
-        comment = CommentModel.objects.first()
+        comment = CommentModel.objects.all()[0]
         self.assertEqual(comment.comment, "This is a test comment.")
-        self.assertIn(comment, CommentModel.objects.for_model(obj))
+        self.assertIn(comment, CommentModel.objects.for_model(obj))  # type: ignore
 
-    def test_membership_edit_form_no_comment(self):
+    def test_membership_edit_form_no_comment(self) -> None:
         """Ensure membership edit form works and doesn't provide `comment` field.
 
         This is a regression test against #1437:
@@ -610,7 +611,7 @@ class TestMembershipForms(TestBase):
         Member.objects.create(
             membership=membership,
             organization=self.org_beta,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
 
         self.assertNotIn("comment", MembershipForm.Meta.fields)
@@ -635,7 +636,7 @@ class TestMembershipForms(TestBase):
         form.save()
         self.assertEqual(CommentModel.objects.count(), 0)
 
-    def test_membership_agreement_dates_validation(self):
+    def test_membership_agreement_dates_validation(self) -> None:
         """Validate invalid agreement end date (can't be sooner than start date)."""
         data = {
             "main_organization": self.org_alpha.pk,
@@ -659,7 +660,7 @@ class TestMembershipForms(TestBase):
             ["Agreement end date can't be sooner than the start date."],
         )
 
-    def test_changing_consortium_to_nonconsortium(self):
+    def test_changing_consortium_to_nonconsortium(self) -> None:
         membership = Membership.objects.create(
             name="Test Membership",
             consortium=True,
@@ -675,12 +676,12 @@ class TestMembershipForms(TestBase):
         m1 = Member.objects.create(
             membership=membership,
             organization=self.org_alpha,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
         Member.objects.create(
             membership=membership,
             organization=self.org_beta,
-            role=MemberRole.objects.last(),
+            role=MemberRole.objects.all().reverse()[0],
         )
 
         data = {
@@ -712,7 +713,7 @@ class TestMembershipForms(TestBase):
         form = MembershipForm(data, instance=membership)
         self.assertTrue(form.is_valid())
 
-    def test_edit_membership_rolled_fields(self):
+    def test_edit_membership_rolled_fields(self) -> None:
         # Arrange
         membership1 = Membership.objects.create(
             name="Test Membership 1",
@@ -816,7 +817,7 @@ class TestMembershipForms(TestBase):
             8,
         )
 
-    def test_membership_edit_extensions(self):
+    def test_membership_edit_extensions(self) -> None:
         for increment in (10, -5):  # +10 days, -5 days per extension
             with self.subTest(increment=increment):
                 # Arrange
@@ -876,16 +877,16 @@ class TestMembershipForms(TestBase):
                 self.assertEqual(membership.agreement_end, new_agreement_end)
 
                 # check if comment was added
-                comment = CommentModel.objects.for_model(membership).last()
+                comment = CommentModel.objects.for_model(membership).last()  # type: ignore
                 self.assertEqual(comment.comment, msg)
 
 
 class TestNewMembershipWorkflow(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
 
-    def test_new_nonconsortium_membership_redirects_to_details(self):
+    def test_new_nonconsortium_membership_redirects_to_details(self) -> None:
         """Ensure once created, new non-consortium membership redirects to it's details
         page."""
         data = {
@@ -904,11 +905,11 @@ class TestNewMembershipWorkflow(TestBase):
             "additional_inhouse_instructor_training_seats": 0,
         }
         response = self.client.post(reverse("membership_add"), data=data)
-        latest_membership = Membership.objects.order_by("-id").first()
+        latest_membership = Membership.objects.order_by("-id").all()[0]
 
         self.assertRedirects(response, reverse("membership_details", args=[latest_membership.pk]))
 
-    def test_new_consortium_membership_redirects_to_members(self):
+    def test_new_consortium_membership_redirects_to_members(self) -> None:
         """Ensure once created, new consortium membership redirects to member page
         to edit the members."""
         data = {
@@ -927,11 +928,11 @@ class TestNewMembershipWorkflow(TestBase):
             "additional_inhouse_instructor_training_seats": 0,
         }
         response = self.client.post(reverse("membership_add"), data=data)
-        latest_membership = Membership.objects.order_by("-id").first()
+        latest_membership = Membership.objects.order_by("-id").all()[0]
 
         self.assertRedirects(response, reverse("membership_members", args=[latest_membership.pk]))
 
-    def test_new_nonconsortium_membership_has_main_member(self):
+    def test_new_nonconsortium_membership_has_main_member(self) -> None:
         """Ensure once created, new non-consortium membership will have a default member
         organisation."""
         data = {
@@ -951,14 +952,14 @@ class TestNewMembershipWorkflow(TestBase):
         }
         response = self.client.post(reverse("membership_add"), data=data, follow=True)
 
-        latest_membership = Membership.objects.order_by("-id").first()
+        latest_membership = Membership.objects.order_by("-id").all()[0]
         self.assertEqual(response.context["membership"], latest_membership)
         self.assertEqual(latest_membership.member_set.count(), 1)
-        member = latest_membership.member_set.first()
+        member = latest_membership.member_set.all()[0]
         self.assertEqual(member.role.name, "main")
         self.assertEqual(member.organization, self.org_alpha)
 
-    def test_new_consortium_membership_has_main_member(self):
+    def test_new_consortium_membership_has_main_member(self) -> None:
         """Ensure once created, new consortium membership will have a default member
         organisation."""
         data = {
@@ -978,20 +979,20 @@ class TestNewMembershipWorkflow(TestBase):
         }
         response = self.client.post(reverse("membership_add"), data=data, follow=True)
 
-        latest_membership = Membership.objects.order_by("-id").first()
+        latest_membership = Membership.objects.order_by("-id").all()[0]
         self.assertEqual(response.context["membership"], latest_membership)
         self.assertEqual(latest_membership.member_set.count(), 1)
-        member = latest_membership.member_set.first()
+        member = latest_membership.member_set.all()[0]
         self.assertEqual(member.role.name, "contract_signatory")
         self.assertEqual(member.organization, self.org_alpha)
 
 
 class TestMembershipExtension(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
 
-    def test_form_simple_valid(self):
+    def test_form_simple_valid(self) -> None:
         data = {
             "agreement_start": "2021-02-27",
             "agreement_end": "2022-02-27",
@@ -1003,7 +1004,7 @@ class TestMembershipExtension(TestBase):
 
         self.assertTrue(form.is_valid())
 
-    def test_form_ignoring_fields(self):
+    def test_form_ignoring_fields(self) -> None:
         data = {
             # fields ignored
             "agreement_start": "invalid value",
@@ -1017,7 +1018,7 @@ class TestMembershipExtension(TestBase):
 
         self.assertTrue(form.is_valid())
 
-    def test_form_validating_extension(self):
+    def test_form_validating_extension(self) -> None:
         data = [
             ("string", False),
             ("", False),
@@ -1033,7 +1034,7 @@ class TestMembershipExtension(TestBase):
                 )
                 self.assertEqual(form.is_valid(), valid)
 
-    def test_membership_extended(self):
+    def test_membership_extended(self) -> None:
         membership = Membership.objects.create(
             name="Test Membership",
             consortium=False,
@@ -1048,7 +1049,7 @@ class TestMembershipExtension(TestBase):
         Member.objects.create(
             organization=self.org_alpha,
             membership=membership,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
         data = {"new_agreement_end": date(2021, 3, 31)}
 
@@ -1063,7 +1064,7 @@ class TestMembershipExtension(TestBase):
         self.assertEqual(membership.extensions, [30])
         self.assertEqual(membership.agreement_end, date(2021, 3, 31))
 
-    def test_membership_extended_multiple_times(self):
+    def test_membership_extended_multiple_times(self) -> None:
         membership = Membership.objects.create(
             name="Test Membership",
             consortium=False,
@@ -1078,7 +1079,7 @@ class TestMembershipExtension(TestBase):
         Member.objects.create(
             organization=self.org_alpha,
             membership=membership,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
         data1 = {"new_agreement_end": date(2021, 3, 31)}
         data2 = {"new_agreement_end": date(2021, 5, 10)}
@@ -1092,7 +1093,7 @@ class TestMembershipExtension(TestBase):
         self.assertEqual(membership.extensions, [30, 40, 50])
         self.assertEqual(membership.agreement_end, date(2021, 6, 29))
 
-    def test_comment_added(self):
+    def test_comment_added(self) -> None:
         # Arrange
         membership = Membership.objects.create(
             name="Test Membership",
@@ -1108,7 +1109,7 @@ class TestMembershipExtension(TestBase):
         Member.objects.create(
             organization=self.org_alpha,
             membership=membership,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
         comment = "Everything is awesome."
         data = {"new_agreement_end": date(2021, 3, 31), "comment": comment}
@@ -1121,13 +1122,13 @@ class TestMembershipExtension(TestBase):
         self.client.post(reverse("membership_extend", args=[membership.pk]), data=data)
 
         # Assert
-        self.assertEqual(CommentModel.objects.for_model(membership).count(), 1)
-        comment = CommentModel.objects.for_model(membership).first()
-        self.assertEqual(comment.comment, expected_comment)
+        self.assertEqual(CommentModel.objects.for_model(membership).count(), 1)  # type: ignore
+        comment = CommentModel.objects.for_model(membership).first()  # type: ignore
+        self.assertEqual(comment.comment, expected_comment)  # type: ignore
 
 
 class TestMembershipCreateRollOver(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self.learner = Role.objects.get(name="learner")
@@ -1158,7 +1159,7 @@ class TestMembershipCreateRollOver(TestBase):
         workshops_without_admin_fee_per_agreement: int = 10,
         public_instructor_training_seats: int = 12,
         inhouse_instructor_training_seats: int = 9,
-    ):
+    ) -> None:
         self.membership = Membership.objects.create(
             name="Test Membership",
             consortium=consortium,
@@ -1177,20 +1178,20 @@ class TestMembershipCreateRollOver(TestBase):
         Member.objects.create(
             organization=self.org_alpha,
             membership=self.membership,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
         MembershipTask.objects.create(
             person=self.hermione,
             membership=self.membership,
-            role=MembershipPersonRole.objects.first(),
+            role=MembershipPersonRole.objects.all()[0],
         )
 
-    def test_form_simple_valid(self):
+    def test_form_simple_valid(self) -> None:
         form = MembershipRollOverForm(self.data)
         self.assertTrue(form.is_valid())
 
-    def test_form_validation_rolled_fields(self):
-        test_data = [
+    def test_form_validation_rolled_fields(self) -> None:
+        test_data: list[tuple[dict[str, int], dict[str, int], bool, list[str]]] = [
             # PASS: centrally org. workshops maxed out, others set to 0
             (
                 {
@@ -1340,13 +1341,13 @@ class TestMembershipCreateRollOver(TestBase):
         ]
         for data, max_values, is_valid, failed_fields in test_data:
             with self.subTest(max_values=max_values):
-                data.update(self.data)
+                data.update(self.data)  # type: ignore
                 form = MembershipRollOverForm(data, max_values=max_values)
                 self.assertEqual(form.is_valid(), is_valid)
                 if not is_valid:
                     self.assertEqual(set(failed_fields), form.errors.keys())
 
-    def test_new_membership_nonconsortium_created(self):
+    def test_new_membership_nonconsortium_created(self) -> None:
         self.setUpMembership(consortium=False)
 
         response = self.client.post(
@@ -1355,15 +1356,15 @@ class TestMembershipCreateRollOver(TestBase):
             follow=True,
         )
 
-        last_membership = Membership.objects.order_by("pk").last()
+        last_membership = Membership.objects.order_by("pk").all().reverse()[0]
         self.assertRedirects(response, reverse("membership_details", args=[last_membership.pk]))
         # main member should be copied over to the new membership when the
         # original membership is not a consortium
         self.assertEqual(last_membership.member_set.count(), 1)
-        self.assertEqual(last_membership.member_set.first().organization, self.org_alpha)
-        self.assertEqual(last_membership.member_set.first().role, MemberRole.objects.first())
+        self.assertEqual(last_membership.member_set.all()[0].organization, self.org_alpha)
+        self.assertEqual(last_membership.member_set.all()[0].role, MemberRole.objects.first())
 
-    def test_new_membership_consortium_created(self):
+    def test_new_membership_consortium_created(self) -> None:
         test_data = [True, False]
 
         for copy_members in test_data:
@@ -1381,20 +1382,20 @@ class TestMembershipCreateRollOver(TestBase):
                     follow=True,
                 )
 
-                last_membership = Membership.objects.order_by("pk").last()
+                last_membership = Membership.objects.order_by("pk").all().reverse()[0]
                 self.assertRedirects(response, reverse("membership_details", args=[last_membership.pk]))
 
                 if copy_members:
                     self.assertEqual(last_membership.member_set.count(), 1)
-                    self.assertEqual(last_membership.member_set.first().organization, self.org_alpha)
+                    self.assertEqual(last_membership.member_set.all()[0].organization, self.org_alpha)
                     self.assertEqual(
-                        last_membership.member_set.first().role,
+                        last_membership.member_set.all()[0].role,
                         MemberRole.objects.first(),
                     )
                 else:
                     self.assertEqual(last_membership.member_set.count(), 0)
 
-    def test_new_membership_persons_copied(self):
+    def test_new_membership_persons_copied(self) -> None:
         test_data = [True, False]
 
         for copy_membership_tasks in test_data:
@@ -1412,20 +1413,20 @@ class TestMembershipCreateRollOver(TestBase):
                     follow=True,
                 )
 
-                last_membership = Membership.objects.order_by("pk").last()
+                last_membership = Membership.objects.order_by("pk").all().reverse()[0]
                 self.assertRedirects(response, reverse("membership_details", args=[last_membership.pk]))
 
                 if copy_membership_tasks:
                     self.assertEqual(last_membership.membershiptask_set.count(), 1)
-                    self.assertEqual(last_membership.membershiptask_set.first().person, self.hermione)
+                    self.assertEqual(last_membership.membershiptask_set.all()[0].person, self.hermione)
                     self.assertEqual(
-                        last_membership.membershiptask_set.first().role,
+                        last_membership.membershiptask_set.all()[0].role,
                         MembershipPersonRole.objects.first(),
                     )
                 else:
                     self.assertEqual(last_membership.membershiptask_set.count(), 0)
 
-    def test_membership_rollovers(self):
+    def test_membership_rollovers(self) -> None:
         self.setUpMembership()
         data = {
             "name": "Test Membership",
@@ -1441,7 +1442,7 @@ class TestMembershipCreateRollOver(TestBase):
             follow=True,
         )
 
-        last_membership = Membership.objects.order_by("pk").last()
+        last_membership = Membership.objects.order_by("pk").all().reverse()[0]
         self.membership.refresh_from_db()
 
         self.assertEqual(self.membership.workshops_without_admin_fee_per_agreement, 10)
@@ -1478,7 +1479,7 @@ class TestMembershipCreateRollOver(TestBase):
         self.assertEqual(last_membership.rolled_from_membership, self.membership)
         self.assertEqual(last_membership.rolled_to_membership, None)
 
-    def test_membership_rollover_negative_remaining_values(self):
+    def test_membership_rollover_negative_remaining_values(self) -> None:
         """If current membership has used more seats/workshops than allowed, and
         its remaining values are negative, the roll-over form should have max values
         for rolled-over fields set to 0, instead of these negative values.
@@ -1568,7 +1569,7 @@ class TestMembershipCreateRollOver(TestBase):
                         [expected_msg],
                     )
 
-    def test_membership_cannot_be_rolled_over_multiple_times(self):
+    def test_membership_cannot_be_rolled_over_multiple_times(self) -> None:
         # Arrange
         self.setUpMembership()
         second_membership = Membership.objects.create(

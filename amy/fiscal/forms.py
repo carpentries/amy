@@ -486,7 +486,7 @@ class MembershipExtensionForm(forms.Form):
 
         # validate new agreement end date is later than original agreement end date
         agreement_end = self.cleaned_data["agreement_end"]
-        new_agreement_end = self.cleaned_data["new_agreement_end"]
+        new_agreement_end = self.cleaned_data.get("new_agreement_end")
         try:
             if new_agreement_end <= agreement_end:
                 errors["new_agreement_end"] = ValidationError(
