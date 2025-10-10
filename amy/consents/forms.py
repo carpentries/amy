@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Any, Iterable, List
 
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
@@ -17,7 +17,7 @@ def option_display_value(option: TermOption) -> str:
     return option.content or OPTION_DISPLAY[TermOptionChoices(option.option_type)]
 
 
-class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
+class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm[Consent]):
     """
     Builds form including all active terms with
     the provided person's consents as the initial selection.
@@ -29,7 +29,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         model = Consent
         fields = ["person"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         form_tag = kwargs.pop("form_tag", True)
         self.person = kwargs["initial"]["person"]
         super().__init__(*args, **kwargs)
@@ -54,7 +54,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         for term in self.terms:
             self.fields[term.slug] = self.create_options_field(term)
 
-    def create_options_field(self, term: Term):
+    def create_options_field(self, term: Term) -> forms.ChoiceField:
         consent = self.term_id_by_consent.get(term.pk, None)
         options = [(opt.pk, option_display_value(opt)) for opt in term.options]
         required = term.required_type != Term.OPTIONAL_REQUIRE_TYPE
@@ -62,7 +62,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         attrs = {"class": "border border-warning"} if initial is None else {}
 
         field = forms.ChoiceField(
-            choices=BLANK_CHOICE_DASH + options,
+            choices=BLANK_CHOICE_DASH + options,  # type: ignore
             label=term.content,
             required=required,
             initial=initial,
@@ -71,7 +71,7 @@ class BaseTermConsentsForm(WidgetOverrideMixin, forms.ModelForm):
         )
         return field
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
         person = self.cleaned_data["person"]
         new_consents: List[Consent] = []
         for term in self.terms:
@@ -121,7 +121,7 @@ class RequiredConsentsForm(BaseTermConsentsForm):
 
 
 class TermBySlugsForm(BaseTermConsentsForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.term_slugs = kwargs.pop("term_slugs")
         super().__init__(*args, **kwargs)
 

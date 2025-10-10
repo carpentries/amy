@@ -3,11 +3,12 @@ from functools import partial, reduce
 import logging
 import operator
 import re
+from typing import Any, Callable
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count, Q
+from django.db.models import Count, Model, Q
 from django.db.models.query import QuerySet
 from django.http import JsonResponse
 from django.http.response import Http404
@@ -15,8 +16,10 @@ from django.urls import path
 from django_select2.views import AutoResponseView
 
 from communityroles.models import CommunityRoleConfig
-from fiscal.models import MembershipPersonRole
+from fiscal.models import Consortium, MembershipPersonRole, Partnership
+from offering.models import Account
 from workshops import models
+from workshops.base_views import AuthenticatedHttpRequest
 from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 logger = logging.getLogger("amy")
@@ -395,20 +398,26 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class GenericObjectLookupView(LoginRequiredMixin, UserPassesTestMixin, AutoResponseView):
+class GenericObjectLookupView(
+    LoginRequiredMixin,
+    UserPassesTestMixin,
+    AutoResponseView,  # type: ignore
+):
+    content_type: ContentType | None
+    request: AuthenticatedHttpRequest
     raise_exception = True  # prevent redirect to login page on unauthenticated user
 
-    def get_test_func(self):
+    def get_test_func(self) -> Callable[[], bool]:
         content_type = self.request.GET.get("content_type", "")
-        return partial(self.test_func, content_type=content_type)
+        return partial(self.test_func, content_type=int(content_type))
 
-    def test_func(self, content_type: str):
+    def test_func(self, content_type: int) -> bool:  # type: ignore
         # Get the ContentType.
         try:
             self.content_type = ContentType.objects.get(pk=int(content_type))
         except (ContentType.DoesNotExist, ValueError):
             self.content_type = None
-            logger.error("GenericObjectLookup tried to look up non-existing ContentType " f"pk={content_type}")
+            logger.error(f"GenericObjectLookup tried to look up non-existing ContentType pk={content_type}")
             return False
 
         # Find "view" permission name for model of type ContentType.
@@ -420,17 +429,17 @@ class GenericObjectLookupView(LoginRequiredMixin, UserPassesTestMixin, AutoRespo
         # Check is user has view permissions for that ContentType.
         return self.request.user.has_perm(permission_name)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Model]:
         if not self.content_type:
             return QuerySet()
 
         try:
-            return self.content_type.model_class()._default_manager.all()
+            return self.content_type.model_class()._default_manager.all()  # type: ignore
         except AttributeError as e:
-            logger.error(f"ContentType {self.content_type} may be stale " f"(model class doesn't exist). Error: {e}")
+            logger.error(f"ContentType {self.content_type} may be stale (model class doesn't exist). Error: {e}")
             raise Http404("ContentType not found.")
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
         self.object_list = self.get_queryset()
         return JsonResponse(
             {
@@ -443,6 +452,46 @@ class GenericObjectLookupView(LoginRequiredMixin, UserPassesTestMixin, AutoRespo
                 ],
             }
         )
+
+
+class OfferingAccountRelation(GenericObjectLookupView):
+    content_type: ContentType | None
+    content_type_name: str
+    term: str
+    request: AuthenticatedHttpRequest
+    raise_exception = True  # prevent redirect to login page on unauthenticated user
+
+    def get_test_func(self) -> Callable[[], bool]:
+        self.content_type_name = self.request.GET.get("content_type_name", "")
+        mapped = Account.ACCOUNT_TYPE_MAPPING.get(self.content_type_name)
+        if not mapped:
+            return partial(self.test_func, content_type=0)
+
+        self.content_type = ContentType.objects.get(app_label=mapped[0], model=mapped[1])
+        return partial(self.test_func, content_type=self.content_type.pk)
+
+    def get_queryset(
+        self,
+    ) -> QuerySet[models.Person] | QuerySet[models.Organization] | QuerySet[Consortium] | QuerySet[Partnership]:
+        qs = super().get_queryset()
+
+        term = self.request.GET.get("term", "")
+        if not term:
+            return qs  # type: ignore
+
+        if self.content_type_name == "individual":
+            qs = qs.filter(Q(personal__icontains=term) | Q(family__icontains=term) | Q(email__icontains=term))
+
+        if self.content_type_name == "organization":
+            qs = qs.filter(Q(domain__icontains=term) | Q(fullname__icontains=term))
+
+        if self.content_type_name == "consortium":
+            qs = qs.filter(Q(name__icontains=term) | Q(description__icontains=term))
+
+        if self.content_type_name == "partnership":
+            qs = qs.filter(Q(name__icontains=term))
+
+        return qs  # type: ignore
 
 
 urlpatterns = [
@@ -493,4 +542,5 @@ urlpatterns = [
     ),
     path("awards/", AwardLookupView.as_view(), name="award-lookup"),
     path("generic/", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
+    path("offering-account-relation/", OfferingAccountRelation.as_view(), name="offering-account-relation-lookup"),
 ]

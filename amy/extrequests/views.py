@@ -53,6 +53,7 @@ from workshops.base_views import (
     AMYListView,
     AMYUpdateView,
     AssignView,
+    AuthenticatedHttpRequest,
     ChangeRequestStateView,
     RedirectSupportMixin,
     StateFilterMixin,
@@ -792,7 +793,7 @@ class TrainingRequestUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateV
     ["workshops.delete_trainingrequest", "workshops.change_trainingrequest"],
     raise_exception=True,
 )
-def trainingrequests_merge(request):
+def trainingrequests_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Display two training requests side by side on GET and merge them on
     POST.
 

@@ -40,7 +40,6 @@ jQuery(function () {
     person = data.id;
   });
   $("#id_communityrole-config").on("select2:select", (e) => {
-    console.log("asdasdasd");
     const data = e.params.data;
     $("#id_communityrole-award").prop("required", data.link_to_award);
     award_badge = data.award_badge_limit;

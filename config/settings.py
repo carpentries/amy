@@ -177,6 +177,7 @@ LOCAL_APPS = [
     "amy.communityroles.apps.CommunityRolesConfig",
     "amy.recruitment.apps.RecruitmentConfig",
     "amy.emails.apps.EmailsConfig",
+    "amy.offering.apps.OfferingConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -655,6 +656,7 @@ PROD_ENVIRONMENT = bool(SITE_BANNER_STYLE == "production")
 #  }
 # ------------
 FLAGS = {
+    # ------------
     # Enable instructor recruitment views.
     "INSTRUCTOR_RECRUITMENT": [
         {"condition": "boolean", "value": True},
@@ -664,9 +666,17 @@ FLAGS = {
     "EMAIL_MODULE": [
         {"condition": "boolean", "value": True},
     ],
+    # ------------
     # Always enabled.
     "ENFORCE_MEMBER_CODES": [
         {"condition": "boolean", "value": True},
+    ],
+    # ------------
+    # Enable the Service Offering module.
+    "SERVICE_OFFERING": [
+        {"condition": "anonymous", "value": False, "required": True},
+        {"condition": "parameter", "value": "enable_service_offering=true"},
+        {"condition": "session", "value": "enable_service_offering"},
     ],
 }
 

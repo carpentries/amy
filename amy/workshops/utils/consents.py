@@ -3,10 +3,10 @@ from collections import defaultdict
 from django.utils import timezone
 
 from consents.models import Consent, TrainingRequestConsent
-from workshops.models import TrainingRequest
+from workshops.models import Person, TrainingRequest
 
 
-def archive_least_recent_active_consents(object_a, object_b, base_obj):
+def archive_least_recent_active_consents(object_a: Person, object_b: Person, base_obj: Person) -> None:
     """
     There is a unique database constraint on consents that only allows
     (person, term) when archived_at is null.
@@ -50,7 +50,7 @@ def archive_least_recent_active_consents(object_a, object_b, base_obj):
 
 def archive_least_recent_active_training_request_consents(
     object_a: TrainingRequest, object_b: TrainingRequest, base_obj: TrainingRequest
-):
+) -> None:
     """
     There is a unique database constraint on training request consents that only allows
     (training_request, term) when archived_at is null.

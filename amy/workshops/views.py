@@ -18,6 +18,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError
 from django.db.models import (
     Case,
@@ -34,7 +35,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.forms import BaseForm, HiddenInput
+from django.forms import HiddenInput
 from django.http import (
     Http404,
     HttpRequest,
@@ -45,6 +46,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
+from flags.state import flag_enabled
 from github.GithubException import GithubException
 import requests
 from reversion.models import Revision, Version
@@ -101,6 +103,7 @@ from emails.signals import (
 )
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitmentSignup
+from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -165,6 +168,7 @@ from workshops.utils.metadata import (
 )
 from workshops.utils.pagination import get_pagination_items
 from workshops.utils.person_upload import (
+    PersonTask,
     create_uploaded_persons_tasks,
     upload_person_task_csv,
     verify_upload_person_task,
@@ -177,16 +181,16 @@ logger = logging.getLogger("amy")
 
 
 @login_required
-def logout_then_login_with_msg(request):
+def logout_then_login_with_msg(request: AuthenticatedHttpRequest) -> HttpResponse:
     messages.success(request, "You were successfully logged-out.")
     return logout_then_login(request)
 
 
 @admin_required
-def changes_log(request):
+def changes_log(request: AuthenticatedHttpRequest) -> HttpResponse:
     log = Revision.objects.all().select_related("user").prefetch_related("version_set").order_by("-date_created")
-    log = get_pagination_items(request, log)
-    context = {"log": log}
+    log_paginated = get_pagination_items(request, log)
+    context = {"log": log_paginated}
     return render(request, "workshops/changes_log.html", context)
 
 
@@ -195,7 +199,7 @@ def changes_log(request):
 AIRPORT_FIELDS = ["iata", "fullname", "country", "latitude", "longitude"]
 
 
-class AllAirports(OnlyForAdminsMixin, AMYListView):
+class AllAirports(OnlyForAdminsMixin, AMYListView[Airport]):
     context_object_name = "all_airports"
     queryset = Airport.objects.all()
     filter_class = AirportFilter
@@ -203,26 +207,26 @@ class AllAirports(OnlyForAdminsMixin, AMYListView):
     title = "All Airports"
 
 
-class AirportDetails(OnlyForAdminsMixin, AMYDetailView):
+class AirportDetails(OnlyForAdminsMixin, AMYDetailView[Airport]):
     queryset = Airport.objects.all()
     context_object_name = "airport"
     template_name = "workshops/airport.html"
     slug_url_kwarg = "airport_iata"
     slug_field = "iata"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Airport {0}".format(self.object)
         return context
 
 
-class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
+class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[None, Airport]):  # type: ignore
     permission_required = "workshops.add_airport"
     model = Airport
     fields = AIRPORT_FIELDS
 
 
-class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[None, Airport]):  # type: ignore
     permission_required = "workshops.change_airport"
     model = Airport
     fields = AIRPORT_FIELDS
@@ -230,7 +234,7 @@ class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     slug_url_kwarg = "airport_iata"
 
 
-class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Airport, GenericDeleteForm[Airport]]):
     model = Airport
     slug_field = "iata"
     slug_url_kwarg = "airport_iata"
@@ -241,7 +245,7 @@ class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
 # ------------------------------------------------------------
 
 
-class AllPersons(OnlyForAdminsMixin, AMYListView):
+class AllPersons(OnlyForAdminsMixin, AMYListView[Person]):
     context_object_name = "all_persons"
     template_name = "workshops/all_persons.html"
     filter_class = PersonFilter
@@ -260,7 +264,7 @@ class AllPersons(OnlyForAdminsMixin, AMYListView):
     title = "All Persons"
 
 
-class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
+class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
     context_object_name = "person"
     template_name = "workshops/person.html"
     pk_url_kwarg = "person_id"
@@ -297,7 +301,7 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
         .order_by("family", "personal")
     )
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         title = "Person {0}".format(self.object)
@@ -314,7 +318,7 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
 
 
 @admin_required
-def person_bulk_add_template(request):
+def person_bulk_add_template(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Dynamically generate a CSV template that can be used to bulk-upload people."""
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = "attachment; filename=BulkPersonAddTemplate.csv"
@@ -326,12 +330,14 @@ def person_bulk_add_template(request):
 
 @admin_required
 @permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
-def person_bulk_add(request):
+def person_bulk_add(request: AuthenticatedHttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = BulkUploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
-            charset = request.FILES["file"].charset or settings.DEFAULT_CHARSET
-            stream = io.TextIOWrapper(request.FILES["file"].file, charset)
+            request_file = cast(UploadedFile, request.FILES["file"])
+            charset = request_file.charset or settings.DEFAULT_CHARSET
+            assert request_file.file  # for mypy
+            stream = io.TextIOWrapper(request_file.file, charset)
             try:
                 persons_tasks, empty_fields = upload_person_task_csv(stream)
             except csv.Error as e:
@@ -366,16 +372,16 @@ def person_bulk_add(request):
 
 @admin_required
 @permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
-def person_bulk_add_confirmation(request):
+def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpResponse:
     """
     This view allows for manipulating and saving session-stored upload data.
     """
-    persons_tasks = request.session.get("bulk-add-people")
+    persons_tasks: list[PersonTask] | None = request.session.get("bulk-add-people")
     match = request.session.get("bulk-add-people-match", False)
 
     # if the session is empty, add message and redirect
     if not persons_tasks:
-        messages.warning(request, "Could not locate CSV data, please " "upload again.")
+        messages.warning(request, "Could not locate CSV data, please upload again.")
         return redirect("person_bulk_add")
 
     if request.method == "POST":
@@ -390,20 +396,19 @@ def person_bulk_add_confirmation(request):
         for k, record in enumerate(data_update):
             personal, family, username, email, event, role = record
             existing_person_id = persons_tasks[k].get("existing_person_id")
-            # "field or None" converts empty strings to None values
             persons_tasks[k] = {
                 "personal": personal,
                 "family": family,
                 "username": username,
-                "email": email or None,
+                "email": email or None,  # "field or None" converts empty strings to None values
                 "existing_person_id": existing_person_id,
+                # when user wants to drop related event they will send empty string
+                # so we should unconditionally accept new value for event even if
+                # it's an empty string
+                "event": event,
+                "role": role,
+                "errors": None,  # reset here
             }
-            # when user wants to drop related event they will send empty string
-            # so we should unconditionally accept new value for event even if
-            # it's an empty string
-            persons_tasks[k]["event"] = event
-            persons_tasks[k]["role"] = role
-            persons_tasks[k]["errors"] = None  # reset here
 
         # save updated data to the session
         request.session["bulk-add-people"] = persons_tasks
@@ -449,20 +454,20 @@ def person_bulk_add_confirmation(request):
         any_errors = verify_upload_person_task(persons_tasks, match=bool(match))
         request.session["bulk-add-people-match"] = False
 
-    roles = Role.objects.all().values_list("name", flat=True)
+    roles_list: list[str] = list(Role.objects.all().values_list("name", flat=True))
 
     context = {
         "title": "Confirm uploaded data",
         "persons_tasks": persons_tasks,
         "any_errors": any_errors,
-        "possible_roles": roles,
+        "possible_roles": roles_list,
     }
     return render(request, "workshops/person_bulk_add_results.html", context)
 
 
 @admin_required
 @permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
-def person_bulk_add_remove_entry(request, entry_id):
+def person_bulk_add_remove_entry(request: AuthenticatedHttpRequest, entry_id: int) -> HttpResponse:
     "Remove specific entry from the session-saved list of people to be added."
     persons_tasks = request.session.get("bulk-add-people")
 
@@ -484,7 +489,9 @@ def person_bulk_add_remove_entry(request, entry_id):
 
 @admin_required
 @permission_required(["workshops.add_person", "workshops.change_person"], raise_exception=True)
-def person_bulk_add_match_person(request, entry_id, person_id=None):
+def person_bulk_add_match_person(
+    request: AuthenticatedHttpRequest, entry_id: int, person_id: int | None = None
+) -> HttpResponse:
     """Save information about matched person in the session-saved data."""
     persons_tasks = request.session.get("bulk-add-people")
     if not persons_tasks:
@@ -535,12 +542,12 @@ def person_bulk_add_match_person(request, entry_id, person_id=None):
         return redirect(person_bulk_add_confirmation)
 
 
-class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
+class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[PersonCreateForm, Person]):
     permission_required = "workshops.add_person"
     model = Person
     form_class = PersonCreateForm
 
-    def form_valid(self, form):
+    def form_valid(self, form: PersonCreateForm) -> HttpResponse:
         """Person.lessons uses an intermediary model so we need to manually add
         objects of that model.
 
@@ -577,7 +584,7 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
             messages.success(self.request, success_message)
         return response
 
-    def get_initial(self):
+    def get_initial(self) -> dict[str, str]:
         initial = {
             "personal": self.request.GET.get("personal", ""),
             "family": self.request.GET.get("family", ""),
@@ -586,18 +593,18 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
         return initial
 
 
-class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
+class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView[PersonForm, Person]):
     model = Person
     form_class = PersonForm
     pk_url_kwarg = "person_id"
     template_name = "workshops/person_edit_form.html"
 
-    def test_func(self):
+    def test_func(self) -> bool:
         if not (self.request.user.has_perm("workshops.change_person") or self.request.user == self.get_object()):
             raise PermissionDenied
         return True
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         failed_trainings = TrainingProgress.objects.filter(state="f", trainee=self.object).exists()
         kwargs = {
@@ -639,7 +646,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
         )
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form: PersonForm) -> HttpResponse:
         self.object = form.save(commit=False)
         # remove existing Qualifications for user
         Qualification.objects.filter(person=self.object).delete()
@@ -687,20 +694,20 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView):
         return result
 
 
-class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Person, GenericDeleteForm[Person]]):
     model = Person
     permission_required = "workshops.delete_person"
     success_url = reverse_lazy("all_persons")
     pk_url_kwarg = "person_id"
 
 
-class PersonArchive(PermissionRequiredMixin, LoginRequiredMixin, AMYDeleteView):
+class PersonArchive(PermissionRequiredMixin, LoginRequiredMixin, AMYDeleteView[Person, GenericDeleteForm[Person]]):
     model = Person
     permission_required = "workshops.delete_person"
     pk_url_kwarg = "person_id"
     success_message = "{} was archived successfully."
 
-    def perform_destroy(self, *args, **kwargs):
+    def perform_destroy(self, *args: Any, **kwargs: Any) -> None:
         self.object.archive()
 
     def get_success_url(self) -> str:
@@ -714,14 +721,14 @@ class PersonArchive(PermissionRequiredMixin, LoginRequiredMixin, AMYDeleteView):
             return reverse("login")
         return self.object.get_absolute_url()
 
-    def has_permission(self):
+    def has_permission(self) -> bool:
         """If the user is archiving their own profile, the user has permission."""
         user_id_being_archived = self.kwargs.get(self.pk_url_kwarg)
         user_archiving_own_profile = self.request.user.pk == user_id_being_archived
         return super(PersonArchive, self).has_permission() or user_archiving_own_profile
 
 
-class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[PersonPermissionsForm, Person]):
     permission_required = "workshops.change_person"
     form_class = PersonPermissionsForm
     pk_url_kwarg = "person_id"
@@ -735,7 +742,7 @@ class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateVi
 
 
 @login_required
-def person_password(request, person_id):
+def person_password(request: AuthenticatedHttpRequest, person_id: int) -> HttpResponse:
     user = get_object_or_404(Person, pk=person_id)
 
     # Either the user requests change of their own password, or someone with
@@ -743,7 +750,7 @@ def person_password(request, person_id):
     if not ((request.user == user) or (request.user.has_perm("workshops.change_person"))):
         raise PermissionDenied
 
-    Form = PasswordChangeForm
+    Form: type[PasswordChangeForm] | type[SetPasswordForm] = PasswordChangeForm
     if request.user.is_superuser:
         Form = SetPasswordForm
     elif request.user.pk != user.pk:
@@ -766,7 +773,7 @@ def person_password(request, person_id):
     else:
         form = Form(user)
 
-    form.helper = BootstrapHelper(add_cancel_button=False)
+    form.helper = BootstrapHelper(add_cancel_button=False)  # type: ignore
     return render(
         request,
         "generic_form.html",
@@ -909,7 +916,7 @@ def persons_merge(request: HttpRequest) -> HttpResponse:
 
 
 @admin_required
-def sync_usersocialauth(request, person_id):
+def sync_usersocialauth(request: AuthenticatedHttpRequest, person_id: str | int) -> HttpResponse:
     person_id = int(person_id)
     try:
         person = Person.objects.get(pk=person_id)
@@ -942,7 +949,7 @@ def sync_usersocialauth(request, person_id):
 # ------------------------------------------------------------
 
 
-class AllEvents(OnlyForAdminsMixin, AMYListView):
+class AllEvents(OnlyForAdminsMixin, AMYListView[Event]):
     context_object_name = "all_events"
     template_name = "workshops/all_events.html"
     queryset = (
@@ -964,7 +971,7 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 
 
 @admin_required
-def event_details(request, slug):
+def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     """List details of a particular event."""
     event = get_object_or_404(
         Event.objects.attendance().select_related(
@@ -974,6 +981,7 @@ def event_details(request, slug):
             "sponsor",
             "membership",
             "instructorrecruitment",
+            "allocated_benefit",
         ),
         slug=slug,
     )
@@ -1063,7 +1071,7 @@ def event_details(request, slug):
 
 
 @admin_required
-def validate_event(request, slug):
+def validate_event(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     """Check the event's home page *or* the specified URL (for testing)."""
     try:
         event = Event.objects.get(slug=slug)
@@ -1215,7 +1223,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
         return context
 
     def get_form_class(self) -> type[EventForm]:
-        return partial(EventForm, show_lessons=True, add_comment=True)  # type: ignore
+        return partial(
+            EventForm,
+            show_lessons=True,
+            add_comment=True,
+            show_allocated_benefit=flag_enabled("SERVICE_OFFERING", request=self.request),  # type: ignore
+        )
 
     def form_valid(self, form: EventForm) -> HttpResponse:
         """Check if RQ job conditions changed, and add/delete jobs if
@@ -1422,7 +1435,7 @@ def event_import(request: HttpRequest) -> HttpResponse:
         return HttpResponseBadRequest('Missing or wrong "url" parameter.')
 
 
-class EventAssign(OnlyForAdminsMixin, AssignView):
+class EventAssign(OnlyForAdminsMixin, AssignView[Event]):
     permission_required = "workshops.change_event"
     model = Event
     pk_url_kwarg = "request_id"
@@ -1431,7 +1444,7 @@ class EventAssign(OnlyForAdminsMixin, AssignView):
 
 @admin_required
 @permission_required(["workshops.delete_event", "workshops.change_event"], raise_exception=True)
-def events_merge(request):
+def events_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Display two events side by side on GET and merge them on POST.
 
     If no events are supplied via GET params, display event selection form."""
@@ -1530,7 +1543,7 @@ def events_merge(request):
 
 
 @admin_required
-def events_metadata_changed(request):
+def events_metadata_changed(request: AuthenticatedHttpRequest) -> HttpResponse:
     """List events with metadata changed."""
 
     assignment_form = AssignmentForm(request.GET)
@@ -1554,7 +1567,7 @@ def events_metadata_changed(request):
 
 @admin_required
 @permission_required("workshops.change_event", raise_exception=True)
-def event_review_metadata_changes(request, slug):
+def event_review_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     """Review changes made to metadata on event's website."""
     try:
         event = Event.objects.get(slug=slug)
@@ -1589,7 +1602,7 @@ def event_review_metadata_changes(request, slug):
 
 @admin_required
 @permission_required("workshops.change_event", raise_exception=True)
-def event_accept_metadata_changes(request, slug):
+def event_accept_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     """Review changes made to metadata on event's website."""
     try:
         event = Event.objects.get(slug=slug)
@@ -1643,7 +1656,7 @@ def event_accept_metadata_changes(request, slug):
 
 @admin_required
 @permission_required("workshops.change_event", raise_exception=True)
-def event_dismiss_metadata_changes(request, slug):
+def event_dismiss_metadata_changes(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
     """Review changes made to metadata on event's website."""
     try:
         event = Event.objects.get(slug=slug)
@@ -1667,7 +1680,7 @@ def event_dismiss_metadata_changes(request, slug):
 # ------------------------------------------------------------
 
 
-class AllTasks(OnlyForAdminsMixin, AMYListView):
+class AllTasks(OnlyForAdminsMixin, AMYListView[Task]):
     context_object_name = "all_tasks"
     template_name = "workshops/all_tasks.html"
     filter_class = TaskFilter
@@ -1681,13 +1694,13 @@ class AllTasks(OnlyForAdminsMixin, AMYListView):
     title = "All Tasks"
 
 
-class TaskDetails(OnlyForAdminsMixin, AMYDetailView):
+class TaskDetails(OnlyForAdminsMixin, AMYDetailView[Task]):
     queryset = Task.objects.all()
     context_object_name = "task"
     pk_url_kwarg = "task_id"
     template_name = "workshops/task.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Task {0}".format(self.object)
         return context
@@ -1840,10 +1853,16 @@ class TaskUpdate(
 ):
     permission_required = "workshops.change_task"
     model = Task
-    queryset = Task.objects.select_related("event", "role", "person")
+    queryset = Task.objects.select_related("event", "role", "person", "seat_membership", "allocated_benefit")
     form_class = TaskForm
     pk_url_kwarg = "task_id"
     object: Task
+
+    def get_form_kwargs(self):
+        result = super().get_form_kwargs()
+        # Optionally show field `allocated benefit`
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
+        return result | dict(show_allocated_benefit=show_allocated_benefit)
 
     def form_valid(self, form: TaskForm) -> HttpResponse:
         """Check if RQ job conditions changed, and add/delete jobs if
@@ -1921,7 +1940,7 @@ class TaskDelete(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    AMYDeleteView,
+    AMYDeleteView[Task, GenericDeleteForm[Task]],
 ):
     model = Task
     permission_required = "workshops.delete_task"
@@ -1929,12 +1948,12 @@ class TaskDelete(
     pk_url_kwarg = "task_id"
     object: Task
 
-    def before_delete(self, *args, **kwargs):
-        self.old: Task = cast(Task, self.get_object())
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
+        self.old: Task = self.get_object()
         self.old_pk = self.old.pk
         self.event = self.old.event
 
-    def after_delete(self, *args, **kwargs):
+    def after_delete(self, *args: Any, **kwargs: Any) -> None:
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object.event),
             self.request,
@@ -1982,7 +2001,7 @@ class MockAwardCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     PrepopulationSupportMixin[AwardForm],
-    AMYCreateView,
+    AMYCreateView[AwardForm, Award],
 ):
     permission_required = "workshops.add_award"
     model = Award
@@ -2018,7 +2037,7 @@ class MockAwardCreate(
     def get_success_url(self) -> str:
         return reverse("badge_details", args=[self.object.badge.name])
 
-    def form_valid(self, form: BaseForm) -> HttpResponse:
+    def form_valid(self, form: AwardForm) -> HttpResponse:
         result = super().form_valid(form)
         self.object: Award  # created and saved to DB by super().form_valid()
 
@@ -2078,7 +2097,7 @@ class AwardCreate(RedirectSupportMixin, MockAwardCreate):
     pass
 
 
-class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Award, GenericDeleteForm[Award]]):
     model = Award
     permission_required = "workshops.delete_award"
     object: Award
@@ -2088,13 +2107,13 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
         referrer = self.request.headers.get("Referer", fallback_url)
         return safe_next_or_default_url(referrer, fallback_url)
 
-    def before_delete(self, *args, **kwargs):
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
         """Save for use in `after_delete` method."""
         self._award = self.object
         self._award_pk = self.object.pk
         self._person = self.object.person
 
-    def after_delete(self, *args, **kwargs):
+    def after_delete(self, *args: Any, **kwargs: Any) -> None:
         award = self._award
         award_pk = self._award_pk
         person = self._person
@@ -2112,7 +2131,7 @@ class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
                 f"Error when running instructor badge awarded strategy. {exc}",
             )
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("badge_details", args=[self.get_object().badge.name])
 
 
@@ -2128,21 +2147,21 @@ class AwardDelete(RedirectSupportMixin, MockAwardDelete):
 # ------------------------------------------------------------
 
 
-class AllBadges(OnlyForAdminsMixin, AMYListView):
+class AllBadges(OnlyForAdminsMixin, AMYListView[Badge]):
     context_object_name = "all_badges"
     queryset = Badge.objects.order_by("name").annotate(num_awarded=Count("award"))
     template_name = "workshops/all_badges.html"
     title = "All Badges"
 
 
-class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
+class BadgeDetails(OnlyForAdminsMixin, AMYDetailView[Badge]):
     queryset = Badge.objects.all()
     context_object_name = "badge"
     template_name = "workshops/badge.html"
     slug_field = "name"
     slug_url_kwarg = "badge_name"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         context["title"] = "Badge {0}".format(self.object)
@@ -2167,7 +2186,7 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
 # ------------------------------------------------------------
 
 
-def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
+def _workshop_staff_query(lat: int | None = None, lng: int | None = None) -> QuerySet[Person]:
     """This query is used in two views: workshop staff searching and its CSV
     results. Thanks to factoring-out this function, we're now quite certain
     that the results in both of the views are the same."""
@@ -2225,7 +2244,7 @@ def _workshop_staff_query(lat=None, lng=None) -> QuerySet[Person]:
 
 
 @admin_required
-def workshop_staff(request):
+def workshop_staff(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Search for workshop staff."""
 
     # read data from form, if it was submitted correctly
@@ -2261,7 +2280,7 @@ def workshop_staff(request):
 
 
 @admin_required
-def workshop_staff_csv(request):
+def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Generate CSV of workshop staff search results."""
 
     # read data from form, if it was submitted correctly
@@ -2325,7 +2344,7 @@ def workshop_staff_csv(request):
 
 
 @admin_required
-def object_changes(request, version_id):
+def object_changes(request: AuthenticatedHttpRequest, version_id: int) -> HttpResponse:
     """This view is highly inspired by `HistoryCompareDetailView` from
     `django-reversion-compare`:
 
@@ -2355,7 +2374,7 @@ def object_changes(request, version_id):
     # set default ordering: latest first
     history_latest_first = True
 
-    def _order(queryset):
+    def _order(queryset: QuerySet[Version]) -> QuerySet[Version]:
         """Applies the correct ordering to the given version queryset."""
         return queryset.order_by("-pk" if history_latest_first else "pk")
 

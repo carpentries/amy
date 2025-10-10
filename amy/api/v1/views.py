@@ -218,7 +218,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     """List many events or retrieve only one."""
 
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset = Event.objects.select_related("host", "administrator").prefetch_related("tags").attendance()
+    queryset = Event.objects.attendance().select_related("host", "administrator").prefetch_related("tags")
     serializer_class = EventSerializer
     lookup_field = "slug"
     pagination_class = StandardResultsSetPagination

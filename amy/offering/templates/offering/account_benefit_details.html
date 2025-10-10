@@ -1,0 +1,72 @@
+{% extends "base_nav.html" %}
+
+{% block content %}
+
+<div class="edit-object">
+  {% if perms.offering.change_accountbenefit %}
+    <a class="btn btn-primary" href="{% url 'account-benefit-update' object.pk %}">Edit</a>
+  {% else %}
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+  {% endif %}
+  <div class="float-right">
+    {% if perms.offering.delete_accountbenefit %}
+    <form action="{% url 'account-benefit-delete' object.pk %}" onsubmit='return confirm("Are you sure you wish to remove this account benefit?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <a class="btn btn-danger disabled" disabled href="#">Delete</a>
+    {% endif %}
+  </div>
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th>Account:</th>
+    <td><a href="{{ object.account.get_absolute_url }}">{{ object.account }}</a></td>
+  </tr>
+  <tr>
+    <th>Partnership:</th>
+    <td>
+      {% if object.partnership %}
+      <a href="{{ object.partnership.get_absolute_url }}">{{ object.partnership }}</a>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Benefit:</th>
+    <td><a href="{{ object.benefit.get_absolute_url }}">{{ object.benefit }}</a></td>
+  </tr>
+  <tr>
+    <th>Curriculum:</th>
+    <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
+  </tr>
+  <tr>
+    <th>Start date:</th>
+    <td>{{ object.start_date }}</td>
+  </tr>
+  <tr>
+    <th>End date:</th>
+    <td>{{ object.end_date }}</td>
+  </tr>
+  <tr>
+    <th>Is currently active:</th>
+    <td>{{ object.active|yesno }}</td>
+  </tr>
+  <tr>
+    <th>Allocation:</th>
+    <td>{{ object.allocation }}</td>
+  </tr>
+  <tr>
+    <th>Created at:</th>
+    <td>{{ object.created_at }}</td>
+  </tr>
+  <tr>
+    <th>Last updated at:</th>
+    <td>{{ object.last_updated_at }}</td>
+  </tr>
+</table>
+
+{% endblock %}

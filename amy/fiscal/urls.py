@@ -48,4 +48,46 @@ urlpatterns = [
             ]
         ),
     ),
+    # consortiums
+    path(
+        "consortiums/",
+        include(
+            [
+                path("", views.ConsortiumList.as_view(), name="consortium-list"),  # type: ignore
+                path("create/", views.ConsortiumCreate.as_view(), name="consortium-create"),  # type: ignore
+            ]
+        ),
+    ),
+    path(
+        "consortiums/<int:pk>/",
+        include(
+            [
+                path("", views.ConsortiumDetails.as_view(), name="consortium-details"),  # type: ignore
+                path("edit/", views.ConsortiumUpdate.as_view(), name="consortium-update"),  # type: ignore
+                path("delete/", views.ConsortiumDelete.as_view(), name="consortium-delete"),  # type: ignore
+            ]
+        ),
+    ),
+    # partnerships
+    path(
+        "partnerships/",
+        include(
+            [
+                path("", views.PartnershipList.as_view(), name="partnership-list"),  # type: ignore
+                path("create/", views.PartnershipCreate.as_view(), name="partnership-create"),  # type: ignore
+            ]
+        ),
+    ),
+    path(
+        "partnerships/<int:pk>/",
+        include(
+            [
+                path("", views.PartnershipDetails.as_view(), name="partnership-details"),  # type: ignore
+                path("edit/", views.PartnershipUpdate.as_view(), name="partnership-update"),  # type: ignore
+                path("delete/", views.PartnershipDelete.as_view(), name="partnership-delete"),  # type: ignore
+                path("extend/", views.PartnershipExtend.as_view(), name="partnership-extend"),  # type: ignore
+                path("roll-over/", views.PartnershipRollOver.as_view(), name="partnership-roll-over"),  # type: ignore
+            ]
+        ),
+    ),
 ]

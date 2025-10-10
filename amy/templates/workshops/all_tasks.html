@@ -15,8 +15,6 @@
         <tr>
             <th>Event</th>
             <th>Person</th>
-            <th>Title</th>
-            <th>URL</th>
             <th>Role</th>
             <th class="additional-links"></th>
         </tr>
@@ -28,8 +26,6 @@
                 {% consent_agreed task.person.active_consents TermEnum.MAY_CONTACT as may_contact %}
                 {% if task.person.email and may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}
             </td>
-            <td>{{ task.title|default:"—" }}</td>
-            <td>{{ task.url|default:"—"|urlize_newtab }}</td>
             <td>{{ task.role }}</td>
             <td>
                 <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><i class="fas fa-info-circle"></i></a>

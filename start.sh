@@ -12,6 +12,7 @@ ls -l /root/.local/bin
 /root/.local/bin/poetry run python manage.py runscript seed_training_requirements
 /root/.local/bin/poetry run python manage.py runscript seed_involvements
 /root/.local/bin/poetry run python manage.py runscript seed_emails
+/root/.local/bin/poetry run python manage.py runscript seed_event_categories
 
 /root/.local/bin/poetry run python manage.py create_superuser
 

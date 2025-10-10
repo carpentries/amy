@@ -70,7 +70,6 @@ package-mode = false
 
 [tool.black]
 line-length = 120
-force-exclude = "migrations"
 
 [tool.isort]
 profile = "black"
@@ -87,6 +86,7 @@ known_first_party = [
   "extforms",
   "extrequests",
   "fiscal",
+  "offering",
   "recruitment",
   "reports",
   "trainings",
@@ -105,9 +105,11 @@ module = [
   "anymail.*",
   "cairosvg.*",
   "crispy_forms.*",
+  "debug_toolbar.*",
   "django_comments.*",
   "django_filters.*",
   "flags.*",
+  "knox.*",
   "markdownx.*",
   "reversion.*",
   "reversion_compare.*",

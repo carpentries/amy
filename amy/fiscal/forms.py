@@ -1,20 +1,22 @@
+from typing import Any, TypeVar, cast
 from urllib.parse import urlparse, urlunparse
 
 from crispy_forms.layout import HTML, Div
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import Model
 from django.dispatch import receiver
 from django.urls import reverse
 from markdownx.fields import MarkdownxFormField
 
 from fiscal.fields import FlexibleSplitArrayField
-from fiscal.models import MembershipTask
+from fiscal.models import Consortium, MembershipTask, Partnership
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import ModelSelect2MultipleWidget, ModelSelect2Widget
-from workshops.forms import BootstrapHelper, form_saved_add_comment
+from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, form_saved_add_comment
 from workshops.models import Member, Membership, Organization
 from workshops.signals import create_comment_signal
 
@@ -26,7 +28,7 @@ SIDEBAR_DAL_WIDTH = {
 }
 
 
-class OrganizationForm(forms.ModelForm):
+class OrganizationForm(forms.ModelForm[Organization]):
     domain = forms.URLField(widget=forms.TextInput)
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
@@ -44,9 +46,9 @@ class OrganizationForm(forms.ModelForm):
             "affiliated_organizations": ModelSelect2MultipleWidget(data_view="organization-lookup"),
         }
 
-    def clean_domain(self):
+    def clean_domain(self) -> str:
         """Convert text into URL without scheme (http/https/etc)."""
-        cleaned = self.cleaned_data["domain"]
+        cleaned = cast(str, self.cleaned_data["domain"])
 
         parsed_url = urlparse(cleaned)
         unparsed_url = urlunparse(parsed_url._replace(scheme="", params="", fragment=""))
@@ -67,13 +69,13 @@ class OrganizationCreateForm(OrganizationForm):
         help_text="This will be added to comments after the organization " "is created.",
         widget=forms.Textarea,
         required=False,
-    )
+    )  # type: ignore
 
     class Meta(OrganizationForm.Meta):
         fields = OrganizationForm.Meta.fields.copy()
         fields.append("comment")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> Any:
         res = super().save(*args, **kwargs)
 
         create_comment_signal.send(
@@ -86,7 +88,7 @@ class OrganizationCreateForm(OrganizationForm):
         return res
 
 
-class MembershipForm(forms.ModelForm):
+class MembershipForm(forms.ModelForm[Membership]):
     helper = BootstrapHelper(add_cancel_button=False)
     extensions = FlexibleSplitArrayField(
         forms.IntegerField(),
@@ -124,13 +126,15 @@ class MembershipForm(forms.ModelForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
         ]
 
-    def __init__(self, *args, show_rolled_over=False, show_rolled_from_previous=False, **kwargs):
+    def __init__(
+        self, *args: Any, show_rolled_over: bool = False, show_rolled_from_previous: bool = False, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         instance = kwargs.get("instance")
 
         if instance and "extensions" in self.fields:
             # Recalculate number of subwidgets for each of the extensions.
-            self.fields["extensions"].change_size(len(instance.extensions))
+            self.fields["extensions"].change_size(len(instance.extensions))  # type: ignore
 
         # When editing membership, allow to edit rolled_over or rolled_from_previous
         # values when membership was rolled over or rolled from other membership.
@@ -144,7 +148,7 @@ class MembershipForm(forms.ModelForm):
             del self.fields["inhouse_instructor_training_seats_rolled_from_previous"]
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
 
         # add warning alert for dates falling within next 2-3 months
         INVALID_AGREEMENT_DURATION_WARNING = (
@@ -153,9 +157,9 @@ class MembershipForm(forms.ModelForm):
         pos_index = self.helper.layout.fields.index("agreement_end")
         self.helper.layout.insert(
             pos_index + 1,
-            Div(
-                Div(
-                    HTML(INVALID_AGREEMENT_DURATION_WARNING),
+            Div(  # type: ignore
+                Div(  # type: ignore
+                    HTML(INVALID_AGREEMENT_DURATION_WARNING),  # type: ignore
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="agreement_duration_warning",
@@ -163,7 +167,7 @@ class MembershipForm(forms.ModelForm):
             ),
         )
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 
@@ -171,7 +175,7 @@ class MembershipForm(forms.ModelForm):
         agreement_start = self.cleaned_data.get("agreement_start")
         agreement_end = self.cleaned_data.get("agreement_end")
         try:
-            if agreement_end < agreement_start:
+            if agreement_end < agreement_start:  # type: ignore
                 errors["agreement_end"] = ValidationError("Agreement end date can't be sooner than the start date.")
         except TypeError:
             pass
@@ -192,7 +196,7 @@ class MembershipForm(forms.ModelForm):
 
 
 class MembershipCreateForm(MembershipForm):
-    comment = MarkdownxFormField(
+    comment = MarkdownxFormField(  # type: ignore
         label="Comment",
         help_text="This will be added to comments after the membership is created.",
         widget=forms.Textarea,
@@ -218,7 +222,7 @@ class MembershipCreateForm(MembershipForm):
     class Media:
         js = ("membership_create.js",)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.fields["consortium"].help_text += (
@@ -228,7 +232,7 @@ class MembershipCreateForm(MembershipForm):
             "membership."
         ).format(reverse("organization_add"))
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> Any:
         res = super().save(*args, **kwargs)
 
         create_comment_signal.send(
@@ -242,7 +246,8 @@ class MembershipCreateForm(MembershipForm):
 
 
 class MembershipRollOverForm(MembershipCreateForm):
-    main_organization = None  # remove the additional field
+    # remove the additional field
+    main_organization = None  # type: ignore
 
     copy_members = forms.BooleanField(
         label="Do you want to automatically copy member organisations from existing " "membership?",
@@ -281,7 +286,7 @@ class MembershipRollOverForm(MembershipCreateForm):
             "comment",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         max_values = kwargs.pop("max_values", {})
         super().__init__(*args, show_rolled_over=True, show_rolled_from_previous=True, **kwargs)
 
@@ -292,14 +297,14 @@ class MembershipRollOverForm(MembershipCreateForm):
             "inhouse_instructor_training_seats_rolled_from_previous",
         ]
         for field in fields:
-            self[field].field.min_value = 0
-            self[field].field.max_value = max_values.get(field, 0)
+            self[field].field.min_value = 0  # type: ignore
+            self[field].field.max_value = max_values.get(field, 0)  # type: ignore
             # widget is already set up at this point, so alter it's attributes
-            self[field].field.widget.attrs["max"] = self[field].field.max_value
+            self[field].field.widget.attrs["max"] = self[field].field.max_value  # type: ignore
             # overwrite any existing validators
             self[field].field.validators = [
-                MinValueValidator(self[field].field.min_value),
-                MaxValueValidator(self[field].field.max_value),
+                MinValueValidator(self[field].field.min_value),  # type: ignore
+                MaxValueValidator(self[field].field.max_value),  # type: ignore
             ]
 
         # disable editing consortium
@@ -310,20 +315,23 @@ class MembershipRollOverForm(MembershipCreateForm):
             self["copy_members"].field.disabled = True
 
 
-class EditableFormsetFormMixin(forms.ModelForm):
+_M = TypeVar("_M", bound=Model)
+
+
+class EditableFormsetFormMixin(forms.ModelForm[_M]):
     EDITABLE = forms.BooleanField(
         label="Change",
         required=False,
         widget=forms.CheckboxInput(attrs={"data-form-editable-check": ""}),
     )
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         if self.has_changed() and not self.cleaned_data["EDITABLE"]:
             raise ValidationError("Form values weren't supposed to be changed.")
         return super().clean()
 
 
-class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
+class MemberForm(EditableFormsetFormMixin[Member], forms.ModelForm[Member]):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(
@@ -365,33 +373,33 @@ class MemberForm(EditableFormsetFormMixin, forms.ModelForm):
             "role": ModelSelect2Widget(data_view="memberrole-lookup"),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper.layout.append("id")
 
-        self.helper_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_deletable.layout.append("id")
         self.helper_deletable.layout.append("DELETE")  # visible; formset adds it
 
-        self.helper_empty_form.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form.layout.append("id")
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
 
-        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form_deletable.layout.append("id")
-        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # hidden
+        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # type: ignore
         # remove EDITABLE checkbox from empty helper deletable form
         pos_index = self.helper_empty_form_deletable.layout.fields.index("EDITABLE")
         self.helper_empty_form_deletable.layout.pop(pos_index)
 
 
-class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
+class MembershipTaskForm(EditableFormsetFormMixin[Membership], forms.ModelForm[Membership]):
     """Form intended to use in formset for creating multiple membership members."""
 
     helper = BootstrapHelper(add_cancel_button=False, form_tag=False, add_submit_button=False)
@@ -422,29 +430,29 @@ class MembershipTaskForm(EditableFormsetFormMixin, forms.ModelForm):
             "role": ModelSelect2Widget(data_view="membershippersonrole-lookup"),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # set up layout objects for the helpers - they're identical except for
         # visibility of the delete checkbox
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper.layout.append("id")
         self.helper.layout.append("DELETE")  # visible; formset adds it
 
-        self.helper_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_deletable.layout.append("id")
         self.helper_deletable.layout.append("DELETE")  # visible; formset adds it
 
-        self.helper_empty_form.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form.layout.append("id")
-        self.helper_empty_form.layout.append(Div("DELETE", css_class="d-none"))  # hidden
+        self.helper_empty_form.layout.append(Div("DELETE", css_class="d-none"))  # type: ignore
         # remove EDITABLE checkbox from empty helper form
         pos_index = self.helper_empty_form.layout.fields.index("EDITABLE")
         self.helper_empty_form.layout.pop(pos_index)
 
-        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form_deletable.layout = self.helper.build_default_layout(self)  # type: ignore
         self.helper_empty_form_deletable.layout.append("id")
-        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # hidden
+        self.helper_empty_form_deletable.layout.append(Div("DELETE", css_class="d-none"))  # type: ignore
 
 
 class MembershipExtensionForm(forms.Form):
@@ -465,19 +473,19 @@ class MembershipExtensionForm(forms.Form):
         ),
         widget=forms.Textarea,
         required=False,
-    )
+    )  # type: ignore
 
     helper = BootstrapHelper()
 
     class Media:
-        js = ("membership_extend.js", "date_yyyymmdd.js")
+        js = ("agreement_extension.js", "date_yyyymmdd.js")
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 
         # validate new agreement end date is later than original agreement end date
-        agreement_end = self.cleaned_data.get("agreement_end")
+        agreement_end = self.cleaned_data["agreement_end"]
         new_agreement_end = self.cleaned_data.get("new_agreement_end")
         try:
             if new_agreement_end <= agreement_end:
@@ -505,3 +513,107 @@ form_saved_add_comment = receiver(
     create_comment_signal,
     sender=MembershipCreateForm,
 )(form_saved_add_comment)
+
+
+# ----------------------------------------------------------
+# Consortiums
+
+
+class ConsortiumForm(forms.ModelForm[Consortium]):
+    organisations = forms.ModelMultipleChoiceField(
+        label="Organisations",
+        required=False,
+        queryset=Organization.objects.all(),
+        widget=ModelSelect2MultipleWidget(
+            data_view="organization-lookup",
+            attrs=SELECT2_SIDEBAR,
+        ),
+    )
+
+    class Meta:
+        model = Consortium
+        fields = [
+            "name",
+            "description",
+            "organisations",
+        ]
+
+
+# ----------------------------------------------------------
+# Partnerships
+
+
+class PartnershipForm(forms.ModelForm[Partnership]):
+    class Meta:
+        model = Partnership
+        fields = [
+            "name",
+            "tier",
+            "agreement_start",
+            "agreement_end",
+            "agreement_link",
+            "registration_code",
+            "public_status",
+            "partner_consortium",
+            "partner_organisation",
+        ]
+
+
+class PartnershipExtensionForm(forms.Form):
+    agreement_start = forms.DateField(disabled=True, required=False)
+    agreement_end = forms.DateField(disabled=True, required=False)
+    new_agreement_end = forms.DateField(required=True)
+    extension = forms.IntegerField(
+        disabled=True,
+        required=False,
+        help_text="Number of days the agreement will be extended.",
+    )
+    comment = MarkdownxFormField(
+        label="Comment",
+        help_text=(
+            "This will be added to comments after the partnership is extended. Beginning"
+            " of the comment will be prefixed with information about length of the "
+            "extension."
+        ),
+        widget=forms.Textarea,
+        required=False,
+    )  # type: ignore
+
+    helper = BootstrapHelper()
+
+    class Media:
+        js = ("agreement_extension.js", "date_yyyymmdd.js")
+
+    def clean(self) -> None:
+        super().clean()
+        errors = dict()
+
+        # validate new agreement end date is later than original agreement end date
+        agreement_end = self.cleaned_data["agreement_end"]
+        new_agreement_end = self.cleaned_data["new_agreement_end"]
+        try:
+            if new_agreement_end <= agreement_end:
+                errors["new_agreement_end"] = ValidationError(
+                    "New agreement end date must be later than original agreement end date."
+                )
+        except TypeError:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
+
+
+class PartnershipRollOverForm(PartnershipForm):
+    class Meta(PartnershipForm.Meta):
+        model = Partnership
+        fields = [
+            "name",
+            "tier",
+            "agreement_start",
+            "agreement_end",
+            "agreement_link",
+            "registration_code",
+            "public_status",
+            "partner_consortium",
+            "partner_organisation",
+        ]

@@ -1,0 +1,163 @@
+{% extends "base_nav.html" %}
+{% load links attrs %}
+
+{% block content %}
+
+{% if object|one2one_exists:"rolled_from_partnership" %}
+<div class="alert alert-info" role="alert">
+  Rolled over from <a href="{{ object.rolled_from_partnership.get_absolute_url }}">{{ object.rolled_from_partnership }}</a>.
+</div>
+{% endif %}
+{% if object.rolled_to_partnership %}
+<div class="alert alert-info" role="alert">
+  Rolled over to <a href="{{ object.rolled_to_partnership.get_absolute_url }}">{{ object.rolled_to_partnership }}</a>.
+</div>
+{% endif %}
+
+<div class="edit-object">
+  {% if perms.fiscal.change_partnership %}
+    <a class="btn btn-primary" href="{% url 'partnership-update' object.pk %}">Edit</a>
+  {% else %}
+    <a class="btn btn-primary disabled" disabled href="#">Edit</a>
+  {% endif %}
+  <div class="float-right">
+    {% if perms.fiscal.delete_partnership %}
+    <form action="{% url 'partnership-delete' object.pk %}" onsubmit='return confirm("Are you sure you wish to remove this partnership?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <a class="btn btn-danger disabled" disabled href="#">Delete</a>
+    {% endif %}
+  </div>
+</div>
+
+<table class="table table-striped">
+  <tr>
+    <th>Name:</th>
+    <td>{{ object.name }}</td>
+  </tr>
+  <tr>
+    <th>Organisation:</th>
+    <td>
+      {% if object.partner_organisation %}
+        <a href="{{ object.partner_organisation.get_absolute_url }}">{{ object.partner_organisation }}</a>
+      {% else%}
+        &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Consortium:</th>
+    <td>
+      {% if object.partner_consortium %}
+        <a href="{{ object.partner_consortium.get_absolute_url }}">{{ object.partner_consortium }}</a>
+      {% else%}
+        &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Account:</th>
+    <td>
+      {% if object.account %}
+      <a href="{{ object.account.get_absolute_url }}">{{ object.account }}</a>
+      {% else %}
+      <a href="{% url 'account-create' %}">Create account</a>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Tier:</th>
+    <td>{{ object.tier }}</td>
+  </tr>
+  <tr>
+    <th>Credits (used / allowed):</th>
+    <td>
+      {% if not object.account %}
+        No account
+      {% else %}
+        {{ object.credits_used }} / {{ object.credits }}
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Agreement start:</th>
+    <td>{{ object.agreement_start }}</td>
+  </tr>
+  <tr>
+    <th>Agreement end:</th>
+    <td>{{ object.agreement_end }}</td>
+  </tr>
+  <tr>
+    <th>Agreement link:</th>
+    <td>{{ object.agreement_link|urlize_newtab }}</td>
+  </tr>
+  <tr>
+    <th>Registration code:</th>
+    <td>
+      {% if object.registration_code %}
+      <code>{{ object.registration_code }}</code>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Extensions:</th>
+    <td>
+      {% if not object.extensions %}
+        None
+      {% else %}
+        By {% for days in object.extensions %}{{ days }}{% if not forloop.last %}, {% endif %}{% endfor %} days
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Rolled to partnership:</th>
+    <td>
+      {% if object.rolled_to_partnership %}
+        <a href="{{ object.rolled_to_partnership.get_absolute_url }}">{{ object.rolled_to_partnership }}</a>
+      {% else%}
+        &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Public status:</th>
+    <td>{{ object.get_public_status_display }}</td>
+  </tr>
+</table>
+
+{% comment %} Add comment list {% endcomment %}
+
+<div class="clearfix">
+  <div class="edit-object float-left">
+    <div class="btn-group" role="group">
+      {% if perms.fiscal.change_partnership %}
+      <a href="{% url 'partnership-update' partnership.id %}" class="btn btn-primary">Edit</a>
+      <a href="{% url 'partnership-extend' partnership.id %}" class="btn btn-secondary">Extend</a>
+      {% else %}
+      <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
+      {% endif %}
+      {% if perms.fiscal.create_partnership and perms.fiscal.change_partnership and partnership.rolled_to_partnership is None %}
+      <a href="{% url 'partnership-roll-over' partnership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
+      {% else %}
+      <a class="btn btn-success disabled" aria-disabled="true">Create new &amp; roll-over</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="delete-object float-right">
+    {% if perms.fiscal.delete_partnership %}
+    <form action="{% url 'partnership-delete' partnership.id %}" onsubmit='return confirm("Are you sure you wish to remove this partnership?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {% else %}
+    <button class="btn btn-danger disabled" aria-disabled="true">Delete</button>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

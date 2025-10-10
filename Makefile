@@ -25,13 +25,14 @@ test_migrations:
 
 ## dev_database : re-make database using saved data
 dev_database :
-	${MANAGE} reset_db --skip-checks
+	${MANAGE} reset_db --close-sessions --no-input
 	${MANAGE} migrate
 	${MANAGE} runscript seed_badges
 	${MANAGE} runscript seed_communityroles
 	${MANAGE} runscript seed_training_requirements
 	${MANAGE} runscript seed_involvements
 	${MANAGE} runscript seed_emails
+	${MANAGE} runscript seed_event_categories
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions

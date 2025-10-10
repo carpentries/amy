@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 from django.conf import settings
 
@@ -8,7 +9,7 @@ WORD_SPLIT = re.compile(r"""([\s<>"']+)""")
 SIMPLE_EMAIL = re.compile(r"^\S+@\S+\.\S+$")
 
 
-def find_emails(text):
+def find_emails(text: str) -> list[str]:
     """Find emails in the text.  This is based on Django's own
     `django.utils.html.urlize`."""
     # Split into tokens in case someone uses for example
@@ -27,7 +28,7 @@ def find_emails(text):
     return emails
 
 
-def match_notification_email(obj):
+def match_notification_email(obj: Any) -> list[str]:
     """Try to match applied object to a set of criteria (defined in
     `settings.py`)."""
     results = []

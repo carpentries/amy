@@ -1,14 +1,16 @@
 from datetime import date, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch, QuerySet
 from django.db.models.functions import Now
 from django.forms import BaseModelFormSet, modelformset_factory
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
+from flags.views import FlaggedViewMixin
 
 from communityroles.models import CommunityRole
 from emails.actions.exceptions import EmailStrategyException
@@ -29,11 +31,18 @@ from emails.types import StrategyEnum
 from extcomments.utils import add_comment_for_object
 from fiscal.base_views import (
     GetMembershipMixin,
+    GetPartnershipMixin,
     MembershipFormsetView,
     UnquoteSlugMixin,
 )
-from fiscal.filters import MembershipFilter, OrganizationFilter
+from fiscal.filters import (
+    ConsortiumFilter,
+    MembershipFilter,
+    OrganizationFilter,
+    PartnershipFilter,
+)
 from fiscal.forms import (
+    ConsortiumForm,
     MemberForm,
     MembershipCreateForm,
     MembershipExtensionForm,
@@ -42,8 +51,13 @@ from fiscal.forms import (
     MembershipTaskForm,
     OrganizationCreateForm,
     OrganizationForm,
+    PartnershipExtensionForm,
+    PartnershipForm,
+    PartnershipRollOverForm,
 )
-from fiscal.models import MembershipTask
+from fiscal.models import Consortium, MembershipTask, Partnership, PartnershipTier
+from offering.models import Account, AccountBenefit
+from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -55,6 +69,9 @@ from workshops.base_views import (
 )
 from workshops.models import Award, Member, MemberRole, Membership, Organization, Task
 from workshops.utils.access import OnlyForAdminsMixin
+
+REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
+
 
 # ------------------------------------------------------------
 # Organization related views
@@ -78,7 +95,7 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView[Organization]):
     title = "All Organizations"
 
 
-class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
+class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView[Organization]):
     queryset = Organization.objects.prefetch_related("memberships")
     context_object_name = "organization"
     template_name = "fiscal/organization.html"
@@ -104,7 +121,9 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
+class OrganizationCreate(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[OrganizationCreateForm, Organization]
+):
     permission_required = "workshops.add_organization"
     model = Organization
     form_class = OrganizationCreateForm
@@ -117,8 +136,26 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateV
         }
         return initial
 
+    def form_valid(self, form: OrganizationCreateForm) -> HttpResponse:
+        result = super().form_valid(form)
 
-class OrganizationUpdate(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+        # Create accompanying Account. This is part of Service Offering 2025 project, but
+        # it doesn't need to be behind a feature flag: Account can be created w/o feature flag,
+        # but it won't show up for the user.
+        content_type = ContentType.objects.get_for_model(Organization)
+        assert self.object  # for mypy
+        Account.objects.get_or_create(
+            generic_relation_content_type=content_type,
+            generic_relation_pk=self.object.pk,
+            defaults=dict(account_type=Account.AccountTypeChoices.ORGANISATION),
+        )
+
+        return result
+
+
+class OrganizationUpdate(
+    UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[OrganizationForm, Organization]
+):
     permission_required = "workshops.change_organization"
     model = Organization
     form_class = OrganizationForm
@@ -127,7 +164,12 @@ class OrganizationUpdate(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequire
     template_name = "generic_form_with_comments.html"
 
 
-class OrganizationDelete(UnquoteSlugMixin, OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class OrganizationDelete(
+    UnquoteSlugMixin,
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYDeleteView[Organization, GenericDeleteForm[Organization]],
+):
     model = Organization
     slug_field = "domain"
     slug_url_kwarg = "org_domain"
@@ -148,7 +190,7 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView[Membership]):
     title = "All Memberships"
 
 
-class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
+class MembershipDetails(OnlyForAdminsMixin, AMYDetailView[Membership]):
     prefetch_awards = Prefetch("person__award_set", queryset=Award.objects.select_related("badge"))
     queryset = Membership.objects.prefetch_related(
         Prefetch(
@@ -183,7 +225,7 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
 class MembershipCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
-    AMYCreateView,
+    AMYCreateView[MembershipCreateForm, Membership],
 ):
     permission_required = [
         "workshops.add_membership",
@@ -227,7 +269,9 @@ class MembershipCreate(
         return reverse(path, args=[self.object.pk])
 
 
-class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView):
+class MembershipUpdate(
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView[MembershipForm, Membership]
+):
     permission_required = "workshops.change_membership"
     model = Membership
     object: Membership
@@ -382,7 +426,9 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupp
         return result
 
 
-class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
+class MembershipDelete(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Membership, GenericDeleteForm[Membership]]
+):
     model = Membership
     object: Membership
     permission_required = "workshops.delete_membership"
@@ -658,14 +704,16 @@ class MembershipExtend(
         return self.membership.get_absolute_url()
 
 
-class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView):
-    permission_required = ["workshops.create_membership", "workshops.change_membership"]
+class MembershipCreateRollOver(
+    OnlyForAdminsMixin, PermissionRequiredMixin, GetMembershipMixin, AMYCreateView[MembershipRollOverForm, Membership]
+):
+    permission_required = ["workshops.add_membership", "workshops.change_membership"]
     template_name = "generic_form.html"
     model = Membership
     object: Membership
     form_class = MembershipRollOverForm
     pk_url_kwarg = "membership_id"
-    success_message = 'Membership "{membership}" was successfully rolled-over to a new ' 'membership "{new_membership}"'
+    success_message = 'Membership "{membership}" was successfully rolled-over to a new membership "{new_membership}"'
 
     def membership_queryset_kwargs(self) -> dict[str, Any]:
         # Prevents already rolled-over memberships from rolling-over again.
@@ -820,6 +868,261 @@ class MembershipCreateRollOver(OnlyForAdminsMixin, PermissionRequiredMixin, GetM
             )
 
         return result
+
+    def get_success_url(self) -> str:
+        return self.object.get_absolute_url()
+
+
+# -----------------------------------------------------------------
+
+
+class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_consortium"]
+    template_name = "fiscal/consortium_list.html"
+    queryset = Consortium.objects.order_by("-created_at")
+    title = "Consortiums"
+    filter_class = ConsortiumFilter
+
+
+class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_consortium"]
+    template_name = "fiscal/consortium_details.html"
+    model = Consortium
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class ConsortiumCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[ConsortiumForm, Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.add_consortium"]
+    template_name = "fiscal/consortium_create.html"
+    form_class = ConsortiumForm
+    model = Consortium
+    object: Consortium
+    title = "Create a new consortium"
+
+
+class ConsortiumUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[ConsortiumForm, Consortium]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_consortium", "fiscal.change_consortium"]
+    template_name = "fiscal/consortium_edit.html"
+    form_class = ConsortiumForm
+    model = Consortium
+    object: Consortium
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class ConsortiumDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Consortium, GenericDeleteForm[Consortium]]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.delete_consortium"]
+    model = Consortium
+
+    def get_success_url(self) -> str:
+        return reverse("consortium-list")
+
+
+# -----------------------------------------------------------------
+
+
+class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_partnership"]
+    template_name = "fiscal/partnership_list.html"
+    queryset = Partnership.objects.credits_usage_annotation().order_by("-created_at")
+    title = "Partnerships"
+    filter_class = PartnershipFilter
+
+
+class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_partnership"]
+    template_name = "fiscal/partnership_details.html"
+    queryset = Partnership.objects.credits_usage_annotation()
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[PartnershipForm, Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.add_partnership"]
+    template_name = "fiscal/partnership_create.html"
+    form_class = PartnershipForm
+    model = Partnership
+    object: Partnership
+    title = "Create a new partnership"
+
+    def form_valid(self, form: PartnershipForm) -> HttpResponse:
+        self.object = form.save(commit=False)
+
+        # Create a new account for the new partnership, if needed
+        account_type = (
+            Account.AccountTypeChoices.ORGANISATION
+            if self.object.partner_organisation
+            else Account.AccountTypeChoices.CONSORTIUM
+        )
+        account_object = self.object.partner_organisation or self.object.partner_consortium
+        assert account_object  # for mypy
+        content_type = ContentType.objects.get_for_model(account_object)
+        # Quite likely this account already exists
+        account, _ = Account.objects.get_or_create(
+            generic_relation_content_type=content_type,
+            generic_relation_pk=account_object.pk,
+            defaults=dict(account_type=account_type),
+        )
+
+        tier = cast(PartnershipTier, form.cleaned_data["tier"])
+        self.object.credits = tier.credits
+        self.object.account = account
+        self.object.save()
+
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class PartnershipUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[PartnershipForm, Partnership]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.view_partnership", "fiscal.change_partnership"]
+    template_name = "fiscal/partnership_edit.html"
+    form_class = PartnershipForm
+    model = Partnership
+    object: Partnership
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["title"] = str(self.object)
+        return context
+
+
+class PartnershipDelete(
+    OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Partnership, GenericDeleteForm[Partnership]]
+):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.delete_partnership"]
+    model = Partnership
+
+    def get_success_url(self) -> str:
+        return reverse("partnership-list")
+
+
+class PartnershipExtend(OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixin, FormView[PartnershipExtensionForm]):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    form_class = PartnershipExtensionForm
+    template_name = "generic_form.html"
+    permission_required = "fiscal.change_partnership"
+    comment = "Extended partnership by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
+    request: AuthenticatedHttpRequest
+
+    def get_initial(self) -> dict[str, Any]:
+        return {
+            "agreement_start": self.partnership.agreement_start,
+            "agreement_end": self.partnership.agreement_end,
+            "extension": 0,
+            "new_agreement_end": self.partnership.agreement_end,
+        }
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        if "title" not in kwargs:
+            kwargs["title"] = f"Extend partnership {self.partnership}"
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form: PartnershipExtensionForm) -> HttpResponse:
+        agreement_end = form.cleaned_data["agreement_end"]
+        new_agreement_end = form.cleaned_data["new_agreement_end"]
+        days = (new_agreement_end - agreement_end).days
+        comment = form.cleaned_data["comment"]
+        self.partnership.agreement_end = new_agreement_end
+        self.partnership.extensions.append(days)
+        self.partnership.save()
+
+        # Add a comment "Extended partnership by X days on DATE" on user's behalf.
+        add_comment_for_object(
+            self.partnership,
+            self.request.user,
+            self.comment.format(
+                days=days,
+                date=date.today(),
+                new_date=new_agreement_end,
+                comment=comment,
+            ),
+        )
+
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        return self.partnership.get_absolute_url()
+
+
+class PartnershipRollOver(
+    OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixin, AMYCreateView[PartnershipRollOverForm, Partnership]
+):
+    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    permission_required = ["fiscal.add_partnership", "fiscal.change_partnership"]
+    template_name = "generic_form.html"
+    model = Partnership
+    object: Partnership
+    form_class = PartnershipRollOverForm
+    success_message = (
+        'Partnership "{partnership}" was successfully rolled-over to a new partnership "{new_partnership}"'
+    )
+
+    def partnership_queryset_kwargs(self) -> dict[str, Any]:
+        # Prevents already rolled-over partnerships from rolling-over again.
+        return dict(rolled_to_partnership__isnull=True)
+
+    def get_success_message(self, cleaned_data: dict[str, Any]) -> str:
+        return self.success_message.format(
+            cleaned_data,
+            partnership=str(self.partnership),
+            new_partnership=str(self.object),
+        )
+
+    def get_initial(self) -> Dict[str, Any]:
+        return {
+            "name": self.partnership.name,
+            "tier": self.partnership.tier,
+            "agreement_start": self.partnership.agreement_end + timedelta(days=1),
+            "agreement_end": date(
+                self.partnership.agreement_end.year + 1,
+                self.partnership.agreement_end.month,
+                self.partnership.agreement_end.day,
+            ),
+            "agreement_link": self.partnership.agreement_link,
+            "registration_code": self.partnership.registration_code,
+            "public_status": self.partnership.public_status,
+            "partner_consortium": self.partnership.partner_consortium,
+            "partner_organisation": self.partnership.partner_organisation,
+        }
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        kwargs["title"] = f"Create new partnership from {self.partnership}"
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form: PartnershipRollOverForm) -> HttpResponse:
+        self.object = form.save(commit=False)
+        # Rewrite credits from "parent" partnership because it's the same tier
+        self.object.credits = self.partnership.credits or 0
+        # Rewrite account from "parent" partnership
+        self.object.account = self.partnership.account
+        self.object.save()
+
+        # Freeze benefits for "parent" partnership
+        AccountBenefit.objects.filter(account=self.partnership.account).update(frozen=True)
+
+        self.partnership.rolled_to_partnership = self.object
+        self.partnership.save()
+
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self) -> str:
         return self.object.get_absolute_url()

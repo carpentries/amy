@@ -1,0 +1,48 @@
+{% extends "base_nav_sidebar.html" %}
+{% load pagination %}
+
+{% block content %}
+  {% if perms.fiscal.add_partnership %}
+  <p><a href="{% url 'partnership-create' %}" class="btn btn-success">New partnership</a></p>
+  {% else %}
+  <p><a href="#" class="btn btn-success disabled">New partnership</a></p>
+  {% endif %}
+
+  {% if object_list %}
+    <table class="table table-striped">
+      <tr>
+        <th>Name</th>
+        <th>Organisation / Consortium</th>
+        <th>Tier</th>
+        <th>Credits (used / allowed)</th>
+        <th>Dates</th>
+      </tr>
+      {% for object in object_list %}
+      <tr>
+        <td><a href="{{ object.get_absolute_url }}">{{ object.name }}</a></td>
+        <td>
+          {% if object.partner_consortium %}
+            <a href="{{ object.partner_consortium.get_absolute_url }}">{{ object.partner_consortium }}</a> (consortium)
+          {% elif object.partner_organisation %}
+            <a href="{{ object.partner_organisation.get_absolute_url }}">{{ object.partner_organisation }}</a>
+          {% else %}
+            &mdash;
+          {% endif %}
+        </td>
+        <td>{{ object.tier }}</td>
+        <td>
+          {% if not object.account %}
+            No account
+          {% else %}
+            {{ object.credits_used }} / {{ object.credits }}
+          {% endif %}
+        </td>
+        <td>{{ object.agreement_start|date:"Y-m-d" }} &mdash; {{ object.agreement_end|date:"Y-m-d" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% pagination object_list %}
+  {% else %}
+    <p>No partnerships.</p>
+  {% endif %}
+{% endblock %}

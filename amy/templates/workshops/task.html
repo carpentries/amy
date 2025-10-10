@@ -2,17 +2,56 @@
 
 {% load revisions %}
 {% load links %}
+{% load feature_flags %}
 
 {% block content %}
+
+{% flag_enabled 'SERVICE_OFFERING' as SERVICE_OFFERING_ENABLED %}
 {% last_modified task %}
 
 <table class="table table-striped">
   <tr><th>Event:</th><td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td></tr>
   <tr><th>Person:</th><td><a href="{{ task.person.get_absolute_url }}">{{ task.person }}</a></td></tr>
   <tr><th>Role:</th><td>{{ task.role }}</td></tr>
-  <tr><th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:</th><td>{% if task.seat_membership %}<a href="{{ task.seat_membership.get_absolute_url }}">{{ task.seat_membership }}</a>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Public or in-house seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:</th><td>{{ task.get_seat_public_display }}</td></tr>
-  <tr><th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i>:</th><td>{{ task.seat_open_training|yesno }}</td></tr>
+  <tr>
+    <th>
+      Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:
+      {% if SERVICE_OFFERING_ENABLED %}
+      <br>
+      <small>Not used with Service Offering 2025 project.</small>
+      {% endif %}
+    </th>
+    <td>{% if task.seat_membership %}<a href="{{ task.seat_membership.get_absolute_url }}">{{ task.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+  </tr>
+  <tr>
+    <th>
+      Public or in-house seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:
+      {% if SERVICE_OFFERING_ENABLED %}
+      <br>
+      <small>Not used with Service Offering 2025 project.</small>
+      {% endif %}
+    </th>
+    <td>{{ task.get_seat_public_display }}</td>
+  </tr>
+  <tr>
+    <th>
+      Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i>:
+      {% if SERVICE_OFFERING_ENABLED %}
+      <br>
+      <small>Not used with Service Offering 2025 project.</small>
+      {% endif %}
+    </th>
+    <td>{{ task.seat_open_training|yesno }}</td>
+  </tr>
+  {% if SERVICE_OFFERING_ENABLED %}
+  <tr>
+    <th>
+      Allocated benefit:<br>
+      <small>Service Offering 2025 project.</small>
+    </th>
+    <td colspan="2">{% if task.allocated_benefit %}<a href="{{ task.allocated_benefit.get_absolute_url }}">{{ task.allocated_benefit }}</a>{% else %}&mdash;{% endif %}</td>
+  </tr>
+  {% endif %}
 </table>
 
 <div class="clearfix">

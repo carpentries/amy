@@ -1,0 +1,34 @@
+{% extends "base_nav_sidebar.html" %}
+{% load pagination %}
+
+{% block content %}
+  {% if perms.offering.add_eventcategory %}
+  <p><a href="{% url 'event-category-create' %}" class="btn btn-success">New event category</a></p>
+  {% else %}
+  <p><a href="#" class="btn btn-success disabled">New event category</a></p>
+  {% endif %}
+
+  {% if object_list %}
+    <table class="table table-striped">
+      <tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Active</th>
+        <th>Created at</th>
+        <th>Last updated at</th>
+      </tr>
+      {% for object in object_list %}
+      <tr>
+        <td><a href="{% url 'event-category-details' object.pk %}">{{ object.name }}</a></td>
+        <td>{{ object.description }}</td>
+        <td>{{ object.active|yesno }}</td>
+        <td>{{ object.created_at }}</td>
+        <td>{{ object.last_updated_at }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% pagination object_list %}
+  {% else %}
+    <p>No event categories.</p>
+  {% endif %}
+{% endblock %}

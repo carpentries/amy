@@ -1,5 +1,6 @@
 {% load navigation feature_flags %}
 {% flag_enabled 'EMAIL_MODULE' as EMAIL_MODULE_ENABLED %}
+{% flag_enabled 'SERVICE_OFFERING' as SERVICE_OFFERING_ENABLED %}
 
 {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow {% if SITE_BANNER_STYLE != 'production' %}navbar-banner-displacement{% endif %}">
@@ -64,6 +65,21 @@
               {% endif %}
             </div>
           </li>
+          {% if SERVICE_OFFERING_ENABLED %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="serviceOfferingDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Service offering</a>
+            <div class="dropdown-menu" aria-labelledby="serviceOfferingDropdown">
+              {% navbar_element "Accounts" "account-list" True %}
+              {% navbar_element "Account benefits" "account-benefit-list" True %}
+              <div class="dropdown-divider"></div>
+              {% navbar_element "Consortiums" "consortium-list" True %}
+              {% navbar_element "Partnerships" "partnership-list" True %}
+              <div class="dropdown-divider"></div>
+              {% navbar_element "Event categories" "event-category-list" True %}
+              {% navbar_element "Benefits" "benefit-list" True %}
+            </div>
+          </li>
+          {% endif %}
         </ul>
         <form class="form-inline my-2 my-lg-0 ml-auto" id="search-form" role="search" method="GET" action="{% url 'search' %}">
           <input class="form-control mx-2" type="search" placeholder="Search" aria-label="Search" name="term" />
