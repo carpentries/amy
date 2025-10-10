@@ -688,6 +688,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         form_tag = kwargs.pop("form_tag", True)
         failed_trainings = kwargs.pop("failed_trainings", False)
+        show_allocated_benefit = kwargs.pop("show_allocated_benefit", False)
         super().__init__(*args, **kwargs)
         bootstrap_kwargs = {
             "add_cancel_button": False,
@@ -698,6 +699,15 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
                 'return confirm("Warning: Trainee failed previous training(s). Are you sure you want to continue?");'
             )
         self.helper = BootstrapHelper(**bootstrap_kwargs)
+        self.helper.layout = Layout(  # type: ignore
+            "event",
+            "person",
+            "role",
+            "seat_membership",
+            "seat_public",
+            "seat_open_training",
+            "allocated_benefit" if show_allocated_benefit else None,
+        )
 
     def clean(self) -> dict[str, Any] | None:
         result = super().clean()

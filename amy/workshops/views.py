@@ -1850,10 +1850,16 @@ class TaskUpdate(
 ):
     permission_required = "workshops.change_task"
     model = Task
-    queryset = Task.objects.select_related("event", "role", "person")
+    queryset = Task.objects.select_related("event", "role", "person", "seat_membership", "allocated_benefit")
     form_class = TaskForm
     pk_url_kwarg = "task_id"
     object: Task
+
+    def get_form_kwargs(self):
+        result = super().get_form_kwargs()
+        # Optionally show field `allocated benefit`
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
+        return result | dict(show_allocated_benefit=show_allocated_benefit)
 
     def form_valid(self, form: TaskForm) -> HttpResponse:
         """Check if RQ job conditions changed, and add/delete jobs if
