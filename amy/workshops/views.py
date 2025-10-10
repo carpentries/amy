@@ -18,6 +18,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError
 from django.db.models import (
     Case,
@@ -167,6 +168,7 @@ from workshops.utils.metadata import (
 )
 from workshops.utils.pagination import get_pagination_items
 from workshops.utils.person_upload import (
+    PersonTask,
     create_uploaded_persons_tasks,
     upload_person_task_csv,
     verify_upload_person_task,
@@ -332,8 +334,10 @@ def person_bulk_add(request: AuthenticatedHttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = BulkUploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
-            charset = request.FILES["file"].charset or settings.DEFAULT_CHARSET
-            stream = io.TextIOWrapper(request.FILES["file"].file, charset)
+            request_file = cast(UploadedFile, request.FILES["file"])
+            charset = request_file.charset or settings.DEFAULT_CHARSET
+            assert request_file.file  # for mypy
+            stream = io.TextIOWrapper(request_file.file, charset)
             try:
                 persons_tasks, empty_fields = upload_person_task_csv(stream)
             except csv.Error as e:
@@ -372,12 +376,12 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
     """
     This view allows for manipulating and saving session-stored upload data.
     """
-    persons_tasks = request.session.get("bulk-add-people")
+    persons_tasks: list[PersonTask] | None = request.session.get("bulk-add-people")
     match = request.session.get("bulk-add-people-match", False)
 
     # if the session is empty, add message and redirect
     if not persons_tasks:
-        messages.warning(request, "Could not locate CSV data, please " "upload again.")
+        messages.warning(request, "Could not locate CSV data, please upload again.")
         return redirect("person_bulk_add")
 
     if request.method == "POST":
@@ -392,20 +396,19 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
         for k, record in enumerate(data_update):
             personal, family, username, email, event, role = record
             existing_person_id = persons_tasks[k].get("existing_person_id")
-            # "field or None" converts empty strings to None values
             persons_tasks[k] = {
                 "personal": personal,
                 "family": family,
                 "username": username,
-                "email": email or None,
+                "email": email or None,  # "field or None" converts empty strings to None values
                 "existing_person_id": existing_person_id,
+                # when user wants to drop related event they will send empty string
+                # so we should unconditionally accept new value for event even if
+                # it's an empty string
+                "event": event,
+                "role": role,
+                "errors": None,  # reset here
             }
-            # when user wants to drop related event they will send empty string
-            # so we should unconditionally accept new value for event even if
-            # it's an empty string
-            persons_tasks[k]["event"] = event
-            persons_tasks[k]["role"] = role
-            persons_tasks[k]["errors"] = None  # reset here
 
         # save updated data to the session
         request.session["bulk-add-people"] = persons_tasks
@@ -451,13 +454,13 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
         any_errors = verify_upload_person_task(persons_tasks, match=bool(match))
         request.session["bulk-add-people-match"] = False
 
-    roles = Role.objects.all().values_list("name", flat=True)
+    roles_list: list[str] = list(Role.objects.all().values_list("name", flat=True))
 
     context = {
         "title": "Confirm uploaded data",
         "persons_tasks": persons_tasks,
         "any_errors": any_errors,
-        "possible_roles": roles,
+        "possible_roles": roles_list,
     }
     return render(request, "workshops/person_bulk_add_results.html", context)
 
@@ -747,7 +750,7 @@ def person_password(request: AuthenticatedHttpRequest, person_id: int) -> HttpRe
     if not ((request.user == user) or (request.user.has_perm("workshops.change_person"))):
         raise PermissionDenied
 
-    Form = PasswordChangeForm
+    Form: type[PasswordChangeForm] | type[SetPasswordForm] = PasswordChangeForm
     if request.user.is_superuser:
         Form = SetPasswordForm
     elif request.user.pk != user.pk:
@@ -770,7 +773,7 @@ def person_password(request: AuthenticatedHttpRequest, person_id: int) -> HttpRe
     else:
         form = Form(user)
 
-    form.helper = BootstrapHelper(add_cancel_button=False)
+    form.helper = BootstrapHelper(add_cancel_button=False)  # type: ignore
     return render(
         request,
         "generic_form.html",

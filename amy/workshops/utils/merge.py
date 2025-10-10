@@ -1,5 +1,8 @@
+from typing import Sequence
+
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, transaction
+from django.db.models import Model
 from django_comments.models import Comment
 
 from consents.models import Consent, TrainingRequestConsent
@@ -9,7 +12,16 @@ from workshops.utils.consents import (
 )
 
 
-def merge_objects(object_a, object_b, easy_fields, difficult_fields, choices, base_a=True):
+def merge_objects[
+    _M: Model
+](
+    object_a: _M,
+    object_b: _M,
+    easy_fields: Sequence[str],
+    difficult_fields: Sequence[str],
+    choices: dict[str, str],
+    base_a: bool = True,
+) -> tuple[_M, list[str]]:
     """Merge two objects of the same model.
 
     `object_a` and `object_b` are two objects being merged. If `base_a==True`

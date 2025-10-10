@@ -1,11 +1,12 @@
 import csv
 from io import TextIOBase
 import logging
-from typing import Literal
+from typing import Literal, TypedDict
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.http import HttpRequest
 
 from workshops.exceptions import InternalError
 from workshops.models import Event, Person, Role, Task
@@ -14,9 +15,19 @@ from workshops.utils.usernames import create_username
 logger = logging.getLogger("amy")
 
 
+class PersonTaskEntry(TypedDict):
+    personal: str | None
+    family: str | None
+    email: str | None
+    event: str | None
+    role: str | None
+    errors: list[str] | None
+    username: str
+
+
 def upload_person_task_csv(
     stream: TextIOBase,
-) -> tuple[list, list[Literal["personal", "family", "email"]]]:
+) -> tuple[list[PersonTaskEntry], list[Literal["personal", "family", "email"]]]:
     """Read people from CSV and return a JSON-serializable list of dicts.
 
     The input `stream` should be a file-like object that returns
@@ -38,30 +49,49 @@ def upload_person_task_csv(
         if not any(row.values()):
             continue
 
-        entry = {}
+        entry: PersonTaskEntry = {
+            "personal": None,
+            "family": None,
+            "email": None,
+            "event": None,
+            "role": None,
+            "errors": None,
+            "username": "",  # it will be set in the `verify_upload_person_task`
+        }
+
         for col in Person.PERSON_UPLOAD_FIELDS:
             try:
-                entry[col] = row[col].strip()
+                entry[col] = row[col].strip()  # type: ignore
             except (KeyError, IndexError, AttributeError):
                 # either `col` is not in `entry`, or not in `row`, or
                 # `.strip()` doesn't work (e.g. `row[col]` gives `None` instead
                 # of string)
-                entry[col] = None
+                entry[col] = None  # type: ignore
                 empty_fields.add(col)
 
         for col in Person.PERSON_TASK_EXTRA_FIELDS:
-            entry[col] = row.get(col, None)
-        entry["errors"] = None
-
-        # it will be set in the `verify_upload_person_task`
-        entry["username"] = ""
+            entry[col] = row.get(col, None)  # type: ignore
 
         result.append(entry)
 
-    return result, list(empty_fields)
+    return (
+        result,
+        list(empty_fields),  # type: ignore
+    )
 
 
-def verify_upload_person_task(data, match=False):
+class PersonTask(TypedDict):
+    personal: str
+    family: str
+    username: str
+    email: str | None
+    existing_person_id: int | None
+    event: str
+    role: str
+    errors: list[str] | None
+
+
+def verify_upload_person_task(data: list[PersonTask], match: bool = False) -> bool:
     """
     Verify that uploaded data is correct.  Show errors by populating `errors`
     dictionary item.  This function changes `data` in place.
@@ -202,7 +232,9 @@ def verify_upload_person_task(data, match=False):
     return errors_occur
 
 
-def create_uploaded_persons_tasks(data, request=None):
+def create_uploaded_persons_tasks(
+    data: list[PersonTask], request: HttpRequest | None = None
+) -> tuple[list[Person], list[Task]]:
     """
     Create persons and tasks from upload data.
     """
