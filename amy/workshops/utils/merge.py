@@ -6,15 +6,14 @@ from django.db.models import Model
 from django_comments.models import Comment
 
 from consents.models import Consent, TrainingRequestConsent
+from workshops.models import Person, TrainingRequest
 from workshops.utils.consents import (
     archive_least_recent_active_consents,
     archive_least_recent_active_training_request_consents,
 )
 
 
-def merge_objects[
-    _M: Model
-](
+def merge_objects[_M: Model](
     object_a: _M,
     object_b: _M,
     easy_fields: Sequence[str],
@@ -121,10 +120,10 @@ def merge_objects[
                     related_a.all().delete()
 
             elif value == "combine":
-                to_add = None
+                to_add = related_b.all()
 
-                if manager == related_a:
-                    to_add = related_b.all()
+                # if manager == related_a:
+                #     to_add = related_b.all()
                 if manager == related_b:
                     to_add = related_a.all()
 
@@ -146,6 +145,9 @@ def merge_objects[
 
             elif attr == "consent_set" and value == "most_recent":
                 # Special case: consents should be merge with a "most recent" strategy.
+
+                # for mypy
+                assert isinstance(object_a, Person) and isinstance(object_b, Person) and isinstance(base_obj, Person)
                 archive_least_recent_active_consents(object_a, object_b, base_obj)
 
                 # Reassign consents to the base object
@@ -156,6 +158,13 @@ def merge_objects[
 
             elif attr == "trainingrequestconsent_set" and value == "most_recent":
                 # Special case: consents should be merge with a "most recent" strategy.
+
+                # for mypy
+                assert (
+                    isinstance(object_a, TrainingRequest)
+                    and isinstance(object_b, TrainingRequest)
+                    and isinstance(base_obj, TrainingRequest)
+                )
                 archive_least_recent_active_training_request_consents(object_a, object_b, base_obj)
 
                 # Reassign consents to the base object
@@ -169,8 +178,8 @@ def merge_objects[
         if "comments" in choices:
             value = choices["comments"]
             # special case: comments made regarding these objects
-            comments_a = Comment.objects.for_model(object_a)
-            comments_b = Comment.objects.for_model(object_b)
+            comments_a = Comment.objects.for_model(object_a)  # type: ignore
+            comments_b = Comment.objects.for_model(object_b)  # type: ignore
             base_obj_ct = ContentType.objects.get_for_model(base_obj)
 
             if value == "obj_a":
@@ -206,5 +215,6 @@ def merge_objects[
                 )
 
         merging_obj.delete()
+        base_obj.save()
 
-        return base_obj.save(), integrity_errors
+        return base_obj, integrity_errors
