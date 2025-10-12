@@ -4,6 +4,7 @@ from typing import Annotated, Any, Collection, TypedDict, cast
 from urllib.parse import quote
 import uuid
 
+import airportsdata
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -67,6 +68,8 @@ from workshops.signals import person_archived_signal
 from workshops.utils.dates import human_daterange
 from workshops.utils.emails import find_emails
 from workshops.utils.reports import reports_link
+
+IATA_AIRPORTS = airportsdata.load("IATA")
 
 # ------------------------------------------------------------
 
@@ -749,18 +752,23 @@ class Person(
         verbose_name="Email address",
         help_text="Primary email address, used for communication and as a login.",
     )
+    airport_iata = models.CharField(
+        null=False,
+        blank=False,
+        default="",
+        help_text="Nearest major airport (IATA code: https://www.world-airport-codes.com/)",
+    )
     country = CountryField(
         null=False,
         blank=True,
         default="",
-        help_text="Person's country of residence.",
+        help_text="Override country of the airport.",
     )
-    airport = models.ForeignKey(
-        Airport,
-        on_delete=models.PROTECT,
-        null=True,
+    timezone = models.CharField(
+        null=False,
         blank=True,
-        verbose_name="Nearest major airport",
+        default="",
+        help_text="Override timezone of the airport.",
     )
     github = NullableGithubUsernameField(
         unique=True,
@@ -979,6 +987,17 @@ class Person(
         # lowercase the email
         self.email = self.email.lower() if self.email else None
 
+    def clean_airport_iata(self) -> None:
+        if not self.airport_iata:
+            return None
+
+        try:
+            IATA_AIRPORTS[self.airport_iata]
+        except KeyError as e:
+            raise ValidationError(f"Invalid IATA code: {self.airport_iata}") from e
+
+        return None
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         # If GitHub username has changed, clear UserSocialAuth table for this
         # person.
@@ -995,7 +1014,6 @@ class Person(
             self.family = self.family.strip()
         self.middle = self.middle.strip()
         self.email = self.email.strip() if self.email else None
-        self.airport = self.airport or None
         self.github = self.github or None
         self.twitter = self.twitter or None
         self.bluesky = self.bluesky or None
@@ -1044,6 +1062,28 @@ class Person(
             sender=self.__class__,
             person=self,
         )
+
+    @cached_property
+    def country_property(self) -> str:
+        if self.country:
+            return cast(str, self.country)
+
+        try:
+            airport = IATA_AIRPORTS[self.airport_iata]
+            return airport["country"]
+        except KeyError:
+            return ""
+
+    @cached_property
+    def timezone_property(self) -> str:
+        if self.timezone:
+            return self.timezone
+
+        try:
+            airport = IATA_AIRPORTS[self.airport_iata]
+            return airport["tz"]
+        except KeyError:
+            return ""
 
 
 # ------------------------------------------------------------
