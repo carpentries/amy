@@ -55,7 +55,15 @@ def find_training_completion_date(person: Person) -> date:
 def instructor_training_completed_not_badged_strategy(person: Person) -> StrategyEnum:
     logger.info(f"Running InstructorTrainingCompletedNotBadged strategy for {person}")
 
+    # All training progresses for Training requirement must be at most 90 days old.
+    cutoff_date = date.today() - timedelta(days=90)
     person_annotated = Person.objects.annotate_with_instructor_eligibility().get(pk=person.pk)
+    person_passed_training_reqs_newer_than_90days = TrainingProgress.objects.filter(
+        trainee=person,
+        requirement__name="Training",
+        state="p",
+        event__start__gte=cutoff_date,
+    )
 
     all_requirements_passed = bool(person_annotated.instructor_eligible)
 
@@ -81,14 +89,16 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
 
     log_condition_elements(
         **{
-            "person_annotated.passed_training": person_annotated.passed_training,
+            "person_passed_training_reqs_newer_than_90days": person_passed_training_reqs_newer_than_90days,
             "all_requirements_passed": all_requirements_passed,
             "instructor_badge_not_awarded": instructor_badge_not_awarded,
         }
     )
 
     email_should_exist = (
-        bool(person_annotated.passed_training) and not all_requirements_passed and instructor_badge_not_awarded
+        bool(person_passed_training_reqs_newer_than_90days)
+        and not all_requirements_passed
+        and instructor_badge_not_awarded
     )
 
     # Prevents running sending multiple emails.
