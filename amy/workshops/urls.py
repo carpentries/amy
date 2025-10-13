@@ -8,26 +8,6 @@ urlpatterns = [
     path("version/<int:version_id>/", views.object_changes, name="object_changes"),
     path("workshop_staff/", views.workshop_staff, name="workshop_staff"),
     path("workshop_staff/csv/", views.workshop_staff_csv, name="workshop_staff_csv"),
-    # airports
-    path(
-        "airports/",
-        include(
-            [
-                path("", views.AllAirports.as_view(), name="all_airports"),
-                path("add/", views.AirportCreate.as_view(), name="airport_add"),
-            ]
-        ),
-    ),
-    path(
-        "airport/<str:airport_iata>/",
-        include(
-            [
-                path("", views.AirportDetails.as_view(), name="airport_details"),
-                path("edit/", views.AirportUpdate.as_view(), name="airport_edit"),
-                path("delete/", views.AirportDelete.as_view(), name="airport_delete"),
-            ]
-        ),
-    ),
     # persons
     path(
         "persons/",

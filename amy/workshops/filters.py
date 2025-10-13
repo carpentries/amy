@@ -439,7 +439,7 @@ class WorkshopStaffFilter(AMYFilterSet):
 
     def filter_country(self, qs: QuerySet[Person], n: str, v: Any) -> QuerySet[Person]:
         if v:
-            return qs.filter(Q(airport__country__in=v) | Q(country__in=v))
+            return qs.filter(Q(country="") & Q(airport_country__in=v) | Q(country__in=v))
         return qs
 
     def filter_instructor(self, qs: QuerySet[Person], n: str, v: Any) -> QuerySet[Person]:

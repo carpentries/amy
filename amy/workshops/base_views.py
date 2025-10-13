@@ -14,6 +14,7 @@ from django.http import (
     Http404,
     HttpRequest,
     HttpResponse,
+    HttpResponseBase,
     HttpResponseRedirect,
     QueryDict,
 )
@@ -474,7 +475,7 @@ class ConditionallyEnabledMixin:
     def get_view_enabled(self, request: HttpRequest) -> bool:
         return self.view_enabled is True
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         if self.get_view_enabled(request) is not True:
             raise Http404("Page not found")
 

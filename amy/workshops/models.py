@@ -577,6 +577,15 @@ class PersonInstructorEligibility(TypedDict):
     instructor_eligible: int
 
 
+class PersonRoleCount(TypedDict):
+    num_instructor: int
+    num_trainer: int
+    num_helper: int
+    num_learner: int
+    num_supporting: int
+    num_organizer: int
+
+
 class PersonManager(BaseUserManager["Person"]):
     """
     Create users and superusers from command line.
@@ -675,7 +684,7 @@ class PersonManager(BaseUserManager["Person"]):
             )
         )
 
-    def annotate_with_role_count(self) -> QuerySet["Person"]:
+    def annotate_with_role_count(self) -> QuerySet[Annotated["Person", Annotations[PersonRoleCount]]]:
         return self.annotate(
             num_instructor=Count(
                 "task",

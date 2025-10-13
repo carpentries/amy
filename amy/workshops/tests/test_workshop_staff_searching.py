@@ -11,7 +11,7 @@ from workshops.views import _workshop_staff_query
 class TestLocateWorkshopStaff(TestBase):
     """Test cases for locating workshop staff."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpTags()
         self._setUpRoles()
@@ -20,12 +20,12 @@ class TestLocateWorkshopStaff(TestBase):
         self._setUpCommunityRoles()
         self.url = reverse("workshop_staff")
 
-    def test_non_instructors_and_instructors_returned_by_search(self):
+    def test_non_instructors_and_instructors_returned_by_search(self) -> None:
         """Ensure search returns everyone with defined airport."""
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_0_0.pk,
+                "airport_iata": "CDG",
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -39,12 +39,12 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.ironman, response.context["persons"])
         self.assertIn(self.blackwidow, response.context["persons"])
 
-    def test_match_on_one_skill(self):
+    def test_match_on_one_skill(self) -> None:
         """Ensure people with correct skill are returned."""
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_50_100.pk,
+                "airport_iata": "LAX",
                 "lessons": [self.git.pk],
             },
         )
@@ -61,12 +61,12 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.ironman, response.context["persons"])
         self.assertNotIn(self.blackwidow, response.context["persons"])
 
-    def test_match_instructors_on_two_skills(self):
+    def test_match_instructors_on_two_skills(self) -> None:
         """Ensure people with correct skills are returned."""
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_50_100.pk,
+                "airport_iata": "LAX",
                 "lessons": [self.git.pk, self.sql.pk],
             },
         )
@@ -84,31 +84,31 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.ironman, response.context["persons"])
         self.assertNotIn(self.blackwidow, response.context["persons"])
 
-    def test_match_by_country(self):
-        """Ensure people with airports in Bulgaria are returned."""
+    def test_match_by_country(self) -> None:
+        """Ensure people from France are returned."""
         response = self.client.get(
             self.url,
             {
-                "country": ["BG"],
+                "country": ["FR"],
             },
         )
         self.assertEqual(response.status_code, 200)
 
         # instructors
-        self.assertNotIn(self.hermione, response.context["persons"])
-        self.assertIn(self.harry, response.context["persons"])
+        self.assertIn(self.hermione, response.context["persons"])
+        self.assertNotIn(self.harry, response.context["persons"])
         self.assertNotIn(self.ron, response.context["persons"])
         # non-instructors
         self.assertNotIn(self.spiderman, response.context["persons"])
         self.assertNotIn(self.ironman, response.context["persons"])
-        self.assertIn(self.blackwidow, response.context["persons"])
+        self.assertIn(self.blackwidow, response.context["persons"])  # through airport
 
-    def test_match_by_multiple_countries(self):
-        """Ensure people with airports in Albania and Bulgaria are returned."""
+    def test_match_by_multiple_countries(self) -> None:
+        """Ensure people from France and Poland are returned."""
         response = self.client.get(
             self.url,
             {
-                "country": ["AL", "BG"],
+                "country": ["FR", "PL"],
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -120,14 +120,14 @@ class TestLocateWorkshopStaff(TestBase):
         # non-instructors
         self.assertNotIn(self.spiderman, response.context["persons"])
         self.assertNotIn(self.ironman, response.context["persons"])
-        self.assertIn(self.blackwidow, response.context["persons"])
+        self.assertIn(self.blackwidow, response.context["persons"])  # through airport
 
-    def test_match_gender(self):
+    def test_match_gender(self) -> None:
         """Ensure only people with specific gender are returned."""
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_0_0.pk,
+                "airport_iata": "CDG",
                 "gender": "F",
             },
         )
@@ -142,13 +142,13 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.ironman, response.context["persons"])
         self.assertIn(self.blackwidow, response.context["persons"])
 
-    def test_is_instructor(self):
+    def test_is_instructor(self) -> None:
         """Ensure people with instructor badges are returned by search. The
         search is OR'ed, so should return people with any of the selected
         badges."""
         response = self.client.get(
             self.url,
-            {"airport": self.airport_0_0.pk, "is_instructor": True},
+            {"airport_iata": "CDG", "is_instructor": True},  # type: ignore
         )
         self.assertEqual(response.status_code, 200)
 
@@ -161,7 +161,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.ironman, response.context["persons"])
         self.assertNotIn(self.blackwidow, response.context["persons"])
 
-        response = self.client.get(self.url, {"airport": self.airport_0_0.pk})
+        response = self.client.get(self.url, {"airport_iata": "CDG"})
         self.assertEqual(response.status_code, 200)
 
         # instructors
@@ -173,7 +173,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.ironman, response.context["persons"])
         self.assertIn(self.blackwidow, response.context["persons"])
 
-    def test_match_on_one_language(self):
+    def test_match_on_one_language(self) -> None:
         """Ensure people with one particular language preference
         are returned by search."""
         # prepare langauges
@@ -196,7 +196,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.harry, response.context["persons"])
         self.assertNotIn(self.ron, response.context["persons"])
 
-    def test_match_on_many_language(self):
+    def test_match_on_many_language(self) -> None:
         """Ensure people with a set of language preferences
         are returned by search."""
         # prepare langauges
@@ -221,7 +221,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.ron, response.context["persons"])
         self.assertNotIn(self.harry, response.context["persons"])
 
-    def test_match_on_one_domain(self):
+    def test_match_on_one_domain(self) -> None:
         """Ensure people with one particular knowledge domain preference
         are returned by search."""
         # prepare knowledge domains
@@ -242,7 +242,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.harry, response.context["persons"])
         self.assertNotIn(self.ron, response.context["persons"])
 
-    def test_match_on_many_domains(self):
+    def test_match_on_many_domains(self) -> None:
         """Ensure people with a set of knowledge domain preferences
         are returned by search."""
         # prepare knowledge domains
@@ -263,7 +263,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.ron, response.context["persons"])
         self.assertNotIn(self.harry, response.context["persons"])
 
-    def test_roles(self):
+    def test_roles(self) -> None:
         """Ensure people with at least one helper/organizer roles are returned
         by search."""
         # prepare events and tasks
@@ -271,13 +271,13 @@ class TestLocateWorkshopStaff(TestBase):
         helper_role = Role.objects.get(name="helper")
         organizer_role = Role.objects.get(name="organizer")
 
-        Task.objects.create(role=helper_role, person=self.spiderman, event=Event.objects.first())
-        Task.objects.create(role=organizer_role, person=self.blackwidow, event=Event.objects.first())
+        Task.objects.create(role=helper_role, person=self.spiderman, event=Event.objects.all()[0])
+        Task.objects.create(role=organizer_role, person=self.blackwidow, event=Event.objects.all()[0])
 
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_0_0.pk,
+                "airport_iata": "CDG",
                 "was_helper": "on",
             },
         )
@@ -287,14 +287,14 @@ class TestLocateWorkshopStaff(TestBase):
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_0_0.pk,
+                "airport_iata": "CDG",
                 "was_organizer": "on",
             },
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["persons"]), [self.blackwidow])
 
-    def test_form_logic(self):
+    def test_form_logic(self) -> None:
         """Check if logic preventing searching from multiple fields,
         except lat+lng pair, and allowing searching from no location field,
         works."""
@@ -310,19 +310,19 @@ class TestLocateWorkshopStaff(TestBase):
                     "latitude": 1,
                     "longitude": 2,
                     "country": ["BG"],
-                    "airport": self.airport_0_0.pk,
+                    "airport_iata": "CDG",
                 },
             ),
         ]
 
         for form_pass, data in test_vectors:
             params = dict(submit="Submit")
-            params.update(data)
+            params.update(data)  # type: ignore
             rv = self.client.get(self.url, params)
             form = rv.context["form"]
             self.assertEqual(form.is_valid(), form_pass, form.errors)
 
-    def test_searching_trainees(self):
+    def test_searching_trainees(self) -> None:
         """Make sure finding trainees works. This test additionally checks for
         a more complex cases:
         * a trainee who participated in only a stalled TTT workshop
@@ -332,7 +332,7 @@ class TestLocateWorkshopStaff(TestBase):
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_0_0.pk,
+                "airport_iata": "CDG",
                 "is_in_progress_trainee": "on",
             },
         )
@@ -341,9 +341,9 @@ class TestLocateWorkshopStaff(TestBase):
 
         TTT = Tag.objects.get(name="TTT")
         stalled = Tag.objects.get(name="stalled")
-        e1 = Event.objects.create(slug="TTT-event", host=Organization.objects.first())
+        e1 = Event.objects.create(slug="TTT-event", host=Organization.objects.all()[0])
         e1.tags.set([TTT])
-        e2 = Event.objects.create(slug="stalled-TTT-event", host=Organization.objects.first())
+        e2 = Event.objects.create(slug="stalled-TTT-event", host=Organization.objects.all()[0])
         e2.tags.set([TTT, stalled])
 
         learner = Role.objects.get(name="learner")
@@ -365,7 +365,7 @@ class TestLocateWorkshopStaff(TestBase):
         response = self.client.get(
             self.url,
             {
-                "airport": self.airport_0_0.pk,
+                "airport_iata": "CDG",
                 "is_in_progress_trainee": "on",
             },
         )
@@ -380,7 +380,7 @@ class TestLocateWorkshopStaff(TestBase):
             ),
         )
 
-    def test_searching_trainers(self):
+    def test_searching_trainers(self) -> None:
         """Make sure people with Trainer badge are shown correctly."""
         response = self.client.get(self.url, dict(is_trainer="on"))
         self.assertEqual(response.status_code, 200)
@@ -395,7 +395,7 @@ class TestLocateWorkshopStaff(TestBase):
 class TestWorkshopStaffCSV(TestBase):
     """Test cases for downloading workshop staff search results as CSV."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpTags()
         self._setUpRoles()
@@ -403,7 +403,7 @@ class TestWorkshopStaffCSV(TestBase):
 
         self.url = reverse("workshop_staff_csv")
 
-    def test_header_row(self):
+    def test_header_row(self) -> None:
         """Ensure header contains the data we want."""
         rv = self.client.get(self.url)
         first_row = rv.content.decode("utf-8").splitlines()[0]
@@ -413,7 +413,7 @@ class TestWorkshopStaffCSV(TestBase):
 
         self.assertEqual(first_row, first_row_expected)
 
-    def test_results(self):
+    def test_results(self) -> None:
         """Test for the workshop staff CSV output."""
         rv = self.client.get(self.url)
         reader = csv.DictReader(io.StringIO(rv.content.decode("utf-8")))
@@ -428,6 +428,6 @@ class TestWorkshopStaffCSV(TestBase):
             self.assertEqual(row["Is trainer"], "yes" if expected.is_trainer else "no")
             self.assertEqual(row["Taught times"], str(expected.num_instructor))
             self.assertEqual(row["Is trainee"], "yes" if expected.is_trainee else "no")
-            self.assertEqual(row["Airport"], str(expected.airport))
+            self.assertEqual(row["Airport"], str(expected.airport_iata))
             self.assertEqual(row["Country"], expected.country.name)
             self.assertEqual(row["Affiliation"], expected.affiliation)

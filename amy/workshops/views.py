@@ -3,7 +3,7 @@ import datetime
 from functools import partial
 import io
 import logging
-from typing import Any, Optional, cast
+from typing import Annotated, Any, Optional, TypedDict, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -46,6 +46,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
+from django_stubs_ext import Annotations
 from flags.state import flag_enabled
 from github.GithubException import GithubException
 import requests
@@ -115,9 +116,9 @@ from workshops.base_views import (
     PrepopulationSupportMixin,
     RedirectSupportMixin,
 )
+from workshops.consts import IATA_AIRPORTS
 from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.filters import (
-    AirportFilter,
     BadgeAwardsFilter,
     EventFilter,
     PersonFilter,
@@ -142,7 +143,6 @@ from workshops.forms import (
     WorkshopStaffForm,
 )
 from workshops.models import (
-    Airport,
     Award,
     Badge,
     Event,
@@ -192,54 +192,6 @@ def changes_log(request: AuthenticatedHttpRequest) -> HttpResponse:
     log_paginated = get_pagination_items(request, log)
     context = {"log": log_paginated}
     return render(request, "workshops/changes_log.html", context)
-
-
-# ------------------------------------------------------------
-
-AIRPORT_FIELDS = ["iata", "fullname", "country", "latitude", "longitude"]
-
-
-class AllAirports(OnlyForAdminsMixin, AMYListView[Airport]):
-    context_object_name = "all_airports"
-    queryset = Airport.objects.all()
-    filter_class = AirportFilter
-    template_name = "workshops/all_airports.html"
-    title = "All Airports"
-
-
-class AirportDetails(OnlyForAdminsMixin, AMYDetailView[Airport]):
-    queryset = Airport.objects.all()
-    context_object_name = "airport"
-    template_name = "workshops/airport.html"
-    slug_url_kwarg = "airport_iata"
-    slug_field = "iata"
-
-    def get_context_data(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Airport {0}".format(self.object)
-        return context
-
-
-class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[None, Airport]):  # type: ignore
-    permission_required = "workshops.add_airport"
-    model = Airport
-    fields = AIRPORT_FIELDS
-
-
-class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[None, Airport]):  # type: ignore
-    permission_required = "workshops.change_airport"
-    model = Airport
-    fields = AIRPORT_FIELDS
-    slug_field = "iata"
-    slug_url_kwarg = "airport_iata"
-
-
-class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Airport, GenericDeleteForm[Airport]]):
-    model = Airport
-    slug_field = "iata"
-    slug_url_kwarg = "airport_iata"
-    permission_required = "workshops.delete_airport"
-    success_url = reverse_lazy("all_airports")
 
 
 # ------------------------------------------------------------
@@ -297,7 +249,6 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
                 queryset=MembershipTask.objects.select_related("role", "membership"),
             ),
         )
-        .select_related("airport")
         .order_by("family", "personal")
     )
 
@@ -2186,7 +2137,23 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView[Badge]):
 # ------------------------------------------------------------
 
 
-def _workshop_staff_query(lat: int | None = None, lng: int | None = None) -> QuerySet[Person]:
+class PersonWorkshopStaffAnnotation(TypedDict):
+    # From PersonRoleCount typed dict defined in `workshops/models.py`
+    num_instructor: int
+    num_trainer: int
+    num_helper: int
+    num_learner: int
+    num_supporting: int
+    num_organizer: int
+
+    is_trainee: int
+    is_trainer: int
+    is_instructor: int
+
+
+def _workshop_staff_query(
+    lat: int | None = None, lng: int | None = None
+) -> QuerySet[Annotated[Person, Annotations[PersonWorkshopStaffAnnotation]]]:
     """This query is used in two views: workshop staff searching and its CSV
     results. Thanks to factoring-out this function, we're now quite certain
     that the results in both of the views are the same."""
@@ -2215,8 +2182,7 @@ def _workshop_staff_query(lat: int | None = None, lng: int | None = None) -> Que
                 filter=Q(communityrole__in=active_instructor_community_roles),
             ),
         )
-        .filter(airport__isnull=False)
-        .select_related("airport")
+        .exclude(airport_iata="")
         .prefetch_related(
             "lessons",
             Prefetch(
@@ -2235,7 +2201,7 @@ def _workshop_staff_query(lat: int | None = None, lng: int | None = None) -> Que
 
     if lat and lng:
         # using Euclidean distance just because it's faster and easier
-        complex_F = (F("airport__latitude") - lat) ** 2 + (F("airport__longitude") - lng) ** 2
+        complex_F = (F("airport_lat") - lat) ** 2 + (F("airport_lon") - lng) ** 2
         people = people.annotate(distance=ExpressionWrapper(complex_F, output_field=FloatField())).order_by(
             "distance", "family"
         )
@@ -2255,19 +2221,20 @@ def workshop_staff(request: AuthenticatedHttpRequest) -> HttpResponse:
         # to highlight (in template) what lessons people know
         lessons = form.cleaned_data["lessons"]
 
-        if form.cleaned_data["airport"]:
-            lat = form.cleaned_data["airport"].latitude
-            lng = form.cleaned_data["airport"].longitude
+        if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
+            airport = IATA_AIRPORTS[airport_iata]
+            lat = airport["lat"]
+            lng = airport["lon"]
 
         elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
             lat = form.cleaned_data["latitude"]
             lng = form.cleaned_data["longitude"]
 
     # prepare the query
-    people = _workshop_staff_query(lat, lng)
+    people_query = _workshop_staff_query(lat, lng)
 
     # filter the query
-    f = WorkshopStaffFilter(request.GET, queryset=people)
+    f = WorkshopStaffFilter(request.GET, queryset=people_query)
     people = get_pagination_items(request, f.qs)
 
     context = {
@@ -2287,19 +2254,20 @@ def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
     lat, lng = None, None
     form = WorkshopStaffForm(request.GET)
     if form.is_valid():
-        if form.cleaned_data["airport"]:
-            lat = form.cleaned_data["airport"].latitude
-            lng = form.cleaned_data["airport"].longitude
+        if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
+            airport = IATA_AIRPORTS[airport_iata]
+            lat = airport["lat"]
+            lng = airport["lon"]
 
         elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
             lat = form.cleaned_data["latitude"]
             lng = form.cleaned_data["longitude"]
 
     # prepare the query
-    people = _workshop_staff_query(lat, lng)
+    people_query = _workshop_staff_query(lat, lng)
 
     # filter the query
-    f = WorkshopStaffFilter(request.GET, queryset=people)
+    f = WorkshopStaffFilter(request.GET, queryset=people_query)
     people = f.qs
 
     # first row of the CSV output
@@ -2318,7 +2286,7 @@ def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
 
     # CSV http header
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = "attachment; " 'filename="WorkshopStaff.csv"'
+    response["Content-Disposition"] = 'attachment; filename="WorkshopStaff.csv"'
     # CSV output
     writer = csv.writer(response)
     writer.writerow(header_row)
@@ -2331,7 +2299,7 @@ def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
                 "yes" if person.is_trainer else "no",
                 person.num_instructor,
                 "yes" if person.is_trainee else "no",
-                str(person.airport) if person.airport else "",
+                person.airport_iata,
                 person.country.name if person.country else "",
                 " ".join([lesson.name for lesson in person.lessons.all()]),
                 person.affiliation or "",

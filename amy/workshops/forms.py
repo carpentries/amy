@@ -23,6 +23,7 @@ from dashboard.models import Continent
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
+    AirportChoiceField,
     ModelSelect2MultipleWidget,
     ModelSelect2Widget,
     RadioSelectWithOther,
@@ -244,12 +245,7 @@ class WorkshopStaffForm(forms.Form):
 
     latitude = forms.FloatField(label="Latitude", min_value=-90.0, max_value=90.0, required=False)
     longitude = forms.FloatField(label="Longitude", min_value=-180.0, max_value=180.0, required=False)
-    airport = forms.ModelChoiceField(
-        label="Airport",
-        required=False,
-        queryset=Airport.objects.all(),
-        widget=ModelSelect2Widget(data_view="airport-lookup", attrs=SELECT2_SIDEBAR),
-    )
+    airport_iata = AirportChoiceField(required=False)
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
         required=False,
@@ -306,7 +302,7 @@ class WorkshopStaffForm(forms.Form):
             Div(  # type: ignore
                 Div(  # type: ignore
                     HTML('<h5 class="card-title">Location</h5>'),  # type: ignore
-                    "airport",
+                    "airport_iata",
                     HTML("<hr>"),  # type: ignore
                     "country",
                     HTML("<hr>"),  # type: ignore
@@ -335,7 +331,7 @@ class WorkshopStaffForm(forms.Form):
         cleaned_data = cast(dict[str, Any], super().clean())
         lat = bool(cleaned_data.get("latitude"))
         lng = bool(cleaned_data.get("longitude"))
-        airport = bool(cleaned_data.get("airport"))
+        airport_iata = bool(cleaned_data.get("airport_iata"))
         country = bool(cleaned_data.get("country"))
         latlng = lat and lng
 
@@ -347,7 +343,7 @@ class WorkshopStaffForm(forms.Form):
         # User must search by airport, or country, or coordinates, or none
         # of them. Sum of boolean elements must be equal 0 (if general search)
         # or 1 (if searching by airport OR country OR lat/lng).
-        if sum([airport, country, latlng]) not in [0, 1]:
+        if sum([airport_iata, country, latlng]) not in [0, 1]:
             raise ValidationError("Must specify an airport OR a country, OR use coordinates, OR none of them.")
         return cleaned_data
 
