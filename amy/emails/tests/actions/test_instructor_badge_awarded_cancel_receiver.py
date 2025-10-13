@@ -197,7 +197,7 @@ class TestInstructorBadgeAwardedCancelIntegration(TestBase):
             email="purdy.kelsi@example.com",
             secondary_email="notused@amy.org",
             gender="F",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             github="purdy_kelsi",
             twitter="purdy_kelsi",
             bluesky="@purdy_kelsi.bsky.social",

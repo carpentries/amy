@@ -144,7 +144,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateReceiver(TestCase):
                     "person": api_model_url("person", self.person.pk),
                     "event": api_model_url("event", self.event.pk),
                     "task": api_model_url("task", task.pk),
-                    "task_id": scalar_value_url("int", task.pk),
+                    "task_id": scalar_value_url("int", str(task.pk)),
                 }
             ),
             scheduled_at=scheduled_at,
@@ -304,7 +304,7 @@ class TestInstructorTaskCreatedForWorkshopUpdateIntegration(TestBase):
             email="purdy.kelsi@example.com",
             secondary_email="notused@amy.org",
             gender="F",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             github="",
             twitter="",
             bluesky="@purdy_kelsi.bsky.social",

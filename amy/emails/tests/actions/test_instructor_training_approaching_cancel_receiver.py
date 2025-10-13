@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import instructor_training_approaching_cancel_receiver
 from emails.actions.instructor_training_approaching import (
+    instructor_training_approaching_cancel_receiver,
     instructor_training_approaching_strategy,
     run_instructor_training_approaching_strategy,
 )
@@ -51,7 +51,7 @@ class TestInstructorTrainingApproachingCancelReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -230,7 +230,7 @@ class TestInstructorTrainingApproachingCancelIntegration(TestBase):
             email="purdy.kelsi@example.com",
             secondary_email="notused@amy.org",
             gender="F",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             github="purdy_kelsi",
             twitter="purdy_kelsi",
             bluesky="@purdy_kelsi.bsky.social",
@@ -249,7 +249,7 @@ class TestInstructorTrainingApproachingCancelIntegration(TestBase):
             email="deckow.jayden@example.com",
             secondary_email="notused@example.org",
             gender="M",
-            airport=self.airport_0_50,
+            airport_iata="LAX",
             github="deckow_jayden",
             twitter="deckow_jayden",
             bluesky="@deckow_jayden.bsky.social",

@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, call, patch
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from emails.actions import ask_for_website_cancel_receiver
 from emails.actions.ask_for_website import (
+    ask_for_website_cancel_receiver,
     ask_for_website_strategy,
     run_ask_for_website_strategy,
 )
@@ -42,7 +42,7 @@ class TestAskForWebsiteCancelReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -220,7 +220,7 @@ class TestAskForWebsiteCancelIntegration(TestBase):
             email="purdy.kelsi@example.com",
             secondary_email="notused@amy.org",
             gender="F",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             github="purdy_kelsi",
             twitter="purdy_kelsi",
             bluesky="@purdy_kelsi.bsky.social",

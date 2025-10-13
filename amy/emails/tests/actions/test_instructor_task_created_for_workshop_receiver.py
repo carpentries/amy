@@ -223,7 +223,7 @@ class TestInstructorTaskCreatedForWorkshopReceiverIntegration(TestBase):
             email="purdy.kelsi@example.com",
             secondary_email="notused@amy.org",
             gender="F",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             github="",
             twitter="",
             bluesky="@purdy_kelsi.bsky.social",
