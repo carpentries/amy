@@ -64,8 +64,18 @@
   </tr>
   <tr>
     <th>Airport</th>
-    <td>{% if obj_a.airport %}<a href="{{ obj_a.airport.get_absolute_url }}">{{ obj_a.airport }}</a>{% else %}—{% endif %}</td><td>{% if obj_b.airport %}<a href="{{ obj_b.airport.get_absolute_url }}">{{ obj_b.airport }}</a>{% else %}—{% endif %}</td>
-    <th>{% include "includes/merge_radio.html" with field=form.airport %}</th>
+    <td>{{ obj_a.airport_iata|default:"&mdash;" }}</td><td>{{ obj_b.airport_iata|default:"&mdash;" }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.airport_iata %}</th>
+  </tr>
+  <tr>
+    <th>Country</th>
+    <td>{{ obj_a.country|default:"&mdash;" }}</td><td>{{ obj_b.country|default:"&mdash;" }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.country %}</th>
+  </tr>
+  <tr>
+    <th>Timezone</th>
+    <td>{{ obj_a.timezone|default:"&mdash;" }}</td><td>{{ obj_b.timezone|default:"&mdash;" }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.timezone %}</th>
   </tr>
   <tr>
     <th>Github</th>

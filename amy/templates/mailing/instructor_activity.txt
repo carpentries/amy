@@ -32,7 +32,7 @@ working with you.
 Name: {{ person.full_name }}
 Preferred email: {{ person.email }}{% for award in instructor_awards %}
 You became {{ award.badge }} on: {{ award.awarded }}{% endfor %}
-Closest airport: {% if person.airport %}{{ person.airport.iata }}{% else %}—{% endif %}
+Closest airport: {% if person.airport_iata %}{{ person.airport_iata }}{% else %}—{% endif %}
 Twitter handle: {{ person.twitter|default:"—" }}
 GitHub handle: {{ person.github|default:"—" }}
 Lessons you can teach: {{ lessons|join:', ' }}

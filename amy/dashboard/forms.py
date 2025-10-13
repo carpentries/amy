@@ -9,6 +9,7 @@ from communityroles.models import CommunityRole
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.fields import (
+    AirportChoiceField,
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
     Select2Widget,
@@ -57,6 +58,7 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
         "team@carpentries.org</a>.",
     )
 
+    airport_iata = AirportChoiceField()
     country = CountryField().formfield(
         required=False,
         help_text="Your country of residence.",
@@ -80,8 +82,9 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
             "secondary_email",
             "gender",
             "gender_other",
+            "airport_iata",
             "country",
-            "airport",
+            "timezone",
             "github",
             "twitter",
             "bluesky",
@@ -103,7 +106,6 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
             "gender": RadioSelectWithOther("gender_other"),
             "domains": forms.CheckboxSelectMultiple(),
             "lessons": forms.CheckboxSelectMultiple(),
-            "airport": Select2Widget,
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
