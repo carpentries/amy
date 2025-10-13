@@ -1,4 +1,5 @@
 from smtplib import SMTPException
+import typing
 from typing import Any, Optional, TypeVar, cast
 
 from anymail.exceptions import AnymailRequestsAPIError
@@ -27,20 +28,27 @@ from django.views.generic import (
     ListView,
     RedirectView,
     UpdateView,
+    View,
 )
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormMixin
 from django_filters.filterset import FilterSet
 
 from workshops.forms import AdminLookupForm, BootstrapHelper
+from workshops.mixins import StateMixin
 from workshops.models import Person
 from workshops.utils.pagination import Paginator, get_pagination_items
 from workshops.utils.urls import safe_next_or_default_url
 from workshops.utils.views import assign, failed_to_delete
 
 _M = TypeVar("_M", bound=Model)
-_ModelFormT = TypeVar("_ModelFormT", bound=BaseModelForm)
+_ModelFormT = TypeVar("_ModelFormT", bound=BaseModelForm)  # type: ignore
 _F = TypeVar("_F", bound=BaseForm)
+
+if typing.TYPE_CHECKING:
+    _V = View
+else:
+    _V = object
 
 
 class AuthenticatedHttpRequest(HttpRequest):
@@ -55,11 +63,11 @@ class FormInvalidMessageMixin[_F]:
     form_invalid_message = ""
 
     def form_invalid(self, form: _F) -> HttpResponse:
-        response = super().form_invalid(form)
-        message = self.get_form_invalid_message(form.cleaned_data)
+        response = super().form_invalid(form)  # type: ignore[misc]
+        message = self.get_form_invalid_message(form.cleaned_data)  # type: ignore[attr-defined]
         if message:
-            messages.error(self.request, message)
-        return response
+            messages.error(self.request, message)  # type: ignore[attr-defined]
+        return response  # type: ignore[no-any-return]
 
     def get_form_invalid_message(self, cleaned_data: dict[str, str]) -> str:
         return self.form_invalid_message % cleaned_data
@@ -86,7 +94,7 @@ class AMYCreateView(
         form = super().get_form(form_class=form_class)
         if not hasattr(form, "helper"):
             # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label="Add")
+            form.helper = BootstrapHelper(submit_label="Add")  # type: ignore[attr-defined]
         return form
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -125,7 +133,7 @@ class AMYUpdateView(
         form = super().get_form(form_class=form_class)
         if not hasattr(form, "helper"):
             # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label="Update")
+            form.helper = BootstrapHelper(submit_label="Update")  # type: ignore[attr-defined]
         return form
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -237,8 +245,8 @@ class AMYListView(ListView[_M]):
 
 
 class EmailSendMixin[_ModelFormT]:
-    email_fail_silently = True
-    email_kwargs = None
+    email_fail_silently: bool = True
+    email_kwargs: dict[str, Any] | None = None
 
     def get_subject(self) -> str:
         """Generate email subject."""
@@ -253,7 +261,7 @@ class EmailSendMixin[_ModelFormT]:
         * `to`: recipient address(es)
         * `reply_to`: reply-to address
         etc."""
-        return self.email_kwargs
+        return self.email_kwargs or {}
 
     def prepare_email(self) -> EmailMultiAlternatives:
         """Set up email contents."""
@@ -270,10 +278,10 @@ class EmailSendMixin[_ModelFormT]:
 
     def form_valid(self, form: _ModelFormT) -> HttpResponse:
         """Once form is valid, send the email."""
-        results = super().form_valid(form)
+        results = super().form_valid(form)  # type: ignore[misc]
         email = self.prepare_email()
         self.send_email(email)
-        return results
+        return results  # type: ignore[no-any-return]
 
 
 class RedirectSupportMixin:
@@ -328,13 +336,13 @@ class AutoresponderMixin[_ModelFormT]:
     def autoresponder_email_context(self, form: _ModelFormT) -> dict[str, Any]:
         """Context for"""
         # list of fields allowed to show to the user
-        whitelist = []
-        form_data = [v for k, v in form.cleaned_data.items() if k in whitelist]
+        whitelist: list[str] = []
+        form_data = [v for k, v in cast(dict[str, Any], form.cleaned_data).items() if k in whitelist]  # type: ignore
         return dict(form_data=form_data)
 
     def autoresponder_kwargs(self, form: _ModelFormT) -> dict[str, list[str]]:
         """Arguments passed to EmailMultiAlternatives."""
-        recipient = form.cleaned_data.get(self.autoresponder_form_field, None) or ""
+        recipient = form.cleaned_data.get(self.autoresponder_form_field, None) or ""  # type: ignore
         return dict(to=[recipient])
 
     def autoresponder_prepare_email(self, form: _ModelFormT) -> EmailMultiAlternatives:
@@ -354,7 +362,7 @@ class AutoresponderMixin[_ModelFormT]:
         # additional arguments, including recipients
         kwargs = self.autoresponder_kwargs(form)
 
-        email = EmailMultiAlternatives(subject, body_txt, **kwargs)
+        email = EmailMultiAlternatives(subject, body_txt, **kwargs)  # type: ignore
         email.attach_alternative(body_html, "text/html")
         return email
 
@@ -370,22 +378,22 @@ class AutoresponderMixin[_ModelFormT]:
 
     def form_valid(self, form: _ModelFormT) -> HttpResponse:
         """Send email to form sender if the form is valid."""
-        retval = super().form_valid(form)
+        retval = super().form_valid(form)  # type: ignore[misc]
         self.autoresponder(form, fail_silently=True)
-        return retval
+        return retval  # type: ignore[no-any-return]
 
 
 class StateFilterMixin:
-    def get_filter_data(self):
+    def get_filter_data(self) -> dict[str, Any]:
         """Enhance filter default data by setting the initial value for the
         `state` field filter."""
-        data = super().get_filter_data().copy()
+        data = super().get_filter_data().copy()  # type: ignore[misc]
         data["state"] = data.get("state", "p")
-        return data
+        return data  # type: ignore[no-any-return]
 
 
-class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin[_M], RedirectView):
-    object: _M
+class ChangeRequestStateView[_M2: StateMixin](PermissionRequiredMixin, SingleObjectMixin[_M2], RedirectView):
+    object: _M2
 
     # State URL argument to state model value mapping.
     # Here 'a' and 'accepted' both match to 'a' (recognizable by model's state
@@ -427,9 +435,9 @@ class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin[_M], Red
         )
 
     def get_redirect_url(self, *args: Any, **kwargs: Any) -> str:
-        return self.object.get_absolute_url()
+        return self.object.get_absolute_url()  # type: ignore[no-any-return,attr-defined]
 
-    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         states = self.get_states()
         requested_state = self.kwargs.get(self.state_url_kwarg)
 
@@ -457,25 +465,28 @@ class AssignView(PermissionRequiredMixin, SingleObjectMixin[_M], FormMixin[Admin
     object: _M
 
     def get_redirect_url(self, *args: Any, **kwargs: Any) -> str:
-        return self.object.get_absolute_url()
+        return self.object.get_absolute_url()  # type: ignore[no-any-return,attr-defined]
 
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         self.object = self.get_object()
         form = self.get_form()
         if form.is_valid():
-            assign(self.object, person=form.cleaned_data.get("person"))
+            assign(
+                self.object,  # type: ignore[arg-type]
+                person=form.cleaned_data.get("person"),
+            )
         return super().post(request, *args, **kwargs)
 
 
-class ConditionallyEnabledMixin:
+class ConditionallyEnabledMixin(_V):
     """Mixin for enabling views based on feature flag."""
 
     view_enabled: Optional[bool] = None
 
-    def get_view_enabled(self, request: HttpRequest) -> bool:
+    def get_view_enabled(self, request: HttpRequest | AuthenticatedHttpRequest) -> bool:
         return self.view_enabled is True
 
-    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
+    def dispatch(self, request: HttpRequest | AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         if self.get_view_enabled(request) is not True:
             raise Http404("Page not found")
 

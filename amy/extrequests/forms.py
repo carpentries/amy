@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import HTML, Div, Layout, Submit
@@ -9,7 +10,6 @@ from django.http import HttpRequest
 
 from extrequests.models import (
     DataVariant,
-    InfoSource,
     SelfOrganisedSubmission,
     WorkshopInquiryRequest,
 )
@@ -33,6 +33,7 @@ from workshops.models import (
     AcademicLevel,
     Curriculum,
     Event,
+    InfoSource,
     KnowledgeDomain,
     Membership,
     Organization,
@@ -68,19 +69,19 @@ class BulkChangeTrainingRequestForm(forms.Form):
         # BulkMatchTrainingRequestForm.
         FormActions(
             Div(
-                Submit(
+                Submit(  # type: ignore[no-untyped-call]
                     "accept",
                     "Accept selected",
                     formnovalidate="formnovalidate",
                     css_class="btn-success",
                 ),
-                Submit(
+                Submit(  # type: ignore[no-untyped-call]
                     "discard",
                     "Discard selected",
                     formnovalidate="formnovalidate",
                     css_class="btn-danger",
                 ),
-                Submit(
+                Submit(  # type: ignore[no-untyped-call]
                     "unmatch",
                     "Unmatch selected from training",
                     formnovalidate="formnovalidate",
@@ -97,7 +98,7 @@ class BulkChangeTrainingRequestForm(forms.Form):
     # with one person.
     check_person_matched = False
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         unmatched_request_exists = any(r.person is None for r in self.cleaned_data.get("requests", []))
         if self.check_person_matched and unmatched_request_exists:
@@ -111,7 +112,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         label="Training",
         required=True,
         queryset=Event.objects.filter(tags__name="TTT"),
-        widget=ModelSelect2Widget(data_view="ttt-event-lookup"),
+        widget=ModelSelect2Widget(data_view="ttt-event-lookup"),  # type: ignore[no-untyped-call]
     )
 
     seat_membership = forms.ModelChoiceField(
@@ -119,7 +120,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         required=False,
         queryset=Membership.objects.all(),
         help_text="Assigned users will take instructor seats from selected " "member site.",
-        widget=ModelSelect2Widget(data_view="membership-lookup"),
+        widget=ModelSelect2Widget(data_view="membership-lookup"),  # type: ignore[no-untyped-call]
     )
 
     seat_membership_auto_assign = forms.BooleanField(
@@ -151,9 +152,9 @@ class BulkMatchTrainingRequestForm(forms.Form):
         "seat_membership_auto_assign",
         "seat_public",
         "seat_open_training",
-    )
+    )  # type: ignore[no-untyped-call]
     helper.add_input(
-        Submit(
+        Submit(  # type: ignore[no-untyped-call]
             "match",
             "Accept & match selected trainees to chosen training",
             **{
@@ -167,7 +168,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         )
     )
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
 
         event = self.cleaned_data["event"]
@@ -210,20 +211,20 @@ class MatchTrainingRequestForm(forms.Form):
         label="Trainee Account",
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="person-lookup"),
+        widget=ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(add_submit_button=False, add_cancel_button=False)
     helper.layout = Layout(
         "person",
-        FormActions(
-            Submit("match-selected-person", "Match to selected trainee account"),
-            HTML("&nbsp;<strong>OR</strong>&nbsp;&nbsp;"),
-            Submit("create-new-person", "Create new trainee account"),
+        FormActions(  # type: ignore[no-untyped-call]
+            Submit("match-selected-person", "Match to selected trainee account"),  # type: ignore[no-untyped-call]
+            HTML("&nbsp;<strong>OR</strong>&nbsp;&nbsp;"),  # type: ignore[no-untyped-call]
+            Submit("create-new-person", "Create new trainee account"),  # type: ignore[no-untyped-call]
         ),
     )
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
 
         if "match-selected-person" in self.data:
@@ -248,7 +249,7 @@ class MatchTrainingRequestForm(forms.Form):
 # WorkshopRequest related forms
 
 
-class WorkshopRequestBaseForm(forms.ModelForm):
+class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
     institution = forms.ModelChoiceField(
         required=False,
         queryset=Organization.objects.order_by("fullname").exclude(fullname="self-organized"),
@@ -356,7 +357,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "additional_contact": Select2TagWidget,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # request is required for ENFORCE_MEMBER_CODES flag
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
@@ -366,10 +367,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # change institution object labels (originally Organization displays
         # domain as well)
-        self.fields["institution"].label_from_instance = self.institution_label_from_instance
+        self.fields["institution"].label_from_instance = self.institution_label_from_instance  # type: ignore
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore[no-untyped-call]
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
@@ -404,8 +405,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self.helper.layout.insert(
             pos_index + 1,
             Div(
-                Div(
-                    HTML(DATES_TOO_SOON_WARNING),
+                Div(  # type: ignore[no-untyped-call]
+                    HTML(DATES_TOO_SOON_WARNING),  # type: ignore[no-untyped-call]
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="preferred_dates_warning",
@@ -428,16 +429,16 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         for field in hr_fields_after:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field) + 1,
-                HTML(self.helper.hr()),
+                HTML(self.helper.hr()),  # type: ignore[no-untyped-call]
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field),
-                HTML(self.helper.hr()),
+                HTML(self.helper.hr()),  # type: ignore[no-untyped-call]
             )
 
     @staticmethod
-    def institution_label_from_instance(obj):
+    def institution_label_from_instance(obj: Organization) -> str:
         """Static method that overrides ModelChoiceField choice labels,
         essentially works just like `Model.__str__`."""
         return "{}".format(obj.fullname)
@@ -471,7 +472,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         return errors
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 
@@ -559,7 +560,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # 7: if workshop is less than 2mo away, or if the dates are unknown, require the
         # confirmation in `instructor_availability`:
-        instructor_availability: bool = self.cleaned_data.get("instructor_availability")
+        instructor_availability: bool = self.cleaned_data.get("instructor_availability", False)
         two_months_away = datetime.date.today() + datetime.timedelta(days=60)
         if (preferred_dates and preferred_dates <= two_months_away) or not preferred_dates:
             if not instructor_availability:
@@ -583,7 +584,7 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta(WorkshopRequestBaseForm.Meta):
-        fields = ("state", "event") + WorkshopRequestBaseForm.Meta.fields
+        fields = ("state", "event") + WorkshopRequestBaseForm.Meta.fields  # type: ignore[assignment]
 
         widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
         widgets.update({"event": Select2Widget})
@@ -593,7 +594,7 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
 # WorkshopInquiryRequest related forms
 
 
-class WorkshopInquiryRequestBaseForm(forms.ModelForm):
+class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
     institution = forms.ModelChoiceField(
         required=False,
         queryset=Organization.objects.order_by("fullname").exclude(domain="self-organized"),
@@ -739,24 +740,24 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         }
 
     @staticmethod
-    def institution_label_from_instance(obj):
+    def institution_label_from_instance(obj: Organization) -> str:
         """Static method that overrides ModelChoiceField choice labels,
         essentially works just like `Model.__str__`."""
         return "{}".format(obj.fullname)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # change institution object labels (originally Organization displays
         # domain as well)
-        self.fields["institution"].label_from_instance = self.institution_label_from_instance
+        self.fields["institution"].label_from_instance = self.institution_label_from_instance  # type: ignore
 
         self.fields["travel_expences_management"].required = False
         self.fields["institution_restrictions"].required = False
         self.fields["public_event"].required = False
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore[no-untyped-call]
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
@@ -795,7 +796,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             pos_index + 1,
             Div(
                 Div(
-                    HTML(PROFICIENCY_WARNING),
+                    HTML(PROFICIENCY_WARNING),  # type: ignore[no-untyped-call]
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="computing_levels_warning",
@@ -816,7 +817,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             pos_index + 1,
             Div(
                 Div(
-                    HTML(DATES_TOO_SOON_WARNING),
+                    HTML(DATES_TOO_SOON_WARNING),  # type: ignore[no-untyped-call]
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="preferred_dates_warning",
@@ -841,26 +842,26 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         for field in hr_fields_after:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field) + 1,
-                HTML(self.helper.hr()),
+                HTML(self.helper.hr()),  # type: ignore[no-untyped-call]
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field),
-                HTML(self.helper.hr()),
+                HTML(self.helper.hr()),  # type: ignore[no-untyped-call]
             )
 
         AGREEMENTS_TEXT = "If we proceed with coordinating a workshop, you will agree to" " the following:"
         self.helper.layout.insert(
             self.helper.layout.fields.index("data_privacy_agreement"),
-            HTML(f"<p class='lead offset-lg-2'>{AGREEMENTS_TEXT}</p>"),
+            HTML(f"<p class='lead offset-lg-2'>{AGREEMENTS_TEXT}</p>"),  # type: ignore[no-untyped-call]
         )
         TRAVEL_AGR_TEXT = "If we proceed with coordinating a workshop, I will agree to" " the following:"
         self.helper.layout.insert(
             self.helper.layout.fields.index("travel_expences_agreement"),
-            HTML(f"<p class='lead offset-lg-2'>{TRAVEL_AGR_TEXT}</p>"),
+            HTML(f"<p class='lead offset-lg-2'>{TRAVEL_AGR_TEXT}</p>"),  # type: ignore[no-untyped-call]
         )
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 
@@ -975,7 +976,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
 
         # 7: if workshop is less than 2mo away, or if the dates are unknown, require the
         # confirmation in `instructor_availability`:
-        instructor_availability: bool = self.cleaned_data.get("instructor_availability")
+        instructor_availability: bool = self.cleaned_data.get("instructor_availability", False)
         two_months_away = datetime.date.today() + datetime.timedelta(days=60)
         if (not preferred_dates or preferred_dates <= two_months_away) and not instructor_availability:
             errors["instructor_availability"] = ValidationError(
@@ -996,7 +997,7 @@ class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
         fields = (
             "state",
             "event",
-        ) + WorkshopInquiryRequestBaseForm.Meta.fields
+        ) + WorkshopInquiryRequestBaseForm.Meta.fields  # type: ignore[assignment]
 
         widgets = WorkshopInquiryRequestBaseForm.Meta.widgets.copy()
         widgets.update({"event": Select2Widget})
@@ -1006,7 +1007,7 @@ class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
 # SelfOrganisedSubmission related forms
 
 
-class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
+class SelfOrganisedSubmissionBaseForm(forms.ModelForm[SelfOrganisedSubmission]):
     institution = forms.ModelChoiceField(
         required=False,
         queryset=Organization.objects.order_by("fullname").exclude(fullname="self-organized"),
@@ -1086,20 +1087,20 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         js = ("selforganisedsubmission_form.js",)
 
     @staticmethod
-    def institution_label_from_instance(obj):
+    def institution_label_from_instance(obj: Organization) -> str:
         """Static method that overrides ModelChoiceField choice labels,
         essentially works just like `Model.__str__`."""
         return "{}".format(obj.fullname)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         # change institution object labels (originally Organization displays
         # domain as well)
-        self.fields["institution"].label_from_instance = self.institution_label_from_instance
+        self.fields["institution"].label_from_instance = self.institution_label_from_instance  # type: ignore
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore[no-untyped-call]
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
@@ -1127,16 +1128,16 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "language",
             "online_inperson",
         )
-        hr_fields_before = []
+        hr_fields_before: list[str] = []
         for field in hr_fields_after:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field) + 1,
-                HTML(self.helper.hr()),
+                HTML(self.helper.hr()),  # type: ignore[no-untyped-call]
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field),
-                HTML(self.helper.hr()),
+                HTML(self.helper.hr()),  # type: ignore[no-untyped-call]
             )
 
         # add warning alert for workshop URL
@@ -1155,7 +1156,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             pos_index + 1,
             Div(
                 Div(
-                    HTML(REPO_WARNING),
+                    HTML(REPO_WARNING),  # type: ignore[no-untyped-call]
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="workshop_url_repo_warning",
@@ -1166,7 +1167,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             pos_index + 2,
             Div(
                 Div(
-                    HTML(URL_WARNING),
+                    HTML(URL_WARNING),  # type: ignore[no-untyped-call]
                     css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
                 ),
                 id="workshop_url_warning",
@@ -1174,7 +1175,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             ),
         )
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 
@@ -1254,7 +1255,7 @@ class SelfOrganisedSubmissionAdminForm(SelfOrganisedSubmissionBaseForm):
         fields = (
             "state",
             "event",
-        ) + SelfOrganisedSubmissionBaseForm.Meta.fields
+        ) + SelfOrganisedSubmissionBaseForm.Meta.fields  # type: ignore[assignment]
 
         widgets = SelfOrganisedSubmissionBaseForm.Meta.widgets.copy()
         widgets.update({"event": Select2Widget})
@@ -1264,12 +1265,12 @@ class SelfOrganisedSubmissionAdminForm(SelfOrganisedSubmissionBaseForm):
 # Training Requests
 
 
-class TrainingRequestUpdateForm(forms.ModelForm):
+class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
     person = forms.ModelChoiceField(
         label="Matched Trainee",
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="person-lookup"),
+        widget=ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
     )
 
     score_auto = forms.IntegerField(
@@ -1295,12 +1296,12 @@ class TrainingRequestUpdateForm(forms.ModelForm):
             "state": forms.RadioSelect(),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # request is required for ENFORCE_MEMBER_CODES flag
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
 
         errors = self.validate_member_code(request=self.request_http)
@@ -1341,14 +1342,14 @@ class TrainingRequestsSelectionForm(forms.Form):
         label="Training request A",
         required=True,
         queryset=TrainingRequest.objects.all(),
-        widget=ModelSelect2Widget(data_view="trainingrequest-lookup"),
+        widget=ModelSelect2Widget(data_view="trainingrequest-lookup"),  # type: ignore[no-untyped-call]
     )
 
     trainingrequest_b = forms.ModelChoiceField(
         label="Training request B",
         required=True,
         queryset=TrainingRequest.objects.all(),
-        widget=ModelSelect2Widget(data_view="trainingrequest-lookup"),
+        widget=ModelSelect2Widget(data_view="trainingrequest-lookup"),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)

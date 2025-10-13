@@ -212,10 +212,10 @@ class EventFilter(AMYFilterSet):
     tags = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
         label="Tags",
-        widget=ModelSelect2MultipleWidget(
+        widget=ModelSelect2MultipleWidget(  # type: ignore[no-untyped-call]
             data_view="tag-lookup",
         ),
-    )  # type: ignore
+    )
 
     country = AllCountriesFilter(widget=Select2Widget)
     continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
@@ -254,7 +254,7 @@ class EventCategoryFilter(AMYFilterSet):
     )  # type: ignore
 
 
-def filter_taught_workshops(queryset: QuerySet[Person], name: str, values: list[str]) -> QuerySet[Person]:
+def filter_taught_workshops(queryset: QuerySet[Person], name: str, values: list[int]) -> QuerySet[Person]:
     """Limit Persons to only instructors from events with specific tags.
 
     This needs to be in a separate function because django-filters doesn't
@@ -272,18 +272,18 @@ class PersonFilter(AMYFilterSet):
     badges = django_filters.ModelMultipleChoiceFilter(
         queryset=Badge.objects.all(),
         label="Badges",
-        widget=ModelSelect2MultipleWidget(
+        widget=ModelSelect2MultipleWidget(  # type: ignore[no-untyped-call]
             data_view="badge-lookup",
         ),
-    )  # type: ignore
+    )
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
         label="Taught at workshops of type",
         method=filter_taught_workshops,
-        widget=ModelSelect2MultipleWidget(
+        widget=ModelSelect2MultipleWidget(  # type: ignore[no-untyped-call]
             data_view="tag-lookup",
         ),
-    )  # type: ignore
+    )
 
     order_by = NamesOrderingFilter(
         fields=("email",),
@@ -301,11 +301,11 @@ class TaskFilter(AMYFilterSet):
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label="Event",
-        widget=ModelSelect2Widget(
+        widget=ModelSelect2Widget(  # type: ignore[no-untyped-call]
             data_view="event-lookup",
             attrs=SELECT2_SIDEBAR,
         ),
-    )  # type: ignore
+    )
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -360,11 +360,11 @@ class BadgeAwardsFilter(AMYFilterSet):
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label="Event",
-        widget=ModelSelect2Widget(
+        widget=ModelSelect2Widget(  # type: ignore[no-untyped-call]
             data_view="event-lookup",
             attrs=SELECT2_SIDEBAR,
         ),
-    )  # type: ignore
+    )
 
     order_by = django_filters.OrderingFilter(
         fields=(

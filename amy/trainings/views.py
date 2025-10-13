@@ -1,6 +1,9 @@
+from typing import Any
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Case, Count, F, IntegerField, Prefetch, Sum, When
+from django.db.models import Case, Count, F, IntegerField, Prefetch, QuerySet, Sum, When
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 
@@ -12,11 +15,13 @@ from emails.actions.instructor_training_completed_not_badged import (
 from trainings.filters import TraineeFilter
 from trainings.forms import BulkAddTrainingProgressForm, TrainingProgressForm
 from trainings.utils import raise_validation_error_if_no_learner_task
+from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
     AMYListView,
     AMYUpdateView,
+    AuthenticatedHttpRequest,
     PrepopulationSupportMixin,
     RedirectSupportMixin,
 )
@@ -32,7 +37,7 @@ from workshops.utils.access import OnlyForAdminsMixin, admin_required
 from workshops.utils.pagination import get_pagination_items
 
 
-class AllTrainings(OnlyForAdminsMixin, AMYListView):
+class AllTrainings(OnlyForAdminsMixin, AMYListView[Event]):
     context_object_name = "all_trainings"
     template_name = "trainings/all_trainings.html"
     queryset = (
@@ -67,17 +72,22 @@ class AllTrainings(OnlyForAdminsMixin, AMYListView):
 # Instructor Training related views
 
 
-class TrainingProgressCreate(RedirectSupportMixin, PrepopulationSupportMixin, OnlyForAdminsMixin, AMYCreateView):
+class TrainingProgressCreate(
+    RedirectSupportMixin,
+    PrepopulationSupportMixin[TrainingProgressForm],
+    OnlyForAdminsMixin,
+    AMYCreateView[TrainingProgressForm, TrainingProgress],
+):
     model = TrainingProgress
     form_class = TrainingProgressForm
     populate_fields = ["trainee"]
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["form"].helper = context["form"].create_helper
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form: TrainingProgressForm) -> HttpResponse:
         person = form.cleaned_data["trainee"]
         event = form.cleaned_data["event"]
         result = super().form_valid(form)
@@ -96,12 +106,14 @@ class TrainingProgressCreate(RedirectSupportMixin, PrepopulationSupportMixin, On
         return result
 
 
-class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView):
+class TrainingProgressUpdate(
+    RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView[TrainingProgressForm, TrainingProgress]
+):
     model = TrainingProgress
     form_class = TrainingProgressForm
     template_name = "trainings/trainingprogress_form.html"
 
-    def form_valid(self, form):
+    def form_valid(self, form: TrainingProgressForm) -> HttpResponse:
         person = form.cleaned_data["trainee"]
         event = form.cleaned_data["event"]
         result = super().form_valid(form)
@@ -120,17 +132,19 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdate
         return result
 
 
-class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin, AMYDeleteView):
+class TrainingProgressDelete(
+    RedirectSupportMixin, OnlyForAdminsMixin, AMYDeleteView[TrainingProgress, GenericDeleteForm[TrainingProgress]]
+):
     model = TrainingProgress
     success_url = reverse_lazy("all_trainees")
     object: TrainingProgress
 
-    def before_delete(self, *args, **kwargs):
+    def before_delete(self, *args: Any, **kwargs: Any) -> None:
         """Save for use in `after_delete` method."""
         self._person = self.object.trainee
         self._event = self.object.event
 
-    def after_delete(self, *args, **kwargs):
+    def after_delete(self, *args: Any, **kwargs: Any) -> None:
         person = self._person
         event = self._event
         try:
@@ -147,16 +161,15 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin, AMYDelete
             )
 
 
-def all_trainees_queryset():
+def all_trainees_queryset() -> QuerySet[Person]:
     return (
         Person.objects.annotate_with_instructor_eligibility()
         .prefetch_related(
             Prefetch(
                 "task_set",
                 to_attr="training_tasks",
-                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT"),
+                queryset=Task.objects.filter(role__name="learner", event__tags__name="TTT").select_related("event"),
             ),
-            "training_tasks__event",
             "trainingrequest_set",
             "trainingprogress_set",
             "trainingprogress_set__requirement",
@@ -175,7 +188,7 @@ def all_trainees_queryset():
 
 
 @admin_required
-def all_trainees(request):
+def all_trainees(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter = TraineeFilter(
         request.GET,
         queryset=all_trainees_queryset(),
@@ -229,8 +242,8 @@ def all_trainees(request):
 
             if errors:
                 # build a user-friendly error set
-                for e in errors:
-                    msg = " ".join(e.messages)
+                for error in errors:
+                    msg = " ".join(error.messages)
                     messages.error(request, msg)
 
                 changed_count = len(form.cleaned_data["trainees"]) - len(errors)
@@ -247,7 +260,7 @@ def all_trainees(request):
     else:  # GET request
         # If the user filters by training, we want to set initial values for
         # "requirement" and "training" fields.
-        training_id = request.GET.get("training", None) or None
+        training_id = request.GET.get("training", 0) or 0
         try:
             initial = {
                 "event": Event.objects.get(pk=training_id),

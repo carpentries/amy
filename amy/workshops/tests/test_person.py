@@ -1,4 +1,5 @@
 from datetime import date, datetime, timezone
+from typing import Any
 from unittest.mock import patch
 from urllib.parse import urlencode
 
@@ -120,20 +121,20 @@ class TestPerson(TestBase):
         )
 
         bob_edit_url = reverse("person_edit", args=[bob.id])
-        res = self.app.get(bob_edit_url, user="manager")
+        res = self.app.get(bob_edit_url, user="manager")  # type: ignore[no-untyped-call]
         self.assertEqual(res.status_code, 200)
 
     def test_person_award_badge(self) -> None:
         """Ensure that we can add an award from `person_edit` view"""
         url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")
+        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
         award_form = person_edit.forms[2]
         award_form["award-badge"] = self.instructor_badge.pk
 
         self.assertEqual(self.spiderman.award_set.count(), 0)
         self.assertRedirects(award_form.submit(), url)
         self.assertEqual(self.spiderman.award_set.count(), 1)
-        self.assertEqual(self.spiderman.award_set.first().badge, self.instructor_badge)
+        self.assertEqual(self.spiderman.award_set.all()[0].badge, self.instructor_badge)
 
     def test_person_failed_training_warning(self) -> None:
         """
@@ -145,7 +146,7 @@ class TestPerson(TestBase):
         )
         # No failed training, so no warning should show
         url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")
+        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
         award_form = person_edit.forms[2]
         task_form = person_edit.forms[3]
         self.assertNotEqual(award_form.fields["submit"][0].attrs.get("onclick"), warning_popup)
@@ -157,7 +158,7 @@ class TestPerson(TestBase):
 
         # A warning should be shown
         url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")
+        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
         award_form = person_edit.forms[2]
         task_form = person_edit.forms[3]
         self.assertEqual(award_form.fields["submit"][0].attrs["onclick"], warning_popup)
@@ -169,15 +170,15 @@ class TestPerson(TestBase):
         role = Role.objects.create(name="test_role")
 
         url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")
+        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
         task_form = person_edit.forms[3]
-        task_form["task-event"].force_value(Event.objects.first().pk)
+        task_form["task-event"].force_value(Event.objects.all()[0].pk)
         task_form["task-role"] = role.pk
 
         self.assertEqual(self.spiderman.task_set.count(), 0)
         self.assertRedirects(task_form.submit(), url)
         self.assertEqual(self.spiderman.task_set.count(), 1)
-        self.assertEqual(self.spiderman.task_set.first().role, role)
+        self.assertEqual(self.spiderman.task_set.all()[0].role, role)
 
     def test_edit_person_permissions(self) -> None:
         """Make sure we can set up user permissions correctly."""
@@ -433,7 +434,7 @@ class TestPerson(TestBase):
             state="p",
         )
 
-        trainees = self.app.get(reverse("all_trainees"), user="admin")
+        trainees = self.app.get(reverse("all_trainees"), user="admin")  # type: ignore[no-untyped-call]
 
         # clear trainee awards so that .last() always returns the exact badge
         # we want
@@ -448,7 +449,7 @@ class TestPerson(TestBase):
         self.assertEqual(int(swc_res.forms["main-form"]["award-event"].value), training.pk)
         res = swc_res.forms["main-form"].submit()
         self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.last().badge, self.instructor_badge)
+        self.assertEqual(trainee.award_set.all().reverse()[0].badge, self.instructor_badge)
 
     def test_person_github_username_validation(self) -> None:
         """Ensure GitHub username doesn't allow for spaces or commas."""
@@ -507,9 +508,9 @@ class TestPerson(TestBase):
         self.client.post(url, data)
         obj = Person.objects.get(username="curie_marie")
         self.assertEqual(Comment.objects.count(), 1)
-        comment = Comment.objects.first()
+        comment = Comment.objects.all()[0]
         self.assertEqual(comment.comment, "This is a test comment.")
-        self.assertIn(comment, Comment.objects.for_model(obj))
+        self.assertIn(comment, Comment.objects.for_model(obj))  # type: ignore[no-untyped-call]
 
     def test_annotate_with_role_count(self) -> None:
         # Arrange
@@ -526,12 +527,12 @@ class TestPerson(TestBase):
 
         workshop = Event.objects.create(
             slug="workshop-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="self-organized"),
         )
         training = Event.objects.create(
             slug="training-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
         )
 
@@ -711,7 +712,6 @@ class TestPersonPassword(TestBase):
 
 class TestPersonMerging(TestBase):
     def setUp(self) -> None:
-        self._setUpAirports()
         self._setUpBadges()
         self._setUpLessons()
         self._setUpRoles()
@@ -732,7 +732,7 @@ class TestPersonMerging(TestBase):
             email="purdy.kelsi@example.com",
             secondary_email="notused@amy.org",
             gender="F",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             github="purdy_kelsi",
             twitter="purdy_kelsi",
             bluesky="@purdy_kelsi.bsky.social",
@@ -746,12 +746,12 @@ class TestPersonMerging(TestBase):
         self.person_a.award_set.create(badge=self.swc_instructor, awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_a, lesson=self.git)
         Qualification.objects.create(person=self.person_a, lesson=self.sql)
-        self.person_a.domains.set([KnowledgeDomain.objects.first()])
+        self.person_a.domains.set([KnowledgeDomain.objects.all()[0]])
         self.person_a.task_set.create(
             event=Event.objects.get(slug="ends-tomorrow-ongoing"),
             role=Role.objects.get(name="instructor"),
         )
-        self.person_a.languages.set([Language.objects.first(), Language.objects.last()])
+        self.person_a.languages.set([Language.objects.all()[0], Language.objects.all().reverse()[0]])
         self.person_a.trainingprogress_set.create(requirement=self.training)
 
         # comments made by this person
@@ -814,7 +814,7 @@ class TestPersonMerging(TestBase):
             email="deckow.jayden@example.com",
             secondary_email="notused@example.org",
             gender="M",
-            airport=self.airport_0_50,
+            airport_iata="LAX",
             github="deckow_jayden",
             twitter="deckow_jayden",
             bluesky="@deckow_jayden.bsky.social",
@@ -827,8 +827,8 @@ class TestPersonMerging(TestBase):
         self.person_consent_active_terms(self.person_b)
         self.person_b.award_set.create(badge=self.dc_instructor, awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
-        self.person_b.domains.set([KnowledgeDomain.objects.last()])
-        self.person_b.languages.set([Language.objects.last()])
+        self.person_b.domains.set([KnowledgeDomain.objects.all().reverse()[0]])
+        self.person_b.languages.set([Language.objects.all().reverse()[0]])
         self.person_b.trainingprogress_set.create(requirement=self.training)
         self.person_b.trainingprogress_set.create(requirement=self.demo)
 
@@ -957,8 +957,8 @@ class TestPersonMerging(TestBase):
             "comments": "combine",
         }
         data = hidden.copy()
-        data.update(failing)
-        data.update(passing)
+        data.update(failing)  # type: ignore[arg-type]
+        data.update(passing)  # type: ignore[arg-type]
 
         form = PersonsMergeForm(data)
         self.assertFalse(form.is_valid())
@@ -1023,10 +1023,10 @@ class TestPersonMerging(TestBase):
             # we're saving/combining qualifications, but it affects lessons
             "lessons": {self.sql},
             "domains": {
-                KnowledgeDomain.objects.first(),
-                KnowledgeDomain.objects.last(),
+                KnowledgeDomain.objects.all()[0],
+                KnowledgeDomain.objects.all().reverse()[0],
             },
-            "languages": {Language.objects.first(), Language.objects.last()},
+            "languages": {Language.objects.all()[0], Language.objects.all().reverse()[0]},
             "task_set": set(Task.objects.none()),
             # Combining similar TrainingProgresses should end up in
             # a unique constraint violation, shouldn't it?
@@ -1051,8 +1051,8 @@ class TestPersonMerging(TestBase):
             # we're saving/combining qualifications, but it affects lessons
             "lessons": {self.sql, self.git},
             "domains": {
-                KnowledgeDomain.objects.first(),
-                KnowledgeDomain.objects.last(),
+                KnowledgeDomain.objects.all()[0],
+                KnowledgeDomain.objects.all().reverse()[0],
             },
         }
         self.strategy["qualification_set"] = "obj_a"
@@ -1088,7 +1088,7 @@ class TestPersonMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.person_b.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),  # type: ignore[no-untyped-call]
             set(comments),
         )
 
@@ -1102,7 +1102,7 @@ class TestPersonMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.person_b.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),  # type: ignore[no-untyped-call]
             set(comments),
         )
 
@@ -1116,7 +1116,7 @@ class TestPersonMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.person_b.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.person_b).filter(is_removed=False)),  # type: ignore[no-untyped-call]
             set(comments),
         )
 
@@ -1165,7 +1165,7 @@ class TestPersonMerging(TestBase):
         self.assertEqual(self.person_b_consent_may_publish_name.person, self.person_b)
 
 
-def github_username_to_uid_mock(username):
+def github_username_to_uid_mock(username: str) -> str:
     username2uid = {
         "username": "1",
         "changed": "2",
@@ -1196,8 +1196,8 @@ class TestPersonAndUserSocialAuth(TestBase):
         user.synchronize_usersocialauth()
 
         got = UserSocialAuth.objects.values_list("provider", "uid", "user")
-        expected = []
-        self.assertSequenceEqual(got, expected)
+        expected: list[Any] = []
+        self.assertSequenceEqual(list(got), expected)
 
         # UserSocialAuth record should be created for a user with GitHub
         # username.
@@ -1207,7 +1207,7 @@ class TestPersonAndUserSocialAuth(TestBase):
 
         got = UserSocialAuth.objects.values_list("provider", "uid", "user")
         expected = [("github", "1", user.pk)]
-        self.assertSequenceEqual(got, expected)
+        self.assertSequenceEqual(list(got), expected)
 
         # When GitHub username is changed, Person.save should take care of
         # clearing UserSocialAuth table.
@@ -1216,14 +1216,14 @@ class TestPersonAndUserSocialAuth(TestBase):
 
         expected = []
         got = UserSocialAuth.objects.values_list("provider", "uid", "user")
-        self.assertSequenceEqual(got, expected)
+        self.assertSequenceEqual(list(got), expected)
 
         # Syncing UserSocialAuth should result in a new UserSocialAuth record.
         user.synchronize_usersocialauth()
 
         got = UserSocialAuth.objects.values_list("provider", "uid", "user")
         expected = [("github", "2", user.pk)]
-        self.assertSequenceEqual(got, expected)
+        self.assertSequenceEqual(list(got), expected)
 
         # Syncing UserSocialAuth after changing GitHub username without
         # saving should also result in updated UserSocialAuth.
@@ -1233,7 +1233,7 @@ class TestPersonAndUserSocialAuth(TestBase):
 
         got = UserSocialAuth.objects.values_list("provider", "uid", "user")
         expected = [("github", "3", user.pk)]
-        self.assertSequenceEqual(got, expected)
+        self.assertSequenceEqual(list(got), expected)
 
     def test_errors_are_not_hidden(self) -> None:
         """Test that errors occuring in synchronize_usersocialauth are not
@@ -1308,7 +1308,6 @@ class TestGetMissingInstructorRequirements(TestBase):
 
 class TestFilterTaughtWorkshops(TestBase):
     def setUp(self) -> None:
-        self._setUpAirports()
         self._setUpBadges()
         self._setUpLessons()
         self._setUpTags()
@@ -1345,7 +1344,7 @@ class TestFilterTaughtWorkshops(TestBase):
         #
         # - Ron and Spiderman should not be listed, because they didn't
         # participated in a TTT event.
-        self.assertSequenceEqual(filtered, [self.hermione])
+        self.assertSequenceEqual(list(filtered), [self.hermione])
 
 
 class TestPersonUpdateViewPermissions(TestBase):
@@ -1364,7 +1363,7 @@ class TestPersonUpdateViewPermissions(TestBase):
         profile_edit = self.app.get(
             reverse("person_edit", args=[self.trainer.pk]),
             user=self.trainer,
-        )
+        )  # type: ignore[no-untyped-call]
         self.assertEqual(profile_edit.status_code, 200)
 
     def test_trainer_cannot_edit_stray_profile(self) -> None:
@@ -1372,7 +1371,7 @@ class TestPersonUpdateViewPermissions(TestBase):
             self.app.get(
                 reverse("person_edit", args=[self.trainee.pk]),
                 user=self.trainer,
-            )
+            )  # type: ignore[no-untyped-call]
 
 
 class TestRegression1076(TestBase):
@@ -1389,12 +1388,12 @@ class TestRegression1076(TestBase):
         self.admin.full_clean()  # no error should be raised
 
     def test_bulk_upload(self) -> None:
-        event_slug = Event.objects.first().slug
+        event_slug = Event.objects.all()[0].slug
         csv = ("personal,family,email,event,role\n" "John,,john@smith.com,{0},learner\n").format(event_slug)
 
-        upload_page = self.app.get(reverse("person_bulk_add"), user="admin")
+        upload_page = self.app.get(reverse("person_bulk_add"), user="admin")  # type: ignore[no-untyped-call]
         upload_form = upload_page.forms["main-form"]
-        upload_form["file"] = Upload("people.csv", csv.encode("utf-8"))
+        upload_form["file"] = Upload("people.csv", csv.encode("utf-8"))  # type: ignore[no-untyped-call]
 
         confirm_page = upload_form.submit().maybe_follow()
         confirm_form = confirm_page.forms["main-form"]
@@ -1426,7 +1425,7 @@ class TestArchivePerson(TestBase):
         self.user.is_active = True
         self.user.secondary_email = "user@second_example.org"
         self.user.gender = GenderMixin.OTHER
-        self.user.other_gender = "Agender"
+        self.user.gender_other = "Agender"
         self.user.github = "user-github"
         self.user.is_active = True
         self.user.save()
@@ -1574,17 +1573,17 @@ class TestArchivePerson(TestBase):
 
     def test_version_history_removed_when_archived(self) -> None:
         # Create the person and change their information a few times.
-        with create_revision():
+        with create_revision():  # type: ignore[no-untyped-call]
             person = Person.objects.create(
                 personal="Draco",
                 family="Malfoy",
                 username="dmalfoy",
                 email="draco@malfoy.com",
             )
-        with create_revision():
+        with create_revision():  # type: ignore[no-untyped-call]
             person.twitter = "dmalfoy"
             person.save()
-        with create_revision():
+        with create_revision():  # type: ignore[no-untyped-call]
             person.github = "dmalfoy"
             person.save()
 

@@ -1,9 +1,11 @@
 from datetime import date
 import re
+from typing import Any
 
 from django.db.models import Case, F, Q, QuerySet, When
 from django.forms import widgets
 from django.http import QueryDict
+from django.utils.datastructures import MultiValueDict
 import django_filters
 
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
@@ -25,7 +27,7 @@ from workshops.models import Curriculum, Person, TrainingRequest, WorkshopReques
 
 
 class TrainingRequestFilter(AMYFilterSet):
-    def __init__(self, data=None, *args, **kwargs):
+    def __init__(self, data: MultiValueDict[str, str] | None = None, *args: Any, **kwargs: Any) -> None:
         # If no filters are set, use some default settings.
         # This avoids handling the full list of training requests
         # client-side unless the user deliberately chooses to do so.
@@ -35,25 +37,29 @@ class TrainingRequestFilter(AMYFilterSet):
 
         super().__init__(data, *args, **kwargs)
 
-    search = django_filters.CharFilter(
+    search = django_filters.CharFilter(  # type: ignore
         label="Name or Email",
         method="filter_by_person",
     )
 
-    member_code = django_filters.CharFilter(field_name="member_code", lookup_expr="icontains", label="Member code")
+    member_code = django_filters.CharFilter(  # type: ignore
+        field_name="member_code",
+        lookup_expr="icontains",
+        label="Member code",
+    )
 
-    eventbrite_id = django_filters.CharFilter(
+    eventbrite_id = django_filters.CharFilter(  # type: ignore
         label="Eventbrite ID or URL",
         method="filter_eventbrite_id",
     )
 
-    state = django_filters.ChoiceFilter(
+    state = django_filters.ChoiceFilter(  # type: ignore
         label="State",
         choices=(("pa", "Pending or accepted"),) + TrainingRequest.STATE_CHOICES,
         method="filter_training_requests_by_state",
     )
 
-    matched = django_filters.ChoiceFilter(
+    matched = django_filters.ChoiceFilter(  # type: ignore
         label="Is Matched?",
         choices=(
             ("", "Unknown"),
@@ -64,23 +70,23 @@ class TrainingRequestFilter(AMYFilterSet):
         method="filter_matched",
     )
 
-    nonnull_manual_score = django_filters.BooleanFilter(
+    nonnull_manual_score = django_filters.BooleanFilter(  # type: ignore
         label="Manual score applied",
         method="filter_non_null_manual_score",
         widget=widgets.CheckboxInput,
     )
 
-    invalid_member_code = django_filters.BooleanFilter(
+    invalid_member_code = django_filters.BooleanFilter(  # type: ignore
         label="Member code marked as invalid",
         method="filter_member_code_override",
         widget=widgets.CheckboxInput,
     )
 
-    affiliation = django_filters.CharFilter(
+    affiliation = django_filters.CharFilter(  # type: ignore
         method="filter_affiliation",
     )
 
-    location = django_filters.CharFilter(lookup_expr="icontains")
+    location = django_filters.CharFilter(lookup_expr="icontains")  # type: ignore
 
     order_by = NamesOrderingFilter(
         fields=(
@@ -101,7 +107,7 @@ class TrainingRequestFilter(AMYFilterSet):
             "location",
         ]
 
-    def filter_matched(self, queryset, name, choice):
+    def filter_matched(self, queryset: QuerySet[TrainingRequest], name: str, choice: str) -> QuerySet[TrainingRequest]:
         if choice == "":
             return queryset
         elif choice == "u":  # unmatched
@@ -121,7 +127,7 @@ class TrainingRequestFilter(AMYFilterSet):
                 person__task__event__tags__name="TTT",
             ).distinct()
 
-    def filter_by_person(self, queryset, name, value):
+    def filter_by_person(self, queryset: QuerySet[TrainingRequest], name: str, value: str) -> QuerySet[TrainingRequest]:
         if value == "":
             return queryset
         else:
@@ -142,32 +148,42 @@ class TrainingRequestFilter(AMYFilterSet):
                 )
             return queryset
 
-    def filter_affiliation(self, queryset, name, affiliation):
+    def filter_affiliation(
+        self, queryset: QuerySet[TrainingRequest], name: str, affiliation: str
+    ) -> QuerySet[TrainingRequest]:
         if affiliation == "":
             return queryset
         else:
             q = Q(affiliation__icontains=affiliation) | Q(person__affiliation__icontains=affiliation)
             return queryset.filter(q).distinct()
 
-    def filter_training_requests_by_state(self, queryset, name, choice):
+    def filter_training_requests_by_state(
+        self, queryset: QuerySet[TrainingRequest], name: str, choice: str
+    ) -> QuerySet[TrainingRequest]:
         if choice == "pa":
             return queryset.filter(state__in=["p", "a"])
         else:
             return queryset.filter(state=choice)
 
-    def filter_non_null_manual_score(self, queryset, name, manual_score):
+    def filter_non_null_manual_score(
+        self, queryset: QuerySet[TrainingRequest], name: str, manual_score: bool
+    ) -> QuerySet[TrainingRequest]:
         if manual_score:
             return queryset.filter(score_manual__isnull=False)
         return queryset
 
-    def filter_member_code_override(self, queryset: QuerySet, name: str, only_overrides: bool) -> QuerySet:
+    def filter_member_code_override(
+        self, queryset: QuerySet[TrainingRequest], name: str, only_overrides: bool
+    ) -> QuerySet[TrainingRequest]:
         """If checked, only show requests where the member code has been
         marked as invalid. Otherwise, show all requests."""
         if only_overrides:
             return queryset.filter(member_code_override=True)
         return queryset
 
-    def filter_eventbrite_id(self, queryset: QuerySet, name: str, value: str) -> QuerySet:
+    def filter_eventbrite_id(
+        self, queryset: QuerySet[TrainingRequest], name: str, value: str
+    ) -> QuerySet[TrainingRequest]:
         """
         Returns the queryset filtered by an Eventbrite ID or URL.
         Events have multiple possible URLs which all contain the ID, so
@@ -193,19 +209,19 @@ class TrainingRequestFilter(AMYFilterSet):
 class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")
-    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(  # type: ignore
         label="Requested workshop types",
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
     )
-    unused_member_code = django_filters.BooleanFilter(
+    unused_member_code = django_filters.BooleanFilter(  # type: ignore
         label="Institution has an active member code but did not provide it",
         method="filter_unused_member_code",
         widget=widgets.CheckboxInput(),
     )
 
-    order_by = django_filters.OrderingFilter(
+    order_by = django_filters.OrderingFilter(  # type: ignore
         fields=("created_at",),
     )
 
@@ -218,7 +234,9 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
             "country",
         ]
 
-    def filter_unused_member_code(self, queryset: QuerySet, name: str, apply_filter: bool) -> QuerySet:
+    def filter_unused_member_code(
+        self, queryset: QuerySet[WorkshopRequest], name: str, apply_filter: bool
+    ) -> QuerySet[WorkshopRequest]:
         if apply_filter:
             # find requests where no member code was provided
             requests_without_code = queryset.filter(member_code="")
@@ -248,14 +266,14 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
 class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")
-    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(  # type: ignore
         label="Requested workshop types",
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
     )
 
-    order_by = django_filters.OrderingFilter(
+    order_by = django_filters.OrderingFilter(  # type: ignore
         fields=("created_at",),
     )
 
@@ -277,14 +295,14 @@ class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
 class SelfOrganisedSubmissionFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")
-    workshop_types = django_filters.ModelMultipleChoiceFilter(
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
+    workshop_types = django_filters.ModelMultipleChoiceFilter(  # type: ignore
         label="Requested workshop types",
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
     )
 
-    order_by = django_filters.OrderingFilter(
+    order_by = django_filters.OrderingFilter(  # type: ignore
         fields=("created_at",),
     )
 

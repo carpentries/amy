@@ -107,14 +107,18 @@ module = [
   "cairosvg.*",
   "crispy_forms.*",
   "debug_toolbar.*",
+  "django_better_admin_arrayfield.*",
   "django_comments.*",
   "django_filters.*",
+  "django_select2.*",
+  "django_webtest.*",
   "flags.*",
   "knox.*",
   "markdownx.*",
   "reversion.*",
   "reversion_compare.*",
   "social_django.*",
+  "webtest.*",
 ]
 follow_untyped_imports = true
 

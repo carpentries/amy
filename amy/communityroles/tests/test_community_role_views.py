@@ -12,7 +12,7 @@ from workshops.tests.base import TestBase
 
 
 class TestCommunityRoleMixin:
-    def setUp(self):
+    def setUp(self) -> None:
         self.config = CommunityRoleConfig.objects.create(
             name="test",
             display_name="Test Role",
@@ -35,11 +35,11 @@ class TestCommunityRoleMixin:
 
 
 class TestCommunityRoleDetailsView(TestCommunityRoleMixin, TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         super()._setUpUsersAndLogin()
 
-    def test_view(self):
+    def test_view(self) -> None:
         # Arrange
         url = reverse("communityrole_details", args=[self.community_role.pk])
         # Act
@@ -51,15 +51,14 @@ class TestCommunityRoleDetailsView(TestCommunityRoleMixin, TestBase):
 
 
 class TestCommunityRoleCreateView(TestCommunityRoleMixin, TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
-        super()._setUpAirports()
         super()._setUpLessons()
         super()._setUpBadges()
         super()._setUpInstructors()
         super()._setUpUsersAndLogin()
         award = Award.objects.create(
-            badge=Badge.objects.first(),
+            badge=Badge.objects.all()[0],
             person=self.person,
         )
         self.data = {
@@ -73,27 +72,26 @@ class TestCommunityRoleCreateView(TestCommunityRoleMixin, TestBase):
             "communityrole-url": "http://example.org",
         }
 
-    def test_view(self):
+    def test_view(self) -> None:
         # Arrange
         url = reverse("communityrole_add")
         # Act
         page = self.client.post(url, self.data)
-        redirect = CommunityRole.objects.last().get_absolute_url()
+        redirect = CommunityRole.objects.all().reverse()[0].get_absolute_url()
         # Assert
         self.assertEqual(page.status_code, 302)  # should redirect to new object
         self.assertRedirects(page, redirect)
 
 
 class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
-        super()._setUpAirports()
         super()._setUpLessons()
         super()._setUpBadges()
         super()._setUpInstructors()
         super()._setUpUsersAndLogin()
         award = Award.objects.create(
-            badge=Badge.objects.first(),
+            badge=Badge.objects.all()[0],
             person=self.person,
         )
         self.data = {
@@ -107,7 +105,7 @@ class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):
             "communityrole-url": "http://example.org",
         }
 
-    def test_view(self):
+    def test_view(self) -> None:
         # Arrange
         url = reverse("communityrole_edit", args=[self.community_role.pk])
         # Act
@@ -117,7 +115,7 @@ class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):
         self.assertEqual(page.status_code, 302)  # should redirect to new object
         self.assertRedirects(page, redirect)
 
-    def test_invalid_form_data_returns_page_with_error(self):
+    def test_invalid_form_data_returns_page_with_error(self) -> None:
         """
         Regression test for issue #2336.
         """
@@ -137,11 +135,11 @@ class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):
 
 
 class TestCommunityRoleDeleteView(TestCommunityRoleMixin, TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         super()._setUpUsersAndLogin()
 
-    def test_view(self):
+    def test_view(self) -> None:
         # Arrange
         url = reverse("communityrole_delete", args=[self.community_role.pk])
         redirect = "/dashboard/admin/"
