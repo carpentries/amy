@@ -54,6 +54,7 @@ class Migration(migrations.Migration):
             model_name="person",
             name="airport_iata",
             field=models.CharField(
+                max_length=10,
                 null=False,
                 blank=False,
                 default="",

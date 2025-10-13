@@ -4,7 +4,6 @@ from typing import Annotated, Any, Collection, TypedDict, cast
 from urllib.parse import quote
 import uuid
 
-import airportsdata
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -42,6 +41,7 @@ from trainings.models import Involvement
 from workshops import github_auth
 from workshops.consts import (
     FEE_DETAILS_URL,
+    IATA_AIRPORTS,
     STR_LONG,
     STR_LONGEST,
     STR_MED,
@@ -68,8 +68,6 @@ from workshops.signals import person_archived_signal
 from workshops.utils.dates import human_daterange
 from workshops.utils.emails import find_emails
 from workshops.utils.reports import reports_link
-
-IATA_AIRPORTS = airportsdata.load("IATA")
 
 # ------------------------------------------------------------
 
@@ -753,11 +751,21 @@ class Person(
         help_text="Primary email address, used for communication and as a login.",
     )
     airport_iata = models.CharField(
+        max_length=STR_SHORT,
         null=False,
         blank=False,
         default="",
         help_text="Nearest major airport (IATA code: https://www.world-airport-codes.com/)",
     )
+    airport_country = models.CharField(
+        max_length=STR_SHORT,
+        null=False,
+        blank=False,
+        default="",
+        help_text="Airport country (copied from airport data package)",
+    )
+    airport_lat = models.FloatField(default=0.0, help_text="Airport latitude (copied from airport data package)")
+    airport_lon = models.FloatField(default=0.0, help_text="Airport longitude (copied from airport data package)")
     country = CountryField(
         null=False,
         blank=True,
@@ -1017,6 +1025,14 @@ class Person(
         self.github = self.github or None
         self.twitter = self.twitter or None
         self.bluesky = self.bluesky or None
+
+        try:
+            airport = IATA_AIRPORTS[self.airport_iata]
+            self.airport_country = airport["country"]
+            self.airport_lat = airport["lat"]
+            self.airport_lon = airport["lon"]
+        except KeyError:
+            pass
         super().save(*args, **kwargs)
 
     def archive(self) -> None:
