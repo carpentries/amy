@@ -1,15 +1,15 @@
-from typing import Any, Dict
+from typing import Any, Sequence
 
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from consents.models import Consent, Term, TermEnum, TermOption, TermOptionChoices
-from workshops.models import Airport, Person
+from workshops.models import Person
 from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestFilter(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         def get_option(term_slug: TermEnum, option_type: str) -> TermOption:
             return [option for option in terms_dict[term_slug].options if option.option_type == option_type][0]
 
@@ -26,7 +26,7 @@ class TestFilter(APITestCase):
             password="admin",
         )
         consent_to_all_required_consents(self.admin_1)
-        self.admin_1.airport = Airport.objects.first()
+        self.admin_1.airport_iata = "CDG"
         self.admin_1.save()
 
         self.admin_2 = Person.objects.create_superuser(
@@ -37,7 +37,7 @@ class TestFilter(APITestCase):
             password="admin",
         )
         consent_to_all_required_consents(self.admin_2)
-        self.admin_2.airport = Airport.objects.first()
+        self.admin_2.airport_iata = "LAX"
         self.admin_2.save()
 
         terms = (
@@ -79,8 +79,8 @@ class TestFilter(APITestCase):
 
         self.client.login(username="admin1", password="admin")
 
-    def test_person_filter(self):
-        def assert_data(data: Dict[str, Any], expected_people) -> None:
+    def test_person_filter(self) -> None:
+        def assert_data(data: dict[str, Any], expected_people: Sequence[Person]) -> None:
             usernames = [person_data["username"] for person_data in data["results"]]
             self.assertCountEqual(usernames, [person.username for person in expected_people])
 

@@ -1,4 +1,5 @@
-from django.urls import include, path
+from django.urls import URLPattern, URLResolver, include, path
+from rest_framework.routers import SimpleRouter
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework_nested import routers
 
@@ -7,7 +8,7 @@ from api.v1 import views
 app_name = "api-v1"
 
 # routers generate URLs for methods like `.list` or `.retrieve`
-router = routers.SimpleRouter(trailing_slash=False)
+router = SimpleRouter(trailing_slash=False)
 router.register("persons", views.PersonViewSet)
 awards_router = routers.NestedSimpleRouter(router, "persons", lookup="person")
 awards_router.register("awards", views.AwardViewSet, basename="person-awards")
@@ -25,7 +26,6 @@ router.register("events", views.EventViewSet)
 tasks_router = routers.NestedSimpleRouter(router, "events", lookup="event")
 tasks_router.register("tasks", views.TaskViewSet, basename="event-tasks")
 router.register("organizations", views.OrganizationViewSet)
-router.register("airports", views.AirportViewSet)
 router.register("terms", views.TermViewSet)
 router.register(
     "communityroleconfigs",
@@ -38,7 +38,7 @@ router.register(
     basename="instructorrecruitment",
 )
 
-urlpatterns = [
+urlpatterns: list[URLResolver | URLPattern] = [
     path("", views.ApiRoot.as_view(), name="root"),
     path(
         "export/person_data/",

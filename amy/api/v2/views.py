@@ -43,6 +43,10 @@ from workshops.models import (
 )
 
 
+class AuthenticatedRequest(Request):
+    user: Person
+
+
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
@@ -137,7 +141,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet[Person]):
         IsAuthenticated,
         ApiAccessPermission,
     )
-    queryset = Person.objects.select_related("airport").all()
+    queryset = Person.objects.all()
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -174,13 +178,13 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet[ScheduledEmail]):
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
-    def lock(self, request: Request, pk: str | None = None) -> Response:
+    def lock(self, request: AuthenticatedRequest, pk: str | None = None) -> Response:
         email = self.get_object()
         locked_email = EmailController.lock_email(email, "State changed by worker", request.user)
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def fail(self, request: Request, pk: str | None = None) -> Response:
+    def fail(self, request: AuthenticatedRequest, pk: str | None = None) -> Response:
         email = self.get_object()
         serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
@@ -191,7 +195,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet[ScheduledEmail]):
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def succeed(self, request: Request, pk: str | None = None) -> Response:
+    def succeed(self, request: AuthenticatedRequest, pk: str | None = None) -> Response:
         email = self.get_object()
         serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 
@@ -202,7 +206,7 @@ class ScheduledEmailViewSet(viewsets.ReadOnlyModelViewSet[ScheduledEmail]):
         return Response(self.get_serializer(locked_email).data)
 
     @action(detail=True, methods=["post"])
-    def cancel(self, request: Request, pk: str | None = None) -> Response:
+    def cancel(self, request: AuthenticatedRequest, pk: str | None = None) -> Response:
         email = self.get_object()
         serializer = ScheduledEmailLogDetailsSerializer[dict[str, Any]](data=request.data)
 

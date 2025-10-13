@@ -1,4 +1,4 @@
-from typing import TypeVar, cast
+from typing import TypeVar
 
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import serializers
@@ -8,7 +8,6 @@ from extrequests.models import SelfOrganisedSubmission
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.models import (
-    Airport,
     Award,
     Badge,
     Curriculum,
@@ -127,7 +126,7 @@ class EventSerializer(serializers.ModelSerializer[Event]):
         try:
             # Iterating like that is faster than using qs.filter(name__in=[...]).first()
             # because it doesn't introduce new queries.
-            return cast(str, next(tag.name for tag in obj.tags.all() if tag.name in TagQuerySet.CARPENTRIES_TAG_NAMES))
+            return next(tag.name for tag in obj.tags.all() if tag.name in TagQuerySet.CARPENTRIES_TAG_NAMES)
         except (IndexError, AttributeError, StopIteration):
             return None
 
@@ -226,7 +225,6 @@ class MembershipSerializer(serializers.ModelSerializer[Membership]):
 
 
 class PersonSerializer(serializers.ModelSerializer[Person]):
-    airport = serializers.SlugRelatedField[Airport](read_only=True, slug_field="iata")
     country = serializers.CharField()
 
     class Meta:
@@ -240,8 +238,9 @@ class PersonSerializer(serializers.ModelSerializer[Person]):
             "full_name",
             "email",
             "secondary_email",
+            "airport_iata",
             "country",
-            "airport",
+            "timezone",
             "github",
             "twitter",
             "bluesky",
