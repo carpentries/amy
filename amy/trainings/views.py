@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Case, Count, F, IntegerField, Prefetch, QuerySet, Sum, When
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
 from emails.actions.exceptions import EmailStrategyException
 from emails.actions.instructor_training_completed_not_badged import (
@@ -255,7 +255,7 @@ def all_trainees(request: AuthenticatedHttpRequest) -> HttpResponse:
             else:
                 messages.success(request, "Successfully changed progress of all selected trainees.")
 
-            return redirect(request.build_absolute_uri())
+            return redirect(reverse("all_trainees") + f"?{request.GET.urlencode()}")
 
     else:  # GET request
         # If the user filters by training, we want to set initial values for
