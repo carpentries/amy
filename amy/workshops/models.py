@@ -762,14 +762,14 @@ class Person(
     airport_iata = models.CharField(
         max_length=STR_SHORT,
         null=False,
-        blank=False,
+        blank=True,
         default="",
         help_text="Nearest major airport (IATA code: https://www.world-airport-codes.com/)",
     )
     airport_country = models.CharField(
         max_length=STR_SHORT,
         null=False,
-        blank=False,
+        blank=True,
         default="",
         help_text="Airport country (copied from airport data package)",
     )
@@ -1054,7 +1054,12 @@ class Person(
         # Remove personal information from an archived profile
         self.email = None
         self.country = ""
-        self.airport = None
+        self.airport_iata = ""
+        self.airport_country = ""
+        self.airport_lat = 0.0
+        self.airport_lon = 0.0
+        self.country = ""
+        self.timezone = ""
         self.github = None
         self.twitter = None
         self.bluesky = None

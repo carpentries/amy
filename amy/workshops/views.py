@@ -168,7 +168,7 @@ from workshops.utils.metadata import (
 )
 from workshops.utils.pagination import get_pagination_items
 from workshops.utils.person_upload import (
-    PersonTask,
+    PersonTaskEntry,
     create_uploaded_persons_tasks,
     upload_person_task_csv,
     verify_upload_person_task,
@@ -297,7 +297,7 @@ def person_bulk_add(request: AuthenticatedHttpRequest) -> HttpResponse:
                 messages.error(request, "Please provide a file in {} encoding.".format(charset))
             else:
                 if empty_fields:
-                    msg_template = "The following required fields were not" " found in the uploaded file: {}"
+                    msg_template = "The following required fields were not found in the uploaded file: {}"
                     msg = msg_template.format(", ".join(empty_fields))
                     messages.error(request, msg)
                 else:
@@ -327,7 +327,7 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
     """
     This view allows for manipulating and saving session-stored upload data.
     """
-    persons_tasks: list[PersonTask] | None = request.session.get("bulk-add-people")
+    persons_tasks: list[PersonTaskEntry] | None = request.session.get("bulk-add-people")
     match = request.session.get("bulk-add-people-match", False)
 
     # if the session is empty, add message and redirect
@@ -347,19 +347,22 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
         for k, record in enumerate(data_update):
             personal, family, username, email, event, role = record
             existing_person_id = persons_tasks[k].get("existing_person_id")
-            persons_tasks[k] = {
-                "personal": personal,
-                "family": family,
-                "username": username,
-                "email": email or None,  # "field or None" converts empty strings to None values
-                "existing_person_id": existing_person_id,
-                # when user wants to drop related event they will send empty string
-                # so we should unconditionally accept new value for event even if
-                # it's an empty string
-                "event": event,
-                "role": role,
-                "errors": None,  # reset here
-            }
+            persons_tasks[k] = PersonTaskEntry(
+                **{
+                    "personal": personal,
+                    "family": family,
+                    "username": username,
+                    "email": email or None,  # "field or None" converts empty strings to None values
+                    "existing_person_id": existing_person_id,
+                    # when user wants to drop related event they will send empty string
+                    # so we should unconditionally accept new value for event even if
+                    # it's an empty string
+                    "event": event,
+                    "role": role,
+                    "errors": [],  # reset here
+                    "info": [],
+                }
+            )
 
         # save updated data to the session
         request.session["bulk-add-people"] = persons_tasks
@@ -369,7 +372,7 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
             if any_errors:
-                messages.error(request, "Please make sure to fix all errors " "listed below.")
+                messages.error(request, "Please make sure to fix all errors listed below.")
 
         # there must be "confirm" and no "cancel" in POST in order to save
         elif request.POST.get("confirm", None) and not request.POST.get("cancel", None):
@@ -701,7 +704,7 @@ def person_password(request: AuthenticatedHttpRequest, person_id: int) -> HttpRe
     if not ((request.user == user) or (request.user.has_perm("workshops.change_person"))):
         raise PermissionDenied
 
-    Form: type[PasswordChangeForm] | type[SetPasswordForm] = PasswordChangeForm
+    Form: type[PasswordChangeForm] | type[SetPasswordForm[Person]] = PasswordChangeForm
     if request.user.is_superuser:
         Form = SetPasswordForm
     elif request.user.pk != user.pk:
@@ -799,7 +802,9 @@ def persons_merge(request: HttpRequest) -> HttpResponse:
                 "secondary_email",
                 "gender",
                 "gender_other",
-                "airport",
+                "airport_iata",
+                "country",
+                "timezone",
                 "github",
                 "twitter",
                 "bluesky",
@@ -989,8 +994,8 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
         form_action=reverse("event_assign", args=[slug]), add_cancel_button=False
     )
     if hasattr(event, "instructorrecruitment"):
-        instructor_recruitment_signups = InstructorRecruitmentSignup.objects.filter(
-            recruitment=event.instructorrecruitment
+        instructor_recruitment_signups = list(
+            InstructorRecruitmentSignup.objects.filter(recruitment=event.instructorrecruitment)
         )
     else:
         instructor_recruitment_signups = []
@@ -1031,12 +1036,12 @@ def validate_event(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse
 
     page_url = request.GET.get("url", None)  # for manual override
     if page_url is None:
-        page_url = event.url
+        page_url = event.url or ""
 
     page_url = page_url.strip()
 
-    error_messages = []
-    warning_messages = []
+    error_messages: list[str] = []
+    warning_messages: list[str] = []
 
     try:
         metadata = fetch_workshop_metadata(page_url)
@@ -1536,16 +1541,16 @@ def event_review_metadata_changes(request: AuthenticatedHttpRequest, slug: str) 
         )
         return redirect(event.get_absolute_url())
 
-    metadata = parse_workshop_metadata(metadata)
+    metadata_parsed = parse_workshop_metadata(metadata)
 
     # save serialized metadata in session so in case of acceptance we don't
     # reload them
-    metadata_serialized = metadata_serialize(metadata)
+    metadata_serialized = metadata_serialize(metadata_parsed)
     request.session["metadata_from_event_website"] = metadata_serialized
 
     context = {
         "title": "Review changes for {}".format(str(event)),
-        "metadata": metadata,
+        "metadata": metadata_parsed,
         "event": event,
     }
     return render(request, "workshops/event_review_metadata_changes.html", context)
@@ -1809,10 +1814,10 @@ class TaskUpdate(
     pk_url_kwarg = "task_id"
     object: Task
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         result = super().get_form_kwargs()
         # Optionally show field `allocated benefit`
-        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)  # type: ignore[no-untyped-call]
         return result | dict(show_allocated_benefit=show_allocated_benefit)
 
     def form_valid(self, form: TaskForm) -> HttpResponse:
@@ -2152,7 +2157,7 @@ class PersonWorkshopStaffAnnotation(TypedDict):
 
 
 def _workshop_staff_query(
-    lat: int | None = None, lng: int | None = None
+    lat: float | None = None, lng: float | None = None
 ) -> QuerySet[Annotated[Person, Annotations[PersonWorkshopStaffAnnotation]]]:
     """This query is used in two views: workshop staff searching and its CSV
     results. Thanks to factoring-out this function, we're now quite certain
@@ -2347,7 +2352,7 @@ def object_changes(request: AuthenticatedHttpRequest, version_id: int) -> HttpRe
         return queryset.order_by("-pk" if history_latest_first else "pk")
 
     # get action list
-    action_list = [
+    action_list: list[dict[str, Any]] = [
         {"version": version, "revision": version.revision}
         for version in _order(Version.objects.get_for_object(obj).select_related("revision__user"))
     ]
@@ -2379,12 +2384,12 @@ def object_changes(request: AuthenticatedHttpRequest, version_id: int) -> HttpRe
 
     context = {
         "title": str(obj),
-        "verbose_name": obj._meta.verbose_name,
+        "verbose_name": obj._meta.verbose_name,  # type: ignore[union-attr]
         "object": obj,
         "version1": version1,
         "version2": version2,
         "revision": version2.revision,
-        "fields": [f for f in obj._meta.get_fields() if f.concrete],
+        "fields": [f for f in obj._meta.get_fields() if f.concrete],  # type: ignore[union-attr]
         "action": "",
         "compare_view": True,
         "action_list": action_list,

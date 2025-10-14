@@ -166,7 +166,7 @@ class ModelSelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2
     pass
 
 
-class ModelSelect2MultipleWidget(  # type: ignore[misc,override]
+class ModelSelect2MultipleWidget(  # type: ignore
     Select2BootstrapMixin,
     Select2NoMinimumInputLength,
     DS2_ModelSelect2MultipleWidget,
@@ -251,7 +251,13 @@ def choice_field_with_other(
 class AirportChoiceField(forms.ChoiceField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         choices = kwargs.pop(
-            "choices", sorted([(key, f"{key}: {value["name"]}") for key, value in IATA_AIRPORTS.items()])
+            "choices",
+            sorted(
+                [
+                    (key, f"{key}: {value["name"]} ({value["country"]}, {value["tz"]})")
+                    for key, value in IATA_AIRPORTS.items()
+                ]
+            ),
         )
         widget = kwargs.pop("widget", Select2Widget)
 

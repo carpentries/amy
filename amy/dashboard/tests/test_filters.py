@@ -3,12 +3,19 @@ from unittest.mock import ANY, MagicMock, call
 
 from django.core.exceptions import ValidationError
 from django.db.models import F
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 
 from dashboard.filters import UpcomingTeachingOpportunitiesFilter
+from workshops.consts import IATA_AIRPORTS
+from workshops.models import Person
 
 
 class TestUpcomingTeachingOpportunitiesFilter(TestCase):
+    def setUp(self) -> None:
+        self.user = Person(personal="Test", family="User", email="test@example.org", airport_iata="CDG")
+        self.request = RequestFactory().get("/")
+        self.request.user = self.user
+
     def test_fields(self) -> None:
         # Arrange
         data: dict[str, Any] = {}
@@ -124,7 +131,7 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
     def test_filter_order_by__not_proximity(self) -> None:
         # Arrange
         qs_mock = MagicMock()
-        filterset = UpcomingTeachingOpportunitiesFilter({})
+        filterset = UpcomingTeachingOpportunitiesFilter({}, request=self.request)
         name = "order_by"
         # Act
         filterset.filter_order_by(qs_mock, name, ["another value"])
@@ -135,7 +142,7 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
     def test_filter_order_by__proximity(self) -> None:
         # Arrange
         qs_mock = MagicMock()
-        filterset = UpcomingTeachingOpportunitiesFilter({})
+        filterset = UpcomingTeachingOpportunitiesFilter({}, request=self.request)
         name = "order_by"
         # Act
         filterset.filter_order_by(qs_mock, name, ["proximity"])
@@ -146,7 +153,7 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
     def test_filter_order_by__neg_proximity(self) -> None:
         # Arrange
         qs_mock = MagicMock()
-        filterset = UpcomingTeachingOpportunitiesFilter({})
+        filterset = UpcomingTeachingOpportunitiesFilter({}, request=self.request)
         name = "order_by"
         # Act
         filterset.filter_order_by(qs_mock, name, ["-proximity"])
@@ -157,11 +164,12 @@ class TestUpcomingTeachingOpportunitiesFilter(TestCase):
     def test_filter_order_by__latlng_provided(self) -> None:
         # Arrange
         qs_mock = MagicMock()
-        filterset = UpcomingTeachingOpportunitiesFilter({})
-        filterset.request = MagicMock()
-        filterset.request.user.airport_iata = "KRK"
+        filterset = UpcomingTeachingOpportunitiesFilter({}, request=self.request)
         name = "order_by"
-        distance_expression = (F("event__latitude") - 123.4) ** 2 + (F("event__longitude") - 56.7) ** 2
+        airport = IATA_AIRPORTS["CDG"]
+        distance_expression = (F("event__latitude") - airport["lat"]) ** 2 + (
+            F("event__longitude") - airport["lon"]
+        ) ** 2
         # Act
         filterset.filter_order_by(qs_mock, name, ["proximity"])
         # Assert

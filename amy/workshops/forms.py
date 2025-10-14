@@ -33,7 +33,6 @@ from workshops.fields import (
 )
 from workshops.mixins import GenderMixin
 from workshops.models import (
-    Airport,
     Award,
     Badge,
     Curriculum,
@@ -250,7 +249,7 @@ class WorkshopStaffForm(forms.Form):
         label="Languages",
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2MultipleWidget(
+        widget=ModelSelect2MultipleWidget(  # type: ignore[no-untyped-call]
             data_view="language-lookup",
             attrs=SELECT2_SIDEBAR,
         ),
@@ -259,7 +258,7 @@ class WorkshopStaffForm(forms.Form):
         label="Knowlege Domains",
         required=False,
         queryset=KnowledgeDomain.objects.all(),
-        widget=ModelSelect2MultipleWidget(
+        widget=ModelSelect2MultipleWidget(  # type: ignore[no-untyped-call]
             data_view="knowledge-domains-lookup",
             attrs=SELECT2_SIDEBAR,
         ),
@@ -361,7 +360,7 @@ class EventForm(forms.ModelForm[Event]):
         required=True,
         help_text=Event._meta.get_field("host").help_text,
         queryset=Organization.objects.all(),
-        widget=ModelSelect2Widget(data_view="organization-lookup"),
+        widget=ModelSelect2Widget(data_view="organization-lookup"),  # type: ignore[no-untyped-call]
     )
 
     sponsor = forms.ModelChoiceField(
@@ -369,7 +368,7 @@ class EventForm(forms.ModelForm[Event]):
         required=True,
         help_text=Event._meta.get_field("sponsor").help_text,
         queryset=Organization.objects.all(),
-        widget=ModelSelect2Widget(data_view="organization-lookup"),
+        widget=ModelSelect2Widget(data_view="organization-lookup"),  # type: ignore[no-untyped-call]
     )
 
     administrator = forms.ModelChoiceField(
@@ -377,21 +376,21 @@ class EventForm(forms.ModelForm[Event]):
         required=True,
         help_text=Event._meta.get_field("administrator").help_text,
         queryset=Organization.objects.administrators(),
-        widget=ModelSelect2Widget(data_view="administrator-org-lookup"),
+        widget=ModelSelect2Widget(data_view="administrator-org-lookup"),  # type: ignore[no-untyped-call]
     )
 
     assigned_to = forms.ModelChoiceField(
         label="Assigned to",
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="admin-lookup"),
+        widget=ModelSelect2Widget(data_view="admin-lookup"),  # type: ignore[no-untyped-call]
     )
 
     language = forms.ModelChoiceField(
         label="Language",
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2Widget(data_view="language-lookup"),
+        widget=ModelSelect2Widget(data_view="language-lookup"),  # type: ignore[no-untyped-call]
     )
 
     country = CountryField().formfield(
@@ -448,7 +447,7 @@ class EventForm(forms.ModelForm[Event]):
             "comment",
         ]
         widgets = {
-            "membership": ModelSelect2Widget(data_view="membership-lookup"),
+            "membership": ModelSelect2Widget(data_view="membership-lookup"),  # type: ignore[no-untyped-call]
             "manual_attendance": TextInput,
             "latitude": TextInput,
             "longitude": TextInput,
@@ -655,7 +654,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
         help_text=SEAT_MEMBERSHIP_HELP_TEXT,
         required=False,
         queryset=Membership.objects.all(),
-        widget=ModelSelect2Widget(
+        widget=ModelSelect2Widget(  # type: ignore[no-untyped-call]
             data_view="membership-lookup-for-tasks",
             attrs=SELECT2_SIDEBAR,
         ),
@@ -673,8 +672,8 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
             "allocated_benefit",
         ]
         widgets = {
-            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),
-            "event": ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),
+            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
+            "event": ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
             "seat_public": forms.RadioSelect(),
         }
 
@@ -740,17 +739,12 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
 
 
 class PersonForm(forms.ModelForm[Person]):
-    airport = forms.ModelChoiceField(
-        label="Airport",
-        required=False,
-        queryset=Airport.objects.all(),
-        widget=ModelSelect2Widget(data_view="airport-lookup"),
-    )
+    airport_iata = AirportChoiceField(required=True)
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2MultipleWidget(data_view="language-lookup"),
+        widget=ModelSelect2MultipleWidget(data_view="language-lookup"),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
@@ -769,8 +763,9 @@ class PersonForm(forms.ModelForm[Person]):
             "secondary_email",
             "gender",
             "gender_other",
+            "airport_iata",
             "country",
-            "airport",
+            "timezone",
             "affiliation",
             "github",
             "twitter",
@@ -865,14 +860,14 @@ class PersonsSelectionForm(forms.Form):
         label="Person From",
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="person-lookup"),
+        widget=ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
     )
 
     person_b = forms.ModelChoiceField(
         label="Person To",
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="person-lookup"),
+        widget=ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
@@ -899,7 +894,9 @@ class PersonsMergeForm(forms.Form):
     secondary_email = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     gender = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     gender_other = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
-    airport = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    airport_iata = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    country = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    timezone = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     github = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     twitter = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     bluesky = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
@@ -935,9 +932,9 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm[Award]):
         model = Award
         fields = "__all__"
         widgets = {
-            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),
-            "event": ModelSelect2Widget(data_view="event-lookup-for-awards", attrs=SELECT2_SIDEBAR),
-            "awarded_by": ModelSelect2Widget(data_view="admin-lookup", attrs=SELECT2_SIDEBAR),
+            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
+            "event": ModelSelect2Widget(data_view="event-lookup-for-awards", attrs=SELECT2_SIDEBAR),  # type: ignore
+            "awarded_by": ModelSelect2Widget(data_view="admin-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
         }
 
     class Media:
@@ -953,7 +950,7 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm[Award]):
         }
         if failed_trainings:
             bootstrap_kwargs["submit_onclick"] = (
-                'return confirm("Warning: Trainee failed previous training(s).' ' Are you sure you want to continue?");'
+                'return confirm("Warning: Trainee failed previous training(s). Are you sure you want to continue?");'
             )
         self.helper = BootstrapHelper(**bootstrap_kwargs)
 
@@ -963,7 +960,7 @@ class EventLookupForm(forms.Form):
         label="Event",
         required=True,
         queryset=Event.objects.all(),
-        widget=ModelSelect2Widget(data_view="event-lookup"),
+        widget=ModelSelect2Widget(data_view="event-lookup"),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -974,7 +971,7 @@ class PersonLookupForm(forms.Form):
         label="Person",
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="person-lookup"),
+        widget=ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
@@ -985,7 +982,7 @@ class AdminLookupForm(forms.Form):
         label="Administrator",
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(
+        widget=ModelSelect2Widget(  # type: ignore[no-untyped-call]
             data_view="admin-lookup",
             attrs=SELECT2_SIDEBAR,
         ),
@@ -999,14 +996,14 @@ class EventsSelectionForm(forms.Form):
         label="Event A",
         required=True,
         queryset=Event.objects.all(),
-        widget=ModelSelect2Widget(data_view="event-lookup"),
+        widget=ModelSelect2Widget(data_view="event-lookup"),  # type: ignore[no-untyped-call]
     )
 
     event_b = forms.ModelChoiceField(
         label="Event B",
         required=True,
         queryset=Event.objects.all(),
-        widget=ModelSelect2Widget(data_view="event-lookup"),
+        widget=ModelSelect2Widget(data_view="event-lookup"),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)

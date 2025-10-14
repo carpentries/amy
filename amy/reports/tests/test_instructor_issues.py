@@ -7,7 +7,7 @@ from workshops.tests.base import TestBase
 class TestInstructorIssues(TestBase):
     """Tests for the `instructor_issues` view."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
 
@@ -27,8 +27,7 @@ class TestInstructorIssues(TestBase):
         Task.objects.create(event=e1, person=self.blackwidow, role=learner)
         Task.objects.create(event=e2, person=self.spiderman, role=learner)
 
-    def test_stalled_trainees_not_in_pending(self):
-        """"""
+    def test_stalled_trainees_not_in_pending(self) -> None:
         rv = self.client.get(reverse("instructor_issues"))
         pending = [t.person for t in rv.context["pending"]]
         stalled = [t.person for t in rv.context["stalled"]]

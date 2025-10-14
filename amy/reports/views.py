@@ -2,6 +2,7 @@ from typing import Optional
 
 from django.contrib import messages
 from django.db.models import Case, Count, F, IntegerField, Prefetch, Q, Value, When
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -9,6 +10,7 @@ from django.utils import timezone
 from consents.models import TermEnum, TermOptionChoices
 from dashboard.forms import AssignmentForm
 from fiscal.filters import MembershipTrainingsFilter
+from workshops.base_views import AuthenticatedHttpRequest
 from workshops.models import (
     Badge,
     Event,
@@ -24,7 +26,7 @@ from workshops.utils.pagination import get_pagination_items
 
 
 @admin_required
-def membership_trainings_stats(request):
+def membership_trainings_stats(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Display basic statistics for memberships and instructor trainings."""
     data = Membership.objects.annotate_with_seat_usage().prefetch_related("organizations", "task_set")
 
@@ -39,7 +41,7 @@ def membership_trainings_stats(request):
 
 
 @admin_required
-def workshop_issues(request):
+def workshop_issues(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Display workshops in the database whose records need attention."""
 
     assignment_form = AssignmentForm(request.GET)
@@ -48,9 +50,9 @@ def workshop_issues(request):
         assigned_to = assignment_form.cleaned_data["assigned_to"]
 
     events = (
-        Event.objects.attendance()
-        .active()
+        Event.objects.active()
         .past_events()
+        .attendance()
         .annotate(
             num_instructors=Count(
                 Case(
@@ -129,12 +131,12 @@ def workshop_issues(request):
 
 
 @admin_required
-def instructor_issues(request):
+def instructor_issues(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Display instructors in the database who need attention."""
 
     # Everyone who has a badge but needs attention.
     instructor_badges = Badge.objects.instructor_badges()
-    instructors = Person.objects.filter(badges__in=instructor_badges).filter(airport__isnull=True)
+    instructors = Person.objects.filter(badges__in=instructor_badges).exclude(airport_iata="")
 
     # Everyone who's been in instructor training but doesn't yet have a badge.
     learner = Role.objects.get(name="learner")
@@ -165,7 +167,7 @@ def instructor_issues(request):
 
 
 @admin_required
-def duplicate_persons(request):
+def duplicate_persons(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Find possible duplicates amongst persons.
 
     Criteria for persons:
@@ -211,7 +213,7 @@ def duplicate_persons(request):
 
 
 @admin_required
-def review_duplicate_persons(request):
+def review_duplicate_persons(request: AuthenticatedHttpRequest) -> HttpResponse:
     if request.method == "POST" and "person_id" in request.POST:
         ids = request.POST.getlist("person_id")
         now = timezone.now()
@@ -225,7 +227,7 @@ def review_duplicate_persons(request):
 
 
 @admin_required
-def duplicate_training_requests(request):
+def duplicate_training_requests(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Find possible duplicates amongst training requests.
 
     Criteria:

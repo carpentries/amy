@@ -77,7 +77,7 @@ class TestCommunityRoleCreateView(TestCommunityRoleMixin, TestBase):
         url = reverse("communityrole_add")
         # Act
         page = self.client.post(url, self.data)
-        redirect = CommunityRole.objects.all().reverse()[0].get_absolute_url()
+        redirect = CommunityRole.objects.order_by("-pk")[0].get_absolute_url()
         # Assert
         self.assertEqual(page.status_code, 302)  # should redirect to new object
         self.assertRedirects(page, redirect)

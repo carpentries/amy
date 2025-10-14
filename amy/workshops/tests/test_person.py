@@ -83,9 +83,9 @@ class TestPerson(TestBase):
 
     def test_edit_person_email_when_airport_not_set(self) -> None:
         data = PersonForm(instance=self.spiderman).initial
-        data["airport"] = ""
+        data["airport_iata"] = ""
         form = PersonForm(data, instance=self.spiderman)
-        self.assertTrue(form.is_valid(), form.errors)
+        self.assertFalse(form.is_valid(), form.errors)
 
     def test_edit_person_empty_family_name(self) -> None:
         data = {
@@ -272,6 +272,7 @@ class TestPerson(TestBase):
             "personal": "Test",
             "family": "Test",
             "gender": "U",
+            "airport_iata": "CDG",
             "lessons": [1, 2],  # just IDs
         }
         rv = self.client.post(reverse("person_add"), data)
@@ -283,6 +284,7 @@ class TestPerson(TestBase):
             "personal": "Test",
             "family": "Test",
             "gender": "U",
+            "airport_iata": "CDG",
             "lessons": [],
         }
         rv = self.client.post(reverse("person_add"), data)
@@ -296,6 +298,7 @@ class TestPerson(TestBase):
             "personal": "Test",
             "family": "Test",
             "gender": "U",
+            "airport_iata": "CDG",
             "lessons": [1, 2],  # just IDs
         }
         rv = self.client.post(reverse("person_add"), data, follow=True)
@@ -333,6 +336,7 @@ class TestPerson(TestBase):
             "personal": "Albert",
             "family": "Einstein",
             "gender": "U",
+            "airport_iata": "CDG",
         }
         self.client.post(url, data)
         Person.objects.get(personal="Albert", family="Einstein", username="einstein_albert")
@@ -344,6 +348,7 @@ class TestPerson(TestBase):
             "family": "Skłodowska-Curie",
             "gender": "F",
             "email": "M.SKLODOWSKA-CURIE@sorbonne.fr",
+            "airport_iata": "CDG",
         }
         url = reverse("person_add")
         self.client.post(url, data)
@@ -485,6 +490,7 @@ class TestPerson(TestBase):
             "family": "Curie",
             "gender": "F",
             "email": "m.curie@sorbonne.fr",
+            "airport_iata": "CDG",
             "comment": "",
         }
         url = reverse("person_add")
@@ -502,6 +508,7 @@ class TestPerson(TestBase):
             "family": "Curie",
             "gender": "F",
             "email": "m.curie@sorbonne.fr",
+            "airport_iata": "CDG",
             "comment": "This is a test comment.",
         }
         url = reverse("person_add")
@@ -733,6 +740,8 @@ class TestPersonMerging(TestBase):
             secondary_email="notused@amy.org",
             gender="F",
             airport_iata="CDG",
+            country="FR",
+            timezone="Europe/Paris",
             github="purdy_kelsi",
             twitter="purdy_kelsi",
             bluesky="@purdy_kelsi.bsky.social",
@@ -815,6 +824,8 @@ class TestPersonMerging(TestBase):
             secondary_email="notused@example.org",
             gender="M",
             airport_iata="LAX",
+            country="US",
+            timezone="US/LosAngeles",
             github="deckow_jayden",
             twitter="deckow_jayden",
             bluesky="@deckow_jayden.bsky.social",
@@ -892,7 +903,9 @@ class TestPersonMerging(TestBase):
             "secondary_email": "obj_b",
             "gender": "obj_b",
             "gender_other": "obj_b",
-            "airport": "obj_a",
+            "airport_iata": "obj_a",
+            "country": "obj_b",
+            "timezone": "obj_a",
             "github": "obj_b",
             "twitter": "obj_a",
             "bluesky": "obj_a",
@@ -933,7 +946,9 @@ class TestPersonMerging(TestBase):
             "secondary_email": "combine",
             "gender": "combine",
             "gender_other": "combine",
-            "airport": "combine",
+            "airport_iata": "combine",
+            "country": "combine",
+            "timezone": "combine",
             "github": "combine",
             "twitter": "combine",
             "bluesky": "combine",
@@ -998,7 +1013,9 @@ class TestPersonMerging(TestBase):
             "secondary_email": self.person_b.secondary_email,
             "gender": self.person_b.gender,
             "gender_other": self.person_b.gender_other,
-            "airport": self.person_a.airport,
+            "airport_iata": self.person_a.airport_iata,
+            "country": self.person_b.country,
+            "timezone": self.person_a.timezone,
             "github": self.person_b.github,
             "twitter": self.person_a.twitter,
             "bluesky": self.person_a.bluesky,
@@ -1511,7 +1528,12 @@ class TestArchivePerson(TestBase):
         self.assertIsNone(archived_profile.email)
         self.assertEqual(archived_profile.secondary_email, "")
         self.assertEqual(archived_profile.country, "")
-        self.assertIsNone(archived_profile.airport)
+        self.assertEqual(archived_profile.airport_iata, "")
+        self.assertEqual(archived_profile.airport_country, "")
+        self.assertEqual(archived_profile.airport_lat, 0.0)
+        self.assertEqual(archived_profile.airport_lon, 0.0)
+        self.assertEqual(archived_profile.country, "")
+        self.assertEqual(archived_profile.timezone, "")
         self.assertIsNone(archived_profile.github)
         self.assertIsNone(archived_profile.twitter)
         self.assertIsNone(archived_profile.bluesky)

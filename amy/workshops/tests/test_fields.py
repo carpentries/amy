@@ -5,7 +5,7 @@ from workshops.tests.base import TestBase
 
 
 class TestNullableGHUsernameField(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.passing = [
             "harrypotter",
             "hp",
@@ -27,12 +27,12 @@ class TestNullableGHUsernameField(TestBase):
 
         self.field = NullableGithubUsernameField()
 
-    def test_passing_usernames(self):
+    def test_passing_usernames(self) -> None:
         """All correct usernames pass the field validation."""
         for username in self.passing:
             self.field.run_validators(username)
 
-    def test_failing_usernames(self):
+    def test_failing_usernames(self) -> None:
         """All incorrect usernames don't pass the field validation."""
         for username in self.failing:
             with self.assertRaises(ValidationError):
@@ -40,15 +40,15 @@ class TestNullableGHUsernameField(TestBase):
 
 
 class TestSelect2TagWidget(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.widget = Select2TagWidget()
 
-    def test_optgroups(self):
+    def test_optgroups(self) -> None:
         # incorrect input
         self.assertEqual(self.widget.optgroups("name", []), [(None, [], 0)])
 
         # correct input (1 value)
-        option1 = self.widget.create_option("name", "Harry", "Harry", set(["Harry"]), 0)
+        option1 = self.widget.create_option("name", "Harry", "Harry", True, 0)
         self.assertEqual(
             self.widget.optgroups("name", ["Harry"]),
             [
@@ -61,8 +61,8 @@ class TestSelect2TagWidget(TestBase):
         )
 
         # correct input (2 values)
-        option1 = self.widget.create_option("name", "Harry", "Harry", set(["Harry", "Ron"]), 0)
-        option2 = self.widget.create_option("name", "Ron", "Ron", set(["Harry", "Ron"]), 1)
+        option1 = self.widget.create_option("name", "Harry", "Harry", True, 0)
+        option2 = self.widget.create_option("name", "Ron", "Ron", True, 1)
         self.assertEqual(
             self.widget.optgroups("name", ["Harry;Ron"]),
             [
