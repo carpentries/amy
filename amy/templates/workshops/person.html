@@ -41,7 +41,7 @@
   <tr><th>Gender:</th><td id="gender">{{ person.get_gender_display }}{{ person.gender_other }}</td></tr>
   <tr><th>Airport:</th><td id="airport">{{ person.airport_iata|default:"&mdash;" }}</td></tr>
   <tr><th>Country:</th><td id="country">{% if person.country_property %}{% include "includes/country_flag.html" with country=person.country_property %}{% else %}—{% endif %}</td></tr>
-  <tr><th>Timezone:</th><td id="timezone">{{ person.timezone_property }}</td></tr>
+  <tr><th>Timezone:</th><td id="timezone">{{ person.timezone_property|default:"&mdash;" }}</td></tr>
   <tr><th>Affiliation:</th><td>{{ person.affiliation|default:"—" }}</td></tr>
   <tr><th>GitHub:</th>
       <td>

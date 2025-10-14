@@ -1098,11 +1098,7 @@ class Person(
         if self.country:
             return cast(str, self.country)
 
-        try:
-            airport = IATA_AIRPORTS[self.airport_iata]
-            return airport["country"]
-        except KeyError:
-            return ""
+        return self.airport_country
 
     @cached_property
     def timezone_property(self) -> str:
