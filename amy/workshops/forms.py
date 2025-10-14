@@ -30,6 +30,7 @@ from workshops.fields import (
     Select2MultipleWidget,
     Select2TagWidget,
     Select2Widget,
+    TimezoneChoiceField,
 )
 from workshops.mixins import GenderMixin
 from workshops.models import (
@@ -740,6 +741,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
 
 class PersonForm(forms.ModelForm[Person]):
     airport_iata = AirportChoiceField(required=True)
+    timezone = TimezoneChoiceField(required=False, help_text="Override timezone of the airport.")
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
         required=False,

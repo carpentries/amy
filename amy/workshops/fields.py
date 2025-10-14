@@ -12,6 +12,7 @@ from django_select2.forms import ModelSelect2Widget as DS2_ModelSelect2Widget
 from django_select2.forms import Select2MultipleWidget as DS2_Select2MultipleWidget
 from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
 from django_select2.forms import Select2Widget as DS2_Select2Widget
+import pytz
 
 from workshops.consts import IATA_AIRPORTS, STR_LONG, STR_MED
 
@@ -259,6 +260,14 @@ class AirportChoiceField(forms.ChoiceField):
                 ]
             ),
         )
+        widget = kwargs.pop("widget", Select2Widget)
+
+        super().__init__(*args, **kwargs, choices=choices, widget=widget)
+
+
+class TimezoneChoiceField(forms.ChoiceField):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        choices = kwargs.pop("choices", zip(pytz.common_timezones, pytz.common_timezones))
         widget = kwargs.pop("widget", Select2Widget)
 
         super().__init__(*args, **kwargs, choices=choices, widget=widget)
