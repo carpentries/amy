@@ -38,7 +38,7 @@
       {% if event_conflicts %}
       <div class="alert alert-danger" role="alert">
         <p>
-          You cannot apply for this workshop. You are teaching at a conflicting workshop: <span class="badge badge-danger">{{ event_conflicts.0.slug }}</span>. 
+          You cannot apply for this workshop. You are teaching at a conflicting workshop: <span class="badge badge-danger">{{ event_conflicts.0.slug }}</span>.
           If you are still interested in teaching at this workshop, please contact <a href="mailto:workshops@carpentries.org">workshops@carpentries.org</a>.
         </p>
       </div>
@@ -62,7 +62,13 @@
           <p>You have workshop applications on the same dates: {% for signup in signup_conflicts %}<span class="badge badge-warning">{{ signup.recruitment.event }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
         </div>
         {% endif %}
+
+        {% if not user.airport_iata %}
+        <a href="#" class="btn btn-primary disabled" disabled>I am interested in teaching this workshop.</a>
+        <p>Your profile is missing airport information. <a href="{% url 'autoupdate_profile' %}">Click here to complete your profile.</a></p>
+        {% else %}
         <a href="{% url 'signup-for-recruitment' object.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-primary">I am interested in teaching this workshop.</a>
+        {% endif %}
 
       {% else %}
         {% if signup.state == "p" %}

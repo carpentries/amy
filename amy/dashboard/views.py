@@ -450,9 +450,13 @@ class SignupForRecruitment(
 
         try:
             role = CommunityRole.objects.get(person=self.request.user, config__name="instructor")
-            return role.is_active()
+            if not role.is_active():
+                return False
         except CommunityRole.DoesNotExist:
             return False
+
+        # Users without airport information aren't allowed.
+        return request.user.airport_iata.strip() != ""
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         event = self.other_object.event

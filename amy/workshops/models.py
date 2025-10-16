@@ -1042,8 +1042,8 @@ class Person(
         except KeyError:
             self.airport_iata = ""
             self.airport_country = ""
-            self.airport_lat = ""
-            self.airport_lon = ""
+            self.airport_lat = 0.0
+            self.airport_lon = 0.0
 
         super().save(*args, **kwargs)
 

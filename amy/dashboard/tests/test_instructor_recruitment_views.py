@@ -23,17 +23,17 @@ from workshops.models import Event, Organization, Person, Role, Tag, Task
 
 class TestUpcomingTeachingOpportunitiesList(TestCase):
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__no_community_role(self):
+    def test_view_enabled__no_community_role(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         request.user = Person.objects.create(personal="Test", family="User", email="test@user.com")
         # Act
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(request), False)
+        self.assertEqual(view.get_view_enabled(request), False)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__community_role_inactive(self):
+    def test_view_enabled__community_role_inactive(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -55,10 +55,10 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
         self.assertEqual(role.is_active(), False)
-        self.assertEqual(view.get_view_enabled(request), False)
+        self.assertEqual(view.get_view_enabled(request), False)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__community_role_active(self):
+    def test_view_enabled__community_role_active(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -78,10 +78,10 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
-        self.assertEqual(view.get_view_enabled(request), True)
+        self.assertEqual(view.get_view_enabled(request), True)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__admin(self):
+    def test_view_enabled__admin(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com", is_superuser=True)
@@ -89,9 +89,9 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         # Act
         view = UpcomingTeachingOpportunitiesList(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(request), True)
+        self.assertEqual(view.get_view_enabled(request), True)  # type: ignore[arg-type]
 
-    def test_get_queryset(self):
+    def test_get_queryset(self) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -150,9 +150,9 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         # Assert
         self.assertEqual(set(qs), {recruitment1, recruitment2})
         # `person_signup` is an additional attribute created using `Prefetch()`
-        self.assertTrue(any(recruitment.person_signup == [signup] for recruitment in qs))
+        self.assertTrue(any(recruitment.person_signup == [signup] for recruitment in qs))  # type: ignore[attr-defined]
 
-    def test_get_context_data(self):
+    def test_get_context_data(self) -> None:
         """Context data is extended only with person object, but it includes pre-counted
         number of roles.
 
@@ -164,7 +164,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
         instructor = Role.objects.create(name="instructor")
         supporting_instructor = Role.objects.create(name="supporting-instructor")
         helper = Role.objects.create(name="helper")
-        host = Organization.objects.first()
+        host = Organization.objects.all()[0]
         event1 = Event.objects.create(slug="test-event1", host=host)
         event2 = Event.objects.create(slug="test-event2", host=host)
         event3 = Event.objects.create(slug="test-event3", host=host)
@@ -195,17 +195,17 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
 
 class TestSignupForRecruitment(TestCase):
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__no_community_role(self):
+    def test_view_enabled__no_community_role(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         request.user = Person.objects.create(personal="Test", family="User", email="test@user.com")
         # Act
         view = SignupForRecruitment(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(request), False)
+        self.assertEqual(view.get_view_enabled(request), False)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__community_role_inactive(self):
+    def test_view_enabled__community_role_inactive(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -227,10 +227,10 @@ class TestSignupForRecruitment(TestCase):
         view = SignupForRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), False)
-        self.assertEqual(view.get_view_enabled(request), False)
+        self.assertEqual(view.get_view_enabled(request), False)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__community_role_active(self):
+    def test_view_enabled__community_role_active__no_airport(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -250,10 +250,33 @@ class TestSignupForRecruitment(TestCase):
         view = SignupForRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
-        self.assertEqual(view.get_view_enabled(request), True)
+        self.assertEqual(view.get_view_enabled(request), False)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__admin(self):
+    def test_view_enabled__community_role_active(self) -> None:
+        # Arrange
+        request = RequestFactory().get("/")
+        person = Person.objects.create(personal="Test", family="User", email="test@user.com", airport_iata="CDG")
+        request.user = person
+        config = CommunityRoleConfig.objects.create(
+            name="instructor",
+            display_name="Instructor",
+            link_to_award=False,
+            link_to_membership=False,
+            additional_url=False,
+        )
+        role = CommunityRole.objects.create(
+            config=config,
+            person=person,
+        )
+        # Act
+        view = SignupForRecruitment(request=request)
+        # Assert
+        self.assertEqual(role.is_active(), True)
+        self.assertEqual(view.get_view_enabled(request), True)  # type: ignore[arg-type]
+
+    @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
+    def test_view_enabled__admin(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com", is_superuser=True)
@@ -261,9 +284,9 @@ class TestSignupForRecruitment(TestCase):
         # Act
         view = SignupForRecruitment(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(request), True)
+        self.assertEqual(view.get_view_enabled(request), True)  # type: ignore[arg-type]
 
-    def test_get_context_data(self):
+    def test_get_context_data(self) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
@@ -285,7 +308,7 @@ class TestSignupForRecruitment(TestCase):
         self.assertEqual(data["person"].num_supporting, 0)
         self.assertEqual(data["person"].num_helper, 0)
 
-    def test_get_success_message(self):
+    def test_get_success_message(self) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
@@ -296,11 +319,11 @@ class TestSignupForRecruitment(TestCase):
         view = SignupForRecruitment(request=request, kwargs={"recruitment_pk": recruitment.pk})
         view.other_object = view.get_other_object()
         # Act
-        msg = view.get_success_message(None)
+        msg = view.get_success_message({})
         # Assert
         self.assertEqual(
             msg,
-            f"Your interest in teaching at {event} has been recorded and is now " "pending.",
+            f"Your interest in teaching at {event} has been recorded and is now pending.",
         )
 
     def test_get_success_url(self) -> None:
@@ -319,7 +342,7 @@ class TestSignupForRecruitment(TestCase):
             # Assert
             self.assertEqual(result, redirect)
 
-    def test_get_form_kwargs(self):
+    def test_get_form_kwargs(self) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         event = Event.objects.create(slug="test-event", host=host, start=date(2022, 2, 19), end=date(2022, 2, 20))
@@ -342,7 +365,7 @@ class TestSignupForRecruitment(TestCase):
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
-    def test_form_valid__obj_saved_with_recruitment_and_person(self):
+    def test_form_valid__obj_saved_with_recruitment_and_person(self) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -365,7 +388,7 @@ class TestSignupForRecruitment(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     @patch("dashboard.views.messages")
-    def test_form_valid__tasks_nearby(self, mock_messages):
+    def test_form_valid__tasks_nearby(self, mock_messages: MagicMock) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -398,7 +421,7 @@ class TestSignupForRecruitment(TestCase):
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     @patch("dashboard.views.messages")
-    def test_form_valid__conflicting_signups(self, mock_messages):
+    def test_form_valid__conflicting_signups(self, mock_messages: MagicMock) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -427,12 +450,12 @@ class TestSignupForRecruitment(TestCase):
         # Assert
         mock_messages.warning.assert_called_once_with(
             request,
-            "You have applied to other workshops on the same dates: " f"{signup.recruitment.event}",
+            f"You have applied to other workshops on the same dates: {signup.recruitment.event}",
         )
 
     @override_settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]})
     @patch("django.contrib.messages.views.messages")
-    def test_form_valid__creates_a_new_signup(self, mock_contrib_messages_views):
+    def test_form_valid__creates_a_new_signup(self, mock_contrib_messages_views: MagicMock) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -462,24 +485,24 @@ class TestSignupForRecruitment(TestCase):
         view.form_valid(form)
 
         # Assert
-        mock_contrib_messages_views.success.assert_called_once_with(request, view.get_success_message(None))
+        mock_contrib_messages_views.success.assert_called_once_with(request, view.get_success_message({}))
         # new object created
         self.assertTrue(isinstance(view.object, InstructorRecruitmentSignup))
 
 
 class TestResignFromRecruitment(TestCase):
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__no_community_role(self):
+    def test_view_enabled__no_community_role(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
         request.user = Person.objects.create(personal="Test", family="User", email="test@user.com")
         # Act
         view = ResignFromRecruitment(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(request), False)
+        self.assertEqual(view.get_view_enabled(request), False)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__community_role_inactive(self):
+    def test_view_enabled__community_role_inactive(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -501,10 +524,10 @@ class TestResignFromRecruitment(TestCase):
         view = ResignFromRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), False)
-        self.assertEqual(view.get_view_enabled(request), False)
+        self.assertEqual(view.get_view_enabled(request), False)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__community_role_active(self):
+    def test_view_enabled__community_role_active(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -524,10 +547,10 @@ class TestResignFromRecruitment(TestCase):
         view = ResignFromRecruitment(request=request)
         # Assert
         self.assertEqual(role.is_active(), True)
-        self.assertEqual(view.get_view_enabled(request), True)
+        self.assertEqual(view.get_view_enabled(request), True)  # type: ignore[arg-type]
 
     @override_settings(FLAGS={"INSTRUCTOR_RECRUITMENT": [("boolean", True)]})
-    def test_view_enabled__admin(self):
+    def test_view_enabled__admin(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com", is_superuser=True)
@@ -535,9 +558,9 @@ class TestResignFromRecruitment(TestCase):
         # Act
         view = ResignFromRecruitment(request=request)
         # Assert
-        self.assertEqual(view.get_view_enabled(request), True)
+        self.assertEqual(view.get_view_enabled(request), True)  # type: ignore[arg-type]
 
-    def test_get_queryset(self):
+    def test_get_queryset(self) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person1 = Person.objects.create(personal="Test1", family="User1", email="test1@user1.com", username="test1")
@@ -562,7 +585,7 @@ class TestResignFromRecruitment(TestCase):
         # Assert
         self.assertEqual(list(signups), [signup3])
 
-    def test_get_redirect_url__no_next_param(self):
+    def test_get_redirect_url__no_next_param(self) -> None:
         # Arrange
         request = RequestFactory().post("/")
         view = ResignFromRecruitment(request=request)
@@ -571,7 +594,7 @@ class TestResignFromRecruitment(TestCase):
         # Assert
         self.assertEqual(url, reverse("upcoming-teaching-opportunities"))
 
-    def test_get_redirect_url__with_next_param(self):
+    def test_get_redirect_url__with_next_param(self) -> None:
         # Arrange
         next_url = "/dashboard"
         request = RequestFactory().post("/", {"next": next_url})
@@ -582,7 +605,7 @@ class TestResignFromRecruitment(TestCase):
         self.assertEqual(url, next_url)
 
     @patch("dashboard.views.messages")
-    def test_post(self, mock_messages):
+    def test_post(self, mock_messages: MagicMock) -> None:
         # Arrange
         host = Organization.objects.create(domain="test.com", fullname="Test")
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
@@ -595,7 +618,7 @@ class TestResignFromRecruitment(TestCase):
         view = ResignFromRecruitment(kwargs={"signup_pk": signup.pk})
 
         # Act
-        result = view.post(request)
+        result = view.post(request)  # type: ignore[arg-type]
 
         # Assert
         mock_messages.success.assert_called_once_with(
