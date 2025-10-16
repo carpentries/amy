@@ -74,6 +74,13 @@
           {% endfor %}
         {% endif %}
 
+        {% if not user.airport_iata %}
+        <div class="alert alert-warning" role="alert">
+          <strong>Warning:</strong>
+          Your profile is missing airport information. <a href="{% url 'autoupdate_profile' %}">Click here to complete your profile.</a>
+        </div>
+        {% endif %}
+
         {% block logo %}{% endblock logo %}
 
         {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock title %}
