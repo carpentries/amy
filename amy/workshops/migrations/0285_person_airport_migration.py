@@ -4,6 +4,7 @@ import airportsdata
 from django.db import migrations, models
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import StateApps
+import django_countries.fields
 
 IATA_AIRPORTS = airportsdata.load("IATA")
 
@@ -16,7 +17,11 @@ def migrate_airport_model_to_airportdata_table(apps: StateApps, schemat_editor: 
                 print(f"Error: Airport {person.airport.iata} not found in airportdata")
                 continue
 
+            airport_iata = IATA_AIRPORTS[person.airport.iata]
             person.airport_iata = person.airport.iata
+            person.airport_country = airport_iata["country"]
+            person.airport_lat = airport_iata["lat"]
+            person.airport_lon = airport_iata["lon"]
             person.save()
 
 
@@ -56,10 +61,27 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 max_length=10,
                 null=False,
-                blank=False,
+                blank=True,
                 default="",
                 help_text="Nearest major airport (IATA code: https://www.world-airport-codes.com/)",
             ),
+        ),
+        migrations.AddField(
+            model_name="person",
+            name="airport_country",
+            field=django_countries.fields.CountryField(
+                blank=True, default="", help_text="Airport country (copied from airport data package)", max_length=2
+            ),
+        ),
+        migrations.AddField(
+            model_name="person",
+            name="airport_lat",
+            field=models.FloatField(default=0.0, help_text="Airport latitude (copied from airport data package)"),
+        ),
+        migrations.AddField(
+            model_name="person",
+            name="airport_lon",
+            field=models.FloatField(default=0.0, help_text="Airport longitude (copied from airport data package)"),
         ),
         migrations.RunPython(
             migrate_airport_model_to_airportdata_table,

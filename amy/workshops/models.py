@@ -31,7 +31,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
-from django_countries.fields import CountryField
+from django_countries.fields import Country, CountryField
 from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 from reversion.models import Version
@@ -766,8 +766,7 @@ class Person(
         default="",
         help_text="Nearest major airport (IATA code: https://www.world-airport-codes.com/)",
     )
-    airport_country = models.CharField(
-        max_length=STR_SHORT,
+    airport_country = CountryField(
         null=False,
         blank=True,
         default="",
@@ -1041,7 +1040,11 @@ class Person(
             self.airport_lat = airport["lat"]
             self.airport_lon = airport["lon"]
         except KeyError:
-            pass
+            self.airport_iata = ""
+            self.airport_country = ""
+            self.airport_lat = ""
+            self.airport_lon = ""
+
         super().save(*args, **kwargs)
 
     def archive(self) -> None:
@@ -1094,11 +1097,11 @@ class Person(
         )
 
     @cached_property
-    def country_property(self) -> str:
+    def country_property(self) -> Country:
         if self.country:
-            return cast(str, self.country)
+            return cast(Country, self.country)
 
-        return self.airport_country
+        return cast(Country, self.airport_country)
 
     @cached_property
     def timezone_property(self) -> str:
