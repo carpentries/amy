@@ -24,9 +24,9 @@ from fiscal.models import Consortium, MembershipPersonRole, Partnership, Partner
 from offering.models import Account, AccountBenefit, AccountBenefitDiscount, Benefit
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
+from workshops.consts import IATA_AIRPORTS
 from workshops.models import (
     AcademicLevel,
-    Airport,
     Award,
     Badge,
     ComputingExperienceLevel,
@@ -100,12 +100,6 @@ class Command(BaseCommand):
             default=None,
             help="Provide an initial seed for randomization mechanism.",
         )
-
-    def fake_airports(self) -> None:
-        """Add some airports."""
-        # we're not doing anything here, since data migrations already add some
-        # airports
-        self.stdout.write("Generating 0 fake airports...")
 
     def fake_roles(self) -> None:
         """Provide fixed roles."""
@@ -352,7 +346,7 @@ class Command(BaseCommand):
             person.delete()
 
     def fake_person(self, *, is_instructor: bool, is_trainer: bool = False) -> Person:
-        airport = choice(Airport.objects.all())
+        airport = choice(list(IATA_AIRPORTS.keys()))
 
         email = choice(
             [
@@ -400,7 +394,7 @@ class Command(BaseCommand):
             email=email,
             gender=gender,
             gender_other=gender_other,
-            airport=airport,
+            airport_iata=airport,
             twitter=twitter,
             bluesky=bluesky,
             mastodon=mastodon,
@@ -1146,7 +1140,6 @@ class Command(BaseCommand):
 
         try:
             self.fake_groups()
-            self.fake_airports()
             self.fake_roles()
             self.fake_tags()
             self.fake_instructors()
