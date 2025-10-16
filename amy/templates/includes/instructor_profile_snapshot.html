@@ -4,8 +4,9 @@
     <ul>
       <li><strong>Name:</strong> {{ person }}</li>
       <li><strong>Email:</strong> {{ person.email|default:"&mdash;" }}</li>
-      <li><strong>Country:</strong> {% include "includes/country_flag.html" with country=person.country %}</li>
-      <li><strong>Airport:</strong> {{ person.airport_iata }}</li>
+      <li><strong>Airport:</strong> {{ person.airport_iata|default:"&mdash;" }}</li>
+      <li><strong>Country:</strong> {% include "includes/country_flag.html" with country=person.country_property %}</li>
+      <li><strong>Timezone:</strong> {{ person.timezone_property|default:"&mdash;" }}</li>
       <li><strong>Teaching experience:</strong>
         <ul>
           <li><strong>Helper:</strong> {{ person.num_helper }} time{{ person.num_helper|pluralize }}</li>

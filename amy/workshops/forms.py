@@ -740,7 +740,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
 
 
 class PersonForm(forms.ModelForm[Person]):
-    airport_iata = AirportChoiceField(required=True)
+    airport_iata = AirportChoiceField(required=True, label="Airport")
     timezone = TimezoneChoiceField(required=False, help_text="Override timezone of the airport.")
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
