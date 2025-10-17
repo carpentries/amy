@@ -1,6 +1,7 @@
 import cgi
 from datetime import date, timedelta
 from io import StringIO
+from typing import Literal
 
 from django.contrib.sessions.serializers import JSONSerializer
 from django.urls import reverse
@@ -8,19 +9,22 @@ from django.urls import reverse
 from workshops.models import Event, Organization, Person, Role, Tag, Task
 from workshops.tests.base import TestBase
 from workshops.utils.person_upload import (
+    PersonTaskEntry,
     upload_person_task_csv,
     verify_upload_person_task,
 )
 
 
 class UploadPersonTaskCSVTestCase(TestBase):
-    def compute_from_string(self, csv_str):
+    def compute_from_string(
+        self, csv_str: str
+    ) -> tuple[list[PersonTaskEntry], list[Literal["personal", "family", "email"]]]:
         """wrap up buffering the raw string & parsing"""
         csv_buf = StringIO(csv_str)
         # compute and return
         return upload_person_task_csv(csv_buf)
 
-    def test_basic_parsing(self):
+    def test_basic_parsing(self) -> None:
         """See Person.PERSON_UPLOAD_FIELDS for field ordering"""
         csv = """personal,family,email
 john,doe,johndoe@email.com
@@ -33,21 +37,21 @@ jane,doe,janedoe@email.com"""
         person = person_tasks[0]
         self.assertTrue(set(person.keys()).issuperset(set(Person.PERSON_UPLOAD_FIELDS)))
 
-    def test_csv_without_required_field(self):
+    def test_csv_without_required_field(self) -> None:
         """All fields in Person.PERSON_UPLOAD_FIELDS must be in csv"""
         bad_csv = """personal,family
 john,doe"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue("email" in empty_fields)
 
-    def test_csv_with_mislabeled_field(self):
+    def test_csv_with_mislabeled_field(self) -> None:
         """It pays to be strict"""
         bad_csv = """personal,family,emailaddress
 john,doe,john@doe.com"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue("email" in empty_fields)
 
-    def test_csv_with_empty_lines(self):
+    def test_csv_with_empty_lines(self) -> None:
         csv = """personal,family,emailaddress
 john,doe,john@doe.com
 ,,"""
@@ -56,7 +60,7 @@ john,doe,john@doe.com
         person = person_tasks[0]
         self.assertEqual(person["personal"], "john")
 
-    def test_empty_field(self):
+    def test_empty_field(self) -> None:
         """Ensure we don't mis-order fields given blank data"""
         csv = """personal,family,email
 john,,johndoe@email.com"""
@@ -64,7 +68,7 @@ john,,johndoe@email.com"""
         person = person_tasks[0]
         self.assertEqual(person["family"], "")
 
-    def test_serializability_of_parsed(self):
+    def test_serializability_of_parsed(self) -> None:
         csv = """personal,family,email
 john,doe,johndoe@email.com
 jane,doe,janedoe@email.com"""
@@ -76,7 +80,7 @@ jane,doe,janedoe@email.com"""
         except TypeError:
             self.fail("Dumping person_tasks to JSON unexpectedly failed!")
 
-    def test_malformed_CSV_with_proper_header_row(self):
+    def test_malformed_CSV_with_proper_header_row(self) -> None:
         csv = """personal,family,email
 This is a malformed CSV
         """
@@ -91,7 +95,7 @@ class CSVBulkUploadTestBase(TestBase):
     different TestCases
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         super(CSVBulkUploadTestBase, self).setUp()
         test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
 
@@ -101,7 +105,7 @@ class CSVBulkUploadTestBase(TestBase):
 
         self._setUpUsersAndLogin()
 
-    def make_csv_data(self):
+    def make_csv_data(self) -> str:
         """
         Sample CSV data
         """
@@ -109,7 +113,7 @@ class CSVBulkUploadTestBase(TestBase):
 John,Doe,notin@db.com,foobar,instructor
 """
 
-    def make_data(self):
+    def make_data(self) -> list[PersonTaskEntry]:
         csv_str = self.make_csv_data()
         # upload_person_task_csv gets thoroughly tested in
         # UploadPersonTaskCSVTestCase
@@ -126,7 +130,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
     - email already exists
     """
 
-    def test_verify_with_good_data(self):
+    def test_verify_with_good_data(self) -> None:
         good_data = self.make_data()
         has_errors = verify_upload_person_task(good_data, match=True)
         self.assertFalse(has_errors)
@@ -134,7 +138,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         # 'errors' may be an empty list, which evaluates to False
         self.assertFalse(good_data[0]["errors"])
 
-    def test_verify_event_doesnt_exist(self):
+    def test_verify_event_doesnt_exist(self) -> None:
         bad_data = self.make_data()
         bad_data[0]["event"] = "no-such-event"
         has_errors = verify_upload_person_task(bad_data, match=True)
@@ -144,7 +148,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertEqual(len(errors), 1)
         self.assertTrue("Event with slug" in errors[0])
 
-    def test_verify_role_doesnt_exist(self):
+    def test_verify_role_doesnt_exist(self) -> None:
         bad_data = self.make_data()
         bad_data[0]["role"] = "foobar"
 
@@ -155,7 +159,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertTrue(len(errors) == 1)
         self.assertTrue("Role with name" in errors[0])
 
-    def test_verify_email_caseinsensitive_matches(self):
+    def test_verify_email_caseinsensitive_matches(self) -> None:
         bad_data = self.make_data()
         # test both matching and case-insensitive matching
         for email in ("harry@hogwarts.edu", "HARRY@hogwarts.edu"):
@@ -166,7 +170,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
             has_errors = verify_upload_person_task(bad_data, match=True)
             self.assertFalse(has_errors, "Bad email: {}".format(email))
 
-    def test_email_missing(self):
+    def test_email_missing(self) -> None:
         """This tests against regression in:
         https://github.com/swcarpentry/amy/issues/1394
 
@@ -179,27 +183,33 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         usernames = ["potter_harry", "granger_hermione", "weasley_ron"]
         Person.objects.filter(username__in=usernames).update(email=None)
 
-        bad_data = [
-            {
+        bad_data: list[PersonTaskEntry] = [
+            {  # type: ignore[typeddict-item]
                 "email": None,
                 "personal": "Harry",
                 "family": "Potter",
                 "event": "foobar",
                 "role": "learner",
+                "errors": [],
+                "info": [],
             },
-            {
+            {  # type: ignore[typeddict-item]
                 "email": None,
                 "personal": "Hermione",
                 "family": "Granger",
                 "event": "foobar",
                 "role": "learner",
+                "errors": [],
+                "info": [],
             },
-            {
+            {  # type: ignore[typeddict-item]
                 "email": None,
                 "personal": "Ron",
                 "family": "Weasley",
                 "event": "foobar",
                 "role": "learner",
+                "errors": [],
+                "info": [],
             },
         ]
         # test for first occurrence of the error
@@ -209,15 +219,17 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         has_errors = verify_upload_person_task(bad_data, match=False)
         self.assertFalse(has_errors)
 
-    def test_verify_existing_user_has_workshop_role_provided(self):
-        bad_data = [
+    def test_verify_existing_user_has_workshop_role_provided(self) -> None:
+        bad_data: list[PersonTaskEntry] = [
             {
                 "email": "harry@hogwarts.edu",
                 "personal": "Harry",
                 "family": "Potter",
                 "event": "",
                 "role": "",
-            }
+                "errors": [],
+                "info": [],
+            }  # type: ignore[typeddict-item]
         ]
         has_errors = verify_upload_person_task(bad_data, match=True)
         self.assertTrue(has_errors)
@@ -226,9 +238,9 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertIn("Must have a role", errors[0])
         self.assertIn("Must have an event", errors[1])
 
-    def test_username_from_existing_person(self):
+    def test_username_from_existing_person(self) -> None:
         """Make sure the username is being changed for correct one."""
-        data = [
+        data: list[PersonTaskEntry] = [
             {
                 "personal": "Harry",
                 "family": "Potter",
@@ -236,15 +248,17 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "email": "harry@hogwarts.edu",
                 "event": "",
                 "role": "",
+                "errors": [],
+                "info": [],
                 "existing_person_id": Person.objects.get(email="harry@hogwarts.edu").pk,
             }
         ]
         verify_upload_person_task(data)
         self.assertEqual("potter_harry", data[0]["username"])
 
-    def test_username_from_nonexisting_person(self):
+    def test_username_from_nonexisting_person(self) -> None:
         """Make sure the username is not being changed."""
-        data = [
+        data: list[PersonTaskEntry] = [
             {
                 "personal": "Harry",
                 "family": "Frotter",
@@ -252,15 +266,17 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "email": "h.frotter@hogwarts.edu",
                 "event": "",
                 "role": "",
+                "errors": [],
+                "info": [],
                 "existing_person_id": None,
             }
         ]
         verify_upload_person_task(data)
         self.assertEqual("supplied_username", data[0]["username"])
 
-    def test_matched_similar_persons(self):
+    def test_matched_similar_persons(self) -> None:
         """Ensure function finds matching persons."""
-        data = [
+        data: list[PersonTaskEntry] = [
             {
                 "personal": "Harry",
                 "family": "Potter",
@@ -268,6 +284,8 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "email": "h.frotter@hogwarts.edu",
                 "event": "",
                 "role": "",
+                "errors": [],
+                "info": [],
             },
             {
                 "personal": "Romuald",
@@ -276,6 +294,8 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "email": "rweasley@ministry.gov.uk",
                 "event": "",
                 "role": "",
+                "errors": [],
+                "info": [],
             },
         ]
         verify_upload_person_task(data)
@@ -286,7 +306,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertEqual(data[0]["similar_persons"][0][0], self.harry.pk)
         self.assertEqual(data[1]["similar_persons"][0][0], self.ron.pk)
 
-    def test_duplicate_errors(self):
+    def test_duplicate_errors(self) -> None:
         """Ensure errors about duplicate person in the database are present."""
         data = self.make_data()
         data[0]["personal"] = "Harry"
@@ -299,11 +319,11 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
 
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         Role.objects.create(name="Helper")
 
-    def test_event_name_dropped(self):
+    def test_event_name_dropped(self) -> None:
         """
         Test for regression:
         test whether event name is really getting empty when user changes it
@@ -331,10 +351,10 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         self.assertEqual(rv.status_code, 200)
         _, params = cgi.parse_header(rv["content-type"])
         charset = params["charset"]
-        content = rv.content.decode(charset)  # type: ignore
+        content = rv.content.decode(charset)
         self.assertNotIn("foobar", content)
 
-    def test_upload_existing_user(self):
+    def test_upload_existing_user(self) -> None:
         """
         Check if uploading existing users ends up with them having new role
         assigned.
@@ -380,7 +400,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,Helper
         # make sure that Harry was assigned a new role
         self.assertNotEqual(tasks_pre, tasks_post)
 
-    def test_upload_existing_user_existing_task(self):
+    def test_upload_existing_user_existing_task(self) -> None:
         """
         Check if uploading existing user and assigning existing task to that
         user is silent (ie. no Task nor Person is being created).
@@ -420,7 +440,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,instructor
         self.assertEqual(users_pre, users_post)
         self.assertEqual(rv.status_code, 200)
 
-    def test_attendance_increases(self):
+    def test_attendance_increases(self) -> None:
         """
         Check if uploading tasks with role "learner" increase event's
         attendance.
@@ -461,7 +481,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
 
 
 class BulkUploadRemoveEntryViewTestCase(CSVBulkUploadTestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         Role.objects.create(name="Helper")
         self.csv = """personal,family,email,event,role
@@ -470,7 +490,7 @@ Hermione,Granger,hermione@hogwarts.edu,foobar,learner
 Ron,Weasley,ron@hogwarts.edu,foobar,learner
 """
 
-    def test_removing_entry0(self):
+    def test_removing_entry0(self) -> None:
         """Make sure entries are removed by the view."""
         data, _ = upload_person_task_csv(StringIO(self.csv))
 
@@ -489,7 +509,7 @@ Ron,Weasley,ron@hogwarts.edu,foobar,learner
         self.assertEqual(data[0]["personal"], "Hermione")
         self.assertEqual(data[1]["personal"], "Ron")
 
-    def test_removing_entry1(self):
+    def test_removing_entry1(self) -> None:
         """Make sure entries are removed by the view."""
         data, _ = upload_person_task_csv(StringIO(self.csv))
 
@@ -508,7 +528,7 @@ Ron,Weasley,ron@hogwarts.edu,foobar,learner
         self.assertEqual(data[0]["personal"], "Harry")
         self.assertEqual(data[1]["personal"], "Ron")
 
-    def test_removing_entry2(self):
+    def test_removing_entry2(self) -> None:
         """Make sure entries are removed by the view."""
         data, _ = upload_person_task_csv(StringIO(self.csv))
 
@@ -529,7 +549,7 @@ Ron,Weasley,ron@hogwarts.edu,foobar,learner
 
 
 class BulkUploadMatchPersonViewTestCase(CSVBulkUploadTestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         Role.objects.create(name="Helper")
         self.csv = """personal,family,email,event,role
@@ -540,7 +560,7 @@ Ron,Weasley,ron@hogwarts.edu,foobar,learner
 
 
 class TestBulkUploadAddsEmailAction(CSVBulkUploadTestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         Role.objects.create(name="host")
 
@@ -560,7 +580,7 @@ class TestBulkUploadAddsEmailAction(CSVBulkUploadTestBase):
         )
         test_event_1 = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="librarycarpentry.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -579,7 +599,7 @@ Hermione,Granger,hermione@hogwarts.edu,test-event,instructor
 Ron,Weasley,ron@hogwarts.edu,test-event,instructor
 """
 
-    def test_jobs_created(self):
+    def test_jobs_created(self) -> None:
         data, _ = upload_person_task_csv(StringIO(self.csv))
 
         # simulate user clicking "Use this user" next to matched person

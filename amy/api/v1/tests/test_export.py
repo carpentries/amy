@@ -1,5 +1,5 @@
 import datetime
-from typing import List
+from typing import Any, List
 
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -7,7 +7,6 @@ from rest_framework.test import APITestCase
 from consents.models import Consent, Term
 from trainings.models import Involvement
 from workshops.models import (
-    Airport,
     Award,
     Badge,
     Event,
@@ -24,13 +23,13 @@ from workshops.tests.base import consent_to_all_required_consents
 
 
 class BaseExportingTest(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         # remove all existing badges (this will be rolled back anyway)
         # including swc-instructor and dc-instructor introduced by migration
         # 0064
         Badge.objects.all().delete()
 
-    def setup_admin(self):
+    def setup_admin(self) -> None:
         self.admin = Person.objects.create_superuser(
             username="admin",
             personal="Super",
@@ -40,14 +39,14 @@ class BaseExportingTest(APITestCase):
         )
         consent_to_all_required_consents(self.admin)
 
-    def login(self):
+    def login(self) -> None:
         if not hasattr(self, "admin"):
             self.setup_admin()
         self.client.login(username="admin", password="admin")
 
 
 class TestExportingPersonData(BaseExportingTest):
-    def setUp(self):
+    def setUp(self) -> None:
         # don't remove all badges
         # super().setUp()
 
@@ -58,6 +57,9 @@ class TestExportingPersonData(BaseExportingTest):
             family="Primary",
             email="primary_user@amy.com",
             is_active=True,
+            airport_iata="CDG",
+            country="GB",
+            timezone="Europe/London",
         )
         self.user.set_password("password")
         self.user.save()
@@ -66,24 +68,13 @@ class TestExportingPersonData(BaseExportingTest):
         # save API endpoint URL
         self.url = reverse("api-v1:export-person-data")
 
-    def login(self):
+    def login(self) -> None:
         """Overwrite BaseExportingTest's login method: instead of loggin in
         as an admin, use a normal user."""
         self.client.login(username="primary_user", password="password")
 
-    def prepare_data(self, user):
+    def prepare_data(self, user: Person) -> None:
         """Populate relational fields for the user."""
-
-        # create and set airport for the user
-        airport = Airport.objects.create(
-            iata="DDD",
-            fullname="Airport 55x105",
-            country="CM",
-            latitude=55.0,
-            longitude=105.0,
-        )
-        self.user.airport = airport
-        self.user.save()
 
         # create a fake organization
         test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")
@@ -171,7 +162,7 @@ class TestExportingPersonData(BaseExportingTest):
             reason="I want to became an instructor",
             user_notes="I like trains",
         )
-        training_request.domains.set([KnowledgeDomain.objects.first()])
+        training_request.domains.set([KnowledgeDomain.objects.all()[0]])
         training_request.previous_involvement.set(Role.objects.filter(name="instructor"))
 
         # add some training progress
@@ -214,10 +205,10 @@ class TestExportingPersonData(BaseExportingTest):
         self.user_consents: List[Consent] = []
         for term in terms:
             self.user_consents.append(
-                Consent.reconsent(consent=consents_by_term_id[term.pk], term_option=term.options[0])
+                Consent.reconsent(consent=consents_by_term_id[term.pk], term_option=term.options[0])  # type: ignore
             )
 
-    def test_unauthorized_access(self):
+    def test_unauthorized_access(self) -> None:
         """Make sure only authenticated users can access."""
         # logout
         self.client.logout()
@@ -228,7 +219,7 @@ class TestExportingPersonData(BaseExportingTest):
         # make sure it's inaccessible
         self.assertEqual(rv.status_code, 401)
 
-    def test_only_for_one_user(self):
+    def test_only_for_one_user(self) -> None:
         """Make sure the results are available only for the logged-in user,
         no-one else."""
         # prepare a different user
@@ -259,7 +250,7 @@ class TestExportingPersonData(BaseExportingTest):
         # make sure this endpoint does not return first user data now
         self.assertEqual(rv.json()["username"], "secondary_user")
 
-    def test_all_related_objects_shown(self):
+    def test_all_related_objects_shown(self) -> None:
         """Test if all related fields are present in data output."""
         self.login()
 
@@ -294,11 +285,13 @@ class TestExportingPersonData(BaseExportingTest):
             "affiliation",
             "occupation",
             "orcid",
+            "airport_iata",
+            "country",
+            "timezone",
         ]
 
         # relational fields expected in API output
         expected_relational = [
-            "airport",
             "badges",
             "lessons",
             "domains",
@@ -318,7 +311,7 @@ class TestExportingPersonData(BaseExportingTest):
         for field in expected_fields + expected_relational:
             self.assertIn(field, user_data_keys)
 
-    def test_relational_fields_structure(self):
+    def test_relational_fields_structure(self) -> None:
         """Make sure relational fields available via API endpoints
         retain a specific structure."""
         self.prepare_data(user=self.user)
@@ -332,17 +325,7 @@ class TestExportingPersonData(BaseExportingTest):
         data = rv.json()
 
         # expected data dict
-        expected = dict()
-
-        # test expected Airport output
-        expected["airport"] = {
-            "iata": "DDD",
-            "fullname": "Airport 55x105",
-            "country": "CM",
-            "latitude": 55.0,
-            "longitude": 105.0,
-        }
-        self.assertEqual(data["airport"], expected["airport"])
+        expected: dict[str, Any] = dict()
 
         # test expected Consents output
         user_consents = Consent.objects.active().filter(person=self.user)

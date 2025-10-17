@@ -3,7 +3,7 @@ import datetime
 from functools import partial
 import io
 import logging
-from typing import Any, Optional, cast
+from typing import Annotated, Any, Optional, TypedDict, cast
 
 from django.conf import settings
 from django.contrib import messages
@@ -46,6 +46,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
+from django_stubs_ext import Annotations
 from flags.state import flag_enabled
 from github.GithubException import GithubException
 import requests
@@ -115,9 +116,9 @@ from workshops.base_views import (
     PrepopulationSupportMixin,
     RedirectSupportMixin,
 )
+from workshops.consts import IATA_AIRPORTS
 from workshops.exceptions import InternalError, WrongWorkshopURL
 from workshops.filters import (
-    AirportFilter,
     BadgeAwardsFilter,
     EventFilter,
     PersonFilter,
@@ -142,7 +143,6 @@ from workshops.forms import (
     WorkshopStaffForm,
 )
 from workshops.models import (
-    Airport,
     Award,
     Badge,
     Event,
@@ -168,7 +168,7 @@ from workshops.utils.metadata import (
 )
 from workshops.utils.pagination import get_pagination_items
 from workshops.utils.person_upload import (
-    PersonTask,
+    PersonTaskEntry,
     create_uploaded_persons_tasks,
     upload_person_task_csv,
     verify_upload_person_task,
@@ -196,53 +196,7 @@ def changes_log(request: AuthenticatedHttpRequest) -> HttpResponse:
 
 # ------------------------------------------------------------
 
-AIRPORT_FIELDS = ["iata", "fullname", "country", "latitude", "longitude"]
-
-
-class AllAirports(OnlyForAdminsMixin, AMYListView[Airport]):
-    context_object_name = "all_airports"
-    queryset = Airport.objects.all()
-    filter_class = AirportFilter
-    template_name = "workshops/all_airports.html"
-    title = "All Airports"
-
-
-class AirportDetails(OnlyForAdminsMixin, AMYDetailView[Airport]):
-    queryset = Airport.objects.all()
-    context_object_name = "airport"
-    template_name = "workshops/airport.html"
-    slug_url_kwarg = "airport_iata"
-    slug_field = "iata"
-
-    def get_context_data(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Airport {0}".format(self.object)
-        return context
-
-
-class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[None, Airport]):  # type: ignore
-    permission_required = "workshops.add_airport"
-    model = Airport
-    fields = AIRPORT_FIELDS
-
-
-class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[None, Airport]):  # type: ignore
-    permission_required = "workshops.change_airport"
-    model = Airport
-    fields = AIRPORT_FIELDS
-    slug_field = "iata"
-    slug_url_kwarg = "airport_iata"
-
-
-class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView[Airport, GenericDeleteForm[Airport]]):
-    model = Airport
-    slug_field = "iata"
-    slug_url_kwarg = "airport_iata"
-    permission_required = "workshops.delete_airport"
-    success_url = reverse_lazy("all_airports")
-
-
-# ------------------------------------------------------------
+PERSON_HAS_NO_AIRPORT_ALERT = "{person} has no airport information on record."
 
 
 class AllPersons(OnlyForAdminsMixin, AMYListView[Person]):
@@ -297,7 +251,6 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
                 queryset=MembershipTask.objects.select_related("role", "membership"),
             ),
         )
-        .select_related("airport")
         .order_by("family", "personal")
     )
 
@@ -314,6 +267,8 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
         context["consents"] = consent_by_description
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
+        if not self.object.airport_iata:
+            messages.warning(self.request, PERSON_HAS_NO_AIRPORT_ALERT.format(person=title))
         return context
 
 
@@ -346,7 +301,7 @@ def person_bulk_add(request: AuthenticatedHttpRequest) -> HttpResponse:
                 messages.error(request, "Please provide a file in {} encoding.".format(charset))
             else:
                 if empty_fields:
-                    msg_template = "The following required fields were not" " found in the uploaded file: {}"
+                    msg_template = "The following required fields were not found in the uploaded file: {}"
                     msg = msg_template.format(", ".join(empty_fields))
                     messages.error(request, msg)
                 else:
@@ -376,7 +331,7 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
     """
     This view allows for manipulating and saving session-stored upload data.
     """
-    persons_tasks: list[PersonTask] | None = request.session.get("bulk-add-people")
+    persons_tasks: list[PersonTaskEntry] | None = request.session.get("bulk-add-people")
     match = request.session.get("bulk-add-people-match", False)
 
     # if the session is empty, add message and redirect
@@ -396,19 +351,22 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
         for k, record in enumerate(data_update):
             personal, family, username, email, event, role = record
             existing_person_id = persons_tasks[k].get("existing_person_id")
-            persons_tasks[k] = {
-                "personal": personal,
-                "family": family,
-                "username": username,
-                "email": email or None,  # "field or None" converts empty strings to None values
-                "existing_person_id": existing_person_id,
-                # when user wants to drop related event they will send empty string
-                # so we should unconditionally accept new value for event even if
-                # it's an empty string
-                "event": event,
-                "role": role,
-                "errors": None,  # reset here
-            }
+            persons_tasks[k] = PersonTaskEntry(
+                **{
+                    "personal": personal,
+                    "family": family,
+                    "username": username,
+                    "email": email or None,  # "field or None" converts empty strings to None values
+                    "existing_person_id": existing_person_id,
+                    # when user wants to drop related event they will send empty string
+                    # so we should unconditionally accept new value for event even if
+                    # it's an empty string
+                    "event": event,
+                    "role": role,
+                    "errors": [],  # reset here
+                    "info": [],
+                }
+            )
 
         # save updated data to the session
         request.session["bulk-add-people"] = persons_tasks
@@ -418,7 +376,7 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
             if any_errors:
-                messages.error(request, "Please make sure to fix all errors " "listed below.")
+                messages.error(request, "Please make sure to fix all errors listed below.")
 
         # there must be "confirm" and no "cancel" in POST in order to save
         elif request.POST.get("confirm", None) and not request.POST.get("cancel", None):
@@ -644,6 +602,8 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView[Person
                 ),
             }
         )
+        if not self.object.airport_iata:
+            messages.warning(self.request, PERSON_HAS_NO_AIRPORT_ALERT.format(person=self.object))
         return context
 
     def form_valid(self, form: PersonForm) -> HttpResponse:
@@ -750,7 +710,7 @@ def person_password(request: AuthenticatedHttpRequest, person_id: int) -> HttpRe
     if not ((request.user == user) or (request.user.has_perm("workshops.change_person"))):
         raise PermissionDenied
 
-    Form: type[PasswordChangeForm] | type[SetPasswordForm] = PasswordChangeForm
+    Form: type[PasswordChangeForm] | type[SetPasswordForm[Person]] = PasswordChangeForm
     if request.user.is_superuser:
         Form = SetPasswordForm
     elif request.user.pk != user.pk:
@@ -848,7 +808,9 @@ def persons_merge(request: HttpRequest) -> HttpResponse:
                 "secondary_email",
                 "gender",
                 "gender_other",
-                "airport",
+                "airport_iata",
+                "country",
+                "timezone",
                 "github",
                 "twitter",
                 "bluesky",
@@ -1038,8 +1000,8 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
         form_action=reverse("event_assign", args=[slug]), add_cancel_button=False
     )
     if hasattr(event, "instructorrecruitment"):
-        instructor_recruitment_signups = InstructorRecruitmentSignup.objects.filter(
-            recruitment=event.instructorrecruitment
+        instructor_recruitment_signups = list(
+            InstructorRecruitmentSignup.objects.filter(recruitment=event.instructorrecruitment)
         )
     else:
         instructor_recruitment_signups = []
@@ -1080,12 +1042,12 @@ def validate_event(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse
 
     page_url = request.GET.get("url", None)  # for manual override
     if page_url is None:
-        page_url = event.url
+        page_url = event.url or ""
 
     page_url = page_url.strip()
 
-    error_messages = []
-    warning_messages = []
+    error_messages: list[str] = []
+    warning_messages: list[str] = []
 
     try:
         metadata = fetch_workshop_metadata(page_url)
@@ -1585,16 +1547,16 @@ def event_review_metadata_changes(request: AuthenticatedHttpRequest, slug: str) 
         )
         return redirect(event.get_absolute_url())
 
-    metadata = parse_workshop_metadata(metadata)
+    metadata_parsed = parse_workshop_metadata(metadata)
 
     # save serialized metadata in session so in case of acceptance we don't
     # reload them
-    metadata_serialized = metadata_serialize(metadata)
+    metadata_serialized = metadata_serialize(metadata_parsed)
     request.session["metadata_from_event_website"] = metadata_serialized
 
     context = {
         "title": "Review changes for {}".format(str(event)),
-        "metadata": metadata,
+        "metadata": metadata_parsed,
         "event": event,
     }
     return render(request, "workshops/event_review_metadata_changes.html", context)
@@ -1858,10 +1820,10 @@ class TaskUpdate(
     pk_url_kwarg = "task_id"
     object: Task
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         result = super().get_form_kwargs()
         # Optionally show field `allocated benefit`
-        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)  # type: ignore[no-untyped-call]
         return result | dict(show_allocated_benefit=show_allocated_benefit)
 
     def form_valid(self, form: TaskForm) -> HttpResponse:
@@ -2186,7 +2148,23 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView[Badge]):
 # ------------------------------------------------------------
 
 
-def _workshop_staff_query(lat: int | None = None, lng: int | None = None) -> QuerySet[Person]:
+class PersonWorkshopStaffAnnotation(TypedDict):
+    # From PersonRoleCount typed dict defined in `workshops/models.py`
+    num_instructor: int
+    num_trainer: int
+    num_helper: int
+    num_learner: int
+    num_supporting: int
+    num_organizer: int
+
+    is_trainee: int
+    is_trainer: int
+    is_instructor: int
+
+
+def _workshop_staff_query(
+    lat: float | None = None, lng: float | None = None
+) -> QuerySet[Annotated[Person, Annotations[PersonWorkshopStaffAnnotation]]]:
     """This query is used in two views: workshop staff searching and its CSV
     results. Thanks to factoring-out this function, we're now quite certain
     that the results in both of the views are the same."""
@@ -2215,8 +2193,7 @@ def _workshop_staff_query(lat: int | None = None, lng: int | None = None) -> Que
                 filter=Q(communityrole__in=active_instructor_community_roles),
             ),
         )
-        .filter(airport__isnull=False)
-        .select_related("airport")
+        .exclude(airport_iata="")
         .prefetch_related(
             "lessons",
             Prefetch(
@@ -2235,7 +2212,7 @@ def _workshop_staff_query(lat: int | None = None, lng: int | None = None) -> Que
 
     if lat and lng:
         # using Euclidean distance just because it's faster and easier
-        complex_F = (F("airport__latitude") - lat) ** 2 + (F("airport__longitude") - lng) ** 2
+        complex_F = (F("airport_lat") - lat) ** 2 + (F("airport_lon") - lng) ** 2
         people = people.annotate(distance=ExpressionWrapper(complex_F, output_field=FloatField())).order_by(
             "distance", "family"
         )
@@ -2255,19 +2232,20 @@ def workshop_staff(request: AuthenticatedHttpRequest) -> HttpResponse:
         # to highlight (in template) what lessons people know
         lessons = form.cleaned_data["lessons"]
 
-        if form.cleaned_data["airport"]:
-            lat = form.cleaned_data["airport"].latitude
-            lng = form.cleaned_data["airport"].longitude
+        if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
+            airport = IATA_AIRPORTS[airport_iata]
+            lat = airport["lat"]
+            lng = airport["lon"]
 
         elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
             lat = form.cleaned_data["latitude"]
             lng = form.cleaned_data["longitude"]
 
     # prepare the query
-    people = _workshop_staff_query(lat, lng)
+    people_query = _workshop_staff_query(lat, lng)
 
     # filter the query
-    f = WorkshopStaffFilter(request.GET, queryset=people)
+    f = WorkshopStaffFilter(request.GET, queryset=people_query)
     people = get_pagination_items(request, f.qs)
 
     context = {
@@ -2287,19 +2265,20 @@ def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
     lat, lng = None, None
     form = WorkshopStaffForm(request.GET)
     if form.is_valid():
-        if form.cleaned_data["airport"]:
-            lat = form.cleaned_data["airport"].latitude
-            lng = form.cleaned_data["airport"].longitude
+        if (airport_iata := form.cleaned_data["airport_iata"]) and airport_iata in IATA_AIRPORTS:
+            airport = IATA_AIRPORTS[airport_iata]
+            lat = airport["lat"]
+            lng = airport["lon"]
 
         elif form.cleaned_data["latitude"] and form.cleaned_data["longitude"]:
             lat = form.cleaned_data["latitude"]
             lng = form.cleaned_data["longitude"]
 
     # prepare the query
-    people = _workshop_staff_query(lat, lng)
+    people_query = _workshop_staff_query(lat, lng)
 
     # filter the query
-    f = WorkshopStaffFilter(request.GET, queryset=people)
+    f = WorkshopStaffFilter(request.GET, queryset=people_query)
     people = f.qs
 
     # first row of the CSV output
@@ -2318,7 +2297,7 @@ def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
 
     # CSV http header
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = "attachment; " 'filename="WorkshopStaff.csv"'
+    response["Content-Disposition"] = 'attachment; filename="WorkshopStaff.csv"'
     # CSV output
     writer = csv.writer(response)
     writer.writerow(header_row)
@@ -2331,7 +2310,7 @@ def workshop_staff_csv(request: AuthenticatedHttpRequest) -> HttpResponse:
                 "yes" if person.is_trainer else "no",
                 person.num_instructor,
                 "yes" if person.is_trainee else "no",
-                str(person.airport) if person.airport else "",
+                person.airport_iata,
                 person.country.name if person.country else "",
                 " ".join([lesson.name for lesson in person.lessons.all()]),
                 person.affiliation or "",
@@ -2379,7 +2358,7 @@ def object_changes(request: AuthenticatedHttpRequest, version_id: int) -> HttpRe
         return queryset.order_by("-pk" if history_latest_first else "pk")
 
     # get action list
-    action_list = [
+    action_list: list[dict[str, Any]] = [
         {"version": version, "revision": version.revision}
         for version in _order(Version.objects.get_for_object(obj).select_related("revision__user"))
     ]
@@ -2411,12 +2390,12 @@ def object_changes(request: AuthenticatedHttpRequest, version_id: int) -> HttpRe
 
     context = {
         "title": str(obj),
-        "verbose_name": obj._meta.verbose_name,
+        "verbose_name": obj._meta.verbose_name,  # type: ignore[union-attr]
         "object": obj,
         "version1": version1,
         "version2": version2,
         "revision": version2.revision,
-        "fields": [f for f in obj._meta.get_fields() if f.concrete],
+        "fields": [f for f in obj._meta.get_fields() if f.concrete],  # type: ignore[union-attr]
         "action": "",
         "compare_view": True,
         "action_list": action_list,

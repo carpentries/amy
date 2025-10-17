@@ -1,9 +1,9 @@
-from typing import Any, Sequence, cast
+from typing import Any, Mapping, Protocol, Sequence, cast
 
 from django import forms
 from django.core.validators import MaxLengthValidator, RegexValidator
 from django.db import models
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
 from django_select2.forms import (
     ModelSelect2MultipleWidget as DS2_ModelSelect2MultipleWidget,
 )
@@ -12,8 +12,9 @@ from django_select2.forms import ModelSelect2Widget as DS2_ModelSelect2Widget
 from django_select2.forms import Select2MultipleWidget as DS2_Select2MultipleWidget
 from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
 from django_select2.forms import Select2Widget as DS2_Select2Widget
+import pytz
 
-from workshops.consts import STR_LONG, STR_MED
+from workshops.consts import IATA_AIRPORTS, STR_LONG, STR_MED
 
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(
     39,
@@ -30,7 +31,7 @@ GHUSERNAME_REGEX_VALIDATOR = RegexValidator(
 )
 
 
-class NullableGithubUsernameField(models.CharField):
+class NullableGithubUsernameField(models.CharField):  # type: ignore
     def __init__(self, **kwargs: Any) -> None:
         kwargs.setdefault("null", True)
         kwargs.setdefault("blank", True)
@@ -98,20 +99,32 @@ class RadioSelectFakeMultiple(FakeRequiredMixin, forms.RadioSelect):
 
 
 class SafeLabelFromInstanceMixin:
-    def label_from_instance(self, obj):
-        return mark_safe(obj)
+    def label_from_instance(self, obj: Any) -> SafeString:
+        return cast(SafeString, mark_safe(obj))
 
 
-class SafeModelChoiceField(SafeLabelFromInstanceMixin, forms.ModelChoiceField):
+class SafeModelChoiceField(
+    SafeLabelFromInstanceMixin,
+    forms.ModelChoiceField,  # type: ignore[type-arg]
+):
     pass
 
 
-class SafeModelMultipleChoiceField(SafeLabelFromInstanceMixin, forms.ModelMultipleChoiceField):
+class SafeModelMultipleChoiceField(
+    SafeLabelFromInstanceMixin,
+    forms.ModelMultipleChoiceField,  # type: ignore[type-arg]
+):
     pass
+
+
+class CurriculumLikeObj(Protocol):
+    description: str
+
+    def __str__(self) -> str: ...
 
 
 class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
-    def label_from_instance(self, obj):
+    def label_from_instance(self, obj: CurriculumLikeObj) -> SafeString:
         # Display in tooltip (it's a little better than popover, because it
         # auto-hides and doesn't require clicking on the element, whereas
         # popover by clicking will automatically select the clicked item)
@@ -142,27 +155,31 @@ class Select2NoMinimumInputLength:
         return attrs
 
 
-class Select2Widget(FakeRequiredMixin, Select2BootstrapMixin, DS2_Select2Widget):
+class Select2Widget(FakeRequiredMixin, Select2BootstrapMixin, DS2_Select2Widget):  # type: ignore
     pass
 
 
-class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):
+class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):  # type: ignore
     pass
 
 
-class ModelSelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2Widget):
+class ModelSelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2Widget):  # type: ignore
     pass
 
 
-class ModelSelect2MultipleWidget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_ModelSelect2MultipleWidget):
+class ModelSelect2MultipleWidget(  # type: ignore
+    Select2BootstrapMixin,
+    Select2NoMinimumInputLength,
+    DS2_ModelSelect2MultipleWidget,
+):
     pass
 
 
 TAG_SEPARATOR = ";"
 
 
-class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
-    def build_attrs(self, base_attrs, extra_attrs=None):
+class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):  # type: ignore[misc]
+    def build_attrs(self, base_attrs: dict[str, Any], extra_attrs: dict[str, Any] | None = None) -> dict[str, Any]:
         """Select2's tag attributes. By default other token separators are
         used, but we want to use "," and ";"."""
         default_attrs = {
@@ -170,17 +187,16 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
             "data-tags": "true",
             "data-token-separators": '[",", ";"]',
         }
-        assert TAG_SEPARATOR in default_attrs["data-token-separators"]
 
         default_attrs.update(base_attrs)
         return super().build_attrs(default_attrs, extra_attrs=extra_attrs)
 
-    def value_from_datadict(self, data, files, name):
+    def value_from_datadict(self, data: Mapping[str, Any], files: Any, name: str) -> Any:
         # sometimes data is held as an immutable QueryDict
         # in those cases, we need to make a copy of it to "disable"
         # the mutability
         try:
-            data_mutable = data.copy()
+            data_mutable = data.copy()  # type: ignore[attr-defined]
         except AttributeError:
             data_mutable = data
 
@@ -188,7 +204,9 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
         values = super().value_from_datadict(data_mutable, files, name)
         return TAG_SEPARATOR.join(values)
 
-    def optgroups(self, name, value, attrs=None):
+    def optgroups(
+        self, name: str, value: list[str], attrs: dict[str, Any] | None = None
+    ) -> list[tuple[str | None, list[dict[str, Any]], int | None]]:
         """Example from
         https://django-select2.readthedocs.io/en/latest/django_select2.html#django_select2.forms.Select2TagWidget
         """  # noqa
@@ -198,21 +216,21 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
             values = []
 
         selected = set(values)
-        subgroup = [self.create_option(name, v, v, selected, i) for i, v in enumerate(values)]
+        subgroup = [self.create_option(name, v, v, bool(selected), i) for i, v in enumerate(values)]
         return [(None, subgroup, 0)]
 
 
-class HeavySelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget):
+class HeavySelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget):  # type: ignore
     pass
 
 
 def choice_field_with_other(
-    choices: Sequence[tuple[str, str]], default: str, verbose_name: str | None = None, help_text: str | None = None
-) -> tuple[models.CharField, models.CharField]:
+    choices: Sequence[tuple[str, str]], default: str, verbose_name: str | None = None, help_text: str = ""
+) -> tuple[models.CharField, models.CharField]:  # type: ignore
     assert default in [c[0] for c in choices]
     assert all(c[0] != "" for c in choices)
 
-    field = models.CharField(
+    field = models.CharField(  # type: ignore
         max_length=STR_MED,
         choices=choices,
         verbose_name=verbose_name,
@@ -221,7 +239,7 @@ def choice_field_with_other(
         blank=False,
         default=default,
     )
-    other_field = models.CharField(
+    other_field = models.CharField(  # type: ignore
         max_length=STR_LONG,
         verbose_name=" ",
         null=False,
@@ -229,3 +247,28 @@ def choice_field_with_other(
         default="",
     )
     return field, other_field
+
+
+class AirportChoiceField(forms.ChoiceField):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        choices = kwargs.pop(
+            "choices",
+            [(None, "------")]
+            + sorted(
+                [
+                    (key, f"{key}: {value["name"]} ({value["country"]}, {value["tz"]})")
+                    for key, value in IATA_AIRPORTS.items()
+                ]
+            ),
+        )
+        widget = kwargs.pop("widget", Select2Widget)
+
+        super().__init__(*args, **kwargs, choices=choices, widget=widget)
+
+
+class TimezoneChoiceField(forms.ChoiceField):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        choices = kwargs.pop("choices", zip(pytz.common_timezones, pytz.common_timezones))
+        widget = kwargs.pop("widget", Select2Widget)
+
+        super().__init__(*args, **kwargs, choices=choices, widget=widget)

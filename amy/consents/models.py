@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Iterable
+from typing import Any, Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -10,8 +10,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 
 from consents.exceptions import TermOptionDoesNotBelongToTermException
+from workshops.consts import STR_LONG, STR_MED
 from workshops.mixins import CreatedUpdatedArchivedMixin
-from workshops.models import STR_LONG, STR_MED, Person, TrainingRequest
+from workshops.models import Person, TrainingRequest
 
 
 class TermQuerySet(QuerySet["Term"]):
@@ -198,7 +199,7 @@ class BaseConsent(CreatedUpdatedArchivedMixin, models.Model):
     class Meta:
         abstract = True
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         if self.term_option and self.term.pk != self.term_option.term.pk:
             raise TermOptionDoesNotBelongToTermException(
                 f"Consent {self.term.pk=} must match {self.term_option.term.pk=}"
@@ -253,7 +254,7 @@ class Consent(BaseConsent):
         cls.archive_all(consents)
 
     @classmethod
-    def archive_all_for_person(cls, person: Person):
+    def archive_all_for_person(cls, person: Person) -> None:
         consents = cls.objects.filter(person=person).active()
         cls.archive_all(consents)
 
@@ -280,8 +281,8 @@ class Consent(BaseConsent):
         )
 
 
-class TrainingRequestConsentQuerySet(QuerySet):
-    def active(self):
+class TrainingRequestConsentQuerySet(QuerySet["TrainingRequestConsent"]):
+    def active(self) -> QuerySet["TrainingRequestConsent"]:
         return self.filter(archived_at=None)
 
 

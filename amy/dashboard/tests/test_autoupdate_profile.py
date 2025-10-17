@@ -6,8 +6,7 @@ from workshops.tests.base import TestBase
 
 
 class TestAutoUpdateProfile(TestBase):
-    def setUp(self):
-        self._setUpAirports()
+    def setUp(self) -> None:
         self._setUpLessons()
         self._setUpLanguages()
 
@@ -33,11 +32,11 @@ class TestAutoUpdateProfile(TestBase):
 
         self.client.login(username="user", password="pass")
 
-    def test_load_form(self):
+    def test_load_form(self) -> None:
         rv = self.client.get(reverse("autoupdate_profile"))
         self.assertEqual(rv.status_code, 200)
 
-    def test_update_profile(self):
+    def test_update_profile(self) -> None:
         term_slugs = [
             TermEnum.MAY_CONTACT,
             TermEnum.MAY_PUBLISH_NAME,
@@ -46,14 +45,18 @@ class TestAutoUpdateProfile(TestBase):
         terms_by_term_slug = {
             term.slug: term for term in Term.objects.filter(slug__in=term_slugs).active().prefetch_active_options()
         }
-        consent_data = {f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk for slug in term_slugs}
+        consent_data = {
+            f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk for slug in term_slugs  # type: ignore
+        }
         data = {
             "personal": "admin",
             "middle": "",
             "family": "Smith",
             "email": "admin@example.org",
             "gender": Person.UNDISCLOSED,
-            "airport": self.airport_0_0.pk,
+            "airport_iata": "CDG",
+            "country": "PL",
+            "timezone": "Europe/Warsaw",
             "github": "changed",
             "twitter": "",
             "bluesky": "",
@@ -89,6 +92,6 @@ class TestAutoUpdateProfile(TestBase):
         }
         for slug in term_slugs:
             self.assertEqual(
-                updated_consents_by_term_slug[slug].term_option.pk,
+                updated_consents_by_term_slug[slug].term_option.pk,  # type: ignore
                 consent_data[f"consents-{slug}"],
             )

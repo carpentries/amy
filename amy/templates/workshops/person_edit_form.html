@@ -22,9 +22,13 @@
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="awards-tab" id="awards">
     {% if perms.workshops.add_awards %}
-    <form class="form-horizontal" role="form" method="POST" action="{% url 'award_add' %}?next={{ request.get_full_path|urlencode }}#awards">
-      {% crispy award_form %}
-    </form>
+      {% if person.airport_iata %}
+      <form class="form-horizontal" role="form" method="POST" action="{% url 'award_add' %}?next={{ request.get_full_path|urlencode }}#awards">
+        {% crispy award_form %}
+      </form>
+      {% else %}
+      <p>Add missing person airport information to enable award form.</p>
+      {% endif %}
     {% endif %}
 
     {% if awards %}
@@ -66,9 +70,13 @@
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="tasks-tab" id="tasks">
     {% if perms.workshops.add_tasks %}
-    <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
-      {% crispy task_form %}
-    </form>
+      {% if person.airport_iata %}
+      <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
+        {% crispy task_form %}
+      </form>
+      {% else %}
+      <p>Add missing person airport information to enable task form.</p>
+      {% endif %}
     {% endif %}
 
     {% if tasks %}
@@ -112,9 +120,13 @@
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="consents-tab" id="consents">
     {% if consents_form.terms %}
-      <form class="form-horizontal" role="form" method="POST" action="{% url 'consents_add' person.id %}?next={{ request.get_full_path|urlencode }}#consents">
-      {% crispy consents_form %}
-      </form>
+      {% if person.airport_iata %}
+        <form class="form-horizontal" role="form" method="POST" action="{% url 'consents_add' person.id %}?next={{ request.get_full_path|urlencode }}#consents">
+        {% crispy consents_form %}
+        </form>
+      {% else %}
+      <p>Add missing person airport information to enable consent form.</p>
+      {% endif %}
     {% else %}
       <p>No Terms.</p>
     {% endif %}
@@ -148,9 +160,13 @@
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="communityroles-tab" id="communityroles">
     {% if perms.communityroles.add_communityroles %}
-    <form class="form-horizontal" role="form" method="POST" action="{% url 'communityrole_add' %}?next={{ request.get_full_path|urlencode }}#communityroles">
-      {% crispy communityrole_form %}
-    </form>
+      {% if person.airport_iata %}
+      <form class="form-horizontal" role="form" method="POST" action="{% url 'communityrole_add' %}?next={{ request.get_full_path|urlencode }}#communityroles">
+        {% crispy communityrole_form %}
+      </form>
+      {% else %}
+      <p>Add missing person airport information to enable community roles form.</p>
+      {% endif %}
     {% endif %}
 
     {% if community_roles %}

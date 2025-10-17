@@ -21,9 +21,8 @@ from workshops.tests.base import TestBase
 
 
 class TestTraineesView(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
-        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpTags()
         self._setUpRoles()
@@ -41,7 +40,7 @@ class TestTraineesView(TestBase):
         self.ttt_event = Event.objects.create(
             start=datetime(2018, 7, 14),
             slug="2018-07-14-training",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
         )
         self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 
@@ -55,11 +54,11 @@ class TestTraineesView(TestBase):
             role=Role.objects.get(name="learner"),
         )
 
-    def test_view_loads(self):
+    def test_view_loads(self) -> None:
         rv = self.client.get(reverse("all_trainees"))
         self.assertEqual(rv.status_code, 200)
 
-    def test_bulk_add_progress__welcome(self):
+    def test_bulk_add_progress__welcome(self) -> None:
         # Arrange
         # create a pre-existing progress to ensure bulk adding doesn't interfere
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.welcome, state="n")
@@ -87,7 +86,7 @@ class TestTraineesView(TestBase):
         }
         self.assertEqual(got, expected)
 
-    def test_bulk_add_progress__training(self):
+    def test_bulk_add_progress__training(self) -> None:
         # Arrange
         # create a pre-existing progress to ensure bulk adding doesn't interfere
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.training, state="n")
@@ -116,7 +115,7 @@ class TestTraineesView(TestBase):
         }
         self.assertEqual(got, expected)
 
-    def test_bulk_add_progress__training_with_failures(self):
+    def test_bulk_add_progress__training_with_failures(self) -> None:
         # Arrange
         # Intended result:
         # spiderman: pass
@@ -158,7 +157,7 @@ class TestTraineesView(TestBase):
         }
         self.assertEqual(got, expected)
 
-    def test_bulk_add_progress__demo(self):
+    def test_bulk_add_progress__demo(self) -> None:
         # Arrange
         # create a pre-existing progress to ensure bulk adding doesn't interfere
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.demo, state="n")
@@ -186,7 +185,7 @@ class TestTraineesView(TestBase):
         }
         self.assertEqual(got, expected)
 
-    def test_bulk_add_progress__get_involved(self):
+    def test_bulk_add_progress__get_involved(self) -> None:
         # Arrange
         # create a pre-existing progress to ensure bulk adding doesn't interfere
         TrainingProgress.objects.create(
@@ -226,13 +225,13 @@ class TestTraineesView(TestBase):
 
 
 class TestFilterTraineesByInstructorStatus(TestBase):
-    def _setUpPermissions(self):
+    def _setUpPermissions(self) -> None:
         pass
 
-    def _setUpNonInstructors(self):
+    def _setUpNonInstructors(self) -> None:
         pass
 
-    def _setUpTrainingRequirements(self):
+    def _setUpTrainingRequirements(self) -> None:
         """Add some Training Requirements created through seeding
         (amy/scripts/seed_training_requirements.py)"""
         self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo", defaults={"url_required": True})
@@ -242,7 +241,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         self.training = TrainingRequirement.objects.get(name="Training")
         self.involvement, _ = Involvement.objects.get_or_create(name="Test Involvement", defaults={})
 
-    def _setUpInstructors(self):
+    def _setUpInstructors(self) -> None:
         # prepare data
 
         # 1 SWC/DC/LC instructor
@@ -382,7 +381,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
             ]
         )
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpTrainingRequirements()
         super().setUp()
 
@@ -391,25 +390,25 @@ class TestFilterTraineesByInstructorStatus(TestBase):
         self.queryset = all_trainees_queryset()
         self.filter = partial(filter_trainees_by_instructor_status, queryset=self.queryset, name="")
 
-    def test_no_choice(self):
+    def test_no_choice(self) -> None:
         # result should be the same as original queryset
         rv = self.filter(choice="")
         self.assertEqual(rv, self.queryset)
         self.assertQuerySetEqual(rv, list(self.queryset), transform=lambda x: x)
 
-    def test_instructors(self):
+    def test_instructors(self) -> None:
         # only instructors who have all 3 badges should be returned
         rv = self.filter(choice="yes")
         values = [self.instructor1, self.instructor2, self.instructor3]
         self.assertQuerySetEqual(rv, values, transform=lambda x: x)
 
-    def test_eligible_trainees(self):
+    def test_eligible_trainees(self) -> None:
         # only 1 eligible trainee should be returned
         rv = self.filter(choice="eligible")
         values = [self.trainee1]
         self.assertQuerySetEqual(rv, values, transform=lambda x: x)
 
-    def test_eligibility_query(self):
+    def test_eligibility_query(self) -> None:
         # check if eligibility query works correctly
         self.assertEqual(Person.objects.all().count(), 6)
         rv = all_trainees_queryset().order_by("pk")
@@ -471,7 +470,7 @@ class TestFilterTraineesByInstructorStatus(TestBase):
                     f"{person.username} attr {k} doesn't have value {v}",
                 )
 
-    def test_no_instructors(self):
+    def test_no_instructors(self) -> None:
         # only non-instructors should be returned
         rv = self.filter(choice="no")
         values = [self.trainee1, self.trainee3]

@@ -237,7 +237,7 @@ def parse_workshop_metadata(metadata: dict[str, str]) -> WorkshopMetadata:
     }
 
 
-def validate_workshop_metadata(metadata: WorkshopMetadata) -> tuple[list[str], list[str]]:
+def validate_workshop_metadata(metadata: dict[str, str]) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -346,7 +346,7 @@ def datetime_decode[T1: dict[Any, Any], T2: list[Any]](obj: T1 | T2 | str) -> T1
                 # recursive call
                 obj[k] = datetime_decode(item)
 
-        return obj  # type: ignore
+        return obj
 
     elif isinstance(obj, str):
         return datetime_match(obj)

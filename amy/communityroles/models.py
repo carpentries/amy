@@ -7,9 +7,8 @@ from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
 from django_better_admin_arrayfield.models.fields import ArrayField
 
-from fiscal.models import Membership
 from workshops.mixins import CreatedUpdatedMixin
-from workshops.models import Award, Badge, Person
+from workshops.models import Award, Badge, Membership, Person
 
 
 class CommunityRoleConfig(CreatedUpdatedMixin, models.Model):
@@ -54,8 +53,8 @@ class CommunityRoleInactivation(CreatedUpdatedMixin, models.Model):
         return self.name
 
 
-class CommunityRoleQuerySet(QuerySet):
-    def active(self):
+class CommunityRoleQuerySet(QuerySet["CommunityRole"]):
+    def active(self) -> QuerySet["CommunityRole"]:
         today = date.today()
         return self.filter(
             Q(inactivation__isnull=True)
@@ -115,7 +114,7 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
     def __str__(self) -> str:
         return f'Community Role "{self.config}" for {self.person}'
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("communityrole_details", kwargs={"pk": self.pk})
 
     def is_active(self) -> bool:

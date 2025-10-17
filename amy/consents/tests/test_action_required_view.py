@@ -10,7 +10,7 @@ from workshops.models import Person
 
 
 class TestActionRequiredTermView(ConsentTestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.neville = Person.objects.create(
             personal="Neville",
@@ -18,11 +18,11 @@ class TestActionRequiredTermView(ConsentTestBase):
             email="neville@longbottom.com",
             gender="M",
             username="longbottom_neville",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             is_active=True,
         )
 
-    def test_agreement_already_set(self):
+    def test_agreement_already_set(self) -> None:
         """Make sure the view redirect somewhere if person has already agreed
         to the required terms."""
         # force login Neville
@@ -45,7 +45,7 @@ class TestActionRequiredTermView(ConsentTestBase):
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)
 
-    def test_optional_agreements_are_optional(self):
+    def test_optional_agreements_are_optional(self) -> None:
         """Make sure the view redirect somewhere if person has agreed
         to the required terms."""
         # force login Neville
@@ -67,7 +67,7 @@ class TestActionRequiredTermView(ConsentTestBase):
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)
 
-    def test_required_agreement_submit(self):
+    def test_required_agreement_submit(self) -> None:
         "Make sure the form passes only when required terms are set."
         # setup sample data
         kwargs = {
@@ -75,7 +75,12 @@ class TestActionRequiredTermView(ConsentTestBase):
             "widgets": {"person": HiddenInput()},
         }
         terms = RequiredConsentsForm(**kwargs).get_terms()
-        data = {term.slug: term.options[0].pk for term in terms.exclude(required_type=Term.PROFILE_REQUIRE_TYPE)}
+        data = {
+            term.slug: term.options[0].pk  # type: ignore
+            for term in terms.exclude(
+                required_type=Term.PROFILE_REQUIRE_TYPE,
+            )
+        }
         data["person"] = self.neville.pk
         # make sure it doesn't pass without the required consents
         form = RequiredConsentsForm(data, initial={"person": self.neville})
@@ -83,13 +88,13 @@ class TestActionRequiredTermView(ConsentTestBase):
 
         # let's try with consent for required terms
         for term in terms.filter(required_type=Term.PROFILE_REQUIRE_TYPE):
-            data[term.slug] = term.options[0].pk
+            data[term.slug] = term.options[0].pk  # type: ignore
         form = RequiredConsentsForm(data, initial={"person": self.neville})
         self.assertTrue(form.is_valid())
 
 
 class TestTermsMiddleware(ConsentTestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.neville = Person.objects.create(
             personal="Neville",
@@ -97,12 +102,12 @@ class TestTermsMiddleware(ConsentTestBase):
             email="neville@longbottom.com",
             gender="M",
             username="longbottom_neville",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             is_active=True,
         )
         self.form_url = reverse("action_required_terms")
 
-    def test_anonymous_user(self):
+    def test_anonymous_user(self) -> None:
         """Ensure anonymous user is not redirected by the Terms middleware."""
         urls = [
             reverse("login"),
@@ -122,7 +127,7 @@ class TestTermsMiddleware(ConsentTestBase):
             # user indeed is anonymous
             self.assertEqual(rv.wsgi_request.user.is_anonymous, True)
 
-    def test_logged_in_user(self):
+    def test_logged_in_user(self) -> None:
         """Ensure logged-in user who has not consented to
         the required terms is redirected to the form."""
         urls = [
@@ -140,7 +145,7 @@ class TestTermsMiddleware(ConsentTestBase):
                 action_required_url = "{}?next={}".format(reverse("action_required_terms"), url)
                 self.assertRedirects(rv, action_required_url)
 
-    def test_no_more_redirects_after_agreement(self):
+    def test_no_more_redirects_after_agreement(self) -> None:
         """Ensure user is no longer forcefully redirected to accept the
         required terms."""
         url = reverse("instructor-dashboard")
@@ -165,7 +170,7 @@ class TestTermsMiddleware(ConsentTestBase):
             rv = self.client.get(url)
             self.assertEqual(rv.status_code, 200)
 
-    def test_allowed_urls(self):
+    def test_allowed_urls(self) -> None:
         url = reverse("logout")
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -176,7 +181,7 @@ class TestTermsMiddleware(ConsentTestBase):
             # But logout does redirect to login
             self.assertRedirects(rv, reverse("login"))
 
-    def test_next_param(self):
+    def test_next_param(self) -> None:
         """Ensure a non-dispatch URL is reachable through `?next` query
         string."""
 
@@ -192,6 +197,6 @@ class TestTermsMiddleware(ConsentTestBase):
             terms = Term.objects.filter(required_type=Term.PROFILE_REQUIRE_TYPE).prefetch_active_options()
             data = {"person": self.neville.pk}
             for term in terms:
-                data[term.slug] = term.options[0].pk
+                data[term.slug] = term.options[0].pk  # type: ignore
             rv = self.client.post(form_url, data=data)
             self.assertRedirects(rv, url)

@@ -37,7 +37,9 @@ from workshops.models import (
 from workshops.tests.base import TestBase
 
 
-def create_training_request(state, person, open_review=True, reg_code=""):
+def create_training_request(
+    state: str, person: Person | None, open_review: bool = True, reg_code: str = ""
+) -> TrainingRequest:
     return TrainingRequest.objects.create(
         review_process="open" if open_review else "preapproved",
         member_code=reg_code,
@@ -63,7 +65,7 @@ def create_training_request(state, person, open_review=True, reg_code=""):
 
 
 class TestTrainingRequestModel(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         # create admin account
         self._setUpUsersAndLogin()
 
@@ -80,7 +82,7 @@ class TestTrainingRequestModel(TestBase):
         learner = Role.objects.get(name="learner")
         Task.objects.create(person=self.trainee, event=training, role=learner)
 
-    def test_accepted_request_are_always_valid(self):
+    def test_accepted_request_are_always_valid(self) -> None:
         """Accepted training requests are valid regardless of whether they
         are matched to a training."""
         req = create_training_request(state="a", person=None)
@@ -92,21 +94,21 @@ class TestTrainingRequestModel(TestBase):
         req = create_training_request(state="a", person=self.trainee)
         req.full_clean()
 
-    def test_valid_pending_request(self):
+    def test_valid_pending_request(self) -> None:
         req = create_training_request(state="p", person=None)
         req.full_clean()
 
         req = create_training_request(state="p", person=self.admin)
         req.full_clean()
 
-    def test_pending_request_must_not_be_matched(self):
+    def test_pending_request_must_not_be_matched(self) -> None:
         req = create_training_request(state="p", person=self.trainee)
         with self.assertRaises(ValidationError):
             req.full_clean()
 
 
 class TestTrainingRequestModelScoring(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpRoles()
 
         self.tr = TrainingRequest.objects.create(
@@ -126,29 +128,29 @@ class TestTrainingRequestModelScoring(TestBase):
             state="p",
         )
 
-    def test_minimal_response_no_score(self):
+    def test_minimal_response_no_score(self) -> None:
         self.assertEqual(self.tr.score_auto, 0)
 
-    def test_country(self):
+    def test_country(self) -> None:
         # a sample country that scores a point
         self.tr.country = "W3"
         self.tr.save()
         self.assertEqual(self.tr.score_auto, 1)
 
-    def test_underresourced_institution(self):
+    def test_underresourced_institution(self) -> None:
         # a sample country that scores a point
         self.tr.underresourced = True
         self.tr.save()
         self.assertEqual(self.tr.score_auto, 1)
 
-    def test_country_and_underresourced_institution(self):
+    def test_country_and_underresourced_institution(self) -> None:
         # a sample country that scores a point
         self.tr.country = "W3"
         self.tr.underresourced = True
         self.tr.save()
         self.assertEqual(self.tr.score_auto, 2)
 
-    def test_domains(self):
+    def test_domains(self) -> None:
         """Ensure m2m_changed signals work correctly on
         `TrainingRequest.domains` field."""
         # test adding a domain
@@ -175,7 +177,7 @@ class TestTrainingRequestModelScoring(TestBase):
         self.tr.domains.set(domains)
         self.assertEqual(self.tr.score_auto, 1)
 
-    def test_each_domain(self):
+    def test_each_domain(self) -> None:
         "Ensure each domain from the list counts for +1 score_auto."
         domain_names = [
             "Humanities",
@@ -198,7 +200,7 @@ class TestTrainingRequestModelScoring(TestBase):
             self.tr.domains.add(last_domain)
             self.assertEqual(self.tr.score_auto, 1, name)
 
-    def test_underrepresented(self):
+    def test_underrepresented(self) -> None:
         """With change in https://github.com/swcarpentry/amy/issues/1468,
         we start automatically scoring underrepresented field."""
         data = {
@@ -212,7 +214,7 @@ class TestTrainingRequestModelScoring(TestBase):
             self.tr.save()
             self.assertEqual(self.tr.score_auto, score)
 
-    def test_previous_involvement(self):
+    def test_previous_involvement(self) -> None:
         """Ensure m2m_changed signals work correctly on
         `TrainingRequest.previous_involvement` field."""
         roles = Role.objects.all()
@@ -226,7 +228,7 @@ class TestTrainingRequestModelScoring(TestBase):
         # previous involvement scoring max's out at 3
         self.assertEqual(self.tr.score_auto, 3)
 
-    def test_previous_training_in_teaching(self):
+    def test_previous_training_in_teaching(self) -> None:
         """Go through all options in `previous_training` and ensure only some
         produce additional score."""
         choices = TrainingRequest.PREVIOUS_TRAINING_CHOICES
@@ -238,7 +240,7 @@ class TestTrainingRequestModelScoring(TestBase):
             else:
                 self.assertEqual(self.tr.score_auto, 0)
 
-    def test_previous_experience_in_teaching(self):
+    def test_previous_experience_in_teaching(self) -> None:
         """Go through all options in `previous_experience` and ensure only some
         produce additional score."""
         choices = TrainingRequest.PREVIOUS_EXPERIENCE_CHOICES
@@ -250,7 +252,7 @@ class TestTrainingRequestModelScoring(TestBase):
             else:
                 self.assertEqual(self.tr.score_auto, 0)
 
-    def test_tooling(self):
+    def test_tooling(self) -> None:
         """Go through all options in `programming_language_usage_frequency`
         and ensure only some produce additional score."""
         choices = TrainingRequest.PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES
@@ -264,8 +266,7 @@ class TestTrainingRequestModelScoring(TestBase):
 
 
 class TestTrainingRequestsListView(TestBase):
-    def setUp(self):
-        self._setUpAirports()
+    def setUp(self) -> None:
         self._setUpNonInstructors()
         self._setUpRoles()
         self._setUpTags()
@@ -284,7 +285,7 @@ class TestTrainingRequestsListView(TestBase):
         self.second_training = Event.objects.create(slug="second-ttt-event", host=self.org)
         self.second_training.tags.add(self.ttt)
 
-    def test_view_loads(self):
+    def test_view_loads(self) -> None:
         """
         View should default to settings:
             state=pa (Pending or accepted)
@@ -300,7 +301,7 @@ class TestTrainingRequestsListView(TestBase):
             {self.second_req},
         )
 
-    def test_view_loads_all_on_request(self):
+    def test_view_loads_all_on_request(self) -> None:
         """
         Explicitly setting state and matched to null should return all requests.
         """
@@ -317,7 +318,7 @@ class TestTrainingRequestsListView(TestBase):
             {self.first_req, self.second_req, self.third_req},
         )
 
-    def test_successful_bulk_discard(self):
+    def test_successful_bulk_discard(self) -> None:
         data = {
             "discard": "",
             "requests": [self.first_req.pk, self.second_req.pk],
@@ -335,7 +336,7 @@ class TestTrainingRequestsListView(TestBase):
         self.third_req.refresh_from_db()
         self.assertEqual(self.third_req.state, "a")
 
-    def test_successful_bulk_accept(self):
+    def test_successful_bulk_accept(self) -> None:
         data = {
             "accept": "",
             "requests": [self.first_req.pk, self.second_req.pk],
@@ -353,7 +354,7 @@ class TestTrainingRequestsListView(TestBase):
         self.third_req.refresh_from_db()
         self.assertEqual(self.third_req.state, "a")
 
-    def test_successful_matching_to_training(self):
+    def test_successful_matching_to_training(self) -> None:
         data = {
             "match": "",
             "event": self.second_training.pk,
@@ -375,7 +376,7 @@ class TestTrainingRequestsListView(TestBase):
             set(),
         )
 
-    def test_successful_matching_twice_to_the_same_training(self):
+    def test_successful_matching_twice_to_the_same_training(self) -> None:
         data = {
             "match": "",
             "event": self.first_training.pk,
@@ -395,7 +396,7 @@ class TestTrainingRequestsListView(TestBase):
             {self.first_training},
         )
 
-    def test_trainee_accepted_during_matching(self):
+    def test_trainee_accepted_during_matching(self) -> None:
         # this request is set up without matched person
         self.second_req.person = self.spiderman
         self.second_req.save()
@@ -416,7 +417,7 @@ class TestTrainingRequestsListView(TestBase):
         self.second_req.refresh_from_db()
         self.assertEqual(self.second_req.state, "a")
 
-    def test_matching_to_training_fails_in_the_case_of_unmatched_persons(self):
+    def test_matching_to_training_fails_in_the_case_of_unmatched_persons(self) -> None:
         """Requests that are not matched with any trainee account cannot be
         matched with a training."""
 
@@ -446,7 +447,7 @@ class TestTrainingRequestsListView(TestBase):
             {self.first_training},
         )
 
-    def test_successful_unmatching(self):
+    def test_successful_unmatching(self) -> None:
         data = {
             "unmatch": "",
             "requests": [self.first_req.pk],
@@ -463,7 +464,7 @@ class TestTrainingRequestsListView(TestBase):
             set(),
         )
 
-    def test_unmatching_fails_when_no_matched_trainee(self):
+    def test_unmatching_fails_when_no_matched_trainee(self) -> None:
         """Requests that are not matched with any trainee cannot be
         unmatched from a training."""
 
@@ -485,7 +486,7 @@ class TestTrainingRequestsListView(TestBase):
             {self.first_training},
         )
 
-    def test_matching_no_remaining__no_message(self):
+    def test_matching_no_remaining__no_message(self) -> None:
         """Regression test for
         https://github.com/carpentries/amy/issues/1946#issuecomment-875806218.
 
@@ -517,7 +518,7 @@ class TestTrainingRequestsListView(TestBase):
         Member.objects.create(
             membership=membership1,
             organization=self.org,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
         data1 = {
             "match": "",
@@ -548,7 +549,7 @@ class TestTrainingRequestsListView(TestBase):
         self.assertEqual(membership2.public_instructor_training_seats_remaining, 0)
         self.assertContains(rv2, msg2)
 
-    def test_inhouse_created_successfully(self):
+    def test_inhouse_created_successfully(self) -> None:
         """Regression test: in-house seat can be created successfully."""
         # Arrange
         membership = Membership.objects.create(
@@ -561,7 +562,7 @@ class TestTrainingRequestsListView(TestBase):
         Member.objects.create(
             membership=membership,
             organization=self.org,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
         data = {
             "match": "",
@@ -578,7 +579,7 @@ class TestTrainingRequestsListView(TestBase):
         task = Task.objects.get(person=self.first_req.person, event=self.second_training)
         self.assertEqual(task.seat_public, data["seat_public"])
 
-    def test_auto_assign_membership_seats(self):
+    def test_auto_assign_membership_seats(self) -> None:
         """Test that the bulk form can match multiple trainees to different memberships
         according to member code."""
         # Arrange
@@ -634,13 +635,12 @@ class TestTrainingRequestsListView(TestBase):
 
 
 class TestMatchingTrainingRequestAndDetailedView(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpRoles()
-        self._setUpAirports()
         self._setUpNonInstructors()
 
-    def test_detailed_view_of_pending_request(self):
+    def test_detailed_view_of_pending_request(self) -> None:
         """Match Request form should be displayed only when no account is
         matched."""
         req = create_training_request(state="p", person=None)
@@ -648,7 +648,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertContains(rv, "Match Request to AMY account")
 
-    def test_detailed_view_of_accepted_request(self):
+    def test_detailed_view_of_accepted_request(self) -> None:
         """Match Request form should be displayed only when no account is
         matched."""
         req = create_training_request(state="p", person=self.admin)
@@ -656,7 +656,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, "Match Request to AMY account")
 
-    def test_person_is_suggested(self):
+    def test_person_is_suggested(self) -> None:
         req = create_training_request(state="p", person=None)
         p = Person.objects.create_user(
             username="john_smith",
@@ -668,7 +668,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
         self.assertEqual(rv.context["form"].initial["person"], p)
 
-    def test_person_is_suggested_based_on_secondary_email(self):
+    def test_person_is_suggested_based_on_secondary_email(self) -> None:
         """Having just secondary email matching should show the person
         in results."""
         req = create_training_request(state="p", person=None)
@@ -683,13 +683,13 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
         self.assertEqual(rv.context["form"].initial["person"], p)
 
-    def test_new_person(self):
+    def test_new_person(self) -> None:
         req = create_training_request(state="p", person=None)
         rv = self.client.get(reverse("trainingrequest_details", args=[req.pk]))
 
         self.assertEqual(rv.context["form"].initial["person"], None)
 
-    def test_matching_with_existing_account_works(self):
+    def test_matching_with_existing_account_works(self) -> None:
         """Regression test for [#949].
 
         [#949] https://github.com/swcarpentry/amy/pull/949/"""
@@ -724,7 +724,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
         self.assertEqual(set(self.ironman.domains.all()), set(req.domains.all()))
 
-    def test_matching_with_new_account_works(self):
+    def test_matching_with_new_account_works(self) -> None:
         req = create_training_request(state="p", person=None)
         rv = self.client.post(
             reverse("trainingrequest_details", args=[req.pk]),
@@ -750,6 +750,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         for key, value in data_expected.items():
             self.assertEqual(getattr(req.person, key), value, "Attribute: {}".format(key))
 
+        assert req.person  # for mypy
         self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
 
     def test_matching_updates_consents(self) -> None:
@@ -800,7 +801,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
             term_option__option_type=TermOptionChoices.AGREE,
         )
 
-    def test_matching_in_transaction(self):
+    def test_matching_in_transaction(self) -> None:
         """This is a regression test.
 
         In case of automatic person data rewrite, when matching a Training
@@ -850,16 +851,16 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
 
 class TestTrainingRequestTemplateTags(TestBase):
-    def test_pending_request(self):
+    def test_pending_request(self) -> None:
         self._test(state="p", expected="badge badge-warning")
 
-    def test_accepted_request(self):
+    def test_accepted_request(self) -> None:
         self._test(state="a", expected="badge badge-success")
 
-    def test_discarded_request(self):
+    def test_discarded_request(self) -> None:
         self._test(state="d", expected="badge badge-danger")
 
-    def _test(self, state, expected):
+    def _test(self, state: str, expected: str) -> None:
         template = Template("{% load state %}" "{% state_label req %}")
         training_request = TrainingRequest(state=state)
         context = Context({"req": training_request})
@@ -872,9 +873,8 @@ class TestTrainingRequestMerging(TestBase):
     # because they're covered by merging tests in `test_person`
     # and `test_event`
 
-    def setUp(self):
+    def setUp(self) -> None:
         # self.clear_sites_cache()
-        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpRoles()
         self._setUpTags()
@@ -1110,7 +1110,7 @@ class TestTrainingRequestMerging(TestBase):
         self.url_1 = "{}?{}".format(base_url, query_1)
         self.url_2 = "{}?{}".format(base_url, query_2)
 
-    def test_form_invalid_values(self):
+    def test_form_invalid_values(self) -> None:
         """Make sure only a few fields accept third option ("combine")."""
         hidden = {
             "trainingrequest_a": self.first_req.pk,
@@ -1166,8 +1166,8 @@ class TestTrainingRequestMerging(TestBase):
             "comments": "combine",
         }
         data = hidden.copy()
-        data.update(failing)
-        data.update(passing)
+        data.update(failing)  # type: ignore[arg-type]
+        data.update(passing)  # type: ignore[arg-type]
 
         form = TrainingRequestsMergeForm(data)
         self.assertFalse(form.is_valid())
@@ -1178,7 +1178,7 @@ class TestTrainingRequestMerging(TestBase):
         # make sure no fields are added without this test being updated
         self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
 
-    def test_merging_base_trainingrequest(self):
+    def test_merging_base_trainingrequest(self) -> None:
         """Merging: ensure the base training request is selected based on ID
         form field.
 
@@ -1192,7 +1192,7 @@ class TestTrainingRequestMerging(TestBase):
         with self.assertRaises(TrainingRequest.DoesNotExist):
             self.second_req.refresh_from_db()
 
-    def test_merging_basic_attributes(self):
+    def test_merging_basic_attributes(self) -> None:
         """Merging: ensure basic (non-relationships) attributes are properly
         saved."""
         assertions = {
@@ -1240,7 +1240,7 @@ class TestTrainingRequestMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(getattr(self.first_req, key), value, key)
 
-    def test_merging_relational_attributes(self):
+    def test_merging_relational_attributes(self) -> None:
         """Merging: ensure relational fields are properly saved/combined."""
         assertions = {
             "domains": set([self.chemistry, self.physics]),
@@ -1256,7 +1256,7 @@ class TestTrainingRequestMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.first_req, key).all()), value, key)
 
-    def test_merging(self):
+    def test_merging(self) -> None:
         rv = self.client.post(self.url_1, self.strategy_1, follow=True)
         self.assertEqual(rv.status_code, 200)
         # after successful merge, we should end up redirected to the details
@@ -1308,7 +1308,7 @@ class TestTrainingRequestMerging(TestBase):
         self.ironman.refresh_from_db()
         self.spiderman.refresh_from_db()
 
-    def test_merging_comments_strategy1(self):
+    def test_merging_comments_strategy1(self) -> None:
         """Ensure comments regarding persons are correctly merged using
         `merge_objects`.
         This test uses strategy 1 (combine)."""
@@ -1318,11 +1318,11 @@ class TestTrainingRequestMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.first_req.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.first_req).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.first_req).filter(is_removed=False)),  # type: ignore[no-untyped-call]
             set(comments),
         )
 
-    def test_merging_comments_strategy2(self):
+    def test_merging_comments_strategy2(self) -> None:
         """Ensure comments regarding persons are correctly merged using
         `merge_objects`.
         This test uses strategy 2 (object a)."""
@@ -1332,11 +1332,11 @@ class TestTrainingRequestMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.first_req.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.first_req).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.first_req).filter(is_removed=False)),  # type: ignore[no-untyped-call]
             set(comments),
         )
 
-    def test_merging_comments_strategy3(self):
+    def test_merging_comments_strategy3(self) -> None:
         """Ensure comments regarding persons are correctly merged using
         `merge_objects`.
         This test uses strategy 3 (object b)."""
@@ -1346,11 +1346,11 @@ class TestTrainingRequestMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
         self.first_req.refresh_from_db()
         self.assertEqual(
-            set(Comment.objects.for_model(self.first_req).filter(is_removed=False)),
+            set(Comment.objects.for_model(self.first_req).filter(is_removed=False)),  # type: ignore[no-untyped-call]
             set(comments),
         )
 
-    def test_merging_consents_most_recent(self):
+    def test_merging_consents_most_recent(self) -> None:
         """Ensure consents regarding persons are correctly merged using
         `merge_objects`.
         This test uses "most_recent" strategy."""

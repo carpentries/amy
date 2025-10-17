@@ -1,19 +1,21 @@
 from contextlib import contextmanager
 import datetime
 import typing
-from typing import Iterable
+from typing import Any, Generator, Iterable, Sequence
 
+from django import forms
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.test import TestCase
 from django_webtest import WebTest
+from requests import Response
 import webtest.forms
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.models import Consent, Term, TermOption
 from workshops.models import (
-    Airport,
     Award,
     Badge,
     Event,
@@ -43,7 +45,7 @@ def consent_to_all_required_consents(person: Person) -> None:
     old_consents_by_term_id = {consent.term_id: consent for consent in old_consents}
     for term in terms:
         old_consent = old_consents_by_term_id[term.id]
-        Consent.reconsent(old_consent, term.options[0])
+        Consent.reconsent(old_consent, term.options[0])  # type: ignore
 
 
 class SuperuserMixin(_T):
@@ -76,7 +78,6 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
         """Create standard objects."""
 
         self._setUpOrganizations()
-        self._setUpAirports()
         self._setUpLessons()
         self._setUpBadges()
         self._setUpInstructors()
@@ -119,44 +120,6 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
         self.org_alpha = Organization.objects.create(domain="alpha.edu", fullname="Alpha Organization", country="AZ")
 
         self.org_beta = Organization.objects.create(domain="beta.com", fullname="Beta Organization", country="BR")
-
-    def _setUpAirports(self) -> None:
-        """Set up airport objects."""
-
-        self.airport_0_10 = Airport.objects.create(
-            iata="ZZZ",
-            fullname="Airport 0x10",
-            latitude=0.0,
-            longitude=10.0,
-        )
-        self.airport_0_0 = Airport.objects.create(
-            iata="AAA",
-            fullname="Airport 0x0",
-            country="AL",  # AL for Albania
-            latitude=0.0,
-            longitude=0.0,
-        )
-        self.airport_0_50 = Airport.objects.create(
-            iata="BBB",
-            fullname="Airport 0x50",
-            country="BG",  # BG for Bulgaria
-            latitude=0.0,
-            longitude=50.0,
-        )
-        self.airport_50_100 = Airport.objects.create(
-            iata="CCC",
-            fullname="Airport 50x100",
-            country="CM",  # CM for Cameroon
-            latitude=50.0,
-            longitude=100.0,
-        )
-        self.airport_55_105 = Airport.objects.create(
-            iata="DDD",
-            fullname="Airport 55x105",
-            country="CM",
-            latitude=55.0,
-            longitude=105.0,
-        )
 
     def _setUpLanguages(self) -> None:
         """Set up language objects."""
@@ -205,14 +168,14 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
             family="Granger",
             email="hermione@granger.co.uk",
             gender="F",
-            airport=self.airport_0_0,
+            airport_iata="CDG",
             github="herself",
             twitter="herself",
             bluesky="@herself.bsky.social",
             mastodon="",
             url="http://hermione.org",
             username="granger_hermione",
-            country="GB",
+            country="FR",
         )
 
         # Hermione is additionally a qualified Data Carpentry instructor
@@ -239,11 +202,11 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
             family="Potter",
             email="harry@hogwarts.edu",
             gender="M",
-            airport=self.airport_0_50,
+            airport_iata="LAX",
             github="hpotter",
             twitter=None,
             username="potter_harry",
-            country="GB",
+            country="PL",
         )
 
         # Harry is additionally a qualified Data Carpentry instructor
@@ -264,7 +227,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
             family="Weasley",
             email="rweasley@ministry.gov.uk",
             gender="M",
-            airport=self.airport_50_100,
+            airport_iata="KRK",
             github=None,
             twitter=None,
             url="http://geocities.com/ron_weas",
@@ -290,7 +253,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
             gender="O",
             gender_other="Spider",
             username="spiderman",
-            airport=self.airport_55_105,
+            airport_iata="WAW",
             country="US",
         )
 
@@ -300,7 +263,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
             email="me@stark.com",
             gender="M",
             username="ironman",
-            airport=self.airport_50_100,
+            airport_iata="KRK",
             country="US",
         )
 
@@ -310,8 +273,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
             email=None,
             gender="F",
             username="blackwidow",
-            airport=self.airport_0_50,
-            country="RU",
+            airport_iata="CDG",
         )
 
     def _setUpUsersAndLogin(self) -> None:
@@ -453,8 +415,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
         # Record some statistics about events.
         self.num_upcoming = 0
         for e in Event.objects.all():
-            e.is_past_event = e.start < today and (e.end is None or e.end < today)
-            if e.url and (e.start > today):
+            if e.url and e.start and (e.start > today):
                 self.num_upcoming += 1
 
     def _setUpRoles(self) -> None:
@@ -548,7 +509,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
 
     def person_agree_to_terms(self, person: Person, terms: Iterable[Term]) -> None:
         for term in terms:
-            self.reconsent(person=person, term_option=term.options[0], term=term)
+            self.reconsent(person=person, term_option=term.options[0], term=term)  # type: ignore
 
     def person_consent_active_terms(self, person: Person) -> None:
         terms = Term.objects.active().prefetch_active_options()
@@ -557,17 +518,17 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
     def person_consent_required_terms(self, person: Person) -> None:
         consent_to_all_required_consents(person)
 
-    def saveResponse(self, response, filename="error.html") -> None:
+    def save_response(self, response: Response, filename: str = "error.html") -> None:
         content = response.content.decode("utf-8")
         with open(filename, "w") as f:
             f.write(content)
 
     # Web-test helpers
-    def assertSelected(self, field, expected) -> None:
+    def assertSelected(self, field: webtest.forms.Select, expected: str) -> None:
         if not isinstance(field, webtest.forms.Select):
             raise TypeError
 
-        expected_value = field._get_value_for_text(expected)
+        expected_value = field._get_value_for_text(expected)  # type: ignore
         got_value = field.value
 
         # field.options is a list of (value, selected?, verbose name) triples
@@ -580,7 +541,7 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
         )
 
     @contextmanager
-    def assertValidationErrors(self, fields) -> None:
+    def assertValidationErrors(self, fields: Sequence[str]) -> Generator[None, None, None]:
         """
         Assert that a validation error is raised, containing all the specified
         fields, and only the specified fields.
@@ -597,23 +558,23 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
         except ValidationError as e:
             self.assertEqual(set(fields), set(e.message_dict.keys()))
 
-    def passCaptcha(self, data_dictionary) -> None:
+    def passCaptcha(self, data_dictionary: dict[str, Any]) -> None:
         """Extends provided `data_dictionary` with RECAPTCHA pass data."""
         data_dictionary.update({"g-recaptcha-response": "PASSED"})  # to auto-pass RECAPTCHA
 
 
-class FormTestHelper:
-    def _test_field_other(
+class FormTestHelper(_T):
+    def _test_field_other[_M: models.Model](
         self,
-        Form,
-        first_name,
-        other_name,
-        valid_first,
-        valid_other,
-        empty_first="",
-        empty_other="",
-        first_when_other="",
-        blank=False,
+        Form: type[forms.ModelForm[_M]],
+        first_name: str,
+        other_name: str,
+        valid_first: str,
+        valid_other: str,
+        empty_first: str = "",
+        empty_other: str = "",
+        first_when_other: str = "",
+        blank: bool = False,
     ) -> None:
         """Universal way of testing field `name` and it's "_other" counterpart
         `other_name`.
@@ -666,7 +627,13 @@ class FormTestHelper:
         self.assertNotIn(other_name, form.errors)
 
 
-class TestViewPermissionsMixin:
+if typing.TYPE_CHECKING:
+    _T2 = TestBase
+else:
+    _T2 = object
+
+
+class TestViewPermissionsMixin(_T2):
     """
     Simple mixin for testing a single view URL for specific permissions, admin/no-admin
     access. Multiple HTTP methods supported.

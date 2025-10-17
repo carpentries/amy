@@ -1,12 +1,12 @@
 from contextlib import contextmanager
+from typing import Any, Generator
 
 from consents.models import Term, TermOption, TermOptionChoices
 from workshops.tests.base import TestBase
 
 
 class ConsentTestBase(TestBase):
-    def setUp(self):
-        super()._setUpAirports()
+    def setUp(self) -> None:
         super()._setUpBadges()
         # Optional terms may not exist in the database.
         # Adding one in case.
@@ -20,7 +20,7 @@ class ConsentTestBase(TestBase):
         self.assert_required_terms()
 
     @contextmanager
-    def terms_middleware(self) -> None:
+    def terms_middleware(self) -> Generator[Any, None, Any]:
         """
         Remove workshops.action_required.PrivacyPolicy
         and replace it with consents.middleware.TermMiddleware

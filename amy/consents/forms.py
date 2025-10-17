@@ -1,6 +1,7 @@
 from typing import Any, Iterable, List
 
 from django import forms
+from django.db.models import QuerySet
 from django.db.models.fields import BLANK_CHOICE_DASH
 
 from consents.models import Consent, Term, TermOption, TermOptionChoices
@@ -116,7 +117,7 @@ class RequiredConsentsForm(BaseTermConsentsForm):
         self.terms = [term for term in self.terms if term.id in term_ids]
         super()._build_form(person)
 
-    def get_terms(self) -> Iterable[Term]:
+    def get_terms(self) -> QuerySet[Term]:
         return Term.objects.active().prefetch_active_options().filter(required_type=Term.PROFILE_REQUIRE_TYPE)
 
 
@@ -125,5 +126,5 @@ class TermBySlugsForm(BaseTermConsentsForm):
         self.term_slugs = kwargs.pop("term_slugs")
         super().__init__(*args, **kwargs)
 
-    def get_terms(self) -> Iterable[Term]:
+    def get_terms(self) -> QuerySet[Term]:
         return Term.objects.active().prefetch_active_options().filter(slug__in=self.term_slugs)

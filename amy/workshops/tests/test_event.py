@@ -27,7 +27,6 @@ class TestEvent(TestBase):
     "Tests for the event model and its manager."
 
     def setUp(self) -> None:
-        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpUsersAndLogin()
         self._setUpOrganizations()
@@ -348,7 +347,6 @@ class TestEventViews(TestBase):
 
     def setUp(self) -> None:
         self._setUpUsersAndLogin()
-        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpOrganizations()
         self._setUpTags()
@@ -860,7 +858,6 @@ class TestEventViews(TestBase):
 class TestEventMerging(TestBase):
     def setUp(self) -> None:
         self._setUpOrganizations()
-        self._setUpAirports()
         self._setUpBadges()
         self._setUpLessons()
         self._setUpRoles()

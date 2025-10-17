@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any, cast
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.db.models import (
     Case,
     Count,
     IntegerField,
+    Model,
     Prefetch,
     Q,
     QuerySet,
@@ -15,7 +17,7 @@ from django.db.models import (
     When,
 )
 from django.forms.widgets import HiddenInput
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import format_html
@@ -47,15 +49,16 @@ from emails.signals import instructor_signs_up_for_workshop_signal
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from fiscal.models import MembershipTask
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
+from workshops.base_forms import GenericDeleteForm
 from workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
     AMYListView,
     AMYUpdateView,
+    AuthenticatedHttpRequest,
     ConditionallyEnabledMixin,
 )
 from workshops.models import (
-    Airport,
     Badge,
     Event,
     Membership,
@@ -76,7 +79,7 @@ TERM_SLUGS = [TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE, TermEnum.MAY_PUBLIS
 
 
 @login_required
-def dispatch(request):
+def dispatch(request: AuthenticatedHttpRequest) -> HttpResponse:
     """If user is admin, then show them admin dashboard; otherwise redirect
     them to instructor dashboard."""
     if request.user.is_admin:
@@ -86,11 +89,11 @@ def dispatch(request):
 
 
 @admin_required
-def admin_dashboard(request):
+def admin_dashboard(request: AuthenticatedHttpRequest) -> HttpResponse:
     """Home page for admins."""
     data = request.GET.copy()
     if "assigned_to" not in data:
-        data["assigned_to"] = request.user.id
+        data["assigned_to"] = str(request.user.id)
     assignment_form = AssignmentForm(data)
     assigned_to: Person | None = None
     if assignment_form.is_valid():
@@ -140,24 +143,20 @@ def admin_dashboard(request):
 
 
 @login_required
-def instructor_dashboard(request):
-    qs = (
-        Person.objects.annotate_with_role_count()  # type: ignore
-        .select_related("airport")
-        .prefetch_related(
-            "badges",
-            "lessons",
-            "domains",
-            "languages",
-            Prefetch(
-                "task_set",
-                queryset=Task.objects.select_related("event", "role").order_by("event__start", "event__slug"),
-            ),
-            Prefetch(
-                "membershiptask_set",
-                queryset=MembershipTask.objects.select_related("membership", "role"),
-            ),
-        )
+def instructor_dashboard(request: AuthenticatedHttpRequest) -> HttpResponse:
+    qs = Person.objects.annotate_with_role_count().prefetch_related(
+        "badges",
+        "lessons",
+        "domains",
+        "languages",
+        Prefetch(
+            "task_set",
+            queryset=Task.objects.select_related("event", "role").order_by("event__start", "event__slug"),
+        ),
+        Prefetch(
+            "membershiptask_set",
+            queryset=MembershipTask.objects.select_related("membership", "role"),
+        ),
     )
     user = get_object_or_404(qs, id=request.user.id)
 
@@ -183,7 +182,7 @@ def instructor_dashboard(request):
 
 
 @login_required
-def autoupdate_profile(request):
+def autoupdate_profile(request: AuthenticatedHttpRequest) -> HttpResponse:
     person = request.user
     consent_form_kwargs = {
         "initial": {"person": person},
@@ -227,7 +226,7 @@ def autoupdate_profile(request):
 
 
 @login_required
-def training_progress(request):
+def training_progress(request: AuthenticatedHttpRequest) -> HttpResponse:
     # Add information about instructor training progress to request.user.
     request.user = (
         Person.objects.annotate_with_instructor_eligibility()
@@ -256,19 +255,20 @@ def training_progress(request):
     return render(request, "dashboard/training_progress.html", context)
 
 
-class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
+class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView[GetInvolvedForm, TrainingProgress]):
     model = TrainingProgress
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = "Thank you. Your Get Involved submission will be evaluated within 7-10 days."
+    request: AuthenticatedHttpRequest
 
-    def get_context_data(self, **kwargs) -> dict:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Submit your Get Involved activity"
         return context
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         base_training_progress = TrainingProgress(
             trainee=self.request.user,
@@ -278,19 +278,30 @@ class GetInvolvedCreateView(LoginRequiredMixin, AMYCreateView):
         kwargs["instance"] = base_training_progress
         return kwargs
 
-    def post(self, request, *args, **kwargs):
+    def post(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
         self.request = request
         return super().post(request, *args, **kwargs)
 
 
-class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
+class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView[GetInvolvedForm, TrainingProgress]):
     form_class = GetInvolvedForm
     template_name = "get_involved_form.html"
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was updated successfully."
     pk_url_kwarg = "pk"
+    request: AuthenticatedHttpRequest
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponseBase:
         self.request = request
         return super().dispatch(request, *args, **kwargs)
 
@@ -303,19 +314,25 @@ class GetInvolvedUpdateView(LoginRequiredMixin, AMYUpdateView):
             state="n",
         )
 
-    def get_context_data(self, **kwargs) -> dict:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Update your Get Involved submission"
         return context
 
 
-class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
+class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView[TrainingProgress, GenericDeleteForm[TrainingProgress]]):
     model = TrainingProgress
     success_url = reverse_lazy("training-progress")
     success_message = "Your Get Involved submission was deleted."
     pk_url_kwarg = "pk"
+    request: AuthenticatedHttpRequest
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponseBase:
         self.request = request
         return super().dispatch(request, *args, **kwargs)
 
@@ -333,14 +350,17 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView):
 # Views for instructors - upcoming teaching opportunities
 
 
-class UpcomingTeachingOpportunitiesList(LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView):
-    flag_name = "INSTRUCTOR_RECRUITMENT"
+class UpcomingTeachingOpportunitiesList(
+    LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView[InstructorRecruitment]
+):
+    flag_name = "INSTRUCTOR_RECRUITMENT"  # type: ignore
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
     template_name = "dashboard/upcoming_teaching_opportunities.html"
     filter_class = UpcomingTeachingOpportunitiesFilter
+    request: AuthenticatedHttpRequest
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[InstructorRecruitment]:  # type: ignore
         today = date.today()
 
         # this condition means: either venue, latitude and longitude are provided, or
@@ -367,9 +387,9 @@ class UpcomingTeachingOpportunitiesList(LoginRequiredMixin, FlaggedViewMixin, Co
             .order_by("event__start")
             .distinct()
         )
-        return super().get_queryset()
+        return super().get_queryset()  # type: ignore
 
-    def get_view_enabled(self, request) -> bool:
+    def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore
         if request.user.is_admin:
             return True
 
@@ -379,13 +399,11 @@ class UpcomingTeachingOpportunitiesList(LoginRequiredMixin, FlaggedViewMixin, Co
         except CommunityRole.DoesNotExist:
             return False
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         # person details with tasks counted
-        context["person"] = (
-            Person.objects.annotate_with_role_count().select_related("airport").get(pk=self.request.user.pk)
-        )
+        context["person"] = Person.objects.annotate_with_role_count().get(pk=self.request.user.pk)
         context["person_instructor_tasks_slugs"] = Task.objects.filter(
             role__name="instructor", person__pk=self.request.user.pk
         ).values_list("event__slug", flat=True)
@@ -408,9 +426,9 @@ class SignupForRecruitment(
     LoginRequiredMixin,
     FlaggedViewMixin,
     ConditionallyEnabledMixin,
-    AMYCreateAndFetchObjectView,
+    AMYCreateAndFetchObjectView[InstructorRecruitmentSignup, InstructorRecruitment, SignupForRecruitmentForm],
 ):
-    flag_name = "INSTRUCTOR_RECRUITMENT"
+    flag_name = "INSTRUCTOR_RECRUITMENT"  # type: ignore
     permission_required = [
         "recruitment.view_instructorrecruitment",
         "recruitment.add_instructorrecruitmentsignup",
@@ -418,38 +436,40 @@ class SignupForRecruitment(
     title = "Signup for workshop"
     model = InstructorRecruitmentSignup
     queryset_other = InstructorRecruitment.objects.filter(status="o").select_related("event")
+    other_object: InstructorRecruitment
     context_other_object_name = "recruitment"
     pk_url_kwarg = "recruitment_pk"
+    request: AuthenticatedHttpRequest
 
     form_class = SignupForRecruitmentForm
     template_name = "dashboard/signup_for_recruitment.html"
 
-    def get_view_enabled(self, request) -> bool:
+    def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
         if request.user.is_admin:
             return True
 
         try:
             role = CommunityRole.objects.get(person=self.request.user, config__name="instructor")
-            return role.is_active()
+            if not role.is_active():
+                return False
         except CommunityRole.DoesNotExist:
             return False
 
-    def get_context_data(self, **kwargs):
-        self.other_object: InstructorRecruitment
+        # Users without airport information aren't allowed.
+        return request.user.airport_iata.strip() != ""
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         event = self.other_object.event
 
         context = super().get_context_data(**kwargs)
         context["title"] = f"Signup for workshop {event}"
 
         # person details with tasks counted
-        context["person"] = (
-            Person.objects.annotate_with_role_count().select_related("airport").get(pk=self.request.user.pk)
-        )
+        context["person"] = Person.objects.annotate_with_role_count().get(pk=self.request.user.pk)
 
         return context
 
-    def get_success_message(self, cleaned_data):
-        self.other_object: InstructorRecruitment
+    def get_success_message(self, cleaned_data: dict[str, Any]) -> str:
         event = self.other_object.event
         return f"Your interest in teaching at {event} has been recorded and is now " "pending."
 
@@ -460,12 +480,12 @@ class SignupForRecruitment(
         success_url = reverse("upcoming-teaching-opportunities")
         return safe_next_or_default_url(next_url, success_url)
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         kwargs.update({"person": self.request.user, "recruitment": self.other_object})
         return kwargs
 
-    def form_valid(self, form):
+    def form_valid(self, form: SignupForRecruitmentForm) -> HttpResponse:
         obj = form.save(commit=False)
         obj.recruitment = self.other_object
         obj.person = self.request.user
@@ -476,11 +496,17 @@ class SignupForRecruitment(
         event: Event = recruitment.event
 
         # existing instructor tasks within +-14days of this event
-        if tasks_nearby := Task.objects.exclude(event=event).filter(
-            person=self.request.user,
-            role__name="instructor",
-            event__start__lte=event.end + timedelta(days=14),
-            event__end__gte=event.start - timedelta(days=14),
+        if (
+            event.start
+            and event.end
+            and (
+                tasks_nearby := Task.objects.exclude(event=event).filter(
+                    person=self.request.user,
+                    role__name="instructor",
+                    event__start__lte=event.end + timedelta(days=14),
+                    event__end__gte=event.start - timedelta(days=14),
+                )
+            )
         ):
             messages.warning(
                 self.request,
@@ -516,18 +542,19 @@ class ResignFromRecruitment(
     LoginRequiredMixin,
     FlaggedViewMixin,
     ConditionallyEnabledMixin,
-    SingleObjectMixin,
+    SingleObjectMixin[InstructorRecruitmentSignup],
     View,
 ):
-    flag_name = "INSTRUCTOR_RECRUITMENT"
+    flag_name = "INSTRUCTOR_RECRUITMENT"  # type: ignore
     permission_required = [
         "recruitment.view_instructorrecruitmentsignup",
         "recruitment.delete_instructorrecruitmentsignup",
     ]
     default_redirect_url = reverse_lazy("upcoming-teaching-opportunities")
     pk_url_kwarg = "signup_pk"
+    request: AuthenticatedHttpRequest
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         self.request = request
 
         signup = self.get_object()
@@ -542,7 +569,7 @@ class ResignFromRecruitment(
         redirect_url = self.get_redirect_url()
         return redirect(redirect_url)
 
-    def get_view_enabled(self, request) -> bool:
+    def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
         if request.user.is_admin:
             return True
 
@@ -552,12 +579,12 @@ class ResignFromRecruitment(
         except CommunityRole.DoesNotExist:
             return False
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[InstructorRecruitmentSignup]:
         return InstructorRecruitmentSignup.objects.filter(person=self.request.user, recruitment__status="o")
 
     def get_redirect_url(self) -> str:
         next_url = self.request.POST.get("next", None)
-        return safe_next_or_default_url(next_url, self.default_redirect_url)
+        return safe_next_or_default_url(next_url, str(self.default_redirect_url))
 
 
 # ------------------------------------------------------------
@@ -573,7 +600,6 @@ def search(request: HttpRequest) -> HttpResponse:
     memberships = None
     events = None
     persons = None
-    airports = None
     training_requests = None
     comments = None
 
@@ -582,7 +608,7 @@ def search(request: HttpRequest) -> HttpResponse:
         if form.is_valid():
             term = form.cleaned_data.get("term", "").strip()
             tokens = tokenize(term)
-            results_combined = []
+            results_combined: list[Model] = []
 
             organizations = Organization.objects.filter(multiple_Q_icontains(term, "domain", "fullname")).order_by(
                 "fullname"
@@ -606,9 +632,6 @@ def search(request: HttpRequest) -> HttpResponse:
                 | (cross_multiple_Q_icontains(tokens[0], tokens[1], "personal", "family") if len(tokens) == 2 else Q())
             ).order_by("family")
             results_combined += list(persons)
-
-            airports = Airport.objects.filter(multiple_Q_icontains(term, "iata", "fullname")).order_by("iata")
-            results_combined += list(airports)
 
             training_requests = TrainingRequest.objects.filter(
                 multiple_Q_icontains(
@@ -651,7 +674,9 @@ def search(request: HttpRequest) -> HttpResponse:
                 )
                 if isinstance(result, Comment):
                     messages.success(request, msg)
-                    return redirect(result.content_object.get_absolute_url() + "#c{}".format(result.id))
+                    return redirect(
+                        result.content_object.get_absolute_url() + "#c{}".format(result.id)  # type: ignore[union-attr]
+                    )
                 elif hasattr(result, "get_absolute_url"):
                     messages.success(request, msg)
                     return redirect(result.get_absolute_url())
@@ -671,7 +696,6 @@ def search(request: HttpRequest) -> HttpResponse:
         "memberships": memberships,
         "events": events,
         "persons": persons,
-        "airports": airports,
         "comments": comments,
         "training_requests": training_requests,
     }
@@ -684,16 +708,21 @@ def search(request: HttpRequest) -> HttpResponse:
 class AllFeatureFlags(ConditionallyEnabledMixin, LoginRequiredMixin, TemplateView):
     template_name = "dashboard/all_feature_flags.html"
 
-    def get_view_enabled(self, request) -> bool:
+    def get_view_enabled(self, request: AuthenticatedHttpRequest) -> bool:  # type: ignore[override]
         return bool(settings.PROD_ENVIRONMENT and request.user.is_superuser) or not bool(settings.PROD_ENVIRONMENT)
 
-    def get(self, request: HttpRequest, *args, **kwargs):
+    def get(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
         self.request = request
         return super().get(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        flags = get_flags(request=self.request)
+        flags = cast(dict[str, Any], get_flags(request=self.request))  # type: ignore[no-untyped-call]
         context["feature_flags"] = sorted(flags.values(), key=lambda x: x.name)
         context["title"] = "Feature flags"
         return context

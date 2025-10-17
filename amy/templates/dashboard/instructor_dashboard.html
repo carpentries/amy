@@ -50,8 +50,9 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
       <th>{{ consents_content.may_publish_name }}</th>
       <td>{% if consents.may_publish_name %}{{ consents.may_publish_name.term_option }}{% else %}Unset{% endif %}</td>
     </tr>
-    <tr><th>Country:</th><td>{% if user.country %}{% include "includes/country_flag.html" with country=user.country %}{% else %}—{% endif %}</td></tr>
-    <tr><th>Airport:</th><td>{{ user.airport|default:"—"  }}</td></tr>
+    <tr><th>Airport:</th><td>{{ user.airport_iata|default:"—"  }}</td></tr>
+    <tr><th>Country:</th><td>{% if user.country_property %}{% include "includes/country_flag.html" with country=user.country_property %}{% else %}—{% endif %}</td></tr>
+    <tr><th>Timezone:</th><td>{{ user.timezone_property|default:"—"  }}</td></tr>
     <tr><th>Github:</th><td>{{ user.github|default:"—" }}</td></tr>
     <tr><th>Twitter:</th><td>{{ user.twitter|default:"—" }}</td></tr>
     <tr><th>Bluesky:</th><td>{{ user.bluesky|default:"—" }}</td></tr>

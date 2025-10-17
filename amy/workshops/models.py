@@ -31,7 +31,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
-from django_countries.fields import CountryField
+from django_countries.fields import Country, CountryField
 from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 from reversion.models import Version
@@ -41,6 +41,7 @@ from trainings.models import Involvement
 from workshops import github_auth
 from workshops.consts import (
     FEE_DETAILS_URL,
+    IATA_AIRPORTS,
     STR_LONG,
     STR_LONGEST,
     STR_MED,
@@ -540,6 +541,7 @@ class Membership(models.Model):
 # ------------------------------------------------------------
 
 
+# TODO: Can be removed since #2816
 @reversion.register
 class Airport(models.Model):
     """Represent an airport (used to locate instructors)."""
@@ -574,6 +576,15 @@ class PersonInstructorEligibility(TypedDict):
     passed_welcome: int
     passed_demo: int
     instructor_eligible: int
+
+
+class PersonRoleCount(TypedDict):
+    num_instructor: int
+    num_trainer: int
+    num_helper: int
+    num_learner: int
+    num_supporting: int
+    num_organizer: int
 
 
 class PersonManager(BaseUserManager["Person"]):
@@ -674,7 +685,7 @@ class PersonManager(BaseUserManager["Person"]):
             )
         )
 
-    def annotate_with_role_count(self) -> QuerySet["Person"]:
+    def annotate_with_role_count(self) -> QuerySet[Annotated["Person", Annotations[PersonRoleCount]]]:
         return self.annotate(
             num_instructor=Count(
                 "task",
@@ -749,18 +760,32 @@ class Person(
         verbose_name="Email address",
         help_text="Primary email address, used for communication and as a login.",
     )
+    airport_iata = models.CharField(
+        max_length=STR_SHORT,
+        null=False,
+        blank=True,
+        default="",
+        help_text="Nearest major airport (IATA code: https://www.world-airport-codes.com/)",
+    )
+    airport_country = CountryField(
+        null=False,
+        blank=True,
+        default="",
+        help_text="Airport country (copied from airport data package)",
+    )
+    airport_lat = models.FloatField(default=0.0, help_text="Airport latitude (copied from airport data package)")
+    airport_lon = models.FloatField(default=0.0, help_text="Airport longitude (copied from airport data package)")
     country = CountryField(
         null=False,
         blank=True,
         default="",
-        help_text="Person's country of residence.",
+        help_text="Override country of the airport.",
     )
-    airport = models.ForeignKey(
-        Airport,
-        on_delete=models.PROTECT,
-        null=True,
+    timezone = models.CharField(
+        null=False,
         blank=True,
-        verbose_name="Nearest major airport",
+        default="",
+        help_text="Override timezone of the airport.",
     )
     github = NullableGithubUsernameField(
         unique=True,
@@ -979,6 +1004,17 @@ class Person(
         # lowercase the email
         self.email = self.email.lower() if self.email else None
 
+    def clean_airport_iata(self) -> None:
+        if not self.airport_iata:
+            return None
+
+        try:
+            IATA_AIRPORTS[self.airport_iata]
+        except KeyError as e:
+            raise ValidationError(f"Invalid IATA code: {self.airport_iata}") from e
+
+        return None
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         # If GitHub username has changed, clear UserSocialAuth table for this
         # person.
@@ -995,10 +1031,21 @@ class Person(
             self.family = self.family.strip()
         self.middle = self.middle.strip()
         self.email = self.email.strip() if self.email else None
-        self.airport = self.airport or None
         self.github = self.github or None
         self.twitter = self.twitter or None
         self.bluesky = self.bluesky or None
+
+        try:
+            airport = IATA_AIRPORTS[self.airport_iata]
+            self.airport_country = airport["country"]
+            self.airport_lat = airport["lat"]
+            self.airport_lon = airport["lon"]
+        except KeyError:
+            self.airport_iata = ""
+            self.airport_country = ""
+            self.airport_lat = 0.0
+            self.airport_lon = 0.0
+
         super().save(*args, **kwargs)
 
     def archive(self) -> None:
@@ -1011,7 +1058,12 @@ class Person(
         # Remove personal information from an archived profile
         self.email = None
         self.country = ""
-        self.airport = None
+        self.airport_iata = ""
+        self.airport_country = ""
+        self.airport_lat = 0.0
+        self.airport_lon = 0.0
+        self.country = ""
+        self.timezone = ""
         self.github = None
         self.twitter = None
         self.bluesky = None
@@ -1044,6 +1096,24 @@ class Person(
             sender=self.__class__,
             person=self,
         )
+
+    @cached_property
+    def country_property(self) -> Country:
+        if self.country:
+            return cast(Country, self.country)
+
+        return cast(Country, self.airport_country)
+
+    @cached_property
+    def timezone_property(self) -> str:
+        if self.timezone:
+            return self.timezone
+
+        try:
+            airport = IATA_AIRPORTS[self.airport_iata]
+            return airport["tz"]
+        except KeyError:
+            return ""
 
 
 # ------------------------------------------------------------

@@ -23,7 +23,6 @@ class TestTrainingProgressValidation(TestBase):
 
     def setUp(self) -> None:
         self._setUpUsersAndLogin()
-        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpRoles()  # used in event validation
 
@@ -387,7 +386,6 @@ class TestProgressLabelTemplateTag(TestBase):
 
 class TestProgressDescriptionTemplateTag(TestBase):
     def setUp(self) -> None:
-        self._setUpAirports()
         self._setUpNonInstructors()
 
     def test_basic(self) -> None:
@@ -480,7 +478,6 @@ class TestProgressDescriptionTemplateTag(TestBase):
 class TestCRUDViews(TestBase):
     def setUp(self) -> None:
         self._setUpUsersAndLogin()
-        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpTags()
         self._setUpRoles()
@@ -597,7 +594,10 @@ class TestCRUDViews(TestBase):
 
     def test_delete_trainingprogress_from_edit_view(self) -> None:
         """Regression test for issue #1085."""
-        trainingprogress_edit = self.app.get(reverse("trainingprogress_edit", args=[self.progress.pk]), user="admin")
+        trainingprogress_edit = self.app.get(
+            reverse("trainingprogress_edit", args=[self.progress.pk]),
+            user="admin",
+        )  # type: ignore[no-untyped-call]
         self.assertRedirects(trainingprogress_edit.forms["delete-form"].submit(), reverse("all_trainees"))
         with self.assertRaises(TrainingProgress.DoesNotExist):
             self.progress.refresh_from_db()

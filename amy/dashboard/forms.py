@@ -9,9 +9,11 @@ from communityroles.models import CommunityRole
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.fields import (
+    AirportChoiceField,
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
     Select2Widget,
+    TimezoneChoiceField,
 )
 from workshops.forms import BootstrapHelper
 from workshops.mixins import GenderMixin
@@ -57,17 +59,19 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
         "team@carpentries.org</a>.",
     )
 
+    airport_iata = AirportChoiceField(required=True, label="Airport")
     country = CountryField().formfield(
         required=False,
-        help_text="Your country of residence.",
+        help_text="Override country of the airport.",
         widget=Select2Widget,
     )  # type: ignore
+    timezone = TimezoneChoiceField(required=False, help_text="Override timezone of the airport.")
 
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2MultipleWidget(data_view="language-lookup"),
+        widget=ModelSelect2MultipleWidget(data_view="language-lookup"),  # type: ignore[no-untyped-call]
     )
 
     class Meta:
@@ -80,8 +84,9 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
             "secondary_email",
             "gender",
             "gender_other",
+            "airport_iata",
             "country",
-            "airport",
+            "timezone",
             "github",
             "twitter",
             "bluesky",
@@ -103,7 +108,6 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
             "gender": RadioSelectWithOther("gender_other"),
             "domains": forms.CheckboxSelectMultiple(),
             "lessons": forms.CheckboxSelectMultiple(),
-            "airport": Select2Widget,
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:

@@ -3,7 +3,6 @@ from rest_framework.test import APITestCase
 
 from consents.models import Consent, Term
 from workshops.models import (
-    Airport,
     Award,
     Badge,
     Event,
@@ -16,7 +15,7 @@ from workshops.tests.base import consent_to_all_required_consents
 
 
 class TestAPIStructure(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.admin = Person.objects.create_superuser(
             username="admin",
             personal="Super",
@@ -25,19 +24,19 @@ class TestAPIStructure(APITestCase):
             password="admin",
         )
         consent_to_all_required_consents(self.admin)
-        self.admin.airport = Airport.objects.first()
+        self.admin.airport_iata = "KRK"
         self.admin.save()
 
         self.event = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
-            administrator=Organization.objects.first(),
+            host=Organization.objects.all()[0],
+            administrator=Organization.objects.all()[0],
             assigned_to=self.admin,
         )
 
         self.award = Award.objects.create(
             person=self.admin,
-            badge=Badge.objects.first(),
+            badge=Badge.objects.all()[0],
             event=self.event,
         )
         self.term = Term.objects.active().prefetch_active_options()[0]
@@ -45,7 +44,7 @@ class TestAPIStructure(APITestCase):
             person=self.admin,
             term=self.term,
         ).active()[0]
-        self.consent = Consent.reconsent(consent=old_consent, term_option=self.term.options[0])
+        self.consent = Consent.reconsent(consent=old_consent, term_option=self.term.options[0])  # type: ignore
 
         self.instructor_role = Role.objects.create(name="instructor")
 
@@ -53,7 +52,7 @@ class TestAPIStructure(APITestCase):
 
         self.client.login(username="admin", password="admin")
 
-    def test_structure_for_list_views(self):
+    def test_structure_for_list_views(self) -> None:
         """Ensure we have list-type views in exact places."""
         # root
         # → persons
@@ -69,7 +68,6 @@ class TestAPIStructure(APITestCase):
             "term-list": reverse("api-v1:term-list"),
             "event-list": reverse("api-v1:event-list"),
             "organization-list": reverse("api-v1:organization-list"),
-            "airport-list": reverse("api-v1:airport-list"),
         }
         for endpoint, link in index_links.items():
             self.assertIn(link, index.data[endpoint])
@@ -88,7 +86,7 @@ class TestAPIStructure(APITestCase):
         for endpoint, link in event_links.items():
             self.assertIn(link, event.data[endpoint])
 
-    def test_links_between_resources(self):
+    def test_links_between_resources(self) -> None:
         # event
         #   → host-detail (via host, administrator)
         #   → tasks-list
@@ -97,21 +95,22 @@ class TestAPIStructure(APITestCase):
         # task
         #   → person-detail
         # person
-        #   → airport-detail
         #   → award-list
         #   → task-list
         #   → consent-list
         # consent
         #   → person-detail
-        # airport (no links)
         # award
         #   → event-detail
         event = self.client.get(reverse("api-v1:event-detail", args=[self.event.slug]))
         event_links = {
             "host": reverse("api-v1:organization-detail", args=[self.event.host.domain]),
-            "administrator": reverse("api-v1:organization-detail", args=[self.event.administrator.domain]),
+            "administrator": reverse(
+                "api-v1:organization-detail",
+                args=[self.event.administrator.domain],  # type: ignore
+            ),
             "tasks": reverse("api-v1:event-tasks-list", args=[self.event.slug]),
-            "assigned_to": reverse("api-v1:person-detail", args=[self.event.assigned_to.pk]),
+            "assigned_to": reverse("api-v1:person-detail", args=[self.event.assigned_to.pk]),  # type: ignore
         }
         for attr, link in event_links.items():
             self.assertIn(link, event.data[attr])
@@ -125,7 +124,6 @@ class TestAPIStructure(APITestCase):
 
         person = self.client.get(reverse("api-v1:person-detail", args=[self.admin.pk]))
         person_links = {
-            "airport": reverse("api-v1:airport-detail", args=[self.admin.airport.iata]),
             "awards": reverse("api-v1:person-awards-list", args=[self.admin.pk]),
             "tasks": reverse("api-v1:person-tasks-list", args=[self.admin.pk]),
             "consents": reverse("api-v1:person-consents-list", args=[self.admin.pk]),
@@ -135,7 +133,7 @@ class TestAPIStructure(APITestCase):
 
         award = self.client.get(reverse("api-v1:person-awards-detail", args=[self.admin.pk, self.award.pk]))
         award_links = {
-            "event": reverse("api-v1:event-detail", args=[self.award.event.slug]),
+            "event": reverse("api-v1:event-detail", args=[self.award.event.slug]),  # type: ignore
         }
         for attr, link in award_links.items():
             self.assertIn(link, award.data[attr])

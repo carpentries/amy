@@ -1,7 +1,7 @@
 import csv
 from io import TextIOBase
 import logging
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError, transaction
@@ -16,13 +16,17 @@ logger = logging.getLogger("amy")
 
 
 class PersonTaskEntry(TypedDict):
-    personal: str | None
-    family: str | None
+    personal: str
+    family: str
+    username: str
     email: str | None
     event: str | None
     role: str | None
-    errors: list[str] | None
-    username: str
+    errors: list[str]
+    info: list[str]
+    existing_person_id: NotRequired[int | None]
+    person_exists: NotRequired[bool]
+    similar_persons: NotRequired[list[tuple[int, str]]]
 
 
 def upload_person_task_csv(
@@ -50,12 +54,13 @@ def upload_person_task_csv(
             continue
 
         entry: PersonTaskEntry = {
-            "personal": None,
-            "family": None,
+            "personal": "",
+            "family": "",
             "email": None,
             "event": None,
             "role": None,
-            "errors": None,
+            "errors": [],
+            "info": [],
             "username": "",  # it will be set in the `verify_upload_person_task`
         }
 
@@ -80,18 +85,7 @@ def upload_person_task_csv(
     )
 
 
-class PersonTask(TypedDict):
-    personal: str
-    family: str
-    username: str
-    email: str | None
-    existing_person_id: int | None
-    event: str
-    role: str
-    errors: list[str] | None
-
-
-def verify_upload_person_task(data: list[PersonTask], match: bool = False) -> bool:
+def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) -> bool:
     """
     Verify that uploaded data is correct.  Show errors by populating `errors`
     dictionary item.  This function changes `data` in place.
@@ -233,7 +227,7 @@ def verify_upload_person_task(data: list[PersonTask], match: bool = False) -> bo
 
 
 def create_uploaded_persons_tasks(
-    data: list[PersonTask], request: HttpRequest | None = None
+    data: list[PersonTaskEntry], request: HttpRequest | None = None
 ) -> tuple[list[Person], list[Task]]:
     """
     Create persons and tasks from upload data.
@@ -252,7 +246,11 @@ def create_uploaded_persons_tasks(
             row_repr = ("{personal} {family} {username} <{email}>, {role} at {event}").format(**row)
 
             try:
-                fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}
+                fields = {
+                    "personal": row["personal"],
+                    "family": row["family"],
+                    "email": row["email"],
+                }
                 fields["username"] = row["username"]
 
                 if row["person_exists"] and row["existing_person_id"]:

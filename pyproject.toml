@@ -59,6 +59,9 @@ dependencies = [
   "boto3 (>=1.36.25,<2.0.0)",
   "boto3-stubs (>=1.36.26,<2.0.0)",
   "cairosvg (>=2.7.1,<3.0.0)",
+  "airportsdata (==20250909)",
+  "pytz (>=2025.2,<2026.0)",
+  "types-pytz (>=2025.2.0.20250809,<2026.0.0.0)",
 ]
 
 [build-system]
@@ -106,14 +109,18 @@ module = [
   "cairosvg.*",
   "crispy_forms.*",
   "debug_toolbar.*",
+  "django_better_admin_arrayfield.*",
   "django_comments.*",
   "django_filters.*",
+  "django_select2.*",
+  "django_webtest.*",
   "flags.*",
   "knox.*",
   "markdownx.*",
   "reversion.*",
   "reversion_compare.*",
   "social_django.*",
+  "webtest.*",
 ]
 follow_untyped_imports = true
 
