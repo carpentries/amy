@@ -63,7 +63,7 @@ def instructor_training_completed_not_badged_strategy(person: Person) -> Strateg
         requirement__name="Training",
         state="p",
         event__start__gte=cutoff_date,
-    )
+    ).exists()
 
     all_requirements_passed = bool(person_annotated.instructor_eligible)
 
