@@ -196,6 +196,8 @@ def changes_log(request: AuthenticatedHttpRequest) -> HttpResponse:
 
 # ------------------------------------------------------------
 
+PERSON_HAS_NO_AIRPORT_ALERT = "{person} has no airport information on record."
+
 
 class AllPersons(OnlyForAdminsMixin, AMYListView[Person]):
     context_object_name = "all_persons"
@@ -266,7 +268,7 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
         if not self.object.airport_iata:
-            messages.warning(self.request, f"{title} has no airport information on record.")
+            messages.warning(self.request, PERSON_HAS_NO_AIRPORT_ALERT.format(person=title))
         return context
 
 
@@ -601,7 +603,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView[Person
             }
         )
         if not self.object.airport_iata:
-            messages.warning(self.request, f"{self.object} has no airport information on record.")
+            messages.warning(self.request, PERSON_HAS_NO_AIRPORT_ALERT.format(person=self.object))
         return context
 
     def form_valid(self, form: PersonForm) -> HttpResponse:
