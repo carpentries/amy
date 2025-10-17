@@ -57,6 +57,9 @@ class TestExportingPersonData(BaseExportingTest):
             family="Primary",
             email="primary_user@amy.com",
             is_active=True,
+            airport_iata="CDG",
+            country="GB",
+            timezone="Europe/London",
         )
         self.user.set_password("password")
         self.user.save()
@@ -72,10 +75,6 @@ class TestExportingPersonData(BaseExportingTest):
 
     def prepare_data(self, user: Person) -> None:
         """Populate relational fields for the user."""
-
-        # set airport for the user
-        self.user.airport_iata = "CDG"
-        self.user.save()
 
         # create a fake organization
         test_host = Organization.objects.create(domain="example.com", fullname="Test Organization")

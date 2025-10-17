@@ -541,6 +541,7 @@ class Membership(models.Model):
 # ------------------------------------------------------------
 
 
+# TODO: Can be removed since #2816
 @reversion.register
 class Airport(models.Model):
     """Represent an airport (used to locate instructors)."""

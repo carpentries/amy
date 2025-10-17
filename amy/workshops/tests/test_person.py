@@ -16,6 +16,7 @@ from webtest.forms import Upload
 
 from consents.models import Consent, Term, TermEnum
 from trainings.models import Involvement
+from workshops.consts import IATA_AIRPORTS
 from workshops.filters import filter_taught_workshops
 from workshops.forms import PersonForm, PersonsMergeForm
 from workshops.mixins import GenderMixin
@@ -581,6 +582,67 @@ class TestPerson(TestBase):
         self.assertEqual(result.num_learner, 1)
         self.assertEqual(result.num_supporting, 2)
         self.assertEqual(result.num_organizer, 1)
+
+    def test_save__airport(self) -> None:
+        # Arrange
+        person = Person(
+            username="test",
+            personal="test",
+            family="test",
+        )
+        person.airport_iata = "CDG"
+        cdg_airport = IATA_AIRPORTS["CDG"]
+
+        # Act
+        person.save()
+
+        # Assert
+        self.assertEqual(person.airport_country, cdg_airport["country"])
+        self.assertEqual(person.airport_lat, cdg_airport["lat"])
+        self.assertEqual(person.airport_lon, cdg_airport["lon"])
+
+    def test_save__airport_invalid(self) -> None:
+        # Arrange
+        person = Person(
+            username="test",
+            personal="test",
+            family="test",
+        )
+        person.airport_iata = "FAKE"
+
+        # Act
+        person.save()
+
+        # Assert
+        self.assertEqual(person.airport_iata, "")  # cleared since airport doesn't exist
+        self.assertEqual(person.airport_country, "")
+        self.assertEqual(person.airport_lat, 0.0)
+        self.assertEqual(person.airport_lon, 0.0)
+
+    def test_clean_airport_iata(self) -> None:
+        # Arrange
+        person = Person(
+            username="test",
+            personal="test",
+            family="test",
+        )
+        person.airport_iata = "CDG"
+
+        # Act
+        person.clean_airport_iata()
+
+    def test_clean_airport_iata__invalid(self) -> None:
+        # Arrange
+        person = Person(
+            username="test",
+            personal="test",
+            family="test",
+        )
+        person.airport_iata = "FAKE"
+
+        # Act & Assert
+        with self.assertRaises(ValidationError):
+            person.clean_airport_iata()
 
 
 class TestPersonPassword(TestBase):
