@@ -52,6 +52,13 @@
       <div class="row">
         {% block leftcolumn %}{% endblock leftcolumn %}
         <div class="{% block maincolumn %}col-sm-12 col-md-12{% endblock maincolumn %} main pb-5">
+        {% if not user.airport_iata %}
+        <div class="alert alert-warning" role="alert">
+          <strong>Warning:</strong>
+          Your profile is missing airport information. <a href="{% url 'autoupdate_profile' %}">Click here to complete your profile.</a>
+        </div>
+        {% endif %}
+
         {% if messages %}
           {% for message in messages %}
             {# if message is tagged as only for admins then show it only for admins #}
@@ -72,13 +79,6 @@
             </div>
             {% endif %}
           {% endfor %}
-        {% endif %}
-
-        {% if not user.airport_iata %}
-        <div class="alert alert-warning" role="alert">
-          <strong>Warning:</strong>
-          Your profile is missing airport information. <a href="{% url 'autoupdate_profile' %}">Click here to complete your profile.</a>
-        </div>
         {% endif %}
 
         {% block logo %}{% endblock logo %}
