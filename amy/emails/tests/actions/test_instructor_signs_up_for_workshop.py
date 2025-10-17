@@ -211,6 +211,8 @@ class TestInstructorSignsUpForWorkshopReceiverIntegration(TestBase):
             email="test@user.com",
             password="test",
         )
+        person.airport_iata = "CDG"
+        person.save()
         consent_to_all_required_consents(person)
         config = CommunityRoleConfig.objects.create(
             name="instructor",
