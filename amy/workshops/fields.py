@@ -253,7 +253,8 @@ class AirportChoiceField(forms.ChoiceField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         choices = kwargs.pop(
             "choices",
-            sorted(
+            [(None, "------")]
+            + sorted(
                 [
                     (key, f"{key}: {value["name"]} ({value["country"]}, {value["tz"]})")
                     for key, value in IATA_AIRPORTS.items()
