@@ -265,6 +265,8 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
         context["consents"] = consent_by_description
         if not self.object.is_active:
             messages.info(self.request, f"{title} is not active.")
+        if not self.object.airport_iata:
+            messages.warning(self.request, f"{title} has no airport information on record.")
         return context
 
 
@@ -598,6 +600,8 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin, AMYUpdateView[Person
                 ),
             }
         )
+        if not self.object.airport_iata:
+            messages.warning(self.request, f"{self.object} has no airport information on record.")
         return context
 
     def form_valid(self, form: PersonForm) -> HttpResponse:
