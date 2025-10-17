@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
@@ -100,10 +100,15 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         self.event = Event.objects.create(
             slug="test-event",
             host=organization,
-            start=date(2023, 10, 28),
-            end=date(2023, 10, 29),
+            start=date.today() - timedelta(days=2),
+            end=date.today() - timedelta(days=1),
         )
         self.training_requirement = TrainingRequirement.objects.get(name="Training")
+
+    def setUpOldEvent(self) -> None:
+        self.event.start = date.today() - timedelta(days=100)
+        self.event.end = date.today() - timedelta(days=99)
+        self.event.save()
 
     def setUpPassedTrainingProgress(
         self,
@@ -154,6 +159,15 @@ class TestInstructorTrainingCompletedNotBadgedStrategy(TestCase):
         result = instructor_training_completed_not_badged_strategy(self.person)
         # Assert
         self.assertEqual(result, StrategyEnum.CREATE)
+
+    def test_strategy_noop__old_training_progress(self) -> None:
+        # Arrange
+        self.setUpOldEvent()
+        self.setUpPassedTrainingProgress(self.person, self.training_requirement, self.event)
+        # Act
+        result = instructor_training_completed_not_badged_strategy(self.person)
+        # Assert
+        self.assertEqual(result, StrategyEnum.NOOP)
 
     def test_strategy_update(self) -> None:
         # Arrange
