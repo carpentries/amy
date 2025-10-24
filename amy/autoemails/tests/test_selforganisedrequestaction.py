@@ -44,7 +44,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         # totally fake Event and SelfOrganisedSubmission
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -132,7 +132,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         # totally fake Event and SelfOrganisedSubmission
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -164,7 +164,7 @@ class TestSelfOrganisedRequestAction(TestCase):
                 request=r,
                 workshop_main_type="LC",
                 dates=e.human_readable_date(),
-                host=Organization.objects.first(),
+                host=Organization.objects.all()[0],
                 regional_coordinator_email=["admin-uk@carpentries.org"],
                 short_notice=True,
                 all_emails=["harry@hogwarts.edu", "hg@magic.uk", "rw@magic.uk"],
@@ -181,7 +181,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         # totally fake Event and SelfOrganisedSubmission
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -228,7 +228,7 @@ class TestSelfOrganisedRequestAction(TestCase):
     def test_event_slug(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -247,7 +247,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         # totally fake Event and SelfOrganisedSubmission
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -280,7 +280,7 @@ class TestSelfOrganisedRequestAction(TestCase):
     def test_drop_empty_contacts(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),

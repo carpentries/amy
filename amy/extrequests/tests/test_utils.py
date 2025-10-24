@@ -18,11 +18,11 @@ from workshops.tests.base import TestBase
 
 
 class TestMemberCodeValid(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpRoles()
         self.date = date.today()
 
-    def setUpMembership(self):
+    def setUpMembership(self) -> None:
         self.valid_code = "valid123"
         self.membership = Membership.objects.create(
             name="Alpha Organization",
@@ -35,7 +35,7 @@ class TestMemberCodeValid(TestBase):
             inhouse_instructor_training_seats=1,
         )
 
-    def setUpUsedSeats(self):
+    def setUpUsedSeats(self) -> None:
         # set up some prior seat usage
         super().setUp()
         self._setUpTags()
@@ -57,7 +57,7 @@ class TestMemberCodeValid(TestBase):
             seat_public=False,
         )
 
-    def test_code_valid(self):
+    def test_code_valid(self) -> None:
         """Valid member code should pass."""
         # Arrange
         self.setUpMembership()
@@ -72,7 +72,7 @@ class TestMemberCodeValid(TestBase):
         # Assert
         self.assertTrue(result)
 
-    def test_code_invalid(self):
+    def test_code_invalid(self) -> None:
         """Invalid member code should not pass."""
         # Arrange
         code = "invalid"
@@ -84,7 +84,7 @@ class TestMemberCodeValid(TestBase):
                 date=self.date,
             )
 
-    def test__code_inactive_early(self):
+    def test__code_inactive_early(self) -> None:
         """Code used before membership start date should not pass."""
         # Arrange
         self.setUpMembership()
@@ -107,7 +107,7 @@ class TestMemberCodeValid(TestBase):
                 date=test_date,
             )
 
-    def test__code_inactive_late(self):
+    def test__code_inactive_late(self) -> None:
         """Code used after membership end date should not pass."""
         # Arrange
         self.setUpMembership()
@@ -130,7 +130,7 @@ class TestMemberCodeValid(TestBase):
                 date=test_date,
             )
 
-    def test_code_valid_within_grace_before(self):
+    def test_code_valid_within_grace_before(self) -> None:
         """Code used within a grace period should pass."""
         # Arrange
         self.setUpMembership()
@@ -146,7 +146,7 @@ class TestMemberCodeValid(TestBase):
         # Assert
         self.assertTrue(result)
 
-    def test_code_valid_within_grace_after(self):
+    def test_code_valid_within_grace_after(self) -> None:
         """Code used within a grace period should pass."""
         # Arrange
         self.setUpMembership()
@@ -162,7 +162,7 @@ class TestMemberCodeValid(TestBase):
         # Assert
         self.assertTrue(result)
 
-    def test_code_invalid_beyond_grace_before(self):
+    def test_code_invalid_beyond_grace_before(self) -> None:
         """Code used outside a grace period should not pass."""
         # Arrange
         self.setUpMembership()
@@ -183,7 +183,7 @@ class TestMemberCodeValid(TestBase):
         ):
             member_code_valid(code=code, date=self.date, grace_before=30)
 
-    def test_code_valid_beyond_grace_after(self):
+    def test_code_valid_beyond_grace_after(self) -> None:
         """Code used outside a grace period should not pass."""
         # Arrange
         self.setUpMembership()
@@ -204,7 +204,7 @@ class TestMemberCodeValid(TestBase):
         ):
             member_code_valid(code=code, date=self.date, grace_after=30)
 
-    def test_code_no_seats_remaining(self):
+    def test_code_no_seats_remaining(self) -> None:
         """Code with no seats remaining should not pass."""
         # Arrange
         self.setUpMembership()
@@ -215,7 +215,7 @@ class TestMemberCodeValid(TestBase):
         with self.assertRaises(MemberCodeValidationError, msg="Membership has no training seats remaining."):
             member_code_valid_training(code=code, date=self.date)
 
-    def test_code_only_public_seats_remaining(self):
+    def test_code_only_public_seats_remaining(self) -> None:
         """Code with only public seats remaining should pass."""
         # Arrange
         self.setUpMembership()
@@ -232,7 +232,7 @@ class TestMemberCodeValid(TestBase):
         # Assert
         self.assertTrue(result)
 
-    def test_member_code_validation__code_only_inhouse_seats_remaining(self):
+    def test_member_code_validation__code_only_inhouse_seats_remaining(self) -> None:
         """Code with only inhouse seats remaining should pass."""
         # Arrange
         self.setUpMembership()
@@ -251,7 +251,7 @@ class TestMemberCodeValid(TestBase):
 
 
 class TestGetMembershipOrNoneFromCode(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.valid_code = "valid123"
         self.membership = Membership.objects.create(
             name="Alpha Organization",
@@ -264,7 +264,7 @@ class TestGetMembershipOrNoneFromCode(TestBase):
             inhouse_instructor_training_seats=1,
         )
 
-    def test_returns_none_if_code_empty(self):
+    def test_returns_none_if_code_empty(self) -> None:
         # Act
         result_empty_string = get_membership_or_none_from_code("")
         result_none = get_membership_or_none_from_code(None)
@@ -273,14 +273,14 @@ class TestGetMembershipOrNoneFromCode(TestBase):
         self.assertIsNone(result_empty_string)
         self.assertIsNone(result_none)
 
-    def test_returns_none_if_no_match(self):
+    def test_returns_none_if_no_match(self) -> None:
         # Act
         result = get_membership_or_none_from_code("invalid")
 
         # Assert
         self.assertIsNone(result)
 
-    def test_returns_matching_membership(self):
+    def test_returns_matching_membership(self) -> None:
         # Act
         result = get_membership_or_none_from_code(self.valid_code)
 
@@ -289,7 +289,7 @@ class TestGetMembershipOrNoneFromCode(TestBase):
 
 
 class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.valid_code = "valid123"
         self.membership = Membership.objects.create(
@@ -303,7 +303,7 @@ class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
             inhouse_instructor_training_seats=1,
         )
 
-    def test_returns_correct_membership(self):
+    def test_returns_correct_membership(self) -> None:
         # Arrange
         request = create_training_request("p", self.spiderman, open_review=False, reg_code=self.valid_code)
 
@@ -313,7 +313,7 @@ class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
         # Assert
         self.assertEqual(self.membership, result)
 
-    def test_error_no_code(self):
+    def test_error_no_code(self) -> None:
         # Arrange
         request = create_training_request("p", self.spiderman, open_review=False, reg_code="")
 
@@ -325,7 +325,7 @@ class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
         ):
             get_membership_from_training_request_or_raise_error(request)
 
-    def test_error_invalid_code(self):
+    def test_error_invalid_code(self) -> None:
         # Arrange
         request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
 
@@ -338,7 +338,7 @@ class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
 
 
 class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpTags()
         self._setUpRoles()
@@ -362,7 +362,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
         self.event.tags.add(Tag.objects.get(name="TTT"))
         self.role = Role.objects.get(name="learner")
 
-    def test_accepts_request(self):
+    def test_accepts_request(self) -> None:
         # Arrange
         request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
 
@@ -379,7 +379,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
         # Assert
         self.assertEqual(request.state, "a")
 
-    def test_creates_task(self):
+    def test_creates_task(self) -> None:
         # Arrange
         request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
 
@@ -395,7 +395,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
 
         # Assert
         self.assertEqual(Task.objects.count(), 1)
-        self.assertEqual(Task.objects.first(), result)
+        self.assertEqual(Task.objects.all()[0], result)
         self.assertEqual(result.person, self.spiderman)
         self.assertEqual(result.event, self.event)
         self.assertEqual(result.role, self.role)
@@ -403,7 +403,7 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
         self.assertEqual(result.seat_open_training, False)
         self.assertEqual(result.seat_membership, self.membership)
 
-    def test_returns_existing_task(self):
+    def test_returns_existing_task(self) -> None:
         # Arrange
         request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
         Task.objects.create(
@@ -427,14 +427,14 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
 
         # Assert
         self.assertEqual(Task.objects.count(), 1)
-        self.assertEqual(Task.objects.first(), result)
+        self.assertEqual(Task.objects.all()[0], result)
         self.assertEqual(result.seat_public, True)
         self.assertEqual(result.seat_open_training, True)
         self.assertEqual(result.seat_membership, None)
 
 
 class TestGetMembershipWarningsAfterMatch(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpOrganizations()
         self._setUpTags()
         self.valid_code = "valid123"
@@ -456,7 +456,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         )
         self.event.tags.add(Tag.objects.get(name="TTT"))
 
-    def test_warns_no_seats_remaining__public(self):
+    def test_warns_no_seats_remaining__public(self) -> None:
         # Arrange
         self.membership.public_instructor_training_seats = 0
         self.membership.save()
@@ -470,7 +470,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         # Assert
         self.assertListEqual(expected, result)
 
-    def test_warns_no_seats_remaining__inhouse(self):
+    def test_warns_no_seats_remaining__inhouse(self) -> None:
         # Arrange
         self.membership.inhouse_instructor_training_seats = 0
         self.membership.save()
@@ -484,7 +484,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         # Assert
         self.assertListEqual(expected, result)
 
-    def test_warns_membership_not_active(self):
+    def test_warns_membership_not_active(self) -> None:
         # Arrange
         self.membership.agreement_start = date.today() + timedelta(days=1)
         self.membership.save()
@@ -498,7 +498,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         # Assert
         self.assertListEqual(expected, result)
 
-    def test_warns_event_outside_membership_dates__early_start(self):
+    def test_warns_event_outside_membership_dates__early_start(self) -> None:
         # Arrange
         self.event.start = self.membership.agreement_start - timedelta(days=1)
         self.event.save()
@@ -513,7 +513,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         # Assert
         self.assertListEqual(expected, result)
 
-    def test_warns_event_outside_membership_dates__early_end(self):
+    def test_warns_event_outside_membership_dates__early_end(self) -> None:
         # Arrange
         # create a case where the end of the event is before the start
         # this shouldn't happen in reality but allows us to check the logic
@@ -530,7 +530,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         # Assert
         self.assertListEqual(expected, result)
 
-    def test_warns_event_outside_membership_dates__late_start(self):
+    def test_warns_event_outside_membership_dates__late_start(self) -> None:
         # Arrange
         self.event.start = self.membership.agreement_end + timedelta(days=1)
         self.event.save()
@@ -545,7 +545,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         # Assert
         self.assertListEqual(expected, result)
 
-    def test_warns_event_outside_membership_dates__late_end(self):
+    def test_warns_event_outside_membership_dates__late_end(self) -> None:
         # Arrange
         self.event.end = self.membership.agreement_end + timedelta(days=1)
         self.event.save()
@@ -560,7 +560,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
         # Assert
         self.assertListEqual(expected, result)
 
-    def test_multiple_warnings(self):
+    def test_multiple_warnings(self) -> None:
         # Arrange
         self.membership.public_instructor_training_seats = 0
         self.membership.agreement_start = date.today() + timedelta(days=1)
@@ -583,7 +583,7 @@ class TestGetMembershipWarningsAfterMatch(TestBase):
 
 
 class TestGetEventbriteIdFromUrl(TestCase):
-    def test_long_url(self):
+    def test_long_url(self) -> None:
         # Arrange
         url = "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator"  # noqa: line too long
 
@@ -593,7 +593,7 @@ class TestGetEventbriteIdFromUrl(TestCase):
         # Assert
         self.assertEqual(result, "711575811407")
 
-    def test_short_url(self):
+    def test_short_url(self) -> None:
         # Arrange
         url = "https://www.eventbrite.com/e/711575811407"
 
@@ -603,7 +603,7 @@ class TestGetEventbriteIdFromUrl(TestCase):
         # Assert
         self.assertEqual(result, "711575811407")
 
-    def test_admin_url(self):
+    def test_admin_url(self) -> None:
         # Arrange
         url = "https://www.eventbrite.com/myevent?eid=711575811407"
 

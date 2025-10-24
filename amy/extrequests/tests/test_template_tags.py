@@ -11,7 +11,7 @@ from workshops.models import Membership
 
 
 class TestMembershipAlertType(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.membership = Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
@@ -22,7 +22,7 @@ class TestMembershipAlertType(TestCase):
             workshops_without_admin_fee_per_agreement=2,
         )
 
-    def test_active_and_has_workshops(self):
+    def test_active_and_has_workshops(self) -> None:
         # Arrange
         expected = "info"
 
@@ -32,7 +32,7 @@ class TestMembershipAlertType(TestCase):
         # Assert
         self.assertEqual(expected, result)
 
-    def test_active_and_no_workshops(self):
+    def test_active_and_no_workshops(self) -> None:
         # Arrange
         self.membership.workshops_without_admin_fee_per_agreement = 0
         expected = "warning"
@@ -43,7 +43,7 @@ class TestMembershipAlertType(TestCase):
         # Assert
         self.assertEqual(expected, result)
 
-    def test_inactive_and_no_workshops(self):
+    def test_inactive_and_no_workshops(self) -> None:
         # Arrange
         self.membership.workshops_without_admin_fee_per_agreement = 0
         self.membership.agreement_end = date.today() - timedelta(days=1)
@@ -55,7 +55,7 @@ class TestMembershipAlertType(TestCase):
         # Assert
         self.assertEqual(expected, result)
 
-    def test_inactive_and_has_workshops(self):
+    def test_inactive_and_has_workshops(self) -> None:
         # Arrange
         self.membership.agreement_end = date.today() - timedelta(days=1)
         expected = "warning"
@@ -68,7 +68,7 @@ class TestMembershipAlertType(TestCase):
 
 
 class TestMembershipActive(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.membership = Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
@@ -79,7 +79,7 @@ class TestMembershipActive(TestCase):
             workshops_without_admin_fee_per_agreement=2,
         )
 
-    def test_active(self):
+    def test_active(self) -> None:
         # Arrange
         expected = True
 
@@ -89,7 +89,7 @@ class TestMembershipActive(TestCase):
         # Assert
         self.assertEqual(expected, result)
 
-    def test_inactive(self):
+    def test_inactive(self) -> None:
         # Arrange
         self.membership.agreement_end = date.today() - timedelta(days=1)
         expected = False
@@ -102,7 +102,7 @@ class TestMembershipActive(TestCase):
 
 
 class TestUrlMatchesEventbriteFormat(TestCase):
-    def test_long_url(self):
+    def test_long_url(self) -> None:
         # Arrange
         url = "https://www.eventbrite.com/e/online-instructor-training-7-8-november-2023-tickets-711575811407?aff=oddtdtcreator"  # noqa: line too long
 
@@ -112,7 +112,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         # Assert
         self.assertTrue(result)
 
-    def test_short_url(self):
+    def test_short_url(self) -> None:
         # Arrange
         url = "www.eventbrite.com/e/711575811407"
 
@@ -122,7 +122,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         # Assert
         self.assertTrue(result)
 
-    def test_localised_url__couk(self):
+    def test_localised_url__couk(self) -> None:
         # Arrange
         url = "https://www.eventbrite.co.uk/e/711575811407"
 
@@ -132,7 +132,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         # Assert
         self.assertTrue(result)
 
-    def test_localised_url__fr(self):
+    def test_localised_url__fr(self) -> None:
         # Arrange
         url = "https://www.eventbrite.fr/e/711575811407"
 
@@ -142,7 +142,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         # Assert
         self.assertTrue(result)
 
-    def test_admin_url(self):
+    def test_admin_url(self) -> None:
         """Admin url should fail - we don't expect trainees to provide this format"""
         # Arrange
         url = "https://www.eventbrite.com/myevent?eid=711575811407"
@@ -153,7 +153,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         # Assert
         self.assertFalse(result)
 
-    def test_non_eventbrite_url(self):
+    def test_non_eventbrite_url(self) -> None:
         """URLs outside the Eventbrite domain should fail."""
         # Arrange
         url = "https://carpentries.org/instructor-training/123123123123/"
@@ -164,7 +164,7 @@ class TestUrlMatchesEventbriteFormat(TestCase):
         # Assert
         self.assertFalse(result)
 
-    def test_empty_string(self):
+    def test_empty_string(self) -> None:
         """Empty string should fail."""
         # Arrange
         url = ""

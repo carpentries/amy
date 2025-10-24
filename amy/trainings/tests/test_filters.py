@@ -123,7 +123,7 @@ class TestTraineeFilter(TestBase):
 
         super().tearDown()
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
@@ -139,7 +139,7 @@ class TestTraineeFilter(TestBase):
             },
         )
 
-    def test_filter_search_name(self):
+    def test_filter_search_name(self) -> None:
         # Arrange
         filter_name = "search"
         value = "Peter Parker"
@@ -150,7 +150,7 @@ class TestTraineeFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.spiderman])
 
-    def test_filter_search_email(self):
+    def test_filter_search_email(self) -> None:
         # Arrange
         filter_name = "search"
         value = "peter@webslinger.net"
@@ -161,7 +161,7 @@ class TestTraineeFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.spiderman])
 
-    def test_filter_all_persons(self):
+    def test_filter_all_persons(self) -> None:
         # Arrange
         filter_name = "all_persons"
         value = True
@@ -170,9 +170,9 @@ class TestTraineeFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(result, Person.objects.all())
+        self.assertQuerySetEqual(result, list(Person.objects.all()))
 
-    def test_filter_get_involved(self):
+    def test_filter_get_involved(self) -> None:
         # Arrange
         filter_name = "get_involved"
         value = True
@@ -183,7 +183,7 @@ class TestTraineeFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.ironman])
 
-    def test_filter_training_request_true(self):
+    def test_filter_training_request_true(self) -> None:
         # Arrange
         filter_name = "training_request"
         value = True
@@ -196,7 +196,7 @@ class TestTraineeFilter(TestBase):
         self.assertNotIn(self.ironman, result)
         self.assertQuerySetEqual(result, [self.spiderman])
 
-    def test_filter_training_request_false(self):
+    def test_filter_training_request_false(self) -> None:
         # Arrange
         filter_name = "training_request"
         value = False
@@ -209,7 +209,7 @@ class TestTraineeFilter(TestBase):
         self.assertIn(self.hermione, result)
         self.assertNotIn(self.spiderman, result)
 
-    def test_filter_is_instructor(self):
+    def test_filter_is_instructor(self) -> None:
         # Arrange
         filter_name = "is_instructor"
         value = "no"
@@ -221,7 +221,7 @@ class TestTraineeFilter(TestBase):
         self.assertIn(self.spiderman, result)
         self.assertIn(self.ironman, result)
 
-    def test_filter_training(self):
+    def test_filter_training(self) -> None:
         # Arrange
         name = "training"
         value = self.event.pk
@@ -232,7 +232,7 @@ class TestTraineeFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.spiderman])
 
-    def test_filter_order_by(self):
+    def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
         fields = self.filterset.filters[filter_name].param_map

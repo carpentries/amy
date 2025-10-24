@@ -2,13 +2,13 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.sessions.backends.db import SessionStore
 from django.test import RequestFactory, TestCase
-from flags.sources import Condition, Flag
+from flags.sources import Condition, Flag  # type: ignore[import-untyped]
 
 from workshops.middleware.feature_flags import SaveSessionFeatureFlagMiddleware
 
 
 class TestSaveSessionFeatureFlagMiddleware(TestCase):
-    def test_conditions_of_type(self):
+    def test_conditions_of_type(self) -> None:
         # Arrange
         condition1 = Condition(condition="session", value="test")
         condition2 = Condition(condition="parameter", value="test")
@@ -20,7 +20,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         self.assertEqual(result, [condition2])
 
-    def test_get_parameter_name_from_condition(self):
+    def test_get_parameter_name_from_condition(self) -> None:
         # Arrange
         condition = Condition(condition="parameter", value="test=value")
         # Act
@@ -28,7 +28,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         self.assertEqual(result, "test")
 
-    def test_get_parameter_name_from_condition__missing_rhs(self):
+    def test_get_parameter_name_from_condition__missing_rhs(self) -> None:
         # Arrange
         condition = Condition(condition="parameter", value="test=")
         # Act
@@ -36,7 +36,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         self.assertEqual(result, "test")
 
-    def test_get_parameter_name_from_condition__missing_rhs_and_lhs(self):
+    def test_get_parameter_name_from_condition__missing_rhs_and_lhs(self) -> None:
         # Arrange
         condition = Condition(condition="parameter", value="=")
         # Act
@@ -44,7 +44,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         self.assertEqual(result, "")
 
-    def test_get_parameter_name_from_condition__missing_lhs(self):
+    def test_get_parameter_name_from_condition__missing_lhs(self) -> None:
         # Arrange
         condition = Condition(condition="parameter", value="=test")
         # Act
@@ -52,7 +52,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         self.assertEqual(result, "")
 
-    def test_enable_feature_flag(self):
+    def test_enable_feature_flag(self) -> None:
         # Arrange
         request = MagicMock()
         flag_name = "test"
@@ -61,7 +61,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         request.session.__setitem__.assert_called_once_with(flag_name, True)
 
-    def test_disable_feature_flag(self):
+    def test_disable_feature_flag(self) -> None:
         # Arrange
         request = MagicMock()
         flag_name = "test"
@@ -70,7 +70,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         request.session.__setitem__.assert_called_once_with(flag_name, False)
 
-    def test_call__set_session_variable(self):
+    def test_call__set_session_variable(self) -> None:
         # Arrange
         request = RequestFactory().get("/?test=True")
         session = SessionStore()
@@ -83,7 +83,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         mock_get_flags = patch("workshops.middleware.feature_flags.get_flags").start()
         mock_get_flags.return_value = flags
 
-        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: x)
+        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: x)  # type: ignore[no-untyped-call]
 
         # Act
         middleware(request)
@@ -91,7 +91,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         # Assert
         self.assertEqual(request.session.get("test"), True)
 
-    def test_call__unset_session_variable(self):
+    def test_call__unset_session_variable(self) -> None:
         # Arrange
         request = RequestFactory().get("/?test=False")
         session = SessionStore()
@@ -105,7 +105,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         mock_get_flags = patch("workshops.middleware.feature_flags.get_flags").start()
         mock_get_flags.return_value = flags
 
-        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: x)
+        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: x)  # type: ignore[no-untyped-call]
 
         # Act
         middleware(request)

@@ -1,9 +1,11 @@
 import logging
 
+from consents.models import Consent, Term, TermEnum, TermOptionChoices
+
 # from autoemails.actions import NewConsentRequiredAction
 # from autoemails.bulk_email import send_bulk_email
 # from autoemails.models import Trigger
-from consents.models import Consent, Term, TermEnum, TermOptionChoices
+from workshops.base_views import AuthenticatedHttpRequest
 from workshops.models import Person
 
 logger = logging.getLogger("amy")
@@ -27,7 +29,7 @@ def person_has_consented_to_required_terms(person: Person) -> bool:
     return set(required_term_ids) == set(term_ids_user_consented_to)
 
 
-def send_consent_email(request, term: Term) -> None:
+def send_consent_email(request: AuthenticatedHttpRequest, term: Term) -> None:
     """
     Sending consent emails individually to each user to avoid
     exposing email addresses.

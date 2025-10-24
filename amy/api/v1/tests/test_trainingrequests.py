@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.http import QueryDict
 from django.urls import reverse
@@ -26,7 +26,7 @@ class TestListingTrainingRequests(APITestCase):
     url = "api-v1:training-requests"
     maxDiff = None
 
-    def setUp(self):
+    def setUp(self) -> None:
         # admin
         self.admin = Person.objects.create_superuser(
             username="admin",
@@ -88,6 +88,7 @@ class TestListingTrainingRequests(APITestCase):
         self.tr1.domains.set(KnowledgeDomain.objects.filter(name__in=["Chemistry", "Medicine"]))
         # no previous involvement
         self.tr1.previous_involvement.clear()
+        assert self.tr1.last_updated_at  # for mypy
 
         # second training request (accepted)
         self.tr2 = TrainingRequest(
@@ -133,11 +134,12 @@ class TestListingTrainingRequests(APITestCase):
         self.tr2.save()
         self.tr2.domains.set(KnowledgeDomain.objects.filter(name__in=["Chemistry"]))
         self.tr2.previous_involvement.set(Role.objects.filter(name__in=["learner", "helper"]))
+        assert self.tr2.last_updated_at  # for mypy
 
         # add TTT event self.admin was matched to
         self.ttt_event = Event(
             slug="2018-07-12-TTT-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
         )
         self.ttt_event.save()
         self.ttt_event.tags.set(Tag.objects.filter(name="TTT"))
@@ -262,7 +264,7 @@ class TestListingTrainingRequests(APITestCase):
         ]
 
     @patch.object(TrainingRequests, "request", query_params=QueryDict(), create=True)
-    def test_serialization(self, mock_request):
+    def test_serialization(self, mock_request: MagicMock) -> None:
         # we're mocking a request here because it's not possible to create
         # a fake request context for the view
         serializer_class = self.view().get_serializer_class()
@@ -271,7 +273,7 @@ class TestListingTrainingRequests(APITestCase):
         self.assertEqual(response.data[0], self.expecting[0])
         self.assertEqual(response.data[1], self.expecting[1])
 
-    def test_CSV_renderer(self):
+    def test_CSV_renderer(self) -> None:
         """Test columns order and labels in the resulting CSV file."""
         url = reverse(self.url)
 
@@ -307,7 +309,7 @@ class TestListingTrainingRequests(APITestCase):
         self.assertEqual(firstline, expected_firstline)
 
     @patch.object(TrainingRequests, "request", query_params=QueryDict(), create=True)
-    def test_M2M_columns(self, mock_request):
+    def test_M2M_columns(self, mock_request: MagicMock) -> None:
         """Some columns are M2M fields, but should be displayed as a string,
         not array /list/."""
         # the same mocking as in test_serialization
@@ -318,7 +320,7 @@ class TestListingTrainingRequests(APITestCase):
         self.assertEqual(response.data[0]["domains"], "Chemistry, Medicine")
         self.assertEqual(response.data[1]["previous_involvement"], "learner, helper")
 
-    def test_selected_ids(self):
+    def test_selected_ids(self) -> None:
         """Test if filtering by IDs works properly."""
         url = reverse(self.url)
 

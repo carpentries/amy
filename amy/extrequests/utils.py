@@ -14,7 +14,7 @@ class MemberCodeValidationError(ValidationError):
     pass
 
 
-def member_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> tuple[bool, str]:
+def member_code_valid(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
     """Returns True if `code` matches an Membership that is active on `date`,
     including a grace period of `grace_before` days before
     and `grace_after` days after the Membership dates.
@@ -36,7 +36,7 @@ def member_code_valid(code: str, date: date, grace_before: int = 0, grace_after:
     return True
 
 
-def member_code_valid_training(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> tuple[bool, str]:
+def member_code_valid_training(code: str, date: date, grace_before: int = 0, grace_after: int = 0) -> bool:
     """Returns True if `code` matches an active Membership with training seats
     remaining. If there is no match, raises an Exception with a detailed error."""
     # first ensure the code matches an active membership
@@ -58,7 +58,7 @@ def member_code_valid_training(code: str, date: date, grace_before: int = 0, gra
     return True
 
 
-def get_membership_or_none_from_code(code: str) -> Membership | None:
+def get_membership_or_none_from_code(code: str | None) -> Membership | None:
     """Given a member code, returns the related membership
     or None if no such membership exists. If provided an empty code, returns None."""
     if not code:

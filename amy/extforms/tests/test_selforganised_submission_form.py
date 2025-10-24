@@ -14,7 +14,7 @@ from workshops.tests.base import TestBase
 class TestSelfOrganisedSubmissionExternalForm(TestBase):
     """Test external (accessible to non-logged in users) form."""
 
-    def test_fields_presence(self):
+    def test_fields_presence(self) -> None:
         """Test if the form shows correct fields."""
         form = SelfOrganisedSubmissionExternalForm()
         fields_left = set(form.fields.keys())
@@ -51,7 +51,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
         self.assertEqual(fields_left, fields_right)
 
     @tag("captcha")
-    def test_request_added(self):
+    def test_request_added(self) -> None:
         """Ensure the request is successfully added to the pool, and
         notification email is sent."""
         data = {
@@ -66,7 +66,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
             "end": date(2020, 11, 8),
             "workshop_url": "",
             "workshop_types": [
-                Curriculum.objects.filter(active=True).exclude(mix_match=True).first().pk,
+                Curriculum.objects.filter(active=True).exclude(mix_match=True)[0].pk,
             ],
             "workshop_types_other_explain": "",
             "country": "GB",
@@ -101,13 +101,13 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
         #     f.write(mail.outbox[1].message().as_bytes())
 
         # before tests, check if the template invalid string exists
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         # test autoresponder email
         msg = mail.outbox[0]
         self.assertEqual(msg.subject, "Self-organised submission confirmation")
         self.assertEqual(msg.recipients(), ["hpotter@magic.gov"])
-        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]
         # test email for admins
         msg = mail.outbox[1]
         self.assertEqual(
@@ -115,4 +115,4 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
             "New self-organised submission: Ministry of Magic",
         )
         self.assertEqual(msg.recipients(), ["admin-uk@carpentries.org"])
-        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]

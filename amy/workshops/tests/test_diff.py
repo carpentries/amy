@@ -8,18 +8,18 @@ from workshops.tests.base import TestBase
 
 
 class TestRevisions(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpOrganizations()
         self.tag1, _ = Tag.objects.get_or_create(pk=1)
         self.tag2, _ = Tag.objects.get_or_create(pk=2)
 
-        with create_revision():
+        with create_revision():  # type: ignore[no-untyped-call]
             self.event = Event.objects.create(host=self.org_alpha, slug="event")
             self.event.tags.add(self.tag1)
             self.event.save()
 
-        with create_revision():
+        with create_revision():  # type: ignore[no-untyped-call]
             self.event.slug = "better-event"
             self.event.host = self.org_beta
             self.event.tags.add(self.tag2)
@@ -30,7 +30,7 @@ class TestRevisions(TestBase):
         assert len(versions) == 2
         self.newer, self.older = versions
 
-    def test_showing_diff_event(self):
+    def test_showing_diff_event(self) -> None:
         # get newer revision page
         rv = self.client.get(reverse("object_changes", args=[self.newer.pk]))
 
@@ -40,7 +40,7 @@ class TestRevisions(TestBase):
         assert rv.context["revision"] == self.newer.revision
         assert rv.context["object"] == self.event
 
-    def test_diff_shows_coloured_labels(self):
+    def test_diff_shows_coloured_labels(self) -> None:
         # get newer revision page
         rv = self.client.get(reverse("object_changes", args=[self.newer.pk]))
         # Red label for removed host
@@ -68,7 +68,7 @@ class TestRevisions(TestBase):
             html=True,
         )
 
-    def test_diff_shows_PK_for_deleted_relationships(self):
+    def test_diff_shows_PK_for_deleted_relationships(self) -> None:
         # Delete the tag
         self.tag1.delete()
         self.tag2.delete()
@@ -79,11 +79,11 @@ class TestRevisions(TestBase):
 
 
 class TestRegression1083(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
 
-    def test_regression_1083(self):
-        with reversion.create_revision():
+    def test_regression_1083(self) -> None:
+        with reversion.create_revision():  # type: ignore[no-untyped-call]
             alice = Person.objects.create_user(
                 username="alice",
                 personal="Alice",
@@ -91,16 +91,16 @@ class TestRegression1083(TestBase):
                 email="alice@jones.pl",
             )
 
-        with reversion.create_revision():
+        with reversion.create_revision():  # type: ignore[no-untyped-call]
             bob = Person.objects.create_user(username="bob", personal="Bob", family="Smith", email="bob@smith.pl")
 
-        with reversion.create_revision():
+        with reversion.create_revision():  # type: ignore[no-untyped-call]
             alice.family = "Williams"
             alice.save()
             bob.family = "Brown"
             bob.save()
 
-        res = self.app.get(reverse("person_details", args=[bob.pk]), user="admin")
+        res = self.app.get(reverse("person_details", args=[bob.pk]), user="admin")  # type: ignore[no-untyped-call]
 
         revision = res.click("Last modified on")
         self.assertIn("Smith", revision)

@@ -1,8 +1,10 @@
+from typing import Any
+
 from django.apps import AppConfig
 from django.db.models.signals import m2m_changed
 
 
-def trainingrequest_m2m_changed(sender, **kwargs):
+def trainingrequest_m2m_changed(sender: Any, **kwargs: Any) -> None:
     """Signal receiver for TrainingRequest m2m_changed signal.
 
     The purpose of this receiver is to react on `TrainingRequest.domains` and
@@ -32,18 +34,18 @@ class WorkshopsConfig(AppConfig):
     label = "workshops"
     verbose_name = "Workshops"
 
-    def ready(self):
+    def ready(self) -> None:
         # connect m2m_changed signal for TrainingRequest.domains to calculate
         # score_auto
         TrainingRequest = self.get_model("TrainingRequest")
 
         m2m_changed.connect(
             trainingrequest_m2m_changed,
-            sender=TrainingRequest.domains.through,
+            sender=TrainingRequest.domains.through,  # type: ignore[attr-defined]
         )
 
         m2m_changed.connect(
             trainingrequest_m2m_changed,
-            sender=TrainingRequest.previous_involvement.through,
+            sender=TrainingRequest.previous_involvement.through,  # type: ignore[attr-defined]
         )
         from workshops import receivers  # noqa

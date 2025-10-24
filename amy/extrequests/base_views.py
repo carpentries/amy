@@ -12,11 +12,13 @@ from workshops.base_views import AMYCreateView
 from workshops.models import Curriculum, Tag, WorkshopRequest
 
 
-class WRFInitial:
-    other_object: WorkshopRequest | WorkshopInquiryRequest | SelfOrganisedSubmission
+class WRFInitial[_M2: SelfOrganisedSubmission | WorkshopInquiryRequest | WorkshopRequest]:
+    other_object: _M2 | None
 
     def get_initial(self) -> dict[str, Any]:
         curricula = Curriculum.objects.none()
+        if not self.other_object:
+            return {}
 
         if hasattr(self.other_object, "workshop_types"):
             curricula = self.other_object.workshop_types.all()
@@ -50,7 +52,7 @@ class WRFInitial:
             start = self.other_object.preferred_dates
             if start:
                 end = start + timedelta(days=1)
-        elif hasattr(self.other_object, "start"):
+        elif hasattr(self.other_object, "start") and hasattr(self.other_object, "end"):
             start = self.other_object.start
             end = self.other_object.end
 
@@ -74,9 +76,9 @@ class AMYCreateAndFetchObjectView[
     """AMY-based CreateView extended with fetching a different object based on
     URL parameter."""
 
-    model_other: type[_M2] | None = None
-    queryset_other: QuerySet[_M2] | None = None
-    other_object: _M2 | None = None
+    model_other: type[_M2] | None
+    queryset_other: QuerySet[_M2] | None
+    other_object: _M2 | None
     context_other_object_name = "other_object"
 
     pk_url_kwarg = "pk"
@@ -107,11 +109,11 @@ class AMYCreateAndFetchObjectView[
 
     def get_other_object(self, queryset: QuerySet[_M2] | None = None) -> _M2:
         """Similar to `get_object`, but uses other queryset."""
-        queryset = self.get_other_queryset()
+        qs = queryset if queryset else self.get_other_queryset()
         return cast(
             _M2,
             super().get_object(
-                queryset=queryset,  # type: ignore
+                queryset=qs,  # type: ignore
             ),
         )
 

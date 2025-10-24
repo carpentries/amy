@@ -1,8 +1,7 @@
 from datetime import date
 
 from fiscal.filters import MembershipFilter, MembershipTrainingsFilter
-from fiscal.models import Membership
-from workshops.models import Event, Member, MemberRole, Role, Task
+from workshops.models import Event, Member, MemberRole, Membership, Role, Task
 from workshops.tests.base import TestBase
 
 
@@ -16,7 +15,7 @@ class TestMembershipFilter(TestBase):
         self._setUpRoles()  # create the learner role
 
         self.model = Membership
-        member_role = MemberRole.objects.first()
+        member_role = MemberRole.objects.all()[0]
 
         self.membership = Membership.objects.create(
             name="Test Membership",
@@ -87,7 +86,7 @@ class TestMembershipFilter(TestBase):
 
         super().tearDown()
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
@@ -105,7 +104,7 @@ class TestMembershipFilter(TestBase):
             },
         )
 
-    def test_filter_organization_name(self):
+    def test_filter_organization_name(self) -> None:
         # Arrange
         filter_name = "organization_name"
         value = "Alpha Organization"
@@ -116,7 +115,7 @@ class TestMembershipFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_consortium(self):
+    def test_filter_consortium(self) -> None:
         # Arrange
         filter_name = "consortium"
         value = True
@@ -127,7 +126,7 @@ class TestMembershipFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_public_status(self):
+    def test_filter_public_status(self) -> None:
         # Arrange
         filter_name = "public_status"
         value = "public"
@@ -138,7 +137,7 @@ class TestMembershipFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_variant(self):
+    def test_filter_variant(self) -> None:
         # Arrange
         filter_name = "variant"
         value = "Bronze"
@@ -150,7 +149,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_contribution_type(self):
+    def test_filter_contribution_type(self) -> None:
         # Arrange
         filter_name = "contribution_type"
         value = "Financial"
@@ -162,7 +161,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_active_only(self):
+    def test_filter_active_only(self) -> None:
         # Arrange
         name = "active_only"
         value = True
@@ -174,7 +173,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_training_seats_only(self):
+    def test_filter_training_seats_only(self) -> None:
         # Arrange
         filter_name = "training_seats_only"
         value = True
@@ -186,7 +185,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_negative_remaining_seats_only(self):
+    def test_filter_negative_remaining_seats_only(self) -> None:
         # Arrange
         filter_name = "negative_remaining_seats_only"
         value = True
@@ -198,7 +197,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_order_by(self):
+    def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
         fields = self.filterset.filters[filter_name].param_map
@@ -234,7 +233,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self._setUpRoles()  # create the learner role
 
         self.model = Membership
-        member_role = MemberRole.objects.first()
+        member_role = MemberRole.objects.all()[0]
 
         self.membership = Membership.objects.create(
             name="Test Membership",
@@ -301,7 +300,7 @@ class TestMembershipTrainingsFilter(TestBase):
 
         super().tearDown()
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
@@ -315,7 +314,7 @@ class TestMembershipTrainingsFilter(TestBase):
             },
         )
 
-    def test_filter_organization_name(self):
+    def test_filter_organization_name(self) -> None:
         # Arrange
         filter_name = "organization_name"
         value = "Alpha Organization"
@@ -326,7 +325,7 @@ class TestMembershipTrainingsFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_active_only(self):
+    def test_filter_active_only(self) -> None:
         # Arrange
         name = "active_only"
         value = True
@@ -338,7 +337,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_training_seats_only(self):
+    def test_filter_training_seats_only(self) -> None:
         # Arrange
         filter_name = "training_seats_only"
         value = True
@@ -350,7 +349,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_negative_remaining_seats_only(self):
+    def test_filter_negative_remaining_seats_only(self) -> None:
         # Arrange
         filter_name = "negative_remaining_seats_only"
         value = True
@@ -362,7 +361,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_order_by(self):
+    def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
         fields = self.filterset.filters[filter_name].param_map

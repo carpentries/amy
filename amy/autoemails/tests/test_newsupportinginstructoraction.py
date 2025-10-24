@@ -40,7 +40,7 @@ class TestNewSupportingInstructorAction(TestCase):
         LC_org = Organization.objects.get(domain="librarycarpentry.org")
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=LC_org,
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -109,7 +109,7 @@ class TestNewSupportingInstructorAction(TestCase):
 
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -131,7 +131,7 @@ class TestNewSupportingInstructorAction(TestCase):
                 workshop=e,
                 workshop_main_type="SWC",
                 dates=e.human_readable_date(),
-                host=Organization.objects.first(),
+                host=Organization.objects.all()[0],
                 regional_coordinator_email=["admin-uk@carpentries.org"],
                 person=p,
                 instructor=p,
@@ -145,7 +145,7 @@ class TestNewSupportingInstructorAction(TestCase):
     def test_event_slug(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -170,7 +170,7 @@ class TestNewSupportingInstructorAction(TestCase):
     def test_all_recipients(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",

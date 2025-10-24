@@ -1,8 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from django import template
-from django.template.defaultfilters import escape
-from django.utils.safestring import mark_safe
+from django.utils.html import escape
+from django.utils.safestring import SafeString, mark_safe
 
 from workshops.models import TrainingProgress
 
@@ -10,7 +10,7 @@ register = template.Library()
 
 
 @register.simple_tag
-def progress_state_class(state):
+def progress_state_class(state: str) -> str:
     switch = {
         "n": "warning",
         "f": "danger",
@@ -21,13 +21,13 @@ def progress_state_class(state):
 
 
 @register.simple_tag
-def progress_label(progress: TrainingProgress):
+def progress_label(progress: TrainingProgress) -> SafeString:
     fmt = f"badge badge-{progress_state_class(progress.state)}"
     return mark_safe(fmt)
 
 
 @register.simple_tag
-def progress_description(progress: TrainingProgress):
+def progress_description(progress: TrainingProgress) -> str:
     # build involvement details as needed
     if progress.requirement.name == "Get Involved" and progress.involvement_type:
         involvement = "<br />"
@@ -53,13 +53,13 @@ def progress_description(progress: TrainingProgress):
 
 
 @register.simple_tag
-def checkout_deadline(start_date):
+def checkout_deadline(start_date: date) -> date:
     # we allow 90 days for checkout
     return start_date + timedelta(days=90)
 
 
 @register.simple_tag
-def welcome_instructions(date: datetime | None = None):
+def welcome_instructions(date: datetime | None = None) -> SafeString:
     """Show different Etherpad links dependent on the time of year.
 
     From January to October, show just this year's Etherpad link.

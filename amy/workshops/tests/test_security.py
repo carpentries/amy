@@ -1,10 +1,11 @@
+from typing import Any, Callable
 import unittest
 
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
-from django.urls import reverse
+from django.urls import URLPattern, URLResolver, reverse
 from django.views.generic import RedirectView, View
 from markdownx.views import ImageUploadView, MarkdownifyView
 from rest_framework.views import APIView
@@ -21,10 +22,10 @@ from workshops.utils.access import (
 )
 
 
-def get_resolved_urls(url_patterns):
+def get_resolved_urls(url_patterns: list[URLPattern | URLResolver]) -> list[URLPattern]:
     """Copy-pasted from
     http://stackoverflow.com/questions/1275486/django-how-can-i-see-a-list-of-urlpatterns
-    """  # noqa: line too long
+    """
     url_patterns_resolved = []
     for entry in url_patterns:
         if hasattr(entry, "url_patterns"):
@@ -34,7 +35,7 @@ def get_resolved_urls(url_patterns):
     return url_patterns_resolved
 
 
-def get_view_by_name(name):
+def get_view_by_name(name: str) -> Callable[[], Any]:
     views = get_resolved_urls(urls.urlpatterns)
     try:
         return next(v.callback for v in views if v.name == name)
@@ -43,7 +44,7 @@ def get_view_by_name(name):
 
 
 class TestViews(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         admins, _ = Group.objects.get_or_create(name="administrators")
@@ -119,7 +120,7 @@ class TestViews(TestBase):
         assert admins not in self.trainee.groups.all()
         assert steering_committee not in self.trainee.groups.all()
 
-    def assert_accessible(self, url, user=None):
+    def assert_accessible(self, url: str, user: str | None = None) -> None:
         if user is not None:
             self.client.login(username=user, password=user)
         response = self.client.get(url)
@@ -127,7 +128,7 @@ class TestViews(TestBase):
 
         self.assertEqual(response.status_code, 200)
 
-    def assert_inaccessible(self, url, user=None):
+    def assert_inaccessible(self, url: str, user: str | None = None) -> None:
         if user is not None:
             self.client.login(username=user, password=user)
         response = self.client.get(url)
@@ -138,14 +139,14 @@ class TestViews(TestBase):
             login_url = "{}?next={}".format(reverse("login"), url)
             self.assertRedirects(response, login_url)
 
-    def test_function_based_view_restricted_to_admins(self):
+    def test_function_based_view_restricted_to_admins(self) -> None:
         """
         Test that a view decorated with @admin_required is accessible only
         for Admins.
         """
         view_name = "admin-dashboard"
         view = get_view_by_name(view_name)
-        assert view._access_control_list == [admin_required]
+        assert view._access_control_list == [admin_required]  # type: ignore[attr-defined]
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
@@ -156,14 +157,14 @@ class TestViews(TestBase):
         self.assert_inaccessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
-    def test_function_based_view_restricted_to_authorized_users(self):
+    def test_function_based_view_restricted_to_authorized_users(self) -> None:
         """
         Test that a view decorated with @login_required is accessible
         only for Admins and Trainees.
         """
         view_name = "instructor-dashboard"
         view = get_view_by_name(view_name)
-        assert view._access_control_list == [login_required]
+        assert view._access_control_list == [login_required]  # type: ignore[attr-defined]
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
@@ -175,14 +176,14 @@ class TestViews(TestBase):
         self.assert_inaccessible(url, user=None)
 
     @unittest.expectedFailure
-    def test_function_based_view_accessible_to_unauthorized_users(self):
+    def test_function_based_view_accessible_to_unauthorized_users(self) -> None:
         """
         Test that a view decorated with @login_not_required is accessible to
         everyone.
         """
         view_name = "profileupdate_request"
         view = get_view_by_name(view_name)
-        assert view._access_control_list == [login_not_required]
+        assert view._access_control_list == [login_not_required]  # type: ignore[attr-defined]
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
@@ -193,13 +194,13 @@ class TestViews(TestBase):
         self.assert_accessible(url, user="trainee")
         self.assert_accessible(url, user=None)
 
-    def test_class_based_view_restricted_to_admins(self):
+    def test_class_based_view_restricted_to_admins(self) -> None:
         """
         Test that a view with OnlyForAdminsMixin is accessible only for Admins.
         """
         view_name = "all_workshoprequests"
         view = get_view_by_name(view_name)
-        assert OnlyForAdminsMixin in view.view_class.__mro__
+        assert OnlyForAdminsMixin in view.view_class.__mro__  # type: ignore[attr-defined]
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
@@ -210,13 +211,13 @@ class TestViews(TestBase):
         self.assert_inaccessible(url, user="trainee")
         self.assert_inaccessible(url, user=None)
 
-    def test_class_based_view_accessible_to_unauthorized_users(self):
+    def test_class_based_view_accessible_to_unauthorized_users(self) -> None:
         """
         Test that a view with LoginNotRequiredMixin is accessible to everyone.
         """
         view_name = "workshop_request"
         view = get_view_by_name(view_name)
-        assert LoginNotRequiredMixin in view.view_class.__mro__
+        assert LoginNotRequiredMixin in view.view_class.__mro__  # type: ignore[attr-defined]
         url = reverse(view_name)
 
         self.assert_accessible(url, user="superuser")
@@ -260,7 +261,7 @@ class TestViews(TestBase):
         "mandrill_tracking_webhook",
     ]
 
-    def test_all_views_have_explicit_access_control_defined(self):
+    def test_all_views_have_explicit_access_control_defined(self) -> None:
         """
         Test that all views have explicitly defined access control:
 
@@ -309,9 +310,9 @@ class TestViews(TestBase):
                         '"{}"'.format(url),
                     )
                     self.assertEqual(
-                        len(acl),
+                        len(acl),  # type: ignore[arg-type]
                         1,
-                        "You have more than one access control " "decorator defined in this view.",
+                        "You have more than one access control decorator defined in this view.",
                     )
 
                 else:  # class based view
@@ -322,7 +323,7 @@ class TestViews(TestBase):
                     if is_markdownx_view:
                         self.assertTrue(
                             acl is not None,
-                            "Markdownx views must be decorated " "with `login_required`.",
+                            "Markdownx views must be decorated with `login_required`.",
                         )
                     else:
                         self.assertTrue(
@@ -346,7 +347,7 @@ class TestViews(TestBase):
                         else:
                             assert is_view
 
-                            mixins = set(class_.__mro__)
+                            mixins = set(class_.__mro__)  # type: ignore[union-attr]
                             desired_mixins = {
                                 OnlyForAdminsMixin,
                                 LoginNotRequiredMixin,
@@ -360,7 +361,7 @@ class TestViews(TestBase):
                                 "The view {} ({}) lacks access control mixin "
                                 "and is probably accessible to every user. If "
                                 "this is what you want, use "
-                                "LoginNotRequiredMixin.".format(class_.__name__, url),
+                                "LoginNotRequiredMixin.".format(class_.__name__, url),  # type: ignore[union-attr]
                             )
                             self.assertEqual(
                                 len(found),

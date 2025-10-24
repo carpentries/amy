@@ -104,8 +104,8 @@ class BaseActionUpdateForTesting(BaseActionUpdate):
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs: Any) -> Any:
         return Event.objects.get_or_create(
             defaults=dict(
-                host=Organization.objects.first(),
-                administrator=Organization.objects.first(),
+                host=Organization.objects.all()[0],
+                administrator=Organization.objects.all()[0],
             ),
             slug="test-event",
         )[0]
@@ -132,8 +132,8 @@ class BaseActionCancelForTesting(BaseActionCancel):
     def get_generic_relation_object(self, context: dict[str, Any], **kwargs: Any) -> Any:
         return Event.objects.get_or_create(
             defaults=dict(
-                host=Organization.objects.first(),
-                administrator=Organization.objects.first(),
+                host=Organization.objects.all()[0],
+                administrator=Organization.objects.all()[0],
             ),
             slug="test-event",
         )[0]

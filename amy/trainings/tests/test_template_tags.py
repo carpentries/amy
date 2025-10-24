@@ -13,10 +13,10 @@ from workshops.templatetags.training_progress import (
 
 
 class TestProgressDescriptionTemplateTag(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.person = Person.objects.create(personal="Test", family="User", email="test@user.com")
 
-    def test_progress_description__basic(self):
+    def test_progress_description__basic(self) -> None:
         welcome, _ = TrainingRequirement.objects.get_or_create(name="Welcome Session")
         progress = TrainingProgress.objects.create(trainee=self.person, requirement=welcome, state="p")
         created = progress.created_at
@@ -26,7 +26,7 @@ class TestProgressDescriptionTemplateTag(TestCase):
         # Assert
         self.assertHTMLEqual(expected, got)
 
-    def test_progress_description__notes(self):
+    def test_progress_description__notes(self) -> None:
         welcome, _ = TrainingRequirement.objects.get_or_create(name="Welcome Session")
         progress = TrainingProgress.objects.create(
             trainee=self.person,
@@ -45,7 +45,7 @@ class TestProgressDescriptionTemplateTag(TestCase):
         # Assert
         self.assertHTMLEqual(expected, got)
 
-    def test_progress_description__get_involved(self):
+    def test_progress_description__get_involved(self) -> None:
         get_involved, _ = TrainingRequirement.objects.get_or_create(
             name="Get Involved", defaults={"involvement_required": True}
         )
@@ -67,7 +67,7 @@ class TestProgressDescriptionTemplateTag(TestCase):
         # Assert
         self.assertHTMLEqual(expected, got)
 
-    def test_progress_description__get_involved__other(self):
+    def test_progress_description__get_involved__other(self) -> None:
         get_involved, _ = TrainingRequirement.objects.get_or_create(
             name="Get Involved", defaults={"involvement_required": True}
         )
@@ -91,7 +91,7 @@ class TestProgressDescriptionTemplateTag(TestCase):
 
 
 class TestProgressLabelTemplateTag(TestCase):
-    def test_progress_labels(self):
+    def test_progress_labels(self) -> None:
         self.person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         welcome, _ = TrainingRequirement.objects.get_or_create(name="Welcome Session")
 
@@ -114,7 +114,7 @@ class TestProgressLabelTemplateTag(TestCase):
 
 
 class TestCheckoutDeadlineTemplateTag(TestCase):
-    def test_checkout_deadline(self):
+    def test_checkout_deadline(self) -> None:
         # Arrange
         start = date(2023, 7, 25)
         # Act
@@ -125,7 +125,7 @@ class TestCheckoutDeadlineTemplateTag(TestCase):
 
 
 class TestWelcomeInstructionsTemplateTag(TestCase):
-    def test_welcome_instructions__early_year(self):
+    def test_welcome_instructions__early_year(self) -> None:
         # Arrange
         date = datetime(2020, 1, 1)
 
@@ -140,7 +140,7 @@ class TestWelcomeInstructionsTemplateTag(TestCase):
         )
         self.assertHTMLEqual(expected, got)
 
-    def test_welcome_instructions__late_year(self):
+    def test_welcome_instructions__late_year(self) -> None:
         # Arrange
         date = datetime(2020, 11, 1)
 
@@ -157,7 +157,7 @@ class TestWelcomeInstructionsTemplateTag(TestCase):
         )
         self.assertHTMLEqual(expected, got)
 
-    def test_welcome_instructions__now(self):
+    def test_welcome_instructions__now(self) -> None:
         # Arrange
         date = datetime.now()
 

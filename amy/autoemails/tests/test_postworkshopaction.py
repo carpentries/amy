@@ -34,17 +34,17 @@ class TestPostWorkshopAction(TestCase):
     def testLaunchAt(self):
         e1 = Event(
             slug="test-event1",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
         )
         e2 = Event(
             slug="test-event2",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
         e3 = Event(
             slug="test-event3",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=-8),
             end=date.today() + timedelta(days=-7),
         )
@@ -81,7 +81,7 @@ class TestPostWorkshopAction(TestCase):
         # totally fake Task, Role and Event data
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="librarycarpentry.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -149,7 +149,7 @@ class TestPostWorkshopAction(TestCase):
         """Make sure `check` works for "Circuits" workshops too."""
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="librarycarpentry.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -180,7 +180,7 @@ class TestPostWorkshopAction(TestCase):
 
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -224,7 +224,7 @@ class TestPostWorkshopAction(TestCase):
                 workshop=e,
                 workshop_main_type="SWC",
                 dates=e.human_readable_date(),
-                host=Organization.objects.first(),
+                host=Organization.objects.all()[0],
                 regional_coordinator_email=["admin-uk@carpentries.org"],
                 instructors=[p2],
                 supporting_instructors=[p4],
@@ -251,7 +251,7 @@ class TestPostWorkshopAction(TestCase):
         building."""
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -309,7 +309,7 @@ class TestPostWorkshopAction(TestCase):
     def test_event_slug(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -330,7 +330,7 @@ class TestPostWorkshopAction(TestCase):
     def test_all_recipients(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",

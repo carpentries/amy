@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from django import forms
 from django.core.exceptions import ValidationError
 
@@ -9,7 +11,7 @@ from workshops.models import Person
 from .models import InstructorRecruitment, InstructorRecruitmentSignup
 
 
-class InstructorRecruitmentCreateForm(forms.ModelForm):
+class InstructorRecruitmentCreateForm(forms.ModelForm[InstructorRecruitment]):
     helper = BootstrapHelper(add_cancel_button=False, submit_label="Add sign up page")
 
     class Meta:
@@ -17,28 +19,28 @@ class InstructorRecruitmentCreateForm(forms.ModelForm):
         fields = ("priority", "notes")
 
 
-class InstructorRecruitmentAddSignupForm(forms.ModelForm):
+class InstructorRecruitmentAddSignupForm(forms.ModelForm[InstructorRecruitmentSignup]):
     helper = BootstrapHelper(add_cancel_button=False)
 
     person = forms.ModelChoiceField(
         label="Instructor",
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="instructor-lookup"),
+        widget=ModelSelect2Widget(data_view="instructor-lookup"),  # type: ignore[no-untyped-call]
     )
 
     class Meta:
         model = InstructorRecruitmentSignup
         fields = ("person", "notes")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._recruitment = kwargs.pop("recruitment", None)
         super().__init__(*args, **kwargs)
 
-    def clean_person(self) -> None:
-        person = self.cleaned_data["person"]
+    def clean_person(self) -> Person:
+        person = cast(Person, self.cleaned_data["person"])
 
         try:
-            (CommunityRole.objects.active().get(person=person, config__name="instructor"))  # type: ignore
+            (CommunityRole.objects.active().get(person=person, config__name="instructor"))
         except CommunityRole.DoesNotExist:
             raise ValidationError(f"Person {person} does not have an active Instructor Community Role")
 
@@ -48,7 +50,7 @@ class InstructorRecruitmentAddSignupForm(forms.ModelForm):
         return person
 
 
-class InstructorRecruitmentSignupUpdateForm(forms.ModelForm):
+class InstructorRecruitmentSignupUpdateForm(forms.ModelForm[InstructorRecruitmentSignup]):
     helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:

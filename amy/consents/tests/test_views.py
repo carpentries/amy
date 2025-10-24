@@ -7,11 +7,11 @@ from workshops.models import Person
 
 
 class ConsentsUpdateTest(ConsentTestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.person = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
 
-    def test_consents_update(self):
+    def test_consents_update(self) -> None:
         """
         Ensures the ConsentsUpdate view is able to show
         and save all active terms.
@@ -60,6 +60,7 @@ class ConsentsUpdateTest(ConsentTestBase):
         # Currently can only be called via redirect
         # from the PersonUpdate view. No direct consent edit view.
         person_edit_view = reverse("person_edit", kwargs={"person_id": self.person.pk})
+        assert original_term3_consent.term_option  # for mypy
         data = {
             "consents-person": self.person.pk,
             f"consents-{term1.slug}": term1_option1.pk,
@@ -72,6 +73,7 @@ class ConsentsUpdateTest(ConsentTestBase):
         # in the view and bound forms do not receive initial data.
         self.person_agree_to_terms(self.person, preexisting_required_terms)
         for consent in Consent.objects.filter(term__in=preexisting_required_terms).active():
+            assert consent.term_option  # for mypy
             data[f"consents-{consent.term.slug}"] = consent.term_option.pk
         consents_path = reverse("consents_add", kwargs={"person_id": self.person.pk})
         result = self.client.post(f"{consents_path}?next={person_edit_view}", data)

@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
 from django.urls import reverse
-from flags.views import FlaggedViewMixin
+from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
 from offering.base_views import AccountFormsetView
 from offering.filters import AccountBenefitFilter, AccountFilter, BenefitFilter
@@ -37,8 +37,8 @@ REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
 # -----------------------------------------------------------------
 
 
-class AccountList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Account]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Account]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_account"]
     template_name = "offering/account_list.html"
     queryset = Account.objects.order_by("-created_at")
@@ -46,8 +46,8 @@ class AccountList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Account]):
     filter_class = AccountFilter
 
 
-class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_account"]
     template_name = "offering/account_details.html"
     model = Account
@@ -59,8 +59,8 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
         return context
 
 
-class AccountCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountForm, Account]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountForm, Account]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.add_account"]
     template_name = "offering/account_create.html"
     form_class = AccountForm
@@ -76,8 +76,8 @@ class AccountCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountF
         return super().form_valid(form)
 
 
-class AccountUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountForm, Account]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountForm, Account]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_account", "offering.change_account"]
     template_name = "offering/account_edit.html"
     form_class = AccountForm
@@ -90,8 +90,12 @@ class AccountUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountF
         return context
 
 
-class AccountDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Account, GenericDeleteForm[Account]]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountDelete(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDeleteView[Account, GenericDeleteForm[Account]],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.delete_account"]
     model = Account
 
@@ -104,11 +108,11 @@ class AccountDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Account,
 
 class AccountOwnersUpdate(
     OnlyForAdminsMixin,
-    FlaggedViewMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
     PermissionRequiredMixin,
     AccountFormsetView[AccountOwner, AccountOwnerForm],
 ):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = [
         "offering.change_account",
         "offering.add_accountowner",
@@ -136,8 +140,8 @@ class AccountOwnersUpdate(
 # -----------------------------------------------------------------
 
 
-class BenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Benefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class BenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Benefit]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_benefit"]
     template_name = "offering/benefit_list.html"
     queryset = Benefit.objects.order_by("-created_at")
@@ -145,8 +149,8 @@ class BenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Benefit]):
     filter_class = BenefitFilter
 
 
-class BenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Benefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class BenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Benefit]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_benefit"]
     template_name = "offering/benefit_details.html"
     model = Benefit
@@ -157,8 +161,8 @@ class BenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Benefit
         return context
 
 
-class BenefitCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[BenefitForm, Benefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class BenefitCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[BenefitForm, Benefit]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.add_benefit"]
     template_name = "offering/benefit_create.html"
     form_class = BenefitForm
@@ -167,8 +171,8 @@ class BenefitCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[BenefitF
     title = "Create a new benefit"
 
 
-class BenefitUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[BenefitForm, Benefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class BenefitUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[BenefitForm, Benefit]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_benefit", "offering.change_benefit"]
     template_name = "offering/benefit_edit.html"
     form_class = BenefitForm
@@ -181,8 +185,12 @@ class BenefitUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[BenefitF
         return context
 
 
-class BenefitDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Benefit, GenericDeleteForm[Benefit]]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class BenefitDelete(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDeleteView[Benefit, GenericDeleteForm[Benefit]],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.delete_benefit"]
     model = Benefit
 
@@ -193,8 +201,8 @@ class BenefitDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Benefit,
 # -----------------------------------------------------------------
 
 
-class AccountBenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[AccountBenefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountBenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[AccountBenefit]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_accountbenefit"]
     template_name = "offering/account_benefit_list.html"
     queryset = AccountBenefit.objects.order_by("-created_at")
@@ -202,8 +210,8 @@ class AccountBenefitList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Accou
     filter_class = AccountBenefitFilter
 
 
-class AccountBenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[AccountBenefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountBenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[AccountBenefit]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_accountbenefit"]
     template_name = "offering/account_benefit_details.html"
     model = AccountBenefit
@@ -214,8 +222,12 @@ class AccountBenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[
         return context
 
 
-class AccountBenefitCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountBenefitForm, AccountBenefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountBenefitCreate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYCreateView[AccountBenefitForm, AccountBenefit],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.add_accountbenefit"]
     template_name = "offering/account_benefit_create.html"
     form_class = AccountBenefitForm
@@ -224,8 +236,12 @@ class AccountBenefitCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[A
     title = "Create a new account benefit"
 
 
-class AccountBenefitUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountBenefitForm, AccountBenefit]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class AccountBenefitUpdate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYUpdateView[AccountBenefitForm, AccountBenefit],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_accountbenefit", "offering.change_accountbenefit"]
     template_name = "offering/account_benefit_edit.html"
     form_class = AccountBenefitForm
@@ -239,9 +255,11 @@ class AccountBenefitUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[A
 
 
 class AccountBenefitDelete(
-    OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[AccountBenefit, GenericDeleteForm[AccountBenefit]]
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDeleteView[AccountBenefit, GenericDeleteForm[AccountBenefit]],
 ):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.delete_accountbenefit"]
     model = AccountBenefit
 
@@ -252,8 +270,8 @@ class AccountBenefitDelete(
 # -----------------------------------------------------------------
 
 
-class EventCategoryList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[EventCategory]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class EventCategoryList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[EventCategory]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_eventcategory"]
     template_name = "offering/event_category_list.html"
     queryset = EventCategory.objects.order_by("name")
@@ -261,8 +279,8 @@ class EventCategoryList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[EventC
     filter_class = EventCategoryFilter
 
 
-class EventCategoryDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[EventCategory]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class EventCategoryDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[EventCategory]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_eventcategory"]
     template_name = "offering/event_category_details.html"
     model = EventCategory
@@ -273,8 +291,12 @@ class EventCategoryDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[E
         return context
 
 
-class EventCategoryCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[EventCategoryForm, EventCategory]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class EventCategoryCreate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYCreateView[EventCategoryForm, EventCategory],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.add_eventcategory"]
     template_name = "offering/event_category_create.html"
     form_class = EventCategoryForm
@@ -283,8 +305,12 @@ class EventCategoryCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Ev
     title = "Create a new event category"
 
 
-class EventCategoryUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[EventCategoryForm, EventCategory]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class EventCategoryUpdate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYUpdateView[EventCategoryForm, EventCategory],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.view_eventcategory", "offering.change_eventcategory"]
     template_name = "offering/event_category_edit.html"
     form_class = EventCategoryForm
@@ -298,9 +324,11 @@ class EventCategoryUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[Ev
 
 
 class EventCategoryDelete(
-    OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[EventCategory, GenericDeleteForm[EventCategory]]
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDeleteView[EventCategory, GenericDeleteForm[EventCategory]],
 ):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.delete_eventcategory"]
     model = EventCategory
 

@@ -10,7 +10,7 @@ from workshops.tests.base import TestBase
 class TestEmptyDuplicates(TestBase):
     """Tests to return empty context variables when no matches found."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
 
         self.harry = Person.objects.create(
@@ -40,7 +40,7 @@ class TestEmptyDuplicates(TestBase):
 
         self.url = reverse("duplicate_persons")
 
-    def test_switched_names_persons(self):
+    def test_switched_names_persons(self) -> None:
         """Ensure none of the above persons are in `switched_persons`."""
         rv = self.client.get(self.url)
         switched = rv.context["switched_persons"]
@@ -49,7 +49,7 @@ class TestEmptyDuplicates(TestBase):
         self.assertNotIn(self.batman, switched)
         self.assertNotIn(self.ironman, switched)
 
-    def test_duplicate_persons(self):
+    def test_duplicate_persons(self) -> None:
         """Ensure none of the above persons are in `duplicate_persons`."""
         rv = self.client.get(self.url)
         switched = rv.context["duplicate_persons"]
@@ -60,7 +60,7 @@ class TestEmptyDuplicates(TestBase):
 
 
 class TestFindingDuplicates(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
 
         self.harry = Person.objects.create(
@@ -90,7 +90,7 @@ class TestFindingDuplicates(TestBase):
 
         self.url = reverse("duplicate_persons")
 
-    def test_switched_names_persons(self):
+    def test_switched_names_persons(self) -> None:
         rv = self.client.get(self.url)
         switched = rv.context["switched_persons"]
         self.assertIn(self.harry, switched)
@@ -98,7 +98,7 @@ class TestFindingDuplicates(TestBase):
         self.assertNotIn(self.ron, switched)
         self.assertNotIn(self.ron2, switched)
 
-    def test_duplicate_persons(self):
+    def test_duplicate_persons(self) -> None:
         rv = self.client.get(self.url)
         duplicated = rv.context["duplicate_persons"]
         self.assertIn(self.ron, duplicated)
@@ -108,7 +108,7 @@ class TestFindingDuplicates(TestBase):
 
 
 class TestFindingReviewedDuplicates(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
 
         self.harry = Person.objects.create(
@@ -139,7 +139,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.url = reverse("duplicate_persons")
         self.review_url = reverse("review_duplicate_persons")
 
-    def test_finding_unreviewed_duplicates(self):
+    def test_finding_unreviewed_duplicates(self) -> None:
         rv = self.client.get(self.url)
         switched = rv.context["switched_persons"]
         duplicates = rv.context["duplicate_persons"]
@@ -159,7 +159,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertNotIn(self.harry, duplicates)
         self.assertNotIn(self.potter, duplicates)
 
-    def test_not_finding_reviewed_duplicates(self):
+    def test_not_finding_reviewed_duplicates(self) -> None:
         """Ensure records with `last_changed_at` timestamp close to their
         `duplication_reviewed_on` timestamp don't show up in the results."""
 
@@ -191,7 +191,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertNotIn(self.harry, duplicates)
         self.assertNotIn(self.potter, duplicates)
 
-    def test_finding_duplicates_changed_soon_after_reviewed(self):
+    def test_finding_duplicates_changed_soon_after_reviewed(self) -> None:
         # make sure after changing the timestamp difference between
         # `last_updated_at` and `duplication_reviewed_on` to couple minutes,
         # the records show up
@@ -220,7 +220,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertNotIn(self.harry, duplicates)
         self.assertNotIn(self.potter, duplicates)
 
-    def test_finding_reviewed_changed_duplicates(self):
+    def test_finding_reviewed_changed_duplicates(self) -> None:
         # modify last_updated_at and duplication_reviewed_on
         # so that these records don't show up in results
         change_timestamp = timezone.now()
@@ -253,7 +253,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertNotIn(self.harry, duplicates)
         self.assertNotIn(self.potter, duplicates)
 
-    def test_not_finding_partially_reviewed_duplicates(self):
+    def test_not_finding_partially_reviewed_duplicates(self) -> None:
         """Ensure that if some records from the duplicated/switched
         names pair don't show up in the results, the other records won't
         either."""
@@ -286,7 +286,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertNotIn(self.harry, duplicates)
         self.assertNotIn(self.potter, duplicates)
 
-    def test_reviewing_persons(self):
+    def test_reviewing_persons(self) -> None:
         self.assertFalse(self.harry.duplication_reviewed_on)
         self.assertFalse(self.ron.duplication_reviewed_on)
 

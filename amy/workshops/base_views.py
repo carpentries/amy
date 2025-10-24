@@ -218,7 +218,7 @@ class AMYListView(ListView[_M]):
     queryset: QuerySet[_M] | None = None
     title: str | None = None
 
-    def get_filter_data(self) -> QueryDict:
+    def get_filter_data(self) -> QueryDict | dict[str, Any]:
         """Datasource for the filter."""
         return self.request.GET
 

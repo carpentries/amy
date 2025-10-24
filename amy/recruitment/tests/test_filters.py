@@ -49,7 +49,7 @@ class TestInstructorRecruitmentFilter(TestCase):
 
     def test_assigned_to_filter_choices(self) -> None:
         # Arrange
-        event = Event.objects.create(slug="test-event", host=Organization.objects.first())
+        event = Event.objects.create(slug="test-event", host=Organization.objects.all()[0])
         person = Person.objects.create(username="test_user")
         InstructorRecruitment.objects.create(event=event, assigned_to=person)
 
@@ -61,7 +61,7 @@ class TestInstructorRecruitmentFilter(TestCase):
         # Assert
         self.assertEqual(list(choices), [person])
 
-    def test_invalid_values_for_online_inperson(self):
+    def test_invalid_values_for_online_inperson(self) -> None:
         # Arrange
         test_data = [
             "test",
@@ -77,7 +77,7 @@ class TestInstructorRecruitmentFilter(TestCase):
                 with self.assertRaises(ValidationError):
                     field.validate(value)
 
-    def test_valid_values_for_online_inperson(self):
+    def test_valid_values_for_online_inperson(self) -> None:
         # Arrange
         test_data = [
             "",
@@ -93,7 +93,7 @@ class TestInstructorRecruitmentFilter(TestCase):
                 # Assert no exception
                 field.validate(value)
 
-    def test_invalid_values_for_order_by(self):
+    def test_invalid_values_for_order_by(self) -> None:
         # Arrange
         test_data = [
             "event_start",  # single _ instead of double __
@@ -111,7 +111,7 @@ class TestInstructorRecruitmentFilter(TestCase):
                 with self.assertRaises(ValidationError):
                     field.validate(value)
 
-    def test_valid_values_for_order_by(self):
+    def test_valid_values_for_order_by(self) -> None:
         # Arrange
         test_data = [
             "",
@@ -128,7 +128,7 @@ class TestInstructorRecruitmentFilter(TestCase):
                 # Assert no exception
                 field.validate(value)
 
-    def test_filter_online_inperson__online(self):
+    def test_filter_online_inperson__online(self) -> None:
         # Arrange
         qs_mock = MagicMock()
         filterset = InstructorRecruitmentFilter({})
@@ -139,7 +139,7 @@ class TestInstructorRecruitmentFilter(TestCase):
         qs_mock.filter.assert_called_once_with(event__tags__name="online")
         qs_mock.exclude.assert_not_called()
 
-    def test_filter_online_inperson__inperson(self):
+    def test_filter_online_inperson__inperson(self) -> None:
         # Arrange
         qs_mock = MagicMock()
         filterset = InstructorRecruitmentFilter({})
@@ -150,7 +150,7 @@ class TestInstructorRecruitmentFilter(TestCase):
         qs_mock.filter.assert_not_called()
         qs_mock.exclude.assert_called_once_with(event__tags__name="online")
 
-    def test_filter_online_inperson__other_value(self):
+    def test_filter_online_inperson__other_value(self) -> None:
         # Arrange
         qs_mock = MagicMock()
         filterset = InstructorRecruitmentFilter({})

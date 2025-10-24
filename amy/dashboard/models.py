@@ -20,7 +20,7 @@ class Criterium(models.Model):
         verbose_name = "Notification Criterium"
         verbose_name_plural = "Notification Criteria"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Criterium {name} ({email})".format(name=self.name, email=self.email)
 
 
@@ -38,5 +38,5 @@ class Continent(models.Model):
         verbose_name = "Continent"
         verbose_name_plural = "Continents"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Continent {name}".format(name=self.name)

@@ -53,7 +53,7 @@ class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase)
                 slug="event1",
                 start=date(2020, 10, 31),
                 end=date(2020, 11, 1),
-                host=Organization.objects.first(),
+                host=Organization.objects.all()[0],
             )
             self.wr = WorkshopRequest.objects.create(event=self.event, **kwargs)
         else:
@@ -138,7 +138,7 @@ class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase)
 
         # 1 new rqjob
         self.assertEqual(RQJob.objects.count(), 1)
-        rqjob = RQJob.objects.first()
+        rqjob = RQJob.objects.all()[0]
 
         # ensure it's the same job
         self.assertEqual(job.get_id(), rqjob.job_id)

@@ -11,12 +11,12 @@ from workshops.tests.base import TestBase
 class TestTrainingRequestUpdateForm(TestBase):
     INVALID_MEMBER_CODE_ERROR = "This code is invalid."
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpRoles()
         self.request = create_training_request(state="p", person=None, open_review=False)
 
-    def setUpMembership(self):
+    def setUpMembership(self) -> None:
         self.membership = Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
@@ -28,7 +28,7 @@ class TestTrainingRequestUpdateForm(TestBase):
             inhouse_instructor_training_seats=1,
         )
 
-    def setUpUsedSeats(self):
+    def setUpUsedSeats(self) -> None:
         # set up some prior seat usage
         super().setUp()
         self._setUpTags()
@@ -51,7 +51,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
-    def test_member_code_validation__not_enforced(self):
+    def test_member_code_validation__not_enforced(self) -> None:
         """Invalid code should pass if enforcement is not enabled."""
         # Arrange
         data = {
@@ -67,7 +67,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_valid(self):
+    def test_member_code_validation__code_valid(self) -> None:
         """Valid member code should pass."""
         # Arrange
         self.setUpMembership()
@@ -84,7 +84,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_invalid(self):
+    def test_member_code_validation__code_invalid(self) -> None:
         """Invalid member code should not pass."""
         # Arrange
         data = {
@@ -100,7 +100,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertContains(rv, "No membership found for code &quot;invalid&quot;.")
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_inactive_early(self):
+    def test_member_code_validation__code_inactive_early(self) -> None:
         """Code used >90 days before membership start date should not pass."""
         # Arrange
         self.setUpMembership()
@@ -123,7 +123,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_inactive_late(self):
+    def test_member_code_validation__code_inactive_late(self) -> None:
         """Code used >90 days after membership end date should not pass."""
         # Arrange
         self.setUpMembership()
@@ -146,7 +146,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_no_seats_remaining(self):
+    def test_member_code_validation__code_no_seats_remaining(self) -> None:
         """Code with no seats remaining should not pass."""
         # Arrange
         self.setUpMembership()
@@ -164,7 +164,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertContains(rv, "Membership has no training seats remaining.")
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_only_public_seats_remaining(self):
+    def test_member_code_validation__code_only_public_seats_remaining(self) -> None:
         """Code with only public seats remaining should pass."""
         # Arrange
         self.setUpMembership()
@@ -183,7 +183,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_only_inhouse_seats_remaining(self):
+    def test_member_code_validation__code_only_inhouse_seats_remaining(self) -> None:
         """Code with only inhouse seats remaining should pass."""
         # Arrange
         self.setUpMembership()
@@ -202,7 +202,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_invalid_override(self):
+    def test_member_code_validation__code_invalid_override(self) -> None:
         """Invalid member code should be accepted when the override is ticked."""
         # Arrange
         data = {
@@ -219,7 +219,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_valid_override(self):
+    def test_member_code_validation__code_valid_override(self) -> None:
         """Override should be quietly hidden if a valid code is used."""
         # Arrange
         self.setUpMembership()
@@ -237,7 +237,7 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_valid_override_full_request(self):
+    def test_member_code_validation__code_valid_override_full_request(self) -> None:
         """Override should be quietly changed to False if a valid code is used
         in a successful submission."""
         # Arrange

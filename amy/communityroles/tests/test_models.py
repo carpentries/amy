@@ -14,13 +14,13 @@ from workshops.models import Award, Badge, Person
 
 
 class TestCommunityRoleConfigModel(TestCase):
-    def test_str(self):
+    def test_str(self) -> None:
         # Arrange
         instance = CommunityRoleConfig(
             name="test",
             display_name="Test Role",
             link_to_award=True,
-            award_badge_limit=Badge.objects.first(),
+            award_badge_limit=Badge.objects.all()[0],
             link_to_membership=True,
             additional_url=True,
             generic_relation_content_type=ContentType.objects.get_for_model(Badge),
@@ -32,7 +32,7 @@ class TestCommunityRoleConfigModel(TestCase):
 
 
 class TestCommunityRoleInactivationModel(TestCase):
-    def test_str(self):
+    def test_str(self) -> None:
         # Arrange
         instance = CommunityRoleInactivation(
             name="test inactivation",
@@ -119,7 +119,7 @@ class TestCommunityRoleQuery(TestCase):
 
 
 class TestCommunityRoleModel(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.config = CommunityRoleConfig.objects.create(
             name="test",
             display_name="Test Role",
@@ -137,7 +137,7 @@ class TestCommunityRoleModel(TestCase):
             person=self.person,
         )
 
-    def test_str(self):
+    def test_str(self) -> None:
         # Act
         representation = str(self.community_role)
         # Assert
@@ -146,7 +146,7 @@ class TestCommunityRoleModel(TestCase):
             'Community Role "Test Role" for Test Family <test.person@example.org>',
         )
 
-    def test_get_absolute_url(self):
+    def test_get_absolute_url(self) -> None:
         # Arrange
         self.community_role.save()
         # Act
@@ -154,7 +154,7 @@ class TestCommunityRoleModel(TestCase):
         # Assert
         self.assertEqual(url, reverse("communityrole_details", args=[self.community_role.pk]))
 
-    def test_is_active(self):
+    def test_is_active(self) -> None:
         # Arrange
         person = Person(personal="Test", family="User", email="test@user.com")
         config = CommunityRoleConfig(
@@ -197,12 +197,12 @@ class TestCommunityRoleModel(TestCase):
             (None, None, today, False),
             (None, None, yesterday, False),
         ]
-        for inactivation, start, end, expected in data:
-            with self.subTest(inactivation=inactivation, start=start, end=end):
+        for inactivation_, start, end, expected in data:
+            with self.subTest(inactivation=inactivation_, start=start, end=end):
                 community_role = CommunityRole(
                     config=config,
                     person=person,
-                    inactivation=inactivation,
+                    inactivation=inactivation_,
                     start=start,
                     end=end,
                 )

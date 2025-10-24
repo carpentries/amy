@@ -25,8 +25,8 @@ from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
-from flags.sources import get_flags
-from flags.views import FlaggedViewMixin
+from flags.sources import get_flags  # type: ignore[import-untyped]
+from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
 from communityroles.models import CommunityRole
 from consents.forms import TermBySlugsForm
@@ -351,9 +351,12 @@ class GetInvolvedDeleteView(LoginRequiredMixin, AMYDeleteView[TrainingProgress, 
 
 
 class UpcomingTeachingOpportunitiesList(
-    LoginRequiredMixin, FlaggedViewMixin, ConditionallyEnabledMixin, AMYListView[InstructorRecruitment]
+    LoginRequiredMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    ConditionallyEnabledMixin,
+    AMYListView[InstructorRecruitment],
 ):
-    flag_name = "INSTRUCTOR_RECRUITMENT"  # type: ignore
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Upcoming Teaching Opportunities"
     template_name = "dashboard/upcoming_teaching_opportunities.html"
@@ -424,11 +427,11 @@ class UpcomingTeachingOpportunitiesList(
 
 class SignupForRecruitment(
     LoginRequiredMixin,
-    FlaggedViewMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
     ConditionallyEnabledMixin,
     AMYCreateAndFetchObjectView[InstructorRecruitmentSignup, InstructorRecruitment, SignupForRecruitmentForm],
 ):
-    flag_name = "INSTRUCTOR_RECRUITMENT"  # type: ignore
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitment",
         "recruitment.add_instructorrecruitmentsignup",
@@ -540,12 +543,12 @@ class SignupForRecruitment(
 
 class ResignFromRecruitment(
     LoginRequiredMixin,
-    FlaggedViewMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
     ConditionallyEnabledMixin,
     SingleObjectMixin[InstructorRecruitmentSignup],
     View,
 ):
-    flag_name = "INSTRUCTOR_RECRUITMENT"  # type: ignore
+    flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = [
         "recruitment.view_instructorrecruitmentsignup",
         "recruitment.delete_instructorrecruitmentsignup",
@@ -722,7 +725,7 @@ class AllFeatureFlags(ConditionallyEnabledMixin, LoginRequiredMixin, TemplateVie
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        flags = cast(dict[str, Any], get_flags(request=self.request))  # type: ignore[no-untyped-call]
+        flags = cast(dict[str, Any], get_flags(request=self.request))
         context["feature_flags"] = sorted(flags.values(), key=lambda x: x.name)
         context["title"] = "Feature flags"
         return context

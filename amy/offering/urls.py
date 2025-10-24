@@ -9,12 +9,12 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.AccountList.as_view(),  # type: ignore
+                    views.AccountList.as_view(),
                     name="account-list",
                 ),
                 path(
                     "create/",
-                    views.AccountCreate.as_view(),  # type: ignore
+                    views.AccountCreate.as_view(),
                     name="account-create",
                 ),
             ]
@@ -26,22 +26,22 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.AccountDetails.as_view(),  # type: ignore
+                    views.AccountDetails.as_view(),
                     name="account-details",
                 ),
                 path(
                     "edit/",
-                    views.AccountUpdate.as_view(),  # type: ignore
+                    views.AccountUpdate.as_view(),
                     name="account-update",
                 ),
                 path(
                     "delete/",
-                    views.AccountDelete.as_view(),  # type: ignore
+                    views.AccountDelete.as_view(),
                     name="account-delete",
                 ),
                 path(
                     "owners/",
-                    views.AccountOwnersUpdate.as_view(),  # type: ignore
+                    views.AccountOwnersUpdate.as_view(),
                     name="account-owners-update",
                 ),
             ]
@@ -53,12 +53,12 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.BenefitList.as_view(),  # type: ignore
+                    views.BenefitList.as_view(),
                     name="benefit-list",
                 ),
                 path(
                     "create/",
-                    views.BenefitCreate.as_view(),  # type: ignore
+                    views.BenefitCreate.as_view(),
                     name="benefit-create",
                 ),
             ]
@@ -70,17 +70,17 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.BenefitDetails.as_view(),  # type: ignore
+                    views.BenefitDetails.as_view(),
                     name="benefit-details",
                 ),
                 path(
                     "edit/",
-                    views.BenefitUpdate.as_view(),  # type: ignore
+                    views.BenefitUpdate.as_view(),
                     name="benefit-update",
                 ),
                 path(
                     "delete/",
-                    views.BenefitDelete.as_view(),  # type: ignore
+                    views.BenefitDelete.as_view(),
                     name="benefit-delete",
                 ),
             ]
@@ -92,12 +92,12 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.AccountBenefitList.as_view(),  # type: ignore
+                    views.AccountBenefitList.as_view(),
                     name="account-benefit-list",
                 ),
                 path(
                     "create/",
-                    views.AccountBenefitCreate.as_view(),  # type: ignore
+                    views.AccountBenefitCreate.as_view(),
                     name="account-benefit-create",
                 ),
             ]
@@ -109,17 +109,17 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.AccountBenefitDetails.as_view(),  # type: ignore
+                    views.AccountBenefitDetails.as_view(),
                     name="account-benefit-details",
                 ),
                 path(
                     "edit/",
-                    views.AccountBenefitUpdate.as_view(),  # type: ignore
+                    views.AccountBenefitUpdate.as_view(),
                     name="account-benefit-update",
                 ),
                 path(
                     "delete/",
-                    views.AccountBenefitDelete.as_view(),  # type: ignore
+                    views.AccountBenefitDelete.as_view(),
                     name="account-benefit-delete",
                 ),
             ]
@@ -131,12 +131,12 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.EventCategoryList.as_view(),  # type: ignore
+                    views.EventCategoryList.as_view(),
                     name="event-category-list",
                 ),
                 path(
                     "create/",
-                    views.EventCategoryCreate.as_view(),  # type: ignore
+                    views.EventCategoryCreate.as_view(),
                     name="event-category-create",
                 ),
             ]
@@ -148,17 +148,17 @@ urlpatterns = [
             [
                 path(
                     "",
-                    views.EventCategoryDetails.as_view(),  # type: ignore
+                    views.EventCategoryDetails.as_view(),
                     name="event-category-details",
                 ),
                 path(
                     "edit/",
-                    views.EventCategoryUpdate.as_view(),  # type: ignore
+                    views.EventCategoryUpdate.as_view(),
                     name="event-category-update",
                 ),
                 path(
                     "delete/",
-                    views.EventCategoryDelete.as_view(),  # type: ignore
+                    views.EventCategoryDelete.as_view(),
                     name="event-category-delete",
                 ),
             ]

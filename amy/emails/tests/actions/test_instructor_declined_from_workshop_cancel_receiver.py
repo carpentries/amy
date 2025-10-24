@@ -203,7 +203,7 @@ class TestInstructorDeclinedFromWorkshopCancelIntegration(TestBase):
         self._setUpAdministrators()
         self._setUpUsersAndLogin()
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create_user(  # type: ignore
+        person = Person.objects.create_user(
             username="test_test",
             personal="Test",
             family="User",

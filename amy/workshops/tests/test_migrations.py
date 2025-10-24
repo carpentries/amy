@@ -4,7 +4,7 @@ from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
 
 class BaseMigrationTestCase(MigratorTestCase):
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepare some data before the migration."""
         # create some Persons
         Person = self.old_state.apps.get_model("workshops", "Person")
@@ -56,7 +56,7 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
     migrate_from = ("workshops", "0258_remove_trainingprogress_evaluated_by")
     migrate_to = ("workshops", "0259_remove_deprecated_training_requirements")
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepare some data before the migration."""
         super().prepare()
 
@@ -80,7 +80,7 @@ class TestWorkshops0259ExistingRequirements(BaseMigrationTestCase):
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=demo)
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=contribution)
 
-    def test_workshops_0259_existing_requirements(self):
+    def test_workshops_0259_existing_requirements(self) -> None:
         # test that deprecated requirements have been removed
 
         TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
@@ -119,7 +119,7 @@ class TestWorkshops0259NewRequirements(BaseMigrationTestCase):
     migrate_from = ("workshops", "0258_remove_trainingprogress_evaluated_by")
     migrate_to = ("workshops", "0259_remove_deprecated_training_requirements")
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepare some data before the migration."""
         super().prepare()
 
@@ -134,7 +134,7 @@ class TestWorkshops0259NewRequirements(BaseMigrationTestCase):
         TrainingProgress.objects.create(trainee=self.ironman, requirement=dc_demo)
         TrainingProgress.objects.create(trainee=self.ironman, requirement=lc_homework)
 
-    def test_workshops_0259_new_requirements(self):
+    def test_workshops_0259_new_requirements(self) -> None:
         TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
         TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
 
@@ -164,7 +164,7 @@ class TestWorkshops0259Rollback(BaseMigrationTestCase):
     migrate_from = ("workshops", "0259_remove_deprecated_training_requirements")
     migrate_to = ("workshops", "0258_remove_trainingprogress_evaluated_by")
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepare some data before the migration."""
         super().prepare()
 
@@ -174,7 +174,7 @@ class TestWorkshops0259Rollback(BaseMigrationTestCase):
         welcome = TrainingRequirement.objects.get(name="Welcome Session")
         TrainingProgress.objects.create(trainee=self.ironman, requirement=welcome)
 
-    def test_workshops_0259_rollback(self):
+    def test_workshops_0259_rollback(self) -> None:
         TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
         TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
 
@@ -199,7 +199,7 @@ class TestWorkshops0261(BaseMigrationTestCase):
     migrate_from = ("workshops", "0260_add_involvement_types")
     migrate_to = ("workshops", "0261_migrate_lesson_contribution_to_get_involved")
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepare some data before the migration."""
         super().prepare()
 
@@ -219,7 +219,7 @@ class TestWorkshops0261(BaseMigrationTestCase):
             notes="Some test notes",
         )
 
-    def test_workshops_0261(self):
+    def test_workshops_0261(self) -> None:
         TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
         TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
         Involvement = self.new_state.apps.get_model("trainings", "Involvement")
@@ -262,7 +262,7 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
     migrate_from = ("workshops", "0261_migrate_lesson_contribution_to_get_involved")
     migrate_to = ("workshops", "0260_add_involvement_types")
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepare some data before the migration."""
         super().prepare()
 
@@ -284,7 +284,7 @@ class TestWorkshops0261Rollback(BaseMigrationTestCase):
             notes="Some test notes",
         )
 
-    def test_workshops_0261_rollback(self):
+    def test_workshops_0261_rollback(self) -> None:
         TrainingRequirement = self.new_state.apps.get_model("workshops", "TrainingRequirement")
         TrainingProgress = self.new_state.apps.get_model("workshops", "TrainingProgress")
         Involvement = self.new_state.apps.get_model("trainings", "Involvement")
@@ -325,7 +325,7 @@ class TestWorkshops0263Rollback(MigratorTestCase):
         "0262_alter_trainingrequest_training_completion_agreement",
     )
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Prepare some data before the migration."""
         # create some requests
         WorkshopRequest = self.old_state.apps.get_model("workshops", "WorkshopRequest")
@@ -338,7 +338,7 @@ class TestWorkshops0263Rollback(MigratorTestCase):
             travel_expences_agreement=True,
         )
 
-    def test_workshops_0263_rollback(self):
+    def test_workshops_0263_rollback(self) -> None:
         """Ensure the migration can be rolled back without an error."""
         WorkshopRequest = self.new_state.apps.get_model("workshops", "WorkshopRequest")
         request = WorkshopRequest.objects.get(location="London")

@@ -1,10 +1,11 @@
 import datetime
+from typing import Any
 
 from django.db import models, transaction
 from django.urls import reverse
 from django_countries.fields import CountryField
 
-from workshops.consts import FEE_DETAILS_URL
+from workshops.consts import FEE_DETAILS_URL, STR_LONGEST
 from workshops.mixins import (
     AssignmentMixin,
     COCAgreementMixin,
@@ -16,7 +17,6 @@ from workshops.mixins import (
     StateMixin,
 )
 from workshops.models import (
-    STR_LONGEST,
     AcademicLevel,
     CommonRequest,
     ComputingExperienceLevel,
@@ -54,11 +54,11 @@ class DataVariant(models.Model):
             "id",
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
     @transaction.atomic
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """When saving with `unknown=True`, update all other records with this
         parameter to `unknown=False`. This helps keeping only one record with
         `unknown=True` in the database - a specific case of uniqueness."""
@@ -345,7 +345,7 @@ class WorkshopInquiryRequest(
         null=False,
         blank=True,
         default="",
-        choices=(UNSURE_CHOICE,) + CommonRequest._meta.get_field("public_event").choices,
+        choices=(UNSURE_CHOICE,) + CommonRequest.PUBLIC_EVENT_CHOICES,
         verbose_name=CommonRequest._meta.get_field("public_event").verbose_name,
         help_text=CommonRequest._meta.get_field("public_event").help_text,
     )
@@ -353,7 +353,7 @@ class WorkshopInquiryRequest(
     class Meta:
         ordering = ["created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ("Workshop inquiry ({institution}, {personal} {family}) - {state}").format(
             institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
@@ -361,20 +361,20 @@ class WorkshopInquiryRequest(
             state=self.get_state_display(),
         )
 
-    def dates(self):
+    def dates(self) -> str:
         if self.preferred_dates:
             return "{:%Y-%m-%d}".format(self.preferred_dates)
         else:
             return self.other_preferred_dates
 
-    def preferred_dates_too_soon(self):
+    def preferred_dates_too_soon(self) -> bool:
         # set cutoff date at 2 months
         cutoff = datetime.timedelta(days=2 * 30)
         if self.preferred_dates:
             return (self.preferred_dates - self.created_at.date()) < cutoff
         return False
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("workshopinquiry_details", args=[self.id])
 
 
@@ -475,7 +475,7 @@ class SelfOrganisedSubmission(
         verbose_name_plural = "Self-Organised Submissions"
         ordering = ["created_at"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ("Self-Organised Submission ({institution}, {personal} {family}) - {state}").format(
             institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
@@ -483,5 +483,5 @@ class SelfOrganisedSubmission(
             state=self.get_state_display(),
         )
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("selforganisedsubmission_details", args=[self.id])

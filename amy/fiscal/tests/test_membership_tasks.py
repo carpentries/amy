@@ -7,27 +7,27 @@ from workshops.tests.base import TestBase
 
 
 class TestMembershipTaskFormLayout(TestBase):
-    def test_main_helper_layout(self):
+    def test_main_helper_layout(self) -> None:
         form = MembershipTaskForm()
 
         self.assertEqual(
-            list(form.helper.layout),
+            list(form.helper.layout),  # type: ignore[arg-type]
             ["membership", "person", "role", "EDITABLE", "id", "DELETE"],
         )
 
-    def test_empty_helper_layout(self):
+    def test_empty_helper_layout(self) -> None:
         form = MembershipTaskForm()
 
-        self.assertEqual(len(form.helper_empty_form.layout), 5)
+        self.assertEqual(len(form.helper_empty_form.layout), 5)  # type: ignore[arg-type]
         self.assertEqual(
-            list(form.helper_empty_form.layout)[:-1],
+            list(form.helper_empty_form.layout)[:-1],  # type: ignore[arg-type]
             ["membership", "person", "role", "id"],
         )
-        self.assertEqual(form.helper_empty_form.layout[-1].fields, ["DELETE"])
+        self.assertEqual(form.helper_empty_form.layout[-1].fields, ["DELETE"])  # type: ignore[index]
 
 
 class TestMembershipTasks(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
 
@@ -40,9 +40,9 @@ class TestMembershipTasks(TestBase):
             public_instructor_training_seats=0,
             additional_public_instructor_training_seats=0,
         )
-        self.membership_person_role = MembershipPersonRole.objects.first()
+        self.membership_person_role = MembershipPersonRole.objects.all()[0]
 
-    def test_adding_new_tasks(self):
+    def test_adding_new_tasks(self) -> None:
         self.assertEqual(self.membership.membershiptask_set.count(), 0)
         data = {
             "form-TOTAL_FORMS": 2,
@@ -70,7 +70,7 @@ class TestMembershipTasks(TestBase):
         self.assertEqual(self.membership.membershiptask_set.count(), 2)
         self.assertEqual(list(self.membership.persons.all()), [self.hermione, self.harry])
 
-    def test_removing_tasks(self):
+    def test_removing_tasks(self) -> None:
         mt1 = MembershipTask.objects.create(
             person=self.hermione,
             membership=self.membership,
@@ -110,7 +110,7 @@ class TestMembershipTasks(TestBase):
 
         self.assertEqual(list(self.membership.persons.all()), [])
 
-    def test_mix_adding_removing_tasks(self):
+    def test_mix_adding_removing_tasks(self) -> None:
         mt1 = MembershipTask.objects.create(
             person=self.hermione,
             membership=self.membership,

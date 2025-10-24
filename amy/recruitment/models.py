@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Annotated, TypedDict
 
 from django.db import models
 from django.db.models import (
@@ -13,6 +14,7 @@ from django.db.models import (
     When,
 )
 from django.urls import reverse
+from django_stubs_ext import Annotations
 from reversion import revisions as reversion
 
 from workshops.mixins import AssignmentMixin, CreatedUpdatedMixin, StateMixin
@@ -25,8 +27,16 @@ class RecruitmentPriority(models.IntegerChoices):
     HIGH = 3
 
 
-class InstructorRecruitmentManager(models.Manager):
-    def annotate_with_priority(self) -> QuerySet["InstructorRecruitment"]:
+class InstructorRecruitmentPriorityAnnotation(TypedDict):
+    online_tag_exists: bool
+    automatic_priority: int
+    calculated_priority: int
+
+
+class InstructorRecruitmentManager(models.Manager["InstructorRecruitment"]):
+    def annotate_with_priority(
+        self,
+    ) -> QuerySet[Annotated["InstructorRecruitment", Annotations[InstructorRecruitmentPriorityAnnotation]]]:
         today = date.today()
         cutoff_low_online = today + timedelta(days=60)
         cutoff_medium_online = today + timedelta(days=30)
@@ -93,10 +103,10 @@ class InstructorRecruitment(CreatedUpdatedMixin, AssignmentMixin, models.Model):
         blank=True,
     )
 
-    def get_absolute_url(self):
+    def get_absolute_url(self) -> str:
         return reverse("instructorrecruitment_details", kwargs={"pk": self.pk})
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Instructor Recruitment Process ({self.get_status_display()}) for " f"event {self.event.slug}"
 
     @staticmethod
