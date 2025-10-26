@@ -1,4 +1,7 @@
 from datetime import datetime, timedelta
+from typing import Any
+
+from django.utils.datastructures import MultiValueDict
 
 from dashboard.models import Continent
 from extrequests.filters import TrainingRequestFilter, WorkshopRequestFilter
@@ -62,7 +65,7 @@ class TestTrainingRequestFilter(TestBase):
         self.request_ironman = TrainingRequest.objects.create(
             person=self.ironman,
             review_process="preapproved",
-            member_code=self.membership.registration_code,
+            member_code=self.membership.registration_code or "",
             eventbrite_url="https://www.eventbrite.com/e/711575811407",
             personal="Tony",
             family="Stark",
@@ -94,12 +97,12 @@ class TestTrainingRequestFilter(TestBase):
         )
 
         # get filterset
-        self.filterset = TrainingRequestFilter({})
+        self.filterset = TrainingRequestFilter(MultiValueDict())
 
         # get queryset
         self.qs = TrainingRequest.objects.all()
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
@@ -118,7 +121,7 @@ class TestTrainingRequestFilter(TestBase):
             },
         )
 
-    def test_filter_search_name(self):
+    def test_filter_search_name(self) -> None:
         # Arrange
         filter_name = "search"
         value = "Peter Parker"
@@ -129,7 +132,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_spiderman])
 
-    def test_filter_search_email(self):
+    def test_filter_search_email(self) -> None:
         # Arrange
         filter_name = "search"
         value = "peter@webslinger.net"
@@ -140,7 +143,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_spiderman])
 
-    def test_filter_member_code(self):
+    def test_filter_member_code(self) -> None:
         # Arrange
         filter_name = "member_code"
         value = "valid123"
@@ -151,7 +154,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_ironman])
 
-    def test_filter_state__none(self):
+    def test_filter_state__none(self) -> None:
         # Arrange
         filter_name = "state"
         value = None
@@ -160,9 +163,9 @@ class TestTrainingRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(result, self.qs, ordered=False)
+        self.assertQuerySetEqual(result, set(self.qs), ordered=False)
 
-    def test_filter_state__pending(self):
+    def test_filter_state__pending(self) -> None:
         # Arrange
         filter_name = "state"
         value = "p"
@@ -173,7 +176,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_ironman])
 
-    def test_filter_state__accepted(self):
+    def test_filter_state__accepted(self) -> None:
         # Arrange
         filter_name = "state"
         value = "a"
@@ -184,7 +187,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_spiderman])
 
-    def test_filter_state__discarded(self):
+    def test_filter_state__discarded(self) -> None:
         # Arrange
         filter_name = "state"
         value = "d"
@@ -195,7 +198,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_blackwidow])
 
-    def test_filter_state__withdrawn(self):
+    def test_filter_state__withdrawn(self) -> None:
         # Arrange
         filter_name = "state"
         value = "w"
@@ -206,7 +209,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_hermione])
 
-    def test_filter_state__pending_or_accepted(self):
+    def test_filter_state__pending_or_accepted(self) -> None:
         # Arrange
         filter_name = "state"
         value = "pa"
@@ -217,7 +220,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_spiderman, self.request_ironman], ordered=False)
 
-    def test_filter_matched__unknown(self):
+    def test_filter_matched__unknown(self) -> None:
         # Arrange
         filter_name = "matched"
         value = None
@@ -226,9 +229,9 @@ class TestTrainingRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(result, self.qs, ordered=False)
+        self.assertQuerySetEqual(result, set(self.qs), ordered=False)
 
-    def test_filter_matched__unmatched(self):
+    def test_filter_matched__unmatched(self) -> None:
         # Arrange
         filter_name = "matched"
         value = "u"
@@ -239,7 +242,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_blackwidow, self.request_hermione], ordered=False)
 
-    def test_filter_matched__matched_trainee_unmatched_training(self):
+    def test_filter_matched__matched_trainee_unmatched_training(self) -> None:
         # Arrange
         filter_name = "matched"
         value = "p"
@@ -250,7 +253,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_ironman])
 
-    def test_filter_matched__matched_trainee_and_training(self):
+    def test_filter_matched__matched_trainee_and_training(self) -> None:
         # Arrange
         filter_name = "matched"
         value = "t"
@@ -261,7 +264,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_spiderman])
 
-    def test_filter_nonnull_manual_score(self):
+    def test_filter_nonnull_manual_score(self) -> None:
         # Arrange
         filter_name = "nonnull_manual_score"
         value = True
@@ -272,7 +275,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_blackwidow])
 
-    def test_filter_invalid_member_code__true(self):
+    def test_filter_invalid_member_code__true(self) -> None:
         # Arrange
         filter_name = "invalid_member_code"
         value = True
@@ -283,7 +286,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_blackwidow])
 
-    def test_filter_invalid_member_code__false(self):
+    def test_filter_invalid_member_code__false(self) -> None:
         # Arrange
         filter_name = "invalid_member_code"
         value = False
@@ -292,9 +295,9 @@ class TestTrainingRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(result, TrainingRequest.objects.all())
+        self.assertQuerySetEqual(result, list(TrainingRequest.objects.all()))
 
-    def test_filter_affiliation(self):
+    def test_filter_affiliation(self) -> None:
         # Arrange
         name = "affiliation"
         value = "stark"
@@ -305,7 +308,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_ironman])
 
-    def test_filter_location(self):
+    def test_filter_location(self) -> None:
         # Arrange
         name = "location"
         value = "new york"
@@ -316,7 +319,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_ironman])
 
-    def test_filter_eventbrite_id__digits(self):
+    def test_filter_eventbrite_id__digits(self) -> None:
         # Arrange
         name = "eventbrite_id"
         value = "1407"
@@ -327,7 +330,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_ironman])
 
-    def test_filter_eventbrite_id__url(self):
+    def test_filter_eventbrite_id__url(self) -> None:
         # Arrange
         name = "eventbrite_id"
         value = "https://www.eventbrite.com/myevent?eid=711575811407"
@@ -338,7 +341,7 @@ class TestTrainingRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.request_ironman])
 
-    def test_filter_order_by(self):
+    def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
         fields = self.filterset.filters[filter_name].param_map
@@ -401,10 +404,10 @@ class TestWorkshopRequestFilter(TestBase):
         Member.objects.create(
             membership=self.membership,
             organization=self.org_alpha,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
 
-        kwargs = dict(
+        kwargs: dict[str, Any] = dict(
             state="p",
             personal="Harry",
             family="Potter",
@@ -466,7 +469,7 @@ class TestWorkshopRequestFilter(TestBase):
         # get queryset
         self.qs = WorkshopRequest.objects.all()
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
@@ -482,7 +485,7 @@ class TestWorkshopRequestFilter(TestBase):
             },
         )
 
-    def test_filter_state__any(self):
+    def test_filter_state__any(self) -> None:
         # Arrange
         filter_name = "state"
         value = ""
@@ -491,9 +494,9 @@ class TestWorkshopRequestFilter(TestBase):
         result = self.filterset.filters[filter_name].filter(self.qs, value)
 
         # Assert
-        self.assertQuerySetEqual(result, self.qs, ordered=False)
+        self.assertQuerySetEqual(result, set(self.qs), ordered=False)
 
-    def test_filter_state__pending(self):
+    def test_filter_state__pending(self) -> None:
         # Arrange
         filter_name = "state"
         value = "p"
@@ -504,7 +507,7 @@ class TestWorkshopRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.req_pending_country_gb, self.req_pending_dates_unused_code])
 
-    def test_filter_state__accepted(self):
+    def test_filter_state__accepted(self) -> None:
         # Arrange
         filter_name = "state"
         value = "a"
@@ -515,7 +518,7 @@ class TestWorkshopRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.req_accepted_valid_code_curriculum_chosen])
 
-    def test_filter_state_discarded(self):
+    def test_filter_state_discarded(self) -> None:
         # Arrange
         filter_name = "state"
         value = "d"
@@ -526,7 +529,7 @@ class TestWorkshopRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.req_assigned_discarded_unused_code])
 
-    def test_filter_assigned_to(self):
+    def test_filter_assigned_to(self) -> None:
         # Arrange
         filter_name = "assigned_to"
         value = self.spiderman
@@ -537,7 +540,7 @@ class TestWorkshopRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.req_assigned_discarded_unused_code])
 
-    def test_filter_country(self):
+    def test_filter_country(self) -> None:
         # Arrange
         filter_name = "country"
         value = "GB"
@@ -548,7 +551,7 @@ class TestWorkshopRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.req_pending_country_gb])
 
-    def test_filter_continent(self):
+    def test_filter_continent(self) -> None:
         # Arrange
         filter_name = "continent"
         value = Continent.objects.get(name="Europe").pk
@@ -559,7 +562,7 @@ class TestWorkshopRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.req_pending_country_gb])
 
-    def test_filter_requested_workshop_types(self):
+    def test_filter_requested_workshop_types(self) -> None:
         # Arrange
         filter_name = "requested_workshop_types"
         value = Curriculum.objects.filter(slug="dc-ecology-r")
@@ -570,7 +573,7 @@ class TestWorkshopRequestFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.req_accepted_valid_code_curriculum_chosen])
 
-    def test_filter_unused_member_code(self):
+    def test_filter_unused_member_code(self) -> None:
         # Arrange
         filter_name = "unused_member_code"
         value = True
@@ -587,7 +590,7 @@ class TestWorkshopRequestFilter(TestBase):
             ],
         )
 
-    def test_filter_order_by(self):
+    def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
         fields = self.filterset.filters[filter_name].param_map

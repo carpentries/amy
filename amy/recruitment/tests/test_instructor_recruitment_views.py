@@ -62,7 +62,7 @@ class TestInstructorRecruitmentListView(TestBase):
         data = view.get_filter_data()
         # Assert
         self.assertIn("assigned_to", data.keys())
-        self.assertEqual(data["assigned_to"], request.user.pk)
+        self.assertEqual(data["assigned_to"], str(request.user.pk))
 
     def test_get_context_data_empty(self) -> None:
         # Arrange
@@ -80,7 +80,7 @@ class TestInstructorRecruitmentListView(TestBase):
         request = RequestFactory().get("/")
         request.user = mock.MagicMock()
         view = InstructorRecruitmentList(request=request, object_list=[], filter=None)
-        host = Organization.objects.first()
+        host = Organization.objects.all()[0]
         event = Event.objects.create(slug="test-event", host=host)
         recruitment = InstructorRecruitment.objects.create(event=event)
         person = Person.objects.create(username="test_user")
@@ -94,7 +94,7 @@ class TestInstructorRecruitmentListView(TestBase):
     def test_integration(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -121,7 +121,7 @@ class TestInstructorRecruitmentListView(TestBase):
 
 class TestInstructorRecruitmentCreateView(TestBase):
     def prepare_event(self) -> Event:
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         return Event.objects.create(
             slug="test-event",
             host=organization,
@@ -143,7 +143,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
 
     def test_get_other_object(self) -> None:
         # Arrange
-        host = Organization.objects.first()
+        host = Organization.objects.all()[0]
         online_tag = Tag.objects.get(name="online")
         data = [
             (Event(slug="test1", host=host, start=date(2000, 1, 1)), False),
@@ -201,7 +201,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
         view = InstructorRecruitmentCreate(kwargs={"event_id": event.pk})
         # Act
         with mock.patch("recruitment.views.super") as mock_super:
-            view.get(request)
+            view.get(request)  # type: ignore[arg-type]
         # Assert
         self.assertEqual(view.request, request)
         self.assertEqual(view.event, event)
@@ -214,7 +214,7 @@ class TestInstructorRecruitmentCreateView(TestBase):
         view = InstructorRecruitmentCreate(kwargs={"event_id": event.pk})
         # Act
         with mock.patch("recruitment.views.super") as mock_super:
-            view.post(request)
+            view.post(request)  # type: ignore[arg-type]
         # Assert
         self.assertEqual(view.request, request)
         self.assertEqual(view.event, event)
@@ -338,7 +338,7 @@ class TestInstructorRecruitmentDetailsView(TestBase):
 
     def test_context_data(self) -> None:
         # Arrange
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -367,7 +367,7 @@ class TestInstructorRecruitmentDetailsView(TestBase):
     def test_integration(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -403,7 +403,7 @@ class TestInstructorRecruitmentAddSignup(TestBase):
     def test_context_data(self) -> None:
         # Arrange
         request = RequestFactory().get("/")
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -454,7 +454,7 @@ class TestInstructorRecruitmentAddSignup(TestBase):
             pk = 120000
             view = InstructorRecruitmentAddSignup(kwargs={"pk": pk})
             with mock.patch("recruitment.views.InstructorRecruitment"):
-                view.post(request)
+                view.post(request)  # type: ignore[arg-type]
             # Act
             result = view.get_success_url()
             # Assert
@@ -499,11 +499,11 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         request = RequestFactory().get("/")
         mock_object = mock.MagicMock()
         view = InstructorRecruitmentAddSignup(request=request, kwargs={"pk": 11200})
-        view.get_object = mock.MagicMock(return_value=mock_object)
+        view.get_object = mock.MagicMock(return_value=mock_object)  # type: ignore[method-assign]
 
         # Act
         with mock.patch("recruitment.views.super") as mock_super:
-            view.get(request)
+            view.get(request)  # type: ignore[arg-type]
 
             # Assert
             self.assertEqual(view.request, request)
@@ -515,11 +515,11 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         request = RequestFactory().post("/")
         mock_object = mock.MagicMock()
         view = InstructorRecruitmentAddSignup(request=request, kwargs={"pk": 11200})
-        view.get_object = mock.MagicMock(return_value=mock_object)
+        view.get_object = mock.MagicMock(return_value=mock_object)  # type: ignore[method-assign]
 
         # Act
         with mock.patch("recruitment.views.super") as mock_super:
-            view.post(request)
+            view.post(request)  # type: ignore[arg-type]
 
             # Assert
             self.assertEqual(view.request, request)
@@ -530,7 +530,7 @@ class TestInstructorRecruitmentAddSignup(TestBase):
     def test_integration(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -558,8 +558,8 @@ class TestInstructorRecruitmentAddSignup(TestBase):
         # Assert
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, success_url)
-        self.assertEqual(recruitment.signups.count(), 1)  # type: ignore
-        signup = recruitment.signups.last()  # type: ignore
+        self.assertEqual(recruitment.signups.count(), 1)
+        signup = recruitment.signups.all().reverse()[0]
         self.assertEqual(signup.person, person)
         self.assertEqual(signup.user_notes, "")
         self.assertEqual(signup.notes, notes)
@@ -596,7 +596,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             pk = 120000
             view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
             with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
-                view.post(request)
+                view.post(request)  # type: ignore[arg-type]
             # Act
             result = view.get_success_url()
             # Assert
@@ -608,7 +608,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         pk = 120000
         view = InstructorRecruitmentSignupChangeState(kwargs={"pk": pk})
         with mock.patch("recruitment.views.InstructorRecruitmentSignup"):
-            view.post(request)
+            view.post(request)  # type: ignore[arg-type]
         # Act
         with mock.patch.object(InstructorRecruitmentSignupChangeState, "get_success_url") as mock_get_success_url:
             mock_get_success_url.return_value = "/"
@@ -622,8 +622,8 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         request = RequestFactory().post("/")
         mock_signup = mock.MagicMock()
         view = InstructorRecruitmentSignupChangeState(object=mock_signup, request=request)
-        view.accept_signup = mock.MagicMock()
-        view.decline_signup = mock.MagicMock()
+        view.accept_signup = mock.MagicMock()  # type: ignore[method-assign]
+        view.decline_signup = mock.MagicMock()  # type: ignore[method-assign]
         data = {"action": "confirm"}
         form = InstructorRecruitmentSignupChangeStateForm(data)
         form.is_valid()
@@ -688,7 +688,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         request = RequestFactory().post("/")
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(personal="Test", family="User", username="test_user")
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -710,7 +710,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
         request = RequestFactory().post("/")
         view = InstructorRecruitmentSignupChangeState(request=request)
         person = Person.objects.create(personal="Test", family="User", username="test_user")
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -735,7 +735,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             mock.patch.object(InstructorRecruitmentSignupChangeState, "form_invalid") as mock_form_invalid,
         ):
             mock_get_form.return_value.is_valid.return_value = True
-            view.post(request)
+            view.post(request)  # type: ignore[arg-type]
         # Assert
         mock_get_object.assert_called_once()
         mock_get_form.assert_called_once()
@@ -757,7 +757,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
             mock.patch.object(InstructorRecruitmentSignupChangeState, "form_invalid") as mock_form_invalid,
         ):
             mock_get_form.return_value.is_valid.return_value = False
-            view.post(request)
+            view.post(request)  # type: ignore[arg-type]
         # Assert
         mock_get_object.assert_called_once()
         mock_get_form.assert_called_once()
@@ -769,7 +769,7 @@ class TestInstructorRecruitmentSignupChangeState(TestBase):
     def test_integration(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -803,7 +803,7 @@ class TestInstructorRecruitmentChangeState(TestBase):
         Organization.objects.bulk_create([Organization(domain="carpentries.org", fullname="Instructor Training")])
         self.event = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -848,12 +848,12 @@ class TestInstructorRecruitmentChangeState(TestBase):
         request = RequestFactory().post("/", data={"action": "close"})
         mock_object = mock.MagicMock()
         view = InstructorRecruitmentChangeState(request=request, kwargs={"pk": 11200})
-        view.get_object = mock.MagicMock(return_value=mock_object)
-        view.close_recruitment = mock.MagicMock()
-        view.reopen_recruitment = mock.MagicMock()
+        view.get_object = mock.MagicMock(return_value=mock_object)  # type: ignore[method-assign]
+        view.close_recruitment = mock.MagicMock()  # type: ignore[method-assign]
+        view.reopen_recruitment = mock.MagicMock()  # type: ignore[method-assign]
 
         # Act
-        view.post(request)
+        view.post(request)  # type: ignore[arg-type]
 
         # Assert
         self.assertEqual(view.request, request)
@@ -866,12 +866,12 @@ class TestInstructorRecruitmentChangeState(TestBase):
         request = RequestFactory().post("/", data={"action": "reopen"})
         mock_object = mock.MagicMock()
         view = InstructorRecruitmentChangeState(request=request, kwargs={"pk": 11200})
-        view.get_object = mock.MagicMock(return_value=mock_object)
-        view.close_recruitment = mock.MagicMock()
-        view.reopen_recruitment = mock.MagicMock()
+        view.get_object = mock.MagicMock(return_value=mock_object)  # type: ignore[method-assign]
+        view.close_recruitment = mock.MagicMock()  # type: ignore[method-assign]
+        view.reopen_recruitment = mock.MagicMock()  # type: ignore[method-assign]
 
         # Act
-        view.post(request)
+        view.post(request)  # type: ignore[arg-type]
 
         # Assert
         self.assertEqual(view.request, request)
@@ -907,9 +907,9 @@ class TestInstructorRecruitmentChangeState(TestBase):
         # Arrange
         request = RequestFactory().post("/")
         view = InstructorRecruitmentChangeState(request=request)
-        view._validate_for_closing = mock.MagicMock(return_value=False)
+        view._validate_for_closing = mock.MagicMock(return_value=False)  # type: ignore[method-assign]
         view.object = mock.MagicMock()
-        view.get_success_url = mock.MagicMock(return_value="")
+        view.get_success_url = mock.MagicMock(return_value="")  # type: ignore[method-assign]
 
         # Act
         with mock.patch("recruitment.views.messages") as mock_messages:
@@ -926,9 +926,9 @@ class TestInstructorRecruitmentChangeState(TestBase):
         mock_host_instructors_introduction_strategy.return_value = StrategyEnum.NOOP
         request = RequestFactory().post("/")
         view = InstructorRecruitmentChangeState(request=request)
-        view._validate_for_closing = mock.MagicMock(return_value=True)
+        view._validate_for_closing = mock.MagicMock(return_value=True)  # type: ignore[method-assign]
         view.object = mock.MagicMock()
-        view.get_success_url = mock.MagicMock(return_value="")
+        view.get_success_url = mock.MagicMock(return_value="")  # type: ignore[method-assign]
 
         # Act
         with mock.patch("recruitment.views.messages") as mock_messages:
@@ -961,9 +961,9 @@ class TestInstructorRecruitmentChangeState(TestBase):
         # Arrange
         request = RequestFactory().post("/")
         view = InstructorRecruitmentChangeState(request=request)
-        view._validate_for_reopening = mock.MagicMock(return_value=False)
+        view._validate_for_reopening = mock.MagicMock(return_value=False)  # type: ignore[method-assign]
         view.object = mock.MagicMock()
-        view.get_success_url = mock.MagicMock(return_value="")
+        view.get_success_url = mock.MagicMock(return_value="")  # type: ignore[method-assign]
 
         # Act
         with mock.patch("recruitment.views.messages") as mock_messages:
@@ -980,9 +980,9 @@ class TestInstructorRecruitmentChangeState(TestBase):
         mock_host_instructors_introduction_strategy.return_value = StrategyEnum.NOOP
         request = RequestFactory().post("/")
         view = InstructorRecruitmentChangeState(request=request)
-        view._validate_for_reopening = mock.MagicMock(return_value=True)
+        view._validate_for_reopening = mock.MagicMock(return_value=True)  # type: ignore[method-assign]
         view.object = mock.MagicMock()
-        view.get_success_url = mock.MagicMock(return_value="")
+        view.get_success_url = mock.MagicMock(return_value="")  # type: ignore[method-assign]
 
         # Act
         with mock.patch("recruitment.views.messages") as mock_messages:
@@ -1041,7 +1041,7 @@ class TestInstructorRecruitmentSignupUpdateView(TestBase):
     def test_integration(self) -> None:
         # Arrange
         super()._setUpUsersAndLogin()
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,

@@ -1,8 +1,25 @@
-from datetime import date
+from datetime import date, timedelta
 
-from fiscal.filters import MembershipFilter, MembershipTrainingsFilter
-from fiscal.models import Membership
-from workshops.models import Event, Member, MemberRole, Role, Task
+from django.test import TestCase
+
+from fiscal.filters import (
+    MembershipFilter,
+    MembershipTrainingsFilter,
+    filter_consortium_organisation_contain,
+    filter_currently_active_partnership,
+    filter_partnership_credits,
+)
+from fiscal.models import Consortium, Partnership
+from offering.models import Account, AccountBenefit, Benefit
+from workshops.models import (
+    Event,
+    Member,
+    MemberRole,
+    Membership,
+    Organization,
+    Role,
+    Task,
+)
 from workshops.tests.base import TestBase
 
 
@@ -16,7 +33,7 @@ class TestMembershipFilter(TestBase):
         self._setUpRoles()  # create the learner role
 
         self.model = Membership
-        member_role = MemberRole.objects.first()
+        member_role = MemberRole.objects.all()[0]
 
         self.membership = Membership.objects.create(
             name="Test Membership",
@@ -87,7 +104,7 @@ class TestMembershipFilter(TestBase):
 
         super().tearDown()
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
@@ -105,7 +122,7 @@ class TestMembershipFilter(TestBase):
             },
         )
 
-    def test_filter_organization_name(self):
+    def test_filter_organization_name(self) -> None:
         # Arrange
         filter_name = "organization_name"
         value = "Alpha Organization"
@@ -116,7 +133,7 @@ class TestMembershipFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_consortium(self):
+    def test_filter_consortium(self) -> None:
         # Arrange
         filter_name = "consortium"
         value = True
@@ -127,7 +144,7 @@ class TestMembershipFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_public_status(self):
+    def test_filter_public_status(self) -> None:
         # Arrange
         filter_name = "public_status"
         value = "public"
@@ -138,7 +155,7 @@ class TestMembershipFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_variant(self):
+    def test_filter_variant(self) -> None:
         # Arrange
         filter_name = "variant"
         value = "Bronze"
@@ -150,7 +167,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_contribution_type(self):
+    def test_filter_contribution_type(self) -> None:
         # Arrange
         filter_name = "contribution_type"
         value = "Financial"
@@ -162,7 +179,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_active_only(self):
+    def test_filter_active_only(self) -> None:
         # Arrange
         name = "active_only"
         value = True
@@ -174,7 +191,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_training_seats_only(self):
+    def test_filter_training_seats_only(self) -> None:
         # Arrange
         filter_name = "training_seats_only"
         value = True
@@ -186,7 +203,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_negative_remaining_seats_only(self):
+    def test_filter_negative_remaining_seats_only(self) -> None:
         # Arrange
         filter_name = "negative_remaining_seats_only"
         value = True
@@ -198,7 +215,7 @@ class TestMembershipFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_order_by(self):
+    def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
         fields = self.filterset.filters[filter_name].param_map
@@ -234,7 +251,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self._setUpRoles()  # create the learner role
 
         self.model = Membership
-        member_role = MemberRole.objects.first()
+        member_role = MemberRole.objects.all()[0]
 
         self.membership = Membership.objects.create(
             name="Test Membership",
@@ -301,7 +318,7 @@ class TestMembershipTrainingsFilter(TestBase):
 
         super().tearDown()
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Arrange & Act stages happen in setUp()
         # Assert
         self.assertEqual(
@@ -315,7 +332,7 @@ class TestMembershipTrainingsFilter(TestBase):
             },
         )
 
-    def test_filter_organization_name(self):
+    def test_filter_organization_name(self) -> None:
         # Arrange
         filter_name = "organization_name"
         value = "Alpha Organization"
@@ -326,7 +343,7 @@ class TestMembershipTrainingsFilter(TestBase):
         # Assert
         self.assertQuerySetEqual(result, [self.membership])
 
-    def test_filter_active_only(self):
+    def test_filter_active_only(self) -> None:
         # Arrange
         name = "active_only"
         value = True
@@ -338,7 +355,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_training_seats_only(self):
+    def test_filter_training_seats_only(self) -> None:
         # Arrange
         filter_name = "training_seats_only"
         value = True
@@ -350,7 +367,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_negative_remaining_seats_only(self):
+    def test_filter_negative_remaining_seats_only(self) -> None:
         # Arrange
         filter_name = "negative_remaining_seats_only"
         value = True
@@ -362,7 +379,7 @@ class TestMembershipTrainingsFilter(TestBase):
         self.assertIn(self.membership, result)
         self.assertNotIn(self.membership2, result)
 
-    def test_filter_order_by(self):
+    def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
         fields = self.filterset.filters[filter_name].param_map
@@ -387,3 +404,150 @@ class TestMembershipTrainingsFilter(TestBase):
         # each field was filtered correctly
         for field in fields.keys():
             self.assertQuerySetEqual(results[field], expected_results[field])
+
+
+class TestConsortiumFilterMethods(TestCase):
+    def test_filter_consortium_organisation_contain__no_filter(self) -> None:
+        # Arrange
+        swc = Organization.objects.create(domain="software-carpentry.org")
+        consortium = Consortium.objects.create(name="test-consortium")
+        consortium.organisations.add(swc)
+        queryset = Consortium.objects.all()
+        organizations: list[Organization] = []
+
+        # Act
+        qs = filter_consortium_organisation_contain(queryset, "", organizations)
+
+        # Assert
+        self.assertQuerySetEqual(qs, list(queryset))
+
+    def test_filter_consortium_organisation_contain__filter(self) -> None:
+        # Arrange
+        swc = Organization.objects.create(domain="software-carpentry.org")
+        consortium = Consortium.objects.create(name="test-consortium")
+        consortium.organisations.add(swc)
+        queryset = Consortium.objects.all()
+        organizations = [swc]
+
+        # Act
+        qs = filter_consortium_organisation_contain(queryset, "", organizations)
+
+        # Assert
+        self.assertQuerySetEqual(qs, [consortium])
+
+
+class TestPartnershipFilterMethods(TestCase):
+    def test_filter_currently_active_partnership__no_filter(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        partnership1 = Partnership.objects.create(
+            name="Test1",
+            credits=10,
+            account=account,
+            agreement_start=date(2020, 10, 24),
+            agreement_end=date(2021, 10, 23),
+            partner_organisation=organisation,
+        )
+        partnership2 = Partnership.objects.create(
+            name="Test2",
+            credits=10,
+            account=account,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation,
+        )
+        queryset = Partnership.objects.all()
+        # Act
+        qs = filter_currently_active_partnership(queryset, "", active=False)
+        # Assert
+        self.assertQuerySetEqual(qs, {partnership1, partnership2}, ordered=False)
+
+    def test_filter_currently_active_partnership__filter(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        _ = Partnership.objects.create(
+            name="Test1",
+            credits=10,
+            account=account,
+            agreement_start=date(2020, 10, 24),
+            agreement_end=date(2021, 10, 23),
+            partner_organisation=organisation,
+        )
+        partnership2 = Partnership.objects.create(
+            name="Test2",
+            credits=10,
+            account=account,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation,
+        )
+        queryset = Partnership.objects.all()
+        # Act
+        qs = filter_currently_active_partnership(queryset, "", active=True)
+        # Assert
+        self.assertQuerySetEqual(qs, [partnership2])
+
+    def test_filter_partnership_credits(self) -> None:
+        # Arrange
+        organisation1 = Organization.objects.create(fullname="test1", domain="example1.com")
+        organisation2 = Organization.objects.create(fullname="test2", domain="example2.com")
+        account1 = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation1,
+        )
+        account2 = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation2,
+        )
+        benefit = Benefit.objects.create(name="product", unit_type="seat", credits=6)
+        partnership1 = Partnership.objects.create(
+            name="Test1",
+            credits=10,
+            account=account1,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation1,
+        )
+        partnership2 = Partnership.objects.create(
+            name="Test2",
+            credits=10,
+            account=account2,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation2,
+        )
+        AccountBenefit.objects.create(
+            account=account1,
+            partnership=partnership1,
+            benefit=benefit,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+            allocation=1,
+        )
+        AccountBenefit.objects.create(
+            account=account2,
+            partnership=partnership2,
+            benefit=benefit,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+            allocation=2,
+        )
+        queryset = Partnership.objects.credits_usage_annotation()
+
+        # Act
+        qs1 = filter_partnership_credits(queryset, "", selection="under_limit")
+        qs2 = filter_partnership_credits(queryset, "", selection="over_limit")
+        qs3 = filter_partnership_credits(queryset, "", selection="")
+
+        # Assert
+        self.assertQuerySetEqual(qs1, [partnership1])
+        self.assertQuerySetEqual(qs2, [partnership2])
+        self.assertQuerySetEqual(qs3, {partnership1, partnership2}, ordered=False)

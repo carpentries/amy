@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import Annotated, Any, Collection, TypedDict, cast
+from typing import Annotated, Any, Collection, Self, TypedDict, cast
 from urllib.parse import quote
 import uuid
 
@@ -1124,14 +1124,14 @@ class TagQuerySet(QuerySet["Tag"]):
     NON_CARPENTRIES_TAG_NAMES = ["TTT", "Circuits", "CLDT"]
     MAIN_TAG_NAMES = ["SWC", "DC", "LC", "TTT", "ITT", "WiSE"]
 
-    def main_tags(self) -> QuerySet["Tag"]:
+    def main_tags(self) -> Self:
         return self.filter(name__in=self.MAIN_TAG_NAMES)
 
-    def carpentries(self) -> QuerySet["Tag"]:
+    def carpentries(self) -> Self:
         return self.filter(name__in=self.CARPENTRIES_TAG_NAMES)
 
     def strings(self) -> list[str]:
-        return self.values_list("name", flat=True)  # type: ignore
+        return list(self.values_list("name", flat=True))
 
 
 class Tag(models.Model):
@@ -1853,7 +1853,7 @@ class BadgeQuerySet(QuerySet["Badge"]):
 
     TRAINER_BADGE = "trainer"
 
-    def instructor_badges(self) -> QuerySet["Badge"]:
+    def instructor_badges(self) -> Self:
         """Filter for instructor badges only."""
 
         return self.filter(name__in=self.INSTRUCTOR_BADGES)

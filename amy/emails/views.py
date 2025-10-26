@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import reverse
 from django.views.generic.detail import SingleObjectMixin
-from flags.views import FlaggedViewMixin
+from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 from jinja2 import DebugUndefined, Environment, TemplateError
 from markdownx.utils import markdownify
 
@@ -46,8 +46,8 @@ from workshops.base_views import (
 from workshops.utils.access import OnlyForAdminsMixin
 
 
-class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[EmailTemplate]):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[EmailTemplate]):  # type: ignore[misc]
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_templates"
     template_name = "emails/email_template_list.html"
@@ -56,8 +56,8 @@ class AllEmailTemplates(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[EmailT
     filter_class = EmailTemplateFilter
 
 
-class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[EmailTemplate]):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[EmailTemplate]):  # type: ignore[misc]
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_detail.html"
@@ -78,8 +78,12 @@ class EmailTemplateDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[E
         return context
 
 
-class EmailTemplateCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[EmailTemplateCreateForm, EmailTemplate]):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+class EmailTemplateCreate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYCreateView[EmailTemplateCreateForm, EmailTemplate],
+):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.add_emailtemplate"]
     template_name = "emails/email_template_create.html"
     form_class = EmailTemplateCreateForm
@@ -88,8 +92,12 @@ class EmailTemplateCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Em
     title = "Create a new email template"
 
 
-class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[EmailTemplateCreateForm, EmailTemplate]):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+class EmailTemplateUpdate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYUpdateView[EmailTemplateCreateForm, EmailTemplate],
+):
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_emailtemplate", "emails.change_emailtemplate"]
     context_object_name = "email_template"
     template_name = "emails/email_template_edit.html"
@@ -112,9 +120,11 @@ class EmailTemplateUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[Em
 
 
 class EmailTemplateDelete(
-    OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[EmailTemplate, GenericDeleteForm[EmailTemplate]]
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDeleteView[EmailTemplate, GenericDeleteForm[EmailTemplate]],
 ):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.delete_emailtemplate"]
     model = EmailTemplate
 
@@ -125,8 +135,8 @@ class EmailTemplateDelete(
 # -------------------------------------------------------------------------------
 
 
-class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[ScheduledEmail]):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[ScheduledEmail]):  # type: ignore[misc]
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_emails"
     template_name = "emails/scheduled_email_list.html"
@@ -135,8 +145,8 @@ class AllScheduledEmails(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Sched
     filter_class = ScheduledEmailFilter
 
 
-class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[ScheduledEmail]):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[ScheduledEmail]):  # type: ignore[misc]
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_detail.html"
@@ -182,9 +192,9 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[
 
 
 class ScheduledEmailUpdate(
-    OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[ScheduledEmailUpdateForm, ScheduledEmail]
+    OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[ScheduledEmailUpdateForm, ScheduledEmail]  # type: ignore[misc]
 ):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     context_object_name = "scheduled_email"
     template_name = "emails/scheduled_email_edit.html"
@@ -219,9 +229,12 @@ class ScheduledEmailUpdate(
 
 
 class ScheduledEmailReschedule(
-    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin[ScheduledEmail], AMYFormView[ScheduledEmailRescheduleForm]
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    SingleObjectMixin[ScheduledEmail],
+    AMYFormView[ScheduledEmailRescheduleForm],
 ):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_reschedule.html"
     form_class = ScheduledEmailRescheduleForm
@@ -264,9 +277,12 @@ class ScheduledEmailReschedule(
 
 
 class ScheduledEmailCancel(
-    OnlyForAdminsMixin, FlaggedViewMixin, SingleObjectMixin[ScheduledEmail], AMYFormView[ScheduledEmailCancelForm]
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    SingleObjectMixin[ScheduledEmail],
+    AMYFormView[ScheduledEmailCancelForm],
 ):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]
     template_name = "emails/scheduled_email_cancel.html"
     form_class = ScheduledEmailCancelForm
@@ -306,11 +322,11 @@ class ScheduledEmailCancel(
 
 class ScheduledEmailAddAttachment(
     OnlyForAdminsMixin,
-    FlaggedViewMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
     SingleObjectMixin[ScheduledEmail],
     AMYFormView[ScheduledEmailAddAttachmentForm],
 ):
-    flag_name = "EMAIL_MODULE"  # type: ignore
+    flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail", "emails.add_attachment"]
     template_name = "emails/scheduled_email_add_attachment.html"
     form_class = ScheduledEmailAddAttachmentForm

@@ -7,6 +7,7 @@ from extrequests.tests.test_training_request import create_training_request
 from workshops.models import TrainingRequest
 from workshops.tests.base import TestBase
 from workshops.utils.trainingrequest_upload import (
+    ManualScoreEntry,
     clean_upload_trainingrequest_manual_score,
     update_manual_score,
     upload_trainingrequest_manual_score_csv,
@@ -14,12 +15,12 @@ from workshops.utils.trainingrequest_upload import (
 
 
 class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
-    def compute_from_string(self, csv_str):
+    def compute_from_string(self, csv_str: str) -> list[ManualScoreEntry]:
         """Wrap string into IO buffer & parse."""
         csv_buf = StringIO(csv_str)
         return upload_trainingrequest_manual_score_csv(csv_buf)
 
-    def test_basic_parsing(self):
+    def test_basic_parsing(self) -> None:
         """Test if perfectly correct CSV loads... correctly."""
         csv = """request_id,score_manual,score_notes
 1,123,"This person exceeded at receiving big manual score."
@@ -35,7 +36,7 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
             set(TrainingRequest.MANUAL_SCORE_UPLOAD_FIELDS + ("errors",)),
         )
 
-    def test_csv_without_required_field(self):
+    def test_csv_without_required_field(self) -> None:
         """Only fields from TrainingRequest.MANUAL_SCORE_UPLOAD_FIELDS are
         taken into consideration, and they all should be present."""
         bad_csv = """request_id,completely_different_field,score_notes
@@ -45,14 +46,14 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
         self.assertTrue(data[0]["score_manual"] is None)
         self.assertTrue(data[1]["score_manual"] is None)
 
-    def test_csv_with_empty_lines(self):
+    def test_csv_with_empty_lines(self) -> None:
         csv = """request_id,score_manual,score_notes
 1,123,"This person exceeded at receiving big manual score."
 ,,"""
         data = self.compute_from_string(csv)
         self.assertEqual(len(data), 1)
 
-    def test_empty_field(self):
+    def test_empty_field(self) -> None:
         """Ensure blank fields don't reorder other fields."""
         csv = """request_id,score_manual,score_notes
 1,,'This person exceeded at receiving big manual score.'"""
@@ -60,7 +61,7 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
         entry = data[0]
         self.assertEqual(entry["score_manual"], "")
 
-    def test_serializability_of_parsed(self):
+    def test_serializability_of_parsed(self) -> None:
         csv = """request_id,score_manual,score_notes
 1,123,"This person exceeded at receiving big manual score."
 2,-321,They did bad at our survey"""
@@ -72,20 +73,20 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
         except TypeError:
             self.fail("Dumping manual scores for Training Requests into JSON " "unexpectedly failed!")
 
-    def test_malformed_CSV_with_proper_header_row(self):
+    def test_malformed_CSV_with_proper_header_row(self) -> None:
         csv = """request_id,score_manual,score_notes
 This is a malformed CSV"""
         data = self.compute_from_string(csv)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["request_id"], "This is a malformed CSV")
         self.assertEqual(data[0]["score_manual"], None)
-        self.assertEqual(data[0]["score_notes"], None)
+        self.assertEqual(data[0]["score_notes"], "")
 
 
 class CSVBulkUploadTestBase(TestBase):
     """Provide auxiliary methods used in descendant TestCases."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Prepare some existing Training Requests."""
         self.tr1 = create_training_request(state="p", person=None)
         self.tr1.score_manual = 10
@@ -107,7 +108,7 @@ class CSVBulkUploadTestBase(TestBase):
         self.tr4.score_notes = "This request hasn't been scored manually"
         self.tr4.save()
 
-    def make_csv_data(self):
+    def make_csv_data(self) -> str:
         return """request_id,score_manual,score_notes
 {},-10,"This person did bad."
 {},0,"This person did neutral."
@@ -116,7 +117,7 @@ class CSVBulkUploadTestBase(TestBase):
             self.tr1.pk, self.tr2.pk, self.tr3.pk, self.tr4.pk
         )
 
-    def make_data(self):
+    def make_data(self) -> list[ManualScoreEntry]:
         csv_str = self.make_csv_data()
         data = upload_trainingrequest_manual_score_csv(StringIO(csv_str))
         return data
@@ -131,7 +132,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
     * request ID not matching any existing requests
     """
 
-    def test_verify_with_good_data(self):
+    def test_verify_with_good_data(self) -> None:
         data = self.make_data()
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertFalse(has_errors)
@@ -141,9 +142,9 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
         self.assertFalse(cleaned[2]["errors"])
         self.assertFalse(cleaned[3]["errors"])
 
-    def test_missing_request_ID(self):
+    def test_missing_request_ID(self) -> None:
         data = self.make_data()
-        data[1]["request_id"] = ""
+        data[1]["request_id"] = None
 
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertTrue(has_errors)
@@ -154,7 +155,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
 
         self.assertIn("Request ID is missing.", cleaned[1]["errors"])
 
-    def test_missing_score_manual(self):
+    def test_missing_score_manual(self) -> None:
         data = self.make_data()
         data[1]["score_manual"] = ""
 
@@ -167,7 +168,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
 
         self.assertIn("Manual score is missing.", cleaned[1]["errors"])
 
-    def test_missing_score_notes(self):
+    def test_missing_score_notes(self) -> None:
         """Missing notes should not trigger any errors."""
         data = self.make_data()
         data[1]["score_notes"] = ""
@@ -179,7 +180,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
         self.assertFalse(cleaned[2]["errors"])
         self.assertFalse(cleaned[3]["errors"])
 
-    def test_request_ID_wrong_format(self):
+    def test_request_ID_wrong_format(self) -> None:
         data = self.make_data()
         data[0]["request_id"] = "1.23.4"
         data[1]["request_id"] = " "
@@ -192,7 +193,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
             self.assertTrue(cleaned[i]["errors"])
             self.assertIn("Request ID is not an integer value.", cleaned[i]["errors"], i)
 
-    def test_score_manual_wrong_format(self):
+    def test_score_manual_wrong_format(self) -> None:
         data = self.make_data()
         data[0]["score_manual"] = "1.23.4"
         data[1]["score_manual"] = " "
@@ -208,7 +209,7 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
         # last entry should be valid
         self.assertFalse(cleaned[3]["errors"])
 
-    def test_request_ID_not_matching(self):
+    def test_request_ID_not_matching(self) -> None:
         data = self.make_data()
         data[0]["request_id"] = "3333"
 
@@ -227,7 +228,7 @@ class UpdateTrainingRequestManualScore(CSVBulkUploadTestBase):
     * requests get updated correctly
     """
 
-    def test_requests_updated(self):
+    def test_requests_updated(self) -> None:
         # prepare data
         data = self.make_data()
 

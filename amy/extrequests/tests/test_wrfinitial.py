@@ -1,16 +1,19 @@
 from datetime import date
 
-from django.db.models import Q, QuerySet
+from django.db.models import Model, Q, QuerySet
 from django.test import RequestFactory, TestCase
 
+from extrequests.base_views import AMYCreateAndFetchObjectView
 from extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from extrequests.views import (
     SelfOrganisedSubmissionAcceptEvent,
     WorkshopInquiryAcceptEvent,
     WorkshopRequestAcceptEvent,
 )
+from workshops.forms import EventCreateForm
 from workshops.models import (
     Curriculum,
+    Event,
     Language,
     Membership,
     Organization,
@@ -19,8 +22,13 @@ from workshops.models import (
 )
 
 
-class InitialWRFTestMixin:
-    def setUp(self):
+class InitialWRFTestMixin[_T: Model](TestCase):
+    view_class: type[AMYCreateAndFetchObjectView[Event, _T, EventCreateForm]]
+
+    def setUpOther(self) -> _T:
+        raise NotImplementedError()
+
+    def setUp(self) -> None:
         self.request = RequestFactory().get("/")
         self.view = self.view_class()
         self.view.setup(self.request)
@@ -42,27 +50,17 @@ class InitialWRFTestMixin:
                 ]
             ),
             "contact": "test@example.org;test2@example.org",
-            "host": Organization.objects.first(),
+            "host": Organization.objects.all()[0],
             "start": date(2020, 11, 11),
             "end": date(2020, 11, 12),
             "membership": None,
         }
 
-    def test_get_initial(self):
-        initial = self.view.get_initial()
 
-        self.assertEqual(initial.keys(), self.expected.keys())
-        for key in self.expected:
-            if isinstance(self.expected[key], QuerySet):
-                self.assertEqual(list(initial[key]), list(self.expected[key]))
-            else:
-                self.assertEqual(initial[key], self.expected[key])
-
-
-class TestInitialWorkshopRequestAccept(InitialWRFTestMixin, TestCase):
+class TestInitialWorkshopRequestAccept(InitialWRFTestMixin[WorkshopRequest]):
     view_class = WorkshopRequestAcceptEvent
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.member_code = "hogwarts55"
         membership = Membership.objects.create(
             name="Hogwarts",
@@ -75,13 +73,13 @@ class TestInitialWorkshopRequestAccept(InitialWRFTestMixin, TestCase):
         super().setUp()
         self.expected.update({"membership": membership})
 
-    def setUpOther(self):
+    def setUpOther(self) -> WorkshopRequest:
         other_object = WorkshopRequest.objects.create(
             state="p",
             personal="Harry",
             family="Potter",
             email="harry@hogwarts.edu",
-            institution=Organization.objects.first(),
+            institution=Organization.objects.all()[0],
             member_code=self.member_code,
             location="Scotland",
             preferred_dates=date(2020, 11, 11),
@@ -96,17 +94,27 @@ class TestInitialWorkshopRequestAccept(InitialWRFTestMixin, TestCase):
         )
         return other_object
 
+    def test_get_initial(self) -> None:
+        initial = self.view.get_initial()
 
-class TestInitialWorkshopInquiryAccept(InitialWRFTestMixin, TestCase):
+        self.assertEqual(initial.keys(), self.expected.keys())
+        for key in self.expected:
+            if isinstance(self.expected[key], QuerySet):
+                self.assertEqual(list(initial[key]), list(self.expected[key]))  # type: ignore[call-overload]
+            else:
+                self.assertEqual(initial[key], self.expected[key])
+
+
+class TestInitialWorkshopInquiryAccept(InitialWRFTestMixin[WorkshopInquiryRequest]):
     view_class = WorkshopInquiryAcceptEvent
 
-    def setUpOther(self):
+    def setUpOther(self) -> WorkshopInquiryRequest:
         other_object = WorkshopInquiryRequest.objects.create(
             state="p",
             personal="Harry",
             family="Potter",
             email="harry@hogwarts.edu",
-            institution=Organization.objects.first(),
+            institution=Organization.objects.all()[0],
             location="Scotland",
             preferred_dates=date(2020, 11, 11),
             language=Language.objects.get(name="English"),
@@ -120,17 +128,27 @@ class TestInitialWorkshopInquiryAccept(InitialWRFTestMixin, TestCase):
         )
         return other_object
 
+    def test_get_initial(self) -> None:
+        initial = self.view.get_initial()
 
-class TestInitialSelfOrganisedSubmissionAccept(InitialWRFTestMixin, TestCase):
+        self.assertEqual(initial.keys(), self.expected.keys())
+        for key in self.expected:
+            if isinstance(self.expected[key], QuerySet):
+                self.assertEqual(list(initial[key]), list(self.expected[key]))  # type: ignore[call-overload]
+            else:
+                self.assertEqual(initial[key], self.expected[key])
+
+
+class TestInitialSelfOrganisedSubmissionAccept(InitialWRFTestMixin[SelfOrganisedSubmission]):
     view_class = SelfOrganisedSubmissionAcceptEvent
 
-    def setUpOther(self):
+    def setUpOther(self) -> SelfOrganisedSubmission:
         other_object = SelfOrganisedSubmission.objects.create(
             state="p",
             personal="Harry",
             family="Potter",
             email="harry@hogwarts.edu",
-            institution=Organization.objects.first(),
+            institution=Organization.objects.all()[0],
             start=date(2020, 11, 11),
             end=date(2020, 11, 12),
             language=Language.objects.get(name="English"),
@@ -142,3 +160,13 @@ class TestInitialSelfOrganisedSubmissionAccept(InitialWRFTestMixin, TestCase):
             Curriculum.objects.filter(Q(carpentry__in=["SWC", "DC", "LC"], other=True) | Q(mix_match=True))
         )
         return other_object
+
+    def test_get_initial(self) -> None:
+        initial = self.view.get_initial()
+
+        self.assertEqual(initial.keys(), self.expected.keys())
+        for key in self.expected:
+            if isinstance(self.expected[key], QuerySet):
+                self.assertEqual(list(initial[key]), list(self.expected[key]))  # type: ignore[call-overload]
+            else:
+                self.assertEqual(initial[key], self.expected[key])

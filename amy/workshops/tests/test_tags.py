@@ -3,10 +3,10 @@ from workshops.tests.base import TestBase
 
 
 class TestTagManager(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super()._setUpTags()
 
-    def test_main_tags(self):
+    def test_main_tags(self) -> None:
         # Arrange
         expected = [
             Tag.objects.get(name="DC"),
@@ -21,7 +21,7 @@ class TestTagManager(TestBase):
         # Assert
         self.assertEqual(list(tags), expected)
 
-    def test_carpentries_tags(self):
+    def test_carpentries_tags(self) -> None:
         # Arrange
         expected = [
             Tag.objects.get(name="DC"),
@@ -33,7 +33,7 @@ class TestTagManager(TestBase):
         # Assert
         self.assertEqual(list(tags), expected)
 
-    def test_strings(self):
+    def test_strings(self) -> None:
         # Arrange
         expected = ["DC", "LC", "SWC"]
         # Act

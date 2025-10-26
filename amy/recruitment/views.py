@@ -9,13 +9,13 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db import IntegrityError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.forms import BaseForm
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDict
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import View
 from django.views.generic.edit import FormMixin, FormView
-from flags.views import FlaggedViewMixin
+from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
 from emails.actions.host_instructors_introduction import (
     host_instructors_introduction_strategy,
@@ -43,6 +43,7 @@ from workshops.base_views import (
     AMYDetailView,
     AMYListView,
     AMYUpdateView,
+    AuthenticatedHttpRequest,
     RedirectSupportMixin,
 )
 from workshops.models import Event, Person, Role, Task
@@ -58,14 +59,19 @@ logger = logging.getLogger("amy")
 # InstructorRecruitment related views
 
 
-class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView):
+class InstructorRecruitmentList(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYListView[InstructorRecruitment],
+):
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     title = "Recruitment processes"
     filter_class = InstructorRecruitmentFilter
+    request: AuthenticatedHttpRequest
 
     queryset = (
-        InstructorRecruitment.objects.annotate_with_priority()  # type: ignore
+        InstructorRecruitment.objects.annotate_with_priority()
         .select_related("event", "assigned_to")
         .prefetch_related(
             Prefetch(
@@ -118,17 +124,17 @@ class InstructorRecruitmentList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListVie
     )
     template_name = "recruitment/instructorrecruitment_list.html"
 
-    def get_filter_data(self):
+    def get_filter_data(self) -> QueryDict | dict[str, Any]:
         """If no filter value present for `assigned_to`, set default to current user.
 
         This means that by default the filter will be set to currently logged-in user;
         it's still possible to clear that filter value, in which case the query param
         will become `?assigned_to=` (empty)."""
         data = super().get_filter_data().copy()
-        data.setdefault("assigned_to", self.request.user.pk)  # type: ignore
+        data.setdefault("assigned_to", str(self.request.user.pk))
         return data
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["personal_conflicts"] = (
             Person.objects.filter(instructorrecruitmentsignup__recruitment__in=self.get_queryset())
@@ -147,16 +153,17 @@ class InstructorRecruitmentCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    FlaggedViewMixin,
-    AMYCreateView,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYCreateView[InstructorRecruitmentCreateForm, InstructorRecruitment],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.add_instructorrecruitment"
     model = InstructorRecruitment
     template_name = "recruitment/instructorrecruitment_add.html"
     form_class = InstructorRecruitmentCreateForm
+    request: AuthenticatedHttpRequest
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.event: Event
 
@@ -170,24 +177,34 @@ class InstructorRecruitmentCreate(
         qs = Event.objects.filter(start__gte=today).filter(location).select_related("administrator").distinct()
         return get_object_or_404(qs, pk=event_id)
 
-    def get(self, request, *args, **kwargs):
+    def get(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
         """Load other object upon GET request. Save the request."""
         self.request = request
         self.event = self.get_other_object()
         return super().get(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
+    def post(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
         """Load other object upon POST request. Save the request."""
         self.request = request
         self.event = self.get_other_object()
         return super().post(request, *args, **kwargs)
 
-    def get_form_kwargs(self) -> dict:
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "instructorrecruitment"})
         return kwargs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = f"Begin Instructor Selection Process for {self.event}"
         context["event"] = self.event
@@ -195,16 +212,16 @@ class InstructorRecruitmentCreate(
         context["priority"] = InstructorRecruitment.calculate_priority(self.event)
         return context
 
-    def get_initial(self) -> dict:
+    def get_initial(self) -> dict[str, Any]:
         try:
-            workshop_request = self.event.workshoprequest  # type: ignore
+            workshop_request = self.event.workshoprequest
             return {"notes": (f"{workshop_request.audience_description}\n\n" f"{workshop_request.user_notes}")}
-        except Event.workshoprequest.RelatedObjectDoesNotExist:  # type: ignore
+        except Event.workshoprequest.RelatedObjectDoesNotExist:
             return {}
 
-    def form_valid(self, form: InstructorRecruitmentCreateForm):
+    def form_valid(self, form: InstructorRecruitmentCreateForm) -> HttpResponse:
         self.object: InstructorRecruitment = form.save(commit=False)
-        self.object.assigned_to = self.request.user  # type: ignore
+        self.object.assigned_to = self.request.user
         self.object.event = self.event
         self.object.save()
         return super().form_valid(form)
@@ -212,13 +229,13 @@ class InstructorRecruitmentCreate(
 
 class InstructorRecruitmentDetails(
     OnlyForAdminsMixin,
-    FlaggedViewMixin,
-    AMYDetailView,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDetailView[InstructorRecruitment],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.view_instructorrecruitment"
     queryset = (
-        InstructorRecruitment.objects.annotate_with_priority()  # type: ignore
+        InstructorRecruitment.objects.annotate_with_priority()
         .prefetch_related(
             Prefetch(
                 "signups",
@@ -263,7 +280,7 @@ class InstructorRecruitmentDetails(
     )
     template_name = "recruitment/instructorrecruitment_details.html"
 
-    def get_context_data(self, **kwargs) -> dict:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         return context
@@ -271,10 +288,10 @@ class InstructorRecruitmentDetails(
 
 class InstructorRecruitmentAddSignup(
     OnlyForAdminsMixin,
-    FlaggedViewMixin,
-    SuccessMessageMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    SuccessMessageMixin[InstructorRecruitmentAddSignupForm],
     PermissionRequiredMixin,
-    FormView,
+    FormView[InstructorRecruitmentAddSignupForm],
 ):
     """POST requests for adding new signup for an existing recruitment."""
 
@@ -286,7 +303,7 @@ class InstructorRecruitmentAddSignup(
     form_class = InstructorRecruitmentAddSignupForm
     template_name = "recruitment/instructorrecruitment_add_signup.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = f"Add instructor application to {self.object}"
         return context
@@ -325,12 +342,22 @@ class InstructorRecruitmentAddSignup(
 
         return super().form_valid(form)
 
-    def get(self, request, *args, **kwargs):
+    def get(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
         self.request = request
         self.object = self.get_object()
         return super().get(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
+    def post(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
         self.request = request
         self.object = self.get_object()
         return super().post(request, *args, **kwargs)
@@ -338,8 +365,8 @@ class InstructorRecruitmentAddSignup(
 
 class InstructorRecruitmentSignupChangeState(
     OnlyForAdminsMixin,
-    FlaggedViewMixin,
-    FormMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    FormMixin[InstructorRecruitmentSignupChangeStateForm],
     PermissionRequiredMixin,
     View,
 ):
@@ -357,10 +384,10 @@ class InstructorRecruitmentSignupChangeState(
         default_url = reverse("all_instructorrecruitment")
         return safe_next_or_default_url(next_url, default_url)
 
-    def form_invalid(self, form) -> HttpResponse:
+    def form_invalid(self, form: InstructorRecruitmentSignupChangeStateForm) -> HttpResponse:
         return HttpResponseRedirect(self.get_success_url())
 
-    def form_valid(self, form) -> HttpResponse:
+    def form_valid(self, form: InstructorRecruitmentSignupChangeStateForm) -> HttpResponse:
         action_to_state_mapping = {
             "confirm": "a",
             "decline": "d",
@@ -473,7 +500,7 @@ class InstructorRecruitmentSignupChangeState(
             instructor_recruitment_signup_id=signup.pk,
         )
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         self.request = request
         self.object = self.get_object()
         form = self.get_form()
@@ -485,8 +512,8 @@ class InstructorRecruitmentSignupChangeState(
 
 class InstructorRecruitmentChangeState(
     OnlyForAdminsMixin,
-    FlaggedViewMixin,
-    FormMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    FormMixin[InstructorRecruitmentChangeStateForm],
     PermissionRequiredMixin,
     View,
 ):
@@ -589,7 +616,7 @@ class InstructorRecruitmentChangeState(
         next_url = self.request.POST.get("next", None)
         return HttpResponseRedirect(safe_next_or_default_url(next_url, referrer))
 
-    def post(self, request, *args, **kwargs) -> HttpResponse:
+    def post(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         self.request = request
         self.object = self.get_object()
         form = self.get_form()
@@ -603,13 +630,13 @@ class InstructorRecruitmentSignupUpdate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
     RedirectSupportMixin,
-    FlaggedViewMixin,
-    AMYUpdateView,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYUpdateView[InstructorRecruitmentSignupUpdateForm, InstructorRecruitmentSignup],
 ):
     flag_name = "INSTRUCTOR_RECRUITMENT"
     permission_required = "recruitment.change_instructorrecruitmentsignup"
     form_class = InstructorRecruitmentSignupUpdateForm
     model = InstructorRecruitmentSignup
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("all_instructorrecruitment")

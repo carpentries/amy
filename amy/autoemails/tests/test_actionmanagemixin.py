@@ -31,7 +31,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         )
         self.event = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -165,7 +165,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
 
         # test self.rq_jobs
         self.assertEqual(RQJob.objects.count(), 1)
-        rqjob = RQJob.objects.first()
+        rqjob = RQJob.objects.all()[0]
         self.assertEqual(rqjob.job_id, job.get_id())
         self.assertEqual(rqjob.trigger, trigger)
 
@@ -237,7 +237,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
 
         # ensure it's the same job
         job = next(self.scheduler.get_jobs())
-        rqjob = RQJob.objects.first()
+        rqjob = RQJob.objects.all()[0]
         self.assertEqual(job.get_id(), rqjob.job_id)
 
         # mock a Query Set

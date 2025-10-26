@@ -24,7 +24,7 @@ from workshops.tests.base import FormTestHelper, TestBase
 class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
 
-    def setUpMembership(self):
+    def setUpMembership(self) -> None:
         Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
@@ -34,7 +34,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             registration_code="valid123",
         )
 
-    def test_minimal_form(self):
+    def test_minimal_form(self) -> None:
         """Test if minimal form works."""
         data = {
             "personal": "Harry",
@@ -46,7 +46,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "location": "London",
             "country": "GB",
             "requested_workshop_types": [
-                Curriculum.objects.default_order(allow_unknown=False, allow_other=False).filter(active=True).first().pk,
+                Curriculum.objects.default_order(allow_unknown=False, allow_other=False).filter(active=True)[0].pk,
             ],
             "preferred_dates": "{:%Y-%m-%d}".format(date.today()),
             "other_preferred_dates": "17-18 August, 2019",
@@ -62,7 +62,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             "public_event": "closed",
             "public_event_other": "",
             "additional_contact": "",
-            "carpentries_info_source": [InfoSource.objects.first().pk],
+            "carpentries_info_source": [InfoSource.objects.all()[0].pk],
             "carpentries_info_source_other": "",
             "user_notes": "n/c",
             "data_privacy_agreement": True,
@@ -74,13 +74,13 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
         form = WorkshopRequestBaseForm(data)
         self.assertTrue(form.is_valid(), dict(form.errors))
 
-    def test_institution_validation(self):
+    def test_institution_validation(self) -> None:
         """Make sure institution data is present, and validation
         errors are triggered for various matrix of input data."""
 
         # 1: selected institution from the list
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "",
             "institution_other_URL": "",
             "institution_department": "School of Wizardry",
@@ -145,7 +145,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
 
         # 6: institution, other name, no other URL
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "Hogwarts",
             "institution_other_URL": "",
             "institution_department": "",
@@ -158,7 +158,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
 
         # 7: institution, other URL, no other name
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "",
             "institution_other_URL": "hogwarts.uk",
             "institution_department": "",
@@ -182,7 +182,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
         self.assertIn("institution_other_URL", form.errors)
         self.assertNotIn("institution_department", form.errors)
 
-    def test_dates_validation(self):
+    def test_dates_validation(self) -> None:
         """Ensure preferred dates validation."""
         # 1: both empty will trigger error
         data = {
@@ -228,7 +228,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
         self.assertIn("preferred_dates", form.errors)
         self.assertNotIn("other_preferred_dates", form.errors)
 
-    def test_scholarship_circumstances(self):
+    def test_scholarship_circumstances(self) -> None:
         """Test validation of scholarship circumstances"""
         # 1: waiver and scholarship circumstances provided
         data = {
@@ -266,7 +266,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
         self.assertNotIn("administrative_fee", form.errors)
         self.assertIn("scholarship_circumstances", form.errors)
 
-    def test_travel_expences_management(self):
+    def test_travel_expences_management(self) -> None:
         """Test validation of travel expences management."""
         self._test_field_other(
             Form=WorkshopRequestBaseForm,
@@ -277,7 +277,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             first_when_other="other",
         )
 
-    def test_institution_restrictions(self):
+    def test_institution_restrictions(self) -> None:
         """Test validation of institution restrictions."""
         self._test_field_other(
             Form=WorkshopRequestBaseForm,
@@ -288,7 +288,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             first_when_other="other",
         )
 
-    def test_public_event(self):
+    def test_public_event(self) -> None:
         """Test validation of event's openness to public."""
         self._test_field_other(
             Form=WorkshopRequestBaseForm,
@@ -299,7 +299,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             first_when_other="other",
         )
 
-    def test_instructor_availability_required(self):
+    def test_instructor_availability_required(self) -> None:
         """Test requiredness of `instructor_availability` depending on selected
         preferred dates."""
         # Arrange
@@ -322,7 +322,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             self.assertNotIn("other_preferred_dates", form.errors)
             self.assertIn("instructor_availability", form.errors)
 
-    def test_instructor_availability_not_required(self):
+    def test_instructor_availability_not_required(self) -> None:
         """Test `instructor_availability` not required in some circumstances."""
         # Arrange
         data1 = {
@@ -359,12 +359,12 @@ class TestWorkshopRequestCreateView(TestBase):
 
     INVALID_CODE_ERROR = "This code is invalid."
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
 
-    def setUpMembership(self):
+    def setUpMembership(self) -> None:
         self.membership = Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
@@ -376,7 +376,7 @@ class TestWorkshopRequestCreateView(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
-    def test_member_code_validation__not_enforced(self):
+    def test_member_code_validation__not_enforced(self) -> None:
         """Invalid code should pass if enforcement is not enabled."""
         # Arrange
         data = {
@@ -391,7 +391,7 @@ class TestWorkshopRequestCreateView(TestBase):
         self.assertNotContains(rv, self.INVALID_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_valid(self):
+    def test_member_code_validation__code_valid(self) -> None:
         """valid code - no error"""
         # Arrange
         self.setUpMembership()
@@ -407,7 +407,7 @@ class TestWorkshopRequestCreateView(TestBase):
         self.assertNotContains(rv, self.INVALID_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_no_match(self):
+    def test_member_code_validation__code_no_match(self) -> None:
         """code does not match a membership - error on code"""
         # Arrange
         data = {
@@ -422,7 +422,7 @@ class TestWorkshopRequestCreateView(TestBase):
         self.assertContains(rv, self.INVALID_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_too_early(self):
+    def test_member_code_validation__code_too_early(self) -> None:
         """code used before the membership is active - error on code"""
         # Arrange
         self.setUpMembership()
@@ -440,7 +440,7 @@ class TestWorkshopRequestCreateView(TestBase):
         self.assertContains(rv, self.INVALID_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_too_late(self):
+    def test_member_code_validation__code_too_late(self) -> None:
         """code used after the membership ends - error on code"""
         # Arrange
         self.setUpMembership()
@@ -458,7 +458,7 @@ class TestWorkshopRequestCreateView(TestBase):
         self.assertContains(rv, self.INVALID_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_no_workshops_remaining(self):
+    def test_member_code_validation__code_no_workshops_remaining(self) -> None:
         """code matches a membership with no workshops remaining - no error"""
         # Arrange
         self.setUpMembership()
@@ -493,7 +493,7 @@ class TestWorkshopRequestCreateView(TestBase):
         self.assertNotContains(rv, self.INVALID_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation_code_empty(self):
+    def test_member_code_validation_code_empty(self) -> None:
         """empty code - no error"""
         # Arrange
         data = {
@@ -508,7 +508,7 @@ class TestWorkshopRequestCreateView(TestBase):
 
 
 class TestWorkshopRequestViews(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
@@ -556,40 +556,40 @@ class TestWorkshopRequestViews(TestBase):
             user_notes="",
         )
 
-    def test_pending_requests_list(self):
+    def test_pending_requests_list(self) -> None:
         rv = self.client.get(reverse("all_workshoprequests"))
         self.assertIn(self.wr1, rv.context["requests"])
         self.assertNotIn(self.wr2, rv.context["requests"])
 
-    def test_discarded_requests_list(self):
+    def test_discarded_requests_list(self) -> None:
         rv = self.client.get(reverse("all_workshoprequests") + "?state=d")
         self.assertNotIn(self.wr1, rv.context["requests"])
         self.assertIn(self.wr2, rv.context["requests"])
 
-    def test_set_state_pending_request_view(self):
+    def test_set_state_pending_request_view(self) -> None:
         rv = self.client.get(reverse("workshoprequest_set_state", args=[self.wr1.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wr1.refresh_from_db()
         self.assertEqual(self.wr1.state, "d")
 
-    def test_set_state_discarded_request_view(self):
+    def test_set_state_discarded_request_view(self) -> None:
         rv = self.client.get(reverse("workshoprequest_set_state", args=[self.wr2.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wr2.refresh_from_db()
         self.assertEqual(self.wr2.state, "d")
 
-    def test_pending_request_accept(self):
+    def test_pending_request_accept(self) -> None:
         rv = self.client.get(reverse("workshoprequest_set_state", args=[self.wr1.pk, "accepted"]))
         self.assertEqual(rv.status_code, 302)
 
-    def test_pending_request_accepted_with_event(self):
+    def test_pending_request_accepted_with_event(self) -> None:
         """Ensure a backlink from Event to WorkshopRequest that created the
         event exists after ER is accepted."""
         data = {
             "slug": "2018-10-28-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(reverse("workshoprequest_accept_event", args=[self.wr1.pk]), data)
@@ -597,7 +597,7 @@ class TestWorkshopRequestViews(TestBase):
         request = Event.objects.get(slug="2018-10-28-test-event").workshoprequest
         self.assertEqual(request, self.wr1)
 
-    def test_accept_with_event_autofill(self):
+    def test_accept_with_event_autofill(self) -> None:
         """Ensure that fields are autofilled correctly when creating an Event from a
         WorkshopRequest."""
         # Arrange
@@ -620,14 +620,14 @@ class TestWorkshopRequestViews(TestBase):
             administrative_fee="forprofit",
             travel_expences_management="reimbursed",
             # fields that should be autofilled
-            institution=Organization.objects.first(),
+            institution=Organization.objects.all()[0],
             preferred_dates=date.today(),
             online_inperson="online",
             workshop_listed=False,
             additional_contact="hermione@granger.com",
             member_code="hogwarts55",
         )
-        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry")[0]
         wr.requested_workshop_types.set([curriculum])
 
         expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
@@ -638,34 +638,36 @@ class TestWorkshopRequestViews(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertQuerySetEqual(form_initial["curricula"].all(), wr.requested_workshop_types.all())
-        self.assertQuerySetEqual(form_initial["tags"], expected_tags)
+        self.assertQuerySetEqual(form_initial["curricula"].all(), list(wr.requested_workshop_types.all()))
+        self.assertQuerySetEqual(form_initial["tags"], list(expected_tags))
         self.assertEqual(form_initial["public_status"], "private")
         self.assertEqual(form_initial["contact"], wr.additional_contact)
+        assert wr.institution  # for mypy
         self.assertEqual(form_initial["host"].pk, wr.institution.pk)
         self.assertEqual(form_initial["start"], wr.preferred_dates)
+        assert wr.preferred_dates  # for mypy
         self.assertEqual(form_initial["end"], wr.preferred_dates + timedelta(days=1))
         self.assertEqual(form_initial["membership"].pk, expected_membership.pk)
 
-    def test_discarded_request_not_accepted_with_event(self):
+    def test_discarded_request_not_accepted_with_event(self) -> None:
         rv = self.client.get(reverse("workshoprequest_accept_event", args=[self.wr2.pk]))
         self.assertEqual(rv.status_code, 404)
 
-    def test_pending_request_discard(self):
+    def test_pending_request_discard(self) -> None:
         rv = self.client.get(
             reverse("workshoprequest_set_state", args=[self.wr1.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
 
-    def test_discarded_request_discard(self):
+    def test_discarded_request_discard(self) -> None:
         rv = self.client.get(
             reverse("workshoprequest_set_state", args=[self.wr2.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
 
-    def test_discarded_request_reopened(self):
+    def test_discarded_request_reopened(self) -> None:
         self.wr1.state = "a"
         self.wr1.save()
         self.client.get(
@@ -675,7 +677,7 @@ class TestWorkshopRequestViews(TestBase):
         self.wr1.refresh_from_db()
         self.assertEqual(self.wr1.state, "p")
 
-    def test_accepted_request_reopened(self):
+    def test_accepted_request_reopened(self) -> None:
         self.assertEqual(self.wr2.state, "d")
         self.client.get(
             reverse("workshoprequest_set_state", args=[self.wr2.pk, "pending"]),
@@ -684,7 +686,7 @@ class TestWorkshopRequestViews(TestBase):
         self.wr2.refresh_from_db()
         self.assertEqual(self.wr2.state, "p")
 
-    def test_list_no_comments(self):
+    def test_list_no_comments(self) -> None:
         """Regression for #1435: missing "comment" field displayed on "all
         workshops" page.
 
@@ -692,7 +694,7 @@ class TestWorkshopRequestViews(TestBase):
         """
 
         # make sure the `string_if_invalid` is not empty
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         rv = self.client.get(reverse("all_workshoprequests"))
 
@@ -700,12 +702,12 @@ class TestWorkshopRequestViews(TestBase):
         self.assertNotEqual(len(rv.context["requests"]), 0)
 
         # no string_if_invalid found in the page
-        invalid = settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"]
+        invalid = settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"]  # type: ignore[index]
         self.assertNotIn(invalid, rv.content.decode("utf-8"))
 
 
 class TestAcceptingWorkshopRequest(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
@@ -734,7 +736,7 @@ class TestAcceptingWorkshopRequest(TestBase):
 
         self.url = reverse("workshoprequest_accept_event", args=[self.wr1.pk])
 
-    def test_page_context(self):
+    def test_page_context(self) -> None:
         """Ensure proper objects render in the page."""
         rv = self.client.get(self.url)
         self.assertIn("form", rv.context)
@@ -744,14 +746,14 @@ class TestAcceptingWorkshopRequest(TestBase):
         self.assertEqual(wr, self.wr1)
         self.assertTrue(isinstance(form, EventCreateForm))
 
-    def test_state_changed(self):
+    def test_state_changed(self) -> None:
         """Ensure request's state is changed after accepting."""
         self.assertTrue(self.wr1.state == "p")
         data = {
             "slug": "2018-10-28-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(self.url, data)
@@ -759,7 +761,7 @@ class TestAcceptingWorkshopRequest(TestBase):
         self.wr1.refresh_from_db()
         self.assertTrue(self.wr1.state == "a")
 
-    def test_host_task_created(self):
+    def test_host_task_created(self) -> None:
         """Ensure a host task is created when a person submitting the request
         already is in our database."""
 
@@ -770,9 +772,9 @@ class TestAcceptingWorkshopRequest(TestBase):
         # create event from that workshop request
         data = {
             "slug": "2019-08-18-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(self.url, data)

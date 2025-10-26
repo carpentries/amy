@@ -10,7 +10,7 @@ from workshops.models import Person
 
 
 class TestDjangoModelPermissionsWithView(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.model = InstructorRecruitment
         meta = self.model._meta
         self.permissions = {
@@ -36,22 +36,22 @@ class TestDjangoModelPermissionsWithView(TestCase):
             ),
         }
 
-    def test_has_permission_GET__no_view_perm(self):
+    def test_has_permission_GET__no_view_perm(self) -> None:
         """Ensure GET request won't pass when user doesn't have `view` permission."""
         # Arrange
         permission_class = DjangoModelPermissionsWithView()
         user = Person(personal="Test", family="User", email="test@example.org")
         request = RequestFactory().get("/")
         request.user = user
-        permission_class._queryset = MagicMock()
+        permission_class._queryset = MagicMock()  # type: ignore[method-assign]
         permission_class._queryset.return_value.model = self.model
         view = View()
         # Act
-        result = permission_class.has_permission(request, view)
+        result = permission_class.has_permission(request, view)  # type: ignore[arg-type]
         # Assert
         self.assertEqual(result, False)
 
-    def test_has_permission_GET__other_perms(self):
+    def test_has_permission_GET__other_perms(self) -> None:
         """Ensure GET request won't pass when user has other permissions than `view`
         permission from the same model."""
         # Arrange
@@ -69,15 +69,15 @@ class TestDjangoModelPermissionsWithView(TestCase):
         )
         request = RequestFactory().get("/")
         request.user = user
-        permission_class._queryset = MagicMock()
+        permission_class._queryset = MagicMock()  # type: ignore[method-assign]
         permission_class._queryset.return_value.model = self.model
         view = View()
         # Act
-        result = permission_class.has_permission(request, view)
+        result = permission_class.has_permission(request, view)  # type: ignore[arg-type]
         # Assert
         self.assertEqual(result, False)
 
-    def test_has_permission_GET__view_perm(self):
+    def test_has_permission_GET__view_perm(self) -> None:
         """Ensure GET request passes when user has `view` permission."""
         # Arrange
         permission_class = DjangoModelPermissionsWithView()
@@ -90,10 +90,10 @@ class TestDjangoModelPermissionsWithView(TestCase):
         user.user_permissions.add(self.permissions["view"])
         request = RequestFactory().get("/")
         request.user = user
-        permission_class._queryset = MagicMock()
+        permission_class._queryset = MagicMock()  # type: ignore[method-assign]
         permission_class._queryset.return_value.model = self.model
         view = View()
         # Act
-        result = permission_class.has_permission(request, view)
+        result = permission_class.has_permission(request, view)  # type: ignore[arg-type]
         # Assert
         self.assertEqual(result, True)

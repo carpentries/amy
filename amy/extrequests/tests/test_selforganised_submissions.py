@@ -15,7 +15,7 @@ from workshops.tests.base import FormTestHelper, TestBase
 class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.minimal_data = {
             "personal": "Harry",
@@ -29,7 +29,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
             "end": date(2020, 11, 8),
             "workshop_url": "",
             "workshop_types": [
-                Curriculum.objects.filter(active=True).exclude(mix_match=True).first().pk,
+                Curriculum.objects.filter(active=True).exclude(mix_match=True)[0].pk,
             ],
             "workshop_types_other_explain": "",
             "country": "GB",
@@ -43,19 +43,19 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
             "online_inperson": "inperson",
         }
 
-    def test_minimal_form(self):
+    def test_minimal_form(self) -> None:
         """Test if minimal form works."""
         data = self.minimal_data.copy()
         form = SelfOrganisedSubmissionBaseForm(data)
         self.assertTrue(form.is_valid(), dict(form.errors))
 
-    def test_institution_validation(self):
+    def test_institution_validation(self) -> None:
         """Make sure institution data is present, and validation
         errors are triggered for various matrix of input data."""
 
         # 1: selected institution from the list
         data = {
-            "institution": Organization.objects.exclude(fullname="self-organised").first().pk,
+            "institution": Organization.objects.exclude(fullname="self-organised")[0].pk,
             "institution_other_name": "",
             "institution_other_URL": "",
             "institution_department": "School of Wizardry",
@@ -120,7 +120,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
 
         # 6: institution, other name, no other URL
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "Hogwarts",
             "institution_other_URL": "",
             "institution_department": "",
@@ -133,7 +133,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
 
         # 7: institution, other URL, no other name
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "",
             "institution_other_URL": "hogwarts.uk",
             "institution_department": "",
@@ -157,7 +157,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
         self.assertIn("institution_other_URL", form.errors)
         self.assertNotIn("institution_department", form.errors)
 
-    def test_workshop_URL(self):
+    def test_workshop_URL(self) -> None:
         """Test validation of workshop URL."""
         # 1: required only when workshop format is "standard" 2-day workshop
         data = self.minimal_data.copy()
@@ -182,7 +182,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
         form = SelfOrganisedSubmissionBaseForm(data)
         self.assertIn("workshop_url", form.errors)
 
-    def test_workshop_format(self):
+    def test_workshop_format(self) -> None:
         """Test validation of workshop format."""
         self._test_field_other(
             Form=SelfOrganisedSubmissionBaseForm,
@@ -193,7 +193,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
             first_when_other="other",
         )
 
-    def test_workshop_types(self):
+    def test_workshop_types(self) -> None:
         """Test validation of workshop types explanation."""
         curricula = Curriculum.objects.default_order(
             allow_other=False, allow_unknown=False, allow_mix_match=True
@@ -201,7 +201,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
 
         # 1: required only when workshop types is "mix & match"
         data = self.minimal_data.copy()
-        data["workshop_types"] = [curricula.exclude(mix_match=True).first().pk]
+        data["workshop_types"] = [curricula.exclude(mix_match=True)[0].pk]
         data["workshop_types_other_explain"] = "It doesn't matter when " "mix&match is not selected."
         form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn("workshop_types", form.errors)
@@ -209,7 +209,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
 
         # 2: error when mix&match but no explanation
         data = self.minimal_data.copy()
-        data["workshop_types"] = [curricula.filter(mix_match=True).first().pk]
+        data["workshop_types"] = [curricula.filter(mix_match=True)[0].pk]
         data["workshop_types_other_explain"] = ""
         form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn("workshop_types", form.errors)
@@ -217,13 +217,13 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
 
         # 3: error fixed
         data = self.minimal_data.copy()
-        data["workshop_types"] = [curricula.filter(mix_match=True).first().pk]
+        data["workshop_types"] = [curricula.filter(mix_match=True)[0].pk]
         data["workshop_types_other_explain"] = "It does matter when " "mix&match is selected."
         form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn("workshop_types", form.errors)
         self.assertNotIn("workshop_types_other_explain", form.errors)
 
-    def test_public_event(self):
+    def test_public_event(self) -> None:
         """Test validation of event's openness to public."""
         self._test_field_other(
             Form=SelfOrganisedSubmissionBaseForm,
@@ -236,7 +236,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
 
 
 class TestSelfOrganisedSubmissionViews(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
@@ -269,40 +269,40 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         )
         self.sos2.workshop_types.set(Curriculum.objects.filter(mix_match=False, unknown=False, other=False)[:1])
 
-    def test_pending_requests_list(self):
+    def test_pending_requests_list(self) -> None:
         rv = self.client.get(reverse("all_selforganisedsubmissions"))
         self.assertIn(self.sos1, rv.context["submissions"])
         self.assertNotIn(self.sos2, rv.context["submissions"])
 
-    def test_discarded_requests_list(self):
+    def test_discarded_requests_list(self) -> None:
         rv = self.client.get(reverse("all_selforganisedsubmissions") + "?state=d")
         self.assertNotIn(self.sos1, rv.context["submissions"])
         self.assertIn(self.sos2, rv.context["submissions"])
 
-    def test_set_state_pending_request_view(self):
+    def test_set_state_pending_request_view(self) -> None:
         rv = self.client.get(reverse("selforganisedsubmission_set_state", args=[self.sos1.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.sos1.refresh_from_db()
         self.assertEqual(self.sos1.state, "d")
 
-    def test_set_state_discarded_request_view(self):
+    def test_set_state_discarded_request_view(self) -> None:
         rv = self.client.get(reverse("selforganisedsubmission_set_state", args=[self.sos2.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.sos2.refresh_from_db()
         self.assertEqual(self.sos2.state, "d")
 
-    def test_pending_request_accept(self):
+    def test_pending_request_accept(self) -> None:
         rv = self.client.get(reverse("selforganisedsubmission_set_state", args=[self.sos1.pk, "accepted"]))
         self.assertEqual(rv.status_code, 302)
 
-    def test_pending_request_accepted_with_event(self):
+    def test_pending_request_accepted_with_event(self) -> None:
         """Ensure a backlink from Event to SelfOrganisedSubmission that created
         the event exists after ER is accepted."""
         data = {
             "slug": "2018-10-28-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk]), data)
@@ -310,7 +310,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         request = Event.objects.get(slug="2018-10-28-test-event").selforganisedsubmission
         self.assertEqual(request, self.sos1)
 
-    def test_accept_with_event_autofill(self):
+    def test_accept_with_event_autofill(self) -> None:
         """Ensure that fields are autofilled correctly when creating an Event from a
         SelfOrganisedSubmission."""
         # Arrange
@@ -323,14 +323,14 @@ class TestSelfOrganisedSubmissionViews(TestBase):
             country="GB",
             language=Language.objects.get(name="English"),
             # fields that should be autofilled
-            institution=Organization.objects.first(),
+            institution=Organization.objects.all()[0],
             start=date.today(),
             end=date.today() + timedelta(days=1),
             online_inperson="online",
             workshop_listed=False,
             additional_contact="hermione@granger.com",
         )
-        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry")[0]
         sos.workshop_types.set([curriculum])
 
         expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
@@ -341,33 +341,34 @@ class TestSelfOrganisedSubmissionViews(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertQuerySetEqual(form_initial["curricula"].all(), sos.workshop_types.all())
-        self.assertQuerySetEqual(form_initial["tags"], expected_tags)
+        self.assertQuerySetEqual(form_initial["curricula"].all(), list(sos.workshop_types.all()))
+        self.assertQuerySetEqual(form_initial["tags"], list(expected_tags))
         self.assertEqual(form_initial["public_status"], "private")
         self.assertEqual(form_initial["contact"], sos.additional_contact)
+        assert sos.institution  # for mypy
         self.assertEqual(form_initial["host"].pk, sos.institution.pk)
         self.assertEqual(form_initial["start"], sos.start)
         self.assertEqual(form_initial["end"], sos.end)
 
-    def test_discarded_request_not_accepted_with_event(self):
+    def test_discarded_request_not_accepted_with_event(self) -> None:
         rv = self.client.get(reverse("selforganisedsubmission_accept_event", args=[self.sos2.pk]))
         self.assertEqual(rv.status_code, 404)
 
-    def test_pending_request_discard(self):
+    def test_pending_request_discard(self) -> None:
         rv = self.client.get(
             reverse("selforganisedsubmission_set_state", args=[self.sos1.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
 
-    def test_discarded_request_discard(self):
+    def test_discarded_request_discard(self) -> None:
         rv = self.client.get(
             reverse("selforganisedsubmission_set_state", args=[self.sos2.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
 
-    def test_discarded_request_reopened(self):
+    def test_discarded_request_reopened(self) -> None:
         self.sos1.state = "a"
         self.sos1.save()
         self.client.get(
@@ -377,7 +378,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         self.sos1.refresh_from_db()
         self.assertEqual(self.sos1.state, "p")
 
-    def test_accepted_request_reopened(self):
+    def test_accepted_request_reopened(self) -> None:
         self.assertEqual(self.sos2.state, "d")
         self.client.get(
             reverse("selforganisedsubmission_set_state", args=[self.sos2.pk, "pending"]),
@@ -386,7 +387,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         self.sos2.refresh_from_db()
         self.assertEqual(self.sos2.state, "p")
 
-    def test_list_no_comments(self):
+    def test_list_no_comments(self) -> None:
         """Regression for #1435: missing "comment" field displayed on "all
         workshops" page.
 
@@ -396,7 +397,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         """
 
         # make sure the `string_if_invalid` is not empty
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         rv = self.client.get(reverse("all_selforganisedsubmissions"))
 
@@ -404,12 +405,12 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         self.assertNotEqual(len(rv.context["submissions"]), 0)
 
         # no string_if_invalid found in the page
-        invalid = settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"]
+        invalid = settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"]  # type: ignore[index]
         self.assertNotIn(invalid, rv.content.decode("utf-8"))
 
 
 class TestAcceptingSelfOrgSubmission(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
@@ -446,7 +447,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         self.sos2.workshop_types.set(Curriculum.objects.filter(mix_match=False, unknown=False, other=False)[:1])
         self.url2 = reverse("selforganisedsubmission_accept_event", args=[self.sos2.pk])
 
-    def test_page_context(self):
+    def test_page_context(self) -> None:
         """Ensure proper objects render in the page."""
         rv = self.client.get(self.url)
         self.assertIn("form", rv.context)
@@ -456,14 +457,14 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         self.assertEqual(sos, self.sos1)
         self.assertTrue(isinstance(form, EventCreateForm))
 
-    def test_state_changed(self):
+    def test_state_changed(self) -> None:
         """Ensure request's state is changed after accepting."""
         self.assertTrue(self.sos1.state == "p")
         data = {
             "slug": "2018-10-28-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(self.url, data)
@@ -471,7 +472,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         self.sos1.refresh_from_db()
         self.assertTrue(self.sos1.state == "a")
 
-    def test_host_task_created(self):
+    def test_host_task_created(self) -> None:
         """Ensure a host task is created when a person submitting already is in
         our database."""
 
@@ -483,9 +484,9 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         # create event from that workshop inquiry
         data = {
             "slug": "2019-08-18-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(self.url, data)
@@ -495,7 +496,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         # check if Harry gained a task
         Task.objects.get(person=self.harry, event=event, role=Role.objects.get(name="host"))
 
-    def test_lessons_hidden_in_event_create_form(self):
+    def test_lessons_hidden_in_event_create_form(self) -> None:
         """Ensure Mix&Match doesn't trigger "lessons" field on EventCreateForm."""
         # self.sos1 has Mix&Match workshop type, so it should hide "lessons"
         # field in Event form
@@ -515,7 +516,7 @@ class TestAcceptingSelfOrgSubmission(TestBase):
 
 
 class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
@@ -535,7 +536,7 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         )
         self.sos1.workshop_types.set(Curriculum.objects.filter(mix_match=True))
 
-    def test_form_prefilled_not_from_URL(self):
+    def test_form_prefilled_not_from_URL(self) -> None:
         """Ensure even though URL isn't working, the form gets some fields
         with initial values."""
         view_url = reverse("selforganisedsubmission_accept_event", args=[self.sos1.pk])
@@ -575,7 +576,7 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
             self.assertEqual(init, value, f"Issue with {key}")
 
     @Mocker()
-    def test_form_prefilled_from_URL(self, mock):
+    def test_form_prefilled_from_URL(self, mock: Mocker) -> None:
         """Ensure the form gets fields populated both from Self-Organised Subm.
         and from the workshop page."""
         html = """
@@ -623,7 +624,7 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
             "tags": Tag.objects.filter(name="Circuits"),
             # fields below are pre-filled from the website meta tags
             "slug": "2020-04-04-test",
-            "language": Language.objects.get(subtag="en"),
+            "language": Language.objects.get(subtag="en").pk,
             "start": date(2020, 4, 4),
             "end": date(2020, 4, 5),
             "country": "US",

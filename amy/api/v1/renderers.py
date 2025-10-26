@@ -1,4 +1,4 @@
-from rest_framework_csv.renderers import CSVRenderer
+from rest_framework_csv.renderers import CSVRenderer  # type: ignore[import-untyped]
 
 from api.v1.serializers import (
     TrainingRequestForManualScoringSerializer,
@@ -45,7 +45,7 @@ class TrainingRequestCSVColumns:
         "checkout_intent": "Intent to complete checkout",
         "teaching_intent": "Intent to teach workshops",
         "teaching_frequency_expectation": "Teaching Frequency Expectation",
-        "teaching_frequency_expectation_other": "Teaching Frequency Expectation (other)",  # noqa: line too long
+        "teaching_frequency_expectation_other": "Teaching Frequency Expectation (other)",
         "max_travelling_frequency": "Max Travelling Frequency",
         "max_travelling_frequency_other": "Max Travelling Frequency (other)",
         "reason": "Reason for undertaking training",
@@ -54,15 +54,15 @@ class TrainingRequestCSVColumns:
         "code_of_conduct_agreement": "Code of Conduct agreement (yes/no)",
     }
 
-    def __init__(self):
-        self.header = self.serializer.Meta.fields
+    def __init__(self) -> None:
+        self.header = self.serializer.Meta.fields  # type: ignore[attr-defined]
         self.labels = {k: v for k, v in self.translation_labels.items() if k in self.header}
 
 
-class TrainingRequestCSVRenderer(CSVRenderer, TrainingRequestCSVColumns):
+class TrainingRequestCSVRenderer(CSVRenderer, TrainingRequestCSVColumns):  # type: ignore[misc]
     serializer = TrainingRequestWithPersonSerializer
 
 
-class TrainingRequestManualScoreCSVRenderer(CSVRenderer, TrainingRequestCSVColumns):
+class TrainingRequestManualScoreCSVRenderer(CSVRenderer, TrainingRequestCSVColumns):  # type: ignore[misc]
     serializer = TrainingRequestForManualScoringSerializer
     format = "csv2"

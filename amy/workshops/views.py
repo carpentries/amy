@@ -47,7 +47,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
 from django_stubs_ext import Annotations
-from flags.state import flag_enabled
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 from github.GithubException import GithubException
 import requests
 from reversion.models import Revision, Version
@@ -1184,12 +1184,12 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
         )
         return context
 
-    def get_form_class(self) -> type[EventForm]:
+    def get_form_class(self) -> partial[EventForm]:  # type: ignore[override]
         return partial(
             EventForm,
             show_lessons=True,
             add_comment=True,
-            show_allocated_benefit=flag_enabled("SERVICE_OFFERING", request=self.request),  # type: ignore
+            show_allocated_benefit=flag_enabled("SERVICE_OFFERING", request=self.request),
         )
 
     def form_valid(self, form: EventForm) -> HttpResponse:
@@ -1823,7 +1823,7 @@ class TaskUpdate(
     def get_form_kwargs(self) -> dict[str, Any]:
         result = super().get_form_kwargs()
         # Optionally show field `allocated benefit`
-        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)  # type: ignore[no-untyped-call]
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
         return result | dict(show_allocated_benefit=show_allocated_benefit)
 
     def form_valid(self, form: TaskForm) -> HttpResponse:

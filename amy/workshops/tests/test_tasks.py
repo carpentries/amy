@@ -22,7 +22,7 @@ from workshops.tests.base import TestBase
 class TestTask(TestBase):
     "Tests for the task model, its manager and views"
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.fixtures = {}
 
         self._setUpTags()
@@ -106,17 +106,17 @@ class TestTask(TestBase):
         Member.objects.create(
             membership=self.membership,
             organization=test_host,
-            role=MemberRole.objects.first(),
+            role=MemberRole.objects.all()[0],
         )
 
         self._setUpUsersAndLogin()
 
-    def test_task_detail_view_reachable_from_event_person_and_role_of_task(self):
+    def test_task_detail_view_reachable_from_event_person_and_role_of_task(self) -> None:
         correct_task = self.fixtures["test_task_1"]
         response = self.client.get(reverse("task_details", args=[str(correct_task.id)]))
         assert response.context["task"].pk == correct_task.pk
 
-    def test_add_duplicate_task(self):
+    def test_add_duplicate_task(self) -> None:
         """Ensure that duplicate tasks cannot exist"""
         task_1 = self.fixtures["test_task_1"]
         with self.assertRaises(IntegrityError):
@@ -126,13 +126,13 @@ class TestTask(TestBase):
                 role=task_1.role,
             )
 
-    def test_task_edit_view_reachable_from_event_person_and_role_of_task(self):
+    def test_task_edit_view_reachable_from_event_person_and_role_of_task(self) -> None:
         correct_task = self.fixtures["test_task_1"]
         url_kwargs = {"task_id": correct_task.id}
         response = self.client.get(reverse("task_edit", kwargs=url_kwargs))
         assert response.context["task"].pk == correct_task.pk
 
-    def test_task_manager_roles_lookup(self):
+    def test_task_manager_roles_lookup(self) -> None:
         """Test TaskManager methods for looking up roles by names."""
         event = Event.objects.get(slug="test_event_3")
         instructors = event.task_set.instructors()
@@ -142,7 +142,7 @@ class TestTask(TestBase):
 
         assert set(tasks) == set(instructors) | set(learners) | set(helpers)
 
-    def test_delete_task(self):
+    def test_delete_task(self) -> None:
         """Make sure deleted task is longer accessible."""
         for task in Task.objects.all():
             rv = self.client.post(reverse("task_delete", args=[task.pk]))
@@ -151,7 +151,7 @@ class TestTask(TestBase):
             with self.assertRaises(Task.DoesNotExist):
                 Task.objects.get(pk=task.pk)
 
-    def test_seats_validation(self):
+    def test_seats_validation(self) -> None:
         """Ensure events without TTT tag raise ValidationError on
         `seat_membership` and `seat_open_training` fields."""
 
@@ -203,7 +203,7 @@ class TestTask(TestBase):
         task4.full_clean()
         task5.full_clean()
 
-    def test_no_remaining_seats_warnings_when_adding(self):
+    def test_no_remaining_seats_warnings_when_adding(self) -> None:
         """Ensure warnings about memberships with no remaining instructor training
         seats appear when new tasks are added."""
         # Arrange
@@ -241,7 +241,7 @@ class TestTask(TestBase):
             f"Membership &quot;{self.membership}&quot; has no in-house instructor " "training seats remaining.",
         )
 
-    def test_exceeded_seats_warnings_when_adding(self):
+    def test_exceeded_seats_warnings_when_adding(self) -> None:
         """Ensure warnings about memberships with exceeded instructor training
         seats appear when new tasks are added."""
         # Arrange
@@ -282,7 +282,7 @@ class TestTask(TestBase):
             "training seats than it&#x27;s been allowed.",
         )
 
-    def test_no_remaining_seats_warnings_when_updating(self):
+    def test_no_remaining_seats_warnings_when_updating(self) -> None:
         """Ensure warnings about memberships with no remaining instructor training
         seats appear when existing tasks are edited."""
         # Arrange
@@ -296,6 +296,7 @@ class TestTask(TestBase):
             seat_membership=self.membership,
             seat_public=True,
         )
+        assert task1.seat_membership  # for mypy
         task2 = Task.objects.create(
             event=self.ttt_event_open,
             person=self.test_person_2,
@@ -303,6 +304,7 @@ class TestTask(TestBase):
             seat_membership=self.membership,
             seat_public=False,
         )
+        assert task2.seat_membership  # for mypy
 
         data1 = {
             "event": task1.event.pk,
@@ -335,7 +337,7 @@ class TestTask(TestBase):
             f"Membership &quot;{self.membership}&quot; has no in-house instructor " "training seats remaining.",
         )
 
-    def test_exceeded_seats_warnings_when_updating(self):
+    def test_exceeded_seats_warnings_when_updating(self) -> None:
         """Ensure warnings about memberships with exceeded instructor training
         seats appear when existing tasks are edited."""
         # Arrange
@@ -350,6 +352,7 @@ class TestTask(TestBase):
             seat_membership=self.membership,
             seat_public=True,
         )
+        assert task1.seat_membership  # for mypy
         task2 = Task.objects.create(
             event=self.ttt_event_open,
             person=self.test_person_2,
@@ -357,6 +360,7 @@ class TestTask(TestBase):
             seat_membership=self.membership,
             seat_public=False,
         )
+        assert task2.seat_membership  # for mypy
 
         data1 = {
             "event": task1.event.pk,
@@ -391,7 +395,7 @@ class TestTask(TestBase):
             "training seats than it&#x27;s been allowed.",
         )
 
-    def test_open_applications_TTT(self):
+    def test_open_applications_TTT(self) -> None:
         """Ensure events with TTT tag but without open application flag raise
         ValidationError on `seat_open_training` field."""
         # wrong task
@@ -419,7 +423,7 @@ class TestTask(TestBase):
 
         task2.full_clean()
 
-    def test_both_open_app_and_seat(self):
+    def test_both_open_app_and_seat(self) -> None:
         """Ensure we cannot add a task with both options selected: a member
         site seat, and open applications seat."""
         # wrong task
@@ -437,7 +441,7 @@ class TestTask(TestBase):
         self.assertNotIn("seat_membership", exception.error_dict)
         self.assertNotIn("seat_open_training", exception.error_dict)
 
-    def test_seats_for_learners_only(self):
+    def test_seats_for_learners_only(self) -> None:
         """Ensure that only learners can be assigned seats."""
 
         # first wrong task

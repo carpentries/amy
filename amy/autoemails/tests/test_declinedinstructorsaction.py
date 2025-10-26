@@ -26,7 +26,7 @@ class TestDeclinedInstructorsAction(TestCase):
 
         self.event = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -63,7 +63,7 @@ class TestDeclinedInstructorsAction(TestCase):
         # Arrange
         event = Event.objects.create(
             slug="test-event2",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -81,7 +81,7 @@ class TestDeclinedInstructorsAction(TestCase):
         # Arrange
         event = Event.objects.create(
             slug="test-event2",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),

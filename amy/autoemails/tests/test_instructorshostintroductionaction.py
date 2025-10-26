@@ -73,13 +73,13 @@ class TestInstructorsHostIntroductionAction(TestCase):
         # totally fake events
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
         e.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
-        e2 = Event.objects.create(slug="bogus-event", host=Organization.objects.first())
+        e2 = Event.objects.create(slug="bogus-event", host=Organization.objects.all()[0])
         # tasks
         host = Task.objects.create(
             person=self.person1,
@@ -197,7 +197,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
         # totally fake Event
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -234,7 +234,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
             workshop=e,
             workshop_main_type="LC",
             dates=e.human_readable_date(),
-            workshop_host=Organization.objects.first(),
+            workshop_host=Organization.objects.all()[0],
             regional_coordinator_email=["admin-uk@carpentries.org"],
             host=host.person,
             instructors=[instructor1.person, instructor2.person],
@@ -269,7 +269,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
         # totally fake Event
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -323,7 +323,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
     def test_event_slug(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -342,7 +342,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
         # totally fake Event
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -378,7 +378,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
         for the event."""
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),

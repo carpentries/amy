@@ -10,7 +10,7 @@ from workshops.tests.base import TestBase
 class TestInstructorDashboard(TestBase):
     """Tests for instructor dashboard."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.user = Person.objects.create_user(
             username="user",
             personal="",
@@ -21,7 +21,7 @@ class TestInstructorDashboard(TestBase):
         self.person_consent_required_terms(self.user)
         self.client.login(username="user", password="pass")
 
-    def test_dashboard_loads(self):
+    def test_dashboard_loads(self) -> None:
         rv = self.client.get(reverse("instructor-dashboard"))
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode("utf-8")
@@ -33,12 +33,12 @@ class TestInstructorStatus(TestBase):
     """Test that instructor dashboard displays information about awarded SWC/DC
     Instructor badges."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpBadges()
         self.progress_url = reverse("training-progress")
 
-    def test_instructor_badge(self):
+    def test_instructor_badge(self) -> None:
         """When the trainee is awarded a Carpentries Instructor badge,
         we want to display that info in the dashboard."""
 
@@ -51,14 +51,14 @@ class TestInstructorStatus(TestBase):
         self.assertContains(rv, "Congratulations, you're a certified Instructor!")
         self.assertIn(self.instructor_badge, rv.context["user"].instructor_badges)
 
-    def test_not_an_instructor(self):
+    def test_not_an_instructor(self) -> None:
         """Check that we don't display that the trainee is an instructor if
         they don't have appropriate badge."""
         rv = self.client.get(self.progress_url)
         self.assertNotContains(rv, "Congratulations, you're a certified Instructor!")
         self.assertContains(rv, "If you have recently completed a training or step towards checkout")
 
-    def test_progress_but_not_eligible(self):
+    def test_progress_but_not_eligible(self) -> None:
         """Check the correct alert is displayed when some progress is completed."""
         TrainingProgress.objects.create(
             trainee=self.admin,
@@ -69,7 +69,7 @@ class TestInstructorStatus(TestBase):
         self.assertNotContains(rv, "Congratulations, you're a certified Instructor!")
         self.assertContains(rv, "Please review your progress towards Instructor certification below.")
 
-    def test_eligible_but_not_awarded(self):
+    def test_eligible_but_not_awarded(self) -> None:
         """Test what is displayed when a trainee is eligible to be certified
         as an Instructor, but doesn't have appropriate badge awarded
         yet."""
@@ -107,7 +107,7 @@ class TestInstructorStatus(TestBase):
             "You have successfully completed all steps towards Instructor " "certification",
         )
 
-    def test_deadline_shown_when_training_passed(self):
+    def test_deadline_shown_when_training_passed(self) -> None:
         """Test that checkout deadline is displayed when trainee has passed training,
         but not completed all other steps."""
         self._setUpOrganizations()
@@ -136,7 +136,7 @@ class TestInstructorStatus(TestBase):
             "Based on your training dates of",
         )
 
-    def test_deadline_not_shown_when_training_not_passed(self):
+    def test_deadline_not_shown_when_training_not_passed(self) -> None:
         """Test that checkout deadline is displayed when trainee has passed training,
         but not completed all other steps."""
         self._setUpOrganizations()
@@ -170,7 +170,7 @@ class TestInstructorTrainingStatus(TestBase):
     """Test that instructor dashboard displays status of passing Instructor
     Training."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpTags()
         self._setUpOrganizations()
@@ -184,7 +184,7 @@ class TestInstructorTrainingStatus(TestBase):
         self.training = TrainingRequirement.objects.get(name="Training")
         self.progress_url = reverse("training-progress")
 
-    def test_training_passed(self):
+    def test_training_passed(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.training, event=self.event)
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -193,7 +193,7 @@ class TestInstructorTrainingStatus(TestBase):
             html=True,
         )
 
-    def test_training_failed(self):
+    def test_training_failed(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.training, event=self.event, state="f")
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -202,7 +202,7 @@ class TestInstructorTrainingStatus(TestBase):
             html=True,
         )
 
-    def test_training_asked_to_repeat(self):
+    def test_training_asked_to_repeat(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.training, event=self.event, state="a")
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -211,7 +211,7 @@ class TestInstructorTrainingStatus(TestBase):
             html=True,
         )
 
-    def test_training_not_finished(self):
+    def test_training_not_finished(self) -> None:
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Training not completed yet")
 
@@ -220,7 +220,7 @@ class TestGetInvolvedStatus(TestBase):
     """Test that trainee dashboard displays status of passing Get Involved.
     Test that Get Involved submission form works."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self.get_involved, _ = TrainingRequirement.objects.get_or_create(
             name="Get Involved", defaults={"involvement_required": True}
@@ -258,7 +258,7 @@ class TestGetInvolvedStatus(TestBase):
         self.EDIT_CLASS = "edit-object"  # class on the Edit button
         self.DELETE_CLASS = "delete-object"  # class on the Delete button
 
-    def test_get_involved_not_submitted(self):
+    def test_get_involved_not_submitted(self) -> None:
         # Arrange
         self.progress.delete()
 
@@ -269,7 +269,7 @@ class TestGetInvolvedStatus(TestBase):
         self.assertContains(rv, "Get Involved step not submitted")
         self.assertContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_get_involved_waiting_to_be_evaluated(self):
+    def test_get_involved_waiting_to_be_evaluated(self) -> None:
         # Arrange
         self.progress.state = "n"
         self.progress.save()
@@ -289,7 +289,7 @@ class TestGetInvolvedStatus(TestBase):
         self.assertContains(rv, self.DELETE_CLASS)
         self.assertNotContains(rv, self.SESSION_LINK_TEXT, html=True)
 
-    def test_get_involved_passed(self):
+    def test_get_involved_passed(self) -> None:
         # Arrange
         self.progress.state = "p"
         self.progress.save()
@@ -309,7 +309,7 @@ class TestGetInvolvedStatus(TestBase):
         self.assertNotContains(rv, self.DELETE_CLASS)
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_get_involved_failed(self):
+    def test_get_involved_failed(self) -> None:
         # Arrange
         self.progress.state = "f"
         self.progress.save()
@@ -329,7 +329,7 @@ class TestGetInvolvedStatus(TestBase):
         self.assertNotContains(rv, self.DELETE_CLASS)
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_get_involved_asked_to_repeat(self):
+    def test_get_involved_asked_to_repeat(self) -> None:
         # Arrange
         self.progress.state = "a"
         self.progress.save()
@@ -350,7 +350,7 @@ class TestGetInvolvedStatus(TestBase):
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
         self.assertContains(rv, "Submit another Get Involved activity")
 
-    def test_get_involved_details_not_provided(self):
+    def test_get_involved_details_not_provided(self) -> None:
         """Check that optional fields are summarised correctly when empty"""
         # Arrange
         self.progress.delete()
@@ -382,13 +382,13 @@ class TestWelcomeSessionStatus(TestBase):
     Session. Test whether we display instructions for registering for a
     session."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self.welcome = TrainingRequirement.objects.get(name="Welcome Session")
         self.progress_url = reverse("training-progress")
         self.SESSION_LINK_TEXT = "Register for a Welcome Session on"
 
-    def test_session_passed(self):
+    def test_session_passed(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.welcome)
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -399,7 +399,7 @@ class TestWelcomeSessionStatus(TestBase):
         )
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_session_failed(self):
+    def test_session_failed(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.welcome, state="f")
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -410,7 +410,7 @@ class TestWelcomeSessionStatus(TestBase):
         )
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_no_participation_in_a_session_yet(self):
+    def test_no_participation_in_a_session_yet(self) -> None:
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Welcome Session not completed yet")
         self.assertContains(rv, self.SESSION_LINK_TEXT)
@@ -420,13 +420,13 @@ class TestDemoSessionStatus(TestBase):
     """Test that trainee dashboard displays status of passing a Demo Session. Test
     whether we display instructions for registering for a session."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self.demo, _ = TrainingRequirement.objects.get_or_create(name="Demo", defaults={})
         self.progress_url = reverse("training-progress")
         self.SESSION_LINK_TEXT = "Register for a Demo Session on"
 
-    def test_session_passed(self):
+    def test_session_passed(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo)
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -437,7 +437,7 @@ class TestDemoSessionStatus(TestBase):
         )
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_session_asked_to_repeat(self):
+    def test_session_asked_to_repeat(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo, state="a")
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -448,7 +448,7 @@ class TestDemoSessionStatus(TestBase):
         )
         self.assertContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_session_failed(self):
+    def test_session_failed(self) -> None:
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.demo, state="f")
         rv = self.client.get(self.progress_url)
         self.assertContains(
@@ -458,7 +458,7 @@ class TestDemoSessionStatus(TestBase):
         )
         self.assertNotContains(rv, self.SESSION_LINK_TEXT)
 
-    def test_no_participation_in_a_session_yet(self):
+    def test_no_participation_in_a_session_yet(self) -> None:
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "Demo Session not completed")
         self.assertContains(rv, self.SESSION_LINK_TEXT)

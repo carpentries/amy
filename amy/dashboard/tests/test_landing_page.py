@@ -8,21 +8,21 @@ from workshops.tests.base import TestBase, consent_to_all_required_consents
 class TestAdminDashboard(TestBase):
     """Tests for the admin dashboard."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpEvents()
         self._setUpUsersAndLogin()
 
         # assign an upcoming event to the logged in user
-        self.assigned_upcoming_event = Event.objects.active().upcoming_events().first()
+        self.assigned_upcoming_event = Event.objects.active().upcoming_events()[0]
         self.assigned_upcoming_event.assigned_to = self.admin
         self.assigned_upcoming_event.save()
 
         # assign an unpublished event to the logged in user
-        self.assigned_unpublished_event = Event.objects.active().unpublished_events().first()
+        self.assigned_unpublished_event = Event.objects.active().unpublished_events()[0]
         self.assigned_unpublished_event.assigned_to = self.admin
         self.assigned_unpublished_event.save()
 
-    def test_has_upcoming_events(self):
+    def test_has_upcoming_events(self) -> None:
         """Test that the admin dashboard is passed some
         upcoming_events in the context."""
 
@@ -39,7 +39,7 @@ class TestAdminDashboard(TestBase):
         # They should all be labeled 'upcoming'.
         assert all([("upcoming" in e.slug or "ongoing" in e.slug) for e in events])
 
-    def test_no_inactive_events(self):
+    def test_no_inactive_events(self) -> None:
         """Make sure we don't display stalled or completed events on the
         dashboard."""
         stalled_tag = Tag.objects.get(name="stalled")
@@ -48,23 +48,23 @@ class TestAdminDashboard(TestBase):
 
         stalled = Event.objects.create(
             slug="stalled-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
         )
         stalled.tags.add(stalled_tag)
 
         unresponsive = Event.objects.create(
             slug="unresponsive-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
         )
         unresponsive.tags.add(unresponsive_tag)
 
         cancelled = Event.objects.create(
             slug="cancelled-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
         )
         cancelled.tags.add(cancelled_tag)
 
-        completed = Event.objects.create(slug="completed-event", completed=True, host=Organization.objects.first())
+        completed = Event.objects.create(slug="completed-event", completed=True, host=Organization.objects.all()[0])
 
         # stalled event appears in unfiltered list of events
         self.assertNotIn(stalled, Event.objects.unpublished_events())
@@ -78,14 +78,14 @@ class TestAdminDashboard(TestBase):
         self.assertNotIn(cancelled, response.context["unpublished_events"])
         self.assertNotIn(completed, response.context["unpublished_events"])
 
-    def test_events_default(self):
+    def test_events_default(self) -> None:
         """The admin dashboard shows the events assigned to the current logged in
         user by default (when the url is /dashboard/admin/)."""
-        upcoming_event = Event.objects.upcoming_events().first()
+        upcoming_event = Event.objects.upcoming_events()[0]
         upcoming_event.assigned_to = self.admin
         upcoming_event.save()
 
-        unpublished_event = Event.objects.active().unpublished_events().first()
+        unpublished_event = Event.objects.active().unpublished_events()[0]
         unpublished_event.assigned_to = self.admin
         unpublished_event.save()
 
@@ -100,7 +100,7 @@ class TestAdminDashboard(TestBase):
         self.assertEqual(list(unpublished_events), [unpublished_event])
         self.assertEqual(assigned_to, self.admin)
 
-    def test_events_assigned_to_none(self):
+    def test_events_assigned_to_none(self) -> None:
         """The admin dashboard shows all events if assigned to is None
         (when the url is /dashboard/admin/?assigned_to=)."""
         response = self.client.get(reverse("admin-dashboard"))
@@ -114,7 +114,7 @@ class TestAdminDashboard(TestBase):
         self.assertEqual(list(unpublished_events), [self.assigned_unpublished_event])
         self.assertEqual(assigned_to, self.admin)
 
-    def test_events_assigned_to_another_user(self):
+    def test_events_assigned_to_another_user(self) -> None:
         """The admin dashboard shows all events assigned to a particular user
         if that user is specified in the assigned_to
         (when the url is /dashboard/admin/?assigned_to=other_user)."""
@@ -129,13 +129,13 @@ class TestAdminDashboard(TestBase):
 
         # Add an upcoming event to the logged in admin (self.admin)
         # and one to other_admin
-        upcoming_event = Event.objects.active().filter(assigned_to__isnull=True).upcoming_events().first()
+        upcoming_event = Event.objects.active().filter(assigned_to__isnull=True).upcoming_events()[0]
         upcoming_event.assigned_to = other_admin
         upcoming_event.save()
 
         # Add an unpublished event to logged in admin (self.admin)
         # and another to other_admin
-        unpublished_event = Event.objects.active().filter(assigned_to__isnull=True).unpublished_events().first()
+        unpublished_event = Event.objects.active().filter(assigned_to__isnull=True).unpublished_events()[0]
         unpublished_event.assigned_to = other_admin
         unpublished_event.save()
 
@@ -155,7 +155,7 @@ class TestDispatch(TestBase):
     """Test that the right dashboard (instructor or admin dashboard) is displayed
     after logging in."""
 
-    def test_superuser_logs_in(self):
+    def test_superuser_logs_in(self) -> None:
         person = Person.objects.create_superuser(
             username="admin",
             personal="",
@@ -169,7 +169,7 @@ class TestDispatch(TestBase):
 
         self.assertEqual(rv.resolver_match.view_name, "admin-dashboard")
 
-    def test_mentor_logs_in(self):
+    def test_mentor_logs_in(self) -> None:
         mentor = Person.objects.create_user(
             username="user",
             personal="",
@@ -185,7 +185,7 @@ class TestDispatch(TestBase):
 
         self.assertEqual(rv.resolver_match.view_name, "admin-dashboard")
 
-    def test_steering_committee_member_logs_in(self):
+    def test_steering_committee_member_logs_in(self) -> None:
         mentor = Person.objects.create_user(
             username="user",
             personal="",
@@ -201,7 +201,7 @@ class TestDispatch(TestBase):
 
         self.assertEqual(rv.resolver_match.view_name, "admin-dashboard")
 
-    def test_trainee_logs_in(self):
+    def test_trainee_logs_in(self) -> None:
         self.trainee = Person.objects.create_user(
             username="trainee",
             personal="",

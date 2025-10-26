@@ -8,7 +8,7 @@ from workshops.tests.base import TestBase, consent_to_all_required_consents
 
 
 class TestGetInvolvedViewBase(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpRoles()
         self._setUpTags()
 
@@ -42,7 +42,7 @@ class TestGetInvolvedViewBase(TestBase):
 
 
 class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.involvement_to_be_archived, _ = Involvement.objects.get_or_create(
             name="To be archived",
@@ -60,14 +60,14 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
             },
         )
 
-    def test_create_view_loads(self):
+    def test_create_view_loads(self) -> None:
         # Act
         rv = self.client.get(reverse("getinvolved_add"))
 
         # Assert
         self.assertEqual(rv.status_code, 200)
 
-    def test_create_view_does_not_show_archived_involvements(self):
+    def test_create_view_does_not_show_archived_involvements(self) -> None:
         # Arrange
         self.github_contribution = Involvement.objects.get(name="GitHub Contribution")
         self.involvement_to_be_archived.archive()
@@ -87,7 +87,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
             ],
         )
 
-    def test_create_view_does_not_show_admin_fields(self):
+    def test_create_view_does_not_show_admin_fields(self) -> None:
         # Act
         rv = self.client.get(reverse("getinvolved_add"))
 
@@ -96,7 +96,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         expected_fields = {"involvement_type", "date", "url", "trainee_notes"}
         self.assertSetEqual(set(rv.context["form"].fields.keys()), expected_fields)
 
-    def test_create_view_works(self):
+    def test_create_view_works(self) -> None:
         # Arrange
         data = {
             "involvement_type": self.involvement.pk,
@@ -126,7 +126,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         ]
         self.assertEqual(got, expected)
 
-    def test_cannot_create_if_not_logged_in(self):
+    def test_cannot_create_if_not_logged_in(self) -> None:
         self.client.logout()
 
         data = {
@@ -144,10 +144,10 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
         self.assertEqual(rv_post.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
-        self.assertTrue(rv_get.url.startswith(reverse("login")))
-        self.assertTrue(rv_post.url.startswith(reverse("login")))
+        self.assertTrue(rv_get.url.startswith(reverse("login")))  # type: ignore[attr-defined]
+        self.assertTrue(rv_post.url.startswith(reverse("login")))  # type: ignore[attr-defined]
 
-    def test_trainee_cannot_set_type_or_state(self):
+    def test_trainee_cannot_set_type_or_state(self) -> None:
         # Arrange
 
         demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
@@ -183,7 +183,7 @@ class TestGetInvolvedCreateView(TestGetInvolvedViewBase):
 
 
 class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.progress = TrainingProgress.objects.create(
@@ -195,14 +195,14 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
             date=date(2023, 7, 27),
         )
 
-    def test_update_view_loads(self):
+    def test_update_view_loads(self) -> None:
         # Act
         rv = self.client.get(reverse("getinvolved_update", args=[self.progress.pk]))
 
         # Assert
         self.assertEqual(rv.status_code, 200)
 
-    def test_update_view_works(self):
+    def test_update_view_works(self) -> None:
         # Arrange
         data = {
             "involvement_type": self.involvement.pk,
@@ -232,7 +232,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         ]
         self.assertEqual(got, expected)
 
-    def test_cannot_update_if_not_logged_in(self):
+    def test_cannot_update_if_not_logged_in(self) -> None:
         self.client.logout()
 
         # Arrange
@@ -251,10 +251,10 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         self.assertEqual(rv_post.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
-        self.assertTrue(rv_get.url.startswith(reverse("login")))
-        self.assertTrue(rv_post.url.startswith(reverse("login")))
+        self.assertTrue(rv_get.url.startswith(reverse("login")))  # type: ignore[attr-defined]
+        self.assertTrue(rv_post.url.startswith(reverse("login")))  # type: ignore[attr-defined]
 
-    def test_cannot_update_evaluated_progress(self):
+    def test_cannot_update_evaluated_progress(self) -> None:
         # Arrange
         self.progress.state = "p"
         self.progress.save()
@@ -273,7 +273,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         self.assertEqual(rv_get.status_code, 404)
         self.assertEqual(rv_post.status_code, 404)
 
-    def test_cannot_update_progress_of_other_type(self):
+    def test_cannot_update_progress_of_other_type(self) -> None:
         # Arrange
         demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
         progress = TrainingProgress.objects.create(
@@ -296,7 +296,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         self.assertEqual(rv_get.status_code, 404)
         self.assertEqual(rv_post.status_code, 404)
 
-    def test_cannot_update_non_existent_progress(self):
+    def test_cannot_update_non_existent_progress(self) -> None:
         # Arrange
         id = 1000
         data = {
@@ -313,7 +313,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
         self.assertEqual(rv_get.status_code, 404)
         self.assertEqual(rv_post.status_code, 404)
 
-    def test_trainee_cannot_set_type_or_state(self):
+    def test_trainee_cannot_set_type_or_state(self) -> None:
         # Arrange
         demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
         data = {
@@ -348,7 +348,7 @@ class TestGetInvolvedUpdateView(TestGetInvolvedViewBase):
 
 
 class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.progress = TrainingProgress.objects.create(
@@ -360,14 +360,14 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
             date=date(2023, 7, 27),
         )
 
-    def test_delete_view_get_request_not_allowed(self):
+    def test_delete_view_get_request_not_allowed(self) -> None:
         # Act
         rv = self.client.get(reverse("getinvolved_delete", args=[self.progress.pk]))
 
         # Assert
         self.assertEqual(rv.status_code, 405)
 
-    def test_delete_view_works(self):
+    def test_delete_view_works(self) -> None:
         # Act
         rv = self.client.post(reverse("getinvolved_delete", args=[self.progress.pk]), follow=True)
 
@@ -376,7 +376,7 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
         self.assertEqual(rv.resolver_match.view_name, "training-progress")
         self.assertEqual(set(TrainingProgress.objects.all()), set())
 
-    def test_cannot_delete_if_not_logged_in(self):
+    def test_cannot_delete_if_not_logged_in(self) -> None:
         # Arrange
         self.client.logout()
 
@@ -387,9 +387,9 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
         self.assertEqual(rv_post.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
-        self.assertTrue(rv_post.url.startswith(reverse("login")))
+        self.assertTrue(rv_post.url.startswith(reverse("login")))  # type: ignore[attr-defined]
 
-    def test_cannot_delete_other_trainees_submission(self):
+    def test_cannot_delete_other_trainees_submission(self) -> None:
         # Arrange
         other_trainee = Person.objects.create(personal="Bob", family="Trainee", email="bob_trainee@example.com")
 
@@ -408,7 +408,7 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
         # Assert
         self.assertEqual(rv.status_code, 404)
 
-    def test_cannot_delete_progress_of_other_type(self):
+    def test_cannot_delete_progress_of_other_type(self) -> None:
         # Arrange
         demo, _ = TrainingRequirement.objects.get_or_create(name="Demo")
         progress = TrainingProgress.objects.create(
@@ -424,7 +424,7 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
         # Assert
         self.assertEqual(rv.status_code, 404)
 
-    def test_cannot_delete_evaluated_progress(self):
+    def test_cannot_delete_evaluated_progress(self) -> None:
         # Arrange
         self.progress.state = "a"
         self.progress.save()
@@ -435,7 +435,7 @@ class TestGetInvolvedDeleteView(TestGetInvolvedViewBase):
         # Assert
         self.assertEqual(rv.status_code, 404)
 
-    def test_cannot_delete_non_existent_progress(self):
+    def test_cannot_delete_non_existent_progress(self) -> None:
         # Arrange
         id = 1000
 

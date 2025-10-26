@@ -12,7 +12,7 @@ from workshops.tests.base import TestBase
 class TestWorkshopInquiryExternalForm(TestBase):
     """Test external (accessible to non-logged in users) form."""
 
-    def test_fields_presence(self):
+    def test_fields_presence(self) -> None:
         """Test if the form shows correct fields."""
         form = WorkshopInquiryRequestExternalForm()
         fields_left = set(form.fields.keys())
@@ -63,7 +63,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
         self.assertEqual(fields_left, fields_right)
 
     @tag("captcha")
-    def test_request_added(self):
+    def test_request_added(self) -> None:
         """Ensure the request is successfully added to the pool, and
         notification email is sent."""
         data = {
@@ -92,7 +92,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
             "public_event": "closed",
             "public_event_other": "",
             "additional_contact": "",
-            "carpentries_info_source": [InfoSource.objects.first().pk],
+            "carpentries_info_source": [InfoSource.objects.all()[0].pk],
             "carpentries_info_source_other": "",
             "user_notes": "n/c",
             "data_privacy_agreement": True,
@@ -123,13 +123,13 @@ class TestWorkshopInquiryExternalForm(TestBase):
         #     f.write(mail.outbox[1].message().as_bytes())
 
         # before tests, check if the template invalid string exists
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         # test autoresponder email
         msg = mail.outbox[0]
         self.assertEqual(msg.subject, "Workshop inquiry confirmation")
         self.assertEqual(msg.recipients(), ["hpotter@magic.gov"])
-        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]
         # test email for admins
         msg = mail.outbox[1]
         self.assertEqual(
@@ -137,4 +137,4 @@ class TestWorkshopInquiryExternalForm(TestBase):
             "New workshop inquiry: Ministry of Magic, 03-04 November, 2018",
         )
         self.assertEqual(msg.recipients(), ["admin-uk@carpentries.org"])
-        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]

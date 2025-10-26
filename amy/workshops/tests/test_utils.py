@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
@@ -15,6 +16,7 @@ from workshops.utils.dates import human_daterange
 from workshops.utils.emails import match_notification_email
 from workshops.utils.feature_flags import feature_flag_enabled
 from workshops.utils.metadata import (
+    WorkshopMetadata,
     datetime_decode,
     datetime_match,
     fetch_workshop_metadata,
@@ -110,7 +112,7 @@ Other content.
     }
 
     @requests_mock.Mocker()
-    def test_fetching_event_metadata_html(self, mock):
+    def test_fetching_event_metadata_html(self, mock: MagicMock) -> None:
         "Ensure 'fetch_workshop_metadata' works correctly with HTML metadata provided."
         website_url = "https://pbanaszkiewicz.github.io/workshop"
         repo_url = "https://raw.githubusercontent.com/pbanaszkiewicz/" "workshop/gh-pages/index.html"
@@ -120,7 +122,7 @@ Other content.
         self.assertEqual(metadata["slug"], "2015-07-13-test")
 
     @requests_mock.Mocker()
-    def test_fetching_event_metadata_yaml(self, mock):
+    def test_fetching_event_metadata_yaml(self, mock: MagicMock) -> None:
         "Ensure 'fetch_workshop_metadata' works correctly with YAML metadata provided."
         website_url = "https://pbanaszkiewicz.github.io/workshop"
         repo_url = "https://raw.githubusercontent.com/pbanaszkiewicz/" "workshop/gh-pages/index.html"
@@ -130,7 +132,7 @@ Other content.
         self.assertEqual(metadata["slug"], "workshop")
 
     @requests_mock.Mocker()
-    def test_fetching_event_metadata_timeout(self, mock):
+    def test_fetching_event_metadata_timeout(self, mock: MagicMock) -> None:
         "Ensure 'fetch_workshop_metadata' reacts to timeout."
         website_url = "https://pbanaszkiewicz.github.io/workshop"
         mock.register_uri(
@@ -141,7 +143,7 @@ Other content.
         with self.assertRaises(requests.exceptions.ConnectTimeout):
             fetch_workshop_metadata(website_url)
 
-    def test_generating_url_to_index(self):
+    def test_generating_url_to_index(self) -> None:
         tests = [
             "http://swcarpentry.github.io/workshop-template",
             "https://swcarpentry.github.com/workshop-template",
@@ -157,7 +159,7 @@ Other content.
                 self.assertEqual(expected_url, url)
                 self.assertEqual(expected_repo, repo)
 
-    def test_finding_metadata_on_index(self):
+    def test_finding_metadata_on_index(self) -> None:
         content = self.yaml_content
         expected = {
             "startdate": "2015-07-13",
@@ -174,7 +176,7 @@ Other content.
         }
         self.assertEqual(expected, find_workshop_YAML_metadata(content))
 
-    def test_finding_metadata_on_website(self):
+    def test_finding_metadata_on_website(self) -> None:
         content = self.html_content
         expected = {
             "slug": "2015-07-13-test",
@@ -193,7 +195,7 @@ Other content.
 
         self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
-    def test_finding_metadata_empty_tags(self):
+    def test_finding_metadata_empty_tags(self) -> None:
         content = """
             <html><head>
             <meta name="slug" content="" />
@@ -231,7 +233,7 @@ Other content.
         }
         self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
-    def test_finding_metadata_missing_tags(self):
+    def test_finding_metadata_missing_tags(self) -> None:
         content = """
             <html><head>
             <meta name="slug" content="" />
@@ -246,7 +248,7 @@ Other content.
         }
         self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
-    def test_finding_metadata_single_line(self):
+    def test_finding_metadata_single_line(self) -> None:
         content = (
             "<html><head>"
             '<meta name="slug" content="" />'
@@ -261,16 +263,16 @@ Other content.
         }
         self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
-    def test_finding_metadata_empty_page(self):
+    def test_finding_metadata_empty_page(self) -> None:
         content1 = "<html><head></head><body></body></html>"
         content2 = ""
-        expected = {}
+        expected: dict[str, str] = {}
         self.assertEqual(expected, find_workshop_HTML_metadata(content1))
         self.assertEqual(expected, find_workshop_HTML_metadata(content2))
 
-    def test_parsing_empty_metadata(self):
-        empty_dict = {}
-        expected = {
+    def test_parsing_empty_metadata(self) -> None:
+        empty_dict: dict[str, str] = {}
+        expected: WorkshopMetadata = {
             "slug": "",
             "language": "",
             "start": None,
@@ -287,7 +289,7 @@ Other content.
         }
         self.assertEqual(expected, parse_workshop_metadata(empty_dict))
 
-    def test_parsing_correct_metadata(self):
+    def test_parsing_correct_metadata(self) -> None:
         metadata = {
             "slug": "2015-07-13-test",
             "startdate": "2015-07-13",
@@ -319,14 +321,14 @@ Other content.
         }
         self.assertEqual(expected, parse_workshop_metadata(metadata))
 
-    def test_parsing_tricky_country_language(self):
+    def test_parsing_tricky_country_language(self) -> None:
         """Ensure we always get a 2-char string or nothing."""
         tests = [
             (("Usa", "English"), ("US", "EN")),
             (("U", "E"), ("", "")),
             (("", ""), ("", "")),
         ]
-        expected = {
+        expected: WorkshopMetadata = {
             "slug": "",
             "language": "",
             "start": None,
@@ -349,13 +351,13 @@ Other content.
                 expected["language"] = language_exp
                 self.assertEqual(expected, parse_workshop_metadata(metadata))
 
-    def test_parsing_tricky_dates(self):
+    def test_parsing_tricky_dates(self) -> None:
         """Test if non-dates don't get parsed."""
         tests = [
             (("wrong start date", "wrong end date"), (None, None)),
             (("11/19/2015", "11/19/2015"), (None, None)),
         ]
-        expected = {
+        expected: WorkshopMetadata = {
             "slug": "",
             "language": "",
             "start": None,
@@ -378,7 +380,7 @@ Other content.
                 expected["end"] = end
                 self.assertEqual(expected, parse_workshop_metadata(metadata))
 
-    def test_parsing_tricky_list_of_names(self):
+    def test_parsing_tricky_list_of_names(self) -> None:
         """Ensure we always get a list."""
         tests = [
             (("", ""), ([], [])),
@@ -392,7 +394,7 @@ Other content.
                 (["Harry", "Ron"], ["Hermione", "Ginny"]),
             ),
         ]
-        expected = {
+        expected: WorkshopMetadata = {
             "slug": "",
             "language": "",
             "start": None,
@@ -415,7 +417,7 @@ Other content.
                 expected["helpers"] = helpers
                 self.assertEqual(expected, parse_workshop_metadata(metadata))
 
-    def test_parsing_tricky_latitude_longitude(self):
+    def test_parsing_tricky_latitude_longitude(self) -> None:
         tests = [
             ("XYZ", (None, None)),
             ("XYZ, ", (None, None)),
@@ -423,7 +425,7 @@ Other content.
             (",", (None, None)),
             (None, (None, None)),
         ]
-        expected = {
+        expected: WorkshopMetadata = {
             "slug": "",
             "language": "",
             "start": None,
@@ -443,15 +445,15 @@ Other content.
                 metadata = dict(latlng=latlng)
                 expected["latitude"] = latitude
                 expected["longitude"] = longitude
-                self.assertEqual(expected, parse_workshop_metadata(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))  # type: ignore
 
-    def test_parsing_tricky_eventbrite_id(self):
+    def test_parsing_tricky_eventbrite_id(self) -> None:
         tests = [
             ("", None),
             ("string", None),
             (None, None),
         ]
-        expected = {
+        expected: WorkshopMetadata = {
             "slug": "",
             "language": "",
             "start": None,
@@ -470,9 +472,9 @@ Other content.
             with self.subTest(eventbrite_id=eventbrite_id):
                 metadata = dict(eventbrite=eventbrite_id)
                 expected["reg_key"] = reg_key
-                self.assertEqual(expected, parse_workshop_metadata(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))  # type: ignore
 
-    def test_validating_invalid_metadata(self):
+    def test_validating_invalid_metadata(self) -> None:
         metadata = {
             "slug": "WRONG FORMAT",
             "language": "ENGLISH",
@@ -492,14 +494,14 @@ Other content.
         assert not warnings
         assert all([error.startswith("Invalid value") for error in errors])
 
-    def test_validating_missing_metadata(self):
-        metadata = {}
+    def test_validating_missing_metadata(self) -> None:
+        metadata: dict[str, str] = {}
         errors, warnings = validate_workshop_metadata(metadata)
         assert len(errors) == 9  # There are nine required fields
         assert len(warnings) == 3  # There are three optional fields
         assert all([issue.startswith("Missing") for issue in (errors + warnings)])
 
-    def test_validating_empty_metadata(self):
+    def test_validating_empty_metadata(self) -> None:
         metadata = {
             "slug": "",
             "language": "",
@@ -528,7 +530,7 @@ Other content.
         for error, key in zip(errors, expected_errors):
             self.assertIn(key, error)
 
-    def test_validating_default_metadata(self):
+    def test_validating_default_metadata(self) -> None:
         metadata = {
             "slug": "FIXME",
             "language": "FIXME",
@@ -548,7 +550,7 @@ Other content.
         assert not warnings
         assert all([error.startswith('Placeholder value "FIXME"') for error in errors])
 
-    def test_validating_correct_metadata(self):
+    def test_validating_correct_metadata(self) -> None:
         metadata = {
             "slug": "2015-07-13-test",
             "language": "us",
@@ -567,15 +569,15 @@ Other content.
         assert not warnings
         assert not errors
 
-    def test_no_attribute_error_missing_instructors_helpers(self):
+    def test_no_attribute_error_missing_instructors_helpers(self) -> None:
         """Regression test: ensure no exception is raised when instructors
         or helpers aren't in the metadata or their values are None."""
-        tests = [
+        tests: list[Any] = [
             ((None, None), ([], [])),
             ((None, ""), ([], [])),
             (("", None), ([], [])),
         ]
-        expected = {
+        expected: WorkshopMetadata = {
             "slug": "",
             "language": "",
             "start": None,
@@ -704,7 +706,7 @@ lng: -109.045173
 Other content.
 """
 
-    def test_finding_metadata_on_index(self):
+    def test_finding_metadata_on_index(self) -> None:
         content = self.yaml_content_old
         expected = {
             "latlng": "36.998977, -109.045173",
@@ -718,7 +720,7 @@ Other content.
         }
         self.assertEqual(expected, find_workshop_YAML_metadata(content))
 
-    def test_finding_metadata_on_website(self):
+    def test_finding_metadata_on_website(self) -> None:
         content = self.html_content_old
         expected = {
             "latlng": "36.998977, -109.045173",
@@ -732,7 +734,7 @@ Other content.
         }
         self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
-    def test_parsing_old_latlng(self):
+    def test_parsing_old_latlng(self) -> None:
         metadata = {
             "slug": "2015-07-13-test",
             "startdate": "2015-07-13",
@@ -764,7 +766,7 @@ Other content.
         }
         self.assertEqual(expected, parse_workshop_metadata(metadata))
 
-    def test_parsing_new_latlng(self):
+    def test_parsing_new_latlng(self) -> None:
         metadata = {
             "slug": "2015-07-13-test",
             "startdate": "2015-07-13",
@@ -797,7 +799,7 @@ Other content.
         }
         self.assertEqual(expected, parse_workshop_metadata(metadata))
 
-    def test_validating_old_latlng(self):
+    def test_validating_old_latlng(self) -> None:
         """"""
         metadata = {
             "slug": "2015-07-13-test",
@@ -817,7 +819,7 @@ Other content.
         self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
 
-    def test_validating_new_latlng(self):
+    def test_validating_new_latlng(self) -> None:
         """"""
         metadata = {
             "slug": "2015-07-13-test",
@@ -840,7 +842,7 @@ Other content.
 
 
 class TestUsernameGeneration(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         Person.objects.create_user(
             username="potter_harry",
             personal="Harry",
@@ -848,60 +850,60 @@ class TestUsernameGeneration(TestBase):
             email="hp@ministry.gov",
         )
 
-    def test_conflicting_name(self):
+    def test_conflicting_name(self) -> None:
         """Ensure `create_username` works correctly when conflicting username
         already exists."""
         username = create_username(personal="Harry", family="Potter")
         self.assertEqual(username, "potter_harry_2")
 
-    def test_nonconflicting_name(self):
+    def test_nonconflicting_name(self) -> None:
         """Ensure `create_username` works correctly when there's no conflicts
         in the database."""
         username = create_username(personal="Hermione", family="Granger")
         self.assertEqual(username, "granger_hermione")
 
-    def test_nonlatin_characters(self):
+    def test_nonlatin_characters(self) -> None:
         """Ensure correct behavior for non-latin names."""
         username = create_username(personal="Grzegorz", family="Brzęczyszczykiewicz")
         self.assertEqual(username, "brzczyszczykiewicz_grzegorz")
 
-    def test_reached_number_of_tries(self):
+    def test_reached_number_of_tries(self) -> None:
         """Ensure we don't DoS ourselves."""
         tries = 1
         with self.assertRaises(InternalError):
             create_username(personal="Harry", family="Potter", tries=tries)
 
-    def test_hyphenated_name(self):
+    def test_hyphenated_name(self) -> None:
         """Ensure people with hyphens in names have correct usernames
         generated."""
         username = create_username(personal="Andy", family="Blanking-Crush")
         self.assertEqual(username, "blanking-crush_andy")
 
-    def test_noned_names(self):
+    def test_noned_names(self) -> None:
         """This is a regression test against #1682
         (https://github.com/carpentries/amy/issues/1682).
 
         The error was: family name was allowed to be null, which caused 500 errors
         when trying to save person without the family name due to name normalization."""
-        username = create_username(personal=None, family=None)
+        username = create_username(personal=None, family=None)  # type: ignore
         self.assertEqual(username, "_")
 
 
 class TestPaginatorSections(TestBase):
-    def make_paginator(self, num_pages, page_index=None):
+    def make_paginator(self, num_pages: int, page_index: int) -> Paginator[None]:
         # there's no need to initialize with real values
-        p = Paginator(object_list=None, per_page=1)
+        p = Paginator[None](object_list=None, per_page=1)  # type: ignore[arg-type]
         p.num_pages = num_pages
-        p._page_number = page_index
+        p._page_number = page_index  # type: ignore[assignment]
         return p
 
-    def test_shortest(self):
+    def test_shortest(self) -> None:
         """Ensure paginator works correctly for only one page."""
         paginator = self.make_paginator(num_pages=1, page_index=1)
         sections = paginator.paginate_sections()
         self.assertEqual(list(sections), [1])
 
-    def test_very_long(self):
+    def test_very_long(self) -> None:
         """Ensure paginator works correctly for big number of pages."""
         paginator = self.make_paginator(num_pages=20, page_index=1)
         sections = paginator.paginate_sections()
@@ -910,7 +912,7 @@ class TestPaginatorSections(TestBase):
             [1, 2, 3, 4, 5, None, 16, 17, 18, 19, 20],  # None is a break, '...'
         )
 
-    def test_in_the_middle(self):
+    def test_in_the_middle(self) -> None:
         """Ensure paginator puts two breaks when page index is in the middle
         of pages range."""
         paginator = self.make_paginator(num_pages=20, page_index=10)
@@ -921,7 +923,7 @@ class TestPaginatorSections(TestBase):
             [1, 2, 3, 4, 5, None, 8, 9, 10, 11, 12, 13, 14, None, 16, 17, 18, 19, 20],
         )
 
-    def test_at_the_end(self):
+    def test_at_the_end(self) -> None:
         """Ensure paginator puts one break when page index is in the right-most
         part of pages range."""
         paginator = self.make_paginator(num_pages=20, page_index=20)
@@ -932,7 +934,7 @@ class TestPaginatorSections(TestBase):
             [1, 2, 3, 4, 5, None, 16, 17, 18, 19, 20],
         )
 
-    def test_long_no_breaks(self):
+    def test_long_no_breaks(self) -> None:
         """Ensure paginator doesn't add breaks when sections touch each
         other."""
         paginator = self.make_paginator(num_pages=17, page_index=8)
@@ -945,19 +947,19 @@ class TestPaginatorSections(TestBase):
 
 
 class TestAssignUtil(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up RequestFactory for making fast fake requests."""
-        self.person = Person.objects.create_user(  # type: ignore
+        self.person = Person.objects.create_user(
             username="test_user", email="user@test", personal="User", family="Test"
         )
         self.factory = RequestFactory()
         self.event = Event.objects.create(
             slug="event-for-assignment",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             assigned_to=None,
         )
 
-    def test_assigning(self):
+    def test_assigning(self) -> None:
         """Ensure that with assignment is set correctly."""
         # Act
         assign(self.event, person=self.person)
@@ -965,7 +967,7 @@ class TestAssignUtil(TestBase):
         self.event.refresh_from_db()
         self.assertEqual(self.event.assigned_to, self.person)
 
-    def test_removing_assignment(self):
+    def test_removing_assignment(self) -> None:
         """Ensure that with person_id=None, the assignment is removed."""
         # Arrange
         self.event.assigned_to = self.person
@@ -978,7 +980,7 @@ class TestAssignUtil(TestBase):
 
 
 class TestHumanDaterange(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.formats = {
             "no_date_left": "????",
             "no_date_right": "!!!!",
@@ -1003,7 +1005,7 @@ class TestHumanDaterange(TestBase):
             "???? - !!!!",
         )
 
-    def test_function(self):
+    def test_function(self) -> None:
         for i, v in enumerate(self.inputs):
             with self.subTest(i=i):
                 left, right = v
@@ -1012,7 +1014,7 @@ class TestHumanDaterange(TestBase):
 
 
 class TestMatchingNotificationEmail(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.request = WorkshopRequest.objects.create(
             state="p",
             personal="Harry",
@@ -1031,7 +1033,7 @@ class TestMatchingNotificationEmail(TestBase):
             institution_restrictions="no_restrictions",
         )
 
-    def test_default_criteria(self):
+    def test_default_criteria(self) -> None:
         # Online
         self.request.country = "W3"
         results = list(match_notification_email(self.request))
@@ -1057,7 +1059,7 @@ class TestMatchingNotificationEmail(TestBase):
         results = list(match_notification_email(self.request))
         self.assertEqual(results, ["workshops@carpentries.org"])
 
-    def test_matching_Africa(self):
+    def test_matching_Africa(self) -> None:
         """Testing just a subset of countries in Africa."""
 
         # the Democratic Republic of the Congo
@@ -1090,7 +1092,7 @@ class TestMatchingNotificationEmail(TestBase):
         results = list(match_notification_email(self.request))
         self.assertEqual(results, ["admin-afr@carpentries.org"])
 
-    def test_matching_UK_CA_NZ_AU(self):
+    def test_matching_UK_CA_NZ_AU(self) -> None:
         """Test a bunch of criteria automatically."""
         data = [
             ("GB", "admin-uk@carpentries.org"),
@@ -1104,7 +1106,7 @@ class TestMatchingNotificationEmail(TestBase):
                 results = list(match_notification_email(self.request))
                 self.assertEqual(results, [email])
 
-    def test_object_no_criteria(self):
+    def test_object_no_criteria(self) -> None:
         self.assertFalse(hasattr(self, "country"))
         results = match_notification_email(self)
         self.assertEqual(results, ["workshops@carpentries.org"])
@@ -1115,13 +1117,13 @@ class TestMatchingNotificationEmail(TestBase):
 
 
 class TestReportsLink(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.slug = "2020-04-12-Krakow"
 
-    def test_hash_lowercased_nonlowercased(self):
+    def test_hash_lowercased_nonlowercased(self) -> None:
         self.assertEqual(reports_link_hash(self.slug), reports_link_hash(self.slug.lower()))
 
-    def test_salts_alter_hash(self):
+    def test_salts_alter_hash(self) -> None:
         hash_pre = reports_link_hash(self.slug)
 
         with self.settings(REPORTS_SALT_FRONT="test12345"):
@@ -1141,7 +1143,7 @@ class TestReportsLink(TestBase):
         self.assertNotEqual(hash_salt_front, hash_salt_back)
         self.assertNotEqual(hash_salt_back, hash_both_salts)
 
-    def test_link(self):
+    def test_link(self) -> None:
         """Ensure the link gets correctly generated."""
 
         with self.settings(REPORTS_LINK=""):
@@ -1160,7 +1162,7 @@ class TestReportsLink(TestBase):
 
 
 class TestArchiveLeastRecentActiveConsents(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.person_a = Person.objects.create(
             personal="A",
@@ -1214,7 +1216,7 @@ class TestFeatureFlagEnabled(TestCase):
             request = RequestFactory().get("/")
 
             @feature_flag_enabled("EMAIL_MODULE")
-            def test_func(**kwargs):
+            def test_func(**kwargs: Any) -> bool:
                 return True
 
             self.assertEqual(test_func(request=request), None)
@@ -1227,7 +1229,7 @@ class TestFeatureFlagEnabled(TestCase):
             request = RequestFactory().get("/")
 
             @feature_flag_enabled("EMAIL_MODULE")
-            def test_func(**kwargs):
+            def test_func(**kwargs: Any) -> bool:
                 return True
 
             self.assertEqual(test_func(request=request), True)
@@ -1241,7 +1243,7 @@ class TestFeatureFlagEnabled(TestCase):
         ):
 
             @feature_flag_enabled("EMAIL_MODULE")
-            def test_func(**kwargs):
+            def test_func(**kwargs: Any) -> bool:
                 return True
 
             self.assertEqual(test_func(), None)
@@ -1253,7 +1255,7 @@ class TestFeatureFlagEnabled(TestCase):
         ):
 
             @feature_flag_enabled("EMAIL_MODULE")
-            def test_func(**kwargs):
+            def test_func(**kwargs: Any) -> bool:
                 return True
 
             self.assertEqual(test_func(), None)

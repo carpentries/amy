@@ -140,7 +140,7 @@ class TestExportingPersonData(BaseExportingTest):
             country="W3",
             underresourced=False,
             # need to set it below
-            # domains=KnowledgeDomain.objects.first(),
+            # domains=KnowledgeDomain.objects.all()[0],
             domains_other="E-commerce",
             underrepresented="yes",
             underrepresented_details="LGBTQ",

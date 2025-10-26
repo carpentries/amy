@@ -1,6 +1,9 @@
+from typing import Any
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.forms import HiddenInput
+from django.http import HttpResponse
 from django.http.response import Http404
 from django.shortcuts import redirect, render
 from rest_framework.reverse import reverse
@@ -8,32 +11,36 @@ from rest_framework.reverse import reverse
 from consents.forms import ActiveTermConsentsForm, RequiredConsentsForm
 from consents.models import Consent
 from consents.util import person_has_consented_to_required_terms
-from workshops.base_views import AMYCreateView, RedirectSupportMixin
+from workshops.base_views import (
+    AMYCreateView,
+    AuthenticatedHttpRequest,
+    RedirectSupportMixin,
+)
 from workshops.utils.access import login_required
 
 
-class ConsentsUpdate(RedirectSupportMixin, AMYCreateView, LoginRequiredMixin):
+class ConsentsUpdate(RedirectSupportMixin, AMYCreateView[ActiveTermConsentsForm, Consent], LoginRequiredMixin):
     model = Consent
     form_class = ActiveTermConsentsForm
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         # Currently can only be called via redirect.
         # There is no direct view for Consents.
         next_url = self.request.GET["next"]
         return next_url
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         person = kwargs["data"]["consents-person"]
         kwargs.update({"prefix": "consents", "initial": {"person": person}})
         return kwargs
 
-    def get_success_message(self, *args, **kwargs):
+    def get_success_message(self, *args: Any, **kwargs: Any) -> str:
         return "Consents were successfully updated."
 
 
 @login_required
-def action_required_terms(request):
+def action_required_terms(request: AuthenticatedHttpRequest) -> HttpResponse:
     # TODO: turn into a class-based view
     person = request.user
 

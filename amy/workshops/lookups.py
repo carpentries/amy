@@ -3,14 +3,14 @@ from functools import partial, reduce
 import logging
 import operator
 import re
-from typing import Any, Callable
+from typing import Any, Callable, Sequence, TypedDict
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Model, Q
 from django.db.models.query import QuerySet
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponseBase, JsonResponse
 from django.http.response import Http404
 from django.urls import path
 from django_select2.views import AutoResponseView
@@ -25,11 +25,16 @@ from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirec
 logger = logging.getLogger("amy")
 
 
+class AutoResponseEntry(TypedDict):
+    text: str
+    id: int
+
+
 class ExtensibleAutoResponseView(AutoResponseView):
-    def get(self, request, *args, **kwargs):
-        self.widget = self.get_widget_or_404()
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
+        self.widget = self.get_widget_or_404()  # type: ignore[no-untyped-call]
         self.term = kwargs.get("term", request.GET.get("term", ""))
-        self.object_list = self.get_queryset()
+        self.object_list = self.get_queryset()  # type: ignore[no-untyped-call]
         context = self.get_context_data()
         return JsonResponse(
             {
@@ -38,12 +43,12 @@ class ExtensibleAutoResponseView(AutoResponseView):
             }
         )
 
-    def parse_results(self, object_list):
+    def parse_results(self, object_list: Sequence[Model]) -> list[AutoResponseEntry]:
         return [{"text": self.widget.label_from_instance(obj), "id": obj.pk} for obj in object_list]
 
 
 class TagLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Tag]:
         q = models.Tag.objects.all()
         if self.term:
             return q.filter(name__icontains=self.term)
@@ -51,7 +56,7 @@ class TagLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class BadgeLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Badge]:
         q = models.Badge.objects.all()
         if self.term:
             return q.filter(Q(name__icontains=self.term) | Q(title__icontains=self.term))
@@ -59,7 +64,7 @@ class BadgeLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class LessonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Lesson]:
         q = models.Lesson.objects.all()
         if self.term:
             return q.filter(name__icontains=self.term)
@@ -67,7 +72,7 @@ class LessonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Event]:
         results = models.Event.objects.all()
 
         if self.term:
@@ -77,7 +82,7 @@ class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class EventLookupForAwardsView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Event]:
         results = models.Event.objects.all()
 
         # if awarding an Instructor badge, find relevant events this person attended
@@ -98,7 +103,7 @@ class EventLookupForAwardsView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Event]:
         results = models.Event.objects.ttt()
 
         # trainee is provided through the TrainingProgress creation views
@@ -113,8 +118,14 @@ class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class OrganizationEntry(TypedDict):
+    fullname: str
+    text: str
+    id: int
+
+
 class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Organization]:
         results = models.Organization.objects.order_by("fullname")
 
         if self.term:
@@ -122,7 +133,7 @@ class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoRespons
 
         return results
 
-    def parse_results(self, object_list):
+    def parse_results(self, object_list: Sequence[models.Organization]) -> list[OrganizationEntry]:  # type: ignore
         return [
             {
                 "fullname": obj.fullname,
@@ -134,7 +145,7 @@ class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoRespons
 
 
 class AdministratorOrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Organization]:
         results = models.Organization.objects.administrators()
 
         if self.term:
@@ -144,7 +155,7 @@ class AdministratorOrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResp
 
 
 class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Membership]:
         results = models.Membership.objects.all()
 
         if self.term:
@@ -175,7 +186,7 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class MembershipLookupForTasksView(MembershipLookupView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Membership]:
         results = super().get_queryset()
 
         # if this is a TTT learner task,
@@ -199,7 +210,7 @@ class MembershipLookupForTasksView(MembershipLookupView):
 
 
 class MemberRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.MemberRole]:
         q = models.MemberRole.objects.all()
         if self.term:
             return q.filter(Q(name__icontains=self.term) | Q(verbose_name__icontains=self.term))
@@ -207,7 +218,7 @@ class MemberRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class MembershipPersonRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[MembershipPersonRole]:
         q = MembershipPersonRole.objects.all()
         if self.term:
             return q.filter(Q(name__icontains=self.term) | Q(verbose_name__icontains=self.term))
@@ -215,7 +226,7 @@ class MembershipPersonRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseV
 
 
 class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Person]:
         results = models.Person.objects.all()
 
         if self.term:
@@ -256,7 +267,7 @@ class CommunityRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 class InstructorLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     """Lookup view for instructors using Community Roles approach (Instructor Role)."""
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Person]:
         results = models.Person.objects.filter(communityrole__config__name="instructor").distinct()
 
         if self.term:
@@ -288,7 +299,7 @@ class AdminLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     Administrator is anyone with superuser power or in "administrators" group.
     """
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Person]:
         admin_group = Group.objects.get(name="administrators")
         results = models.Person.objects.filter(Q(is_superuser=True) | Q(groups__in=[admin_group]))
 
@@ -304,22 +315,12 @@ class AdminLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
-class AirportLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
-        results = models.Airport.objects.all()
-
-        if self.term:
-            results = results.filter(Q(iata__icontains=self.term) | Q(fullname__icontains=self.term))
-
-        return results
-
-
 class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponseBase:
         self.subtag = "subtag" in request.GET.keys()
         return super().dispatch(request, *args, **kwargs)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Language]:
         results = models.Language.objects.all()
 
         if self.term:
@@ -334,7 +335,7 @@ class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
 
 
 class KnowledgeDomainLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.KnowledgeDomain]:
         results = models.KnowledgeDomain.objects.all()
 
         if self.term:
@@ -351,7 +352,7 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     Administrator is anyone with superuser power or in "administrators" group.
     """
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.TrainingRequest]:
         results = models.TrainingRequest.objects.all()
 
         if self.term:
@@ -377,7 +378,7 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 
 class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Award]:
         results = models.Award.objects.all()
 
         if badge := self.request.GET.get("badge"):
@@ -401,7 +402,7 @@ class AwardLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 class GenericObjectLookupView(
     LoginRequiredMixin,
     UserPassesTestMixin,
-    AutoResponseView,  # type: ignore
+    AutoResponseView,
 ):
     content_type: ContentType | None
     request: AuthenticatedHttpRequest
@@ -439,7 +440,12 @@ class GenericObjectLookupView(
             logger.error(f"ContentType {self.content_type} may be stale (model class doesn't exist). Error: {e}")
             raise Http404("ContentType not found.")
 
-    def get(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> JsonResponse:
+    def get(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> JsonResponse:
         self.object_list = self.get_queryset()
         return JsonResponse(
             {
@@ -528,7 +534,6 @@ urlpatterns = [
     # uses community role
     path("communityroles/", CommunityRoleLookupView.as_view(), name="community-role-lookup"),
     path("instructors/", InstructorLookupView.as_view(), name="instructor-lookup"),
-    path("airports/", AirportLookupView.as_view(), name="airport-lookup"),
     path("languages/", LanguageLookupView.as_view(), name="language-lookup"),
     path(
         "knowledge_domains/",

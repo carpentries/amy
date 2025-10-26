@@ -4,21 +4,21 @@ from workshops.tests.base import TestBase
 
 
 class TestGetLastOrPassedProgress(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpTags()
 
         # set up some progresses
         self.requirement, _ = TrainingRequirement.objects.get_or_create(name="Demo")
 
-    def test_no_progress(self):
+    def test_no_progress(self) -> None:
         """Should return None if no progress present."""
         # Act
         got_progress = get_passed_or_last_progress(self.spiderman, self.requirement.name)
         # Assert
         self.assertIsNone(got_progress)
 
-    def test_single_passed_progress(self):
+    def test_single_passed_progress(self) -> None:
         """Only one progress, and it's passed"""
         # Arrange
         expected = TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.requirement, state="p")
@@ -27,7 +27,7 @@ class TestGetLastOrPassedProgress(TestBase):
         # Assert
         self.assertEqual(expected, got_progress)
 
-    def test_single_nonpassed_progress(self):
+    def test_single_nonpassed_progress(self) -> None:
         """Only one progress, and it's not passed"""
         # Arrange
         expected = TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.requirement, state="f")
@@ -36,7 +36,7 @@ class TestGetLastOrPassedProgress(TestBase):
         # Assert
         self.assertEqual(expected, got_progress)
 
-    def test_passed_progress_prioritised(self):
+    def test_passed_progress_prioritised(self) -> None:
         """Passed progress should be returned even if later progresses exist"""
         # Arrange
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.requirement, state="a")
@@ -47,7 +47,7 @@ class TestGetLastOrPassedProgress(TestBase):
         # Assert
         self.assertEqual(expected, got_progress)
 
-    def test_recent_progress_no_pass(self):
+    def test_recent_progress_no_pass(self) -> None:
         """The most recent progress should be returned if none are passed"""
         # Arrange
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.requirement, state="a")
@@ -57,7 +57,7 @@ class TestGetLastOrPassedProgress(TestBase):
         # Assert
         self.assertEqual(expected, got_progress)
 
-    def test_recent_passed_progress(self):
+    def test_recent_passed_progress(self) -> None:
         """The most recent passed progress should be returned if multiple are passed"""
         # Arrange
         TrainingProgress.objects.create(trainee=self.spiderman, requirement=self.requirement, state="p")

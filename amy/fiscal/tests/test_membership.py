@@ -273,7 +273,7 @@ class TestMembershipConsortiumCountingBase(TestBase):
                 Member(
                     membership=self.membership,
                     organization=self.org_alpha,
-                    role=MemberRole.objects.first(),
+                    role=MemberRole.objects.all()[0],
                 ),
                 Member(
                     membership=self.membership,
@@ -1123,8 +1123,8 @@ class TestMembershipExtension(TestBase):
 
         # Assert
         self.assertEqual(CommentModel.objects.for_model(membership).count(), 1)  # type: ignore
-        comment = CommentModel.objects.for_model(membership).first()  # type: ignore
-        self.assertEqual(comment.comment, expected_comment)  # type: ignore
+        comment_obj = CommentModel.objects.for_model(membership).all()[0]  # type: ignore
+        self.assertEqual(comment_obj.comment, expected_comment)
 
 
 class TestMembershipCreateRollOver(TestBase):
@@ -1362,7 +1362,7 @@ class TestMembershipCreateRollOver(TestBase):
         # original membership is not a consortium
         self.assertEqual(last_membership.member_set.count(), 1)
         self.assertEqual(last_membership.member_set.all()[0].organization, self.org_alpha)
-        self.assertEqual(last_membership.member_set.all()[0].role, MemberRole.objects.first())
+        self.assertEqual(last_membership.member_set.all()[0].role, MemberRole.objects.all()[0])
 
     def test_new_membership_consortium_created(self) -> None:
         test_data = [True, False]
@@ -1390,7 +1390,7 @@ class TestMembershipCreateRollOver(TestBase):
                     self.assertEqual(last_membership.member_set.all()[0].organization, self.org_alpha)
                     self.assertEqual(
                         last_membership.member_set.all()[0].role,
-                        MemberRole.objects.first(),
+                        MemberRole.objects.all()[0],
                     )
                 else:
                     self.assertEqual(last_membership.member_set.count(), 0)
@@ -1421,7 +1421,7 @@ class TestMembershipCreateRollOver(TestBase):
                     self.assertEqual(last_membership.membershiptask_set.all()[0].person, self.hermione)
                     self.assertEqual(
                         last_membership.membershiptask_set.all()[0].role,
-                        MembershipPersonRole.objects.first(),
+                        MembershipPersonRole.objects.all()[0],
                     )
                 else:
                     self.assertEqual(last_membership.membershiptask_set.count(), 0)

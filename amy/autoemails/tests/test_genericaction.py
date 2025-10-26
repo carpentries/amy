@@ -50,7 +50,7 @@ class TestGenericAction(TestCase):
         self.assertEqual(a1.get_launch_at(), timedelta(hours=1))
 
     def testCheckConditions(self):
-        e = Event(slug="test-event1", host=Organization.objects.first())
+        e = Event(slug="test-event1", host=Organization.objects.all()[0])
         with self.assertRaises(NotImplementedError):
             GenericAction.check(e)
 
@@ -71,7 +71,7 @@ class TestGenericAction(TestCase):
 
         event = Event.objects.create(
             slug="test-event1",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=datetime(2020, 10, 30),
             end=datetime(2020, 11, 1),
         )
@@ -84,7 +84,7 @@ class TestGenericAction(TestCase):
                 "workshop": event,
                 "workshop_main_type": "SWC",
                 "dates": "Oct 30 - Nov 01, 2020",
-                "workshop_host": Organization.objects.first(),
+                "workshop_host": Organization.objects.all()[0],
                 "regional_coordinator_email": ["workshops@carpentries.org"],
                 "all_emails": [],
                 "assignee": "Regional Coordinator",
@@ -110,7 +110,7 @@ class TestGenericAction(TestCase):
         wr = WorkshopRequest(email="test@email.com")
         event = Event.objects.create(
             slug="test-event1",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=datetime(2020, 10, 30),
             end=datetime(2020, 11, 1),
         )
@@ -123,7 +123,7 @@ class TestGenericAction(TestCase):
         wr = WorkshopRequest(email="test@email.com")
         event = Event.objects.create(
             slug="test-event1",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=datetime(2020, 10, 30),
             end=datetime(2020, 11, 1),
         )
@@ -137,7 +137,7 @@ class TestGenericAction(TestCase):
         wr = WorkshopRequest(email="test@email.com")
         e = Event.objects.create(
             slug="test-event1",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=datetime(2020, 10, 30),
             end=datetime(2020, 11, 1),
             country="GB",

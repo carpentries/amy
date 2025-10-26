@@ -19,7 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.contenttypes.views import shortcut
-from django.urls import include, path
+from django.urls import URLPattern, URLResolver, include, path
 from django.views.generic import RedirectView
 from django_comments.views.comments import comment_done, post_comment
 from markdownx.views import ImageUploadView, MarkdownifyView
@@ -27,7 +27,7 @@ from markdownx.views import ImageUploadView, MarkdownifyView
 from workshops.utils.access import login_required
 from workshops.views import logout_then_login_with_msg
 
-urlpatterns = [
+urlpatterns: list[URLPattern | URLResolver] = [
     path("", RedirectView.as_view(pattern_name="dispatch")),
     path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
     path("api/v1/", include("api.v1.urls")),  # REST API v1
@@ -125,7 +125,9 @@ urlpatterns = [
             ]
         ),
     ),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 redirect_urlpatterns = [
     path("workshops/", RedirectView.as_view(pattern_name="dispatch")),

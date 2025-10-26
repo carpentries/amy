@@ -40,7 +40,7 @@ class TestInstructorConfirmedForWorkshopCancelReceiver(TestCase):
         )
 
     @patch("emails.actions.base_action.logger")
-    def test_disabled_when_no_feature_flag(self, mock_logger) -> None:
+    def test_disabled_when_no_feature_flag(self, mock_logger: MagicMock) -> None:
         # Arrange
         request = RequestFactory().get("/")
         with self.settings(FLAGS={"EMAIL_MODULE": [("boolean", False)]}):
@@ -203,7 +203,7 @@ class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
         self._setUpAdministrators()
         self._setUpUsersAndLogin()
         host = Organization.objects.create(domain="test.com", fullname="Test")
-        person = Person.objects.create_user(  # type: ignore
+        person = Person.objects.create_user(
             username="test_test",
             personal="Test",
             family="User",

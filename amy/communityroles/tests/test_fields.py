@@ -5,10 +5,10 @@ from workshops.tests.base import TestBase
 
 
 class TestCustomKeysField(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.widget = CustomKeysWidget()
 
-    def test_custom_keys_apply_labels(self):
+    def test_custom_keys_apply_labels(self) -> None:
         # Arrange
         custom_keys = ["Test", "Second test"]
 
@@ -18,7 +18,7 @@ class TestCustomKeysField(TestBase):
         # Assert
         self.assertEqual(self.widget.labels, custom_keys)
 
-    def test_custom_keys_create_subwidgets(self):
+    def test_custom_keys_create_subwidgets(self) -> None:
         # Arrange
         custom_keys = ["Test", "Second test"]
         values = {"Test": "test value", "Second test": "second test value"}
@@ -34,7 +34,7 @@ class TestCustomKeysField(TestBase):
         self.assertListEqual(subwidget_labels, custom_keys)
         self.assertListEqual(subwidget_values, list(values.values()))
 
-    def test_custom_keys_value_null(self):
+    def test_custom_keys_value_null(self) -> None:
         # Arrange
         custom_keys = ["Test"]
         self.widget.apply_labels(custom_keys)
@@ -46,7 +46,7 @@ class TestCustomKeysField(TestBase):
         # Assert
         self.assertEqual(subwidget["value"], None)
 
-    def test_custom_keys_value_invalid(self):
+    def test_custom_keys_value_invalid(self) -> None:
         # Arrange
         custom_keys = ["Test"]
         # set a value which cannot be parsed as dict - should be ignored

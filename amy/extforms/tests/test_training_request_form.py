@@ -19,7 +19,7 @@ class TestTrainingRequestForm(TestBase):
     MEMBER_CODE_OVERRIDE_EMAIL_WARNING = "A member of our team will check the code and follow up with you"
     INVALID_EVENTBRITE_URL_ERROR = "Must be an Eventbrite URL."
 
-    def setUp(self):
+    def setUp(self) -> None:
         self._setUpUsersAndLogin()
         self._setUpRoles()
         self.data = {
@@ -57,9 +57,9 @@ class TestTrainingRequestForm(TestBase):
             "user_notes": "",
             "code_of_conduct_agreement": "on",
         }
-        self.data.update(self.add_terms_to_payload())
+        self.data.update(self.add_terms_to_payload())  # type: ignore[arg-type]
 
-    def setUpMembership(self):
+    def setUpMembership(self) -> None:
         self.membership = Membership.objects.create(
             name="Alpha Organization",
             variant="bronze",
@@ -71,7 +71,7 @@ class TestTrainingRequestForm(TestBase):
             inhouse_instructor_training_seats=1,
         )
 
-    def setUpUsedSeats(self):
+    def setUpUsedSeats(self) -> None:
         # set up some prior seat usage
         super().setUp()
         self._setUpTags()
@@ -103,12 +103,12 @@ class TestTrainingRequestForm(TestBase):
 
     @tag("captcha")
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
-    def test_request_added(self):
+    def test_request_added(self) -> None:
         # Arrange
         email = self.data.get("email")
         self.passCaptcha(self.data)
         # before tests, check if the template invalid string exists
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         # Act
         rv = self.client.post(reverse("training_request"), self.data, follow=True)
@@ -126,10 +126,10 @@ class TestTrainingRequestForm(TestBase):
         self.assertIn("A copy of your request", msg.body)
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
-        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]
 
     @tag("captcha")
-    def test_invalid_request_not_added(self):
+    def test_invalid_request_not_added(self) -> None:
         # Arrange
         self.data.pop("personal")  # remove a required field
         self.passCaptcha(self.data)
@@ -147,7 +147,7 @@ class TestTrainingRequestForm(TestBase):
 
         self.assertEqual(TrainingRequest.objects.all().count(), 0)
 
-    def test_review_process_validation__preapproved_code_empty(self):
+    def test_review_process_validation__preapproved_code_empty(self) -> None:
         """Shouldn't pass when review_process requires member_code."""
         # Arrange
         data = {
@@ -172,7 +172,7 @@ class TestTrainingRequestForm(TestBase):
 
     @skip("Since 2024-03-19 (#2617) we don't allow open training requests.")
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
-    def test_review_process_validation__open_code_nonempty(self):
+    def test_review_process_validation__open_code_nonempty(self) -> None:
         """Shouldn't pass when review_process requires *NO* member_code."""
         # Arrange
         data = {
@@ -193,7 +193,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", False)]})
-    def test_member_code_validation__not_enforced(self):
+    def test_member_code_validation__not_enforced(self) -> None:
         """Invalid code should pass if enforcement is not enabled."""
         # Arrange
         data = {
@@ -209,7 +209,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_valid(self):
+    def test_member_code_validation__code_valid(self) -> None:
         """Valid member code should pass."""
         # Arrange
         self.setUpMembership()
@@ -231,7 +231,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_invalid(self):
+    def test_member_code_validation__code_invalid(self) -> None:
         """Invalid member code should not pass."""
         # Arrange
         data = {
@@ -252,7 +252,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_inactive_early(self):
+    def test_member_code_validation__code_inactive_early(self) -> None:
         """Code used >90 days before membership start date should not pass."""
         # Arrange
         self.setUpMembership()
@@ -276,7 +276,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_inactive_late(self):
+    def test_member_code_validation__code_inactive_late(self) -> None:
         """Code used >90 days after membership end date should not pass."""
         # Arrange
         self.setUpMembership()
@@ -300,7 +300,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_no_seats_remaining(self):
+    def test_member_code_validation__code_no_seats_remaining(self) -> None:
         """Code with no seats remaining should not pass."""
         # Arrange
         self.setUpMembership()
@@ -323,7 +323,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_only_public_seats_remaining(self):
+    def test_member_code_validation__code_only_public_seats_remaining(self) -> None:
         """Code with only public seats remaining should pass."""
         # Arrange
         self.setUpMembership()
@@ -342,7 +342,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_only_inhouse_seats_remaining(self):
+    def test_member_code_validation__code_only_inhouse_seats_remaining(self) -> None:
         """Code with only inhouse seats remaining should pass."""
         # Arrange
         self.setUpMembership()
@@ -361,7 +361,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertNotContains(rv, self.INVALID_MEMBER_CODE_ERROR)
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_invalid_override(self):
+    def test_member_code_validation__code_invalid_override(self) -> None:
         """Invalid member code should be accepted when the override is ticked."""
         # Arrange
         data = {
@@ -383,7 +383,7 @@ class TestTrainingRequestForm(TestBase):
         )
 
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_valid_override(self):
+    def test_member_code_validation__code_valid_override(self) -> None:
         """Override should be quietly hidden if a valid code is used."""
         # Arrange
         self.setUpMembership()
@@ -407,16 +407,16 @@ class TestTrainingRequestForm(TestBase):
 
     @tag("captcha")
     @override_settings(FLAGS={"ENFORCE_MEMBER_CODES": [("boolean", True)]})
-    def test_member_code_validation__code_valid_override_full_request(self):
+    def test_member_code_validation__code_valid_override_full_request(self) -> None:
         """Override should be quietly changed to False if a valid code is used
         in a successful submission."""
         # Arrange
         self.setUpMembership()
         self.data["member_code"] = "valid123"
-        self.data["member_code_override"] = True
+        self.data["member_code_override"] = True  # type: ignore[assignment]
         self.passCaptcha(self.data)
         # before tests, check if the template invalid string exists
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         # Act
         rv = self.client.post(reverse("training_request"), data=self.data, follow=True)
@@ -431,18 +431,18 @@ class TestTrainingRequestForm(TestBase):
         msg = mail.outbox[0]
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
         self.assertNotIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
-        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]
 
     @tag("captcha")
-    def test_member_code_validation__code_invalid_override_full_request(self):
+    def test_member_code_validation__code_invalid_override_full_request(self) -> None:
         """Sent email should include the member_code_override field if used."""
         # Arrange
         self.setUpMembership()
         self.data["member_code"] = "invalid"
-        self.data["member_code_override"] = True
+        self.data["member_code_override"] = True  # type: ignore[assignment]
         self.passCaptcha(self.data)
         # before tests, check if the template invalid string exists
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         # Act
         rv = self.client.post(reverse("training_request"), data=self.data, follow=True)
@@ -457,9 +457,9 @@ class TestTrainingRequestForm(TestBase):
         msg = mail.outbox[0]
         self.assertIn(self.MEMBER_CODE_OVERRIDE_LABEL, msg.body)
         self.assertIn(self.MEMBER_CODE_OVERRIDE_EMAIL_WARNING, msg.body)
-        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)
+        self.assertNotIn(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"], msg.body)  # type: ignore[index]
 
-    def test_eventbrite_url_validation__none(self):
+    def test_eventbrite_url_validation__none(self) -> None:
         """Should not error if no URL is entered."""
         # Arrange
         self.setUpMembership()
@@ -472,7 +472,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
 
-    def test_eventbrite_url_validation__invalid(self):
+    def test_eventbrite_url_validation__invalid(self) -> None:
         """Should error if a non-Eventbrite URL is entered."""
         # Arrange
         self.setUpMembership()
@@ -485,7 +485,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
 
-    def test_eventbrite_url_validation__valid(self):
+    def test_eventbrite_url_validation__valid(self) -> None:
         """Should not error if an Eventbrite URL is entered."""
         # Arrange
         self.setUpMembership()
@@ -498,7 +498,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertNotContains(rv, self.INVALID_EVENTBRITE_URL_ERROR)
 
-    def test_coc_agreement_required(self):
+    def test_coc_agreement_required(self) -> None:
         """Should error if CoC checkbox is not ticked."""
         # Arrange
         self.setUpMembership()

@@ -8,11 +8,11 @@ from fiscal.forms import MemberForm
 from workshops.models import Member, MemberRole, Membership
 from workshops.tests.base import TestBase
 
-CommentModel = django_comments.get_model()
+CommentModel = django_comments.get_model()  # type: ignore[no-untyped-call]
 
 
 class MembershipTestMixin:
-    def setUpMembership(self, consortium: bool):
+    def setUpMembership(self, consortium: bool) -> None:
         self.membership = Membership.objects.create(
             name="Test Membership",
             consortium=consortium,
@@ -24,52 +24,52 @@ class MembershipTestMixin:
             public_instructor_training_seats=0,
             additional_public_instructor_training_seats=0,
         )
-        self.member_role = MemberRole.objects.first()
+        self.member_role = MemberRole.objects.all()[0]
 
 
 class TestMemberFormLayout(TestBase):
-    def test_main_helper_layout(self):
+    def test_main_helper_layout(self) -> None:
         form = MemberForm()
 
         self.assertEqual(
-            list(form.helper.layout),
+            list(form.helper.layout),  # type: ignore[arg-type]
             ["membership", "organization", "role", "EDITABLE", "id"],
         )
 
-    def test_main_helper_deletable_layout(self):
+    def test_main_helper_deletable_layout(self) -> None:
         form = MemberForm()
 
         self.assertEqual(
-            list(form.helper_deletable.layout),
+            list(form.helper_deletable.layout),  # type: ignore[arg-type]
             ["membership", "organization", "role", "EDITABLE", "id", "DELETE"],
         )
 
-    def test_empty_helper_layout(self):
+    def test_empty_helper_layout(self) -> None:
         form = MemberForm()
 
-        self.assertEqual(len(form.helper_empty_form.layout), 4)
+        self.assertEqual(len(form.helper_empty_form.layout), 4)  # type: ignore[arg-type]
         self.assertEqual(
-            list(form.helper_empty_form.layout),
+            list(form.helper_empty_form.layout),  # type: ignore[arg-type]
             ["membership", "organization", "role", "id"],
         )
 
-    def test_empty_helper_deletable_layout(self):
+    def test_empty_helper_deletable_layout(self) -> None:
         form = MemberForm()
 
-        self.assertEqual(len(form.helper_empty_form_deletable.layout), 5)
+        self.assertEqual(len(form.helper_empty_form_deletable.layout), 5)  # type: ignore[arg-type]
         self.assertEqual(
-            list(form.helper_empty_form_deletable.layout)[:-1],
+            list(form.helper_empty_form_deletable.layout)[:-1],  # type: ignore[arg-type]
             ["membership", "organization", "role", "id"],
         )
-        self.assertEqual(form.helper_empty_form_deletable.layout[-1].fields, ["DELETE"])
+        self.assertEqual(form.helper_empty_form_deletable.layout[-1].fields, ["DELETE"])  # type: ignore[index]
 
 
 class TestMembershipMembers(MembershipTestMixin, TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
 
-    def test_adding_new_member_to_nonconsortium(self):
+    def test_adding_new_member_to_nonconsortium(self) -> None:
         """Ensure only 1 member can be added to non-consortium membership."""
         self.setUpMembership(consortium=False)
         self.assertEqual(self.membership.member_set.count(), 0)
@@ -120,7 +120,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.membership.member_set.count(), 1)  # number didn't change
 
-    def test_adding_new_members_to_consortium(self):
+    def test_adding_new_members_to_consortium(self) -> None:
         """Ensure 1+ members can be added to consortium membership."""
         self.setUpMembership(consortium=True)
         self.assertEqual(self.membership.member_set.count(), 0)
@@ -150,7 +150,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         self.assertEqual(self.membership.member_set.count(), 2)
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha, self.org_beta])
 
-    def test_removing_members_from_nonconsortium(self):
+    def test_removing_members_from_nonconsortium(self) -> None:
         """Ensure removing the only member from non-consortium membership is not
         allowed."""
         self.setUpMembership(consortium=False)
@@ -180,7 +180,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         self.assertEqual(response.status_code, 200)  # response failed
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
-    def test_removing_members_from_consortium(self):
+    def test_removing_members_from_consortium(self) -> None:
         """Ensure removing all members from consortium membership is allowed."""
         self.setUpMembership(consortium=True)
         m1 = Member.objects.create(
@@ -221,7 +221,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         self.assertEqual(list(self.membership.organizations.all()), [])
 
-    def test_mix_adding_removing_members_from_consortium(self):
+    def test_mix_adding_removing_members_from_consortium(self) -> None:
         """Ensure a mixed-content formset for consortium membership members works
         fine (e.g. a new member is added, and an old one is removed)."""
         self.setUpMembership(consortium=True)
@@ -258,7 +258,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
 
         self.assertEqual(list(self.membership.organizations.all()), [self.org_beta])
 
-    def test_editing_noneditable_members_fails(self):
+    def test_editing_noneditable_members_fails(self) -> None:
         """Ensure an attempt to edit member without 'editable' checkbox ticked off
         fails with validation error."""
         self.setUpMembership(consortium=True)
@@ -291,7 +291,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         )
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
-    def test_not_editing_noneditable_members_succeeds(self):
+    def test_not_editing_noneditable_members_succeeds(self) -> None:
         """Ensure saving edit member without 'editable' checkbox ticked off works fine.
         No changes are introduced to the member."""
         self.setUpMembership(consortium=True)
@@ -320,7 +320,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
-    def test_mix_adding_removing_members_leaves_comment(self):
+    def test_mix_adding_removing_members_leaves_comment(self) -> None:
         """Ensure a mixed-content formset for consortium membership members leaves
         correct message in the comments."""
         self.setUpMembership(consortium=True)
@@ -354,7 +354,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
         )
 
         self.assertRedirects(response, reverse("membership_details", args=[self.membership.pk]))
-        comment = CommentModel.objects.first()
+        comment = CommentModel.objects.all()[0]
         self.assertEqual(
             comment.comment,
             f"""Changed members on {date.today():%Y-%m-%d}:
@@ -365,7 +365,7 @@ class TestMembershipMembers(MembershipTestMixin, TestBase):
 
 
 class TestMemberUnique(MembershipTestMixin, TestBase):
-    def test_duplicate_members_with_the_same_role_fail(self):
+    def test_duplicate_members_with_the_same_role_fail(self) -> None:
         """Duplicate Member & Role should fail for given membership."""
         # Arrange
         self.setUpMembership(consortium=True)
@@ -388,7 +388,7 @@ class TestMemberUnique(MembershipTestMixin, TestBase):
         with self.assertRaises(IntegrityError):
             member2.save()
 
-    def test_distinct_members_for_the_same_membership(self):
+    def test_distinct_members_for_the_same_membership(self) -> None:
         """Distinct Member & Role should work for given membership."""
         # Arrange
         self.setUpMembership(consortium=True)

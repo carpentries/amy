@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.test import TestCase
 
 from communityroles.models import (
@@ -19,7 +21,7 @@ class TestTaskForm(TestCase):
             domain="software-carpentry.org",
             fullname="Software Carpentry",
         )
-        host = Organization.objects.first()
+        host = Organization.objects.all()[0]
         self.event1 = Event.objects.create(
             slug="test-event2",
             host=host,
@@ -32,7 +34,7 @@ class TestTaskForm(TestCase):
         )
         self.person = Person.objects.create(personal="Test", family="User", email="test@example.org")
         role = Role.objects.create(name="instructor", verbose_name="Instructor")
-        self.payload = {
+        self.payload: dict[str, Any] = {
             "event": None,
             "person": self.person.pk,
             "role": role.pk,

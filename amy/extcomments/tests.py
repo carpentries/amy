@@ -9,7 +9,7 @@ from .utils import add_comment_for_object
 
 
 class TestCommentForObjectUtil(TestCase):
-    def test_util(self):
+    def test_util(self) -> None:
         # Arrange
         person = Person.objects.create(
             personal="Ron",
@@ -24,7 +24,7 @@ class TestCommentForObjectUtil(TestCase):
             fullname="Example Organisation",
         )
         content = "Test comment"
-        CommentModel = django_comments.get_model()
+        CommentModel = django_comments.get_model()  # type: ignore[no-untyped-call]
 
         # Act
         comment = add_comment_for_object(organization, person, content)
@@ -34,7 +34,7 @@ class TestCommentForObjectUtil(TestCase):
 
 
 class TestEmailFieldRequiredness(TestCase):
-    def test_email_field_requiredness(self):
+    def test_email_field_requiredness(self) -> None:
         """Regression test for #1944.
 
         Previously a user without email address would not be able to add a comment."""
@@ -44,7 +44,7 @@ class TestEmailFieldRequiredness(TestCase):
             domain="example.org",
             fullname="Example Organisation",
         )
-        CommentForm = django_comments.get_form()
+        CommentForm = django_comments.get_form()  # type: ignore[no-untyped-call]
 
         data = {
             "honeypot": "",
@@ -59,7 +59,7 @@ class TestEmailFieldRequiredness(TestCase):
         # Assert
         self.assertTrue(form.is_valid())
 
-    def test_email_field_requiredness_POST(self):
+    def test_email_field_requiredness_POST(self) -> None:
         """Regression test for #1944.
 
         Previously a user without email address would not be able to add a comment.
@@ -81,8 +81,8 @@ class TestEmailFieldRequiredness(TestCase):
             fullname="Example Organisation",
         )
 
-        CommentModel = django_comments.get_model()
-        CommentForm = django_comments.get_form()
+        CommentModel = django_comments.get_model()  # type: ignore[no-untyped-call]
+        CommentForm = django_comments.get_form()  # type: ignore[no-untyped-call]
         data = {
             "honeypot": "",
             "comment": "Content",

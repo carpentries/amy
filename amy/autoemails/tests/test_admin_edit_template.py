@@ -35,7 +35,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         LC_org = Organization.objects.create(domain="librarycarpentry.org", fullname="Library Carpentry")
         self.event = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=LC_org,
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),

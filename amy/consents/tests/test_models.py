@@ -43,8 +43,8 @@ class TestQuerySet(ConsentTestBase):
             content="option1",
         )
         terms = Term.objects.all().prefetch_active_options()
-        self.assertEqual(terms.filter(id=term1.id)[0].active_options, [term1_option1])
-        self.assertEqual(terms.filter(id=term2.id)[0].active_options, [term2_option1])
+        self.assertEqual(terms.filter(id=term1.id)[0].active_options, [term1_option1])  # type: ignore[attr-defined]
+        self.assertEqual(terms.filter(id=term2.id)[0].active_options, [term2_option1])  # type: ignore[attr-defined]
 
     def test_consent_active(self) -> None:
         term1 = Term.objects.create(content="term1", slug="term1")
@@ -116,7 +116,7 @@ class TestConsentModel(ConsentTestBase):
             # create without archiving pre-existing active consent.
             Consent.objects.create(person=person1, term=term1, term_option=term1_option2)
 
-    def test_term_and_term_option_should_match(self):
+    def test_term_and_term_option_should_match(self) -> None:
         """Term was added to the Consent model to avoid too many complicated joins.
         The term option should always be related to the term stored in the table."""
         # Arrange
@@ -220,7 +220,7 @@ class TestConsentModel(ConsentTestBase):
 
 
 class TestTermModel(ConsentTestBase):
-    def test_archive(self):
+    def test_archive(self) -> None:
         """
         Term archive method should archive the term
         and all related term options and consents.
@@ -278,7 +278,7 @@ class TestTermModel(ConsentTestBase):
         # Unrelated consent should not be archived
         self.assertNotIn(consent3.pk, archived_consent_ids)
 
-    def test_clean(self):
+    def test_clean(self) -> None:
         """Ensure required terms have at least one yes term option"""
         term = Term.objects.create(
             slug="required-test-term",
@@ -307,7 +307,7 @@ class TestTermModel(ConsentTestBase):
 
 
 class TestTermOptionModel(ConsentTestBase):
-    def test_archive(self):
+    def test_archive(self) -> None:
         """
         TermOption archive method should archive the TermOption
         and all related consents.

@@ -9,13 +9,13 @@ from workshops.tests.base import TestBase
 class TestChangesLogView(TestBase):
     """Tests the view of recent changes."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
         self._setUpRoles()
         self.tag1, _ = Tag.objects.get_or_create(pk=1)
 
-    def test_changes_log_links(self):
+    def test_changes_log_links(self) -> None:
         """Regression test for https://github.com/carpentries/amy/issues/2456.
 
         This test isn't an effective regression test unless the PKs of the most recent
@@ -25,7 +25,7 @@ class TestChangesLogView(TestBase):
 
         # Arrange
         # set up an event
-        with create_revision():
+        with create_revision():  # type: ignore[no-untyped-call]
             self.event = Event.objects.create(host=self.org_alpha, slug="event")
             self.event.tags.add(self.tag1)
             self.event.save()
@@ -33,7 +33,7 @@ class TestChangesLogView(TestBase):
         # Act
         # create a revision that generates two new versions,
         # to offset the pk counter between revisions and versions
-        with create_revision():
+        with create_revision():  # type: ignore[no-untyped-call]
             self.task = Task.objects.create(
                 person=self.blackwidow,
                 event=self.event,
@@ -41,8 +41,8 @@ class TestChangesLogView(TestBase):
             )
 
         # get the change we just made
-        revision = Revision.objects.order_by("-date_created").first()
-        version = revision.version_set.first()
+        revision = Revision.objects.order_by("-date_created")[0]
+        version = revision.version_set.all()[0]
 
         url = reverse("changes_log")
         rv = self.client.get(url)

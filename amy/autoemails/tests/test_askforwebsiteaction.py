@@ -31,22 +31,22 @@ class TestAskForWebsiteAction(TestCase):
         )
 
     def testLaunchAt(self):
-        e1 = Event(slug="test-event1", host=Organization.objects.first())
+        e1 = Event(slug="test-event1", host=Organization.objects.all()[0])
         e2 = Event(
             slug="test-event2",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
         e3 = Event(
             slug="test-event3",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=-8),
             end=date.today() + timedelta(days=-7),
         )
         e4 = Event(
             slug="test-event4",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=70),
             end=date.today() + timedelta(days=71),
         )
@@ -90,7 +90,7 @@ class TestAskForWebsiteAction(TestCase):
         # totally fake Task, Role and Event data
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
@@ -183,7 +183,7 @@ class TestAskForWebsiteAction(TestCase):
 
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -217,7 +217,7 @@ class TestAskForWebsiteAction(TestCase):
                 workshop=e,
                 workshop_main_type="SWC",
                 dates=e.human_readable_date(),
-                workshop_host=Organization.objects.first(),
+                workshop_host=Organization.objects.all()[0],
                 regional_coordinator_email=["admin-uk@carpentries.org"],
                 instructors=[p1, p2],
                 hosts=[p3],
@@ -234,7 +234,7 @@ class TestAskForWebsiteAction(TestCase):
         building."""
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -281,7 +281,7 @@ class TestAskForWebsiteAction(TestCase):
     def test_event_slug(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",
@@ -302,7 +302,7 @@ class TestAskForWebsiteAction(TestCase):
     def test_all_recipients(self):
         e = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",

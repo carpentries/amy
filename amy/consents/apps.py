@@ -6,6 +6,6 @@ class ConsentsConfig(AppConfig):
     label = "consents"
     verbose_name = "Consents"
 
-    def ready(self):
+    def ready(self) -> None:
         super().ready()
         from consents import receivers  # noqa

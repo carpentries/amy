@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 
@@ -9,7 +9,7 @@ from workshops.models import Event, Organization, Tag
 
 class TestInstructorRecruitment(TestCase):
     @patch("recruitment.models.date")
-    def test_calculate_priority__not_online(self, mock_date):
+    def test_calculate_priority__not_online(self, mock_date: MagicMock) -> None:
         # Arrange
         mock_date.today.return_value = date(2022, 1, 1)  # force today's date
         dates = [
@@ -24,7 +24,7 @@ class TestInstructorRecruitment(TestCase):
             (date(2023, 12, 31), RecruitmentPriority.LOW),  # way in future
         ]
 
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -41,7 +41,7 @@ class TestInstructorRecruitment(TestCase):
             self.assertEqual(priority, expected_priority, start_date)
 
     @patch("recruitment.models.date")
-    def test_calculate_priority__online(self, mock_date):
+    def test_calculate_priority__online(self, mock_date: MagicMock) -> None:
         # Arrange
         mock_date.today.return_value = date(2022, 1, 1)  # force today's date
         dates = [
@@ -56,7 +56,7 @@ class TestInstructorRecruitment(TestCase):
             (date(2023, 12, 31), RecruitmentPriority.LOW),  # way in future
         ]
 
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -74,7 +74,7 @@ class TestInstructorRecruitment(TestCase):
             self.assertEqual(priority, expected_priority, start_date)
 
     @patch("recruitment.models.date")
-    def test_manager_annotate_with_priority__not_online(self, mock_date):
+    def test_manager_annotate_with_priority__not_online(self, mock_date: MagicMock) -> None:
         # Arrange
         mock_date.today.return_value = date(2022, 1, 1)  # force today's date
         dates = [
@@ -89,7 +89,7 @@ class TestInstructorRecruitment(TestCase):
             (date(2023, 12, 31), RecruitmentPriority.LOW),  # way in future
         ]
 
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,
@@ -108,7 +108,7 @@ class TestInstructorRecruitment(TestCase):
             self.assertEqual(result.automatic_priority, expected_priority, start_date)
 
     @patch("recruitment.models.date")
-    def test_manager_annotate_with_priority__online(self, mock_date):
+    def test_manager_annotate_with_priority__online(self, mock_date: MagicMock) -> None:
         # Arrange
         mock_date.today.return_value = date(2022, 1, 1)  # force today's date
         dates = [
@@ -123,7 +123,7 @@ class TestInstructorRecruitment(TestCase):
             (date(2023, 12, 31), RecruitmentPriority.LOW),  # way in future
         ]
 
-        organization = Organization.objects.first()
+        organization = Organization.objects.all()[0]
         event = Event.objects.create(
             slug="test-event",
             host=organization,

@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.db.models import Model
+from django.forms import ModelForm
 from django.urls import reverse
 
 from extrequests.forms import WorkshopInquiryRequestBaseForm
@@ -41,7 +43,9 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         "online_inperson": "inperson",
     }
 
-    def _test_dont_know_yet_option(self, Form, field, value_normal, value_dont_know_yet):
+    def _test_dont_know_yet_option[_M: Model](
+        self, Form: type[ModelForm[_M]], field: str, value_normal: int, value_dont_know_yet: int
+    ) -> None:
         data = self.minimal_data.copy()
         data[field] = [
             value_normal,
@@ -60,19 +64,19 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         form = Form(data)
         self.assertNotIn(field, form.errors)
 
-    def test_minimal_form(self):
+    def test_minimal_form(self) -> None:
         """Test if minimal form works."""
         data = self.minimal_data.copy()
         form = WorkshopInquiryRequestBaseForm(data)
         self.assertTrue(form.is_valid(), dict(form.errors))
 
-    def test_institution_validation(self):
+    def test_institution_validation(self) -> None:
         """Make sure institution data is present, and validation
         errors are triggered for various matrix of input data."""
 
         # 1: selected institution from the list
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "",
             "institution_other_URL": "",
             "institution_department": "School of Wizardry",
@@ -140,7 +144,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
 
         # 6: institution, other name, no other URL
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "Hogwarts",
             "institution_other_URL": "",
             "institution_department": "",
@@ -153,7 +157,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
 
         # 7: institution, other URL, no other name
         data = {
-            "institution": Organization.objects.first().pk,
+            "institution": Organization.objects.all()[0].pk,
             "institution_other_name": "",
             "institution_other_URL": "hogwarts.uk",
             "institution_department": "",
@@ -177,7 +181,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self.assertIn("institution_other_URL", form.errors)
         self.assertNotIn("institution_department", form.errors)
 
-    def test_dont_know_yet(self):
+    def test_dont_know_yet(self) -> None:
         """Make sure selecting 'Don't know yet' + other option in various
         fields yields errors."""
         # 1: routine data, domains, academic levels, computing levels and
@@ -194,12 +198,12 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="routine_data",
-            value_normal=DataVariant.objects.filter(unknown=False).first().pk,
-            value_dont_know_yet=DataVariant.objects.filter(unknown=True).first().pk,
+            value_normal=DataVariant.objects.filter(unknown=False)[0].pk,
+            value_dont_know_yet=DataVariant.objects.filter(unknown=True)[0].pk,
         )
         # additionally test against `routine_data_other`
         data = self.minimal_data.copy()
-        data["routine_data"] = [DataVariant.objects.filter(unknown=True).first().pk]
+        data["routine_data"] = [DataVariant.objects.filter(unknown=True)[0].pk]
         data["routine_data_other"] = "Other routine data"
         form = WorkshopInquiryRequestBaseForm(data)
         self.assertIn("routine_data", form.errors)
@@ -208,12 +212,12 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="domains",
-            value_normal=KnowledgeDomain.objects.exclude(name="Don't know yet").first().pk,
-            value_dont_know_yet=KnowledgeDomain.objects.filter(name="Don't know yet").first().pk,
+            value_normal=KnowledgeDomain.objects.exclude(name="Don't know yet")[0].pk,
+            value_dont_know_yet=KnowledgeDomain.objects.filter(name="Don't know yet")[0].pk,
         )
         # additionally test against `domains_other`
         data = self.minimal_data.copy()
-        data["domains"] = [KnowledgeDomain.objects.filter(name="Don't know yet").first().pk]
+        data["domains"] = [KnowledgeDomain.objects.filter(name="Don't know yet")[0].pk]
         data["domains_other"] = "Other domains"
         form = WorkshopInquiryRequestBaseForm(data)
         self.assertIn("domains", form.errors)
@@ -222,16 +226,16 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="academic_levels",
-            value_normal=AcademicLevel.objects.exclude(name="Don't know yet").first().pk,
-            value_dont_know_yet=AcademicLevel.objects.filter(name="Don't know yet").first().pk,
+            value_normal=AcademicLevel.objects.exclude(name="Don't know yet")[0].pk,
+            value_dont_know_yet=AcademicLevel.objects.filter(name="Don't know yet")[0].pk,
         )
 
         # 5: computing levels
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="computing_levels",
-            value_normal=ComputingExperienceLevel.objects.exclude(name="Don't know yet").first().pk,
-            value_dont_know_yet=ComputingExperienceLevel.objects.filter(name="Don't know yet").first().pk,
+            value_normal=ComputingExperienceLevel.objects.exclude(name="Don't know yet")[0].pk,
+            value_dont_know_yet=ComputingExperienceLevel.objects.filter(name="Don't know yet")[0].pk,
         )
 
         # 6: requested workshop types
@@ -239,11 +243,11 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self._test_dont_know_yet_option(
             Form=WorkshopInquiryRequestBaseForm,
             field="requested_workshop_types",
-            value_normal=base_curriculum.filter(unknown=False).first().pk,
-            value_dont_know_yet=base_curriculum.filter(unknown=True).first().pk,
+            value_normal=base_curriculum.filter(unknown=False)[0].pk,
+            value_dont_know_yet=base_curriculum.filter(unknown=True)[0].pk,
         )
 
-    def test_dates_validation(self):
+    def test_dates_validation(self) -> None:
         """Ensure preferred dates validation."""
         # 1: both empty won't trigger error - the field is not required
         data = {
@@ -289,7 +293,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self.assertIn("preferred_dates", form.errors)
         self.assertNotIn("other_preferred_dates", form.errors)
 
-    def test_travel_expences_management(self):
+    def test_travel_expences_management(self) -> None:
         """Test validation of travel expences management."""
         self._test_field_other(
             Form=WorkshopInquiryRequestBaseForm,
@@ -301,7 +305,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
             blank=True,
         )
 
-    def test_institution_restrictions(self):
+    def test_institution_restrictions(self) -> None:
         """Test validation of institution restrictions."""
         self._test_field_other(
             Form=WorkshopInquiryRequestBaseForm,
@@ -313,7 +317,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
             blank=True,
         )
 
-    def test_public_event(self):
+    def test_public_event(self) -> None:
         """Test validation of event's openness to public."""
         self._test_field_other(
             Form=WorkshopInquiryRequestBaseForm,
@@ -325,7 +329,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
             blank=True,
         )
 
-    def test_instructor_availability_required(self):
+    def test_instructor_availability_required(self) -> None:
         """Test requiredness of `instructor_availability` depending on selected
         preferred dates."""
         # Arrange
@@ -348,7 +352,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
             self.assertNotIn("other_preferred_dates", form.errors)
             self.assertIn("instructor_availability", form.errors)
 
-    def test_instructor_availability_not_required(self):
+    def test_instructor_availability_not_required(self) -> None:
         """Test `instructor_availability` not required in some circumstances."""
         # Arrange
         data1 = {
@@ -378,7 +382,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
 
 
 class TestWorkshopInquiryViews(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
@@ -434,40 +438,40 @@ class TestWorkshopInquiryViews(TestBase):
             user_notes="n/c",
         )
 
-    def test_pending_requests_list(self):
+    def test_pending_requests_list(self) -> None:
         rv = self.client.get(reverse("all_workshopinquiries"))
         self.assertIn(self.wi1, rv.context["inquiries"])
         self.assertNotIn(self.wi2, rv.context["inquiries"])
 
-    def test_discarded_requests_list(self):
+    def test_discarded_requests_list(self) -> None:
         rv = self.client.get(reverse("all_workshopinquiries") + "?state=d")
         self.assertNotIn(self.wi1, rv.context["inquiries"])
         self.assertIn(self.wi2, rv.context["inquiries"])
 
-    def test_set_state_pending_request_view(self):
+    def test_set_state_pending_request_view(self) -> None:
         rv = self.client.get(reverse("workshopinquiry_set_state", args=[self.wi1.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wi1.refresh_from_db()
         self.assertEqual(self.wi1.state, "d")
 
-    def test_set_state_discarded_request_view(self):
+    def test_set_state_discarded_request_view(self) -> None:
         rv = self.client.get(reverse("workshopinquiry_set_state", args=[self.wi2.pk, "discarded"]))
         self.assertEqual(rv.status_code, 302)
         self.wi2.refresh_from_db()
         self.assertEqual(self.wi2.state, "d")
 
-    def test_pending_request_accept(self):
+    def test_pending_request_accept(self) -> None:
         rv = self.client.get(reverse("workshopinquiry_set_state", args=[self.wi1.pk, "accepted"]))
         self.assertEqual(rv.status_code, 302)
 
-    def test_pending_request_accepted_with_event(self):
+    def test_pending_request_accepted_with_event(self) -> None:
         """Ensure a backlink from Event to WorkshopInquiryRequest that created the
         event exists after ER is accepted."""
         data = {
             "slug": "2018-10-28-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(reverse("workshopinquiry_accept_event", args=[self.wi1.pk]), data)
@@ -475,7 +479,7 @@ class TestWorkshopInquiryViews(TestBase):
         request = Event.objects.get(slug="2018-10-28-test-event").workshopinquiryrequest
         self.assertEqual(request, self.wi1)
 
-    def test_accept_with_event_autofill(self):
+    def test_accept_with_event_autofill(self) -> None:
         """Ensure that fields are autofilled correctly when creating an Event from a
         WorkshopInquiryRequest."""
         # Arrange
@@ -492,13 +496,13 @@ class TestWorkshopInquiryViews(TestBase):
             administrative_fee="forprofit",
             travel_expences_management="reimbursed",
             # fields that should be autofilled
-            institution=Organization.objects.first(),
+            institution=Organization.objects.all()[0],
             preferred_dates=date.today(),
             online_inperson="online",
             workshop_listed=False,
             additional_contact="hermione@granger.com",
         )
-        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry").first()
+        curriculum = Curriculum.objects.filter(name__contains="Data Carpentry")[0]
         wi.requested_workshop_types.set([curriculum])
 
         expected_tags = Tag.objects.filter(name__in=["private-event", "online", "dc"])
@@ -509,33 +513,35 @@ class TestWorkshopInquiryViews(TestBase):
 
         # Assert
         self.assertEqual(rv.status_code, 200)
-        self.assertQuerySetEqual(form_initial["curricula"].all(), wi.requested_workshop_types.all())
-        self.assertQuerySetEqual(form_initial["tags"], expected_tags)
+        self.assertQuerySetEqual(form_initial["curricula"].all(), list(wi.requested_workshop_types.all()))
+        self.assertQuerySetEqual(form_initial["tags"], list(expected_tags))
         self.assertEqual(form_initial["public_status"], "private")
         self.assertEqual(form_initial["contact"], wi.additional_contact)
+        assert wi.institution  # for mypy
         self.assertEqual(form_initial["host"].pk, wi.institution.pk)
         self.assertEqual(form_initial["start"], wi.preferred_dates)
+        assert wi.preferred_dates  # for mypy
         self.assertEqual(form_initial["end"], wi.preferred_dates + timedelta(days=1))
 
-    def test_discarded_request_not_accepted_with_event(self):
+    def test_discarded_request_not_accepted_with_event(self) -> None:
         rv = self.client.get(reverse("workshopinquiry_accept_event", args=[self.wi2.pk]))
         self.assertEqual(rv.status_code, 404)
 
-    def test_pending_request_discard(self):
+    def test_pending_request_discard(self) -> None:
         rv = self.client.get(
             reverse("workshopinquiry_set_state", args=[self.wi1.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
 
-    def test_discarded_request_discard(self):
+    def test_discarded_request_discard(self) -> None:
         rv = self.client.get(
             reverse("workshopinquiry_set_state", args=[self.wi2.pk, "discarded"]),
             follow=True,
         )
         self.assertEqual(rv.status_code, 200)
 
-    def test_discarded_request_reopened(self):
+    def test_discarded_request_reopened(self) -> None:
         self.wi1.state = "a"
         self.wi1.save()
         self.client.get(
@@ -545,7 +551,7 @@ class TestWorkshopInquiryViews(TestBase):
         self.wi1.refresh_from_db()
         self.assertEqual(self.wi1.state, "p")
 
-    def test_accepted_request_reopened(self):
+    def test_accepted_request_reopened(self) -> None:
         self.assertEqual(self.wi2.state, "d")
         self.client.get(
             reverse("workshopinquiry_set_state", args=[self.wi2.pk, "pending"]),
@@ -554,7 +560,7 @@ class TestWorkshopInquiryViews(TestBase):
         self.wi2.refresh_from_db()
         self.assertEqual(self.wi2.state, "p")
 
-    def test_list_no_comments(self):
+    def test_list_no_comments(self) -> None:
         """Regression for #1435: missing "comment" field displayed on "all
         workshops" page.
 
@@ -564,7 +570,7 @@ class TestWorkshopInquiryViews(TestBase):
         """
 
         # make sure the `string_if_invalid` is not empty
-        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])
+        self.assertTrue(settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"])  # type: ignore[index]
 
         rv = self.client.get(reverse("all_workshopinquiries"))
 
@@ -572,12 +578,12 @@ class TestWorkshopInquiryViews(TestBase):
         self.assertNotEqual(len(rv.context["inquiries"]), 0)
 
         # no string_if_invalid found in the page
-        invalid = settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"]
+        invalid = settings.TEMPLATES[0]["OPTIONS"]["string_if_invalid"]  # type: ignore[index]
         self.assertNotIn(invalid, rv.content.decode("utf-8"))
 
 
 class TestAcceptingWorkshopInquiry(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
@@ -610,7 +616,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
 
         self.url = reverse("workshopinquiry_accept_event", args=[self.wi1.pk])
 
-    def test_page_context(self):
+    def test_page_context(self) -> None:
         """Ensure proper objects render in the page."""
         rv = self.client.get(self.url)
         self.assertIn("form", rv.context)
@@ -620,14 +626,14 @@ class TestAcceptingWorkshopInquiry(TestBase):
         self.assertEqual(wi, self.wi1)
         self.assertTrue(isinstance(form, EventCreateForm))
 
-    def test_state_changed(self):
+    def test_state_changed(self) -> None:
         """Ensure request's state is changed after accepting."""
         self.assertTrue(self.wi1.state == "p")
         data = {
             "slug": "2018-10-28-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(self.url, data)
@@ -635,7 +641,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
         self.wi1.refresh_from_db()
         self.assertTrue(self.wi1.state == "a")
 
-    def test_host_task_created(self):
+    def test_host_task_created(self) -> None:
         """Ensure a host task is created when a person submitting the inquiry
         already is in our database."""
 
@@ -646,9 +652,9 @@ class TestAcceptingWorkshopInquiry(TestBase):
         # create event from that workshop inquiry
         data = {
             "slug": "2019-08-18-test-event",
-            "host": Organization.objects.first().pk,
-            "sponsor": Organization.objects.first().pk,
-            "administrator": Organization.objects.administrators().first().id,
+            "host": Organization.objects.all()[0].pk,
+            "sponsor": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators()[0].id,
             "tags": [1],
         }
         rv = self.client.post(self.url, data)

@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -8,13 +9,12 @@ from communityroles.models import (
     CommunityRoleConfig,
     CommunityRoleInactivation,
 )
-from fiscal.models import Membership
-from workshops.models import Award, Badge, Lesson, Person
+from workshops.models import Award, Badge, Lesson, Membership, Person
 from workshops.tests.base import TestBase
 
 
 class TestCommunityRoleForm(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
 
         self.test_badge = Badge.objects.create(name="test badge")
@@ -30,7 +30,7 @@ class TestCommunityRoleForm(TestBase):
             additional_public_instructor_training_seats=3,
         )
 
-    def test_clean_success(self):
+    def test_clean_success(self) -> None:
         # Arrange
         ct = ContentType.objects.get_for_model(Lesson)
         test_config = CommunityRoleConfig.objects.create(
@@ -62,8 +62,8 @@ class TestCommunityRoleForm(TestBase):
         self.assertTrue(form.is_valid())
         self.assertEqual(form.errors, {})
 
-    def test_empty_payload(self):
-        data = {}
+    def test_empty_payload(self) -> None:
+        data: dict[str, Any] = {}
 
         # Act
         form = CommunityRoleForm(data)
@@ -75,7 +75,7 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(form.errors["person"], ["This field is required."])
         self.assertEqual(form.errors["start"], ["This field is required."])
 
-    def test_award_required(self):
+    def test_award_required(self) -> None:
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -107,7 +107,7 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(form.errors.keys(), {"award"})
         self.assertEqual(form.errors["award"], ["Award is required with community role Test"])
 
-    def test_award_same_person_required(self):
+    def test_award_same_person_required(self) -> None:
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -140,7 +140,7 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(form.errors.keys(), {"award"})
         self.assertEqual(form.errors["award"], [f"Award should belong to {self.hermione}"])
 
-    def test_specific_award_badge_required(self):
+    def test_specific_award_badge_required(self) -> None:
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -175,7 +175,7 @@ class TestCommunityRoleForm(TestBase):
             ["Award badge must be Software Carpentry Instructor " "for community role Test"],
         )
 
-    def test_membership_required(self):
+    def test_membership_required(self) -> None:
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -210,7 +210,7 @@ class TestCommunityRoleForm(TestBase):
             ["Membership is required with community role Test"],
         )
 
-    def test_start_date_gt_end_date_is_invalid(self):
+    def test_start_date_gt_end_date_is_invalid(self) -> None:
         """Tests error raised if end < start"""
         # Arrange
         data = {
@@ -229,7 +229,7 @@ class TestCommunityRoleForm(TestBase):
             ["Must not be earlier than start date."],
         )
 
-    def test_start_end_dates_valid(self):
+    def test_start_end_dates_valid(self) -> None:
         """Tests valid start date <= end date"""
         # Arrange
         params = [
@@ -252,7 +252,7 @@ class TestCommunityRoleForm(TestBase):
                 self.assertEqual(form.cleaned_data.get("end"), p2)
                 self.assertNotIn("end", form.errors.keys())
 
-    def test_additional_url_required(self):
+    def test_additional_url_required(self) -> None:
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -287,7 +287,7 @@ class TestCommunityRoleForm(TestBase):
             ["URL is required for community role Test"],
         )
 
-    def test_additional_url_not_required(self):
+    def test_additional_url_not_required(self) -> None:
         # Arrange
         test_config = CommunityRoleConfig.objects.create(
             name="test",
@@ -318,7 +318,7 @@ class TestCommunityRoleForm(TestBase):
         self.assertTrue(form.is_valid())  # errors not expected
         self.assertEqual(form.errors.keys(), set())
 
-    def test_generic_relation_object_doesnt_exist(self):
+    def test_generic_relation_object_doesnt_exist(self) -> None:
         # Arrange
         ct = ContentType.objects.get_for_model(Lesson)
         test_config = CommunityRoleConfig.objects.create(
@@ -354,7 +354,7 @@ class TestCommunityRoleForm(TestBase):
             ["Generic relation object of model Lesson doesn't exist"],
         )
 
-    def test_end_date_required_when_inactivation_selected(self):
+    def test_end_date_required_when_inactivation_selected(self) -> None:
         """Should not validate if the inactivation reason is provided and end date
         is missing."""
         # Arrange
@@ -621,7 +621,7 @@ class TestCommunityRoleUpdateForm(TestBase):
 
     def test_empty_payload(self) -> None:
         # Arrange
-        data = {}
+        data: dict[str, Any] = {}
         person = Person.objects.create(personal="Test", family="Test")
         config = CommunityRoleConfig.objects.create(
             name="test",

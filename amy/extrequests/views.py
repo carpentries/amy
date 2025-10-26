@@ -1,13 +1,14 @@
 import csv
 import io
 import logging
-from typing import cast
+from typing import Any, cast
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, ProtectedError, Q
 from django.http import HttpRequest, HttpResponse
@@ -96,7 +97,7 @@ logger = logging.getLogger("amy")
 # ------------------------------------------------------------
 
 
-class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView[WorkshopRequest]):
     context_object_name = "requests"
     template_name = "requests/all_workshoprequests.html"
     filter_class = WorkshopRequestFilter
@@ -106,18 +107,18 @@ class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     title = "Workshop requests"
 
 
-class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
+class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView[WorkshopRequest]):
     queryset = WorkshopRequest.objects.all()
     context_object_name = "object"
     template_name = "requests/workshoprequest.html"
     pk_url_kwarg = "request_id"
     object: WorkshopRequest
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Workshop request #{}".format(self.get_object().pk)
 
-        member_code = cast(WorkshopRequest, self.get_object()).member_code
+        member_code = self.get_object().member_code
         context["membership"] = get_membership_or_none_from_code(member_code)
 
         person_lookup_form = AdminLookupForm()
@@ -134,7 +135,9 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class WorkshopRequestChange(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[WorkshopRequestAdminForm, WorkshopRequest]
+):
     permission_required = "workshops.change_workshoprequest"
     model = WorkshopRequest
     pk_url_kwarg = "request_id"
@@ -142,7 +145,7 @@ class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpda
     template_name = "generic_form_with_comments.html"
 
 
-class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
+class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView[WorkshopRequest]):
     permission_required = "workshops.change_workshoprequest"
     model = WorkshopRequest
     pk_url_kwarg = "request_id"
@@ -150,7 +153,12 @@ class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permanent = False
 
 
-class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView):
+class WorkshopRequestAcceptEvent(
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    WRFInitial[WorkshopRequest],
+    AMYCreateAndFetchObjectView[Event, WorkshopRequest, EventCreateForm],
+):
     permission_required = ["workshops.change_workshoprequest", "workshops.add_event"]
     model = Event
     form_class = EventCreateForm
@@ -160,20 +168,20 @@ class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WR
     context_other_object_name = "object"
     pk_url_kwarg = "request_id"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
         context["title"] = "Accept and create a new event"
 
-        member_code = cast(WorkshopRequest, self.get_other_object()).member_code
+        member_code = self.get_other_object().member_code
         context["membership"] = get_membership_or_none_from_code(member_code)
 
         return context
 
-    def get_success_url(self):
-        return reverse("event_details", args=[self.object.slug])
+    def get_success_url(self) -> str:
+        return reverse("event_details", args=[self.object.slug])  # type: ignore[union-attr]
 
-    def form_valid(self, form):
+    def form_valid(self, form: EventCreateForm) -> HttpResponse:
         self.object = form.save()
 
         event = self.object
@@ -195,7 +203,7 @@ class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WR
         return super().form_valid(form)
 
 
-class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
+class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView[WorkshopRequest]):
     permission_required = "workshops.change_workshoprequest"
     model = WorkshopRequest
     pk_url_kwarg = "request_id"
@@ -207,7 +215,7 @@ class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
 # ------------------------------------------------------------
 
 
-class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView[WorkshopInquiryRequest]):
     context_object_name = "inquiries"
     template_name = "requests/all_workshopinquiries.html"
     filter_class = WorkshopInquiryFilter
@@ -217,14 +225,14 @@ class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     title = "Workshop inquiries"
 
 
-class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
+class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView[WorkshopInquiryRequest]):
     queryset = WorkshopInquiryRequest.objects.all()
     context_object_name = "object"
     template_name = "requests/workshopinquiry.html"
     pk_url_kwarg = "inquiry_id"
     object: WorkshopInquiryRequest
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Workshop inquiry #{}".format(self.get_object().pk)
 
@@ -241,7 +249,9 @@ class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class WorkshopInquiryChange(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[WorkshopInquiryRequestAdminForm, WorkshopInquiryRequest]
+):
     permission_required = "extrequests.change_workshopinquiryrequest"
     model = WorkshopInquiryRequest
     pk_url_kwarg = "inquiry_id"
@@ -249,7 +259,7 @@ class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpda
     template_name = "generic_form_with_comments.html"
 
 
-class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
+class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView[WorkshopInquiryRequest]):
     permission_required = "extrequests.change_workshopinquiryrequest"
     model = WorkshopInquiryRequest
     pk_url_kwarg = "inquiry_id"
@@ -257,7 +267,12 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permanent = False
 
 
-class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView):
+class WorkshopInquiryAcceptEvent(
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    WRFInitial[WorkshopInquiryRequest],
+    AMYCreateAndFetchObjectView[Event, WorkshopInquiryRequest, EventCreateForm],
+):
     permission_required = [
         "extrequests.change_workshopinquiryrequest",
         "workshops.add_event",
@@ -270,14 +285,14 @@ class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WR
     context_other_object_name = "object"
     pk_url_kwarg = "inquiry_id"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         kwargs["title"] = "Accept and create a new event"
         return super().get_context_data(**kwargs)
 
-    def get_success_url(self):
-        return reverse("event_details", args=[self.object.slug])
+    def get_success_url(self) -> str:
+        return reverse("event_details", args=[self.object.slug])  # type: ignore[union-attr]
 
-    def form_valid(self, form):
+    def form_valid(self, form: EventCreateForm) -> HttpResponse:
         self.object = form.save()
 
         event = self.object
@@ -299,7 +314,7 @@ class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin, WR
         return super().form_valid(form)
 
 
-class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
+class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView[WorkshopInquiryRequest]):
     permission_required = "extrequests.change_workshopinquiryrequest"
     model = WorkshopInquiryRequest
     pk_url_kwarg = "inquiry_id"
@@ -311,7 +326,7 @@ class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
 # ------------------------------------------------------------
 
 
-class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView[SelfOrganisedSubmission]):
     context_object_name = "submissions"
     template_name = "requests/all_selforganisedsubmissions.html"
     filter_class = SelfOrganisedSubmissionFilter
@@ -321,14 +336,14 @@ class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListV
     title = "Self-Organised submissions"
 
 
-class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
+class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView[SelfOrganisedSubmission]):
     queryset = SelfOrganisedSubmission.objects.all()
     context_object_name = "object"
     template_name = "requests/selforganisedsubmission.html"
     pk_url_kwarg = "submission_id"
     object: SelfOrganisedSubmission
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Self-Organised submission #{}".format(self.get_object().pk)
 
@@ -345,7 +360,11 @@ class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class SelfOrganisedSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class SelfOrganisedSubmissionChange(
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    AMYUpdateView[SelfOrganisedSubmissionAdminForm, SelfOrganisedSubmission],
+):
     permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
     pk_url_kwarg = "submission_id"
@@ -353,7 +372,7 @@ class SelfOrganisedSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = "generic_form_with_comments.html"
 
 
-class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView):
+class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView[SelfOrganisedSubmission]):
     permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
     pk_url_kwarg = "submission_id"
@@ -362,7 +381,10 @@ class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView
 
 
 class SelfOrganisedSubmissionAcceptEvent(
-    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    WRFInitial[SelfOrganisedSubmission],
+    AMYCreateAndFetchObjectView[Event, SelfOrganisedSubmission, EventCreateForm],
 ):
     permission_required = [
         "extrequests.change_selforganisedsubmission",
@@ -377,7 +399,7 @@ class SelfOrganisedSubmissionAcceptEvent(
     pk_url_kwarg = "submission_id"
     other_object: SelfOrganisedSubmission
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         """Extend form kwargs with `initial` values.
 
         The initial values are read from SelfOrganisedSubmission request
@@ -389,7 +411,7 @@ class SelfOrganisedSubmissionAcceptEvent(
         kwargs["show_lessons"] = False
 
         url = self.other_object.workshop_url.strip()
-        data = {
+        data: dict[str, Any] = {
             "url": url,
             "host": self.other_object.host_organization() or self.other_object.institution,
             "administrator": Organization.objects.get(domain="self-organized"),
@@ -406,41 +428,41 @@ class SelfOrganisedSubmissionAcceptEvent(
             )
         else:
             # keep working only if no exception occurred
+            language = None
             try:
-                lang = parsed_data["language"].lower()
-                parsed_data["language"] = Language.objects.get(subtag=lang)
+                language = Language.objects.get(subtag=parsed_data["language"].lower())
             except (KeyError, ValueError, Language.DoesNotExist):
                 # ignore non-existing
                 messages.warning(self.request, "Cannot automatically fill language.")
-                # it's easier to remove bad value than to leave
-                # 500 Server Error when the form is rendered
-                if "language" in parsed_data:
-                    del parsed_data["language"]
+                # clear bad value
+                parsed_data["language"] = ""
 
             data.update(parsed_data)
+            if language:
+                data["language"] = language.pk
 
             if "instructors" in data or "helpers" in data:
                 instructors = data.get("instructors") or ["none"]
                 helpers = data.get("helpers") or ["none"]
-                data["comment"] = f"Instructors: {','.join(instructors)}\n\n" f"Helpers: {','.join(helpers)}"
+                data["comment"] = f"Instructors: {','.join(instructors)}\n\nHelpers: {','.join(helpers)}"
 
         initial = super().get_initial()
         initial.update(data)
         kwargs["initial"] = initial
         return kwargs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         kwargs["title"] = "Accept and create a new event"
         return super().get_context_data(**kwargs)
 
-    def get_success_url(self):
-        return reverse("event_details", args=[self.object.slug])
+    def get_success_url(self) -> str:
+        return reverse("event_details", args=[self.object.slug])  # type: ignore[union-attr]
 
-    def form_valid(self, form):
+    def form_valid(self, form: EventCreateForm) -> HttpResponse:
         self.object = form.save()
 
         event = self.object
-        submission = cast(SelfOrganisedSubmission, self.other_object)
+        submission = self.other_object
 
         person = submission.host()
         if person:
@@ -467,7 +489,7 @@ class SelfOrganisedSubmissionAcceptEvent(
         return super().form_valid(form)
 
 
-class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView):
+class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView[SelfOrganisedSubmission]):
     permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
     pk_url_kwarg = "submission_id"
@@ -480,7 +502,7 @@ class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView):
 
 
 @admin_required
-def all_trainingrequests(request):
+def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
     filter_ = TrainingRequestFilter(
         request.GET,
         queryset=TrainingRequest.objects.all().prefetch_related(
@@ -673,7 +695,7 @@ def _match_training_request_to_person(
         training_request.person.affiliation = training_request.affiliation
         training_request.person.domains.set(training_request.domains.all())
         training_request.person.occupation = (
-            training_request.get_occupation_display()  # type: ignore
+            training_request.get_occupation_display()
             if training_request.occupation
             else training_request.occupation_other
         )
@@ -703,10 +725,10 @@ def _match_training_request_to_person(
     )
     for consent in training_request_consents:
         try:
-            option_type = consent.term_option.option_type
+            option_type = consent.term_option.option_type  # type: ignore[union-attr]
             reconsent_for_term_option_type(
-                term_key=consent.term.key,
-                term_option_type=option_type,
+                term_key=consent.term.key,  # type: ignore[arg-type]
+                term_option_type=option_type,  # type: ignore[arg-type]
                 person=training_request.person,
             )
         except (Term.DoesNotExist, TermOption.DoesNotExist):
@@ -776,12 +798,14 @@ def trainingrequest_details(request: HttpRequest, pk: str) -> HttpResponse:
     return render(request, "requests/trainingrequest.html", context)
 
 
-class TrainingRequestUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView):
+class TrainingRequestUpdate(
+    RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView[TrainingRequestUpdateForm, TrainingRequest]
+):
     model = TrainingRequest
     form_class = TrainingRequestUpdateForm
     template_name = "generic_form_with_comments.html"
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         # request is required for ENFORCE_MEMBER_CODES flag
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
@@ -922,12 +946,14 @@ def trainingrequests_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
 
 @admin_required
 @permission_required(["workshops.change_trainingrequest"], raise_exception=True)
-def bulk_upload_training_request_scores(request):
+def bulk_upload_training_request_scores(request: AuthenticatedHttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = BulkUploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
-            charset = request.FILES["file"].charset or settings.DEFAULT_CHARSET
-            stream = io.TextIOWrapper(request.FILES["file"].file, charset)
+            request_file = cast(UploadedFile, request.FILES["file"])
+            charset = request_file.charset or settings.DEFAULT_CHARSET
+            assert request_file.file  # for mypy
+            stream = io.TextIOWrapper(request_file.file, charset)
             try:
                 data = upload_trainingrequest_manual_score_csv(stream)
             except csv.Error as e:
@@ -958,7 +984,7 @@ def bulk_upload_training_request_scores(request):
 
 @admin_required
 @permission_required(["workshops.change_trainingrequest"], raise_exception=True)
-def bulk_upload_training_request_scores_confirmation(request):
+def bulk_upload_training_request_scores_confirmation(request: AuthenticatedHttpRequest) -> HttpResponse:
     """This view allows for verifying and saving of uploaded training
     request scores."""
     data = request.session.get("bulk-upload-training-request-scores")

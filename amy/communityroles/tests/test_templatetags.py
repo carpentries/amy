@@ -11,7 +11,7 @@ from workshops.models import Person
 
 
 class TestCommunityRolesTemplateTag(TestCase):
-    def test_get_community_role(self):
+    def test_get_community_role(self) -> None:
         # Arrange
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         role_name = "instructor"
@@ -28,7 +28,7 @@ class TestCommunityRolesTemplateTag(TestCase):
         # Assert
         self.assertEqual(role_orig, role_found)
 
-    def test_get_community_role__config_not_found(self):
+    def test_get_community_role__config_not_found(self) -> None:
         # Arrange
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         role_name = "instructor"
@@ -45,7 +45,7 @@ class TestCommunityRolesTemplateTag(TestCase):
         # Assert
         self.assertEqual(role_found, None)
 
-    def test_get_community_role__person_not_found(self):
+    def test_get_community_role__person_not_found(self) -> None:
         # Arrange
         person = Person.objects.create(personal="Test", family="User", email="test@user.com")
         fake_person = Person.objects.create(

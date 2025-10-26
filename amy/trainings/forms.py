@@ -1,3 +1,5 @@
+from typing import cast
+
 from crispy_forms.layout import Layout
 from django import forms
 from django.forms import CharField, RadioSelect, TextInput
@@ -12,12 +14,12 @@ from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper
 from workshops.models import Event, Person, TrainingProgress, TrainingRequirement
 
 
-class TrainingProgressForm(forms.ModelForm):
+class TrainingProgressForm(forms.ModelForm[TrainingProgress]):
     trainee = forms.ModelChoiceField(
         label="Trainee",
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="person-lookup"),
+        widget=ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
     )
     requirement = forms.ModelChoiceField(
         queryset=TrainingRequirement.objects.all(),
@@ -35,7 +37,7 @@ class TrainingProgressForm(forms.ModelForm):
         required=False,
         queryset=Event.objects.all(),
         help_text="If a trainee is selected, only the events for which that trainee " "has a learner task are listed.",
-        widget=ModelSelect2Widget(data_view="ttt-event-lookup", attrs=SELECT2_SIDEBAR),
+        widget=ModelSelect2Widget(data_view="ttt-event-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
     )
     trainee_notes = CharField(
         label="Notes from trainee",
@@ -80,19 +82,19 @@ class TrainingProgressForm(forms.ModelForm):
     class Media:
         js = ("trainingprogress_form.js",)
 
-    def clean_event(self):
+    def clean_event(self) -> Event:
         trainee = self.cleaned_data["trainee"]
-        event = self.cleaned_data["event"]
+        event = cast(Event, self.cleaned_data["event"])
         raise_validation_error_if_no_learner_task(trainee, event)
         return event
 
 
-class BulkAddTrainingProgressForm(forms.ModelForm):
+class BulkAddTrainingProgressForm(forms.ModelForm[TrainingProgress]):
     event = forms.ModelChoiceField(
         label="Training",
         required=False,
         queryset=Event.objects.filter(tags__name="TTT"),
-        widget=ModelSelect2Widget(data_view="ttt-event-lookup", attrs=SELECT2_SIDEBAR),
+        widget=ModelSelect2Widget(data_view="ttt-event-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
     )
 
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
@@ -116,7 +118,7 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
         form_tag=False,
         add_cancel_button=False,
     )
-    helper.layout = Layout(
+    helper.layout = Layout(  # type: ignore[no-untyped-call]
         # no 'trainees' -- you should take care of generating it manually in
         # the template where this form is used
         "requirement",

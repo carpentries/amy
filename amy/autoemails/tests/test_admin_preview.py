@@ -46,7 +46,7 @@ class TestAdminJobPreview(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         )
         self.event = Event.objects.create(
             slug="test-event",
-            host=Organization.objects.first(),
+            host=Organization.objects.all()[0],
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country="GB",

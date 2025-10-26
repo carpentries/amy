@@ -12,7 +12,7 @@ from workshops.tests.base import TestBase
 
 
 class TestTrainingProgressForm(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpTags()
         self._setUpRoles()
@@ -24,7 +24,7 @@ class TestTrainingProgressForm(TestBase):
         self.ttt_event = Event.objects.create(slug="test-event", host=host)
         self.ttt_event.tags.add(Tag.objects.get(name="TTT"))
 
-    def test_fields(self):
+    def test_fields(self) -> None:
         # Act
         form = TrainingProgressForm()
 
@@ -44,7 +44,7 @@ class TestTrainingProgressForm(TestBase):
             form.fields.keys(),
         )
 
-    def test_clean_custom_validation__no_learner_task(self):
+    def test_clean_custom_validation__no_learner_task(self) -> None:
         # Arrange
         data = {
             "trainee": self.person,
@@ -68,7 +68,7 @@ class TestTrainingProgressForm(TestBase):
             [expected_msg],
         )
 
-    def test_clean_custom_validation__learner_task_present(self):
+    def test_clean_custom_validation__learner_task_present(self) -> None:
         # Arrange
         data = {
             "trainee": self.person,

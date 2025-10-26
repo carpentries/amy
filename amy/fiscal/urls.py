@@ -53,8 +53,8 @@ urlpatterns = [
         "consortiums/",
         include(
             [
-                path("", views.ConsortiumList.as_view(), name="consortium-list"),  # type: ignore
-                path("create/", views.ConsortiumCreate.as_view(), name="consortium-create"),  # type: ignore
+                path("", views.ConsortiumList.as_view(), name="consortium-list"),
+                path("create/", views.ConsortiumCreate.as_view(), name="consortium-create"),
             ]
         ),
     ),
@@ -62,9 +62,9 @@ urlpatterns = [
         "consortiums/<int:pk>/",
         include(
             [
-                path("", views.ConsortiumDetails.as_view(), name="consortium-details"),  # type: ignore
-                path("edit/", views.ConsortiumUpdate.as_view(), name="consortium-update"),  # type: ignore
-                path("delete/", views.ConsortiumDelete.as_view(), name="consortium-delete"),  # type: ignore
+                path("", views.ConsortiumDetails.as_view(), name="consortium-details"),
+                path("edit/", views.ConsortiumUpdate.as_view(), name="consortium-update"),
+                path("delete/", views.ConsortiumDelete.as_view(), name="consortium-delete"),
             ]
         ),
     ),
@@ -73,8 +73,8 @@ urlpatterns = [
         "partnerships/",
         include(
             [
-                path("", views.PartnershipList.as_view(), name="partnership-list"),  # type: ignore
-                path("create/", views.PartnershipCreate.as_view(), name="partnership-create"),  # type: ignore
+                path("", views.PartnershipList.as_view(), name="partnership-list"),
+                path("create/", views.PartnershipCreate.as_view(), name="partnership-create"),
             ]
         ),
     ),
@@ -82,11 +82,11 @@ urlpatterns = [
         "partnerships/<int:pk>/",
         include(
             [
-                path("", views.PartnershipDetails.as_view(), name="partnership-details"),  # type: ignore
-                path("edit/", views.PartnershipUpdate.as_view(), name="partnership-update"),  # type: ignore
-                path("delete/", views.PartnershipDelete.as_view(), name="partnership-delete"),  # type: ignore
-                path("extend/", views.PartnershipExtend.as_view(), name="partnership-extend"),  # type: ignore
-                path("roll-over/", views.PartnershipRollOver.as_view(), name="partnership-roll-over"),  # type: ignore
+                path("", views.PartnershipDetails.as_view(), name="partnership-details"),
+                path("edit/", views.PartnershipUpdate.as_view(), name="partnership-update"),
+                path("delete/", views.PartnershipDelete.as_view(), name="partnership-delete"),
+                path("extend/", views.PartnershipExtend.as_view(), name="partnership-extend"),
+                path("roll-over/", views.PartnershipRollOver.as_view(), name="partnership-roll-over"),
             ]
         ),
     ),

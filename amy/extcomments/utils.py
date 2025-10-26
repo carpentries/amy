@@ -12,7 +12,7 @@ def add_comment_for_object(
     """A simple utility to add a comment for given object by given user."""
 
     # Adding comment is the easiest to achieve using comment form methods.
-    CommentForm = get_form()
+    CommentForm = get_form()  # type: ignore[no-untyped-call]
 
     security_data = CommentForm(object).generate_security_data()
     data = {
@@ -31,4 +31,4 @@ def add_comment_for_object(
     # simplicity this behavior has not been implemented here.
 
     comment.save()
-    return comment
+    return comment  # type: ignore[no-any-return]

@@ -6,7 +6,7 @@ from workshops.models import Person
 
 
 class TestAssignmentForm(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.superuser = Person.objects.create(
             personal="Harry",
             family="Potter",
@@ -28,7 +28,7 @@ class TestAssignmentForm(TestCase):
             is_superuser=True,
         )
 
-    def test_assigned_to_queryset(self):
+    def test_assigned_to_queryset(self) -> None:
         """Ensure duplicate results don't appear in the queryset.
 
         This is a regression test for https://github.com/carpentries/amy/issues/1792.
@@ -42,4 +42,7 @@ class TestAssignmentForm(TestCase):
         self.both.groups.add(admins)
 
         field = AssignmentForm().fields["assigned_to"]
-        self.assertEqual(list(field.queryset), [self.both, self.superuser, self.administrator])
+        self.assertEqual(
+            list(field.queryset),  # type: ignore[attr-defined]
+            [self.both, self.superuser, self.administrator],
+        )

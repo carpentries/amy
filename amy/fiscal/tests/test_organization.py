@@ -1,17 +1,19 @@
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django_comments.models import Comment
 
 from fiscal.forms import OrganizationCreateForm, OrganizationForm
+from offering.models import Account
 from workshops.models import Event, Organization
 from workshops.tests.base import TestBase
 
 
 class TestOrganization(TestBase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._setUpUsersAndLogin()
 
-    def test_organization_delete(self):
+    def test_organization_delete(self) -> None:
         """Make sure deleted organization is longer accessible.
 
         Additionally check on_delete behavior for Event."""
@@ -45,7 +47,7 @@ class TestOrganization(TestBase):
             with self.assertRaises(Organization.DoesNotExist):
                 Organization.objects.get(domain=org_domain)
 
-    def test_organization_invalid_chars_in_domain(self):
+    def test_organization_invalid_chars_in_domain(self) -> None:
         """Ensure organisation's domain is cleaned from URL scheme, if it was present.
         Ensure other parts of the URL remain.
 
@@ -75,7 +77,7 @@ class TestOrganization(TestBase):
                 self.assertIn("domain", form.cleaned_data)
                 self.assertEqual(form.cleaned_data["domain"], expected)
 
-    def test_creating_organization_with_no_comment(self):
+    def test_creating_organization_with_no_comment(self) -> None:
         """Ensure that no comment is added when OrganizationCreateForm without
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -88,7 +90,7 @@ class TestOrganization(TestBase):
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
-    def test_creating_organization_with_comment(self):
+    def test_creating_organization_with_comment(self) -> None:
         """Ensure that a comment is added when OrganizationCreateForm with
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -100,11 +102,11 @@ class TestOrganization(TestBase):
         form = OrganizationCreateForm(data)
         obj = form.save()
         self.assertEqual(Comment.objects.count(), 1)
-        comment = Comment.objects.first()
+        comment = Comment.objects.all()[0]
         self.assertEqual(comment.comment, "This is a test comment.")
-        self.assertIn(comment, Comment.objects.for_model(obj))
+        self.assertIn(comment, Comment.objects.for_model(obj))  # type: ignore[no-untyped-call]
 
-    def test_symmetrical_affiliations(self):
+    def test_symmetrical_affiliations(self) -> None:
         """Make sure adding an affiliation in one organisation, automatically reveals
         this relationship in the other organisation."""
         # Arrange - `setUp()` creates 2 organisations we can use
@@ -116,7 +118,7 @@ class TestOrganization(TestBase):
         self.assertIn(self.org_beta, self.org_alpha.affiliated_organizations.all())
         self.assertIn(self.org_alpha, self.org_beta.affiliated_organizations.all())
 
-    def test_manager_administrators(self):
+    def test_manager_administrators(self) -> None:
         """Ensure the correct organizations are returned as possible administrators."""
         # Arrange - `setUp()` also creates 2 organisations these filters should ignore
         self._setUpAdministrators()
@@ -140,4 +142,26 @@ class TestOrganization(TestBase):
         self.assertSetEqual(set(expected_domains), set(Organization.objects.ADMIN_DOMAINS))
         self.assertEqual(organizations_with_admin_domain.count(), len(expected_domains))
         # check that administrators() returns what we expect
-        self.assertQuerySetEqual(organizations_with_admin_domain, administrators)
+        self.assertQuerySetEqual(organizations_with_admin_domain, list(administrators))
+
+    def test_creating_organisation_creates_account(self) -> None:
+        """Ensure that Account is created after Organisation is created.
+        Part of Service Offering 2025 project."""
+        # Arrange
+        data = {
+            "fullname": "Test Organization",
+            "domain": "test123.org",
+            "comment": "",
+        }
+        ck_for_organisation = ContentType.objects.get_for_model(Organization)
+
+        # Act
+        self.client.post(reverse("organization_add"), data)
+        organisation = Organization.objects.get(domain="test123.org")
+
+        # Assert
+        Account.objects.get(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation_content_type=ck_for_organisation,
+            generic_relation_pk=organisation.pk,
+        )

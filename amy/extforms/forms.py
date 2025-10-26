@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Iterable, cast
+from typing import Any, Iterable, cast
 from urllib.parse import urlparse
 
 from crispy_forms.layout import HTML, Div, Field, Layout
@@ -27,10 +27,10 @@ from workshops.models import TrainingRequest
 from workshops.utils.feature_flags import feature_flag_enabled
 
 
-class TrainingRequestForm(forms.ModelForm):
+class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
     # agreement fields are moved to the model
 
-    captcha = ReCaptchaField()
+    captcha = ReCaptchaField()  # type: ignore[no-untyped-call]
 
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
@@ -95,7 +95,7 @@ class TrainingRequestForm(forms.ModelForm):
             "country": Select2Widget,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # request is required for ENFORCE_MEMBER_CODES flag
         self.request_http = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
@@ -108,7 +108,7 @@ class TrainingRequestForm(forms.ModelForm):
         self.set_consent_fields(self.terms)
 
         # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout = self.helper.build_default_layout(self)  # type: ignore[no-untyped-call]
 
         self.set_other_fields(self.helper.layout)
         self.set_fake_required_fields()
@@ -120,7 +120,7 @@ class TrainingRequestForm(forms.ModelForm):
         Set up a field so that it can be displayed as a separate widget.
         """
         WidgetType = self._meta.widgets[field_name].__class__  # type: ignore
-        cast(WidgetType, self[field_name].field.widget).other_field = self[f"{field_name}_other"]
+        cast(WidgetType, self[field_name].field.widget).other_field = self[f"{field_name}_other"]  # type: ignore
         layout.fields.remove(f"{field_name}_other")
 
     def set_other_fields(self, layout: Layout) -> None:
@@ -138,13 +138,13 @@ class TrainingRequestForm(forms.ModelForm):
 
     def set_fake_required_fields(self) -> None:
         # fake requiredness of the registration code / group name
-        self["member_code"].field.widget.fake_required = True  # type: ignore
+        self["member_code"].field.widget.fake_required = True
 
     def set_accordion(self, layout: Layout) -> None:
         # Note: not used since 2024-03-19 (#2617).
 
         # special accordion display for the review process
-        self["review_process"].field.widget.subfields = {  # type: ignore
+        self["review_process"].field.widget.subfields = {
             "preapproved": [
                 self["member_code"],
                 self["member_code_override"],
@@ -152,7 +152,7 @@ class TrainingRequestForm(forms.ModelForm):
             ],
             "open": [],  # this option doesn't require any additional fields
         }
-        self["review_process"].field.widget.notes = TrainingRequest.REVIEW_CHOICES_NOTES  # type: ignore
+        self["review_process"].field.widget.notes = TrainingRequest.REVIEW_CHOICES_NOTES
 
         # get current position of `review_process` field
         pos_index = layout.fields.index("review_process")
@@ -165,8 +165,8 @@ class TrainingRequestForm(forms.ModelForm):
         # insert div+field at previously saved position
         layout.insert(
             pos_index,
-            Div(
-                Field("review_process", template="bootstrap4/layout/radio-accordion.html"),
+            Div(  # type: ignore[no-untyped-call]
+                Field("review_process", template="bootstrap4/layout/radio-accordion.html"),  # type: ignore
                 css_class="form-group row",
             ),
         )
@@ -178,10 +178,10 @@ class TrainingRequestForm(forms.ModelForm):
     def set_hr(self, layout: Layout) -> None:
         # add <HR> around "underrepresented*" fields
         index = layout.fields.index("underrepresented")
-        layout.insert(index, HTML(self.helper.hr()))
+        layout.insert(index, HTML(self.helper.hr()))  # type: ignore[no-untyped-call]
 
         index = layout.fields.index("underrepresented_details")
-        layout.insert(index + 1, HTML(self.helper.hr()))
+        layout.insert(index + 1, HTML(self.helper.hr()))  # type: ignore[no-untyped-call]
 
     def set_consent_fields(self, terms: Iterable[Term]) -> None:
         for term in terms:
@@ -195,7 +195,7 @@ class TrainingRequestForm(forms.ModelForm):
         attrs = {"class": "border border-warning"} if initial is None else {}
 
         field = forms.ChoiceField(
-            choices=BLANK_CHOICE_DASH + options,
+            choices=BLANK_CHOICE_DASH + options,  # type: ignore[operator]
             label=label,
             required=required,
             initial=initial,
@@ -242,14 +242,14 @@ class TrainingRequestForm(forms.ModelForm):
 
         return errors
 
-    def clean_eventbrite_url(self):
+    def clean_eventbrite_url(self) -> str:
         """Check that entered URL includes 'eventbrite' in the domain."""
-        eventbrite_url = self.cleaned_data.get("eventbrite_url", "")
-        if eventbrite_url and "eventbrite" not in urlparse(eventbrite_url).hostname:
+        eventbrite_url = str(self.cleaned_data.get("eventbrite_url", ""))
+        if eventbrite_url and "eventbrite" not in (urlparse(eventbrite_url).hostname or ""):
             raise ValidationError("Must be an Eventbrite URL.")
         return eventbrite_url
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         errors = dict()
 
@@ -280,7 +280,7 @@ class TrainingRequestForm(forms.ModelForm):
         if errors:
             raise ValidationError(errors)
 
-    def save(self, *args, **kwargs) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> TrainingRequest:
         training_request = super().save(*args, **kwargs)
         new_consents: list[TrainingRequestConsent] = []
         for term in self.terms:
@@ -299,21 +299,21 @@ class TrainingRequestForm(forms.ModelForm):
 
 
 class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
-    captcha = ReCaptchaField()
+    captcha = ReCaptchaField()  # type: ignore[no-untyped-call]
 
     class Meta(WorkshopRequestBaseForm.Meta):
-        fields = WorkshopRequestBaseForm.Meta.fields + ("captcha",)
+        fields = WorkshopRequestBaseForm.Meta.fields + ("captcha",)  # type: ignore[assignment]
 
 
 class WorkshopInquiryRequestExternalForm(WorkshopInquiryRequestBaseForm):
-    captcha = ReCaptchaField()
+    captcha = ReCaptchaField()  # type: ignore[no-untyped-call]
 
     class Meta(WorkshopInquiryRequestBaseForm.Meta):
-        fields = WorkshopInquiryRequestBaseForm.Meta.fields + ("captcha",)
+        fields = WorkshopInquiryRequestBaseForm.Meta.fields + ("captcha",)  # type: ignore[assignment]
 
 
 class SelfOrganisedSubmissionExternalForm(SelfOrganisedSubmissionBaseForm):
-    captcha = ReCaptchaField()
+    captcha = ReCaptchaField()  # type: ignore[no-untyped-call]
 
     class Meta(SelfOrganisedSubmissionBaseForm.Meta):
-        fields = SelfOrganisedSubmissionBaseForm.Meta.fields + ("captcha",)
+        fields = SelfOrganisedSubmissionBaseForm.Meta.fields + ("captcha",)  # type: ignore[assignment]

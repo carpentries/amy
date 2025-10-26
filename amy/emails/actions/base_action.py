@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from django.contrib.contenttypes.models import ContentType
-from flags.state import flag_enabled
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 
 from emails.controller import (
     EmailController,
@@ -34,7 +34,7 @@ def feature_flag_enabled(feature_flag: str, signal_name: str, **kwargs: Any) -> 
         logger.debug(f"Cannot check {feature_flag} feature flag, `request` parameter to {signal_name} is missing")
         return False
 
-    if not flag_enabled(feature_flag, request=request):  # type: ignore[no-untyped-call]
+    if not flag_enabled(feature_flag, request=request):
         logger.debug(f"{feature_flag} feature flag not set, skipping {signal_name}")
         return False
 

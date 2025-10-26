@@ -10,7 +10,7 @@ from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
-from flags.views import FlaggedViewMixin
+from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
 from communityroles.models import CommunityRole
 from emails.actions.exceptions import EmailStrategyException
@@ -876,8 +876,8 @@ class MembershipCreateRollOver(
 # -----------------------------------------------------------------
 
 
-class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Consortium]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Consortium]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_consortium"]
     template_name = "fiscal/consortium_list.html"
     queryset = Consortium.objects.order_by("-created_at")
@@ -885,8 +885,8 @@ class ConsortiumList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Consortiu
     filter_class = ConsortiumFilter
 
 
-class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Consortium]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Consortium]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_consortium"]
     template_name = "fiscal/consortium_details.html"
     model = Consortium
@@ -897,8 +897,12 @@ class ConsortiumDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Cons
         return context
 
 
-class ConsortiumCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[ConsortiumForm, Consortium]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class ConsortiumCreate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYCreateView[ConsortiumForm, Consortium],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.add_consortium"]
     template_name = "fiscal/consortium_create.html"
     form_class = ConsortiumForm
@@ -907,8 +911,12 @@ class ConsortiumCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Conso
     title = "Create a new consortium"
 
 
-class ConsortiumUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[ConsortiumForm, Consortium]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class ConsortiumUpdate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYUpdateView[ConsortiumForm, Consortium],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_consortium", "fiscal.change_consortium"]
     template_name = "fiscal/consortium_edit.html"
     form_class = ConsortiumForm
@@ -921,8 +929,12 @@ class ConsortiumUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[Conso
         return context
 
 
-class ConsortiumDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Consortium, GenericDeleteForm[Consortium]]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class ConsortiumDelete(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDeleteView[Consortium, GenericDeleteForm[Consortium]],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.delete_consortium"]
     model = Consortium
 
@@ -933,8 +945,8 @@ class ConsortiumDelete(OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Conso
 # -----------------------------------------------------------------
 
 
-class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partnership]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partnership]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_partnership"]
     template_name = "fiscal/partnership_list.html"
     queryset = Partnership.objects.credits_usage_annotation().order_by("-created_at")
@@ -942,8 +954,8 @@ class PartnershipList(OnlyForAdminsMixin, FlaggedViewMixin, AMYListView[Partners
     filter_class = PartnershipFilter
 
 
-class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Partnership]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Partnership]):  # type: ignore[misc]
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_partnership"]
     template_name = "fiscal/partnership_details.html"
     queryset = Partnership.objects.credits_usage_annotation()
@@ -954,8 +966,12 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
         return context
 
 
-class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[PartnershipForm, Partnership]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class PartnershipCreate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYCreateView[PartnershipForm, Partnership],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.add_partnership"]
     template_name = "fiscal/partnership_create.html"
     form_class = PartnershipForm
@@ -990,8 +1006,12 @@ class PartnershipCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[Part
         return HttpResponseRedirect(self.get_success_url())
 
 
-class PartnershipUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[PartnershipForm, Partnership]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class PartnershipUpdate(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYUpdateView[PartnershipForm, Partnership],
+):
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.view_partnership", "fiscal.change_partnership"]
     template_name = "fiscal/partnership_edit.html"
     form_class = PartnershipForm
@@ -1005,9 +1025,11 @@ class PartnershipUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[Part
 
 
 class PartnershipDelete(
-    OnlyForAdminsMixin, FlaggedViewMixin, AMYDeleteView[Partnership, GenericDeleteForm[Partnership]]
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYDeleteView[Partnership, GenericDeleteForm[Partnership]],
 ):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.delete_partnership"]
     model = Partnership
 
@@ -1015,12 +1037,17 @@ class PartnershipDelete(
         return reverse("partnership-list")
 
 
-class PartnershipExtend(OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixin, FormView[PartnershipExtensionForm]):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+class PartnershipExtend(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    GetPartnershipMixin,
+    FormView[PartnershipExtensionForm],
+):
+    flag_name = REQUIRED_FLAG_NAME
     form_class = PartnershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "fiscal.change_partnership"
-    comment = "Extended partnership by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
+    comment = "Partnership extended by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
     request: AuthenticatedHttpRequest
 
     def get_initial(self) -> dict[str, Any]:
@@ -1064,9 +1091,12 @@ class PartnershipExtend(OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixi
 
 
 class PartnershipRollOver(
-    OnlyForAdminsMixin, FlaggedViewMixin, GetPartnershipMixin, AMYCreateView[PartnershipRollOverForm, Partnership]
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    GetPartnershipMixin,
+    AMYCreateView[PartnershipRollOverForm, Partnership],
 ):
-    flag_name = REQUIRED_FLAG_NAME  # type: ignore
+    flag_name = REQUIRED_FLAG_NAME
     permission_required = ["fiscal.add_partnership", "fiscal.change_partnership"]
     template_name = "generic_form.html"
     model = Partnership
