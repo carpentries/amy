@@ -5,9 +5,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.handlers.wsgi import WSGIRequest
 from django.db.models import Q
 from django.http.response import Http404
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.urls import reverse
 
+from fiscal.models import Consortium
 from workshops.lookups import (
     AwardLookupView,
     EventLookupForAwardsView,
@@ -16,6 +17,7 @@ from workshops.lookups import (
     KnowledgeDomainLookupView,
     MembershipLookupForTasksView,
     MembershipLookupView,
+    OfferingAccountRelation,
     TTTEventLookupView,
     urlpatterns,
 )
@@ -660,3 +662,53 @@ class TestGenericObjectLookupViewUserPermissions(TestViewPermissionsMixin, TestB
         self.view_url = reverse("generic-object-lookup") + f"?content_type={self.content_type.pk}"
         # prevent redirect to accept terms from middleware
         consent_to_all_required_consents(self.user)
+
+
+@override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+class TestOfferingAccountRelation(TestViewPermissionsMixin, TestBase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.user = Person.objects.create_user(
+            "testuser",
+            "Personal",
+            "Family",
+            "personal.family@example.org",
+            "secretpassword",
+        )
+        self.model = Person
+        self.permissions = ["view_person"]
+        self.methods = ["GET"]
+        self.content_type = ContentType.objects.get_for_model(self.model)
+        self.view_url = reverse("offering-account-relation-lookup") + "?content_type_name=individual"
+        # prevent redirect to accept terms from middleware
+        consent_to_all_required_consents(self.user)
+
+    def test_get_test_func__no_parameter(self) -> None:
+        # Arrange
+        view = OfferingAccountRelation()
+        request = RequestFactory().get("/")
+        view.setup(request)
+
+        # Act
+        partial_function = view.get_test_func()
+
+        # Assert
+        self.assertEqual(
+            partial_function.keywords["content_type"],  # type: ignore[attr-defined]
+            0,
+        )
+
+    def test_get_test_func(self) -> None:
+        # Arrange
+        view = OfferingAccountRelation()
+        request = RequestFactory().get("/?content_type_name=consortium")
+        view.setup(request)
+
+        # Act
+        partial_function = view.get_test_func()
+
+        # Assert
+        self.assertEqual(
+            partial_function.keywords["content_type"],  # type: ignore[attr-defined]
+            ContentType.objects.get_for_model(Consortium).pk,
+        )

@@ -624,7 +624,7 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
             "tags": Tag.objects.filter(name="Circuits"),
             # fields below are pre-filled from the website meta tags
             "slug": "2020-04-04-test",
-            "language": Language.objects.get(subtag="en"),
+            "language": Language.objects.get(subtag="en").pk,
             "start": date(2020, 4, 4),
             "end": date(2020, 4, 5),
             "country": "US",

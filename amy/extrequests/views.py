@@ -16,7 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from requests.exceptions import HTTPError, RequestException
 
-from consents.models import Term, TermEnum, TermOption, TrainingRequestConsent
+from consents.models import Term, TermOption, TrainingRequestConsent
 from consents.util import reconsent_for_term_option_type
 from emails.actions.new_self_organised_workshop import new_self_organised_workshop_check
 from emails.actions.post_workshop_7days import (
@@ -428,9 +428,9 @@ class SelfOrganisedSubmissionAcceptEvent(
             )
         else:
             # keep working only if no exception occurred
+            language = None
             try:
-                lang = parsed_data["language"].lower()
-                parsed_data["language"] = Language.objects.get(subtag=lang).name
+                language = Language.objects.get(subtag=parsed_data["language"].lower())
             except (KeyError, ValueError, Language.DoesNotExist):
                 # ignore non-existing
                 messages.warning(self.request, "Cannot automatically fill language.")
@@ -438,6 +438,8 @@ class SelfOrganisedSubmissionAcceptEvent(
                 parsed_data["language"] = ""
 
             data.update(parsed_data)
+            if language:
+                data["language"] = language.pk
 
             if "instructors" in data or "helpers" in data:
                 instructors = data.get("instructors") or ["none"]
@@ -725,7 +727,7 @@ def _match_training_request_to_person(
         try:
             option_type = consent.term_option.option_type  # type: ignore[union-attr]
             reconsent_for_term_option_type(
-                term_key=TermEnum(consent.term.key),
+                term_key=consent.term.key,  # type: ignore[arg-type]
                 term_option_type=option_type,  # type: ignore[arg-type]
                 person=training_request.person,
             )

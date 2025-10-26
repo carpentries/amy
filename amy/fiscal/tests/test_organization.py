@@ -1,7 +1,9 @@
+from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django_comments.models import Comment
 
 from fiscal.forms import OrganizationCreateForm, OrganizationForm
+from offering.models import Account
 from workshops.models import Event, Organization
 from workshops.tests.base import TestBase
 
@@ -141,3 +143,25 @@ class TestOrganization(TestBase):
         self.assertEqual(organizations_with_admin_domain.count(), len(expected_domains))
         # check that administrators() returns what we expect
         self.assertQuerySetEqual(organizations_with_admin_domain, list(administrators))
+
+    def test_creating_organisation_creates_account(self) -> None:
+        """Ensure that Account is created after Organisation is created.
+        Part of Service Offering 2025 project."""
+        # Arrange
+        data = {
+            "fullname": "Test Organization",
+            "domain": "test123.org",
+            "comment": "",
+        }
+        ck_for_organisation = ContentType.objects.get_for_model(Organization)
+
+        # Act
+        self.client.post(reverse("organization_add"), data)
+        organisation = Organization.objects.get(domain="test123.org")
+
+        # Assert
+        Account.objects.get(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation_content_type=ck_for_organisation,
+            generic_relation_pk=organisation.pk,
+        )

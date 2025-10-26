@@ -122,8 +122,6 @@ def merge_objects[_M: Model](
             elif value == "combine":
                 to_add = related_b.all()
 
-                # if manager == related_a:
-                #     to_add = related_b.all()
                 if manager == related_b:
                     to_add = related_a.all()
 

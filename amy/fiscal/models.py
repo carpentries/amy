@@ -170,7 +170,8 @@ class Partnership(CreatedUpdatedMixin, models.Model):
             return
 
         if account and (
-            account.generic_relation != self.partner_consortium or account.generic_relation != self.partner_organisation
+            account.generic_relation != self.partner_consortium
+            and account.generic_relation != self.partner_organisation
         ):
             raise ValidationError(
                 {

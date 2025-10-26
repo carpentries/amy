@@ -1,7 +1,25 @@
-from datetime import date
+from datetime import date, timedelta
 
-from fiscal.filters import MembershipFilter, MembershipTrainingsFilter
-from workshops.models import Event, Member, MemberRole, Membership, Role, Task
+from django.test import TestCase
+
+from fiscal.filters import (
+    MembershipFilter,
+    MembershipTrainingsFilter,
+    filter_consortium_organisation_contain,
+    filter_currently_active_partnership,
+    filter_partnership_credits,
+)
+from fiscal.models import Consortium, Partnership
+from offering.models import Account, AccountBenefit, Benefit
+from workshops.models import (
+    Event,
+    Member,
+    MemberRole,
+    Membership,
+    Organization,
+    Role,
+    Task,
+)
 from workshops.tests.base import TestBase
 
 
@@ -386,3 +404,150 @@ class TestMembershipTrainingsFilter(TestBase):
         # each field was filtered correctly
         for field in fields.keys():
             self.assertQuerySetEqual(results[field], expected_results[field])
+
+
+class TestConsortiumFilterMethods(TestCase):
+    def test_filter_consortium_organisation_contain__no_filter(self) -> None:
+        # Arrange
+        swc = Organization.objects.create(domain="software-carpentry.org")
+        consortium = Consortium.objects.create(name="test-consortium")
+        consortium.organisations.add(swc)
+        queryset = Consortium.objects.all()
+        organizations: list[Organization] = []
+
+        # Act
+        qs = filter_consortium_organisation_contain(queryset, "", organizations)
+
+        # Assert
+        self.assertQuerySetEqual(qs, list(queryset))
+
+    def test_filter_consortium_organisation_contain__filter(self) -> None:
+        # Arrange
+        swc = Organization.objects.create(domain="software-carpentry.org")
+        consortium = Consortium.objects.create(name="test-consortium")
+        consortium.organisations.add(swc)
+        queryset = Consortium.objects.all()
+        organizations = [swc]
+
+        # Act
+        qs = filter_consortium_organisation_contain(queryset, "", organizations)
+
+        # Assert
+        self.assertQuerySetEqual(qs, [consortium])
+
+
+class TestPartnershipFilterMethods(TestCase):
+    def test_filter_currently_active_partnership__no_filter(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        partnership1 = Partnership.objects.create(
+            name="Test1",
+            credits=10,
+            account=account,
+            agreement_start=date(2020, 10, 24),
+            agreement_end=date(2021, 10, 23),
+            partner_organisation=organisation,
+        )
+        partnership2 = Partnership.objects.create(
+            name="Test2",
+            credits=10,
+            account=account,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation,
+        )
+        queryset = Partnership.objects.all()
+        # Act
+        qs = filter_currently_active_partnership(queryset, "", active=False)
+        # Assert
+        self.assertQuerySetEqual(qs, {partnership1, partnership2}, ordered=False)
+
+    def test_filter_currently_active_partnership__filter(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        _ = Partnership.objects.create(
+            name="Test1",
+            credits=10,
+            account=account,
+            agreement_start=date(2020, 10, 24),
+            agreement_end=date(2021, 10, 23),
+            partner_organisation=organisation,
+        )
+        partnership2 = Partnership.objects.create(
+            name="Test2",
+            credits=10,
+            account=account,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation,
+        )
+        queryset = Partnership.objects.all()
+        # Act
+        qs = filter_currently_active_partnership(queryset, "", active=True)
+        # Assert
+        self.assertQuerySetEqual(qs, [partnership2])
+
+    def test_filter_partnership_credits(self) -> None:
+        # Arrange
+        organisation1 = Organization.objects.create(fullname="test1", domain="example1.com")
+        organisation2 = Organization.objects.create(fullname="test2", domain="example2.com")
+        account1 = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation1,
+        )
+        account2 = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation2,
+        )
+        benefit = Benefit.objects.create(name="product", unit_type="seat", credits=6)
+        partnership1 = Partnership.objects.create(
+            name="Test1",
+            credits=10,
+            account=account1,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation1,
+        )
+        partnership2 = Partnership.objects.create(
+            name="Test2",
+            credits=10,
+            account=account2,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            partner_organisation=organisation2,
+        )
+        AccountBenefit.objects.create(
+            account=account1,
+            partnership=partnership1,
+            benefit=benefit,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+            allocation=1,
+        )
+        AccountBenefit.objects.create(
+            account=account2,
+            partnership=partnership2,
+            benefit=benefit,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+            allocation=2,
+        )
+        queryset = Partnership.objects.credits_usage_annotation()
+
+        # Act
+        qs1 = filter_partnership_credits(queryset, "", selection="under_limit")
+        qs2 = filter_partnership_credits(queryset, "", selection="over_limit")
+        qs3 = filter_partnership_credits(queryset, "", selection="")
+
+        # Assert
+        self.assertQuerySetEqual(qs1, [partnership1])
+        self.assertQuerySetEqual(qs2, [partnership2])
+        self.assertQuerySetEqual(qs3, {partnership1, partnership2}, ordered=False)

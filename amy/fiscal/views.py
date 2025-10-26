@@ -1047,7 +1047,7 @@ class PartnershipExtend(
     form_class = PartnershipExtensionForm
     template_name = "generic_form.html"
     permission_required = "fiscal.change_partnership"
-    comment = "Extended partnership by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
+    comment = "Partnership extended by {days} days on {date} (new end date: {new_date}).\n\n----\n\n{comment}"
     request: AuthenticatedHttpRequest
 
     def get_initial(self) -> dict[str, Any]:

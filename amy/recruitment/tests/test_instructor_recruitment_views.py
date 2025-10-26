@@ -62,7 +62,7 @@ class TestInstructorRecruitmentListView(TestBase):
         data = view.get_filter_data()
         # Assert
         self.assertIn("assigned_to", data.keys())
-        self.assertEqual(data["assigned_to"], request.user.pk)
+        self.assertEqual(data["assigned_to"], str(request.user.pk))
 
     def test_get_context_data_empty(self) -> None:
         # Arrange

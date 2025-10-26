@@ -80,7 +80,7 @@ This is a malformed CSV"""
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["request_id"], "This is a malformed CSV")
         self.assertEqual(data[0]["score_manual"], None)
-        self.assertEqual(data[0]["score_notes"], None)
+        self.assertEqual(data[0]["score_notes"], "")
 
 
 class CSVBulkUploadTestBase(TestBase):

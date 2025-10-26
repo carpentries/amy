@@ -43,7 +43,9 @@ class OrganizationForm(forms.ModelForm[Organization]):
             "affiliated_organizations",
         ]
         widgets = {
-            "affiliated_organizations": ModelSelect2MultipleWidget(data_view="organization-lookup"),
+            "affiliated_organizations": ModelSelect2MultipleWidget(  # type: ignore[no-untyped-call]
+                data_view="organization-lookup",
+            ),
         }
 
     def clean_domain(self) -> str:
@@ -209,7 +211,7 @@ class MembershipCreateForm(MembershipForm):
         Organization.objects.all(),
         label="Main organisation",
         required=True,
-        widget=ModelSelect2Widget(data_view="organization-lookup"),
+        widget=ModelSelect2Widget(data_view="organization-lookup"),  # type: ignore[no-untyped-call]
         help_text="Select main organisation (e.g. Signatory in case of consortium).",
     )
 
@@ -369,8 +371,8 @@ class MemberForm(EditableFormsetFormMixin[Member], forms.ModelForm[Member]):
         ]
         widgets = {
             "membership": forms.HiddenInput,
-            "organization": ModelSelect2Widget(data_view="organization-lookup"),
-            "role": ModelSelect2Widget(data_view="memberrole-lookup"),
+            "organization": ModelSelect2Widget(data_view="organization-lookup"),  # type: ignore[no-untyped-call]
+            "role": ModelSelect2Widget(data_view="memberrole-lookup"),  # type: ignore[no-untyped-call]
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -426,8 +428,8 @@ class MembershipTaskForm(EditableFormsetFormMixin[Membership], forms.ModelForm[M
         ]
         widgets = {
             "membership": forms.HiddenInput,
-            "person": ModelSelect2Widget(data_view="person-lookup"),
-            "role": ModelSelect2Widget(data_view="membershippersonrole-lookup"),
+            "person": ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
+            "role": ModelSelect2Widget(data_view="membershippersonrole-lookup"),  # type: ignore[no-untyped-call]
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -524,7 +526,7 @@ class ConsortiumForm(forms.ModelForm[Consortium]):
         label="Organisations",
         required=False,
         queryset=Organization.objects.all(),
-        widget=ModelSelect2MultipleWidget(
+        widget=ModelSelect2MultipleWidget(  # type: ignore[no-untyped-call]
             data_view="organization-lookup",
             attrs=SELECT2_SIDEBAR,
         ),
