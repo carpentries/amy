@@ -59,7 +59,9 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
         "team@carpentries.org</a>.",
     )
 
-    airport_iata = AirportChoiceField(required=True, label="Airport")
+    airport_iata = AirportChoiceField(
+        required=True, label="Airport", help_text="Country and timezone of the airport are in the parentheses."
+    )
     country = CountryField().formfield(
         required=False,
         help_text="Override country of the airport.",
