@@ -23,7 +23,7 @@ from dashboard.models import Continent
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    AirportChoiceField,
+    HeavySelect2Widget,
     ModelSelect2MultipleWidget,
     ModelSelect2Widget,
     RadioSelectWithOther,
@@ -245,7 +245,11 @@ class WorkshopStaffForm(forms.Form):
 
     latitude = forms.FloatField(label="Latitude", min_value=-90.0, max_value=90.0, required=False)
     longitude = forms.FloatField(label="Longitude", min_value=-180.0, max_value=180.0, required=False)
-    airport_iata = AirportChoiceField(required=False)
+    airport_iata = forms.CharField(
+        required=False,
+        label="Airport",
+        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+    )
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
         required=False,
@@ -740,7 +744,12 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
 
 
 class PersonForm(forms.ModelForm[Person]):
-    airport_iata = AirportChoiceField(required=True, label="Airport")
+    airport_iata = forms.CharField(
+        required=True,
+        label="Airport",
+        help_text="Country and timezone of the airport are in the parentheses.",
+        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+    )
     timezone = TimezoneChoiceField(required=False, help_text="Override timezone of the airport.")
     languages = forms.ModelMultipleChoiceField(
         label="Languages",

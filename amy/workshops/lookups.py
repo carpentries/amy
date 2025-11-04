@@ -5,6 +5,7 @@ import operator
 import re
 from typing import Any, Callable, Sequence, TypedDict
 
+from airportsdata import Airport
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
@@ -20,6 +21,7 @@ from fiscal.models import Consortium, MembershipPersonRole, Partnership
 from offering.models import Account
 from workshops import models
 from workshops.base_views import AuthenticatedHttpRequest
+from workshops.consts import COUNTRIES, IATA_AIRPORTS
 from workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 logger = logging.getLogger("amy")
@@ -500,6 +502,46 @@ class OfferingAccountRelation(GenericObjectLookupView):
         return qs  # type: ignore
 
 
+class AirportsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def filter_results(self, results: list[tuple[str, Airport]], term: str) -> list[tuple[str, Airport]]:
+        lowered_term = term.lower()
+        return [
+            (key, value)
+            for key, value in results
+            if lowered_term in key.lower()
+            or lowered_term in value["name"].lower()
+            or lowered_term in COUNTRIES.get(value["country"], "-").lower()
+        ]
+
+    def get_queryset(self) -> list[tuple[str, Airport]]:  # type: ignore[override]
+        results = sorted(IATA_AIRPORTS.items(), key=lambda k: k[0])
+
+        if self.term:
+            results = self.filter_results(results, self.term)
+
+        return results
+
+    def get(
+        self,
+        request: AuthenticatedHttpRequest,  # type: ignore[override]
+        *args: Any,
+        **kwargs: Any,
+    ) -> JsonResponse:
+        self.term = kwargs.get("term", request.GET.get("term", ""))
+        self.object_list = self.get_queryset()
+        return JsonResponse(
+            {
+                "results": [
+                    {
+                        "text": f"{key}: {value["name"]} ({COUNTRIES.get(value["country"], "-")}, {value["tz"]})",
+                        "id": key,
+                    }
+                    for key, value in self.object_list
+                ],
+            }
+        )
+
+
 urlpatterns = [
     path("tags/", TagLookupView.as_view(), name="tag-lookup"),
     path("badges/", BadgeLookupView.as_view(), name="badge-lookup"),
@@ -548,4 +590,5 @@ urlpatterns = [
     path("awards/", AwardLookupView.as_view(), name="award-lookup"),
     path("generic/", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
     path("offering-account-relation/", OfferingAccountRelation.as_view(), name="offering-account-relation-lookup"),
+    path("airports/", AirportsLookupView.as_view(), name="airports-lookup"),
 ]
