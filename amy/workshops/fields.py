@@ -14,7 +14,7 @@ from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
 from django_select2.forms import Select2Widget as DS2_Select2Widget
 import pytz
 
-from workshops.consts import COUNTRIES, IATA_AIRPORTS, STR_LONG, STR_MED
+from workshops.consts import STR_LONG, STR_MED
 
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(
     39,
@@ -247,23 +247,6 @@ def choice_field_with_other(
         default="",
     )
     return field, other_field
-
-
-class AirportChoiceField(forms.ChoiceField):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        choices = kwargs.pop(
-            "choices",
-            [(None, "------")]
-            + sorted(
-                [
-                    (key, f"{key}: {value["name"]} ({COUNTRIES.get(value["country"], "-")}, {value["tz"]})")
-                    for key, value in IATA_AIRPORTS.items()
-                ]
-            ),
-        )
-        widget = kwargs.pop("widget", Select2Widget)
-
-        super().__init__(*args, **kwargs, choices=choices, widget=widget)
 
 
 class TimezoneChoiceField(forms.ChoiceField):

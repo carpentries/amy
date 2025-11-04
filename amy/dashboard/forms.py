@@ -9,7 +9,7 @@ from communityroles.models import CommunityRole
 from recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from trainings.models import Involvement
 from workshops.fields import (
-    AirportChoiceField,
+    HeavySelect2Widget,
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
     Select2Widget,
@@ -59,8 +59,11 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
         "team@carpentries.org</a>.",
     )
 
-    airport_iata = AirportChoiceField(
-        required=True, label="Airport", help_text="Country and timezone of the airport are in the parentheses."
+    airport_iata = forms.CharField(
+        required=True,
+        label="Airport",
+        help_text="Country and timezone of the airport are in the parentheses.",
+        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
     )
     country = CountryField().formfield(
         required=False,
