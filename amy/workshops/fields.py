@@ -14,7 +14,7 @@ from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
 from django_select2.forms import Select2Widget as DS2_Select2Widget
 import pytz
 
-from workshops.consts import IATA_AIRPORTS, STR_LONG, STR_MED
+from workshops.consts import COUNTRIES, IATA_AIRPORTS, STR_LONG, STR_MED
 
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(
     39,
@@ -256,7 +256,7 @@ class AirportChoiceField(forms.ChoiceField):
             [(None, "------")]
             + sorted(
                 [
-                    (key, f"{key}: {value["name"]} ({value["country"]}, {value["tz"]})")
+                    (key, f"{key}: {value["name"]} ({COUNTRIES.get(value["country"], "-")}, {value["tz"]})")
                     for key, value in IATA_AIRPORTS.items()
                 ]
             ),

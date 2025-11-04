@@ -1,4 +1,5 @@
 import airportsdata
+from django_countries import countries
 
 FEE_DETAILS_URL = "https://carpentries.org/workshops/#workshop-cost"
 
@@ -9,3 +10,4 @@ STR_LONGEST = 255  # length of the longest strings
 STR_REG_KEY = 20  # length of Eventbrite registration key
 
 IATA_AIRPORTS = airportsdata.load("IATA")
+COUNTRIES = dict(countries)
