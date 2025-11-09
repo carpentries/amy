@@ -20,7 +20,7 @@ class AccountForm(forms.ModelForm[Account]):
         widgets = {
             "generic_relation_pk": HeavySelect2Widget(
                 data_view="offering-account-relation-lookup",
-            ),
+            ),  # type: ignore[no-untyped-call]
         }
 
     class Media:
@@ -70,7 +70,7 @@ class AccountOwnerForm(EditableFormsetFormMixin[AccountOwner], forms.ModelForm[A
         ]
         widgets = {
             "account": forms.HiddenInput,
-            "person": ModelSelect2Widget(data_view="person-lookup"),
+            "person": ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:

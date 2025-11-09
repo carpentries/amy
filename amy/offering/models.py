@@ -72,6 +72,9 @@ class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     person = models.ForeignKey(Person, on_delete=models.PROTECT)
     permission_type = models.CharField(max_length=30, choices=PERMISSION_TYPE_CHOICES)
 
+    def __str__(self) -> str:
+        return f"Owner {self.person} for {self.account} ({self.permission_type})"
+
 
 class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """A single good available to be purchased for an account."""
