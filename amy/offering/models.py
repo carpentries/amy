@@ -63,7 +63,8 @@ class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""
 
     PERMISSION_TYPE_CHOICES = (
-        ("account_contact", "Account Contact"),
+        ("owner", "Owner"),
+        ("programmatic_contact", "Programmatic Contact"),
         ("billing_contact", "Billing Contact"),
     )
 

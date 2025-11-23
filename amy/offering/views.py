@@ -168,8 +168,10 @@ class AccountOwnersUpdate(
         if self.account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
             # overwrite any changes to the person field to keep it the same as the account's generic relation
             original_owner = cast(Person, self.account.generic_relation)
+            permission_type = "owner"
             for obj in results:
                 obj.person = original_owner
+                obj.permission_type = permission_type
 
         return super().form_valid(formset)
 
