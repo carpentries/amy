@@ -56,6 +56,7 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         context["owners"] = AccountOwner.objects.filter(account=self.object).select_related("person")
+        context["account_benefits"] = AccountBenefit.objects.filter(account=self.object).select_related("benefit")
         return context
 
 

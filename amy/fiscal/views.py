@@ -963,6 +963,7 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
+        context["account_benefits"] = AccountBenefit.objects.filter(partnership=self.object).select_related("benefit")
         return context
 
 
