@@ -1081,6 +1081,12 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView[Eve
     object: Event
     request: AuthenticatedHttpRequest
 
+    def get_form_kwargs(self) -> dict[str, Any]:
+        result = super().get_form_kwargs()
+        # Optionally show field `allocated benefit`
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
+        return result | dict(show_allocated_benefit=show_allocated_benefit)
+
     def form_valid(self, form: EventCreateForm) -> HttpResponse:
         """Additional functions for validating Event Create form:
         * maybe adding a mail job, if conditions are met
@@ -1681,7 +1687,9 @@ class TaskCreate(
     def get_form_kwargs(self) -> dict[str, str]:
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "task"})
-        return kwargs
+        # Optionally show field `allocated benefit`
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
+        return kwargs | dict(show_allocated_benefit=show_allocated_benefit)
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Save request in `self.request`."""
