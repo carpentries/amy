@@ -124,3 +124,37 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             "end_date",
             "allocation",
         ]
+
+
+class AccountBenefitFormForPartnership(forms.ModelForm[AccountBenefit]):
+    class Meta:
+        model = AccountBenefit
+        fields = [
+            "partnership",
+            "benefit",
+            "discount",
+            "curriculum",
+            "start_date",
+            "end_date",
+            "allocation",
+        ]
+        widgets = {
+            "partnership": ModelSelect2Widget(data_view="partnership-lookup"),  # type: ignore[no-untyped-call]
+        }
+
+    class Media:
+        js = ("offering_account_benefit_for_partnership_form.js",)
+
+
+class AccountBenefitFormForAccount(forms.ModelForm[AccountBenefit]):
+    class Meta:
+        model = AccountBenefit
+        fields = [
+            "account",
+            "benefit",
+            "discount",
+            "curriculum",
+            "start_date",
+            "end_date",
+            "allocation",
+        ]

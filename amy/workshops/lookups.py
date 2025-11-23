@@ -542,6 +542,27 @@ class AirportsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         )
 
 
+class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponseView):
+    def get_queryset(self) -> QuerySet[Partnership]:
+        results = Partnership.objects.order_by("name", "agreement_start")
+
+        if self.term:
+            results = results.filter(name__icontains=self.term)
+
+        return results
+
+    def parse_results(self, object_list: Sequence[Partnership]) -> list[Any]:  # type: ignore[override]
+        return [
+            {
+                "text": self.widget.label_from_instance(obj),
+                "agreement_start": obj.agreement_start,
+                "agreement_end": obj.agreement_end,
+                "id": obj.pk,
+            }
+            for obj in object_list
+        ]
+
+
 urlpatterns = [
     path("tags/", TagLookupView.as_view(), name="tag-lookup"),
     path("badges/", BadgeLookupView.as_view(), name="badge-lookup"),
@@ -591,4 +612,5 @@ urlpatterns = [
     path("generic/", GenericObjectLookupView.as_view(), name="generic-object-lookup"),
     path("offering-account-relation/", OfferingAccountRelation.as_view(), name="offering-account-relation-lookup"),
     path("airports/", AirportsLookupView.as_view(), name="airports-lookup"),
+    path("partnerships/", PartnershipLookupView.as_view(), name="partnership-lookup"),
 ]
