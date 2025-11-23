@@ -73,13 +73,19 @@
   </tr>
   <tr>
     <th>Credits (used / allowed):</th>
+    {% if not object.account %}
     <td>
-      {% if not object.account %}
-        No account
-      {% else %}
-        {{ object.credits_used }} / {{ object.credits }}
-      {% endif %}
+      No account
     </td>
+    {% elif object.credits_used > object.credits %}
+    <td class="bg-warning">
+      {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits used exceed allowed"></i>
+    </td>
+    {% else %}
+    <td>
+      {{ object.credits_used }} / {{ object.credits }}
+    </td>
+    {% endif %}
   </tr>
   <tr>
     <th>Agreement start:</th>

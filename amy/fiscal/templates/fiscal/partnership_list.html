@@ -30,12 +30,19 @@
           {% endif %}
         </td>
         <td>{{ object.tier }}</td>
+        {% if not object.account %}
         <td>
-          {% if not object.account %}
-            No account
-          {% else %}
-            {{ object.credits_used }} / {{ object.credits }}
-          {% endif %}
+          No account
+        </td>
+        {% elif object.credits_used > object.credits %}
+        <td class="bg-warning">
+          {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits used exceed allowed"></i>
+        </td>
+        {% else %}
+        <td>
+          {{ object.credits_used }} / {{ object.credits }}
+        </td>
+        {% endif %}
         </td>
         <td>{{ object.agreement_start|date:"Y-m-d" }} &mdash; {{ object.agreement_end|date:"Y-m-d" }}</td>
       </tr>
