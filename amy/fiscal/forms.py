@@ -15,7 +15,11 @@ from fiscal.models import Consortium, MembershipTask, Partnership
 
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
-from workshops.fields import ModelSelect2MultipleWidget, ModelSelect2Widget
+from workshops.fields import (
+    ModelSelect2MultipleWidget,
+    ModelSelect2Widget,
+    Select2Widget,
+)
 from workshops.forms import SELECT2_SIDEBAR, BootstrapHelper, form_saved_add_comment
 from workshops.models import Member, Membership, Organization
 from workshops.signals import create_comment_signal
@@ -549,6 +553,8 @@ class PartnershipForm(forms.ModelForm[Partnership]):
     class Meta:
         model = Partnership
         fields = [
+            "partner_consortium",
+            "partner_organisation",
             "name",
             "tier",
             "agreement_start",
@@ -556,9 +562,15 @@ class PartnershipForm(forms.ModelForm[Partnership]):
             "agreement_link",
             "registration_code",
             "public_status",
-            "partner_consortium",
-            "partner_organisation",
         ]
+
+        widgets = {
+            "partner_consortium": Select2Widget(attrs=SELECT2_SIDEBAR),
+            "partner_organisation": Select2Widget(attrs=SELECT2_SIDEBAR),
+        }
+
+    class Media:
+        js = ("partnership_form.js",)
 
 
 class PartnershipExtensionForm(forms.Form):
