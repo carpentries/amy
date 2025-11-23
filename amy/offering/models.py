@@ -101,6 +101,9 @@ class AccountBenefitDiscount(CreatedUpdatedMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=STR_LONG, blank=False, null=False)
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class AccountBenefit(CreatedUpdatedMixin, models.Model):
     """A single benefit purchased for an account."""

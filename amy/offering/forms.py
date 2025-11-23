@@ -118,6 +118,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             "account",
             "partnership",
             "benefit",
+            "discount",
             "curriculum",
             "start_date",
             "end_date",
