@@ -54,4 +54,6 @@
 
 {% include "offering/includes/account_benefits.html" with object_list=account_benefits %}
 
+<a href="{% url 'account-benefit-create' %}?account_pk={{ object.pk }}&next={{request.get_full_path|urlencode}}" class="btn btn-success">Add account benefit to this account</a>
+
 {% endblock %}
