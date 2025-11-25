@@ -96,14 +96,9 @@ urlpatterns = [
                     name="account-benefit-list",
                 ),
                 path(
-                    "create/partnership/",
-                    views.AccountBenefitCreateForPartnership.as_view(),
-                    name="account-benefit-create-for-partnership",
-                ),
-                path(
-                    "create/account/",
-                    views.AccountBenefitCreateForAccount.as_view(),
-                    name="account-benefit-create-for-account",
+                    "create/",
+                    views.AccountBenefitCreate.as_view(),
+                    name="account-benefit-create",
                 ),
             ]
         ),

@@ -8,12 +8,11 @@ from django.http import HttpResponse
 from django.urls import reverse
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
+from fiscal.models import Partnership
 from offering.base_views import AccountFormsetView
 from offering.filters import AccountBenefitFilter, AccountFilter, BenefitFilter
 from offering.forms import (
     AccountBenefitForm,
-    AccountBenefitFormForAccount,
-    AccountBenefitFormForPartnership,
     AccountForm,
     AccountOwnerForm,
     BenefitForm,
@@ -59,6 +58,11 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
         context["title"] = str(self.object)
         context["owners"] = AccountOwner.objects.filter(account=self.object).select_related("person")
         context["account_benefits"] = AccountBenefit.objects.filter(account=self.object).select_related("benefit")
+        context["partnerships"] = (
+            Partnership.objects.credits_usage_annotation()
+            .filter(account=self.object)
+            .select_related("tier", "partner_consortium", "partner_organisation", "account")
+        )
         return context
 
 
@@ -261,41 +265,18 @@ class AccountBenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[
         return context
 
 
-class AccountBenefitCreateForPartnership(
+class AccountBenefitCreate(
     OnlyForAdminsMixin,
     FlaggedViewMixin,  # type: ignore[misc]
-    AMYCreateView[AccountBenefitFormForPartnership, AccountBenefit],
+    AMYCreateView[AccountBenefitForm, AccountBenefit],
 ):
     flag_name = REQUIRED_FLAG_NAME
     permission_required = ["offering.add_accountbenefit"]
     template_name = "offering/account_benefit_create.html"
-    form_class = AccountBenefitFormForPartnership
+    form_class = AccountBenefitForm
     model = AccountBenefit
     object: AccountBenefit
-    title = "Create a new account benefit for partnership"
-
-    def form_valid(self, form: AccountBenefitFormForPartnership) -> HttpResponse:
-        obj = form.save(commit=False)
-        # Use partnership's account as account for this benefit
-        if obj.partnership is not None:
-            account = obj.partnership.account
-            obj.account = account
-        obj.save()
-        return super().form_valid(form)
-
-
-class AccountBenefitCreateForAccount(
-    OnlyForAdminsMixin,
-    FlaggedViewMixin,  # type: ignore[misc]
-    AMYCreateView[AccountBenefitFormForAccount, AccountBenefit],
-):
-    flag_name = REQUIRED_FLAG_NAME
-    permission_required = ["offering.add_accountbenefit"]
-    template_name = "offering/account_benefit_create.html"
-    form_class = AccountBenefitFormForAccount
-    model = AccountBenefit
-    object: AccountBenefit
-    title = "Create a new account benefit for account"
+    title = "Create a new account benefit"
 
 
 class AccountBenefitUpdate(
