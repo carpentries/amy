@@ -2,22 +2,6 @@
 {% load pagination %}
 
 {% block content %}
-  {% if perms.offering.add_accountbenefit %}
-  <p>
-    <div class="dropdown">
-      <button class="btn btn-success dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
-        New account benefit
-      </button>
-      <div class="dropdown-menu">
-        <a class="dropdown-item" href="{% url 'account-benefit-create-for-partnership' %}">For partnership</a>
-        <a class="dropdown-item" href="{% url 'account-benefit-create-for-account' %}">For account</a>
-      </div>
-    </div>
-  </p>
-  {% else %}
-  <p><a href="#" class="btn btn-success disabled">New account benefit</a></p>
-  {% endif %}
-
   {% if object_list %}
     <table class="table table-striped">
       <tr>
