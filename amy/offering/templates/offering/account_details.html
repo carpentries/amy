@@ -41,7 +41,9 @@
       {% else %}
         <p>&mdash;</p>
       {% endif %}
+      {% if object.account_type != "individual" %}
       <a href="{% url 'account-owners-update' object.pk %}">Edit</a>
+      {% endif %}
     </td>
   </tr>
 </table>
