@@ -617,6 +617,43 @@ class PartnershipExtensionForm(forms.Form):
             raise ValidationError(errors)
 
 
+class PartnershipCreditsExtensionForm(forms.Form):
+    credits = forms.IntegerField(disabled=True, required=False)
+    new_credits = forms.IntegerField(required=True)
+    diff_credits = forms.IntegerField(
+        disabled=True,
+        required=False,
+        help_text="Number of credits added.",
+    )
+    comment = MarkdownxFormField(
+        label="Comment",
+        help_text=(
+            "This will be added to comments after the partnership is amended. Beginning"
+            " of the comment will be prefixed with information about the credits."
+        ),
+        widget=forms.Textarea,
+        required=False,
+    )  # type: ignore
+
+    helper = BootstrapHelper()
+
+    class Media:
+        js = ("agreement_credits_extension.js",)
+
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = cast(dict[str, Any], super().clean())
+        errors = {}
+
+        # validate new credits is larger than original credits
+        if cleaned_data["new_credits"] <= cleaned_data["credits"]:
+            errors["new_credits"] = ValidationError("New credits value must be larger than original credits.")
+
+        if errors:
+            raise ValidationError(errors)
+
+        return cleaned_data
+
+
 class PartnershipRollOverForm(PartnershipForm):
     class Meta(PartnershipForm.Meta):
         model = Partnership

@@ -86,6 +86,7 @@ urlpatterns = [
                 path("edit/", views.PartnershipUpdate.as_view(), name="partnership-update"),
                 path("delete/", views.PartnershipDelete.as_view(), name="partnership-delete"),
                 path("extend/", views.PartnershipExtend.as_view(), name="partnership-extend"),
+                path("extend-credits/", views.PartnershipExtendCredits.as_view(), name="partnership-extend-credits"),
                 path("roll-over/", views.PartnershipRollOver.as_view(), name="partnership-roll-over"),
             ]
         ),

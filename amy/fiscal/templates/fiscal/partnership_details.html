@@ -88,12 +88,32 @@
     {% endif %}
   </tr>
   <tr>
+    <th>Credits extensions:</th>
+    <td>
+      {% if not object.credits_extensions %}
+        None
+      {% else %}
+        By {% for value in object.credits_extensions %}{{ value }}{% if not forloop.last %}, {% endif %}{% endfor %} credits
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
     <th>Agreement start:</th>
     <td>{{ object.agreement_start }}</td>
   </tr>
   <tr>
     <th>Agreement end:</th>
     <td>{{ object.agreement_end }}</td>
+  </tr>
+  <tr>
+    <th>Agreement date extensions:</th>
+    <td>
+      {% if not object.extensions %}
+        None
+      {% else %}
+        By {% for days in object.extensions %}{{ days }}{% if not forloop.last %}, {% endif %}{% endfor %} days
+      {% endif %}
+    </td>
   </tr>
   <tr>
     <th>Agreement link:</th>
@@ -106,16 +126,6 @@
       <code>{{ object.registration_code }}</code>
       {% else %}
       &mdash;
-      {% endif %}
-    </td>
-  </tr>
-  <tr>
-    <th>Extensions:</th>
-    <td>
-      {% if not object.extensions %}
-        None
-      {% else %}
-        By {% for days in object.extensions %}{{ days }}{% if not forloop.last %}, {% endif %}{% endfor %} days
       {% endif %}
     </td>
   </tr>
@@ -142,10 +152,12 @@
     <div class="btn-group" role="group">
       {% if perms.fiscal.change_partnership %}
       <a href="{% url 'partnership-update' partnership.id %}" class="btn btn-primary">Edit</a>
-      <a href="{% url 'partnership-extend' partnership.id %}" class="btn btn-secondary">Extend</a>
+      <a href="{% url 'partnership-extend' partnership.id %}" class="btn btn-secondary">Extend dates</a>
+      <a href="{% url 'partnership-extend-credits' partnership.id %}" class="btn btn-secondary">Extend credits</a>
       {% else %}
       <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
-      <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend dates</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend credits</a>
       {% endif %}
       {% if perms.fiscal.create_partnership and perms.fiscal.change_partnership and partnership.rolled_to_partnership is None %}
       <a href="{% url 'partnership-roll-over' partnership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
