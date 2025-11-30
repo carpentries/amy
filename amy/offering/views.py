@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet
 from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
@@ -31,6 +32,7 @@ from workshops.filters import EventCategoryFilter
 from workshops.forms import EventCategoryForm
 from workshops.models import EventCategory, Person
 from workshops.utils.access import OnlyForAdminsMixin
+from workshops.utils.urls import safe_next_or_default_url
 
 REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
 
@@ -277,6 +279,29 @@ class AccountBenefitCreate(
     model = AccountBenefit
     object: AccountBenefit
     title = "Create a new account benefit"
+
+    def get_initial(self) -> dict[str, Any]:
+        initial = super().get_initial()
+        if account_pk := self.request.GET.get("account_pk"):
+            initial["account"] = get_object_or_404(Account, pk=account_pk)
+        if partnership_pk := self.request.GET.get("partnership_pk"):
+            partnership = get_object_or_404(Partnership, pk=partnership_pk)
+            initial["partnership"] = partnership
+            initial["start_date"] = partnership.agreement_start
+            initial["end_date"] = partnership.agreement_end
+        return initial
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        if kwargs.get("initial", {}).get("account") is not None:
+            kwargs["disable_account"] = True
+        if kwargs.get("initial", {}).get("partnership") is not None:
+            kwargs["disable_partnership"] = True
+        return kwargs
+
+    def get_success_url(self) -> str:
+        default_url = super().get_success_url()
+        return safe_next_or_default_url(self.request.GET.get("next"), default_url)
 
 
 class AccountBenefitUpdate(

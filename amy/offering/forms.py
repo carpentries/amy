@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Any, cast
 
 from crispy_forms.layout import Div
 from django import forms
+from django.core.exceptions import ValidationError
 
 from fiscal.forms import EditableFormsetFormMixin
 from offering.models import Account, AccountBenefit, AccountOwner, Benefit
@@ -130,3 +131,54 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
 
     class Media:
         js = ("offering_account_benefit_for_partnership_form.js",)
+
+    def __init__(
+        self,
+        *args: Any,
+        disable_account: bool = False,
+        disable_partnership: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+
+        if disable_account:
+            self.fields["account"].disabled = True
+        if disable_partnership:
+            self.fields["partnership"].disabled = True
+            self.fields["start_date"].disabled = True
+            self.fields["end_date"].disabled = True
+
+        # If these fields are disabled, the browser won't send their values and this trips the validation
+        # (unless we make them not required).
+        self.fields["start_date"].required = False
+        self.fields["end_date"].required = False
+
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = cast(dict[str, Any], super().clean())
+        errors = {}
+
+        # Verify if partnership belongs to the account
+        account = cleaned_data["account"]
+        partnership = cleaned_data["partnership"]
+        if partnership and partnership.account != account:
+            errors["partnership"] = ValidationError("Selected partnership does not belong to the selected account.")
+
+        # Set start/end dates from partnership if partnership is set
+        if partnership:
+            cleaned_data["start_date"] = partnership.agreement_start
+            cleaned_data["end_date"] = partnership.agreement_end
+
+        # Ensure start_date and end_date are set
+        if not cleaned_data["start_date"]:
+            errors["start_date"] = ValidationError("Start date is required.")
+        if not cleaned_data["end_date"]:
+            errors["end_date"] = ValidationError("End date is required.")
+
+        if (start_date := cleaned_data["start_date"]) and (end_date := cleaned_data["end_date"]):
+            if start_date > end_date:
+                errors["end_date"] = ValidationError("End date must be after start date.")
+
+        if errors:
+            raise ValidationError(errors)
+
+        return cleaned_data
