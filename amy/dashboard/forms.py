@@ -295,7 +295,7 @@ class SignupForRecruitmentForm(forms.ModelForm[InstructorRecruitmentSignup]):
         widget=forms.Textarea,
         label="Your notes",
         help_text="Is there anything else you would like to share with us? "
-        "Please include any accommodations that the host organization should provide "
+        "Please include any accessibility support that the host organisation should provide "
         "to enable you to teach effectively.",
     )
     helper = BootstrapHelper(
