@@ -40,6 +40,10 @@
     <td><a href="{{ object.benefit.get_absolute_url }}">{{ object.benefit }}</a></td>
   </tr>
   <tr>
+    <th>Discount:</th>
+    <td>{{ object.discount|default:"&mdash;" }}</td>
+  </tr>
+  <tr>
     <th>Curriculum:</th>
     <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
   </tr>

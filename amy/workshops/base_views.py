@@ -103,7 +103,9 @@ class AMYCreateView(
         kwargs["model"] = self.model
 
         if "title" not in kwargs:
-            if self.model and issubclass(self.model, Model):
+            if getattr(self, "title", None):
+                kwargs["title"] = self.title  # type: ignore[attr-defined]
+            elif self.model and issubclass(self.model, Model):
                 kwargs["title"] = "New {}".format(self.model._meta.verbose_name)
             else:
                 kwargs["title"] = "New object"

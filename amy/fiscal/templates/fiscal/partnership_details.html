@@ -73,11 +73,27 @@
   </tr>
   <tr>
     <th>Credits (used / allowed):</th>
+    {% if not object.account %}
     <td>
-      {% if not object.account %}
-        No account
+      No account
+    </td>
+    {% elif object.credits_used > object.credits %}
+    <td class="bg-warning">
+      {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits used exceed allowed"></i>
+    </td>
+    {% else %}
+    <td>
+      {{ object.credits_used }} / {{ object.credits }}
+    </td>
+    {% endif %}
+  </tr>
+  <tr>
+    <th>Credits extensions:</th>
+    <td>
+      {% if not object.credits_extensions %}
+        None
       {% else %}
-        {{ object.credits_used }} / {{ object.credits }}
+        By {% for value in object.credits_extensions %}{{ value }}{% if not forloop.last %}, {% endif %}{% endfor %} credits
       {% endif %}
     </td>
   </tr>
@@ -90,6 +106,16 @@
     <td>{{ object.agreement_end }}</td>
   </tr>
   <tr>
+    <th>Agreement date extensions:</th>
+    <td>
+      {% if not object.extensions %}
+        None
+      {% else %}
+        By {% for days in object.extensions %}{{ days }}{% if not forloop.last %}, {% endif %}{% endfor %} days
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
     <th>Agreement link:</th>
     <td>{{ object.agreement_link|urlize_newtab }}</td>
   </tr>
@@ -100,16 +126,6 @@
       <code>{{ object.registration_code }}</code>
       {% else %}
       &mdash;
-      {% endif %}
-    </td>
-  </tr>
-  <tr>
-    <th>Extensions:</th>
-    <td>
-      {% if not object.extensions %}
-        None
-      {% else %}
-        By {% for days in object.extensions %}{{ days }}{% if not forloop.last %}, {% endif %}{% endfor %} days
       {% endif %}
     </td>
   </tr>
@@ -136,10 +152,12 @@
     <div class="btn-group" role="group">
       {% if perms.fiscal.change_partnership %}
       <a href="{% url 'partnership-update' partnership.id %}" class="btn btn-primary">Edit</a>
-      <a href="{% url 'partnership-extend' partnership.id %}" class="btn btn-secondary">Extend</a>
+      <a href="{% url 'partnership-extend' partnership.id %}" class="btn btn-secondary">Extend dates</a>
+      <a href="{% url 'partnership-extend-credits' partnership.id %}" class="btn btn-secondary">Extend credits</a>
       {% else %}
       <a class="btn btn-primary disabled" aria-disabled="true">Edit</a>
-      <a class="btn btn-secondary disabled" aria-disabled="true">Extend</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend dates</a>
+      <a class="btn btn-secondary disabled" aria-disabled="true">Extend credits</a>
       {% endif %}
       {% if perms.fiscal.create_partnership and perms.fiscal.change_partnership and partnership.rolled_to_partnership is None %}
       <a href="{% url 'partnership-roll-over' partnership.id %}" class="btn btn-success">Create new &amp; roll-over</a>
@@ -159,5 +177,11 @@
     {% endif %}
   </div>
 </div>
+
+<h4>Linked account benefits:</h4>
+
+{% include "offering/includes/account_benefits.html" with object_list=account_benefits %}
+
+<a href="{% url 'account-benefit-create' %}?account_pk={{ object.account.pk }}&partnership_pk={{ object.pk }}&next={{request.get_full_path|urlencode}}" class="btn btn-success">Add account benefit to this partnership</a>
 
 {% endblock %}

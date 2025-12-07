@@ -85,7 +85,7 @@ class TestAccountBenefit(TestCase):
 
         # Assert
         expected_str = (
-            '(FROZEN) Benefit "Benefit1" (seat, 10 credits) for '
+            '(FROZEN) Account Benefit "Benefit1" (seat, 10 credits) for '
             '"Test Partnership Gold partnership Jan 01 - Dec 31, 2024"'
             " (allocation: 10, valid: Jan 01 - Dec 31, 2024)"
         )

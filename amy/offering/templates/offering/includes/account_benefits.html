@@ -1,0 +1,33 @@
+<table class="table table-striped">
+  <tr>
+    <th>Benefit</th>
+    {% if show_partnership_column is True %}
+    <th>Partnership</th>
+    {% endif %}
+    <th>Dates</th>
+    <th>Allocation</th>
+    <th>Discount</th>
+    <th>Curriculum</th>
+    <th>Active</th>
+    <th>Created at</th>
+    <th>Last updated at</th>
+  </tr>
+  {% for object in object_list %}
+  <tr>
+    <td><a href="{{ object.get_absolute_url }}">{{ object.benefit.name }} ({{ object.benefit.unit_type }})</a></td>
+    {% if show_partnership_column is True %}
+    <td><a href="{{ object.partnership.get_absolute_url }}">{{ object.partnership.name }}</a></td>
+    {% endif %}
+    <td>{{ object.human_daterange }}</td>
+    <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
+    <td>{{ object.discount|default:"&mdash;" }}</td>
+    <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
+    <td>
+      {{ object.active|yesno }}
+      {% if object.frozen %}(frozen){% endif %}
+    </td>
+    <td>{{ object.created_at }}</td>
+    <td>{{ object.last_updated_at }}</td>
+  </tr>
+  {% endfor %}
+</table>

@@ -63,7 +63,8 @@ class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""
 
     PERMISSION_TYPE_CHOICES = (
-        ("account_contact", "Account Contact"),
+        ("owner", "Owner"),
+        ("programmatic_contact", "Programmatic Contact"),
         ("billing_contact", "Billing Contact"),
     )
 
@@ -71,6 +72,9 @@ class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     person = models.ForeignKey(Person, on_delete=models.PROTECT)
     permission_type = models.CharField(max_length=30, choices=PERMISSION_TYPE_CHOICES)
+
+    def __str__(self) -> str:
+        return f"Owner {self.person} for {self.account} ({self.permission_type})"
 
 
 class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
@@ -98,6 +102,9 @@ class AccountBenefitDiscount(CreatedUpdatedMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=STR_LONG, blank=False, null=False)
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class AccountBenefit(CreatedUpdatedMixin, models.Model):
     """A single benefit purchased for an account."""
@@ -124,8 +131,9 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
         return self.start_date <= (current_date or timezone.now().date()) <= self.end_date
 
     def __str__(self) -> str:
+        state = "(FROZEN)" if self.frozen else "(EXPIRED)" if not self.active() else ""
         return (
-            f'{"(FROZEN) " if self.frozen else ""}{self.benefit} for '
+            f"{state} Account {self.benefit} for "
             f'"{self.partnership or self.account.generic_relation}" '
             f"(allocation: {self.allocation}, valid: {self.human_daterange})"
         )

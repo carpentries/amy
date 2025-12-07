@@ -2,22 +2,17 @@
 {% load pagination %}
 
 {% block content %}
-  {% if perms.offering.add_accountbenefit %}
-  <p><a href="{% url 'account-benefit-create' %}" class="btn btn-success">New account benefit</a></p>
-  {% else %}
-  <p><a href="#" class="btn btn-success disabled">New account benefit</a></p>
-  {% endif %}
-
   {% if object_list %}
     <table class="table table-striped">
       <tr>
         <th>Account</th>
         <th>Partnership</th>
         <th>Benefit</th>
+        <th>Allocation</th>
+        <th>Discount</th>
         <th>Curriculum</th>
         <th>Dates</th>
         <th>Active</th>
-        <th>Allocation</th>
         <th>Created at</th>
         <th>Last updated at</th>
       </tr>
@@ -26,13 +21,14 @@
         <td><a href="{% url 'account-benefit-details' object.pk %}">{{ object.account.generic_relation }}</a></td>
         <td>{{ object.partnership|default_if_none:"&mdash;" }}</td>
         <td><a href="{{ object.benefit.get_absolute_url }}">{{ object.benefit.name }} ({{ object.benefit.unit_type }})</a></td>
+        <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
+        <td>{{ object.discount|default:"&mdash;" }}</td>
         <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
         <td>{{ object.human_daterange }}</td>
         <td>
           {{ object.active|yesno }}
           {% if object.frozen %}(frozen){% endif %}
         </td>
-        <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
         <td>{{ object.created_at }}</td>
         <td>{{ object.last_updated_at }}</td>
       </tr>

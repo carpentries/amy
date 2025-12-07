@@ -80,6 +80,13 @@ class Partnership(CreatedUpdatedMixin, models.Model):
     name = models.CharField(max_length=STR_LONG)
     tier = models.ForeignKey(PartnershipTier, on_delete=models.SET_NULL, null=True, blank=True)
     credits = models.IntegerField()
+    credits_extensions = ArrayField(
+        models.PositiveIntegerField(),
+        help_text="Number of credits extended. The field stores multiple extensions. "
+        "The credits value has been moved by a cumulative sum of values from this field.",
+        default=list,
+    )
+
     account = models.ForeignKey(
         Account,
         on_delete=models.PROTECT,

@@ -51,6 +51,7 @@ from fiscal.forms import (
     MembershipTaskForm,
     OrganizationCreateForm,
     OrganizationForm,
+    PartnershipCreditsExtensionForm,
     PartnershipExtensionForm,
     PartnershipForm,
     PartnershipRollOverForm,
@@ -963,6 +964,7 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
+        context["account_benefits"] = AccountBenefit.objects.filter(partnership=self.object).select_related("benefit")
         return context
 
 
@@ -1080,6 +1082,61 @@ class PartnershipExtend(
                 days=days,
                 date=date.today(),
                 new_date=new_agreement_end,
+                comment=comment,
+            ),
+        )
+
+        return super().form_valid(form)
+
+    def get_success_url(self) -> str:
+        return self.partnership.get_absolute_url()
+
+
+class PartnershipExtendCredits(
+    OnlyForAdminsMixin,
+    FlaggedViewMixin,  # type: ignore[misc]
+    GetPartnershipMixin,
+    FormView[PartnershipCreditsExtensionForm],
+):
+    flag_name = REQUIRED_FLAG_NAME
+    form_class = PartnershipCreditsExtensionForm
+    template_name = "generic_form.html"
+    permission_required = "fiscal.change_partnership"
+    comment = (
+        "Partnership credits extended by {diff_credits} on {date} (new credits value: {new_credits})."
+        "\n\n----\n\n{comment}"
+    )
+    request: AuthenticatedHttpRequest
+
+    def get_initial(self) -> dict[str, Any]:
+        return {
+            "credits": self.partnership.credits,
+            "new_credits": self.partnership.credits,
+            "diff_credits": 0,
+        }
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        if "title" not in kwargs:
+            kwargs["title"] = f"Extend credits for partnership {self.partnership}"
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form: PartnershipCreditsExtensionForm) -> HttpResponse:
+        credits = form.cleaned_data["credits"]
+        new_credits = form.cleaned_data["new_credits"]
+        diff_credits = new_credits - credits
+        comment = form.cleaned_data["comment"]
+        self.partnership.credits = new_credits
+        self.partnership.credits_extensions.append(diff_credits)
+        self.partnership.save()
+
+        # Add a comment on user's behalf
+        add_comment_for_object(
+            self.partnership,
+            self.request.user,
+            self.comment.format(
+                diff_credits=diff_credits,
+                date=date.today(),
+                new_credits=new_credits,
                 comment=comment,
             ),
         )

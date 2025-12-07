@@ -1,13 +1,15 @@
-from typing import Any
+from typing import Any, cast
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet
 from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
+from fiscal.models import Partnership
 from offering.base_views import AccountFormsetView
 from offering.filters import AccountBenefitFilter, AccountFilter, BenefitFilter
 from offering.forms import (
@@ -28,8 +30,9 @@ from workshops.base_views import (
 )
 from workshops.filters import EventCategoryFilter
 from workshops.forms import EventCategoryForm
-from workshops.models import EventCategory
+from workshops.models import EventCategory, Person
 from workshops.utils.access import OnlyForAdminsMixin
+from workshops.utils.urls import safe_next_or_default_url
 
 REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
 
@@ -56,6 +59,12 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         context["owners"] = AccountOwner.objects.filter(account=self.object).select_related("person")
+        context["account_benefits"] = AccountBenefit.objects.filter(account=self.object).select_related("benefit")
+        context["partnerships"] = (
+            Partnership.objects.credits_usage_annotation()
+            .filter(account=self.object)
+            .select_related("tier", "partner_consortium", "partner_organisation", "account")
+        )
         return context
 
 
@@ -73,6 +82,20 @@ class AccountCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountF
         mapped = Account.ACCOUNT_TYPE_MAPPING[form.cleaned_data["account_type"]]
         obj.generic_relation_content_type = ContentType.objects.get(app_label=mapped[0], model=mapped[1])
         obj.save()
+
+        if obj.account_type == Account.AccountTypeChoices.INDIVIDUAL:
+            # Automatically create an AccountOwner for individual accounts. It's the same as the person
+            # this account is for.
+            try:
+                owner = Person.objects.get(pk=form.cleaned_data["generic_relation_pk"])
+                AccountOwner.objects.create(
+                    account=obj,
+                    person=owner,
+                    permission_type=AccountOwner.PERMISSION_TYPE_CHOICES[0][0],
+                )
+            except Person.DoesNotExist:
+                pass
+
         return super().form_valid(form)
 
 
@@ -126,6 +149,15 @@ class AccountOwnersUpdate(
 
     def get_formset_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_formset_kwargs()
+
+        if self.account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
+            kwargs["can_delete"] = False
+            kwargs["min_num"] = 1
+            kwargs["max_num"] = 1
+            kwargs["validate_min"] = True
+            kwargs["validate_max"] = True
+            kwargs["edit_only"] = True
+
         return kwargs
 
     def get_formset_queryset(self, object: Account) -> QuerySet[AccountOwner]:
@@ -135,6 +167,19 @@ class AccountOwnersUpdate(
         if "title" not in kwargs:
             kwargs["title"] = "Change owners for {}".format(self.account)
         return super().get_context_data(**kwargs)
+
+    def form_valid(self, formset: BaseModelFormSet[AccountOwner, AccountOwnerForm]) -> HttpResponse:
+        results = formset.save(commit=True)
+
+        if self.account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
+            # overwrite any changes to the person field to keep it the same as the account's generic relation
+            original_owner = cast(Person, self.account.generic_relation)
+            permission_type = "owner"
+            for obj in results:
+                obj.person = original_owner
+                obj.permission_type = permission_type
+
+        return super().form_valid(formset)
 
 
 # -----------------------------------------------------------------
@@ -234,6 +279,29 @@ class AccountBenefitCreate(
     model = AccountBenefit
     object: AccountBenefit
     title = "Create a new account benefit"
+
+    def get_initial(self) -> dict[str, Any]:
+        initial = super().get_initial()
+        if account_pk := self.request.GET.get("account_pk"):
+            initial["account"] = get_object_or_404(Account, pk=account_pk)
+        if partnership_pk := self.request.GET.get("partnership_pk"):
+            partnership = get_object_or_404(Partnership, pk=partnership_pk)
+            initial["partnership"] = partnership
+            initial["start_date"] = partnership.agreement_start
+            initial["end_date"] = partnership.agreement_end
+        return initial
+
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        if kwargs.get("initial", {}).get("account") is not None:
+            kwargs["disable_account"] = True
+        if kwargs.get("initial", {}).get("partnership") is not None:
+            kwargs["disable_partnership"] = True
+        return kwargs
+
+    def get_success_url(self) -> str:
+        default_url = super().get_success_url()
+        return safe_next_or_default_url(self.request.GET.get("next"), default_url)
 
 
 class AccountBenefitUpdate(
