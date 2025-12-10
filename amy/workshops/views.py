@@ -1173,6 +1173,7 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
             "initial": {"event": self.object},
             "widgets": {"event": HiddenInput()},
         }
+        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
         context.update(
             {
                 "tasks": self.get_object()
@@ -1185,7 +1186,9 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
                     ),
                 )
                 .order_by("role__name"),
-                "task_form": TaskForm(form_tag=False, prefix="task", **kwargs),
+                "task_form": TaskForm(
+                    form_tag=False, prefix="task", show_allocated_benefit=show_allocated_benefit, **kwargs
+                ),
             }
         )
         return context
