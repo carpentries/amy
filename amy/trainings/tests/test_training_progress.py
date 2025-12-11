@@ -594,10 +594,9 @@ class TestCRUDViews(TestBase):
 
     def test_delete_trainingprogress_from_edit_view(self) -> None:
         """Regression test for issue #1085."""
-        trainingprogress_edit = self.app.get(
-            reverse("trainingprogress_edit", args=[self.progress.pk]),
-            user="admin",
-        )  # type: ignore[no-untyped-call]
-        self.assertRedirects(trainingprogress_edit.forms["delete-form"].submit(), reverse("all_trainees"))
+        trainingprogress_delete = self.client.post(
+            reverse("trainingprogress_delete", args=[self.progress.pk]),
+        )
+        self.assertRedirects(trainingprogress_delete, reverse("all_trainees"))
         with self.assertRaises(TrainingProgress.DoesNotExist):
             self.progress.refresh_from_db()

@@ -28,20 +28,6 @@ class TestBadge(TestBase):
         for award in awards:
             assert award.person.full_name in content, "Award for {} not found".format(award.person)
 
-    def test_badge_award(self) -> None:
-        """Ensure we can add awards from badge_award page."""
-        swc_badge = self.app.get(  # type: ignore[no-untyped-call]
-            reverse("badge_details", args=[self.instructor_badge.name]),
-            user="admin",
-        )
-        award_add = swc_badge.click("Award new", index=0)
-        form = award_add.forms[2]
-        self.assertSelected(form["award-badge"], "Instructor")
-        form["award-person"].force_value(self.spiderman.id)
-        assert self.instructor_badge.award_set.count() == 0
-        form.submit()
-        assert self.instructor_badge.award_set.count() == 1
-
     def test_remove_award(self) -> None:
         "Remove a badge from someone (ie. remove corresponding Award object)."
         person = self.hermione

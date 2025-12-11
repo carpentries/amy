@@ -1,4 +1,3 @@
-import cgi
 from datetime import date, timedelta
 from io import StringIO
 from typing import Literal
@@ -349,9 +348,7 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         }
         rv = self.client.post(reverse("person_bulk_add_confirmation"), payload)
         self.assertEqual(rv.status_code, 200)
-        _, params = cgi.parse_header(rv["content-type"])
-        charset = params["charset"]
-        content = rv.content.decode(charset)
+        content = rv.content.decode("utf-8")
         self.assertNotIn("foobar", content)
 
     def test_upload_existing_user(self) -> None:

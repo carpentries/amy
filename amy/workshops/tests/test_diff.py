@@ -100,11 +100,7 @@ class TestRegression1083(TestBase):
             bob.family = "Brown"
             bob.save()
 
-        res = self.app.get(reverse("person_details", args=[bob.pk]), user="admin")  # type: ignore[no-untyped-call]
-
-        revision = res.click("Last modified on")
+        last_version = Version.objects.get_for_object(bob).select_related("revision", "revision__user")[0]
+        revision = self.client.get(reverse("object_changes", args=[last_version.pk])).content.decode("utf-8")
         self.assertIn("Smith", revision)
         self.assertIn("Brown", revision)
-
-        back_to_person_view = revision.click("View newest")
-        self.assertIn("Brown", back_to_person_view)

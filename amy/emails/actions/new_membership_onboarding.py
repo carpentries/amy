@@ -46,7 +46,7 @@ def new_membership_onboarding_strategy(membership: Membership) -> StrategyEnum:
         template__signal=NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME,
     ).exists()
     task_count = MembershipTask.objects.filter(
-        membership=membership, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
+        membership_id=membership.pk, role__name__in=MEMBERSHIP_TASK_ROLES_EXPECTED
     ).count()
     membership_acceptable_variant = membership.variant in MEMBERSHIP_ACCEPTABLE_VARIANTS
     titanium_variant = membership.variant == "titanium"

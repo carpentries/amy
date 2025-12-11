@@ -509,7 +509,7 @@ class WorkshopRequestBaseForm(forms.ModelForm[WorkshopRequest]):
         if not preferred_dates and not other_preferred_dates:
             errors["preferred_dates"] = ValidationError("This field or the field below is required.")
 
-        yesterday = datetime.datetime.utcnow().date() - datetime.timedelta(days=1)
+        yesterday = datetime.datetime.now(datetime.timezone.utc).date() - datetime.timedelta(days=1)
         if preferred_dates and preferred_dates < yesterday:
             errors["preferred_dates"] = ValidationError("You cannot select date in the past.")
 
@@ -938,7 +938,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm[WorkshopInquiryRequest]):
         # 3: require preferred_dates or its "other" counterpart
         preferred_dates = self.cleaned_data.get("preferred_dates", None)
 
-        yesterday = datetime.datetime.utcnow().date() - datetime.timedelta(days=1)
+        yesterday = datetime.datetime.now(datetime.timezone.utc).date() - datetime.timedelta(days=1)
         if preferred_dates and preferred_dates < yesterday:
             errors["preferred_dates"] = ValidationError("You cannot select date in the past.")
 
