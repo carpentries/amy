@@ -683,3 +683,7 @@ FLAGS = {
 # Instructor Certificates
 # -----------------------------------------------------------------------------
 CERTIFICATE_SIGNATURE = "SherAaron Hurt (Director of Workshops and Instruction)"
+
+
+# To silence the Django 6.0 warning about URLField assume_https default changing
+FORMS_URLFIELD_ASSUME_HTTPS = True

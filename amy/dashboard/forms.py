@@ -180,6 +180,7 @@ class GetInvolvedForm(forms.ModelForm[TrainingProgress]):
         "If you made a GitHub contribution, enter that link and ensure it is to a"
         "Carpentries GitHub repository (not a fork).",
         required=False,
+        assume_scheme="https",
     )
     trainee_notes = forms.CharField(
         label="Additional information",

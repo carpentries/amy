@@ -162,7 +162,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
         # TODO: different arguments in Django 5.2
         constraints = [
             models.CheckConstraint(
-                check=Q(partner_consortium__isnull=True) ^ Q(partner_organisation__isnull=True),
+                condition=Q(partner_consortium__isnull=True) ^ Q(partner_organisation__isnull=True),
                 name="check_only_one_partner",
                 violation_error_message="Select only partner consortium OR partner organisation, never both.",
             ),

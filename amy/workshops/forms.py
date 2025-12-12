@@ -415,6 +415,7 @@ class EventForm(forms.ModelForm[Event]):
         label="Assessment survey for instructors:",
         help_text=("Auto-generated as long as the event is NOT marked as complete and " "it has a slug."),
         required=False,
+        assume_scheme="https",
     )
 
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)

@@ -33,7 +33,7 @@ SIDEBAR_DAL_WIDTH = {
 
 
 class OrganizationForm(forms.ModelForm[Organization]):
-    domain = forms.URLField(widget=forms.TextInput)
+    domain = forms.URLField(widget=forms.TextInput, assume_scheme="https")
     helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta:

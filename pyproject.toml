@@ -10,7 +10,7 @@ dependencies = [
   "argon2-cffi (>=23.1.0,<24.0.0)",
   "black",
   "crispy-bootstrap4 (>=2024.10,<2025.0)",
-  "django (>=4.2,<5.0)",
+  "django (>=5.2,<6.0)",
   "django-anymail (>=12.0,<13.0)",
   "django-better-admin-arrayfield (>=1.4.2,<2.0.0)",
   "django-contrib-comments (>=2.2.0,<3.0.0)",
