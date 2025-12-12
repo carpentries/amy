@@ -10,7 +10,7 @@ dependencies = [
   "argon2-cffi (>=23.1.0,<24.0.0)",
   "black",
   "crispy-bootstrap4 (>=2024.10,<2025.0)",
-  "django (>=4.2,<5.0)",
+  "django (>=5.2,<6.0)",
   "django-anymail (>=12.0,<13.0)",
   "django-better-admin-arrayfield (>=1.4.2,<2.0.0)",
   "django-contrib-comments (>=2.2.0,<3.0.0)",
@@ -30,7 +30,6 @@ dependencies = [
   "django-select2 (>=8.2.3,<9.0.0)",
   "django-stubs",
   "django-test-migrations (>=1.4.0,<2.0.0)",
-  "django-webtest (>=1.9.12,<2.0.0)",
   "djangorestframework (>=3.15.2,<4.0.0)",
   "djangorestframework-csv (>=3.0.2,<4.0.0)",
   "djangorestframework-stubs",
@@ -114,13 +113,12 @@ module = [
   "django_comments.*",
   "django_filters.*",
   "django_select2.*",
-  "django_webtest.*",
   "knox.*",
   "markdownx.*",
   "reversion.*",
   "reversion_compare.*",
   "social_django.*",
-  "webtest.*",
+  "social_core.exceptions.*",
 ]
 follow_untyped_imports = true
 

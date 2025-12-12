@@ -35,7 +35,7 @@ class TestInstructorRecruitmentFilter(TestCase):
         choices = filter_set.filters["status"].extra["choices"]
 
         # Assert
-        self.assertEqual(choices, InstructorRecruitment.STATUS_CHOICES)
+        self.assertEqual(choices, list(InstructorRecruitment.STATUS_CHOICES))
 
     def test_assigned_to_filter_choices_empty(self) -> None:
         # Arrange

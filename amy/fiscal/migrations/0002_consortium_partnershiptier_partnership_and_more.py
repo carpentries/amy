@@ -146,7 +146,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="partnership",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("partner_consortium__isnull", True), ("partner_organisation__isnull", True), _connector="XOR"
                 ),
                 name="check_only_one_partner",

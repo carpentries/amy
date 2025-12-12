@@ -9,9 +9,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.test import TestCase
-from django_webtest import WebTest
 from requests import Response
-import webtest.forms
 
 from communityroles.models import CommunityRole, CommunityRoleConfig
 from consents.models import Consent, Term, TermOption
@@ -71,7 +69,7 @@ class SuperuserMixin(_T):
         self.client.login(username=self.admin.username, password=self.admin_password)
 
 
-class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django-webtest)
+class TestBase(SuperuserMixin, TestCase):
     """Base class for AMY test cases."""
 
     def setUp(self) -> None:
@@ -522,23 +520,6 @@ class TestBase(SuperuserMixin, WebTest):  # Support for functional tests (django
         content = response.content.decode("utf-8")
         with open(filename, "w") as f:
             f.write(content)
-
-    # Web-test helpers
-    def assertSelected(self, field: webtest.forms.Select, expected: str) -> None:
-        if not isinstance(field, webtest.forms.Select):
-            raise TypeError
-
-        expected_value = field._get_value_for_text(expected)  # type: ignore
-        got_value = field.value
-
-        # field.options is a list of (value, selected?, verbose name) triples
-        selected = [o[2] for o in field.options if o[1]]
-
-        self.assertEqual(
-            expected_value,
-            got_value,
-            msg='Expected "{}" to be selected ' "while {} is/are selected.".format(expected, selected),
-        )
 
     @contextmanager
     def assertValidationErrors(self, fields: Sequence[str]) -> Generator[None, None, None]:

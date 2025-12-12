@@ -56,7 +56,7 @@ def membership_quarterly_email_strategy(signal_name: str, membership: Membership
         generic_relation_pk=membership.pk,
         template__signal=signal_name,
     ).exists()
-    task_count = MembershipTask.objects.filter(membership=membership).count()
+    task_count = MembershipTask.objects.filter(membership_id=membership.pk).count()
     membership_acceptable_variant = membership.variant in MEMBERSHIP_ACCEPTABLE_VARIANTS
 
     log_condition_elements(

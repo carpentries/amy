@@ -176,7 +176,7 @@ class TestTermsMiddleware(ConsentTestBase):
         self.client.force_login(self.neville)
         self.assertEqual(person_has_consented_to_required_terms(self.neville), False)
         with self.terms_middleware():
-            rv = self.client.get(url)
+            rv = self.client.post(url)
             # doesn't redirect to the form
             # But logout does redirect to login
             self.assertRedirects(rv, reverse("login"))

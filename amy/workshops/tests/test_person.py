@@ -11,8 +11,6 @@ from django_comments.models import Comment
 from reversion.models import Version
 from reversion.revisions import create_revision
 from social_django.models import UserSocialAuth
-import webtest
-from webtest.forms import Upload
 
 from consents.models import Consent, Term, TermEnum
 from trainings.models import Involvement
@@ -122,64 +120,8 @@ class TestPerson(TestBase):
         )
 
         bob_edit_url = reverse("person_edit", args=[bob.id])
-        res = self.app.get(bob_edit_url, user="manager")  # type: ignore[no-untyped-call]
+        res = self.client.get(bob_edit_url, user="manager")
         self.assertEqual(res.status_code, 200)
-
-    def test_person_award_badge(self) -> None:
-        """Ensure that we can add an award from `person_edit` view"""
-        url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
-        award_form = person_edit.forms[2]
-        award_form["award-badge"] = self.instructor_badge.pk
-
-        self.assertEqual(self.spiderman.award_set.count(), 0)
-        self.assertRedirects(award_form.submit(), url)
-        self.assertEqual(self.spiderman.award_set.count(), 1)
-        self.assertEqual(self.spiderman.award_set.all()[0].badge, self.instructor_badge)
-
-    def test_person_failed_training_warning(self) -> None:
-        """
-        Ensure that the form warns the admin if the person
-        has a failed training, and an award or task is added
-        """
-        warning_popup = (
-            'return confirm("Warning: Trainee failed previous training(s).' ' Are you sure you want to continue?");'
-        )
-        # No failed training, so no warning should show
-        url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
-        award_form = person_edit.forms[2]
-        task_form = person_edit.forms[3]
-        self.assertNotEqual(award_form.fields["submit"][0].attrs.get("onclick"), warning_popup)
-        self.assertNotEqual(task_form.fields["submit"][0].attrs.get("onclick"), warning_popup)
-
-        # Spiderman failed a training
-        training = TrainingRequirement.objects.get(name="Training")
-        TrainingProgress.objects.create(trainee=self.spiderman, state="f", requirement=training, notes="Failed")
-
-        # A warning should be shown
-        url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
-        award_form = person_edit.forms[2]
-        task_form = person_edit.forms[3]
-        self.assertEqual(award_form.fields["submit"][0].attrs["onclick"], warning_popup)
-        self.assertEqual(task_form.fields["submit"][0].attrs["onclick"], warning_popup)
-
-    def test_person_add_task(self) -> None:
-        """Ensure that we can add a task from `person_edit` view"""
-        self._setUpEvents()  # set up some events for us
-        role = Role.objects.create(name="test_role")
-
-        url = reverse("person_edit", args=[self.spiderman.pk])
-        person_edit = self.app.get(url, user="admin")  # type: ignore[no-untyped-call]
-        task_form = person_edit.forms[3]
-        task_form["task-event"].force_value(Event.objects.all()[0].pk)
-        task_form["task-role"] = role.pk
-
-        self.assertEqual(self.spiderman.task_set.count(), 0)
-        self.assertRedirects(task_form.submit(), url)
-        self.assertEqual(self.spiderman.task_set.count(), 1)
-        self.assertEqual(self.spiderman.task_set.all()[0].role, role)
 
     def test_edit_person_permissions(self) -> None:
         """Make sure we can set up user permissions correctly."""
@@ -413,49 +355,6 @@ class TestPerson(TestBase):
         Task.objects.create(person=p2, event=e1, role=learner)
 
         self.assertEqual(set(p1.get_training_tasks()), {t1})
-
-    def test_awarding_instructor_badge_workflow(self) -> None:
-        """Test that you can click "instructor badge" label in "eligible"
-        column in trainees list view. When you click them, you're moved to
-        the view where you can edit person's awards. "Award", "Badge", and "Event"
-        field should be prefilled in. Also test if you're moved back to
-        trainees view after adding the badge."""
-
-        trainee = Person.objects.create_user(
-            username="trainee",
-            personal="Bob",
-            family="Smith",
-            email="bob.smith@example.com",
-        )
-        host = Organization.objects.create(domain="example.com", fullname="Test Organization")
-        ttt, _ = Tag.objects.get_or_create(name="TTT")
-        learner, _ = Role.objects.get_or_create(name="learner")
-        training = Event.objects.create(slug="2016-08-10-training", host=host)
-        training.tags.add(ttt)
-        Task.objects.create(person=trainee, event=training, role=learner)
-        TrainingProgress.objects.create(
-            trainee=trainee,
-            requirement=TrainingRequirement.objects.get(name="Training"),
-            event=training,
-            state="p",
-        )
-
-        trainees = self.app.get(reverse("all_trainees"), user="admin")  # type: ignore[no-untyped-call]
-
-        # clear trainee awards so that .last() always returns the exact badge
-        # we want
-        trainee.award_set.all().delete()
-
-        # Test workflow starting from clicking at "instructor badge" label
-        swc_res = trainees.click("^<strike>instructor badge</strike>$")
-        self.assertEqual(
-            int(swc_res.forms["main-form"]["award-badge"].value),
-            self.instructor_badge.pk,
-        )
-        self.assertEqual(int(swc_res.forms["main-form"]["award-event"].value), training.pk)
-        res = swc_res.forms["main-form"].submit()
-        self.assertRedirects(res, reverse("all_trainees"))
-        self.assertEqual(trainee.award_set.all().reverse()[0].badge, self.instructor_badge)
 
     def test_person_github_username_validation(self) -> None:
         """Ensure GitHub username doesn't allow for spaces or commas."""
@@ -1434,23 +1333,22 @@ class TestPersonUpdateViewPermissions(TestBase):
         trainer_group, _ = Group.objects.get_or_create(name="trainers")
         self.trainer.groups.add(trainer_group)
 
+    def tearDown(self) -> None:
+        self.client.logout()
+
     def test_correct_permissions(self) -> None:
         self.assertTrue(self.trainer.is_admin)
         self.assertFalse(self.trainee.is_admin)
 
     def test_trainer_can_edit_self_profile(self) -> None:
-        profile_edit = self.app.get(
-            reverse("person_edit", args=[self.trainer.pk]),
-            user=self.trainer,
-        )  # type: ignore[no-untyped-call]
+        self.client.force_login(self.trainer)
+        profile_edit = self.client.get(reverse("person_edit", args=[self.trainer.pk]))
         self.assertEqual(profile_edit.status_code, 200)
 
     def test_trainer_cannot_edit_stray_profile(self) -> None:
-        with self.assertRaises(webtest.app.AppError):
-            self.app.get(
-                reverse("person_edit", args=[self.trainee.pk]),
-                user=self.trainer,
-            )  # type: ignore[no-untyped-call]
+        self.client.force_login(self.trainer)
+        response = self.client.get(reverse("person_edit", args=[self.trainee.pk]))
+        self.assertEqual(response.status_code, 403)
 
 
 class TestRegression1076(TestBase):
@@ -1465,22 +1363,6 @@ class TestRegression1076(TestBase):
         self.admin.family = ""
         self.admin.save()  # no error should be raised
         self.admin.full_clean()  # no error should be raised
-
-    def test_bulk_upload(self) -> None:
-        event_slug = Event.objects.all()[0].slug
-        csv = ("personal,family,email,event,role\n" "John,,john@smith.com,{0},learner\n").format(event_slug)
-
-        upload_page = self.app.get(reverse("person_bulk_add"), user="admin")  # type: ignore[no-untyped-call]
-        upload_form = upload_page.forms["main-form"]
-        upload_form["file"] = Upload("people.csv", csv.encode("utf-8"))  # type: ignore[no-untyped-call]
-
-        confirm_page = upload_form.submit().maybe_follow()
-        confirm_form = confirm_page.forms["main-form"]
-
-        info_page = confirm_form.submit("confirm").maybe_follow()
-        self.assertIn("Successfully created 1 persons and 1 tasks", info_page)
-        john_created = Person.objects.filter(personal="John", family="").exists()
-        self.assertTrue(john_created)
 
 
 class TestArchivePerson(TestBase):

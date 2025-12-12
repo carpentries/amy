@@ -1,5 +1,7 @@
+from typing import Any
+
 from django.conf import settings
-from github import Github
+from github import Auth, Github
 from github.GithubException import UnknownObjectException
 from social_core.exceptions import SocialAuthBaseException
 
@@ -10,20 +12,20 @@ class NoPersonAssociatedWithGithubAccount(SocialAuthBaseException):
     pass
 
 
-def abort_if_no_user_found(user=None, **kwargs):
+def abort_if_no_user_found(user: Any | None = None, **kwargs: Any) -> None:
     """Part of Python-Social pipeline; aborts the authentication if no user
     can be associated with the specified GitHub username."""
     if user is None:
         raise NoPersonAssociatedWithGithubAccount
 
 
-def github_username_to_uid(username):
+def github_username_to_uid(username: str) -> int:
     """Return UID (int) of GitHub account for username == `Person.github`.
 
     WARNING: this should only accept valid usernames (use
     `validate_github_username` before invoking this function)."""
 
-    g = Github(settings.GITHUB_API_TOKEN)
+    g = Github(auth=Auth.Token(settings.GITHUB_API_TOKEN))
 
     try:
         user = g.get_user(username)
@@ -40,7 +42,7 @@ def github_username_to_uid(username):
         return user.id
 
 
-def validate_github_username(username):
+def validate_github_username(username: str) -> None:
     """Run GitHub username validators in sequence."""
     GHUSERNAME_MAX_LENGTH_VALIDATOR(username)
     GHUSERNAME_REGEX_VALIDATOR(username)

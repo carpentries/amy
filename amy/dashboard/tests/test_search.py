@@ -2,7 +2,6 @@ from datetime import date, datetime, timedelta, timezone
 
 from django.urls import reverse
 from django_comments.models import Comment
-from django_webtest.response import DjangoWebtestResponse
 
 from workshops.models import (
     Member,
@@ -22,14 +21,12 @@ class TestSearch(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
-    def search_for(self, term: str, no_redirect: bool = True, follow: bool = False) -> DjangoWebtestResponse:
-        search_page = self.app.get(reverse("search"), user="admin")  # type: ignore[no-untyped-call]
-        form = search_page.forms["main-form"]
-        form["term"] = term
-        form["no_redirect"] = no_redirect
-        if follow:
-            return form.submit().maybe_follow()  # type: ignore[no-any-return]
-        return form.submit()  # type: ignore[no-any-return]
+    def search_for(self, term: str, no_redirect: bool = True, follow: bool = False):  # type: ignore[no-untyped-def]
+        return self.client.get(
+            reverse("search"),
+            data={"term": term, "no_redirect": "on" if no_redirect else ""},
+            follow=follow,
+        )
 
     def test_search_for_organization_with_no_matches(self) -> None:
         response = self.search_for("non.existent")
@@ -154,8 +151,7 @@ class TestSearch(TestBase):
     def test_search_redirect(self) -> None:
         # search for "Alpha" (should yield 1 organisation)
         response = self.search_for("Alpha", no_redirect=False, follow=True)
-        assert response.request  # for mypy
-        self.assertEqual(response.request.path, self.org_alpha.get_absolute_url())
+        self.assertEqual(response.redirect_chain[0][0], self.org_alpha.get_absolute_url())
 
     def test_search_for_memberships_code(self) -> None:
         """Make sure that finding memberships by registration code works."""
