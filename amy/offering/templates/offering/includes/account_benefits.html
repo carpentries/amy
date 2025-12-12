@@ -16,7 +16,11 @@
   <tr>
     <td><a href="{{ object.get_absolute_url }}">{{ object.benefit.name }} ({{ object.benefit.unit_type }})</a></td>
     {% if show_partnership_column is True %}
-    <td><a href="{{ object.partnership.get_absolute_url }}">{{ object.partnership.name }}</a></td>
+      {% if object.partnership %}
+      <td><a href="{{ object.partnership.get_absolute_url }}">{{ object.partnership.name }}</a></td>
+      {% else %}
+      <td>&mdash;</td>
+      {% endif %}
     {% endif %}
     <td>{{ object.human_daterange }}</td>
     <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
