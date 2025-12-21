@@ -4,10 +4,10 @@
 # ----------------------------------
 # BASE IMAGE: slim debian bullseye
 # ----------------------------------
-FROM python:3.12-slim AS base
+FROM python:3.14-slim AS base
 
 # security updates
-RUN apt-get update && apt-get -y upgrade && apt-get install -y --no-install-recommends libpq5 libcairo2
+RUN apt-get update && apt-get -y upgrade && apt-get install -y --no-install-recommends libpq5 libcairo2 libjpeg
 # fonts for the SVG generation
 RUN apt-get install -y fonts-liberation
 
@@ -20,7 +20,7 @@ FROM base AS dependencies
 RUN apt-get install -y --no-install-recommends libpq-dev gcc
 RUN python3 -m pip install pipx
 RUN python3 -m pipx ensurepath
-RUN pipx install poetry==2.0.0
+RUN pipx install poetry==2.2.1
 RUN mkdir /app
 RUN mkdir /venv
 

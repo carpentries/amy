@@ -10,7 +10,7 @@ jobs:
     continue-on-error: true # currently we expect these tests to fail
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.14"]
         # two options for package: "pa11y" and "lighthouse"
         # both options use axe-core ruleset for a11y tests
         # pa11y runs faster and produces smaller artifacts
@@ -55,9 +55,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get install -y libjpeg-dev
           python -m pip install pipx
           python -m pipx ensurepath
-          pipx install poetry==2.0.0
+          pipx install poetry
           poetry sync
 
       - name: Set up Node

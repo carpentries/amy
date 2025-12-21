@@ -1,7 +1,7 @@
 ![](amy/static/amy-logo.png)
 
-[![](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![](https://img.shields.io/badge/django-4.2+-blue.svg)](https://www.djangoproject.com/)
+[![](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
+[![](https://img.shields.io/badge/django-5.2+-blue.svg)](https://www.djangoproject.com/)
 [![](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE.md)
 
 AMY is a web-based workshop administration application for [The Carpentries][tc]
