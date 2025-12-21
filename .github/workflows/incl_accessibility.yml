@@ -55,9 +55,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get install -y libjpeg-dev
           python -m pip install pipx
           python -m pipx ensurepath
-          pipx install poetry==2.0.0
+          pipx install poetry
           poetry sync
 
       - name: Set up Node

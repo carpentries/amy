@@ -41,7 +41,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: poetry sync
+      run: |
+        sudo apt-get install -y libjpeg-dev
+        poetry sync
 
     - name: Install NodeJS dependencies
       run: npm install
