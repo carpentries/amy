@@ -5,7 +5,7 @@ description = "A web-based workshop administration application built using Djang
 authors = [{ name = "Carpentries Team", email = "team@carpentries.org" }]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.14,<4.0"
 dependencies = [
   "argon2-cffi (>=23.1.0,<24.0.0)",
   "black",
@@ -97,7 +97,7 @@ known_first_party = [
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
-python_version = "3.12"
+python_version = "3.14"
 show_error_codes = true
 strict = true
 mypy_path = "amy"
