@@ -7,7 +7,7 @@
 FROM python:3.14-slim AS base
 
 # security updates
-RUN apt-get update && apt-get -y upgrade && apt-get install -y --no-install-recommends libpq5 libcairo2
+RUN apt-get update && apt-get -y upgrade && apt-get install -y --no-install-recommends libpq5 libcairo2 libjpeg
 # fonts for the SVG generation
 RUN apt-get install -y fonts-liberation
 
