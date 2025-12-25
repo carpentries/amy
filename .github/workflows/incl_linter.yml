@@ -7,6 +7,9 @@ jobs:
   lint:
     name: Lint Code Base
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.14' ]
 
     permissions:
       contents: read
@@ -32,5 +35,5 @@ jobs:
           poetry sync
 
       - name: Run Ruff
-        run: ruff check --output-format=github .
+        run: poetry run ruff check --output-format=github .
 
