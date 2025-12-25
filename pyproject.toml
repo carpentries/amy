@@ -61,6 +61,7 @@ dependencies = [
   "airportsdata (==20250909)",
   "pytz (>=2025.2,<2026.0)",
   "types-pytz (>=2025.2.0.20250809,<2026.0.0.0)",
+  "ruff (>=0.14.10,<0.15.0)",
 ]
 
 [build-system]
@@ -70,30 +71,27 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 package-mode = false
 
-[tool.black]
+[tool.ruff]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-force_sort_within_sections = true
-skip_gitignore = true
-known_first_party = [
-  "api",
-  "autoemails",
-  "consents",
-  "communityroles",
-  "dashboard",
-  "emails",
-  "extcomments",
-  "extforms",
-  "extrequests",
-  "fiscal",
-  "offering",
-  "recruitment",
-  "reports",
-  "trainings",
-  "workshops",
+[tool.ruff.lint]
+select = [
+  # pycodestyle
+  "E",
+  # pyflakes
+  "F",
+  # pyupgrade
+  "UP",
+  # flake8-bugbear
+  "B",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]

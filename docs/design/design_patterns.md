@@ -14,8 +14,8 @@ This document acts as a reference for where certain design patterns can be found
 
 1. Use JavaScript to change the request that is used to get the available choices for the dynamically changing field. Add the dependent field as a parameter in the request. (e.g. `$("#id_communityrole-award").select2({...})` in [/static/communityrole_form.js](../../amy/static/communityrole_form.js))
 2. In the relevant form, ensure that the JS file is included under the `Media` metaclass (e.g. `CommunityRoleForm` in [/communityroles/forms.py](../../amy/communityroles/forms.py))
-3. In the relevant lookup view, check for the presence of the extra parameters and use them to filter the results as needed (e.g. `AwardLookupView` in [/workshops/lookups.py](../../amy/workshops/lookups.py))
-4. Write tests using different parameter settings (e.g. `TestAwardLookupView` in [/workshops/tests/test_lookups.py](../../amy/workshops/tests/test_lookups.py))
+3. In the relevant lookup view, check for the presence of the extra parameters and use them to filter the results as needed (e.g. `AwardLookupView` in [/workshops/lookups.py](../../src/workshops/lookups.py))
+4. Write tests using different parameter settings (e.g. `TestAwardLookupView` in [/workshops/tests/test_lookups.py](../../src/workshops/tests/test_lookups.py))
 
 ### Make a field required/not required according to another field's value
 
@@ -60,4 +60,4 @@ This document acts as a reference for where certain design patterns can be found
 
 ### Migration tests
 
-Use the `django_test_migrations` package, e.g. [/workshops/tests/test_migrations.py](../../amy/workshops/tests/test_migrations.py)
+Use the `django_test_migrations` package, e.g. [/workshops/tests/test_migrations.py](../../src/workshops/tests/test_migrations.py)

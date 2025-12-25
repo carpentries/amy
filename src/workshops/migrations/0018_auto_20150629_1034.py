@@ -1,0 +1,15 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("workshops", "0017_merge"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="person",
+            name="lessons",
+            field=models.ManyToManyField(to="workshops.Lesson", through="workshops.Qualification"),
+        ),
+    ]

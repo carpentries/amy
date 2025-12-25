@@ -5,13 +5,13 @@ Django settings for AMY project.
 from pathlib import Path
 from typing import cast
 
-from django.core.exceptions import ImproperlyConfigured
-from django.utils.translation import gettext_lazy as _
 import environ  # type: ignore
 import jinja2
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import gettext_lazy as _
 
-ROOT_DIR = Path(__file__).parent.parent  # amy/
-APPS_DIR = ROOT_DIR / "amy"
+ROOT_DIR = Path(__file__).parent.parent
+APPS_DIR = ROOT_DIR / "src"
 
 # set default values
 env = environ.Env(
@@ -69,7 +69,7 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
 USE_TZ = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#std-setting-FORMAT_MODULE_PATH
-FORMAT_MODULE_PATH = "amy.formats"
+FORMAT_MODULE_PATH = "src.formats"
 # Secret key must be kept secret
 DEFAULT_SECRET_KEY = "3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@"
 SECRET_KEY = env.str("AMY_SECRET_KEY", default=DEFAULT_SECRET_KEY)
@@ -163,21 +163,21 @@ THIRD_PARTY_APPS = [
     "flags",
 ]
 LOCAL_APPS = [
-    "amy.workshops.apps.WorkshopsConfig",
-    "amy.api.apps.ApiConfig",
-    "amy.dashboard.apps.DashboardConfig",
-    "amy.extforms.apps.ExtformsConfig",
-    "amy.extrequests.apps.ExtrequestsConfig",
-    "amy.fiscal.apps.FiscalConfig",
-    "amy.reports.apps.ReportsConfig",
-    "amy.trainings.apps.TrainingsConfig",
-    "amy.extcomments.apps.ExtcommentsConfig",
-    "amy.autoemails.apps.AutoemailsConfig",  # TODO: eventually remove
-    "amy.consents.apps.ConsentsConfig",
-    "amy.communityroles.apps.CommunityRolesConfig",
-    "amy.recruitment.apps.RecruitmentConfig",
-    "amy.emails.apps.EmailsConfig",
-    "amy.offering.apps.OfferingConfig",
+    "src.workshops.apps.WorkshopsConfig",
+    "src.api.apps.ApiConfig",
+    "src.dashboard.apps.DashboardConfig",
+    "src.extforms.apps.ExtformsConfig",
+    "src.extrequests.apps.ExtrequestsConfig",
+    "src.fiscal.apps.FiscalConfig",
+    "src.reports.apps.ReportsConfig",
+    "src.trainings.apps.TrainingsConfig",
+    "src.extcomments.apps.ExtcommentsConfig",
+    "src.autoemails.apps.AutoemailsConfig",  # TODO: eventually remove
+    "src.consents.apps.ConsentsConfig",
+    "src.communityroles.apps.CommunityRolesConfig",
+    "src.recruitment.apps.RecruitmentConfig",
+    "src.emails.apps.EmailsConfig",
+    "src.offering.apps.OfferingConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -208,7 +208,7 @@ SOCIAL_AUTH_PIPELINE = (
     "social_core.pipeline.social_auth.auth_allowed",
     "social_core.pipeline.social_auth.social_user",
     # If we can't find Person associated with given github account, abort.
-    "workshops.github_auth.abort_if_no_user_found",
+    "src.workshops.github_auth.abort_if_no_user_found",
     # The default pipeline includes 'social.pipeline.user.create_user' here,
     # but we don't want to register a new Person when somebody logs in
     # using GitHub account that is not associated with any Person.
@@ -273,7 +273,7 @@ CACHES = {
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
 MIDDLEWARE = [
-    "workshops.middleware.version_check.VersionCheckMiddleware",
+    "src.workshops.middleware.version_check.VersionCheckMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "reversion.middleware.RevisionMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -284,9 +284,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "workshops.middleware.github_auth.GithubAuthMiddleware",
-    "consents.middleware.TermsMiddleware",
-    "workshops.middleware.feature_flags.SaveSessionFeatureFlagMiddleware",
+    "src.workshops.middleware.github_auth.GithubAuthMiddleware",
+    "src.consents.middleware.TermsMiddleware",
+    "src.workshops.middleware.feature_flags.SaveSessionFeatureFlagMiddleware",
 ]
 
 # STATIC
@@ -370,11 +370,11 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 # AMY version
-                "workshops.context_processors.version",
-                "workshops.context_processors.site_banner",
-                "workshops.context_processors.feature_flags_enabled",
+                "src.workshops.context_processors.version",
+                "src.workshops.context_processors.site_banner",
+                "src.workshops.context_processors.feature_flags_enabled",
                 # Consent enums
-                "consents.context_processors.terms",
+                "src.consents.context_processors.terms",
                 # GitHub auth
                 "social_django.context_processors.backends",
                 "social_django.context_processors.login_redirect",
@@ -586,7 +586,7 @@ DEBUG_TOOLBAR_PANELS = [
 # Django-contrib-comments
 # -----------------------------------------------------------------------------
 # https://django-contrib-comments.readthedocs.io/en/latest/settings.html
-COMMENTS_APP = "extcomments"
+COMMENTS_APP = "src.extcomments"
 
 # Django-Select2 settings
 # -----------------------------------------------------------------------------
@@ -601,7 +601,7 @@ SELECT2_CACHE_BACKEND = "select2"
 # -----------------------------------------------------------------------------
 # A custom test runner tailored for our needs.
 # https://docs.djangoproject.com/en/4.1/topics/testing/advanced/#defining-a-test-runner
-TEST_RUNNER = "workshops.tests.runner.SilenceLogsRunner"
+TEST_RUNNER = "src.workshops.tests.runner.SilenceLogsRunner"
 
 # Autoemails application settings
 # -----------------------------------------------------------------------------
@@ -622,7 +622,7 @@ EMAIL_ATTACHMENTS_BUCKET_NAME = env("AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME")
 REPORTS_SALT_FRONT = env("AMY_REPORTS_SALT_FRONT")
 REPORTS_SALT_BACK = env("AMY_REPORTS_SALT_BACK")
 if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
-    raise ImproperlyConfigured("Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK" " in settings.")
+    raise ImproperlyConfigured("Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK in settings.")
 
 REPORTS_LINK = env("AMY_REPORTS_LINK")
 
