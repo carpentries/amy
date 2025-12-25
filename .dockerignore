@@ -27,6 +27,9 @@ mediafiles/
 *.pyc
 __pycache__
 
+# ruff cache
+.ruff_cache
+
 # MyPy cache files
 .mypy_cache
 
