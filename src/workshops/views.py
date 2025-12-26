@@ -1039,11 +1039,7 @@ def validate_event(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse
     except Event.DoesNotExist as e:
         raise Http404("Event matching query does not exist.") from e
 
-    page_url = request.GET.get("url", None)  # for manual override
-    if page_url is None:
-        page_url = event.url or ""
-
-    page_url = page_url.strip()
+    page_url = (event.url or "").strip()
 
     error_messages: list[str] = []
     warning_messages: list[str] = []
