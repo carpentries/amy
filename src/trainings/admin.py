@@ -4,7 +4,7 @@ from src.consents.admin import ArchiveActionMixin
 from src.trainings.models import Involvement
 
 
-class InvolvementAdmin(ArchiveActionMixin, admin.ModelAdmin):
+class InvolvementAdmin(ArchiveActionMixin[Involvement], admin.ModelAdmin[Involvement]):
     list_display = (
         "name",
         "display_name",
