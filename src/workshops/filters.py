@@ -51,7 +51,7 @@ def extend_country_choices(choices: Sequence[str], countries_override: dict[str,
 class BaseCountriesFilter(django_filters.Filter):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.extend_countries = kwargs.pop("extend_countries", True)
-        super().__init__(*args, **kwargs)  # type: ignore
+        super().__init__(*args, **kwargs)
 
     def _get_countries(self) -> list[str]:
         qs = self.model._default_manager.distinct()  # type: ignore
@@ -70,7 +70,7 @@ class BaseCountriesFilter(django_filters.Filter):
         countries = Countries()
         countries.only = only  # type: ignore
         self.extra["choices"] = list(countries)
-        return super().field  # type: ignore
+        return super().field
 
 
 class AllCountriesFilter(BaseCountriesFilter, django_filters.ChoiceFilter):
@@ -84,7 +84,7 @@ class AllCountriesMultipleFilter(BaseCountriesFilter, django_filters.MultipleCho
 class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
     def __init__(self, model: type[Model], *args: Any, **kwargs: Any) -> None:
         self.lookup_model = model
-        super().__init__(*args, **kwargs)  # type: ignore
+        super().__init__(*args, **kwargs)
 
     @property
     def field(self) -> Field:
@@ -95,7 +95,7 @@ class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
         qs1 = qs1.order_by(name).values_list(name, flat=True)
         qs2 = model.objects.filter(pk__in=qs1)  # type: ignore
         self.extra["choices"] = [(o.pk, str(o)) for o in qs2]
-        return super().field  # type: ignore
+        return super().field
 
 
 class EventStateFilter(django_filters.ChoiceFilter):
@@ -117,7 +117,7 @@ class EventStateFilter(django_filters.ChoiceFilter):
 
 class NamesOrderingFilter(django_filters.OrderingFilter):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)  # type: ignore
+        super().__init__(*args, **kwargs)
         self.extra["choices"] += [
             ("lastname", "Last name"),
             ("-lastname", "Last name (descending)"),
@@ -127,24 +127,24 @@ class NamesOrderingFilter(django_filters.OrderingFilter):
 
     def filter(self, qs: QuerySet[Model], value: list[Any] | None) -> QuerySet[Model]:
         if not value:
-            return super().filter(qs, value)  # type: ignore
+            return super().filter(qs, value)
         elif any(v in ["lastname"] for v in value):
-            return super().filter(qs, ("family", "middle", "personal"))  # type: ignore
+            return super().filter(qs, ("family", "middle", "personal"))
         elif any(v in ["-lastname"] for v in value):
-            return super().filter(qs, ("-family", "-middle", "-personal"))  # type: ignore
+            return super().filter(qs, ("-family", "-middle", "-personal"))
         elif any(v in ["firstname"] for v in value):
-            return super().filter(qs, ("personal", "middle", "family"))  # type: ignore
+            return super().filter(qs, ("personal", "middle", "family"))
         elif any(v in ["-firstname"] for v in value):
-            return super().filter(qs, ("-personal", "-middle", "-family"))  # type: ignore
+            return super().filter(qs, ("-personal", "-middle", "-family"))
         else:
-            return super().filter(qs, value)  # type: ignore
+            return super().filter(qs, value)
 
 
 class ContinentFilter(django_filters.ChoiceFilter):
     @property
     def field(self) -> Field:
         self.extra["choices"] = Continent.objects.values_list("pk", "name")
-        return super().field  # type: ignore
+        return super().field
 
     def filter(self, qs: QuerySet[Model], value: Any) -> QuerySet[Model]:
         if isinstance(value, django_filters.fields.Lookup):
@@ -162,7 +162,7 @@ class ContinentFilter(django_filters.ChoiceFilter):
 # ------------------------------------------------------------
 
 
-class AMYFilterSet(django_filters.FilterSet):  # type: ignore
+class AMYFilterSet(django_filters.FilterSet):
     """
     This base class sets FormHelper.
     """
@@ -171,10 +171,10 @@ class AMYFilterSet(django_filters.FilterSet):  # type: ignore
         super().__init__(*args, **kwargs)
 
         # Set default FormHelper
-        self.form.helper = bootstrap_helper_filter
+        self.form.helper = bootstrap_helper_filter  # type: ignore[attr-defined]
 
 
-class StateFilterSet(django_filters.FilterSet):  # type: ignore
+class StateFilterSet(django_filters.FilterSet):
     """A mixin for extending filter classes for Django models that make use of
     `StateMixin`."""
 
@@ -185,7 +185,7 @@ class StateFilterSet(django_filters.FilterSet):  # type: ignore
         empty_label="Any",
         null_label=None,
         null_value=None,
-    )  # type: ignore
+    )
 
 
 # ------------------------------------------------------------
@@ -206,7 +206,7 @@ class EventFilter(AMYFilterSet):
         ("published_events", "Published"),
         ("metadata_changed", "Detected changes in metadata"),
     ]
-    state = EventStateFilter(choices=STATUS_CHOICES, label="Status", widget=Select2Widget)  # type: ignore
+    state = EventStateFilter(choices=STATUS_CHOICES, label="Status", widget=Select2Widget)
 
     tags = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
@@ -217,7 +217,7 @@ class EventFilter(AMYFilterSet):
     )
 
     country = AllCountriesFilter(widget=Select2Widget)
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -225,7 +225,7 @@ class EventFilter(AMYFilterSet):
             "start",
             "end",
         ),
-    )  # type: ignore
+    )
 
     class Meta:
         model = Event
@@ -242,7 +242,7 @@ class EventFilter(AMYFilterSet):
 
 
 class EventCategoryFilter(AMYFilterSet):
-    active = django_filters.BooleanFilter("active")  # type: ignore
+    active = django_filters.BooleanFilter("active")
     order_by = django_filters.OrderingFilter(
         fields=(
             "name",
@@ -250,7 +250,7 @@ class EventCategoryFilter(AMYFilterSet):
             "created_at",
             "last_modified_at",
         )
-    )  # type: ignore
+    )
 
 
 def filter_taught_workshops(queryset: QuerySet[Person], name: str, values: list[int]) -> QuerySet[Person]:
@@ -317,7 +317,7 @@ class TaskFilter(AMYFilterSet):
             "person__family": "Person",
             "role": "Role",
         },
-    )  # type: ignore
+    )
 
     class Meta:
         model = Task
@@ -331,9 +331,9 @@ class TaskFilter(AMYFilterSet):
 
 
 class AirportFilter(AMYFilterSet):
-    fullname = django_filters.CharFilter(lookup_expr="icontains")  # type: ignore
+    fullname = django_filters.CharFilter(lookup_expr="icontains")
 
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -344,7 +344,7 @@ class AirportFilter(AMYFilterSet):
             "iata": "IATA",
             "fullname": "Full name",
         },
-    )  # type: ignore
+    )
 
     class Meta:
         model = Airport
@@ -354,8 +354,8 @@ class AirportFilter(AMYFilterSet):
 
 
 class BadgeAwardsFilter(AMYFilterSet):
-    awarded_after = django_filters.DateFilter(field_name="awarded", lookup_expr="gte")  # type: ignore
-    awarded_before = django_filters.DateFilter(field_name="awarded", lookup_expr="lte")  # type: ignore
+    awarded_after = django_filters.DateFilter(field_name="awarded", lookup_expr="gte")
+    awarded_before = django_filters.DateFilter(field_name="awarded", lookup_expr="lte")
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label="Event",
@@ -374,7 +374,7 @@ class BadgeAwardsFilter(AMYFilterSet):
             "awarded": "Awarded date",
             "person__family": "Person",
         },
-    )  # type: ignore
+    )
 
     class Meta:
         model = Award
@@ -394,47 +394,47 @@ class WorkshopStaffFilter(AMYFilterSet):
     country = django_filters.MultipleChoiceFilter(
         choices=list(Countries()),
         method="filter_country",
-    )  # type: ignore
-    continent = ContinentFilter(label="Continent")  # type: ignore
+    )
+    continent = ContinentFilter(label="Continent")
     lessons = django_filters.ModelMultipleChoiceFilter(
         label="Lessons",
         queryset=Lesson.objects.all(),
         conjoined=True,  # `AND`
-    )  # type: ignore
+    )
     is_instructor = django_filters.BooleanFilter(
         widget=widgets.CheckboxInput,
         method="filter_instructor",
-    )  # type: ignore
+    )
     is_trainer = django_filters.BooleanFilter(
         widget=widgets.CheckboxInput,
         method="filter_trainer",
-    )  # type: ignore
+    )
     languages = django_filters.ModelMultipleChoiceFilter(
         label="Languages",
         queryset=Language.objects.all(),
         conjoined=True,  # `AND`
-    )  # type: ignore
+    )
     domains = django_filters.ModelMultipleChoiceFilter(
         label="Knowledge Domains",
         queryset=KnowledgeDomain.objects.all(),
         conjoined=True,  # `AND`
-    )  # type: ignore
+    )
     gender = django_filters.ChoiceFilter(
         label="Gender",
         choices=Person.GENDER_CHOICES,
-    )  # type: ignore
+    )
     was_helper = django_filters.BooleanFilter(
         widget=widgets.CheckboxInput,
         method="filter_helper",
-    )  # type: ignore
+    )
     was_organizer = django_filters.BooleanFilter(
         widget=widgets.CheckboxInput,
         method="filter_organizer",
-    )  # type: ignore
+    )
     is_in_progress_trainee = django_filters.BooleanFilter(
         widget=widgets.CheckboxInput,
         method="filter_in_progress_trainee",
-    )  # type: ignore
+    )
 
     def filter_country(self, qs: QuerySet[Person], n: str, v: Any) -> QuerySet[Person]:
         if v:

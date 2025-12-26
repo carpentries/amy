@@ -65,6 +65,7 @@ dependencies = [
     { name = "social-auth-app-django" },
     { name = "social-auth-core" },
     { name = "toml" },
+    { name = "types-django-filter" },
     { name = "types-pytz" },
     { name = "typing-extensions" },
     { name = "whitenoise" },
@@ -121,6 +122,7 @@ requires-dist = [
     { name = "social-auth-app-django", specifier = ">=5.4.2,<6.0.0" },
     { name = "social-auth-core", specifier = ">=4.5.4,<5.0.0" },
     { name = "toml", specifier = ">=0.10.2,<0.11.0" },
+    { name = "types-django-filter", specifier = ">=25.2.0.20251010" },
     { name = "types-pytz", specifier = ">=2025.2.0.20250809,<2026.0.0.0" },
     { name = "typing-extensions" },
     { name = "whitenoise", specifier = ">=6.8.2,<7.0.0" },
@@ -1654,6 +1656,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/30/1f/febd2df22e24f77b759db0dd9ecdd7f07f055e6a4dbbb699c5eb34b617ef/types_awscrt-0.30.0.tar.gz", hash = "sha256:362fd8f5eaebcfcd922cb9fd8274fb375df550319f78031ee3779eac0b9ecc79", size = 17761, upload-time = "2025-12-12T01:55:59.626Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/5f/15999051fca2949a67562c3f80fae2dd5d3404a3f97b326b614533843281/types_awscrt-0.30.0-py3-none-any.whl", hash = "sha256:8204126e01a00eaa4a746e7a0076538ca0e4e3f52408adec0ab9b471bb0bb64b", size = 42392, upload-time = "2025-12-12T01:55:58.194Z" },
+]
+
+[[package]]
+name = "types-django-filter"
+version = "25.2.0.20251010"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django-stubs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/71/62/7d5b38a4421d6abe025f3a8e336f84916ebaa66f50badfa93c6fed04462b/types_django_filter-25.2.0.20251010.tar.gz", hash = "sha256:f250784a9e3aa1b260881317e6d5505c05bb43a1caa1b3039efd5f93aaff6389", size = 15629, upload-time = "2025-10-10T02:54:47.838Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/df/870dff7e5fde095d1662b04575412b113cafcc38d4c16f6ecbd051a62d64/types_django_filter-25.2.0.20251010-py3-none-any.whl", hash = "sha256:58bc2c663ee9bf65db34346c2554a5b0d64f0033e090bfe651d398368bc9fab4", size = 19331, upload-time = "2025-10-10T02:54:46.992Z" },
 ]
 
 [[package]]

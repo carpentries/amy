@@ -124,7 +124,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
     )
     def test_strategy_calls_create_signal(
         self,
-        mock_host_instructors_introduction_signal,
+        mock_host_instructors_introduction_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
@@ -146,7 +146,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
     )
     def test_strategy_calls_update_signal(
         self,
-        mock_host_instructors_introduction_update_signal,
+        mock_host_instructors_introduction_update_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -168,7 +168,7 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
     )
     def test_strategy_calls_cancel_signal(
         self,
-        mock_host_instructors_introduction_cancel_signal,
+        mock_host_instructors_introduction_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -197,10 +197,10 @@ class TestRunHostInstructorsIntroductionStrategy(TestCase):
     )
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_host_instructors_introduction_cancel_signal,
-        mock_host_instructors_introduction_update_signal,
-        mock_host_instructors_introduction_signal,
-        mock_logger,
+        mock_host_instructors_introduction_cancel_signal: MagicMock,
+        mock_host_instructors_introduction_update_signal: MagicMock,
+        mock_host_instructors_introduction_signal: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP

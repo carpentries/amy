@@ -76,11 +76,10 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
     def test_get_scheduled_at__3_months(self, mock_datetime: MagicMock) -> None:
         # Arrange
         mock_datetime.now.return_value = datetime(2023, 1, 1, 0, 0, 0, tzinfo=UTC)
-        request = RequestFactory().get("/")
         membership = self.set_up_membership()
         signal_name = MEMBERSHIP_QUARTERLY_3_MONTHS_SIGNAL_NAME
         # Act
-        result = get_scheduled_at(signal_name, request=request, membership=membership)
+        result = get_scheduled_at(signal_name, membership=membership)
         # Assert
         self.assertEqual(result, datetime(2022, 4, 1, tzinfo=UTC))
 
@@ -88,11 +87,10 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
     def test_get_scheduled_at__6_months(self, mock_datetime: MagicMock) -> None:
         # Arrange
         mock_datetime.now.return_value = datetime(2023, 1, 1, 0, 0, 0, tzinfo=UTC)
-        request = RequestFactory().get("/")
         membership = self.set_up_membership()
         signal_name = MEMBERSHIP_QUARTERLY_6_MONTHS_SIGNAL_NAME
         # Act
-        result = get_scheduled_at(signal_name, request=request, membership=membership)
+        result = get_scheduled_at(signal_name, membership=membership)
         # Assert
         self.assertEqual(result, datetime(2022, 6, 30, tzinfo=UTC))
 
@@ -100,24 +98,22 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
     def test_get_scheduled_at__9_months(self, mock_datetime: MagicMock) -> None:
         # Arrange
         mock_datetime.now.return_value = datetime(2023, 1, 1, 0, 0, 0, tzinfo=UTC)
-        request = RequestFactory().get("/")
         membership = self.set_up_membership()
         signal_name = MEMBERSHIP_QUARTERLY_9_MONTHS_SIGNAL_NAME
         # Act
-        result = get_scheduled_at(signal_name, request=request, membership=membership)
+        result = get_scheduled_at(signal_name, membership=membership)
         # Assert
         self.assertEqual(result, datetime(2022, 10, 3, tzinfo=UTC))
 
     def test_get_context(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership = self.set_up_membership()
         person = Person.objects.create(username="test1", email="test1@example.com")
         self.set_up_membership_task(membership, person)
         event = self.set_up_event_for_membership(membership)
         task = self.set_up_learner_task(membership, person, event)
         # Act
-        result = get_context(request=request, membership=membership)
+        result = get_context(membership=membership)
         # Assert
         self.assertEqual(
             result,
@@ -162,7 +158,6 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
 
     def test_get_generic_relation_object(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership = self.set_up_membership()
         person = Person.objects.create(username="test1", email="test1@example.com")
         self.set_up_membership_task(membership, person)
@@ -176,13 +171,12 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             "trainees": [person],
         }
         # Act
-        result = get_generic_relation_object(context, request=request, membership=membership)
+        result = get_generic_relation_object(context, membership=membership)
         # Assert
         self.assertEqual(result, membership)
 
     def test_get_recipients(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership = self.set_up_membership()
         person1 = Person.objects.create(username="test1", email="test1@example.com")
         person2 = Person.objects.create(username="test2")
@@ -198,13 +192,12 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             "trainees": [person1],
         }
         # Act
-        result = get_recipients(context, request=request, membership=membership)
+        result = get_recipients(context, membership=membership)
         # Assert
         self.assertEqual(result, ["test1@example.com"])
 
     def test_get_recipients_context_json(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership = self.set_up_membership()
         person1 = Person.objects.create(username="test1", email="test1@example.com")
         person2 = Person.objects.create(username="test2")
@@ -220,7 +213,7 @@ class TestMembershipQuarterlyEmailsCommonFunctions(TestCase):
             "trainees": [person1],
         }
         # Act
-        result = get_recipients_context_json(context, request=request, membership=membership)
+        result = get_recipients_context_json(context, membership=membership)
         # Assert
         self.assertEqual(
             result,

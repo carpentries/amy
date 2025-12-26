@@ -119,7 +119,7 @@ class TestRunRecruitHelpersStrategy(TestCase):
     @patch("src.emails.actions.recruit_helpers.recruit_helpers_signal")
     def test_strategy_calls_create_signal(
         self,
-        mock_recruit_helpers_signal,
+        mock_recruit_helpers_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
@@ -140,7 +140,7 @@ class TestRunRecruitHelpersStrategy(TestCase):
     @patch("src.emails.actions.recruit_helpers.recruit_helpers_update_signal")
     def test_strategy_calls_update_signal(
         self,
-        mock_recruit_helpers_update_signal,
+        mock_recruit_helpers_update_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -161,7 +161,7 @@ class TestRunRecruitHelpersStrategy(TestCase):
     @patch("src.emails.actions.recruit_helpers.recruit_helpers_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
-        mock_recruit_helpers_cancel_signal,
+        mock_recruit_helpers_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -185,10 +185,10 @@ class TestRunRecruitHelpersStrategy(TestCase):
     @patch("src.emails.actions.recruit_helpers.recruit_helpers_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_recruit_helpers_cancel_signal,
-        mock_recruit_helpers_update_signal,
-        mock_recruit_helpers_signal,
-        mock_logger,
+        mock_recruit_helpers_cancel_signal: MagicMock,
+        mock_recruit_helpers_update_signal: MagicMock,
+        mock_recruit_helpers_signal: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP

@@ -111,7 +111,7 @@ class TestRunAskForWebsiteStrategy(TestCase):
     @patch("src.emails.actions.ask_for_website.ask_for_website_signal")
     def test_strategy_calls_create_signal(
         self,
-        mock_ask_for_website_signal,
+        mock_ask_for_website_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
@@ -132,7 +132,7 @@ class TestRunAskForWebsiteStrategy(TestCase):
     @patch("src.emails.actions.ask_for_website.ask_for_website_update_signal")
     def test_strategy_calls_update_signal(
         self,
-        mock_ask_for_website_update_signal,
+        mock_ask_for_website_update_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -153,7 +153,7 @@ class TestRunAskForWebsiteStrategy(TestCase):
     @patch("src.emails.actions.ask_for_website.ask_for_website_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
-        mock_ask_for_website_cancel_signal,
+        mock_ask_for_website_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -177,10 +177,10 @@ class TestRunAskForWebsiteStrategy(TestCase):
     @patch("src.emails.actions.ask_for_website.ask_for_website_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_ask_for_website_cancel_signal,
-        mock_ask_for_website_update_signal,
-        mock_ask_for_website_signal,
-        mock_logger,
+        mock_ask_for_website_cancel_signal: MagicMock,
+        mock_ask_for_website_update_signal: MagicMock,
+        mock_ask_for_website_signal: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP

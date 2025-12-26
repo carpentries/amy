@@ -112,7 +112,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
     )
     def test_strategy_calls_create_signal(
         self,
-        mock_instructor_training_approaching_signal,
+        mock_instructor_training_approaching_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
@@ -135,7 +135,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
     )
     def test_strategy_calls_update_signal(
         self,
-        mock_instructor_training_approaching_update_signal,
+        mock_instructor_training_approaching_update_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -158,7 +158,7 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
     )
     def test_strategy_calls_cancel_signal(
         self,
-        mock_instructor_training_approaching_cancel_signal,
+        mock_instructor_training_approaching_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -188,10 +188,10 @@ class TestRunInstructorTrainingApproachingStrategy(TestCase):
     )
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_instructor_training_approaching_cancel_signal,
-        mock_instructor_training_approaching_update_signal,
-        mock_instructor_training_approaching_signal,
-        mock_logger,
+        mock_instructor_training_approaching_cancel_signal: MagicMock,
+        mock_instructor_training_approaching_update_signal: MagicMock,
+        mock_instructor_training_approaching_signal: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP
