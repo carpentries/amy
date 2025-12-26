@@ -2,17 +2,17 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from flags.state import flag_enabled
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 
 logger = logging.getLogger("amy")
 
 
-def feature_flag_enabled(feature_flag: str) -> Callable:
+def feature_flag_enabled(feature_flag: str) -> Callable[..., Any]:
     """Check if the feature flag is enabled before running the function.
     If the feature flag is disabled, the function will exit early and not run."""
 
-    def func_wrapper(func: Callable[..., Any]) -> Callable:
-        def wrapper(*args, **kwargs) -> Any:
+    def func_wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             request = kwargs.get("request")
             if not request:
                 logger.debug(

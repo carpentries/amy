@@ -1,4 +1,7 @@
+from typing import Any
+
 from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpResponse
 from django.template.loader import get_template
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
@@ -21,8 +24,8 @@ from src.workshops.utils.emails import match_notification_email
 
 class TrainingRequestCreate(
     LoginNotRequiredMixin,
-    AutoresponderMixin,
-    AMYCreateView,
+    AutoresponderMixin[TrainingRequestForm],
+    AMYCreateView[TrainingRequestForm, TrainingRequest],
 ):
     model = TrainingRequest
     form_class = TrainingRequestForm
@@ -34,21 +37,21 @@ class TrainingRequestCreate(
     autoresponder_body_template_html = "mailing/training_request.html"
     autoresponder_form_field = "email"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = self.page_title
         return context
 
-    def autoresponder_email_context(self, form):
+    def autoresponder_email_context(self, form: TrainingRequestForm) -> dict[str, Any]:
         return dict(object=self.object)
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         # request is required for ENFORCE_MEMBER_CODES flag
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
 
-    def get_success_message(self, *args, **kwargs):
+    def get_success_message(self, *args: Any, **kwargs: Any) -> str:
         """Don't display a success message."""
         return ""
 
@@ -56,7 +59,7 @@ class TrainingRequestCreate(
 class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
     template_name = "forms/trainingrequest_confirm.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Thank you for applying for an instructor training"
         return context
@@ -76,9 +79,9 @@ class WorkshopLanding(LoginNotRequiredMixin, TemplateView):
 
 class WorkshopRequestCreate(
     LoginNotRequiredMixin,
-    EmailSendMixin,
-    AutoresponderMixin,
-    AMYCreateView,
+    EmailSendMixin[WorkshopRequestExternalForm],
+    AutoresponderMixin[WorkshopRequestExternalForm],
+    AMYCreateView[WorkshopRequestExternalForm, WorkshopRequest],
 ):
     model = WorkshopRequest
     form_class = WorkshopRequestExternalForm
@@ -92,36 +95,38 @@ class WorkshopRequestCreate(
     autoresponder_body_template_html = "mailing/workshoprequest.html"
     autoresponder_form_field = "email"
 
-    def autoresponder_email_context(self, form):
+    object: WorkshopRequest
+
+    def autoresponder_email_context(self, form: WorkshopRequestExternalForm) -> dict[str, Any]:
         return dict(object=self.object)
 
-    def get_success_message(self, *args, **kwargs):
+    def get_success_message(self, *args: Any, **kwargs: Any) -> str:
         """Don't display a success message."""
         return ""
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = self.page_title
         return context
 
-    def get_form_kwargs(self):
+    def get_form_kwargs(self) -> dict[str, Any]:
         # request is required for ENFORCE_MEMBER_CODES flag
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
 
-    def get_email_kwargs(self):
+    def get_email_kwargs(self) -> dict[str, Any]:
         return {
             "to": match_notification_email(self.object),
             "reply_to": [self.object.email],
         }
 
-    def get_subject(self):
+    def get_subject(self) -> str:
         affiliation = str(self.object.institution) if self.object.institution else self.object.institution_other_name
         subject = f"New workshop request: {affiliation}, {self.object.dates()}"
         return subject
 
-    def get_body(self):
+    def get_body(self) -> tuple[str, str]:
         link = self.object.get_absolute_url()
         link_domain = f"https://{get_current_site(self.request)}"
 
@@ -142,7 +147,7 @@ class WorkshopRequestCreate(
         )
         return body_txt, body_html
 
-    def form_valid(self, form):
+    def form_valid(self, form: WorkshopRequestExternalForm) -> HttpResponse:
         """Send email to admins if the form is valid."""
         result = super().form_valid(form)
         return result
@@ -151,7 +156,7 @@ class WorkshopRequestCreate(
 class WorkshopRequestConfirm(LoginNotRequiredMixin, TemplateView):
     template_name = "forms/workshoprequest_confirm.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Thank you for requesting a workshop"
         return context
@@ -163,9 +168,9 @@ class WorkshopRequestConfirm(LoginNotRequiredMixin, TemplateView):
 
 class WorkshopInquiryRequestCreate(
     LoginNotRequiredMixin,
-    EmailSendMixin,
-    AutoresponderMixin,
-    AMYCreateView,
+    EmailSendMixin[WorkshopInquiryRequestExternalForm],
+    AutoresponderMixin[WorkshopInquiryRequestExternalForm],
+    AMYCreateView[WorkshopInquiryRequestExternalForm, WorkshopInquiryRequest],
 ):
     model = WorkshopInquiryRequest
     form_class = WorkshopInquiryRequestExternalForm
@@ -179,30 +184,32 @@ class WorkshopInquiryRequestCreate(
     autoresponder_body_template_html = "mailing/workshopinquiry.html"
     autoresponder_form_field = "email"
 
-    def autoresponder_email_context(self, form):
+    object: WorkshopInquiryRequest
+
+    def autoresponder_email_context(self, form: WorkshopInquiryRequestExternalForm) -> dict[str, Any]:
         return dict(object=self.object)
 
-    def get_success_message(self, *args, **kwargs):
+    def get_success_message(self, *args: Any, **kwargs: Any) -> str:
         """Don't display a success message."""
         return ""
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = self.page_title
         return context
 
-    def get_email_kwargs(self):
+    def get_email_kwargs(self) -> dict[str, Any]:
         return {
             "to": match_notification_email(self.object),
             "reply_to": [self.object.email],
         }
 
-    def get_subject(self):
+    def get_subject(self) -> str:
         affiliation = str(self.object.institution) if self.object.institution else self.object.institution_other_name
         subject = f"New workshop inquiry: {affiliation}, {self.object.dates()}"
         return subject
 
-    def get_body(self):
+    def get_body(self) -> tuple[str, str]:
         link = self.object.get_absolute_url()
         link_domain = f"https://{get_current_site(self.request)}"
 
@@ -223,7 +230,7 @@ class WorkshopInquiryRequestCreate(
         )
         return body_txt, body_html
 
-    def form_valid(self, form):
+    def form_valid(self, form: WorkshopInquiryRequestExternalForm) -> HttpResponse:
         """Send email to admins if the form is valid."""
         result = super().form_valid(form)
         return result
@@ -232,7 +239,7 @@ class WorkshopInquiryRequestCreate(
 class WorkshopInquiryRequestConfirm(LoginNotRequiredMixin, TemplateView):
     template_name = "forms/workshopinquiry_confirm.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Thank you for inquiring about The Carpentries"
         return context
@@ -244,9 +251,9 @@ class WorkshopInquiryRequestConfirm(LoginNotRequiredMixin, TemplateView):
 
 class SelfOrganisedSubmissionCreate(
     LoginNotRequiredMixin,
-    EmailSendMixin,
-    AutoresponderMixin,
-    AMYCreateView,
+    EmailSendMixin[SelfOrganisedSubmissionExternalForm],
+    AutoresponderMixin[SelfOrganisedSubmissionExternalForm],
+    AMYCreateView[SelfOrganisedSubmissionExternalForm, SelfOrganisedSubmission],
 ):
     model = SelfOrganisedSubmission
     form_class = SelfOrganisedSubmissionExternalForm
@@ -260,30 +267,32 @@ class SelfOrganisedSubmissionCreate(
     autoresponder_body_template_html = "mailing/selforganisedsubmission.html"
     autoresponder_form_field = "email"
 
-    def autoresponder_email_context(self, form):
+    object: SelfOrganisedSubmission
+
+    def autoresponder_email_context(self, form: SelfOrganisedSubmissionExternalForm) -> dict[str, Any]:
         return dict(object=self.object)
 
-    def get_success_message(self, *args, **kwargs):
+    def get_success_message(self, *args: Any, **kwargs: Any) -> str:
         """Don't display a success message."""
         return ""
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = self.page_title
         return context
 
-    def get_email_kwargs(self):
+    def get_email_kwargs(self) -> dict[str, Any]:
         return {
             "to": match_notification_email(self.object),
             "reply_to": [self.object.email],
         }
 
-    def get_subject(self):
+    def get_subject(self) -> str:
         affiliation = str(self.object.institution) if self.object.institution else self.object.institution_other_name
         subject = f"New self-organised submission: {affiliation}"
         return subject
 
-    def get_body(self):
+    def get_body(self) -> tuple[str, str]:
         link = self.object.get_absolute_url()
         link_domain = f"https://{get_current_site(self.request)}"
 
@@ -304,7 +313,7 @@ class SelfOrganisedSubmissionCreate(
         )
         return body_txt, body_html
 
-    def form_valid(self, form):
+    def form_valid(self, form: SelfOrganisedSubmissionExternalForm) -> HttpResponse:
         """Send email to admins if the form is valid."""
         result = super().form_valid(form)
         return result
@@ -313,7 +322,7 @@ class SelfOrganisedSubmissionCreate(
 class SelfOrganisedSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
     template_name = "forms/selforganisedsubmission_confirm.html"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = "Thank you for submitting self-organised workshop"
         return context
