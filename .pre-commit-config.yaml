@@ -3,21 +3,21 @@ repos:
     hooks:
       - id: ruff-format
         name: Ruff Format
-        entry: poetry run ruff format
+        entry: uv run ruff format
         require_serial: true
         language: system
         types: [python]
 
       - id: ruff-linter
         name: Ruff Linter
-        entry: poetry run ruff check --fix
+        entry: uv run ruff check --fix
         require_serial: true
         language: system
         types: [python]
 
       - id: mypy
         name: Python Typing (mypy) strict
-        entry: poetry run mypy --follow-imports=silent
+        entry: uv run mypy --follow-imports=silent
         require_serial: true
         language: system
         types: [python]

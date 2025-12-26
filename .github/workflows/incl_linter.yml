@@ -21,8 +21,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Install poetry
-        run: pipx install poetry
+      - name: Install uv
+        run: pipx install uv
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -32,8 +32,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install -y libjpeg-dev
-          poetry sync
+          uv sync
 
       - name: Run Ruff
-        run: poetry run ruff check --output-format=github .
+        run: uv run ruff check --output-format=github .
 
