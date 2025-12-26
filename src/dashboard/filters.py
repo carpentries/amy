@@ -3,6 +3,7 @@ from django.db.models import F, QuerySet
 from django.forms import widgets
 
 from src.recruitment.models import InstructorRecruitment
+from src.workshops.base_views import AuthenticatedHttpRequest
 from src.workshops.consts import IATA_AIRPORTS
 from src.workshops.fields import Select2MultipleWidget
 from src.workshops.filters import AllCountriesMultipleFilter, AMYFilterSet
@@ -10,7 +11,7 @@ from src.workshops.models import Curriculum
 
 
 class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
-    status = filters.ChoiceFilter(  # type: ignore
+    status = filters.ChoiceFilter(
         choices=(
             ("online", "Online only"),
             ("inperson", "Inperson only"),
@@ -20,7 +21,7 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
         method="filter_status",
     )
 
-    only_applied_to = filters.BooleanFilter(  # type: ignore
+    only_applied_to = filters.BooleanFilter(
         label="Show only workshops I have applied to",
         method="filter_application_only",
         widget=widgets.CheckboxInput,
@@ -32,14 +33,14 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
         extend_countries=False,
     )
 
-    curricula = filters.ModelMultipleChoiceFilter(  # type: ignore
+    curricula = filters.ModelMultipleChoiceFilter(
         field_name="event__curricula",
         queryset=Curriculum.objects.all(),
         label="Curriculum",
         widget=Select2MultipleWidget(),
     )
 
-    order_by = filters.OrderingFilter(  # type: ignore
+    order_by = filters.OrderingFilter(
         fields=("event__start",),
         choices=(
             ("-calculated_priority", "Priority"),
@@ -50,6 +51,8 @@ class UpcomingTeachingOpportunitiesFilter(AMYFilterSet):
         ),
         method="filter_order_by",
     )
+
+    request: AuthenticatedHttpRequest
 
     class Meta:
         model = InstructorRecruitment

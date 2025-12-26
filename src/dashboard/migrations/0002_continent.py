@@ -2,9 +2,11 @@
 
 import django_countries.fields
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_initial_continents(apps, schema_editor):
+def add_initial_continents(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add initial continents."""
 
     Continent = apps.get_model("dashboard", "Continent")
@@ -41,7 +43,7 @@ def add_initial_continents(apps, schema_editor):
         Continent.objects.create(name=name, countries=countries)
 
 
-def remove_initial_continents(apps, schema_editor):
+def remove_initial_continents(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Remove initial continents."""
 
     Continent = apps.get_model("dashboard", "Continent")
