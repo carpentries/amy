@@ -15,13 +15,13 @@ from src.workshops.models import Membership, MembershipSeatUsage, Organization
 class OrganizationFilter(AMYFilterSet):
     country = AllCountriesFilter(widget=Select2Widget)
 
-    memberships__variant = django_filters.MultipleChoiceFilter(  # type: ignore
+    memberships__variant = django_filters.MultipleChoiceFilter(
         label="Memberships (current or past)",
         choices=Membership.MEMBERSHIP_CHOICES,
         widget=Select2MultipleWidget,
     )
 
-    order_by = django_filters.OrderingFilter(  # type: ignore
+    order_by = django_filters.OrderingFilter(
         fields=(
             "fullname",
             "domain",
@@ -65,37 +65,37 @@ def filter_negative_remaining_seats(
 
 
 class MembershipFilter(AMYFilterSet):
-    organization_name = django_filters.CharFilter(  # type: ignore
+    organization_name = django_filters.CharFilter(
         label="Organization name",
         field_name="organizations__fullname",
         lookup_expr="icontains",
     )
 
     MEMBERSHIP_CHOICES = (("", "Any"),) + Membership.MEMBERSHIP_CHOICES
-    variant = django_filters.ChoiceFilter(choices=MEMBERSHIP_CHOICES)  # type: ignore
+    variant = django_filters.ChoiceFilter(choices=MEMBERSHIP_CHOICES)
 
     CONTRIBUTION_CHOICES = (("", "Any"),) + Membership.CONTRIBUTION_CHOICES
-    contribution_type = django_filters.ChoiceFilter(choices=CONTRIBUTION_CHOICES)  # type: ignore
+    contribution_type = django_filters.ChoiceFilter(choices=CONTRIBUTION_CHOICES)
 
-    active_only = django_filters.BooleanFilter(  # type: ignore
+    active_only = django_filters.BooleanFilter(
         label="Only show active memberships",
         method=filter_active_memberships_only,
         widget=widgets.CheckboxInput,
     )
 
-    training_seats_only = django_filters.BooleanFilter(  # type: ignore
+    training_seats_only = django_filters.BooleanFilter(
         label="Only show memberships with more than zero allowed training seats",
         method=filter_training_seats_only,
         widget=widgets.CheckboxInput,
     )
 
-    negative_remaining_seats_only = django_filters.BooleanFilter(  # type: ignore
+    negative_remaining_seats_only = django_filters.BooleanFilter(
         label="Only show memberships with less than zero remaining seats",
         method=filter_negative_remaining_seats,
         widget=widgets.CheckboxInput,
     )
 
-    order_by = django_filters.OrderingFilter(  # type: ignore
+    order_by = django_filters.OrderingFilter(
         fields=(
             "agreement_start",
             "agreement_end",
@@ -115,31 +115,31 @@ class MembershipFilter(AMYFilterSet):
 
 
 class MembershipTrainingsFilter(AMYFilterSet):
-    organization_name = django_filters.CharFilter(  # type: ignore
+    organization_name = django_filters.CharFilter(
         label="Organization name",
         field_name="organizations__fullname",
         lookup_expr="icontains",
     )
 
-    active_only = django_filters.BooleanFilter(  # type: ignore
+    active_only = django_filters.BooleanFilter(
         label="Only show active memberships",
         method=filter_active_memberships_only,
         widget=widgets.CheckboxInput,
     )
 
-    training_seats_only = django_filters.BooleanFilter(  # type: ignore
+    training_seats_only = django_filters.BooleanFilter(
         label="Only show memberships with more than zero allowed training seats",
         method=filter_training_seats_only,
         widget=widgets.CheckboxInput,
     )
 
-    negative_remaining_seats_only = django_filters.BooleanFilter(  # type: ignore
+    negative_remaining_seats_only = django_filters.BooleanFilter(
         label="Only show memberships with less than zero remaining seats",
         method=filter_negative_remaining_seats,
         widget=widgets.CheckboxInput,
     )
 
-    order_by = django_filters.OrderingFilter(  # type: ignore
+    order_by = django_filters.OrderingFilter(
         fields=(
             "name",
             "agreement_start",
@@ -171,13 +171,13 @@ class ConsortiumFilter(AMYFilterSet):
         queryset=Organization.objects.all(),
         method=filter_consortium_organisation_contain,
         label="Contains organisations",
-    )  # type: ignore
+    )
     order_by = django_filters.OrderingFilter(
         fields=(
             "name",
             "description",
         )
-    )  # type: ignore
+    )
 
 
 def filter_currently_active_partnership(
@@ -204,13 +204,13 @@ def filter_partnership_credits(
 
 
 class PartnershipFilter(AMYFilterSet):
-    active_only = django_filters.BooleanFilter(  # type: ignore
+    active_only = django_filters.BooleanFilter(
         label="Show active only (current date between (start, end) dates)",
         method=filter_currently_active_partnership,
         widget=widgets.CheckboxInput,
     )
 
-    credits = django_filters.ChoiceFilter(  # type: ignore
+    credits = django_filters.ChoiceFilter(
         label="Credits",
         choices=[
             ("under_limit", "under limit"),
@@ -219,7 +219,7 @@ class PartnershipFilter(AMYFilterSet):
         method=filter_partnership_credits,
     )
 
-    order_by = django_filters.OrderingFilter(fields=["name"])  # type: ignore
+    order_by = django_filters.OrderingFilter(fields=["name"])
 
     class Meta:
         model = Partnership
