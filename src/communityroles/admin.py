@@ -4,7 +4,7 @@ from django_better_admin_arrayfield.admin.mixins import DynamicArrayMixin
 from .models import CommunityRoleConfig, CommunityRoleInactivation
 
 
-class CommunityRoleConfigAdmin(DynamicArrayMixin, admin.ModelAdmin):
+class CommunityRoleConfigAdmin(DynamicArrayMixin, admin.ModelAdmin[CommunityRoleConfig]):
     list_display = (
         "display_name",
         "name",
@@ -20,7 +20,7 @@ class CommunityRoleConfigAdmin(DynamicArrayMixin, admin.ModelAdmin):
     date_hierarchy = "created_at"
 
 
-class CommunityRoleInactivationAdmin(admin.ModelAdmin):
+class CommunityRoleInactivationAdmin(admin.ModelAdmin[CommunityRoleInactivation]):
     list_display = (
         "name",
         "created_at",

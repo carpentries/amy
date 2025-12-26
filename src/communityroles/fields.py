@@ -1,9 +1,9 @@
 import json
 import logging
+from collections.abc import Mapping
 from typing import Any
 
 from django import forms
-from django.http import QueryDict
 from django.utils.datastructures import MultiValueDict
 
 logger = logging.getLogger("amy")
@@ -47,7 +47,7 @@ class CustomKeysWidget(forms.TextInput):
         context["widget"]["subwidgets"] = subwidgets
         return context
 
-    def value_from_datadict(self, data: QueryDict, files: MultiValueDict, name: str) -> list[tuple[str, str]]:
+    def value_from_datadict(self, data: Mapping[str, Any], files: MultiValueDict[str, Any], name: str) -> str:
         """Prepare structure stored in database. The structure is tied to
         `CommunityRole.custom_keys` expected format:
             [
@@ -57,12 +57,13 @@ class CustomKeysWidget(forms.TextInput):
             ]
         """
         try:
-            values = data.getlist(name)
+            # `.getlist` comes from QueryDict
+            values = data.getlist(name)  # type: ignore[attr-defined]
         except AttributeError:
             values = data.get(name, [])
         return json.dumps(list(zip(self.labels, values, strict=False)))
 
-    def value_omitted_from_data(self, data: QueryDict, files: MultiValueDict, name: str) -> bool:
+    def value_omitted_from_data(self, data: Mapping[str, Any], files: MultiValueDict[str, Any], name: str) -> bool:
         return False
 
 
