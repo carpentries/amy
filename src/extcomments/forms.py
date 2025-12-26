@@ -7,4 +7,4 @@ from markdownx.fields import MarkdownxFormField
 
 class CommentForm(DjCF):
     email = forms.EmailField(required=False)
-    comment = MarkdownxFormField(label=_("Comment"), max_length=COMMENT_MAX_LENGTH)
+    comment = MarkdownxFormField(label=_("Comment"), max_length=COMMENT_MAX_LENGTH)  # type: ignore[no-untyped-call]
