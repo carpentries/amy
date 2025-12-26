@@ -1,4 +1,5 @@
 from hashlib import sha1
+from typing import cast
 
 from django.conf import settings
 
@@ -15,5 +16,5 @@ def reports_link_hash(slug: str) -> str:
 def reports_link(slug: str) -> str:
     """Return link to workshop's reports with hash and slug filled in."""
     hashed = reports_link_hash(slug)
-    link = settings.REPORTS_LINK
+    link = cast(str, settings.REPORTS_LINK)
     return link.format(hash=hashed, slug=slug)

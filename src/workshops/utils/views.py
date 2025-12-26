@@ -15,8 +15,13 @@ class Assignable(Protocol):
     def save(self) -> None: ...
 
 
+class ModelWithGetAbsoluteURL(Protocol):
+    def save(self) -> None: ...
+    def get_absolute_url(self) -> str: ...
+
+
 def failed_to_delete(
-    request: HttpRequest, object: Model, protected_objects: set[Model], back: str | None = None
+    request: HttpRequest, object: ModelWithGetAbsoluteURL, protected_objects: set[Model], back: str | None = None
 ) -> HttpResponse:
     context: dict[str, Any] = {
         "title": "Failed to delete",

@@ -1,6 +1,9 @@
+from typing import Any
+
 from django import forms
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
+from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
     AMYCreateView,
     AMYDeleteView,
@@ -17,34 +20,36 @@ from .models import CommunityRole
 # CommunityRole related views
 
 
-class CommunityRoleDetails(OnlyForAdminsMixin, AMYDetailView):
+class CommunityRoleDetails(OnlyForAdminsMixin, AMYDetailView[CommunityRole]):
     queryset = CommunityRole.objects.all()
     context_object_name = "role"
     template_name = "communityroles/communityrole.html"
 
-    def get_context_data(self, **kwargs) -> dict:
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         return context
 
 
-class CommunityRoleCreate(OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView):
+class CommunityRoleCreate(
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView[CommunityRoleForm, CommunityRole]
+):
     permission_required = "communityroles.add_communityrole"
     model = CommunityRole
     form_class = CommunityRoleForm
 
-    def get_form_kwargs(self) -> dict:
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "communityrole"})
         return kwargs
 
 
-class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[CommunityRoleForm, CommunityRole]):
     permission_required = "communityroles.change_communityrole"
     model = CommunityRole
     form_class = CommunityRoleUpdateForm
 
-    def get_form_kwargs(self) -> dict:
+    def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
@@ -56,7 +61,7 @@ class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdate
         return kwargs
 
 
-class CommunityRoleDelete(OnlyForAdminsMixin, AMYDeleteView):
+class CommunityRoleDelete(OnlyForAdminsMixin, AMYDeleteView[CommunityRole, GenericDeleteForm[CommunityRole]]):
     permission_required = "communityroles.delete_communityrole"
     model = CommunityRole
 

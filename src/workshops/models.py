@@ -929,15 +929,15 @@ class Person(
         if self.github and self.is_active:
             try:
                 # if the username is incorrect, this will throw ValidationError
-                github_auth.validate_github_username(self.github)  # type: ignore
+                github_auth.validate_github_username(self.github)
 
-                github_uid = github_auth.github_username_to_uid(self.github)  # type: ignore
+                github_uid = github_auth.github_username_to_uid(self.github)
             except (ValidationError, ValueError):
                 github_uid = None
         else:
             github_uid = None
 
-        return github_uid  # type: ignore
+        return github_uid
 
     def synchronize_usersocialauth(self) -> UserSocialAuth | bool:
         """Disconnect all GitHub account associated with this Person and

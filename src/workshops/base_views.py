@@ -16,9 +16,9 @@ from django.http import (
     HttpRequest,
     HttpResponse,
     HttpResponseBase,
-    HttpResponseRedirect,
     QueryDict,
 )
+from django.shortcuts import redirect
 from django.template.loader import get_template
 from django.views.generic import (
     CreateView,
@@ -64,7 +64,7 @@ class FormInvalidMessageMixin[F]:
 
     def form_invalid(self, form: _F) -> HttpResponse:
         response = super().form_invalid(form)  # type: ignore[misc]
-        message = self.get_form_invalid_message(form.cleaned_data)  # type: ignore[attr-defined]
+        message = self.get_form_invalid_message(form.cleaned_data)
         if message:
             messages.error(self.request, message)  # type: ignore[attr-defined]
         return response  # type: ignore[no-any-return]
@@ -189,10 +189,15 @@ class AMYDeleteView(DeleteView[_M, _ModelFormT]):
             self.perform_destroy()
             self.after_delete()
             messages.success(self.request, self.success_message.format(object_str))
-            return HttpResponseRedirect(success_url)
+            return redirect(success_url)
         except ProtectedError as e:
             back = self.back_address()
-            return failed_to_delete(self.request, self.object, e.protected_objects, back=back)
+            return failed_to_delete(
+                self.request,
+                self.object,  # type: ignore[arg-type]
+                e.protected_objects,
+                back=back,
+            )
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         return self.http_method_not_allowed(request, *args, **kwargs)
@@ -344,7 +349,7 @@ class AutoresponderMixin[ModelFormT]:
 
     def autoresponder_kwargs(self, form: _ModelFormT) -> dict[str, list[str]]:
         """Arguments passed to EmailMultiAlternatives."""
-        recipient = form.cleaned_data.get(self.autoresponder_form_field, None) or ""  # type: ignore
+        recipient = form.cleaned_data.get(self.autoresponder_form_field, None) or ""
         return dict(to=[recipient])
 
     def autoresponder_prepare_email(self, form: _ModelFormT) -> EmailMultiAlternatives:
