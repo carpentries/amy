@@ -1,0 +1,10 @@
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("workshops", "0022_auto_20150707_0617"),
+        ("workshops", "0023_auto_20150706_0254"),
+    ]
+
+    operations = []

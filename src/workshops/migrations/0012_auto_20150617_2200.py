@@ -1,0 +1,17 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("workshops", "0011_remove_event_published"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="event",
+            name="url",
+            field=models.CharField(
+                unique=True, max_length=100, help_text='Setting this "publishes" the event.', null=True, blank=True
+            ),
+        ),
+    ]

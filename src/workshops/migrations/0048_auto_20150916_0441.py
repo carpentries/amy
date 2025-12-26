@@ -1,0 +1,20 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("workshops", "0047_auto_20150916_0355"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="person",
+            name="domains",
+            field=models.ManyToManyField(blank=True, to="workshops.KnowledgeDomain"),
+        ),
+        migrations.AlterField(
+            model_name="person",
+            name="lessons",
+            field=models.ManyToManyField(through="workshops.Qualification", blank=True, to="workshops.Lesson"),
+        ),
+    ]

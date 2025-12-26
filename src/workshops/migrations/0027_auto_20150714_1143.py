@@ -1,0 +1,15 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("workshops", "0026_add_missing_airports"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="event",
+            name="slug",
+            field=models.CharField(unique=True, null=True, blank=True, max_length=100),
+        ),
+    ]

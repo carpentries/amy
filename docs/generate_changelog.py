@@ -1,5 +1,5 @@
-from datetime import datetime
 import sys
+from datetime import datetime
 
 import requests
 
@@ -33,7 +33,7 @@ def search_closed_prs_in_milestone(
         raise RuntimeError("Too many pull request pages calls")
 
     Q = f"repo:{repository} type:pr is:merged milestone:{milestone}"
-    URL = f"{API_SEARCH_URL}/issues?q={Q}&sort=created&order=desc" f"&per_page={per_page}&page={page}"
+    URL = f"{API_SEARCH_URL}/issues?q={Q}&sort=created&order=desc&per_page={per_page}&page={page}"
     response = requests.get(URL)
     response.raise_for_status()
 
@@ -46,9 +46,7 @@ def search_closed_prs_in_milestone(
 
 
 def parse_iso8601z(date_string: str) -> datetime:
-    if sys.version_info >= (3, 11):
-        return datetime.fromisoformat(date_string)
-    return datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%SZ")
+    return datetime.fromisoformat(date_string)
 
 
 def pretty_milestone(milestone: dict) -> str:
@@ -62,7 +60,7 @@ def pretty_milestone(milestone: dict) -> str:
 
 
 def pretty_pull_request(pr: dict) -> str:
-    return f"* {pr['title']} - [#{pr['number']}]({pr['html_url']})" f" by @{pr['user']['login']}"
+    return f"* {pr['title']} - [#{pr['number']}]({pr['html_url']}) by @{pr['user']['login']}"
 
 
 def find_milestone_number_in_pr(pr: dict) -> int:
