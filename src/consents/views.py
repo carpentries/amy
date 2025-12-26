@@ -17,6 +17,7 @@ from src.workshops.base_views import (
     RedirectSupportMixin,
 )
 from src.workshops.utils.access import login_required
+from src.workshops.utils.urls import safe_next_or_default_url
 
 
 class ConsentsUpdate(RedirectSupportMixin, AMYCreateView[ActiveTermConsentsForm, Consent], LoginRequiredMixin):
@@ -58,10 +59,7 @@ def action_required_terms(request: AuthenticatedHttpRequest) -> HttpResponse:
             form.save()
             messages.success(request, "Agreement successfully saved.")
 
-            if "next" in request.GET:
-                return redirect(request.GET["next"])
-            else:
-                return redirect(reverse("dispatch"))
+            return redirect(safe_next_or_default_url(request.GET.get("next"), default=reverse("dispatch")))
         else:
             messages.error(request, "Fix errors below.")
     else:

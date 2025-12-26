@@ -1299,6 +1299,15 @@ class TestSafeNextOrDefaultURL(TestCase):
         # Assert
         self.assertEqual(url, next_url)
 
+    def test_when_default_is_not_safe(self) -> None:
+        # Arrange
+        next_url = ""
+        default_url = "https://malicious.com"
+        # Act
+        url = safe_next_or_default_url(next_url, default_url)
+        # Assert
+        self.assertEqual(url, "/")  # Safe fallback
+
 
 class TestSafeUrl(TestCase):
     def test_default_url_if_next_not_provided(self) -> None:

@@ -609,9 +609,9 @@ class InstructorRecruitmentChangeState(
         messages.error(self.request, "Please choose correct action.")
         # Note: there's not really a place to redirect user to... So worst-case scenario
         # they will be redirected to the success URL.
-        referrer = self.request.headers.get("Referer", self.get_success_url())
+        referrer = self.request.headers.get("Referer", None)
         next_url = self.request.POST.get("next", None)
-        return HttpResponseRedirect(safe_next_or_default_url(next_url, referrer))
+        return HttpResponseRedirect(safe_next_or_default_url(next_url or referrer, default=self.get_success_url()))
 
     def post(self, request: AuthenticatedHttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         self.request = request
