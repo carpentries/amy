@@ -47,6 +47,7 @@ from django.http import (
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
+from django.utils.http import url_has_allowed_host_and_scheme
 from django_stubs_ext import Annotations
 from flags.state import flag_enabled  # type: ignore[import-untyped]
 from github.GithubException import GithubException
@@ -173,7 +174,7 @@ from src.workshops.utils.person_upload import (
     upload_person_task_csv,
     verify_upload_person_task,
 )
-from src.workshops.utils.urls import safe_next_or_default_url, safe_url
+from src.workshops.utils.urls import safe_next_or_default_url
 from src.workshops.utils.usernames import create_username
 from src.workshops.utils.views import failed_to_delete
 
@@ -755,7 +756,7 @@ def persons_merge(request: HttpRequest) -> HttpResponse:
             "form": PersonsSelectionForm(),
         }
         next_url = request.GET.get("next")
-        if next_url and safe_url(next_url):
+        if next_url and url_has_allowed_host_and_scheme(next_url, settings.ALLOWED_HOSTS):
             return redirect(next_url)
         return render(request, "generic_form.html", context)
 
@@ -766,7 +767,7 @@ def persons_merge(request: HttpRequest) -> HttpResponse:
         }
         messages.warning(request, "You cannot merge the same person with themself.")
         next_url = request.GET.get("next")
-        if next_url and safe_url(next_url):
+        if next_url and url_has_allowed_host_and_scheme(next_url, settings.ALLOWED_HOSTS):
             return redirect(next_url)
         return render(request, "generic_form.html", context)
 

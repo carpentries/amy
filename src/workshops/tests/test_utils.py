@@ -30,7 +30,7 @@ from src.workshops.utils.metadata import (
 )
 from src.workshops.utils.pagination import Paginator
 from src.workshops.utils.reports import reports_link, reports_link_hash
-from src.workshops.utils.urls import safe_next_or_default_url, safe_url
+from src.workshops.utils.urls import safe_next_or_default_url
 from src.workshops.utils.usernames import create_username
 from src.workshops.utils.views import assign
 
@@ -1307,29 +1307,3 @@ class TestSafeNextOrDefaultURL(TestCase):
         url = safe_next_or_default_url(next_url, default_url)
         # Assert
         self.assertEqual(url, "/")  # Safe fallback
-
-
-class TestSafeUrl(TestCase):
-    def test_default_url_if_next_not_provided(self) -> None:
-        # Arrange
-        next_url = ""
-        # Act
-        result = safe_url(next_url)
-        # Assert
-        self.assertFalse(result)
-
-    def test_default_url_if_next_not_safe(self) -> None:
-        # Arrange
-        next_url = "https://google.com"
-        # Act
-        result = safe_url(next_url)
-        # Assert
-        self.assertFalse(result)
-
-    def test_next_url_if_next_safe(self) -> None:
-        # Arrange
-        next_url = "/admin/"
-        # Act
-        result = safe_url(next_url)
-        # Assert
-        self.assertTrue(result)
