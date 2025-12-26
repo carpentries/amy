@@ -1,22 +1,21 @@
 #!/bin/bash
 
-ls -l /root/.local/bin
-/root/.local/bin/poetry run python manage.py check --fail-level WARNING
+uv run python manage.py check --fail-level WARNING
 
-/root/.local/bin/poetry run python manage.py migrate
+uv run python manage.py migrate
 
-/root/.local/bin/poetry run python manage.py createcachetable
+uv run python manage.py createcachetable
 
-/root/.local/bin/poetry run python manage.py runscript seed_badges
-/root/.local/bin/poetry run python manage.py runscript seed_communityroles
-/root/.local/bin/poetry run python manage.py runscript seed_training_requirements
-/root/.local/bin/poetry run python manage.py runscript seed_involvements
-/root/.local/bin/poetry run python manage.py runscript seed_emails
-/root/.local/bin/poetry run python manage.py runscript seed_event_categories
+uv run python manage.py runscript seed_badges
+uv run python manage.py runscript seed_communityroles
+uv run python manage.py runscript seed_training_requirements
+uv run python manage.py runscript seed_involvements
+uv run python manage.py runscript seed_emails
+uv run python manage.py runscript seed_event_categories
 
-/root/.local/bin/poetry run python manage.py create_superuser
+uv run python manage.py create_superuser
 
-/root/.local/bin/poetry run gunicorn \
+uv run gunicorn \
     --workers=4 \
     --bind=0.0.0.0:80 \
     --access-logfile - \

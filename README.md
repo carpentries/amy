@@ -48,16 +48,16 @@ sudo apt-get install python3-dev libpq-dev
     git config blame.ignoreRevsFile .git-blame-ignore-revs
     ~~~
 
-1. Install [Poetry](https://python-poetry.org/docs/#installation).
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 1. Install Python dependencies:
 
     ~~~
-    poetry install
+    uv sync
     ~~~
 
     **Note:**
-    Poetry will create a new virtual environment for this installation, so you don't
+    uv will create a new virtual environment for this installation, so you don't
     have to create one yourself.
 
 1. Install [node][nodejs] for front-end packages management.
@@ -72,7 +72,7 @@ sudo apt-get install python3-dev libpq-dev
 1. Create a local instance of Postgres (in a container). This requires Docker to be installed locally.
 
     ~~~
-    poetry run make database
+    uv run make database
     ~~~
 
 1. Note: if the database container already exists, the above command will error out. Use `docker start amy-database` instead to start the database container.
@@ -80,13 +80,13 @@ sudo apt-get install python3-dev libpq-dev
 1. Set up your local database with fake (development-ready) data.  This will create a superuser with "admin" as both the username and password.
 
     ~~~
-    poetry run make dev_database
+    uv run make dev_database
     ~~~
 
 1. Start a local Django development server by running:
 
     ~~~
-    poetry run make serve
+    uv run make serve
     ~~~
 
     **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
@@ -106,13 +106,13 @@ sudo apt-get install python3-dev libpq-dev
 1. Run this command:
 
     ~~~
-    poetry run make test
+    uv run make test
     ~~~
 
 1. To run tests intended for testing migrations:
 
     ~~~
-    poetry run make test_migrations
+    uv run make test_migrations
     ~~~
 
 
@@ -154,7 +154,7 @@ directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 1. Update back-end dependencies:
 
     ~~~
-    poetry sync
+    uv sync
     ~~~
 
 1. Update front-end dependencies:
@@ -166,19 +166,19 @@ directory) with tags `amy:latest` and `amy:$LAST_COMMIT`.
 1. (Optional) make fresh development-ready database:
 
     ~~~
-    poetry run make dev_database
+    uv run make dev_database
     ~~~
 
 1. Run database migrations (note: this is included in the `make dev_database` step above):
 
     ~~~~
-    poetry run python manage.py migrate
+    uv run python manage.py migrate
     ~~~~
 
 1. Enjoy your new version of AMY:
 
     ~~~
-    poetry run make serve
+    uv run make serve
     ~~~
 
 

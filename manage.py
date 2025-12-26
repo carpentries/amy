@@ -6,11 +6,10 @@ import sys
 
 # import warnings
 # from django.utils.deprecation import RemovedInDjango50Warning
-
 # warnings.filterwarnings('always', category=RemovedInDjango50Warning)
 
 
-def main():
+def main() -> None:
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     try:

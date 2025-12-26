@@ -58,8 +58,8 @@ jobs:
           sudo apt-get install -y libjpeg-dev
           python -m pip install pipx
           python -m pipx ensurepath
-          pipx install poetry
-          poetry sync
+          pipx install uv
+          uv sync
 
       - name: Set up Node
         uses: actions/setup-node@v3
@@ -71,21 +71,21 @@ jobs:
 
       - name: Check migrations
         run: |
-          poetry run python manage.py makemigrations --dry-run --check;
+          uv run python manage.py makemigrations --dry-run --check;
           if [[ $? != "0" ]]; then
             exit 1;
           fi;
 
       - name: Collect static files
         run: |
-          poetry run python manage.py collectstatic --no-input;
+          uv run python manage.py collectstatic --no-input;
           if [[ $? != "0" ]]; then
             exit 1;
           fi;
 
       - name: Set up dev database
         run: |
-          echo "yes" | poetry run make dev_database
+          echo "yes" | uv run make dev_database
 
       - name: Set up Chromium
         id: setup-chrome
@@ -115,7 +115,7 @@ jobs:
 
       - name: Start server in background
         run: |
-          poetry run make serve &
+          uv run make serve &
         if: matrix.package == 'pa11y'
 
       - name: Run pa11y

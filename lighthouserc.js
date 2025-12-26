@@ -69,7 +69,7 @@ module.exports = {
                 "http://127.0.0.1:8000/workshops/workshop_staff/",
                 "http://127.0.0.1:8000/account/logout/"
             ],
-            startServerCommand: 'poetry run make serve',
+            startServerCommand: 'uv run make serve',
             puppeteerScript: 'puppeteer-script.js',
             numberOfRuns: 1
         },

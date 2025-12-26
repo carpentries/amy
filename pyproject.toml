@@ -8,7 +8,6 @@ readme = "README.md"
 requires-python = ">=3.14,<4.0"
 dependencies = [
   "argon2-cffi (>=23.1.0,<24.0.0)",
-  "black",
   "crispy-bootstrap4 (>=2024.10,<2025.0)",
   "django (>=5.2,<6.0)",
   "django-anymail (>=12.0,<13.0)",
@@ -36,9 +35,7 @@ dependencies = [
   "drf-nested-routers (>=0.94.1,<0.95.0)",
   "faker (>=33.3.1,<34.0.0)",
   "fakeredis (>=2.26.2,<3.0.0)",                     # TODO: remove in #2755
-  "flake8",
   "gunicorn (>=23.0.0,<24.0.0)",
-  "isort",
   "jinja2 (>=3.1.5,<4.0.0)",
   "mkdocs (>=1.6.1,<2.0.0)",
   "mkdocs-material (>=9.5.49,<10.0.0)",
@@ -63,13 +60,6 @@ dependencies = [
   "types-pytz (>=2025.2.0.20250809,<2026.0.0.0)",
   "ruff (>=0.14.10,<0.15.0)",
 ]
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-package-mode = false
 
 [tool.ruff]
 line-length = 120

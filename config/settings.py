@@ -2,6 +2,8 @@
 Django settings for AMY project.
 """
 
+import os
+import sys
 from pathlib import Path
 from typing import cast
 
@@ -9,6 +11,10 @@ import environ  # type: ignore
 import jinja2
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
+
+# Fallback for Homebrew on macOS and Cairo library issues
+if sys.platform == "darwin" and os.getenv("HOMEBREW_PREFIX"):
+    os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{os.getenv('HOMEBREW_PREFIX', '/opt/homebrew')}/lib/"
 
 ROOT_DIR = Path(__file__).parent.parent
 APPS_DIR = ROOT_DIR / "src"
