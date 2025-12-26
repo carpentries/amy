@@ -41,7 +41,7 @@ class TestActiveTermConsentsForm(ConsentTestBase):
         form = ActiveTermConsentsForm(initial={"person": self.person})
         self.assertIn(term1.slug, form.fields)
         self.assertCountEqual(
-            form.fields[term1.slug].choices,
+            form.fields[term1.slug].choices,  # type: ignore[attr-defined]
             BLANK_CHOICE_DASH
             + [
                 (term1_option1.id, "term1_option1"),
@@ -50,7 +50,7 @@ class TestActiveTermConsentsForm(ConsentTestBase):
         )
         self.assertIn(term2.slug, form.fields)
         self.assertCountEqual(
-            form.fields[term2.slug].choices,
+            form.fields[term2.slug].choices,  # type: ignore[attr-defined]
             BLANK_CHOICE_DASH
             + [
                 (term2_option1.id, "Yes"),

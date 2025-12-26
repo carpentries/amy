@@ -1,15 +1,18 @@
-from django.http import HttpRequest
-from flags.sources import Condition, Flag, get_flags
+from collections.abc import Callable
+from typing import cast
+
+from django.http import HttpRequest, HttpResponse
+from flags.sources import Condition, Flag, get_flags  # type: ignore[import-untyped]
 
 
 class SaveSessionFeatureFlagMiddleware:
     """Save a feature flag value to the session if it was set in the request and the
     respective condition was met."""
 
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
         self.get_response = get_response
 
-    def __call__(self, request: HttpRequest):
+    def __call__(self, request: HttpRequest) -> HttpResponse:
         flags = get_flags(request=request)
         parameter_conditions = self.conditions_of_type(flags, type="parameter")
 
@@ -43,7 +46,7 @@ class SaveSessionFeatureFlagMiddleware:
         except ValueError:
             param_name = condition.value
 
-        return param_name
+        return cast(str, param_name)
 
     @staticmethod
     def enable_feature_flag(request: HttpRequest, flag_name: str) -> None:

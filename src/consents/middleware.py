@@ -1,3 +1,6 @@
+from collections.abc import Callable
+
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -6,10 +9,10 @@ from src.consents.util import person_has_consented_to_required_terms
 
 
 class TermsMiddleware:
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest) -> HttpResponse:
         url = reverse("action_required_terms")
 
         allowed_urls = [reverse("logout"), url]

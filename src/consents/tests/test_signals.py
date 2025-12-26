@@ -1,7 +1,8 @@
 from django.utils import timezone
 
-from src.consents.models import Consent, Person, Term
+from src.consents.models import Consent, Term
 from src.consents.tests.base import ConsentTestBase
+from src.workshops.models import Person
 
 
 class TestTermModel(ConsentTestBase):

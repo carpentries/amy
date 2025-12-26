@@ -1,7 +1,7 @@
 from django.db import migrations
 
 
-def change_instructor_badge_to_swc_instructor(apps, schemat_editor):
+def change_instructor_badge_to_swc_instructor(apps, schema_editor):
     """Get 'Instructor' badge, change it to 'Software Carpentry Instructor'."""
     Badge = apps.get_model("workshops", "Badge")
 
@@ -14,7 +14,7 @@ def change_instructor_badge_to_swc_instructor(apps, schemat_editor):
     instructor.save()
 
 
-def add_dc_instructor_badge(apps, schemat_editor):
+def add_dc_instructor_badge(apps, schema_editor):
     """Add 'Data Carpentry Instructor' badge."""
     Badge = apps.get_model("workshops", "Badge")
     Badge.objects.create(

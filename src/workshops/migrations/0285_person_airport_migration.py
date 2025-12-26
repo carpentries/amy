@@ -9,7 +9,7 @@ from django.db.migrations.state import StateApps
 IATA_AIRPORTS = airportsdata.load("IATA")
 
 
-def migrate_airport_model_to_airportdata_table(apps: StateApps, schemat_editor: BaseDatabaseSchemaEditor) -> None:
+def migrate_airport_model_to_airportdata_table(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Person = apps.get_model("workshops", "Person")
     for person in Person.objects.select_related("airport").all():
         if person.airport:
@@ -25,7 +25,7 @@ def migrate_airport_model_to_airportdata_table(apps: StateApps, schemat_editor: 
             person.save()
 
 
-def migrate_airportdata_table_to_airport_model(apps: StateApps, schemat_editor: BaseDatabaseSchemaEditor) -> None:
+def migrate_airportdata_table_to_airport_model(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Airport = apps.get_model("workshops", "Airport")
     Person = apps.get_model("workshops", "Person")
     for person in Person.objects.all():

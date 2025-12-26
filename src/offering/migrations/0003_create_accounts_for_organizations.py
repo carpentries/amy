@@ -7,7 +7,7 @@ from django.db.migrations.state import StateApps
 from src.offering.models import Account as AccountModel
 
 
-def create_accounts_for_organizations(apps: StateApps, schemat_editor: BaseDatabaseSchemaEditor) -> None:
+def create_accounts_for_organizations(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Organization = apps.get_model("workshops", "Organization")
     Account = apps.get_model("offering", "Account")
     ContentType = apps.get_model("contenttypes", "ContentType")

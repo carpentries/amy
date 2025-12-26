@@ -1,7 +1,7 @@
 from django.db import migrations
 
 
-def change_dots_to_underscores(apps, schemat_editor):
+def change_dots_to_underscores(apps, schema_editor):
     """Replace '.' with '_' in every username."""
     Person = apps.get_model("workshops", "Person")
     persons = Person.objects.filter(username__contains=".")

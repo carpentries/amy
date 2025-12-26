@@ -5,7 +5,7 @@ from django.db.models import F
 from django.db.models.functions import Lower
 
 
-def lowercase_emails(apps, schemat_editor):
+def lowercase_emails(apps, schema_editor):
     """Replace '.' with '_' in every username."""
     Person = apps.get_model("workshops", "Person")
     # first: annotate everyone with their email lower-cased
