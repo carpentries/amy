@@ -137,4 +137,4 @@ class TestInstructorRecruitmentTemplateTags(TestCase):
         for value in values:
             # Assert
             with self.assertRaises(ValueError):
-                priority_label(value)
+                priority_label(value)  # type: ignore[arg-type]

@@ -12,7 +12,7 @@ from .models import InstructorRecruitment
 class InstructorRecruitmentFilter(AMYFilterSet):
     assigned_to = filters.ModelChoiceFilter(
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view="admin-lookup", attrs=SELECT2_SIDEBAR),
+        widget=ModelSelect2Widget(data_view="admin-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
     )
 
     online_inperson = filters.ChoiceFilter(
@@ -51,7 +51,9 @@ class InstructorRecruitmentFilter(AMYFilterSet):
             "status",
         ]
 
-    def filter_online_inperson(self, queryset: QuerySet, name: str, value: str) -> QuerySet:
+    def filter_online_inperson(
+        self, queryset: QuerySet[InstructorRecruitment], name: str, value: str
+    ) -> QuerySet[InstructorRecruitment]:
         """Filter recruitments based on the event (online/inperson) status."""
         if value == "online":
             return queryset.filter(event__tags__name="online")
@@ -60,5 +62,7 @@ class InstructorRecruitmentFilter(AMYFilterSet):
         else:
             return queryset
 
-    def filter_order_by(self, queryset: QuerySet, name: str, values: list) -> QuerySet:
+    def filter_order_by(
+        self, queryset: QuerySet[InstructorRecruitment], name: str, values: list[str]
+    ) -> QuerySet[InstructorRecruitment]:
         return queryset.order_by(*values)
