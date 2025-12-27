@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.db.utils import IntegrityError
 from django.test import TestCase
 
@@ -15,7 +17,7 @@ from src.workshops.models import Person
 class TestInstructorRecruitmentCreateForm(TestCase):
     def test_empty_payload(self) -> None:
         # Arrange
-        data = {}
+        data: dict[str, Any] = {}
         # Act
         form = InstructorRecruitmentCreateForm(data)
         # Assert
@@ -59,7 +61,7 @@ class TestInstructorRecruitmentAddSignupForm(TestCase):
 
     def test_empty_payload(self) -> None:
         # Arrange
-        data = {}
+        data: dict[str, Any] = {}
         # Act
         form = InstructorRecruitmentAddSignupForm(data)
         # Assert
@@ -90,7 +92,7 @@ class TestInstructorRecruitmentAddSignupForm(TestCase):
 class TestInstructorRecruitmentSignupChangeStateForm(TestCase):
     def test_empty_payload(self) -> None:
         # Arrange
-        data = {}
+        data: dict[str, Any] = {}
         # Act
         form = InstructorRecruitmentSignupChangeStateForm(data)
         # Assert
@@ -110,7 +112,7 @@ class TestInstructorRecruitmentSignupChangeStateForm(TestCase):
 class TestInstructorRecruitmentChangeStateForm(TestCase):
     def test_empty_payload(self) -> None:
         # Arrange
-        data = {}
+        data: dict[str, Any] = {}
         # Act
         form = InstructorRecruitmentChangeStateForm(data)
         # Assert
@@ -130,7 +132,7 @@ class TestInstructorRecruitmentChangeStateForm(TestCase):
 class TestInstructorRecruitmentSignupUpdateForm(TestCase):
     def test_empty_payload(self) -> None:
         # Arrange
-        data = {}
+        data: dict[str, Any] = {}
         # Act
         form = InstructorRecruitmentSignupUpdateForm(data)
         # Assert

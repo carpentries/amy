@@ -1,7 +1,7 @@
 import re
 
 import django_filters
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.forms import widgets
 
 from src.workshops.fields import ModelSelect2Widget
@@ -10,7 +10,7 @@ from src.workshops.forms import SELECT2_SIDEBAR
 from src.workshops.models import Event, Person
 
 
-def filter_all_persons(queryset, name, all_persons):
+def filter_all_persons(queryset: QuerySet[Person], name: str, all_persons: bool) -> QuerySet[Person]:
     """Filter only trainees when all_persons==False."""
     if all_persons:
         return queryset
@@ -18,7 +18,7 @@ def filter_all_persons(queryset, name, all_persons):
         return queryset.filter(task__role__name="learner", task__event__tags__name="TTT").distinct()
 
 
-def filter_trainees_by_trainee_name_or_email(queryset, name, value):
+def filter_trainees_by_trainee_name_or_email(queryset: QuerySet[Person], name: str, value: str) -> QuerySet[Person]:
     if value:
         # 'Harry Potter' -> ['Harry', 'Potter']
         tokens = re.split(r"\s+", value)
@@ -33,14 +33,18 @@ def filter_trainees_by_trainee_name_or_email(queryset, name, value):
         return queryset
 
 
-def filter_trainees_by_unevaluated_get_involved_presence(queryset, name, flag):
+def filter_trainees_by_unevaluated_get_involved_presence(
+    queryset: QuerySet[Person], name: str, flag: bool
+) -> QuerySet[Person]:
     if flag:  # return only trainees with an unevaluated Get Involved submission
         return queryset.filter(trainingprogress__state="n").distinct()
     else:
         return queryset
 
 
-def filter_trainees_by_training_request_presence(queryset, name, flag):
+def filter_trainees_by_training_request_presence(
+    queryset: QuerySet[Person], name: str, flag: bool | None
+) -> QuerySet[Person]:
     if flag is None:
         return queryset
     elif flag is True:  # return only trainees who submitted training request
@@ -49,21 +53,21 @@ def filter_trainees_by_training_request_presence(queryset, name, flag):
         return queryset.filter(trainingrequest__isnull=True)
 
 
-def filter_trainees_by_instructor_status(queryset, name, choice):
+def filter_trainees_by_instructor_status(queryset: QuerySet[Person], name: str, choice: str) -> QuerySet[Person]:
     if choice == "yes":
-        return queryset.filter(is_instructor=True)
+        return queryset.filter(is_instructor=True)  # type: ignore[misc]
     elif choice == "eligible":
         # Instructor eligible but without any badge.
         # This code is kept in Q()-expressions to allow for fast condition
         # change.
         return queryset.filter(Q(instructor_eligible__gte=1) & Q(is_instructor=False))
     elif choice == "no":
-        return queryset.filter(is_instructor=False)
+        return queryset.filter(is_instructor=False)  # type: ignore[misc]
     else:
         return queryset
 
 
-def filter_trainees_by_training(queryset, name, training):
+def filter_trainees_by_training(queryset: QuerySet[Person], name: str, training: Event | None) -> QuerySet[Person]:
     if training is None:
         return queryset
     else:
@@ -108,7 +112,7 @@ class TraineeFilter(AMYFilterSet):
         widget=ModelSelect2Widget(
             data_view="ttt-event-lookup",
             attrs=SELECT2_SIDEBAR,
-        ),
+        ),  # type: ignore[no-untyped-call]
     )
 
     order_by = NamesOrderingFilter(

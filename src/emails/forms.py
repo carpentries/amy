@@ -14,7 +14,7 @@ class EmailTemplateCreateForm(forms.ModelForm[EmailTemplate]):
         label=EmailTemplate._meta.get_field("body").verbose_name,
         help_text=EmailTemplate._meta.get_field("body").help_text,
         widget=forms.Textarea,
-    )
+    )  # type: ignore[no-untyped-call]
     signal = forms.CharField(
         help_text=EmailTemplate._meta.get_field("signal").help_text,
         widget=forms.Select(choices=SignalNameEnum.choices()),
@@ -59,7 +59,7 @@ class ScheduledEmailUpdateForm(forms.ModelForm[ScheduledEmail]):
         label=ScheduledEmail._meta.get_field("body").verbose_name,
         help_text=ScheduledEmail._meta.get_field("body").help_text,
         widget=forms.Textarea,
-    )
+    )  # type: ignore[no-untyped-call]
 
     class Meta:
         model = ScheduledEmail

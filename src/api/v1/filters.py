@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Literal
 
+from django.db.models import QuerySet
 from django_filters import rest_framework as filters
 
 from src.consents.models import Consent, TermEnum, TermOptionChoices
@@ -53,7 +54,7 @@ class TaskFilter(filters.FilterSet):
         fields = ("role",)
 
 
-def filter_instructors(queryset, name, value):
+def filter_instructors(queryset: QuerySet[Person], name: str, value: bool) -> QuerySet[Person]:
     instructor_badges = Badge.objects.instructor_badges()
     if value is True:
         return queryset.filter(badges__in=instructor_badges)
@@ -64,11 +65,11 @@ def filter_instructors(queryset, name, value):
 
 
 def filter_consent(
-    queryset,
-    name,
+    queryset: QuerySet[Person],
+    name: str,
     value: bool | None,
     slug: Literal[TermEnum.MAY_CONTACT, TermEnum.PUBLIC_PROFILE],
-):
+) -> QuerySet[Person]:
     consents = Consent.objects.active().filter(
         term__slug=slug,
         person__in=queryset,
@@ -76,7 +77,7 @@ def filter_consent(
 
     if value is None:
         people_ids = consents.filter(term_option__isnull=True).values_list("person_id", flat=True)
-        return queryset.filter(person_id__in=people_ids)
+        return queryset.filter(id__in=people_ids)
 
     option = TermOptionChoices.AGREE if value is True else TermOptionChoices.DECLINE
     people_ids = consents.filter(term_option__option_type=option).values_list("person_id", flat=True)

@@ -1,9 +1,11 @@
 from functools import partial
 
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def drop_deleted_object(model, apps, schema_editor):
+def drop_deleted_object(model: str, apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     m = apps.get_model("workshops", model)
     m.objects.filter(deleted=True).delete()
 

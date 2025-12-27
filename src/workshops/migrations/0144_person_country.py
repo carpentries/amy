@@ -2,10 +2,12 @@
 
 import django_countries.fields
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 from django.db.models import OuterRef, Subquery
 
 
-def update_country_from_airport(apps, schema_editor):
+def update_country_from_airport(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Person = apps.get_model("workshops", "Person")
     Airport = apps.get_model("workshops", "Airport")
 

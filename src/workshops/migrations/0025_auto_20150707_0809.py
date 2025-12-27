@@ -1,7 +1,9 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def change_knowledgedomain_names(apps, schema_editor):
+def change_knowledgedomain_names(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Change "Psychology" → "Psychology/neuroscience".
     Change "Civil, mechanical, or chemical engineering" to
     "Civil, mechanical, chemical, or nuclear engineering".

@@ -1,11 +1,14 @@
+from typing import Any
+
 from django import template
+from django.db.models import Model
 from reversion.models import Version
 
 register = template.Library()
 
 
 @register.inclusion_tag("includes/last_modified.html")
-def last_modified(obj):
+def last_modified(obj: Model) -> dict[str, Any]:
     """Get all versions for specific object, display:
 
     "Created on ASD by DSA."

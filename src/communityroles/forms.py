@@ -31,16 +31,16 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm[CommunityRole]):
             "generic_relation_pk",
         )
         widgets = {
-            "config": ModelSelect2Widget(data_view="community-role-lookup", attrs=SELECT2_SIDEBAR),
-            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),
-            "award": ModelSelect2Widget(data_view="award-lookup", attrs=SELECT2_SIDEBAR),
-            "membership": ModelSelect2Widget(data_view="membership-lookup", attrs=SELECT2_SIDEBAR),
+            "config": ModelSelect2Widget(data_view="community-role-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
+            "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
+            "award": ModelSelect2Widget(data_view="award-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
+            "membership": ModelSelect2Widget(data_view="membership-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
             "generic_relation_content_type": forms.Select(
                 # "disabled" means the browsers will not send the field during POST.
                 # See how it's handled in `clean()` method below.
                 attrs={"disabled": ""},
             ),
-            "generic_relation_pk": HeavySelect2Widget(data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR),
+            "generic_relation_pk": HeavySelect2Widget(data_view="generic-object-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
         }
         labels = {
             "generic_relation_content_type": "Generic relation object type",

@@ -218,7 +218,7 @@ class TestMembershipFilter(TestBase):
     def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
-        fields = self.filterset.filters[filter_name].param_map
+        fields = self.filterset.filters[filter_name].param_map  # type: ignore[attr-defined]
         results = {}
         # default ordering is ascending
         expected_results = {
@@ -382,7 +382,7 @@ class TestMembershipTrainingsFilter(TestBase):
     def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
-        fields = self.filterset.filters[filter_name].param_map
+        fields = self.filterset.filters[filter_name].param_map  # type: ignore[attr-defined]
         results = {}
         # default ordering is ascending
         expected_results = {

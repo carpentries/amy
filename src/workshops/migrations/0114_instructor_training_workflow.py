@@ -3,9 +3,11 @@
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_training_requirements(apps, schema_editor):
+def add_training_requirements(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     TrainingRequirement = apps.get_model("workshops", "TrainingRequirement")
     TrainingRequirement.objects.get_or_create(name="Training", event_required=True)
     TrainingRequirement.objects.get_or_create(name="DC Homework", url_required=True)

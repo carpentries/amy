@@ -109,7 +109,7 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
     @patch("src.emails.actions.instructor_task_created_for_workshop.instructor_task_created_for_workshop_signal")
     def test_strategy_calls_create_signal(
         self,
-        mock_instructor_task_created_for_workshop_signal,
+        mock_instructor_task_created_for_workshop_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CREATE
@@ -136,7 +136,7 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
     @patch("src.emails.actions.instructor_task_created_for_workshop.instructor_task_created_for_workshop_update_signal")
     def test_strategy_calls_update_signal(
         self,
-        mock_update_signal,
+        mock_update_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.UPDATE
@@ -163,7 +163,7 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
     @patch("src.emails.actions.instructor_task_created_for_workshop.instructor_task_created_for_workshop_cancel_signal")
     def test_strategy_calls_cancel_signal(
         self,
-        mock_cancel_signal,
+        mock_cancel_signal: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.CANCEL
@@ -193,10 +193,10 @@ class TestRunInstructorTaskCreatedForWorkshopStrategy(TestCase):
     @patch("src.emails.actions.instructor_task_created_for_workshop.instructor_task_created_for_workshop_cancel_signal")
     def test_invalid_strategy_no_signal_called(
         self,
-        mock_instructor_task_created_for_workshop_cancel_signal,
-        mock_instructor_task_created_for_workshop_update_signal,
-        mock_instructor_task_created_for_workshop_signal,
-        mock_logger,
+        mock_instructor_task_created_for_workshop_cancel_signal: MagicMock,
+        mock_instructor_task_created_for_workshop_update_signal: MagicMock,
+        mock_instructor_task_created_for_workshop_signal: MagicMock,
+        mock_logger: MagicMock,
     ) -> None:
         # Arrange
         strategy = StrategyEnum.NOOP

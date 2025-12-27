@@ -3,11 +3,13 @@
 from datetime import datetime
 
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 from django.db.models import F, Value
 from django.db.models.functions import Concat
 
 
-def migrate_lesson_contributions_to_involvements(apps, schema_editor) -> None:
+def migrate_lesson_contributions_to_involvements(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """
     Forward step:
     Set all Lesson Contributions to have the GitHub Contribution involvement.
@@ -30,7 +32,7 @@ def migrate_lesson_contributions_to_involvements(apps, schema_editor) -> None:
     # print(f"Migrated {updated_rows} lesson contributions")
 
 
-def migrate_involvements_to_lesson_contributions(apps, schema_editor) -> None:
+def migrate_involvements_to_lesson_contributions(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """
     Backward step:
     Un-link all involvements of type GitHub Contribution.
@@ -50,7 +52,7 @@ def migrate_involvements_to_lesson_contributions(apps, schema_editor) -> None:
     Involvement.objects.get(name="GitHub Contribution").delete()
 
 
-def rename_lesson_contribution_to_get_involved(apps, schema_editor) -> None:
+def rename_lesson_contribution_to_get_involved(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """
     Forward step.
     """
@@ -66,7 +68,7 @@ def rename_lesson_contribution_to_get_involved(apps, schema_editor) -> None:
         pass
 
 
-def rename_get_involved_to_lesson_contribution(apps, schema_editor) -> None:
+def rename_get_involved_to_lesson_contribution(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """
     Backward step.
     """

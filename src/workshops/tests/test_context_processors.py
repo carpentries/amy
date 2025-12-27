@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from django.test import RequestFactory, TestCase
-from flags.sources import Condition, Flag
+from flags.sources import Condition, Flag  # type: ignore[import-untyped]
 
 from src.workshops.context_processors import feature_flags_enabled
 

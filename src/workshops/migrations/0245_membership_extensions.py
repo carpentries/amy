@@ -2,9 +2,11 @@
 
 import django.contrib.postgres.fields
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def move_extensions(apps, schema_editor):
+def move_extensions(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Move existing `extended` value into the new field `extensions`."""
     Membership = apps.get_model("workshops", "Membership")
     for membership in Membership.objects.all():
@@ -12,7 +14,7 @@ def move_extensions(apps, schema_editor):
         membership.save()
 
 
-def undo_extensions(apps, schema_editor):
+def undo_extensions(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Move from `extensions` to single value `extended` field."""
     Membership = apps.get_model("workshops", "Membership")
     for membership in Membership.objects.all():

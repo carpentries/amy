@@ -26,7 +26,7 @@ def create_username(personal: str, family: str, tries: int = NUM_TRIES) -> str:
     raise InternalError(f"Cannot find a non-repeating username(tried {tries} usernames): {username}.")
 
 
-def normalize_name(name):
+def normalize_name(name: str) -> str:
     """Get rid of spaces, funky characters, etc."""
     name = name.strip()
     for accented, flat in [(" ", "-")]:

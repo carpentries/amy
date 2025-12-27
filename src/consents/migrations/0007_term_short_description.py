@@ -1,6 +1,8 @@
 # Written by @elichad 2023-03-15
 
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 term_descriptions = {
     "may-contact": "May contact",
@@ -10,7 +12,7 @@ term_descriptions = {
 }
 
 
-def set_term_descriptions(apps, schema_editor):
+def set_term_descriptions(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Term = apps.get_model("consents", "Term")
     for term in Term.objects.all():
         term.short_description = term_descriptions.get(term.slug, term.slug.replace("-", " ").capitalize())

@@ -1,7 +1,9 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_maintainer_badge(apps, schema_editor):
+def add_maintainer_badge(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Badge = apps.get_model("workshops", "Badge")
     Badge.objects.create(
         name="maintainer", title="Maintainer", criteria="Maintainer of Software or Data Carpentry lesson"

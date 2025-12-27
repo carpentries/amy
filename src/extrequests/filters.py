@@ -37,29 +37,29 @@ class TrainingRequestFilter(AMYFilterSet):
 
         super().__init__(data, *args, **kwargs)
 
-    search = django_filters.CharFilter(  # type: ignore
+    search = django_filters.CharFilter(
         label="Name or Email",
         method="filter_by_person",
     )
 
-    member_code = django_filters.CharFilter(  # type: ignore
+    member_code = django_filters.CharFilter(
         field_name="member_code",
         lookup_expr="icontains",
         label="Member code",
     )
 
-    eventbrite_id = django_filters.CharFilter(  # type: ignore
+    eventbrite_id = django_filters.CharFilter(
         label="Eventbrite ID or URL",
         method="filter_eventbrite_id",
     )
 
-    state = django_filters.ChoiceFilter(  # type: ignore
+    state = django_filters.ChoiceFilter(
         label="State",
         choices=(("pa", "Pending or accepted"),) + TrainingRequest.STATE_CHOICES,
         method="filter_training_requests_by_state",
     )
 
-    matched = django_filters.ChoiceFilter(  # type: ignore
+    matched = django_filters.ChoiceFilter(
         label="Is Matched?",
         choices=(
             ("", "Unknown"),
@@ -70,23 +70,23 @@ class TrainingRequestFilter(AMYFilterSet):
         method="filter_matched",
     )
 
-    nonnull_manual_score = django_filters.BooleanFilter(  # type: ignore
+    nonnull_manual_score = django_filters.BooleanFilter(
         label="Manual score applied",
         method="filter_non_null_manual_score",
         widget=widgets.CheckboxInput,
     )
 
-    invalid_member_code = django_filters.BooleanFilter(  # type: ignore
+    invalid_member_code = django_filters.BooleanFilter(
         label="Member code marked as invalid",
         method="filter_member_code_override",
         widget=widgets.CheckboxInput,
     )
 
-    affiliation = django_filters.CharFilter(  # type: ignore
+    affiliation = django_filters.CharFilter(
         method="filter_affiliation",
     )
 
-    location = django_filters.CharFilter(lookup_expr="icontains")  # type: ignore
+    location = django_filters.CharFilter(lookup_expr="icontains")
 
     order_by = NamesOrderingFilter(
         fields=(
@@ -209,19 +209,19 @@ class TrainingRequestFilter(AMYFilterSet):
 class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
-    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(  # type: ignore
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
         label="Requested workshop types",
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
     )
-    unused_member_code = django_filters.BooleanFilter(  # type: ignore
+    unused_member_code = django_filters.BooleanFilter(
         label="Institution has an active member code but did not provide it",
         method="filter_unused_member_code",
         widget=widgets.CheckboxInput(),
     )
 
-    order_by = django_filters.OrderingFilter(  # type: ignore
+    order_by = django_filters.OrderingFilter(
         fields=("created_at",),
     )
 
@@ -266,14 +266,14 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
 class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
-    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(  # type: ignore
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
         label="Requested workshop types",
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
     )
 
-    order_by = django_filters.OrderingFilter(  # type: ignore
+    order_by = django_filters.OrderingFilter(
         fields=("created_at",),
     )
 
@@ -295,14 +295,14 @@ class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
 class SelfOrganisedSubmissionFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
-    continent = ContinentFilter(widget=Select2Widget, label="Continent")  # type: ignore
-    workshop_types = django_filters.ModelMultipleChoiceFilter(  # type: ignore
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
+    workshop_types = django_filters.ModelMultipleChoiceFilter(
         label="Requested workshop types",
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
     )
 
-    order_by = django_filters.OrderingFilter(  # type: ignore
+    order_by = django_filters.OrderingFilter(
         fields=("created_at",),
     )
 

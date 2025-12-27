@@ -1,6 +1,8 @@
 import base64
+from collections.abc import Callable
 from datetime import datetime
 from functools import partial
+from typing import TypedDict, cast
 from uuid import uuid4
 
 from django.db.models import Model
@@ -30,6 +32,14 @@ def token_auth_header(token: str) -> str:
     return f"Token {token}"
 
 
+class UrlsTypedDict(TypedDict):
+    token: str
+    scheduled_to_run: str
+    lock: Callable[..., str]
+    fail: Callable[..., str]
+    succeed: Callable[..., str]
+
+
 class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
     def setUp(self) -> None:
         self.harry = Person.objects.create(
@@ -50,7 +60,7 @@ class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
         )
         self._setUpSuperuser()
         self._superUserConsent()
-        self.urls = {
+        self.urls: UrlsTypedDict = {
             "token": reverse("knox_login"),
             "scheduled_to_run": reverse("api-v2:scheduledemail-scheduled-to-run"),
             "lock": partial(reverse, "api-v2:scheduledemail-lock"),
@@ -86,7 +96,7 @@ class TestScheduledEmailsAPI(SuperuserMixin, TestCase):
             self.urls["token"],
             HTTP_AUTHORIZATION=basic_auth_header(self.admin.username, self.admin_password),
         )
-        return response.json()["token"]
+        return cast(str, response.json()["token"])
 
     def test_scheduled_to_run(self) -> None:
         # Arrange

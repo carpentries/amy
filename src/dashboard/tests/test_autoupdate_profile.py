@@ -46,8 +46,8 @@ class TestAutoUpdateProfile(TestBase):
             term.slug: term for term in Term.objects.filter(slug__in=term_slugs).active().prefetch_active_options()
         }
         consent_data = {
-            f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk
-            for slug in term_slugs  # type: ignore
+            f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk  # type: ignore[attr-defined]
+            for slug in term_slugs
         }
         data = {
             "personal": "admin",

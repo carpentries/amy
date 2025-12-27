@@ -346,8 +346,9 @@ class TestViews(TestBase):
                             pass  # ignore pure redirect views
                         else:
                             assert is_view
+                            assert class_
 
-                            mixins = set(class_.__mro__)  # type: ignore[union-attr]
+                            mixins = set(class_.__mro__)
                             desired_mixins = {
                                 OnlyForAdminsMixin,
                                 LoginNotRequiredMixin,
@@ -361,7 +362,7 @@ class TestViews(TestBase):
                                 f"The view {class_.__name__} ({url}) lacks access control mixin "
                                 "and is probably accessible to every user. If "
                                 "this is what you want, use "
-                                "LoginNotRequiredMixin.",  # type: ignore[union-attr]
+                                "LoginNotRequiredMixin.",
                             )
                             self.assertEqual(
                                 len(found),

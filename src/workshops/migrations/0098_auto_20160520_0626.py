@@ -2,10 +2,12 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 from django.db.models.functions import Length
 
 
-def migrate_language(apps, schema_editor):
+def migrate_language(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Convert EventRequest.language string to key"""
     EventRequest = apps.get_model("workshops", "EventRequest")
     Language = apps.get_model("workshops", "Language")

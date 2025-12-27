@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime
 from unittest.mock import MagicMock, patch
 
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 
 from src.emails.actions.new_membership_onboarding import (
     get_context,
@@ -35,7 +35,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
     @patch("src.emails.actions.new_membership_onboarding.immediate_action")
     def test_get_scheduled_at__immediately(self, mock_immediate_action: MagicMock) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership_start_date = date(2022, 1, 1)
         membership = Membership(
             name="Test Membership",
@@ -47,7 +46,7 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         mock_immediate_action.return_value = datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         # Act
-        scheduled_at = get_scheduled_at(request=request, membership=membership)
+        scheduled_at = get_scheduled_at(membership=membership)
 
         # Assert
         self.assertEqual(scheduled_at, datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC))
@@ -58,7 +57,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         self, mock_immediate_action: MagicMock, mock_datetime: MagicMock
     ) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership_start_date = date(2023, 6, 1)
         membership = Membership(
             name="Test Membership",
@@ -71,14 +69,13 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         mock_immediate_action.return_value = datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
 
         # Act
-        scheduled_at = get_scheduled_at(request=request, membership=membership)
+        scheduled_at = get_scheduled_at(membership=membership)
 
         # Assert
         self.assertEqual(scheduled_at, datetime(2023, 5, 2, 12, 0, 0, tzinfo=UTC))
 
     def test_get_context(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership_start_date = date(2023, 1, 1)
         membership = Membership(
             name="Test Membership",
@@ -89,10 +86,7 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         )
 
         # Act
-        context = get_context(
-            request=request,
-            membership=membership,
-        )
+        context = get_context(membership=membership)
 
         # Assert
         self.assertEqual(
@@ -104,7 +98,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
 
     def test_get_generic_relation_object(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership_start_date = date(2023, 1, 1)
         membership = Membership(
             name="Test Membership",
@@ -117,7 +110,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         # Act
         obj = get_generic_relation_object(
             context=self.setUpContext(membership),
-            request=request,
             membership=membership,
         )
 
@@ -126,7 +118,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
 
     def test_get_recipients(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership_start_date = date(2023, 1, 1)
         membership = Membership.objects.create(
             name="Test Membership",
@@ -142,7 +133,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         # Act
         obj = get_recipients(
             context=self.setUpContext(membership),
-            request=request,
             membership=membership,
         )
 
@@ -151,7 +141,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
 
     def test_get_recipients__no_email(self) -> None:
         # Arrange
-        request = RequestFactory().get("/")
         membership_start_date = date(2023, 1, 1)
         membership = Membership.objects.create(
             name="Test Membership",
@@ -165,7 +154,6 @@ class TestNewMembershipOnboardingCommonFunctions(TestCase):
         # Act
         obj = get_recipients(
             context=self.setUpContext(membership),
-            request=request,
             membership=membership,
         )
 

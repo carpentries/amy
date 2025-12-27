@@ -1,4 +1,6 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 TRANSLATE_NAMES = {
     "Git": ["swc/git"],
@@ -17,7 +19,7 @@ TRANSLATE_NAMES = {
 EXTRA_LEGACY_NAMES = ["MATLAB"]
 
 
-def add_new_lesson_names(apps, schema_editor):
+def add_new_lesson_names(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add instances of Lesson named after lessons."""
     Lesson = apps.get_model("workshops", "Lesson")
     for _, new_names in TRANSLATE_NAMES.items():
@@ -25,7 +27,7 @@ def add_new_lesson_names(apps, schema_editor):
             Lesson.objects.create(name=name)
 
 
-def fix_duplicate_names(apps, schema_editor):
+def fix_duplicate_names(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Fix references to lessons with case sensitivity in names."""
     Lesson = apps.get_model("workshops", "Lesson")
     Qualification = apps.get_model("workshops", "Qualification")
@@ -37,7 +39,7 @@ def fix_duplicate_names(apps, schema_editor):
         pass
 
 
-def replace_qualifications(apps, schema_editor):
+def replace_qualifications(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add qualification entries with new lesson names and delete old ones."""
     Lesson = apps.get_model("workshops", "Lesson")
     Qualification = apps.get_model("workshops", "Qualification")
@@ -50,7 +52,7 @@ def replace_qualifications(apps, schema_editor):
         q.delete()
 
 
-def remove_old_skill_names(apps, schema_editor):
+def remove_old_skill_names(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Remove legacy instances of Lesson named after skills."""
     Lesson = apps.get_model("workshops", "Lesson")
     for old_name, _ in TRANSLATE_NAMES.items():

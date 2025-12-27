@@ -1,7 +1,9 @@
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_empty_knowledge_domain(apps, schema_app):
+def add_empty_knowledge_domain(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     "A 'Don't know yet' KnowledgeDomain is required for EventRequest forms."
     KnowledgeDomain = apps.get_model("workshops", "KnowledgeDomain")
     KnowledgeDomain.objects.get_or_create(name="Don't know yet")

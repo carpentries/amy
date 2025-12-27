@@ -7,20 +7,20 @@ from src.workshops.models import Curriculum
 
 
 class AccountFilter(AMYFilterSet):
-    active = django_filters.BooleanFilter("active")  # type: ignore
-    account_type = django_filters.ChoiceFilter(choices=Account.AccountTypeChoices.choices)  # type: ignore
+    active = django_filters.BooleanFilter("active")
+    account_type = django_filters.ChoiceFilter(choices=Account.AccountTypeChoices.choices)
     order_by = django_filters.OrderingFilter(
         fields=(
             "account_type",
             "generic_relation_content_type",
             "generic_relation",
         )
-    )  # type: ignore
+    )
 
 
 class BenefitFilter(AMYFilterSet):
-    active = django_filters.BooleanFilter("active")  # type: ignore
-    unit_type = django_filters.ChoiceFilter(choices=Benefit.UNIT_TYPE_CHOICES)  # type: ignore
+    active = django_filters.BooleanFilter("active")
+    unit_type = django_filters.ChoiceFilter(choices=Benefit.UNIT_TYPE_CHOICES)
     order_by = django_filters.OrderingFilter(
         fields=(
             "name",
@@ -28,14 +28,14 @@ class BenefitFilter(AMYFilterSet):
             "created_at",
             "last_modified_at",
         )
-    )  # type: ignore
+    )
 
 
 class AccountBenefitFilter(AMYFilterSet):
-    account = django_filters.ModelChoiceFilter(queryset=Account.objects.all())  # type: ignore
-    partnership = django_filters.ModelChoiceFilter(queryset=Partnership.objects.all())  # type: ignore
-    benefit = django_filters.ModelChoiceFilter(queryset=Benefit.objects.all())  # type: ignore
-    curriculum = django_filters.ModelChoiceFilter(queryset=Curriculum.objects.all())  # type: ignore
+    account = django_filters.ModelChoiceFilter(queryset=Account.objects.all())
+    partnership = django_filters.ModelChoiceFilter(queryset=Partnership.objects.all())
+    benefit = django_filters.ModelChoiceFilter(queryset=Benefit.objects.all())
+    curriculum = django_filters.ModelChoiceFilter(queryset=Curriculum.objects.all())
     order_by = django_filters.OrderingFilter(
         fields=(
             "account",
@@ -46,4 +46,4 @@ class AccountBenefitFilter(AMYFilterSet):
             "created_at",
             "last_modified_at",
         )
-    )  # type: ignore
+    )

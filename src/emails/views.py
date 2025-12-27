@@ -193,8 +193,8 @@ class ScheduledEmailDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[
 
 class ScheduledEmailUpdate(
     OnlyForAdminsMixin,
-    FlaggedViewMixin,
-    AMYUpdateView[ScheduledEmailUpdateForm, ScheduledEmail],  # type: ignore[misc]
+    FlaggedViewMixin,  # type: ignore[misc]
+    AMYUpdateView[ScheduledEmailUpdateForm, ScheduledEmail],
 ):
     flag_name = "EMAIL_MODULE"
     permission_required = ["emails.view_scheduledemail", "emails.change_scheduledemail"]

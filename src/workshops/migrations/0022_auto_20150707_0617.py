@@ -1,7 +1,9 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def change_lesson_on_spreadsheets(apps, schema_editor):
+def change_lesson_on_spreadsheets(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Change "dc/spreadsheet" → "dc/spreadsheets"."""
     Lesson = apps.get_model("workshops", "Lesson")
     Lesson.objects.filter(name="dc/spreadsheet").update(name="dc/spreadsheets")

@@ -2,9 +2,11 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def create_event_host_to_sponsor(apps, schema_editor):
+def create_event_host_to_sponsor(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Copy event.host to event.sponsor for existing events."""
     Event = apps.get_model("workshops", "Event")
     Event.objects.exclude(host__isnull=True).update(sponsor=models.F("host"))

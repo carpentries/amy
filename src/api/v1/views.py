@@ -1,6 +1,6 @@
 import contextlib
 from collections import OrderedDict
-from typing import Any, cast
+from typing import Any
 
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Prefetch, Q, QuerySet
@@ -161,7 +161,7 @@ class ExportPersonDataView(RetrieveAPIView[Person]):
         if user.is_anonymous:
             return self.get_queryset().none()  # type: ignore
         else:
-            return self.get_queryset().get(pk=cast(int, user.pk))
+            return self.get_queryset().get(pk=user.pk)
 
 
 class TrainingRequests(ListAPIView[TrainingRequest]):

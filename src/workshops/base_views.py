@@ -251,7 +251,7 @@ class AMYListView(ListView[_M]):
         return context
 
 
-class EmailSendMixin[ModelFormT]:
+class EmailSendMixin[T: BaseModelForm]:  # type: ignore[type-arg]
     email_fail_silently: bool = True
     email_kwargs: dict[str, Any] | None = None
 
@@ -283,7 +283,7 @@ class EmailSendMixin[ModelFormT]:
         """Send a prepared email out."""
         return email.send(fail_silently=self.email_fail_silently)
 
-    def form_valid(self, form: _ModelFormT) -> HttpResponse:
+    def form_valid(self, form: T) -> HttpResponse:
         """Once form is valid, send the email."""
         results = super().form_valid(form)  # type: ignore[misc]
         email = self.prepare_email()
@@ -317,7 +317,7 @@ class PrepopulationSupportMixin[FormT: BaseForm]:
         return form
 
 
-class AutoresponderMixin[ModelFormT]:
+class AutoresponderMixin[T: BaseModelForm]:  # type: ignore[type-arg]
     """Automatically emails the form sender."""
 
     @property
@@ -340,19 +340,19 @@ class AutoresponderMixin[ModelFormT]:
         """Form field's name that contains autoresponder recipient email."""
         return "email"
 
-    def autoresponder_email_context(self, form: _ModelFormT) -> dict[str, Any]:
+    def autoresponder_email_context(self, form: T) -> dict[str, Any]:
         """Context for"""
         # list of fields allowed to show to the user
         whitelist: list[str] = []
         form_data = [v for k, v in cast(dict[str, Any], form.cleaned_data).items() if k in whitelist]  # type: ignore
         return dict(form_data=form_data)
 
-    def autoresponder_kwargs(self, form: _ModelFormT) -> dict[str, list[str]]:
+    def autoresponder_kwargs(self, form: T) -> dict[str, list[str]]:
         """Arguments passed to EmailMultiAlternatives."""
         recipient = form.cleaned_data.get(self.autoresponder_form_field, None) or ""
         return dict(to=[recipient])
 
-    def autoresponder_prepare_email(self, form: _ModelFormT) -> EmailMultiAlternatives:
+    def autoresponder_prepare_email(self, form: T) -> EmailMultiAlternatives:
         """Prepare EmailMultiAlternatives object with message."""
         # get message subject
         subject = self.autoresponder_subject
@@ -373,7 +373,7 @@ class AutoresponderMixin[ModelFormT]:
         email.attach_alternative(body_html, "text/html")
         return email
 
-    def autoresponder(self, form: _ModelFormT, fail_silently: bool = True) -> None:
+    def autoresponder(self, form: T, fail_silently: bool = True) -> None:
         """Get email from `self.autoresponder_prepare_email`, then send it."""
         email = self.autoresponder_prepare_email(form)
 
@@ -383,7 +383,7 @@ class AutoresponderMixin[ModelFormT]:
             if not fail_silently:
                 raise e
 
-    def form_valid(self, form: _ModelFormT) -> HttpResponse:
+    def form_valid(self, form: T) -> HttpResponse:
         """Send email to form sender if the form is valid."""
         retval = super().form_valid(form)  # type: ignore[misc]
         self.autoresponder(form, fail_silently=True)

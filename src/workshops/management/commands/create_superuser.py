@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -12,7 +13,7 @@ class Command(BaseCommand):
     args = "no arguments"
     help = 'Create a superuser called "admin" with password "admin".'
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         username = "admin"
 
         if Person.objects.filter(username=username).exists():

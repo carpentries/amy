@@ -12,7 +12,7 @@ from django.db.models import Model
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
-from flags import conditions
+from flags import conditions  # type: ignore[import-untyped]
 from jinja2 import Environment
 from rest_framework.serializers import ModelSerializer
 

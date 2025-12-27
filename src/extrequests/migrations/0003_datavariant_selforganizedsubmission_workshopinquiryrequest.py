@@ -4,9 +4,11 @@ import django.db.models.deletion
 import django_countries.fields
 from django.conf import settings
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_data_variants(apps, schema_editor):
+def add_data_variants(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add new entries to the DataVariant model."""
     DataVariant = apps.get_model("extrequests", "DataVariant")
 

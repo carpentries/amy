@@ -4,24 +4,27 @@ import random
 import string
 
 from django.db import IntegrityError, migrations, models, transaction
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 from django.template.defaultfilters import slugify
 
 
-class Migration(migrations.Migration):
-    def slugify_event(apps, schema_editor):
-        """Generate slug from date and venue."""
-        Event = apps.get_model("workshops", "Event")
-        for event in Event.objects.filter(slug__isnull=True):
-            try:
-                with transaction.atomic():
-                    event.slug = slugify(f"{event.start}-{event.venue}")
-                    event.save()
-            except IntegrityError:
-                population = string.ascii_letters + string.digits
-                random_suffix = "".join(random.sample(population, 20))
-                event.slug = slugify(f"{event.start}-{event.venue}-{random_suffix}")
+def slugify_event(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
+    """Generate slug from date and venue."""
+    Event = apps.get_model("workshops", "Event")
+    for event in Event.objects.filter(slug__isnull=True):
+        try:
+            with transaction.atomic():
+                event.slug = slugify(f"{event.start}-{event.venue}")
                 event.save()
+        except IntegrityError:
+            population = string.ascii_letters + string.digits
+            random_suffix = "".join(random.sample(population, 20))
+            event.slug = slugify(f"{event.start}-{event.venue}-{random_suffix}")
+            event.save()
 
+
+class Migration(migrations.Migration):
     dependencies = [
         ("workshops", "0087_renaming_column_repository_tags_squashed_0092_alter_help_text_of_metadata_changed"),
     ]

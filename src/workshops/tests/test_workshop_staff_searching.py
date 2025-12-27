@@ -43,7 +43,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skill are returned."""
         response = self.client.get(
             self.url,
-            {
+            query_params={
                 "airport_iata": "LAX",
                 "lessons": [self.git.pk],
             },
@@ -65,7 +65,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skills are returned."""
         response = self.client.get(
             self.url,
-            {
+            query_params={
                 "airport_iata": "LAX",
                 "lessons": [self.git.pk, self.sql.pk],
             },

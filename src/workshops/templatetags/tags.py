@@ -1,13 +1,13 @@
 from django import template
 
 # from django.template.defaultfilters import stringfilter
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
 
 register = template.Library()
 
 
 @register.simple_tag
-def bootstrap_tag_class(name):
+def bootstrap_tag_class(name: str) -> SafeString:
     name_low = name.lower()
 
     mapping = {
@@ -31,7 +31,7 @@ def bootstrap_tag_class(name):
 
 
 @register.simple_tag
-def bootstrap_tag(name):
+def bootstrap_tag(name: str) -> SafeString:
     """Wrap <span> around a tag so that it's displayed as Bootstrap badge:
     http://getbootstrap.com/components/#labels"""
     addn_class = bootstrap_tag_class(name)

@@ -2,9 +2,11 @@
 
 import django_countries.fields
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_initial_criteria(apps, schema_editor):
+def add_initial_criteria(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add initial criteria."""
 
     Criterium = apps.get_model("dashboard", "Criterium")
@@ -26,7 +28,7 @@ def add_initial_criteria(apps, schema_editor):
         Criterium.objects.create(name=name, email=email, countries=countries)
 
 
-def remove_initial_criteria(apps, schema_editor):
+def remove_initial_criteria(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Remove initial criteria."""
 
     Criterium = apps.get_model("dashboard", "Criterium")

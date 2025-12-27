@@ -2,13 +2,15 @@
 
 
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 PROFILE_REQUIRE_TYPE = "profile"
 AGREE = "agree"
 DECLINE = "decline"
 
 
-def create_preexisting_terms(apps, schema_editor) -> None:
+def create_preexisting_terms(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """
     Adds terms that already existed in amy on the Person model.
     """
@@ -64,7 +66,7 @@ def create_preexisting_terms(apps, schema_editor) -> None:
     Consent = apps.get_model("consents", "Consent")
     Person = apps.get_model("workshops", "Person")
 
-    consents: list[Consent] = []
+    consents = []
     people = Person.objects.all()
     may_publish_name_answer = {
         "yes-profile": may_publish_name_agree_profile,
@@ -108,7 +110,7 @@ def create_preexisting_terms(apps, schema_editor) -> None:
     Consent.objects.bulk_create(consents)
 
 
-def remove_preexisting_terms(apps, schema_editor) -> None:
+def remove_preexisting_terms(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     terms_added = [
         "privacy-policy",
         "may-contact",

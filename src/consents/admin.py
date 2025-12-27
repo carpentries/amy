@@ -3,16 +3,18 @@ from typing import Any
 from urllib.parse import unquote
 
 from django.contrib import admin, messages
-from django.contrib.admin.options import csrf_protect_m
 from django.core.exceptions import ValidationError
-from django.http.response import HttpResponseRedirect
+from django.db.models import Model, QuerySet
+from django.http import HttpRequest
+from django.http.response import HttpResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_protect
 
 from src.consents.models import Consent, Term, TermOption
 
 logger = logging.getLogger("amy")
 
 
-class ArchiveActionMixin:
+class ArchiveActionMixin[T: Model](admin.ModelAdmin[T]):
     """
     Used for AdminModels that have the CreatedUpdatedArchivedMixin
     and need to archive rather than delete the model.
@@ -22,11 +24,18 @@ class ArchiveActionMixin:
     actions = ["archive"]
     readonly_fields = ("archived_at",)
 
-    @csrf_protect_m
-    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+    @csrf_protect
+    def changeform_view(
+        self,
+        request: HttpRequest,
+        object_id: str | None = None,
+        form_url: str = "",
+        extra_context: dict[str, Any] | None = None,
+    ) -> HttpResponse:
         if request.method == "POST" and "_archive" in request.POST:
-            obj = self.get_object(request, unquote(object_id))
-            self.archive_single(request, obj)
+            obj = self.get_object(request, unquote(object_id or ""))
+            if obj:
+                self.archive_single(request, obj)
             return HttpResponseRedirect(request.get_full_path())
 
         if object_id is not None:
@@ -44,21 +53,23 @@ class ArchiveActionMixin:
             extra_context=extra_context,
         )
 
-    def archive_single(self, request, obj):
-        if obj.archived_at is not None:
+    def archive_single(self, request: HttpRequest, obj: T) -> None:
+        # `.archived_at` comes from CreatedUpdatedArchivedMixin
+        if obj.archived_at is not None:  # type: ignore[attr-defined]
             messages.error(
                 request,
                 f"Error: Cannot archive. {obj.__class__.__name__}  {obj} is already archived.",
             )
         else:
             try:
-                obj.archive()
+                # `.archive()` comes from CreatedUpdatedArchivedMixin
+                obj.archive()  # type: ignore[attr-defined]
             except ValidationError as error:
                 messages.error(request, f"Error: Could not archive {obj}.\n{str(error)}")
             else:
                 messages.success(request, f"Success: Archived {obj}.")
 
-    def has_delete_permission(self, *args, **kwargs):
+    def has_delete_permission(self, *args: Any, **kwargs: Any) -> bool:
         """Determines if the admin class can delete objects.
         See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission
         """  # noqa
@@ -71,7 +82,7 @@ class ArchiveActionMixin:
         return f"Warning: This will archive {obj.__class__.__name__} {obj}"
 
 
-class TermOptionAdmin(ArchiveActionMixin, admin.ModelAdmin):
+class TermOptionAdmin(ArchiveActionMixin[TermOption]):
     list_display = ("term", "option_type", "content", "archived_at")
 
     def warning_message(self, obj: Any) -> str:
@@ -81,7 +92,7 @@ class TermOptionAdmin(ArchiveActionMixin, admin.ModelAdmin):
         return message
 
 
-class TermOptionInline(admin.TabularInline):
+class TermOptionInline(admin.TabularInline[TermOption, Term]):
     model = TermOption
     extra = 0
     readonly_fields = (
@@ -90,17 +101,17 @@ class TermOptionInline(admin.TabularInline):
     )
     show_change_link = True
 
-    def is_archived(self, object):
+    def is_archived(self, object: TermOption) -> bool:
         return object.archived_at is not None
 
-    def has_delete_permission(self, *args, **kwargs):
+    def has_delete_permission(self, *args: Any, **kwargs: Any) -> bool:
         """Determines if the admin class can delete objects.
         See https://docs.djangoproject.com/en/2.2/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_delete_permission
         """  # noqa
         return False
 
 
-class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
+class TermAdmin(ArchiveActionMixin[Term]):
     list_display = (
         "slug",
         "content",
@@ -115,7 +126,7 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
     actions = ["email_users_missing_consent", "email_users_to_reconsent"]
     readonly_fields = ("archived_at",)
 
-    def email_users_missing_consent(self, request, queryset):
+    def email_users_missing_consent(self, request: HttpRequest, queryset: QuerySet[Term]) -> None:
         messages.error(
             request,
             "Error: action disabled because old email system is disabled.",
@@ -126,7 +137,7 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
         # for term in queryset:
         #     send_consent_email(request, term)
 
-    def email_users_to_reconsent(self, request, queryset):
+    def email_users_to_reconsent(self, request: HttpRequest, queryset: QuerySet[Term]) -> None:
         messages.error(
             request,
             "Error: action disabled because old email system is disabled.",
@@ -153,10 +164,10 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
         message = super().warning_message(obj)
         return f"{message} and all associated term options and user consents."
 
-    def get_form(self, request, obj=None, change=False, **kwargs):
+    def get_form(self, request: HttpRequest, obj: Term | None = None, change: bool = False, **kwargs: Any) -> Any:
         form = super().get_form(request, obj=None, change=False, **kwargs)
         if not change:
-            form.base_fields["required_type"].choices = [("optional", "Optional")]
+            form.base_fields["required_type"].choices = [("optional", "Optional")]  # type: ignore[attr-defined]
             form.base_fields["required_type"].help_text = (
                 "If you'd like to set the term to required, you must first create it"
                 " as optional, and then set as required."
@@ -167,13 +178,13 @@ class TermAdmin(ArchiveActionMixin, admin.ModelAdmin):
                 " (including admins)"
                 " to consent to this term IMMEDIATELY before using the site."
             )
-            if obj.required_type == Term.OPTIONAL_REQUIRE_TYPE:
+            if obj and obj.required_type == Term.OPTIONAL_REQUIRE_TYPE:
                 messages.warning(request, warning_message)
             form.base_fields["required_type"].help_text = warning_message
         return form
 
 
-class ConsentAdmin(admin.ModelAdmin):
+class ConsentAdmin(admin.ModelAdmin[Consent]):
     list_display = (
         "created_at",
         "person",
@@ -186,23 +197,23 @@ class ConsentAdmin(admin.ModelAdmin):
     search_fields = ("person__personal", "person__family", "person__email")
     list_filter = ["term", "term_option__option_type", "archived_at"]
 
-    def get_term_option_type(self, obj):
+    def get_term_option_type(self, obj: Consent) -> str | None:
         return obj.term_option.option_type if obj.term_option else None
 
-    def has_delete_permission(self, *args, **kwargs):
+    def has_delete_permission(self, *args: Any, **kwargs: Any) -> bool:
         # Note this class does not inherit from ArchiveActionMixin purposefully.
         # Individual user consents should not be archived or deleted
         # from the admin view.
         return False
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
-    def has_change_permission(self, request, obj=None):
+    def has_change_permission(self, request: HttpRequest, obj: Consent | None = None) -> bool:
         return False
 
-    get_term_option_type.short_description = "Term Option Type"
-    get_term_option_type.admin_order_field = "term_option__option_type"
+    get_term_option_type.short_description = "Term Option Type"  # type: ignore[attr-defined]
+    get_term_option_type.admin_order_field = "term_option__option_type"  # type: ignore[attr-defined]
 
 
 admin.site.register(Term, TermAdmin)

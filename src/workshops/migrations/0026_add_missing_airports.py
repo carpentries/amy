@@ -1,4 +1,6 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 AIRPORTS = [
     ("ALC", "Alicante", "ES", 38.2821999, -0.558156),
@@ -17,7 +19,7 @@ AIRPORTS = [
 ]
 
 
-def add_bunch_of_new_airports(apps, schema_editor):
+def add_bunch_of_new_airports(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Airport = apps.get_model("workshops", "Airport")
     for iata, fullname, country, latitude, longitude in AIRPORTS:
         Airport.objects.get_or_create(

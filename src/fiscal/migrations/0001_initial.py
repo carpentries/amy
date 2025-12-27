@@ -3,18 +3,20 @@
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 DEFAULT_ROLES = (("default", "Default"),)
 
 
-def create_default_membership_person_roles(apps, schema_editor):
+def create_default_membership_person_roles(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Create a default MembershipPersonRole."""
     MembershipPersonRole = apps.get_model("fiscal", "MembershipPersonRole")
     objects = [MembershipPersonRole(name=name, verbose_name=verbose_name) for name, verbose_name in DEFAULT_ROLES]
     MembershipPersonRole.objects.bulk_create(objects)
 
 
-def remove_default_membership_person_roles(apps, schema_editor):
+def remove_default_membership_person_roles(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Remove the default-created MembershipPersonRole."""
     MembershipPersonRole = apps.get_model("fiscal", "MembershipPersonRole")
     role_names = [name for name, _ in DEFAULT_ROLES]
