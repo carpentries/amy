@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.core.management.base import BaseCommand
 from django.db.models import QuerySet
 
@@ -30,7 +32,7 @@ class Command(BaseCommand):
         if not no_output:
             self.stdout.write(msg)
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args: Any, **kwargs: Any) -> None:
         no_output = kwargs.get("no_output", False)
 
         self.log(no_output, "Starting migration to a single instructor badge...")

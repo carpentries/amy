@@ -3,11 +3,13 @@
 from datetime import UTC, datetime
 
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 from src.workshops.models import Person
 
 
-def set_data_privacy_agreement(apps, schema_editor):
+def set_data_privacy_agreement(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Set data privacy agreement to TRUE for every request created after
     2016-11-10, ie. the day this agreement was incorporated into AMY"""
     TrainingRequest = apps.get_model("workshops", "TrainingRequest")
@@ -15,7 +17,7 @@ def set_data_privacy_agreement(apps, schema_editor):
     TrainingRequest.objects.filter(created_at__gte=cutoff_date).update(data_privacy_agreement=True)
 
 
-def set_other_agreements(apps, schema_editor):
+def set_other_agreements(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """All training requests required 3 agreements from the start, so
     we need to set them to TRUE."""
     TrainingRequest = apps.get_model("workshops", "TrainingRequest")
@@ -26,7 +28,7 @@ def set_other_agreements(apps, schema_editor):
     )
 
 
-def set_underrepresented(apps, schema_editor):
+def set_underrepresented(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """All training requests required 3 agreements from the start, so
     we need to set them to TRUE."""
     TrainingRequest = apps.get_model("workshops", "TrainingRequest")
@@ -39,13 +41,13 @@ def set_underrepresented(apps, schema_editor):
             request.save()
 
 
-def set_previous_training(apps, schema_editor):
+def set_previous_training(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Prepare previous_training for removal of one option ('days')."""
     TrainingRequest = apps.get_model("workshops", "TrainingRequest")
     TrainingRequest.objects.filter(previous_training="days").update(previous_training="workshops")
 
 
-def set_teaching_frequency_expectation(apps, schema_editor):
+def set_teaching_frequency_expectation(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Prepare teaching_frequency_expectation for removal of one option
     ('often')."""
     TrainingRequest = apps.get_model("workshops", "TrainingRequest")

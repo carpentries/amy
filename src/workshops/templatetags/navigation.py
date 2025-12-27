@@ -1,12 +1,16 @@
+from typing import Any
+
 from django import template
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
 
 register = template.Library()
 
 
-def navbar_template(title, url, active=False, disabled=False, dropdown=False, deprecated=False):
+def navbar_template(
+    title: str, url: str, active: bool = False, disabled: bool = False, dropdown: bool = False, deprecated: bool = False
+) -> str:
     """Compose Bootstrap v4 <li> element for top navigation bar.
 
     List item can be added one or more class attributes:
@@ -17,7 +21,7 @@ def navbar_template(title, url, active=False, disabled=False, dropdown=False, de
       Bootstrap4
     * deprecated: add a deprecated badge to indicate old features
     """
-    classes = []
+    classes: list[str] = []
     screen_reader = ""
     badge = ""
 
@@ -31,13 +35,13 @@ def navbar_template(title, url, active=False, disabled=False, dropdown=False, de
     if deprecated:
         badge = mark_safe('<span class="badge badge-secondary">deprecated</span> ')
 
-    classes = " ".join(classes)
+    classes_str = " ".join(classes)
     template = '<li class="nav-item {classes}"><a class="nav-link" href="{url}">{badge}{title}{screen_reader}</a></li>'
     if dropdown:
         template = '<a class="dropdown-item {classes}" href="{url}">{badge}{title}{screen_reader}</a>'
     return format_html(
         template,
-        classes=classes,
+        classes=classes_str,
         url=url,
         badge=badge,
         title=title,
@@ -46,7 +50,9 @@ def navbar_template(title, url, active=False, disabled=False, dropdown=False, de
 
 
 @register.simple_tag(takes_context=True)
-def navbar_element(context, title, url_name, dropdown=False, deprecated=False):
+def navbar_element(
+    context: dict[str, Any], title: str, url_name: str, dropdown: bool = False, deprecated: bool = False
+) -> SafeString:
     """
     Insert Bootstrap's `<li><a>...</a></li>` with specific classes and
     accessibility elements.  This tag takes a URL name (with no arguments) that
@@ -58,7 +64,9 @@ def navbar_element(context, title, url_name, dropdown=False, deprecated=False):
 
 
 @register.simple_tag(takes_context=True)
-def navbar_element_permed(context, title, url_name, perms, dropdown=False):
+def navbar_element_permed(
+    context: dict[str, Any], title: str, url_name: str, perms: str, dropdown: bool = False
+) -> SafeString:
     """
     Works like `navbar_element`, but also disables if user doesn't have
     permissions.
@@ -71,16 +79,16 @@ def navbar_element_permed(context, title, url_name, perms, dropdown=False):
 
     # check permissions
     perms_ctx = context["perms"]
-    perms = perms.split(",")
+    perms_list = perms.split(",")
     # True for every perm (from perms_ctx) that's granted to the user
-    perms = map(lambda x: x in perms_ctx, perms)
-    not all(perms)  # or: enabled = all(perms)
+    perms_active = map(lambda x: x in perms_ctx, perms_list)
+    not all(perms_active)  # or: enabled = all(perms)
 
     return mark_safe(navbar_template(title, url, active=active, dropdown=dropdown))
 
 
 @register.simple_tag(takes_context=True)
-def navbar_element_url(context, title, url, dropdown=False):
+def navbar_element_url(context: dict[str, Any], title: str, url: str, dropdown: bool = False) -> SafeString:
     """
     Insert Bootstrap's `<li><a>...</a></li>` with specific classes and
     accessibility elements.  This tag takes a pre-made URL as an argument.

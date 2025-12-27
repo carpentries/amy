@@ -2,9 +2,11 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def new_mix_match_curriculum(apps, schema_editor):
+def new_mix_match_curriculum(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add new mix & match Curriculum entry."""
     Curriculum = apps.get_model("workshops", "Curriculum")
     Curriculum.objects.create(

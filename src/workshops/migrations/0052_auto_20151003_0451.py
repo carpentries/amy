@@ -1,6 +1,8 @@
 import re
 
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 REPO_REGEX = re.compile(
     r"https?://github\.com/(?P<name>[^/]+)/"
@@ -13,7 +15,7 @@ WEBSITE_REGEX = re.compile(
 WEBSITE_FORMAT = "https://{name}.github.io/{repo}/"
 
 
-def website_url(url):
+def website_url(url: str) -> str:
     """Return URL formatted as it was website URL.
 
     Website URL is as specified in WEBSITE_FORMAT.
@@ -32,7 +34,7 @@ def website_url(url):
         return url
 
 
-def switch_events_to_website_urls(apps, schema_editor):
+def switch_events_to_website_urls(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """For every event in the DB, try to save it's URL as website URL.
 
     The rules are:

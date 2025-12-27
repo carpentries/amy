@@ -3,9 +3,11 @@
 import json
 
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def populate_languages(apps, schema_editor):
+def populate_languages(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Populate the Languages table.
 
     [1] lists IANA as the registry maintainer, [2] looks like that

@@ -1,8 +1,10 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 from django.db.models import Q
 
 
-def make_people_with_usable_passwords_active(apps, schema_editor):
+def make_people_with_usable_passwords_active(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Password is unusable if:
     * it's empty, or
     * it starts with "!", or

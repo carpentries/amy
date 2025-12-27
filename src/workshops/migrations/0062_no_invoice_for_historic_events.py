@@ -1,17 +1,19 @@
 from datetime import date
 
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 START_OF_MODERNITY = date(2014, 1, 1)
 
 
-def no_invoice_for_historical_events(apps, schema_editor):
+def no_invoice_for_historical_events(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Set invoice status for historical (<2014) events."""
     Event = apps.get_model("workshops", "Event")
     Event.objects.filter(start__lt=START_OF_MODERNITY, invoice_status="unknown").update(invoice_status="ni-historic")
 
 
-def mark_historical_events_completed(apps, schema_editor):
+def mark_historical_events_completed(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Set invoice status for historical (<2014) events."""
     Event = apps.get_model("workshops", "Event")
     Event.objects.filter(start__lt=date(2014, 1, 1), completed=False).update(completed=True)

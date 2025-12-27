@@ -1,11 +1,11 @@
 from django import template
-from django.utils.safestring import mark_safe
+from django.utils.safestring import SafeString, mark_safe
 
 register = template.Library()
 
 
 @register.simple_tag
-def assign(variable):
+def assign(variable: str) -> SafeString:
     """Directly pass a variable to the output.
 
     This tag is intended to use with the new 'as' syntax:

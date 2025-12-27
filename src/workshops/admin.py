@@ -16,15 +16,15 @@ from src.workshops.models import (
 )
 
 
-class MemberRoleAdmin(admin.ModelAdmin):
+class MemberRoleAdmin(admin.ModelAdmin[MemberRole]):
     list_display = ("name", "verbose_name")
 
 
-class RoleAdmin(admin.ModelAdmin):
+class RoleAdmin(admin.ModelAdmin[Role]):
     list_display = ("name", "verbose_name")
 
 
-class CurriculumAdmin(admin.ModelAdmin):
+class CurriculumAdmin(admin.ModelAdmin[Curriculum]):
     list_display = (
         "__str__",
         "carpentry",
@@ -39,11 +39,11 @@ class CurriculumAdmin(admin.ModelAdmin):
     )
 
 
-class InfoSourceAdmin(admin.ModelAdmin):
+class InfoSourceAdmin(admin.ModelAdmin[InfoSource]):
     list_display = ("name",)
 
 
-class TagAdmin(admin.ModelAdmin):
+class TagAdmin(admin.ModelAdmin[Tag]):
     list_display = ("name", "priority", "details")
 
 

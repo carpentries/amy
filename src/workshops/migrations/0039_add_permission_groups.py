@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 from src.workshops.models import (
     Airport,
@@ -18,7 +20,7 @@ from src.workshops.models import (
 )
 
 
-def add_permission_groups(apps, schema_editor):
+def add_permission_groups(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     # create 'administrators' group with all permissions for CRUD
     auth_ct = ContentType.objects.get_for_models(Permission, Group)
     workshops_ct = ContentType.objects.get_for_models(

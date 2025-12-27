@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                     ("other", "Other:"),
                 ],
                 default="not-at-all",
-                help_text=None,
+                help_text="",
                 max_length=40,
                 verbose_name="How often would you expect to teach Carpentries workshops  (of any kind) after this"
                 " training?",

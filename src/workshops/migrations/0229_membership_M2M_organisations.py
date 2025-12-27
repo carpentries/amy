@@ -2,6 +2,8 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 DEFAULT_ROLES = (
     # ("default", "Default"),
@@ -11,7 +13,7 @@ DEFAULT_ROLES = (
 )
 
 
-def create_default_member_roles(apps, schema_editor):
+def create_default_member_roles(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Create a default MemberRole. It's required in M2M relationship between
     Memberships and Organisations."""
     MemberRole = apps.get_model("workshops", "MemberRole")
@@ -19,14 +21,14 @@ def create_default_member_roles(apps, schema_editor):
     MemberRole.objects.bulk_create(objects)
 
 
-def remove_default_member_roles(apps, schema_editor):
+def remove_default_member_roles(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Remove the default-created MemberRole."""
     MemberRole = apps.get_model("workshops", "MemberRole")
     role_names = [name for name, _ in DEFAULT_ROLES]
     MemberRole.objects.filter(name__in=role_names).delete()
 
 
-def copy_organisation_to_organisations(apps, schema_editor):
+def copy_organisation_to_organisations(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Copy single FK organization to entry in M2M through table (Member). Use
     the default role created in previous data migration."""
     Member = apps.get_model("workshops", "Member")
@@ -43,7 +45,7 @@ def copy_organisation_to_organisations(apps, schema_editor):
             )
 
 
-def copy_default_organisations_to_organisation(apps, schema_editor):
+def copy_default_organisations_to_organisation(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Reverse `copy_organisation_to_organisations`."""
     Membership = apps.get_model("workshops", "Membership")
     for membership in Membership.objects.all():

@@ -2,16 +2,18 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def migrate_travel_exp_management(apps, schema_editor):
+def migrate_travel_exp_management(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Migrate options previously with no contents (displayed as "Other:")
     to a new contents ("other")."""
     WorkshopInquiryRequest = apps.get_model("extrequests", "WorkshopInquiryRequest")
     WorkshopInquiryRequest.objects.filter(travel_expences_management="").update(travel_expences_management="other")
 
 
-def migrate_institutional_restrictions(apps, schema_editor):
+def migrate_institutional_restrictions(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Migrate options previously with no contents (displayed as "Other:")
     to a new contents ("other")."""
     WorkshopInquiryRequest = apps.get_model("extrequests", "WorkshopInquiryRequest")

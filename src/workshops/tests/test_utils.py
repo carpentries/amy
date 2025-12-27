@@ -894,7 +894,7 @@ class TestPaginatorSections(TestBase):
         # there's no need to initialize with real values
         p = Paginator[None](object_list=None, per_page=1)  # type: ignore[arg-type]
         p.num_pages = num_pages
-        p._page_number = page_index  # type: ignore[assignment]
+        p._page_number = page_index
         return p
 
     def test_shortest(self) -> None:

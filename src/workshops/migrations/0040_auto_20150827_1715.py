@@ -1,7 +1,9 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_academic_levels(apps, schema_editor):
+def add_academic_levels(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     AcademicLevel = apps.get_model("workshops", "AcademicLevel")
     names = [
         "Undergraduate or below",
@@ -15,7 +17,7 @@ def add_academic_levels(apps, schema_editor):
         AcademicLevel.objects.create(name=name)
 
 
-def add_comp_exp_levels(apps, schema_editor):
+def add_comp_exp_levels(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     ComputingExperienceLevel = apps.get_model("workshops", "ComputingExperienceLevel")
     names = [
         "Novice (uses a spreadsheet for data analysis rather than writing code)",

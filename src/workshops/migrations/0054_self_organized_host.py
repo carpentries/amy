@@ -2,16 +2,18 @@ import re
 
 import django
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 from django.db.models import Q
 
 
-def add_self_organized_host(apps, schema_editor):
+def add_self_organized_host(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Make new host: self-organized."""
     Host = apps.get_model("workshops", "Host")
     Host.objects.create(domain="self-organized", fullname="self-organized", country="W3")
 
 
-def update_administrator_to_self_organized(apps, schema_editor):
+def update_administrator_to_self_organized(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Find all events that were self-organized and set administrator for them
     to be "self-organized"."""
     Host = apps.get_model("workshops", "Host")

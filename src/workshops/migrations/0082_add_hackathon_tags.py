@@ -1,7 +1,9 @@
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_hackathon_tags(apps, schema_editor):
+def add_hackathon_tags(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add "hackathon tags."""
     Tag = apps.get_model("workshops", "Tag")
     Tag.objects.create(

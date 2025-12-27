@@ -17,7 +17,7 @@ repos:
 
       - id: mypy
         name: Python Typing (mypy) strict
-        entry: uv run mypy --follow-imports=silent
+        entry: uv run mypy
         require_serial: true
         language: system
         types: [python]

@@ -1,7 +1,9 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_data_analysis_levels(apps, schema_editor):
+def add_data_analysis_levels(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     DataAnalysisLevel = apps.get_model("workshops", "DataAnalysisLevel")
     L = [
         "Little to no prior computational experience",

@@ -1,8 +1,10 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 from django_countries import countries
 
 
-def migrate_to_2char_country_names(apps, schema_editor):
+def migrate_to_2char_country_names(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     Site = apps.get_model("workshops", "Site")
     Airport = apps.get_model("workshops", "Airport")
 

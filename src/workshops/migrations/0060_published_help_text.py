@@ -3,9 +3,11 @@ import re
 import django.core.validators
 import django_countries.fields
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_address_to_online_events(apps, schema_editor):
+def add_address_to_online_events(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Set Event.address if empty for online events."""
     Event = apps.get_model("workshops", "Event")
     Tag = apps.get_model("workshops", "Tag")

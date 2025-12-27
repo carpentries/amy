@@ -1,7 +1,9 @@
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def migrate_invoiced(apps, schema_editor):
+def migrate_invoiced(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Migrate `invoiced` bool field into `invoice_status` text field."""
     Event = apps.get_model("workshops", "Event")
 

@@ -2,9 +2,11 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def select_membership_for_events(apps, schema_editor):
+def select_membership_for_events(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """
     Set existing membership to event based on some criteria:
     * https://github.com/carpentries/amy/issues/1941

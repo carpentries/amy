@@ -1,7 +1,9 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def add_country_to_online_events(apps, schema_editor):
+def add_country_to_online_events(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add an 'Online' country to all events tagged with 'online' tag."""
     Event = apps.get_model("workshops", "Event")
 

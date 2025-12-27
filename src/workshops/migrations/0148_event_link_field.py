@@ -2,9 +2,11 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def copy_old_eventrequest_relation(apps, schema_editor):
+def copy_old_eventrequest_relation(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Basically the relation name was changed, but also the point of
     declaration, so the way this migration rewrites data is a little bit
     complicated. See comment below."""
@@ -21,7 +23,7 @@ def copy_old_eventrequest_relation(apps, schema_editor):
         EventRequest.objects.filter(id=event.request_id).update(event=event.id)
 
 
-def fill_eventsubmission_event_link(apps, schema_editor):
+def fill_eventsubmission_event_link(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Find possible candidates for the link by using the declared submission
     URL."""
     Event = apps.get_model("workshops", "Event")

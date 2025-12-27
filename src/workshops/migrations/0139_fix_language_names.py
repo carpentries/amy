@@ -4,11 +4,13 @@
 import json
 
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 PREVIOUS_NAME_MAX_LENGTH = 40
 
 
-def fix_truncated_language_names(apps, schema_editor):
+def fix_truncated_language_names(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Some languages names were truncated in 0097_auto_20160519_0739 migration.
 
     See https://github.com/swcarpentry/amy/issues/1165 for more info."""

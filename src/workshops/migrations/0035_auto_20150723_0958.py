@@ -1,9 +1,18 @@
 from functools import partial
 
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def switch_host_to_tag(host_domain, new_host_domain, tag_name, tag_desc, apps, schema_editor):
+def switch_host_to_tag(
+    host_domain: str,
+    new_host_domain: str,
+    tag_name: str,
+    tag_desc: str,
+    apps: StateApps,
+    schema_editor: BaseDatabaseSchemaEditor,
+) -> None:
     Host = apps.get_model("workshops", "Host")
     Event = apps.get_model("workshops", "Event")
     Tag = apps.get_model("workshops", "Tag")

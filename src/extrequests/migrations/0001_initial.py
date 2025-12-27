@@ -4,11 +4,13 @@ import django.db.models.deletion
 import django_countries.fields
 from django.conf import settings
 from django.db import migrations, models
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 import src.workshops.fields
 
 
-def update_contenttypes(apps, schema_editor):
+def update_contenttypes(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     ContentType = apps.get_model("contenttypes", "ContentType")
 
     # update application for all non-versioned model content type

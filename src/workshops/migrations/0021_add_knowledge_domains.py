@@ -1,4 +1,6 @@
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 DOMAINS = [
     "Space sciences",
@@ -19,7 +21,7 @@ DOMAINS = [
 ]
 
 
-def add_knowledge_domains(apps, schema_editor):
+def add_knowledge_domains(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """Add instances of KnowledgeDomains."""
     KnowledgeDomain = apps.get_model("workshops", "KnowledgeDomain")
     for domain in DOMAINS:

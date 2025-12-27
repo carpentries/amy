@@ -1,5 +1,5 @@
 from django import template
-from flags.sources import Condition, Flag
+from flags.sources import Condition, Flag  # type: ignore[import-untyped]
 
 register = template.Library()
 

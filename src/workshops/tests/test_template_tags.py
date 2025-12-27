@@ -1,5 +1,5 @@
 from django.test import TestCase
-from flags.sources import Condition, Flag
+from flags.sources import Condition, Flag  # type: ignore[import-untyped]
 
 from src.workshops.templatetags.feature_flag_conditions import (
     can_change_state,

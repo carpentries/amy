@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from django.contrib.sessions.backends.db import SessionStore
+from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 from flags.sources import Condition, Flag  # type: ignore[import-untyped]
 
@@ -83,7 +84,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         mock_get_flags = patch("src.workshops.middleware.feature_flags.get_flags").start()
         mock_get_flags.return_value = flags
 
-        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: x)  # type: ignore[no-untyped-call]
+        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: HttpResponse())
 
         # Act
         middleware(request)
@@ -105,7 +106,7 @@ class TestSaveSessionFeatureFlagMiddleware(TestCase):
         mock_get_flags = patch("src.workshops.middleware.feature_flags.get_flags").start()
         mock_get_flags.return_value = flags
 
-        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: x)  # type: ignore[no-untyped-call]
+        middleware = SaveSessionFeatureFlagMiddleware(get_response=lambda x: HttpResponse())
 
         # Act
         middleware(request)

@@ -3,9 +3,11 @@
 import json
 
 from django.db import migrations
+from django.db.backends.base.schema import BaseDatabaseSchemaEditor
+from django.db.migrations.state import StateApps
 
 
-def update_language_names(apps, schema_editor):
+def update_language_names(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor) -> None:
     """`registry.json` in some cases provides multiple descriptions for the
     same language. This will update the names of these languages in the
     database with proper punctuation between description choices.
