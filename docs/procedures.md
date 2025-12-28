@@ -9,9 +9,6 @@ is a web application and not a library, we have come up with these rules to bump
 * normal release: bump minor version
 * major changes (e.g. big project gets merged): bump major version.
 
-In future, once CI/CD is implemented, we may consider switching to [commitizen](https://github.com/commitizen/cz-cli)
-which will help with generating changelogs and bumping versions accordingly.
-
 **Milestone name should indicate the release version**. For example, if next release is
 `v3.15.0`, then the milestone collecting issues and PRs should be named `v3.15` or `v3.15.0`.
 
@@ -92,11 +89,18 @@ Execute the following commands on your local machine, not production.
     Omit `-s` flag if you cannot create signed tags.
     See [Git documentation](https://git-scm.com/book/tr/v2/Git-Tools-Signing-Your-Work) for more info about signed tags.
 
-10. Push `main` and the new tag everywhere:
+10. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for before deployment of this release.
+
+11. Push `main` and the new tag everywhere:
 
         $ git push origin main --tags
 
-11. Bump version on `develop` (dev version corresponding to the milestone):
+    **Note:** this will trigger deployment to production environment.
+    A manual confirmation is required in Github Actions UI to proceed.
+
+12. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for after deployment of this release.
+
+13. Bump version on `develop` (dev version corresponding to the milestone):
 
         $ git checkout develop
         $ # manually edit version in `pyproject.toml` and `package.json`
@@ -106,20 +110,8 @@ Execute the following commands on your local machine, not production.
 
     This step is only needed if next development cycle begins (ie. no hotfix release was done).
 
-12. And push it everywhere:
+14. And push it everywhere:
 
         $ git push origin develop
 
----
-
-## Deployment procedure using Ansible
-
-1. Back up the database through the AWS console (RDS > Databases > (cluster name) > Actions (top right) > Take snapshot). Use the naming scheme `vA-B-C-YYYY-MM-DD` for version A.B.C (the version before the one that will be deployed) and date YYYY-MM-DD, e.g. `v4-2-0-2023-08-12`.
-
-2. Check for pending maintenance through the AWS console (RDS > Databases > (cluster name) > Maintenance and Backups (below Summary section)) and complete it if needed.
-
-3. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for before deployment of this release.
-
-4. Run the Ansible deployment as described in the relevant repository `README.md`.
-
-5. Complete any [Manual Deployment Steps](./manual_deployment_steps.md) noted for after deployment of this release.
+    **Note:** this will trigger deployment to testing environment.
