@@ -17,7 +17,7 @@ database:
 
 ## test         : run all tests except migration tests.
 test :
-	${MANAGE} test --exclude-tag migration_test --exclude-tag autoemails
+	${MANAGE} test --exclude-tag migration_test
 
 ## test_migrations    : test database migrations only
 test_migrations:

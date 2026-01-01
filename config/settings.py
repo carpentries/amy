@@ -43,7 +43,6 @@ env = environ.Env(
     AMY_MAILGUN_API_KEY=(str, ""),
     AMY_MAILGUN_SENDER_DOMAIN=(str, ""),
     AMY_ADMIN_URL=(str, "admin/"),
-    AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS=(str, ""),
     AMY_REPORTS_SALT_FRONT=(str, ""),
     AMY_REPORTS_SALT_BACK=(str, ""),
     AMY_REPORTS_LINK=(
@@ -178,7 +177,6 @@ LOCAL_APPS = [
     "src.reports.apps.ReportsConfig",
     "src.trainings.apps.TrainingsConfig",
     "src.extcomments.apps.ExtcommentsConfig",
-    "src.autoemails.apps.AutoemailsConfig",  # TODO: eventually remove
     "src.consents.apps.ConsentsConfig",
     "src.communityroles.apps.CommunityRolesConfig",
     "src.recruitment.apps.RecruitmentConfig",
@@ -389,24 +387,6 @@ TEMPLATES = [
             "string_if_invalid": "XXX-unset-variable-XXX",
         },
     },
-    # `autoemails` app backend used for reading templates from the database
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "NAME": "db_backend",
-        # not-allowed to fetch from disk
-        "DIRS": [],
-        "APP_DIRS": False,
-        "OPTIONS": {
-            "debug": False,
-            "loaders": [],
-            "context_processors": [
-                "django.template.context_processors.i18n",
-                "django.template.context_processors.tz",
-            ],
-            # Warn about invalid template variables
-            "string_if_invalid": "XXX-unset-variable-XXX",
-        },
-    },
     # `emails` app backend used for reading templates from the database
     {
         "BACKEND": "django.template.backends.jinja2.Jinja2",
@@ -609,15 +589,9 @@ SELECT2_CACHE_BACKEND = "select2"
 # https://docs.djangoproject.com/en/4.1/topics/testing/advanced/#defining-a-test-runner
 TEST_RUNNER = "src.workshops.tests.runner.SilenceLogsRunner"
 
-# Autoemails application settings
-# -----------------------------------------------------------------------------
-# These settings describe internal `autoemails` application behavior.
-# On test server: 'amy-tests@carpentries.org'
-AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env("AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS")
-
 # Email module
 # -----------------------------------------------------------------------------
-# This module is the next version of Autoemails.
+# This module is the next version of automated emails.
 EMAIL_TEMPLATE_ENGINE_BACKEND = "email_jinja2_backend"
 EMAIL_MAX_FAILED_ATTEMPTS = 10  # value controls the circuit breaker for failed attempts
 EMAIL_ATTACHMENTS_BUCKET_NAME = env("AMY_EMAIL_ATTACHMENTS_S3_BUCKET_NAME")
