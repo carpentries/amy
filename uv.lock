@@ -47,7 +47,6 @@ dependencies = [
     { name = "djangorestframework-stubs" },
     { name = "drf-nested-routers" },
     { name = "faker" },
-    { name = "fakeredis" },
     { name = "gunicorn" },
     { name = "jinja2" },
     { name = "mkdocs" },
@@ -104,7 +103,6 @@ requires-dist = [
     { name = "djangorestframework-stubs" },
     { name = "drf-nested-routers", specifier = ">=0.94.1,<0.95.0" },
     { name = "faker", specifier = ">=33.3.1,<34.0.0" },
-    { name = "fakeredis", specifier = ">=2.26.2,<3.0.0" },
     { name = "gunicorn", specifier = ">=23.0.0,<24.0.0" },
     { name = "jinja2", specifier = ">=3.1.5,<4.0.0" },
     { name = "mkdocs", specifier = ">=1.6.1,<2.0.0" },
@@ -851,19 +849,6 @@ wheels = [
 ]
 
 [[package]]
-name = "fakeredis"
-version = "2.33.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "redis" },
-    { name = "sortedcontainers" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/f9/57464119936414d60697fcbd32f38909bb5688b616ae13de6e98384433e0/fakeredis-2.33.0.tar.gz", hash = "sha256:d7bc9a69d21df108a6451bbffee23b3eba432c21a654afc7ff2d295428ec5770", size = 175187, upload-time = "2025-12-16T19:45:52.269Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/78/a850fed8aeef96d4a99043c90b818b2ed5419cd5b24a4049fd7cfb9f1471/fakeredis-2.33.0-py3-none-any.whl", hash = "sha256:de535f3f9ccde1c56672ab2fdd6a8efbc4f2619fc2f1acc87b8737177d71c965", size = 119605, upload-time = "2025-12-16T19:45:51.08Z" },
-]
-
-[[package]]
 name = "filelock"
 version = "3.20.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1472,15 +1457,6 @@ wheels = [
 ]
 
 [[package]]
-name = "redis"
-version = "7.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/43/c8/983d5c6579a411d8a99bc5823cc5712768859b5ce2c8afe1a65b37832c81/redis-7.1.0.tar.gz", hash = "sha256:b1cc3cfa5a2cb9c2ab3ba700864fb0ad75617b41f01352ce5779dabf6d5f9c3c", size = 4796669, upload-time = "2025-11-19T15:54:39.961Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/f0/8956f8a86b20d7bb9d6ac0187cf4cd54d8065bc9a1a09eb8011d4d326596/redis-7.1.0-py3-none-any.whl", hash = "sha256:23c52b208f92b56103e17c5d06bdc1a6c2c0b3106583985a76a18f83b265de2b", size = 354159, upload-time = "2025-11-19T15:54:38.064Z" },
-]
-
-[[package]]
 name = "requests"
 version = "2.32.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1608,15 +1584,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/87/7b/c5b40fca7a9bd052fb403a15f63f6de7c7daf65ff2ce463f5cdb7855ea25/social_auth_core-4.8.3.tar.gz", hash = "sha256:7225e57d7cef530aa7ebbb3892493002025b45e894be1d5cb0b78b9e8293ec2c", size = 241354, upload-time = "2025-12-18T18:44:43.299Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bf/4c/48f54057e9284c60c51a01282351346a2662736386a72fd8a12801fb31a3/social_auth_core-4.8.3-py3-none-any.whl", hash = "sha256:a8ddb8a442416489a8f77f5fd472b29fc257627f8e3f770367db015b5171342b", size = 443537, upload-time = "2025-12-18T18:44:41.821Z" },
-]
-
-[[package]]
-name = "sortedcontainers"
-version = "2.4.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594, upload-time = "2021-05-16T22:03:42.897Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
 ]
 
 [[package]]

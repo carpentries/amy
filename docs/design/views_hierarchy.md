@@ -20,6 +20,8 @@ A lot of them is used in AMY, too. Good resource to read about the views is
 
 ### `ActionManageMixin` (`amy/autoemails/base_views.py`)
 
+Note: no longer available in the codebase as `autoemails` application was removed.
+
 This mixin was designed to support triggering actions (from
 [automated emails](./projects/2019_automated_emails.md) project) by inheriting from it
 in class-based views, but as it turned out this is never used. Its `add` and `remove`
