@@ -16,17 +16,8 @@ jobs:
     needs: lint
 
   build_container:
-    name: Build container image
+    uses: ./.github/workflows/incl_build_container_image.yml
     needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v4
-
-    - name: Build container image
-      id: build-image
-      run: docker build .
 
   # build_deploy:
   #   needs: test
