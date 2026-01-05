@@ -3,12 +3,7 @@
 name: CI/CD (main - production deployment)
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Git tag to deploy (e.g. "v4.2.0")'
-        required: true
-        type: string
+  workflow_dispatch
 
 jobs:
   accessibility:
@@ -24,5 +19,3 @@ jobs:
   build_deploy:
     uses: ./.github/workflows/incl_build_and_deploy_production.yml
     needs: test
-    with:
-      tag: ${{ inputs.tag }}
