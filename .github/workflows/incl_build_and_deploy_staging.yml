@@ -3,6 +3,9 @@
 on:
   workflow_call
 
+concurrency:
+  group: staging-deployment
+
 jobs:
   build:
     name: Build Docker image and push to ECR
@@ -78,3 +81,4 @@ jobs:
         service: ${{ vars.AMY_ECS_SERVICE_NAME }}
         cluster: ${{ vars.AMY_ECS_CLUSTER_NAME }}
         force-new-deployment: true
+        wait-for-service-stability: true

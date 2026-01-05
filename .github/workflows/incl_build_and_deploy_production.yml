@@ -1,16 +1,14 @@
 # reusable workflow - `production` environment
 
 on:
-  workflow_call:
-    inputs:
-      tag:
-        description: 'Git tag to deploy (e.g. "v4.2.0")'
-        required: true
-        type: string
+  workflow_call
+
+concurrency:
+  group: production-deployment
 
 jobs:
-  build:
-    name: Build Docker image and push to ECR
+  build-deploy:
+    name: Build Docker image and push to ECR, Deploy to ECS
     environment: production
     runs-on: ubuntu-latest
 
@@ -23,10 +21,8 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v4
-      with:
-        ref: ${{ inputs.tag }}
 
-    - name: Configure AWS Credentials
+    - name: Configure AWS Credentials (for ECR)
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ vars.AWS_ECR_ROLE_TO_ASSUME }}
@@ -47,17 +43,7 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA" >> $GITHUB_OUTPUT
 
-  deploy:
-    name: Deploy to ECS
-    environment: production
-    needs: build
-    runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-
-    steps:
-    - name: Configure AWS Credentials
+    - name: Configure AWS Credentials (for ECS)
       uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ vars.AWS_ECS_ROLE_TO_ASSUME }}
@@ -76,7 +62,7 @@ jobs:
       with:
         task-definition: task-definition.json
         container-name: ${{ vars.AMY_ECS_TASK_DEFINITION_CONTAINER_NAME }}
-        image: ${{ needs.build.outputs.image }}
+        image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2
@@ -85,3 +71,4 @@ jobs:
         service: ${{ vars.AMY_ECS_SERVICE_NAME }}
         cluster: ${{ vars.AMY_ECS_CLUSTER_NAME }}
         force-new-deployment: true
+        wait-for-service-stability: true
