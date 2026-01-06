@@ -491,14 +491,11 @@ class OfferingAccountRelation(GenericObjectLookupView):
         if self.content_type_name == "individual":
             qs = qs.filter(Q(personal__icontains=term) | Q(family__icontains=term) | Q(email__icontains=term))
 
-        if self.content_type_name == "organization":
+        if self.content_type_name == "organisation":
             qs = qs.filter(Q(domain__icontains=term) | Q(fullname__icontains=term))
 
         if self.content_type_name == "consortium":
             qs = qs.filter(Q(name__icontains=term) | Q(description__icontains=term))
-
-        if self.content_type_name == "partnership":
-            qs = qs.filter(Q(name__icontains=term))
 
         return qs  # type: ignore
 
