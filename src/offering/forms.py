@@ -170,6 +170,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         *args: Any,
         disable_account: bool = False,
         disable_partnership: bool = False,
+        disable_dates: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -178,6 +179,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             self.fields["account"].disabled = True
         if disable_partnership:
             self.fields["partnership"].disabled = True
+        if disable_dates:
             self.fields["start_date"].disabled = True
             self.fields["end_date"].disabled = True
 

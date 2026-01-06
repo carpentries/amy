@@ -304,19 +304,28 @@ class AccountBenefitCreate(
         initial = super().get_initial()
         if account_pk := self.request.GET.get("account_pk"):
             initial["account"] = get_object_or_404(Account, pk=account_pk)
+
         if partnership_pk := self.request.GET.get("partnership_pk"):
             partnership = get_object_or_404(Partnership, pk=partnership_pk)
             initial["partnership"] = partnership
             initial["start_date"] = partnership.agreement_start
             initial["end_date"] = partnership.agreement_end
+
         return initial
 
     def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
-        if kwargs.get("initial", {}).get("account") is not None:
+
+        if (account := kwargs.get("initial", {}).get("account")) is not None:
             kwargs["disable_account"] = True
+            if account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
+                # For individual accounts, we also disable partnership selection
+                kwargs["disable_partnership"] = True
+
         if kwargs.get("initial", {}).get("partnership") is not None:
             kwargs["disable_partnership"] = True
+            kwargs["disable_dates"] = True
+
         return kwargs
 
     def get_success_url(self) -> str:
