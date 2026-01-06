@@ -112,6 +112,26 @@ class AccountUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountF
         context["title"] = str(self.object)
         return context
 
+    def form_valid(self, form: AccountForm) -> HttpResponse:
+        obj = form.save(commit=False)
+        # Update content type in case account type was changed
+        obj.generic_relation_content_type = Account.get_content_type_for_account_type(
+            form.cleaned_data["account_type"],
+        )
+        obj.save()
+
+        if obj.account_type == Account.AccountTypeChoices.INDIVIDUAL:
+            # Update AccountOwner for individual accounts. It's the same as the person this account is for.
+            try:
+                owner = Person.objects.get(pk=form.cleaned_data["generic_relation_pk"])
+                AccountOwner.objects.filter(
+                    account=obj, permission_type=AccountOwner.PERMISSION_TYPE_CHOICES[0][0]
+                ).update(person=owner)
+            except Person.DoesNotExist:
+                pass
+
+        return super().form_valid(form)
+
 
 class AccountDelete(
     OnlyForAdminsMixin,
