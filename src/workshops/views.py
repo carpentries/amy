@@ -1708,11 +1708,15 @@ class TaskCreate(
         """
 
         seat_membership = form.cleaned_data["seat_membership"]
-        seat_public = form.cleaned_data["seat_public"]
         event = form.cleaned_data["event"]
+        # This field is no longer available in the form.
+        # seat_public = form.cleaned_data["seat_public"]
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
+            # Assume seat_public is True if not provided (for backward compatibility)
+            seat_public = True
+
             remaining = (
                 seat_membership.public_instructor_training_seats_remaining
                 if seat_public
@@ -1851,9 +1855,14 @@ class TaskUpdate(
                 "This task had both allocated benefit and membership set. Allocated benefit was removed.",
             )
 
-        seat_public = form.cleaned_data["seat_public"]
+        # This field is no longer available in the form.
+        # seat_public = form.cleaned_data["seat_public"]
+
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
+            # Assume seat_public is True if not provided (for backward compatibility)
+            seat_public = True
+
             remaining = (
                 seat_membership.public_instructor_training_seats_remaining
                 if seat_public

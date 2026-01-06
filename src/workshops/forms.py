@@ -677,14 +677,14 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
             "person",
             "role",
             "seat_membership",
-            "seat_public",
-            "seat_open_training",
+            # "seat_public",
+            # "seat_open_training",
             "allocated_benefit",
         ]
         widgets = {
             "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
             "event": ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
-            "seat_public": forms.RadioSelect(),
+            # "seat_public": forms.RadioSelect(),
         }
 
     class Media:
@@ -709,8 +709,8 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
             "person",
             "role",
             "seat_membership",
-            "seat_public",
-            "seat_open_training",
+            # "seat_public",
+            # "seat_open_training",
             "allocated_benefit" if show_allocated_benefit else None,
         )
 
