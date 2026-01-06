@@ -952,8 +952,6 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
         slug=slug,
     )
 
-    member_sites = Membership.objects.filter(task__event=event).distinct()
-
     try:
         recruitment_stats = event.instructorrecruitment.signups.aggregate(
             all_signups=Count("person"),
@@ -1014,7 +1012,6 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
         "title": f"Event {event}",
         "event": event,
         "tasks": tasks,
-        "member_sites": member_sites,
         "all_emails": tasks.filter(
             person__consent__archived_at__isnull=True,
             person__consent__term_option__option_type=TermOptionChoices.AGREE,
