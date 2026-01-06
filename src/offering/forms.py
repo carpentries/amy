@@ -18,6 +18,9 @@ class AccountForm(forms.ModelForm[Account]):
             "generic_relation_pk",
             "active",
         ]
+        labels = {
+            "generic_relation_pk": "Name",
+        }
         widgets = {
             "generic_relation_pk": HeavySelect2Widget(
                 data_view="offering-account-relation-lookup",
