@@ -306,11 +306,8 @@ def person_bulk_add(request: AuthenticatedHttpRequest) -> HttpResponse:
                     msg = msg_template.format(", ".join(empty_fields))
                     messages.error(request, msg)
                 else:
-                    # instead of insta-saving, put everything into session
-                    # then redirect to confirmation page which in turn saves
-                    # the data
+                    # Put everything into session and then redirect to confirmation page which can save the data.
                     request.session["bulk-add-people"] = persons_tasks
-                    # request match
                     request.session["bulk-add-people-match"] = True
                     return redirect("person_bulk_add_confirmation")
 
@@ -346,11 +343,12 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
         families = request.POST.getlist("family")
         usernames = request.POST.getlist("username")
         emails = request.POST.getlist("email")
+        airport_iatas = request.POST.getlist("airport_iata")
         events = request.POST.getlist("event")
         roles = request.POST.getlist("role")
-        data_update = zip(personals, families, usernames, emails, events, roles, strict=False)
+        data_update = zip(personals, families, usernames, emails, airport_iatas, events, roles, strict=False)
         for k, record in enumerate(data_update):
-            personal, family, username, email, event, role = record
+            personal, family, username, email, airport_iata, event, role = record
             existing_person_id = persons_tasks[k].get("existing_person_id")
             persons_tasks[k] = PersonTaskEntry(
                 **{
@@ -358,6 +356,7 @@ def person_bulk_add_confirmation(request: AuthenticatedHttpRequest) -> HttpRespo
                     "family": family,
                     "username": username,
                     "email": email or None,  # "field or None" converts empty strings to None values
+                    "airport_iata": airport_iata,
                     "existing_person_id": existing_person_id,
                     # when user wants to drop related event they will send empty string
                     # so we should unconditionally accept new value for event even if

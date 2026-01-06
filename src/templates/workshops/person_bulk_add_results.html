@@ -12,6 +12,7 @@
       <th>Family</th>
       <th>Username (generated)</th>
       <th>Email</th>
+      <th>Airport</th>
       <th>Event</th>
       <th>Role</th>
       <th>Errors</th>
@@ -36,6 +37,10 @@
       <td class="editable">
           <span>{{ entry.email|default:"—" }}</span>
           <input type="text" name="email" value="{{ entry.email|default:"" }}" class="d-none">
+      </td>
+      <td class="editable">
+          <span>{{ entry.airport_iata|default:"—" }}</span>
+          <input type="text" name="airport_iata" value="{{ entry.airport_iata|default:"" }}" class="d-none">
       </td>
       <td class="editable">
           <span>{{ entry.event|default:"—" }}</span>
