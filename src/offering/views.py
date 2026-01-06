@@ -1,7 +1,6 @@
 from typing import Any, cast
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet
 from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
@@ -79,8 +78,9 @@ class AccountCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountF
 
     def form_valid(self, form: AccountForm) -> HttpResponse:
         obj = form.save(commit=False)
-        mapped = Account.ACCOUNT_TYPE_MAPPING[form.cleaned_data["account_type"]]
-        obj.generic_relation_content_type = ContentType.objects.get(app_label=mapped[0], model=mapped[1])
+        obj.generic_relation_content_type = Account.get_content_type_for_account_type(
+            form.cleaned_data["account_type"],
+        )
         obj.save()
 
         if obj.account_type == Account.AccountTypeChoices.INDIVIDUAL:

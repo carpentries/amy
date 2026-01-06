@@ -35,6 +35,30 @@ class AccountForm(forms.ModelForm[Account]):
             "offering_account_form.js",
         )
 
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = cast(dict[str, Any], super().clean())
+        errors = {}
+
+        # Select proper content type based on account type
+        account_type = cleaned_data["account_type"]
+        generic_relation_content_type = Account.get_content_type_for_account_type(account_type)
+
+        # Verify if there isn't already an account with the given generic relation
+        generic_relation_pk = cleaned_data["generic_relation_pk"]
+        try:
+            Account.objects.get(
+                generic_relation_content_type=generic_relation_content_type,
+                generic_relation_pk=generic_relation_pk,
+            )
+            errors["generic_relation_pk"] = ValidationError("An account for the selected entity already exists")
+        except Account.DoesNotExist:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
+
+        return cleaned_data
+
 
 class AccountOwnerForm(EditableFormsetFormMixin[AccountOwner], forms.ModelForm[AccountOwner]):
     """Form intended to use in formset for creating multiple account owners."""

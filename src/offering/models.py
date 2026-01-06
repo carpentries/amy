@@ -58,6 +58,11 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self) -> str:
         return reverse("account-details", kwargs={"pk": self.pk})
 
+    @classmethod
+    def get_content_type_for_account_type(cls, account_type: str) -> ContentType:
+        mapped = cls.ACCOUNT_TYPE_MAPPING[account_type]
+        return ContentType.objects.get(app_label=mapped[0], model=mapped[1])
+
 
 class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""
