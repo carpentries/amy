@@ -119,6 +119,15 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView[Or
         context["main_organisation_memberships"] = Membership.objects.filter(
             member__role__name="main", member__organization=self.object
         )
+        context["account"] = Account.objects.filter(
+            generic_relation_content_type=ContentType.objects.get_for_model(Organization),
+            generic_relation_pk=self.object.pk,
+        ).first()
+        context["partnerships"] = (
+            Partnership.objects.credits_usage_annotation()
+            .filter(partner_organisation=self.object)
+            .select_related("tier", "account")
+        )
         return context
 
 

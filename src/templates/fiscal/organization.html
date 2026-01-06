@@ -40,6 +40,16 @@
       {% endif %}
     </td>
   </tr>
+  <tr>
+    <th>Account:</th>
+    <td>
+      {% if account %}
+      <a href="{{ account.get_absolute_url }}">{{ account }}</a>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
 </table>
 
 <div class="clearfix">
@@ -218,10 +228,22 @@
   <p>No memberships for this organization.</p>
 {% endif %}
 
+
 {% if perms.workshops.add_membership and perms.workshops.change_organization %}
-  <a href="{% url 'membership_add' %}?organization={{ organization.pk }}" class="btn btn-success">Add a membership</a>
+  <a href="{% url 'membership_add' %}?organization={{ organization.pk }}" class="btn btn-success">Add membership</a>
 {% else %}
-  <a href="#" class="btn btn-success disabled">Add a membership</a>
+  <a href="#" class="btn btn-success disabled">Add membership</a>
+{% endif %}
+
+<hr>
+
+<h4>Partnerships:</h4>
+{% include "offering/includes/partnerships.html" with object_list=partnerships %}
+
+{% if perms.fiscal.add_partnership %}
+  <a href="{% url 'partnership-create' %}" class="btn btn-success">Add partnership</a>
+{% else %}
+  <a href="#" class="btn btn-success disabled">Add partnership</a>
 {% endif %}
 
 {% include "includes/comments.html" with object=organization %}

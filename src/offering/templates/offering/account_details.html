@@ -51,11 +51,21 @@
 <h4>Partnerships:</h4>
 
 {% include "offering/includes/partnerships.html" with object_list=partnerships %}
+{% if perms.fiscal.add_partnership %}
+<a href="{% url 'partnership-create' %}" class="btn btn-success">Add partnership</a>
+{% else %}
+<a href="#" class="btn btn-success disabled">Add partnership</a>
+{% endif %}
+<p></p>
 
 <h4>Linked account benefits:</h4>
 
 {% include "offering/includes/account_benefits.html" with object_list=account_benefits show_partnership_column=True %}
 
+{% if perms.offering.add_account %}
 <a href="{% url 'account-benefit-create' %}?account_pk={{ object.pk }}&next={{request.get_full_path|urlencode}}" class="btn btn-success">Add account benefit to this account</a>
+{% else %}
+<a href="#" class="btn btn-success disabled">Add account benefit to this account</a>
+{% endif %}
 
 {% endblock %}
