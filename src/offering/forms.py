@@ -3,6 +3,7 @@ from typing import Any, cast
 from crispy_forms.layout import Div
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
 
 from src.fiscal.forms import EditableFormsetFormMixin
 from src.offering.models import Account, AccountBenefit, AccountOwner, Benefit
@@ -46,11 +47,16 @@ class AccountForm(forms.ModelForm[Account]):
         # Verify if there isn't already an account with the given generic relation
         generic_relation_pk = cleaned_data["generic_relation_pk"]
         try:
-            Account.objects.get(
+            account = Account.objects.get(
                 generic_relation_content_type=generic_relation_content_type,
                 generic_relation_pk=generic_relation_pk,
             )
-            errors["generic_relation_pk"] = ValidationError("An account for the selected entity already exists")
+            errors["generic_relation_pk"] = ValidationError(
+                format_html(
+                    'An account for the selected entity already exists: <a href="{}">account</a>.',
+                    account.get_absolute_url(),
+                )
+            )
         except Account.DoesNotExist:
             pass
 
