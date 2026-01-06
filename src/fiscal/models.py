@@ -122,7 +122,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
     registration_code = models.CharField(
         max_length=STR_MED,
         null=True,
-        blank=True,
+        blank=False,
         unique=True,
         verbose_name="Registration Code",
         help_text="Unique registration code used for Eventbrite and trainee application.",
