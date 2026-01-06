@@ -262,6 +262,36 @@
     </td>
   </tr>
   <tr>
+    <th>Account:</th>
+    <td>
+      {% if account %}
+      <a href="{{ account.get_absolute_url }}">{{ account }}</a>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th>Account owner roles:</th>
+    <td>
+      {% with account_owners=person.accountowner_set.all %}
+      {% if account_owners %}
+      <table class="table table-sm">
+        <tr><th>Account</th><th>Role</th></tr>
+        {% for task in account_owners %}
+        <tr>
+          <td><a href="{{ task.account.get_absolute_url }}">{{ task.account }}</a></td>
+          <td>{{ task.get_permission_type_display }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No related account owner roles.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
+  <tr>
     <th>Related scheduled emails:</th>
     <td>
       {% include "includes/related_scheduled_emails.html" with object=person %}

@@ -18,6 +18,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError
@@ -104,6 +105,7 @@ from src.emails.signals import (
     persons_merged_signal,
 )
 from src.fiscal.models import MembershipTask
+from src.offering.models import Account
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
@@ -270,6 +272,10 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
             messages.info(self.request, f"{title} is not active.")
         if not self.object.airport_iata:
             messages.warning(self.request, PERSON_HAS_NO_AIRPORT_ALERT.format(person=title))
+        context["account"] = Account.objects.filter(
+            generic_relation_content_type=ContentType.objects.get_for_model(Person),
+            generic_relation_pk=self.object.pk,
+        ).first()
         return context
 
 
