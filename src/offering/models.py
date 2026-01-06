@@ -136,7 +136,15 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
         return self.start_date <= (current_date or timezone.now().date()) <= self.end_date
 
     def __str__(self) -> str:
-        state = "(FROZEN)" if self.frozen else "(EXPIRED)" if not self.active() else ""
+        state = (
+            "(FROZEN)"
+            if self.frozen
+            else "(FUTURE)"
+            if timezone.now().date() < self.start_date
+            else "(EXPIRED)"
+            if not self.active()
+            else ""
+        )
         return (
             f"{state} Account {self.benefit} for "
             f'"{self.partnership or self.account.generic_relation}" '
