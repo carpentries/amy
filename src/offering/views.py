@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from typing import Any, cast
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -302,6 +303,9 @@ class AccountBenefitCreate(
 
     def get_initial(self) -> dict[str, Any]:
         initial = super().get_initial()
+        initial["start_date"] = date.today()
+        initial["end_date"] = date.today() + timedelta(days=365)
+
         if account_pk := self.request.GET.get("account_pk"):
             initial["account"] = get_object_or_404(Account, pk=account_pk)
 
