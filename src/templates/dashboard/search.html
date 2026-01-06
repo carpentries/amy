@@ -38,6 +38,11 @@
               </a>
             </li>
             <li class="nav-item" role="presentation">
+              <a class="nav-link" id="partnerships-tab" data-toggle="tab" role="tab" aria-controls="Partnerships" aria-selected="false" href="#partnerships">
+                Partnerships ({{ partnerships|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
               <a class="nav-link" id="comments-tab" data-toggle="tab" role="tab" aria-controls="Comments" aria-selected="false" href="#comments">
                 Comments ({{ comments|length }})
               </a>
@@ -89,21 +94,21 @@
             <p>No matches.</p>
             {% endif %}
           </div>
-          <div class="tab-pane fade card-body" id="airports" role="tabpanel" aria-labelledby="airports-tab">
-            {% if airports %}
+          <div class="tab-pane fade card-body" id="training-requests" role="tabpanel" aria-labelledby="training-requests-tab">
+            {% if training_requests %}
             <ul>
-              {% for a in airports %}
-              <li><a class="searchresult" href="{% url 'airport_details' a.iata %}">{{ a }}</a></li>
+              {% for r in training_requests %}
+              <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
               {% endfor %}
             </ul>
             {% else %}
             <p>No matches.</p>
             {% endif %}
           </div>
-          <div class="tab-pane fade card-body" id="training-requests" role="tabpanel" aria-labelledby="training-requests-tab">
-            {% if training_requests %}
+          <div class="tab-pane fade card-body" id="partnerships" role="tabpanel" aria-labelledby="partnerships-tab">
+            {% if partnerships %}
             <ul>
-              {% for r in training_requests %}
+              {% for r in partnerships %}
               <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
               {% endfor %}
             </ul>
