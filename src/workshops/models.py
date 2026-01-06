@@ -2,7 +2,7 @@ import datetime
 import re
 import uuid
 from collections.abc import Collection
-from typing import Annotated, Any, Self, TypedDict, cast
+from typing import Annotated, Any, Literal, Self, TypedDict, cast
 from urllib.parse import quote
 
 from django.contrib.auth.models import (
@@ -724,9 +724,9 @@ class Person(
     """Represent a single person."""
 
     # These attributes should always contain field names of Person
-    PERSON_UPLOAD_FIELDS = ("personal", "family", "email")
-    PERSON_TASK_EXTRA_FIELDS = ("event", "role")
-    PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
+    PERSON_UPLOAD_FIELDS: set[Literal["personal", "family", "email"]] = {"personal", "family", "email"}
+    PERSON_TASK_EXTRA_FIELDS: set[Literal["airport_iata", "event", "role"]] = {"airport_iata", "event", "role"}
+    PERSON_TASK_UPLOAD_FIELDS = ("personal", "family", "email", "airport_iata", "event", "role")
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = [

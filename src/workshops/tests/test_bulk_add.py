@@ -17,7 +17,7 @@ from src.workshops.utils.person_upload import (
 class UploadPersonTaskCSVTestCase(TestBase):
     def compute_from_string(
         self, csv_str: str
-    ) -> tuple[list[PersonTaskEntry], list[Literal["personal", "family", "email"]]]:
+    ) -> tuple[list[PersonTaskEntry], set[Literal["personal", "family", "email"]]]:
         """wrap up buffering the raw string & parsing"""
         csv_buf = StringIO(csv_str)
         # compute and return
@@ -34,7 +34,7 @@ jane,doe,janedoe@email.com"""
         self.assertEqual(len(person_tasks), 2)
 
         person = person_tasks[0]
-        self.assertTrue(set(person.keys()).issuperset(set(Person.PERSON_UPLOAD_FIELDS)))
+        self.assertTrue(set(person.keys()).issuperset(Person.PERSON_UPLOAD_FIELDS))
 
     def test_csv_without_required_field(self) -> None:
         """All fields in Person.PERSON_UPLOAD_FIELDS must be in csv"""
@@ -108,8 +108,8 @@ class CSVBulkUploadTestBase(TestBase):
         """
         Sample CSV data
         """
-        return """personal,family,email,event,role
-John,Doe,notin@db.com,foobar,instructor
+        return """personal,family,email,airport_iata,event,role
+John,Doe,notin@db.com,LAX,foobar,instructor
 """
 
     def make_data(self) -> list[PersonTaskEntry]:
@@ -158,6 +158,17 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertTrue(len(errors) == 1)
         self.assertTrue("Role with name" in errors[0])
 
+    def test_verify_airport_doesnt_exist(self) -> None:
+        bad_data = self.make_data()
+        bad_data[0]["airport_iata"] = "foobar"
+
+        has_errors = verify_upload_person_task(bad_data, match=True)
+        self.assertTrue(has_errors)
+
+        errors = bad_data[0]["errors"]
+        self.assertTrue(len(errors) == 1)
+        self.assertTrue('Airport with IATA code "foobar" does not exist' in errors[0])
+
     def test_verify_email_caseinsensitive_matches(self) -> None:
         bad_data = self.make_data()
         # test both matching and case-insensitive matching
@@ -183,28 +194,34 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         Person.objects.filter(username__in=usernames).update(email=None)
 
         bad_data: list[PersonTaskEntry] = [
-            {  # type: ignore[typeddict-item]
+            {
                 "email": None,
                 "personal": "Harry",
                 "family": "Potter",
+                "username": "potter_harry2",
+                "airport_iata": "",
                 "event": "foobar",
                 "role": "learner",
                 "errors": [],
                 "info": [],
             },
-            {  # type: ignore[typeddict-item]
+            {
                 "email": None,
                 "personal": "Hermione",
                 "family": "Granger",
+                "username": "granger_hermione2",
+                "airport_iata": "",
                 "event": "foobar",
                 "role": "learner",
                 "errors": [],
                 "info": [],
             },
-            {  # type: ignore[typeddict-item]
+            {
                 "email": None,
                 "personal": "Ron",
                 "family": "Weasley",
+                "username": "weasley_ron2",
+                "airport_iata": "",
                 "event": "foobar",
                 "role": "learner",
                 "errors": [],
@@ -224,6 +241,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "email": "harry@hogwarts.edu",
                 "personal": "Harry",
                 "family": "Potter",
+                "airport_iata": "",
                 "event": "",
                 "role": "",
                 "errors": [],
@@ -245,6 +263,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "family": "Potter",
                 "username": "wrong_username",
                 "email": "harry@hogwarts.edu",
+                "airport_iata": "",
                 "event": "",
                 "role": "",
                 "errors": [],
@@ -263,6 +282,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "family": "Frotter",
                 "username": "supplied_username",
                 "email": "h.frotter@hogwarts.edu",
+                "airport_iata": "",
                 "event": "",
                 "role": "",
                 "errors": [],
@@ -281,6 +301,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "family": "Potter",
                 "username": "supplied_username",
                 "email": "h.frotter@hogwarts.edu",
+                "airport_iata": "",
                 "event": "",
                 "role": "",
                 "errors": [],
@@ -291,6 +312,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 "family": "Weazel",
                 "username": "",
                 "email": "rweasley@ministry.gov.uk",
+                "airport_iata": "",
                 "event": "",
                 "role": "",
                 "errors": [],
@@ -342,6 +364,7 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
             "family": data[0]["family"],
             "username": data[0]["username"],
             "email": data[0]["email"],
+            "airport_iata": data[0]["airport_iata"],
             "event": "",
             "role": "",
             "verify": "Verify",
@@ -359,8 +382,8 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         This is a special case of upload feature: if user uploads a person that
         already exists we should only assign new role and event to that person.
         """
-        csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,foobar,Helper
+        csv = """personal,family,email,airport_iata,event,role
+Harry,Potter,harry@hogwarts.edu,LAX,foobar,Helper
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
@@ -377,6 +400,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,Helper
             "personal": data[0]["personal"],
             "family": data[0]["family"],
             "email": data[0]["email"],
+            "airport_iata": data[0]["airport_iata"],
             "event": data[0]["event"],
             "role": data[0]["role"],
             "confirm": "Confirm",
@@ -406,8 +430,8 @@ Harry,Potter,harry@hogwarts.edu,foobar,Helper
         instructor = Role.objects.get(name="instructor")
         Task.objects.create(person=self.harry, event=foobar, role=instructor)
 
-        csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,foobar,instructor
+        csv = """personal,family,email,airport_iata,event,role
+Harry,Potter,harry@hogwarts.edu,LAX,foobar,instructor
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
@@ -421,6 +445,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,instructor
             "personal": data[0]["personal"],
             "family": data[0]["family"],
             "email": data[0]["email"],
+            "airport_iata": data[0]["airport_iata"],
             "event": data[0]["event"],
             "role": data[0]["role"],
             "confirm": "Confirm",
@@ -446,8 +471,8 @@ Harry,Potter,harry@hogwarts.edu,foobar,instructor
         self.assertEqual(foobar.attendance, 0)
         foobar.save()
 
-        csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,foobar,learner
+        csv = """personal,family,email,airport_iata,event,role
+Harry,Potter,harry@hogwarts.edu,LAX,foobar,learner
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
@@ -463,7 +488,9 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
         payload = {
             "personal": data[0]["personal"],
             "family": data[0]["family"],
+            "username": data[0]["username"],
             "email": data[0]["email"],
+            "airport_iata": data[0]["airport_iata"],
             "event": data[0]["event"],
             "role": data[0]["role"],
             "confirm": "Confirm",
@@ -481,10 +508,10 @@ class BulkUploadRemoveEntryViewTestCase(CSVBulkUploadTestBase):
     def setUp(self) -> None:
         super().setUp()
         Role.objects.create(name="Helper")
-        self.csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,foobar,learner
-Hermione,Granger,hermione@hogwarts.edu,foobar,learner
-Ron,Weasley,ron@hogwarts.edu,foobar,learner
+        self.csv = """personal,family,email,airport_iata,event,role
+Harry,Potter,harry@hogwarts.edu,LAX,foobar,learner
+Hermione,Granger,hermione@hogwarts.edu,,foobar,learner
+Ron,Weasley,ron@hogwarts.edu,JFK,foobar,learner
 """
 
     def test_removing_entry0(self) -> None:
@@ -549,14 +576,14 @@ class BulkUploadMatchPersonViewTestCase(CSVBulkUploadTestBase):
     def setUp(self) -> None:
         super().setUp()
         Role.objects.create(name="Helper")
-        self.csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,foobar,learner
-Hermione,Granger,hermione@hogwarts.edu,foobar,learner
-Ron,Weasley,ron@hogwarts.edu,foobar,learner
+        self.csv = """personal,family,email,airport_iata,event,role
+Harry,Potter,harry@hogwarts.edu,LAX,foobar,learner
+Hermione,Granger,hermione@hogwarts.edu,,foobar,learner
+Ron,Weasley,ron@hogwarts.edu,JFK,foobar,learner
 """
 
 
-class TestBulkUploadAddsEmailAction(CSVBulkUploadTestBase):
+class TestBulkUploadAddsTasks(CSVBulkUploadTestBase):
     def setUp(self) -> None:
         super().setUp()
         Role.objects.create(name="host")
@@ -590,13 +617,13 @@ class TestBulkUploadAddsEmailAction(CSVBulkUploadTestBase):
         )
         test_event_1.tags.set(Tag.objects.filter(name__in=["SWC", "DC", "LC", "automated-email"]))
 
-        self.csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,test-event,host
-Hermione,Granger,hermione@hogwarts.edu,test-event,instructor
-Ron,Weasley,ron@hogwarts.edu,test-event,instructor
+        self.csv = """personal,family,email,airport_iata,event,role
+Harry,Potter,harry@hogwarts.edu,LAX,test-event,host
+Hermione,Granger,hermione@hogwarts.edu,,test-event,instructor
+Ron,Weasley,ron@hogwarts.edu,JFK,test-event,instructor
 """
 
-    def test_jobs_created(self) -> None:
+    def test_tasks_created(self) -> None:
         data, _ = upload_person_task_csv(StringIO(self.csv))
 
         # simulate user clicking "Use this user" next to matched person
@@ -614,12 +641,14 @@ Ron,Weasley,ron@hogwarts.edu,test-event,instructor
             "personal": [data[0]["personal"], data[1]["personal"], data[2]["personal"]],
             "family": [data[0]["family"], data[1]["family"], data[2]["family"]],
             "email": [data[0]["email"], data[1]["email"], data[2]["email"]],
+            "username": [data[0]["username"], data[1]["username"], data[2]["username"]],
+            "airport_iata": [data[0]["airport_iata"], data[1]["airport_iata"], data[2]["airport_iata"]],
             "event": [data[0]["event"], data[1]["event"], data[2]["event"]],
             "role": [data[0]["role"], data[1]["role"], data[2]["role"]],
             "confirm": "Confirm",
         }
 
-        # empty tasks and no jobs scheduled
+        # empty tasks
         tasks_pre = Task.objects.filter(
             person__in=Person.objects.filter(
                 email__in=[

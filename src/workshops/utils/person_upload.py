@@ -1,3 +1,4 @@
+import contextlib
 import csv
 import logging
 from io import TextIOBase
@@ -8,6 +9,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import HttpRequest
 
+from src.workshops.consts import IATA_AIRPORTS
 from src.workshops.exceptions import InternalError
 from src.workshops.models import Event, Person, Role, Task
 from src.workshops.utils.usernames import create_username
@@ -20,6 +22,7 @@ class PersonTaskEntry(TypedDict):
     family: str
     username: str
     email: str | None
+    airport_iata: str
     event: str | None
     role: str | None
     errors: list[str]
@@ -31,7 +34,7 @@ class PersonTaskEntry(TypedDict):
 
 def upload_person_task_csv(
     stream: TextIOBase,
-) -> tuple[list[PersonTaskEntry], list[Literal["personal", "family", "email"]]]:
+) -> tuple[list[PersonTaskEntry], set[Literal["personal", "family", "email"]]]:
     """Read people from CSV and return a JSON-serializable list of dicts.
 
     The input `stream` should be a file-like object that returns
@@ -40,13 +43,12 @@ def upload_person_task_csv(
     "Serializability" is required because we put this data into session.  See
     https://docs.djangoproject.com/en/1.7/topics/http/sessions/ for details.
 
-    Also return a list of fields from Person.PERSON_UPLOAD_FIELDS for which
+    Also return a set of fields {"personal", "family", "email"} for which
     no data was given.
     """
-
     result = []
     reader = csv.DictReader(stream)
-    empty_fields = set()
+    empty_fields: set[Literal["personal", "family", "email"]] = set()
 
     for row in reader:
         # skip empty lines in the CSV
@@ -57,6 +59,7 @@ def upload_person_task_csv(
             "personal": "",
             "family": "",
             "email": None,
+            "airport_iata": "",
             "event": None,
             "role": None,
             "errors": [],
@@ -64,24 +67,24 @@ def upload_person_task_csv(
             "username": "",  # it will be set in the `verify_upload_person_task`
         }
 
-        for col in Person.PERSON_UPLOAD_FIELDS:
+        for base_column in Person.PERSON_UPLOAD_FIELDS:
             try:
-                entry[col] = row[col].strip()  # type: ignore
+                entry[base_column] = row[base_column].strip()
             except (KeyError, IndexError, AttributeError):
-                # either `col` is not in `entry`, or not in `row`, or
-                # `.strip()` doesn't work (e.g. `row[col]` gives `None` instead
+                # either `base_column` is not in `entry`, or not in `row`, or
+                # `.strip()` doesn't work (e.g. `row[base_column]` gives `None` instead
                 # of string)
-                entry[col] = None  # type: ignore
-                empty_fields.add(col)
+                empty_fields.add(base_column)
 
-        for col in Person.PERSON_TASK_EXTRA_FIELDS:
-            entry[col] = row.get(col, None)  # type: ignore
+        for additional_column in Person.PERSON_TASK_EXTRA_FIELDS:
+            with contextlib.suppress(KeyError):
+                entry[additional_column] = row[additional_column]
 
         result.append(entry)
 
     return (
         result,
-        list(empty_fields),  # type: ignore
+        empty_fields,
     )
 
 
@@ -98,7 +101,7 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
         errors = []
         info = []
 
-        event = item.get("event", None)
+        event = item["event"]
         existing_event = None
         if event:
             try:
@@ -108,7 +111,7 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
             except Event.MultipleObjectsReturned:
                 errors.append(f'More than one event named "{event}" exists.')
 
-        role = item.get("role", None)
+        role = item["role"]
         existing_role = None
         if role:
             try:
@@ -118,11 +121,18 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
             except Role.MultipleObjectsReturned:
                 errors.append(f'More than one role named "{role}" exists.')
 
+        airport_iata = item["airport_iata"]
+        if airport_iata:
+            try:
+                IATA_AIRPORTS[airport_iata]
+            except KeyError:
+                errors.append(f'Airport with IATA code "{airport_iata}" does not exist.')
+
         # check if the user exists, and if so: check if existing user's
         # personal and family names are the same as uploaded
-        email = item.get("email", "")
-        personal = item.get("personal", "")
-        family = item.get("family", "")
+        email = item["email"]
+        personal = item["personal"]
+        family = item["family"]
         person_id = item.get("existing_person_id", None)
         person = None
 
@@ -154,7 +164,7 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
                 errors.append("Person with this email address already exists.")
 
             try:
-                if item.get("username"):
+                if item["username"]:
                     Person.objects.get(username=item.get("username"))
             except Person.DoesNotExist:
                 pass
@@ -169,18 +179,19 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
             item["personal"] = personal = person.personal
             item["family"] = family = person.family
             item["email"] = email = person.email
+            item["airport_iata"] = airport_iata = person.airport_iata
             item["username"] = person.username
             item["existing_person_id"] = person_id
             item["person_exists"] = True
         else:
             # force a newly created username
-            if not item.get("username"):
+            if not item["username"]:
                 item["username"] = create_username(personal, family)
             item["person_exists"] = False
 
             info.append("Person and task will be created.")
 
-        # let's check if there's someone else named this way
+        # check if there's someone else named this way
         similar_persons = Person.objects.filter(
             Q(personal=personal, family=family) | Q(email=email) & ~Q(email="") & Q(email__isnull=False)
         )
@@ -189,7 +200,7 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
             zip(
                 similar_persons.values_list("id", flat=True),
                 map(lambda x: str(x), similar_persons),
-                strict=False,
+                strict=True,
             )
         )
 
@@ -205,7 +216,9 @@ def verify_upload_person_task(data: list[PersonTaskEntry], match: bool = False) 
 
         # let's check what Person model validators want to say
         try:
-            p = Person(personal=personal, family=family, email=email, username=item["username"])
+            p = Person(
+                personal=personal, family=family, email=email, username=item["username"], airport_iata=airport_iata
+            )
             p.clean_fields(exclude=["password"])
         except ValidationError as e:
             if e.message_dict:  # to get rid of type error in line below
@@ -251,16 +264,17 @@ def create_uploaded_persons_tasks(
                     "personal": row["personal"],
                     "family": row["family"],
                     "email": row["email"],
+                    "username": row["username"],
+                    "airport_iata": row["airport_iata"],
                 }
-                fields["username"] = row["username"]
 
                 if row["person_exists"] and row["existing_person_id"]:
                     # we should use existing Person
-                    p = Person.objects.get(pk=row["existing_person_id"])
+                    person = Person.objects.get(pk=row["existing_person_id"])
 
                 elif row["person_exists"] and not row["existing_person_id"]:
                     # we should use existing Person
-                    p = Person.objects.get(
+                    person = Person.objects.get(
                         personal=fields["personal"],
                         family=fields["family"],
                         username=fields["username"],
@@ -269,27 +283,27 @@ def create_uploaded_persons_tasks(
 
                 else:
                     # we should create a new Person without any email provided
-                    p = Person(**fields)
-                    p.save()
-                    persons_created.append(p)
+                    person = Person(**fields)
+                    person.save()
+                    persons_created.append(person)
 
                 if row["event"] and row["role"]:
-                    e = Event.objects.get(slug=row["event"])
-                    r = Role.objects.get(name=row["role"])
+                    event = Event.objects.get(slug=row["event"])
+                    role = Role.objects.get(name=row["role"])
 
                     # if the number of learners attending the event changed,
                     # we should update ``event.attendance``
                     if row["role"] == "learner":
-                        events.add(e)
+                        events.add(event)
 
-                    t, created = Task.objects.get_or_create(person=p, event=e, role=r)
+                    task, created = Task.objects.get_or_create(person=person, event=event, role=role)
                     if created:
-                        tasks_created.append(t)
+                        tasks_created.append(task)
 
-            except IntegrityError as e:
-                raise IntegrityError(f'{str(e)} (for "{row_repr}")') from e
+            except IntegrityError as event:
+                raise IntegrityError(f'{str(event)} (for "{row_repr}")') from event
 
-            except ObjectDoesNotExist as e:
-                raise ObjectDoesNotExist(f'{str(e)} (for "{row_repr}")') from e
+            except ObjectDoesNotExist as event:
+                raise ObjectDoesNotExist(f'{str(event)} (for "{row_repr}")') from event
 
     return persons_created, tasks_created
