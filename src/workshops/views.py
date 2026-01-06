@@ -1196,9 +1196,16 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
         )
 
     def form_valid(self, form: EventForm) -> HttpResponse:
-        """Check if RQ job conditions changed, and add/delete jobs if
-        necessary."""
         res = super().form_valid(form)
+
+        # TODO: remove this check once SERVICE_OFFERING feature flag is always ON
+        if self.object.allocated_benefit and self.object.membership:
+            self.object.allocated_benefit = None
+            self.object.save()
+            messages.warning(
+                self.request,
+                "This event had both allocated benefit and membership set. Allocated benefit was removed.",
+            )
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object),
@@ -1831,11 +1838,19 @@ class TaskUpdate(
         return result | dict(show_allocated_benefit=show_allocated_benefit)
 
     def form_valid(self, form: TaskForm) -> HttpResponse:
-        """Check if RQ job conditions changed, and add/delete jobs if
-        necessary."""
         res = super().form_valid(form)
 
         seat_membership = form.cleaned_data["seat_membership"]
+
+        # TODO: remove this check once SERVICE_OFFERING feature flag is always ON
+        if self.object.allocated_benefit and seat_membership:
+            self.object.allocated_benefit = None
+            self.object.save()
+            messages.warning(
+                self.request,
+                "This task had both allocated benefit and membership set. Allocated benefit was removed.",
+            )
+
         seat_public = form.cleaned_data["seat_public"]
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:

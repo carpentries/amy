@@ -623,6 +623,11 @@ class EventForm(forms.ModelForm[Event]):
                 ),
             )
 
+        if cleaned_data["allocated_benefit"] and cleaned_data["membership"]:
+            errors["allocated_benefit"].append(
+                ValidationError("You cannot have both allocated benefit and membership for the same event."),
+            )
+
         if errors:
             raise ValidationError(errors)
 
@@ -735,6 +740,11 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
                 errors["role"] = ValidationError(
                     f'{person} has inactive "{community_role_name}" community role(s) related to "{{role.name}}" task.'
                 )
+
+        if self.cleaned_data["allocated_benefit"] and self.cleaned_data["seat_membership"]:
+            errors["allocated_benefit"] = ValidationError(
+                "You cannot have both allocated benefit and membership for the same event."
+            )
 
         # raise errors if any present
         if errors:
