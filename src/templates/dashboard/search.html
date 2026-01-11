@@ -1,7 +1,9 @@
 {% extends "base_nav.html" %}
 
-{% load crispy_forms_tags %}
+{% load crispy_forms_tags feature_flags %}
+
 {% block content %}
+  {% flag_enabled 'SERVICE_OFFERING' as SERVICE_OFFERING_ENABLED %}
   <div class="row">
     <div class="col-sm-8 col-12 mx-auto">
       {% crispy form %}
@@ -22,6 +24,18 @@
                 Memberships ({{ memberships|length }})
               </a>
             </li>
+            {% if SERVICE_OFFERING_ENABLED %}
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="partnerships-tab" data-toggle="tab" role="tab" aria-controls="Partnerships" aria-selected="false" href="#partnerships">
+                Partnerships ({{ partnerships|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="consortiums-tab" data-toggle="tab" role="tab" aria-controls="Consortiums" aria-selected="false" href="#consortiums">
+                Consortiums ({{ consortiums|length }})
+              </a>
+            </li>
+            {% endif %}
             <li class="nav-item" role="presentation">
               <a class="nav-link" id="events-tab" data-toggle="tab" role="tab" aria-controls="Events" aria-selected="false" href="#events">
                 Events ({{ events|length }})
@@ -35,11 +49,6 @@
             <li class="nav-item" role="presentation">
               <a class="nav-link" id="training-requests-tab" data-toggle="tab" role="tab" aria-controls="Training requests" aria-selected="false" href="#training-requests">
                 Training requests ({{ training_requests|length }})
-              </a>
-            </li>
-            <li class="nav-item" role="presentation">
-              <a class="nav-link" id="partnerships-tab" data-toggle="tab" role="tab" aria-controls="Partnerships" aria-selected="false" href="#partnerships">
-                Partnerships ({{ partnerships|length }})
               </a>
             </li>
             <li class="nav-item" role="presentation">
@@ -72,6 +81,30 @@
             <p>No matches.</p>
             {% endif %}
           </div>
+          {% if SERVICE_OFFERING_ENABLED %}
+          <div class="tab-pane fade card-body" id="partnerships" role="tabpanel" aria-labelledby="partnerships-tab">
+            {% if partnerships %}
+            <ul>
+              {% for r in partnerships %}
+              <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          <div class="tab-pane fade card-body" id="consortiums" role="tabpanel" aria-labelledby="consortiums-tab">
+            {% if consortiums %}
+            <ul>
+              {% for r in consortiums %}
+              <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          {% endif %}
           <div class="tab-pane fade card-body" id="events" role="tabpanel" aria-labelledby="events-tab">
             {% if events %}
             <ul>
@@ -98,17 +131,6 @@
             {% if training_requests %}
             <ul>
               {% for r in training_requests %}
-              <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <p>No matches.</p>
-            {% endif %}
-          </div>
-          <div class="tab-pane fade card-body" id="partnerships" role="tabpanel" aria-labelledby="partnerships-tab">
-            {% if partnerships %}
-            <ul>
-              {% for r in partnerships %}
               <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
               {% endfor %}
             </ul>

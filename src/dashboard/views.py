@@ -47,7 +47,7 @@ from src.dashboard.utils import (
 )
 from src.emails.signals import instructor_signs_up_for_workshop_signal
 from src.extrequests.base_views import AMYCreateAndFetchObjectView
-from src.fiscal.models import MembershipTask, Partnership
+from src.fiscal.models import Consortium, MembershipTask, Partnership
 from src.recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
@@ -605,6 +605,7 @@ def search(request: HttpRequest) -> HttpResponse:
     persons = None
     training_requests = None
     partnerships = None
+    consortiums = None
     comments = None
 
     if request.method == "GET" and "term" in request.GET:
@@ -665,6 +666,15 @@ def search(request: HttpRequest) -> HttpResponse:
             ).order_by("name")
             results_combined += list(partnerships)
 
+            consortiums = Consortium.objects.filter(
+                multiple_Q_icontains(
+                    term,
+                    "name",
+                    "description",
+                )
+            ).order_by("name")
+            results_combined += list(consortiums)
+
             comments = Comment.objects.filter(
                 multiple_Q_icontains(
                     term,
@@ -712,6 +722,7 @@ def search(request: HttpRequest) -> HttpResponse:
         "persons": persons,
         "training_requests": training_requests,
         "partnerships": partnerships,
+        "consortiums": consortiums,
         "comments": comments,
     }
     return render(request, "dashboard/search.html", context)
