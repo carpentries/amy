@@ -526,8 +526,12 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
             event = match_form.cleaned_data["event"]
             membership = match_form.cleaned_data["seat_membership"]
             membership_auto_assign = match_form.cleaned_data["seat_membership_auto_assign"]
-            seat_public = match_form.cleaned_data["seat_public"]
-            open_seat = match_form.cleaned_data["seat_open_training"]
+            # Assume seat_public is True for backward compatibility
+            # seat_public = match_form.cleaned_data["seat_public"]
+            seat_public = True
+            # Assume seat_open_training is False for backward compatibility
+            # seat_open_training = match_form.cleaned_data["seat_open_training"]
+            seat_open_training = False
             role = Role.objects.get(name="learner")
 
             # Perform bulk match using one of two methods
@@ -553,7 +557,7 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                         event=event,
                         role=role,
                         seat_public=seat_public,
-                        seat_open_training=open_seat,
+                        seat_open_training=seat_open_training,
                         seat_membership=membership_to_use,
                     )
 
@@ -577,7 +581,7 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                         event=event,
                         role=role,
                         seat_public=seat_public,
-                        seat_open_training=open_seat,
+                        seat_open_training=seat_open_training,
                         seat_membership=membership,
                     )
 

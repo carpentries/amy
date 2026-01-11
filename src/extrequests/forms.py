@@ -38,7 +38,6 @@ from src.workshops.models import (
     Membership,
     Organization,
     Person,
-    Task,
     TrainingRequest,
     WorkshopRequest,
 )
@@ -129,29 +128,29 @@ class BulkMatchTrainingRequestForm(forms.Form):
         required=False,
     )
 
-    seat_public = forms.TypedChoiceField(
-        coerce=lambda x: x == "True",
-        choices=Task.SEAT_PUBLIC_CHOICES,
-        initial=Task._meta.get_field("seat_public").default,
-        required=False,
-        label=Task._meta.get_field("seat_public").verbose_name,
-        widget=forms.RadioSelect(),
-    )
+    # seat_public = forms.TypedChoiceField(
+    #     coerce=lambda x: x == "True",
+    #     choices=Task.SEAT_PUBLIC_CHOICES,
+    #     initial=Task._meta.get_field("seat_public").default,
+    #     required=False,
+    #     label=Task._meta.get_field("seat_public").verbose_name,
+    #     widget=forms.RadioSelect(),
+    # )
 
-    seat_open_training = forms.BooleanField(
-        label="Open training seat",
-        required=False,
-        help_text="Some TTT events allow for open training; check this field "
-        "to count this person into open applications.",
-    )
+    # seat_open_training = forms.BooleanField(
+    #     label="Open training seat",
+    #     required=False,
+    #     help_text="Some TTT events allow for open training; check this field "
+    #     "to count this person into open applications.",
+    # )
 
     helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
     helper.layout = Layout(
         "event",
         "seat_membership",
         "seat_membership_auto_assign",
-        "seat_public",
-        "seat_open_training",
+        # "seat_public",
+        # "seat_open_training",
     )  # type: ignore[no-untyped-call]
     helper.add_input(
         Submit(  # type: ignore[no-untyped-call]
@@ -171,10 +170,10 @@ class BulkMatchTrainingRequestForm(forms.Form):
     def clean(self) -> None:
         super().clean()
 
-        event = self.cleaned_data["event"]
+        # event = self.cleaned_data["event"]
         seat_membership = self.cleaned_data["seat_membership"]
         seat_membership_auto_assign = self.cleaned_data["seat_membership_auto_assign"]
-        open_training = self.cleaned_data["seat_open_training"]
+        # open_training = self.cleaned_data["seat_open_training"]
 
         if any(r.person is None for r in self.cleaned_data.get("requests", [])):
             raise ValidationError(
@@ -184,22 +183,24 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "and match with a trainee."
             )
 
-        if (seat_membership or seat_membership_auto_assign) and open_training:
-            raise ValidationError(
-                "Cannot simultaneously match as open training and use a Membership instructor training seat."
-            )
+        # if (seat_membership or seat_membership_auto_assign) and open_training:
+        #     raise ValidationError(
+        #         "Cannot simultaneously match as open training and use a Membership instructor training seat."
+        #     )
 
         if seat_membership and seat_membership_auto_assign:
             raise ValidationError(
                 "Cannot simultaneously use seats from selected membership and use seats based on registration code."
             )
 
-        if open_training and not event.open_TTT_applications:
-            raise ValidationError(
-                {
-                    "seat_open_training": ValidationError("Selected TTT event does not allow for open training seats."),
-                }
-            )
+        # if open_training and not event.open_TTT_applications:
+        #     raise ValidationError(
+        #         {
+        #             "seat_open_training": ValidationError(
+        #                 "Selected TTT event does not allow for open training seats.",
+        #             ),
+        #         }
+        #     )
 
 
 class MatchTrainingRequestForm(forms.Form):
