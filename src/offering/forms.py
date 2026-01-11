@@ -36,6 +36,16 @@ class AccountForm(forms.ModelForm[Account]):
             "offering_account_form.js",
         )
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        update = "instance" in kwargs and kwargs["instance"] and kwargs["instance"].pk is not None
+
+        if update:
+            self.helper = BootstrapHelper(
+                submit_label="Update",
+                submit_onclick='return confirm("Are you sure you want to update this account?");',
+            )
+
     def clean(self) -> dict[str, Any]:
         cleaned_data = cast(dict[str, Any], super().clean())
         errors = {}
