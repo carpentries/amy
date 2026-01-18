@@ -45,6 +45,7 @@ from src.extrequests.forms import (
 from src.extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from src.extrequests.utils import (
     accept_training_request_and_match_to_event,
+    get_account_benefit_warnings_after_match,
     get_membership_from_training_request_or_raise_error,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
@@ -525,13 +526,13 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]
             membership = match_form.cleaned_data["seat_membership"]
-            membership_auto_assign = match_form.cleaned_data["seat_membership_auto_assign"]
+            seat_membership_auto_assign = match_form.cleaned_data["seat_membership_auto_assign"]
             # Assume seat_public is True for backward compatibility
             # seat_public = match_form.cleaned_data["seat_public"]
             seat_public = True
-            # Assume seat_open_training is False for backward compatibility
-            # seat_open_training = match_form.cleaned_data["seat_open_training"]
-            seat_open_training = False
+
+            allocated_benefit = match_form.cleaned_data["allocated_benefit"]
+
             role = Role.objects.get(name="learner")
 
             # Perform bulk match using one of two methods
@@ -541,29 +542,27 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
             # Method 1: Auto assign membership
             # membership is different for each seat (and may not be None)
-            if membership_auto_assign:
-                for r in training_requests:
+            if seat_membership_auto_assign:
+                for training_request in training_requests:
                     # find which membership to use
                     # if membership can't be determined, skip this request
                     try:
-                        membership_to_use = get_membership_from_training_request_or_raise_error(r)
+                        membership_to_use = get_membership_from_training_request_or_raise_error(training_request)
                     except (ValueError, Membership.DoesNotExist) as e:
                         errors.append(str(e))
                         continue
 
                     # perform match
                     accept_training_request_and_match_to_event(
-                        request=r,
+                        request=training_request,
                         event=event,
                         role=role,
-                        seat_public=seat_public,
-                        seat_open_training=seat_open_training,
                         seat_membership=membership_to_use,
                     )
 
                     # collect warnings after each match
                     warnings += [
-                        f"{r}: {w}"
+                        f"{training_request}: {w}"
                         for w in get_membership_warnings_after_match(
                             membership=membership_to_use,
                             seat_public=seat_public,
@@ -573,22 +572,42 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
             # Method 2: Don't auto assign membership
             # membership is same for all seats (and may be None)
-            else:
+            elif membership:
                 # perform matches
-                for r in training_requests:
+                for training_request in training_requests:
                     accept_training_request_and_match_to_event(
-                        request=r,
+                        request=training_request,
                         event=event,
                         role=role,
-                        seat_public=seat_public,
-                        seat_open_training=seat_open_training,
                         seat_membership=membership,
                     )
 
                 # collect warnings after all requests are processed
-                if membership:
-                    warnings = get_membership_warnings_after_match(
-                        membership=membership, seat_public=seat_public, event=event
+                warnings = get_membership_warnings_after_match(
+                    membership=membership, seat_public=seat_public, event=event
+                )
+
+            # Method 3: Use benefits (offering project 2025)
+            elif allocated_benefit:
+                # perform matches
+                for training_request in training_requests:
+                    accept_training_request_and_match_to_event(
+                        request=training_request,
+                        event=event,
+                        role=role,
+                        allocated_benefit=allocated_benefit,
+                    )
+
+                # collect warnings after all requests are processed
+                warnings = get_account_benefit_warnings_after_match(allocated_benefit)
+
+            # Method 4: No membership and no benefit
+            else:
+                for training_request in training_requests:
+                    accept_training_request_and_match_to_event(
+                        request=training_request,
+                        event=event,
+                        role=role,
                     )
 
             # Matching is complete, display messages
@@ -617,9 +636,9 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
         if form.is_valid():
             # Perform bulk discard
-            for r in form.cleaned_data["requests"]:
-                r.state = "a"
-                r.save()
+            for training_request in form.cleaned_data["requests"]:
+                training_request.state = "a"
+                training_request.save()
 
             messages.success(request, "Successfully accepted selected requests.")
 
@@ -629,9 +648,9 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
         if form.is_valid():
             # Perform bulk discard
-            for r in form.cleaned_data["requests"]:
-                r.state = "d"
-                r.save()
+            for training_request in form.cleaned_data["requests"]:
+                training_request.state = "d"
+                training_request.save()
 
             messages.success(request, "Successfully discarded selected requests.")
 
@@ -643,8 +662,8 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
         form.check_person_matched = True
         if form.is_valid():
             # Perform bulk unmatch
-            for r in form.cleaned_data["requests"]:
-                r.person.get_training_tasks().delete()
+            for training_request in form.cleaned_data["requests"]:
+                training_request.person.get_training_tasks().delete()
 
             messages.success(request, "Successfully unmatched selected people from src.trainings.")
 

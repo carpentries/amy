@@ -1,10 +1,23 @@
 from datetime import date, timedelta
 
-from django.test import override_settings
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from src.extrequests.forms import BulkMatchTrainingRequestForm
 from src.extrequests.tests.test_training_request import create_training_request
-from src.workshops.models import Event, Membership, Role, Tag, Task, TrainingRequest
+from src.offering.models import Account, AccountBenefit, Benefit
+from src.workshops.models import (
+    Event,
+    Member,
+    MemberRole,
+    Membership,
+    Organization,
+    Person,
+    Role,
+    Tag,
+    Task,
+    TrainingRequest,
+)
 from src.workshops.tests.base import TestBase
 
 
@@ -258,3 +271,257 @@ class TestTrainingRequestUpdateForm(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, "trainingrequest_details")
         self.assertFalse(TrainingRequest.objects.get(member_code="valid123").member_code_override)
+
+
+class TestBulkMatchTrainingRequestForm(TestCase):
+    def test_clean__valid_data__no_membership_no_benefit(self) -> None:
+        """Test that form is valid with correct data."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean__valid_data__membership(self) -> None:
+        """Test that form is valid with correct data."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+        membership = Membership.objects.create(
+            name="alpha-name",
+            variant="partner",
+            registration_code="test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=organisation,
+            role=MemberRole.objects.all()[0],
+        )
+
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "seat_membership": membership.pk,
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean__valid_data__auto_assign_membership(self) -> None:
+        """Test that form is valid with correct data."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person, reg_code="test")
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+        membership = Membership.objects.create(
+            name="alpha-name",
+            variant="partner",
+            registration_code="test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=organisation,
+            role=MemberRole.objects.all()[0],
+        )
+
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "seat_membership_auto_assign": True,
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean__valid_data__benefit(self) -> None:
+        """Test that form is valid with correct data."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        benefit = Benefit.objects.create(
+            name="Test Benefit",
+            unit_type="seat",
+            credits=2,
+        )
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            start_date=date.today() - timedelta(days=1),
+            end_date=date.today() + timedelta(days=365),
+            allocation=2,
+        )
+
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "allocated_benefit": account_benefit.pk,
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data)
+
+        # Assert
+        self.assertTrue(form.is_valid())
+
+    def test_clean__unmatched_trainees(self) -> None:
+        """Test that form is invalid when there are unmatched trainees."""
+        # Arrange
+        training_request = create_training_request(state="p", person=None)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        msg = (
+            "Some of the requests are not matched to a trainee yet. Before matching them to a training, you "
+            "need to accept them and match with a trainee."
+        )
+        self.assertIn(msg, form.errors["__all__"])
+
+    def test_clean__membership_with_autoassign(self) -> None:
+        """Test that form is invalid when membership has auto-assign enabled."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+        membership = Membership.objects.create(
+            name="alpha-name",
+            variant="partner",
+            registration_code="test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=organisation,
+            role=MemberRole.objects.all()[0],
+        )
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "seat_membership": membership.pk,
+            "seat_membership_auto_assign": True,
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        msg = (
+            "Cannot simultaneously use seats from selected membership and auto-assign seats based on registration code."
+        )
+        self.assertIn(msg, form.errors["seat_membership_auto_assign"])
+
+    def test_clean__benefit_with_membership_or_auto_assign(self) -> None:
+        """Test that form is invalid when benefit is used with membership or auto-assign."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+        membership = Membership.objects.create(
+            name="alpha-name",
+            variant="partner",
+            registration_code="test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=organisation,
+            role=MemberRole.objects.all()[0],
+        )
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        benefit = Benefit.objects.create(
+            name="Test Benefit",
+            unit_type="seat",
+            credits=2,
+        )
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            start_date=date.today() - timedelta(days=1),
+            end_date=date.today() + timedelta(days=365),
+            allocation=2,
+        )
+        data1 = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "seat_membership": membership.pk,
+            "allocated_benefit": account_benefit.pk,
+        }
+        data2 = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "seat_membership_auto_assign": True,
+            "allocated_benefit": account_benefit.pk,
+        }
+
+        # Act
+        form1 = BulkMatchTrainingRequestForm(data1)
+        form2 = BulkMatchTrainingRequestForm(data2)
+
+        # Assert
+        msg = (
+            "Cannot simultaneously use an explicitly selected benefit and "
+            "use seats from membership or auto-assign membership."
+        )
+
+        self.assertFalse(form1.is_valid())
+        self.assertIn(msg, form1.errors["allocated_benefit"])
+
+        self.assertFalse(form2.is_valid())
+        self.assertIn(msg, form2.errors["allocated_benefit"])
