@@ -224,7 +224,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             and (end_date := cleaned_data["end_date"])
             and start_date > end_date
         ):
-            errors["end_date"] = ValidationError("End date must be after start date.")
+            errors["end_date"] = ValidationError("End date must not be before start date.")
 
         if errors:
             raise ValidationError(errors)
