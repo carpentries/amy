@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import Any, cast
+from typing import Any
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import QuerySet
@@ -125,9 +125,15 @@ class AccountUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountF
             # Update AccountOwner for individual accounts. It's the same as the person this account is for.
             try:
                 owner = Person.objects.get(pk=form.cleaned_data["generic_relation_pk"])
-                AccountOwner.objects.filter(
-                    account=obj, permission_type=AccountOwner.PERMISSION_TYPE_CHOICES[0][0]
-                ).update(person=owner)
+                AccountOwner.objects.update_or_create(
+                    account=obj,
+                    permission_type=AccountOwner.PERMISSION_TYPE_CHOICES[0][0],
+                    defaults=dict(person=owner),
+                    create_defaults=dict(
+                        person=owner,
+                        permission_type=AccountOwner.PERMISSION_TYPE_CHOICES[0][0],
+                    ),
+                )
             except Person.DoesNotExist:
                 pass
 
@@ -165,21 +171,12 @@ class AccountOwnersUpdate(
     ]
     request: AuthenticatedHttpRequest
 
+    def account_queryset_kwargs(self) -> dict[str, Any]:
+        # Prevent from loading the page for account type of "individual"
+        return dict(account_type__in=[Account.AccountTypeChoices.CONSORTIUM, Account.AccountTypeChoices.ORGANISATION])
+
     def get_formset(self, *args: Any, **kwargs: Any) -> type[BaseModelFormSet[AccountOwner, AccountOwnerForm]]:
         return modelformset_factory(AccountOwner, AccountOwnerForm, *args, **kwargs)
-
-    def get_formset_kwargs(self) -> dict[str, Any]:
-        kwargs = super().get_formset_kwargs()
-
-        if self.account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
-            kwargs["can_delete"] = False
-            kwargs["min_num"] = 1
-            kwargs["max_num"] = 1
-            kwargs["validate_min"] = True
-            kwargs["validate_max"] = True
-            kwargs["edit_only"] = True
-
-        return kwargs
 
     def get_formset_queryset(self, object: Account) -> QuerySet[AccountOwner]:
         return object.accountowner_set.select_related("account", "person")
@@ -188,19 +185,6 @@ class AccountOwnersUpdate(
         if "title" not in kwargs:
             kwargs["title"] = f"Change owners for {self.account}"
         return super().get_context_data(**kwargs)
-
-    def form_valid(self, formset: BaseModelFormSet[AccountOwner, AccountOwnerForm]) -> HttpResponse:
-        results = formset.save(commit=True)
-
-        if self.account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
-            # overwrite any changes to the person field to keep it the same as the account's generic relation
-            original_owner = cast(Person, self.account.generic_relation)
-            permission_type = "owner"
-            for obj in results:
-                obj.person = original_owner
-                obj.permission_type = permission_type
-
-        return super().form_valid(formset)
 
 
 # -----------------------------------------------------------------
