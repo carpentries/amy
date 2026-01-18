@@ -132,19 +132,17 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     def human_daterange(self) -> str:
         return human_daterange(self.start_date, self.end_date)
 
+    def in_future(self, current_date: date | None = None) -> bool:
+        return (current_date or timezone.now().date()) < self.start_date
+
+    def in_past(self, current_date: date | None = None) -> bool:
+        return (current_date or timezone.now().date()) > self.end_date
+
     def active(self, current_date: date | None = None) -> bool:
         return self.start_date <= (current_date or timezone.now().date()) <= self.end_date
 
     def __str__(self) -> str:
-        state = (
-            "(FROZEN)"
-            if self.frozen
-            else "(FUTURE)"
-            if timezone.now().date() < self.start_date
-            else "(EXPIRED)"
-            if not self.active()
-            else ""
-        )
+        state = "(FROZEN)" if self.frozen else "(FUTURE)" if self.in_future() else "(EXPIRED)" if self.in_past() else ""
         return (
             f"{state} Account {self.benefit} for "
             f'"{self.partnership or self.account.generic_relation}" '
