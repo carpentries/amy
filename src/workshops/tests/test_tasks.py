@@ -217,29 +217,16 @@ class TestTask(TestBase):
             "task-seat_membership": self.membership.pk,
             # "task-seat_public": True,
         }
-        # data2 = {
-        #     "task-event": self.ttt_event_open.pk,
-        #     "task-person": self.test_person_2.pk,
-        #     "task-role": self.learner.pk,
-        #     "task-seat_membership": self.membership.pk,
-        #     # "task-seat_public": False,
-        # }
 
         # Act
         response1 = self.client.post(reverse("task_add"), data1, follow=True)
-        # response2 = self.client.post(reverse("task_add"), data2, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)
-        # self.assertEqual(response2.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; has no public instructor training seats remaining.",
         )
-        # self.assertContains(
-        #     response2,
-        #     f"Membership &quot;{self.membership}&quot; has no in-house instructor training seats remaining.",
-        # )
 
     def test_exceeded_seats_warnings_when_adding(self) -> None:
         """Ensure warnings about memberships with exceeded instructor training
@@ -256,31 +243,17 @@ class TestTask(TestBase):
             "task-seat_membership": self.membership.pk,
             # "task-seat_public": True,
         }
-        # data2 = {
-        #     "task-event": self.ttt_event_open.pk,
-        #     "task-person": self.test_person_2.pk,
-        #     "task-role": self.learner.pk,
-        #     "task-seat_membership": self.membership.pk,
-        #     # "task-seat_public": False,
-        # }
 
         # Act
         response1 = self.client.post(reverse("task_add"), data1, follow=True)
-        # response2 = self.client.post(reverse("task_add"), data2, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)
-        # self.assertEqual(response2.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; is using more public "
             "training seats than it&#x27;s been allowed.",
         )
-        # self.assertContains(
-        #     response2,
-        #     f"Membership &quot;{self.membership}&quot; is using more in-house "
-        #     "training seats than it&#x27;s been allowed.",
-        # )
 
     def test_no_remaining_seats_warnings_when_updating(self) -> None:
         """Ensure warnings about memberships with no remaining instructor training
@@ -297,45 +270,24 @@ class TestTask(TestBase):
             seat_public=True,
         )
         assert task1.seat_membership  # for mypy
-        # task2 = Task.objects.create(
-        #     event=self.ttt_event_open,
-        #     person=self.test_person_2,
-        #     role=self.learner,
-        #     seat_membership=self.membership,
-        #     seat_public=False,
-        # )
-        # assert task2.seat_membership  # for mypy
 
         data1 = {
             "event": task1.event.pk,
             "person": task1.person.pk,
             "role": task1.role.pk,
             "seat_membership": task1.seat_membership.pk,
-            "seat_public": task1.seat_public,
+            # "seat_public": task1.seat_public,
         }
-        # data2 = {
-        #     "event": task2.event.pk,
-        #     "person": task2.person.pk,
-        #     "role": task2.role.pk,
-        #     "seat_membership": task2.seat_membership.pk,
-        #     "seat_public": task2.seat_public,
-        # }
 
         # Act
         response1 = self.client.post(reverse("task_edit", args=[task1.pk]), data1, follow=True)
-        # response2 = self.client.post(reverse("task_edit", args=[task2.pk]), data2, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)
-        # self.assertEqual(response2.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; has no public instructor training seats remaining.",
         )
-        # self.assertContains(
-        #     response2,
-        #     f"Membership &quot;{self.membership}&quot; has no in-house instructor training seats remaining.",
-        # )
 
     def test_exceeded_seats_warnings_when_updating(self) -> None:
         """Ensure warnings about memberships with exceeded instructor training
@@ -353,47 +305,25 @@ class TestTask(TestBase):
             seat_public=True,
         )
         assert task1.seat_membership  # for mypy
-        # task2 = Task.objects.create(
-        #     event=self.ttt_event_open,
-        #     person=self.test_person_2,
-        #     role=self.learner,
-        #     seat_membership=self.membership,
-        #     seat_public=False,
-        # )
-        # assert task2.seat_membership  # for mypy
 
         data1 = {
             "event": task1.event.pk,
             "person": task1.person.pk,
             "role": task1.role.pk,
             "seat_membership": task1.seat_membership.pk,
-            "seat_public": task1.seat_public,
+            # "seat_public": task1.seat_public,
         }
-        # data2 = {
-        #     "event": task2.event.pk,
-        #     "person": task2.person.pk,
-        #     "role": task2.role.pk,
-        #     "seat_membership": task2.seat_membership.pk,
-        #     "seat_public": task2.seat_public,
-        # }
 
         # Act
         response1 = self.client.post(reverse("task_edit", args=[task1.pk]), data1, follow=True)
-        # response2 = self.client.post(reverse("task_edit", args=[task2.pk]), data2, follow=True)
 
         # Assert
         self.assertEqual(response1.status_code, 200)
-        # self.assertEqual(response2.status_code, 200)
         self.assertContains(
             response1,
             f"Membership &quot;{self.membership}&quot; is using more public "
             "training seats than it&#x27;s been allowed.",
         )
-        # self.assertContains(
-        #     response2,
-        #     f"Membership &quot;{self.membership}&quot; is using more in-house "
-        #     "training seats than it&#x27;s been allowed.",
-        # )
 
     def test_open_applications_TTT(self) -> None:
         """Ensure events with TTT tag but without open application flag raise
