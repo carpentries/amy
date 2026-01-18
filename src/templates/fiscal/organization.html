@@ -2,9 +2,11 @@
 
 {% load links %}
 {% load revisions %}
+{% load feature_flags %}
 
 {% block content %}
 {% last_modified organization %}
+{% flag_enabled 'SERVICE_OFFERING' as SERVICE_OFFERING_ENABLED %}
 
 <p class="edit-object">
   {% if perms.workshops.change_organization %}
@@ -40,6 +42,7 @@
       {% endif %}
     </td>
   </tr>
+  {% if SERVICE_OFFERING_ENABLED %}
   <tr>
     <th>Account:</th>
     <td>
@@ -50,6 +53,7 @@
       {% endif %}
     </td>
   </tr>
+  {% endif %}
 </table>
 
 <div class="clearfix">
@@ -235,15 +239,17 @@
   <a href="#" class="btn btn-success disabled">Add membership</a>
 {% endif %}
 
-<hr>
+{% if SERVICE_OFFERING_ENABLED %}
+  <hr>
 
-<h4>Partnerships:</h4>
-{% include "offering/includes/partnerships.html" with object_list=partnerships %}
+  <h4>Partnerships:</h4>
+  {% include "offering/includes/partnerships.html" with object_list=partnerships %}
 
-{% if perms.fiscal.add_partnership %}
-  <a href="{% url 'partnership-create' %}" class="btn btn-success">Add partnership</a>
-{% else %}
-  <a href="#" class="btn btn-success disabled">Add partnership</a>
+  {% if perms.fiscal.add_partnership %}
+    <a href="{% url 'partnership-create' %}" class="btn btn-success">Add partnership</a>
+  {% else %}
+    <a href="#" class="btn btn-success disabled">Add partnership</a>
+  {% endif %}
 {% endif %}
 
 {% include "includes/comments.html" with object=organization %}

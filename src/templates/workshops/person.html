@@ -4,9 +4,11 @@
 {% load revisions %}
 {% load dates %}
 {% load communityroles %}
+{% load feature_flags %}
 
 {% block content %}
 {% last_modified person %}
+{% flag_enabled 'SERVICE_OFFERING' as SERVICE_OFFERING_ENABLED %}
 
 <div class="edit-object">
   {% if perms.workshops.change_person or person == request.user %}
@@ -261,6 +263,7 @@
       {% endwith %}
     </td>
   </tr>
+  {% if SERVICE_OFFERING_ENABLED %}
   <tr>
     <th>Account:</th>
     <td>
@@ -291,6 +294,7 @@
       {% endwith %}
     </td>
   </tr>
+  {% endif %}
   <tr>
     <th>Related scheduled emails:</th>
     <td>
