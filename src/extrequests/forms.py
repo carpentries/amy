@@ -137,27 +137,30 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="account-benefit-seats-lookup"),  # type: ignore[no-untyped-call]
     )
 
-    helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
-    helper.layout = Layout(
-        "event",
-        "seat_membership",
-        "seat_membership_auto_assign",
-        "allocated_benefit",
-    )  # type: ignore[no-untyped-call]
-    helper.add_input(
-        Submit(  # type: ignore[no-untyped-call]
-            "match",
-            "Accept & match selected trainees to chosen training",
-            **{
-                "data-toggle": "popover",
-                "data-html": "true",
-                "data-trigger": "hover",
-                "data-content": "If you want to <strong>re</strong>match "
-                "trainees to other training, first "
-                "<strong>unmatch</strong> them!",
-            },
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        show_allocated_benefit = kwargs.pop("show_allocated_benefit", False)
+        super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
+        self.helper.layout = Layout(
+            "event",
+            "seat_membership",
+            "seat_membership_auto_assign",
+            "allocated_benefit" if show_allocated_benefit else None,
+        )  # type: ignore[no-untyped-call]
+        self.helper.add_input(
+            Submit(  # type: ignore[no-untyped-call]
+                "match",
+                "Accept & match selected trainees to chosen training",
+                **{
+                    "data-toggle": "popover",
+                    "data-html": "true",
+                    "data-trigger": "hover",
+                    "data-content": "If you want to <strong>re</strong>match "
+                    "trainees to other training, first "
+                    "<strong>unmatch</strong> them!",
+                },
+            )
         )
-    )
 
     def clean(self) -> None:
         super().clean()

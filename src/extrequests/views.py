@@ -14,6 +14,7 @@ from django.db.models import Prefetch, ProtectedError, Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 from requests.exceptions import HTTPError, RequestException
 
 from src.consents.models import Term, TermOption, TrainingRequestConsent
@@ -516,12 +517,13 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
     )
 
     form = BulkChangeTrainingRequestForm()
-    match_form = BulkMatchTrainingRequestForm()
+    service_offering_enabled = flag_enabled("SERVICE_OFFERING", request=request)
+    match_form = BulkMatchTrainingRequestForm(show_allocated_benefit=service_offering_enabled)
 
     if request.method == "POST" and "match" in request.POST:
         # Bulk match people associated with selected TrainingRequests to
         # trainings.
-        match_form = BulkMatchTrainingRequestForm(request.POST)
+        match_form = BulkMatchTrainingRequestForm(request.POST, show_allocated_benefit=service_offering_enabled)
 
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]

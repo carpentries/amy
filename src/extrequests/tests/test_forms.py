@@ -394,7 +394,7 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         }
 
         # Act
-        form = BulkMatchTrainingRequestForm(data)
+        form = BulkMatchTrainingRequestForm(data, show_allocated_benefit=True)
 
         # Assert
         self.assertTrue(form.is_valid())
@@ -511,8 +511,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         }
 
         # Act
-        form1 = BulkMatchTrainingRequestForm(data1)
-        form2 = BulkMatchTrainingRequestForm(data2)
+        form1 = BulkMatchTrainingRequestForm(data1, show_allocated_benefit=True)
+        form2 = BulkMatchTrainingRequestForm(data2, show_allocated_benefit=True)
 
         # Assert
         msg = (
