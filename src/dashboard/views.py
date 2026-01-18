@@ -26,6 +26,7 @@ from django.views.generic import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 from flags.sources import get_flags  # type: ignore[import-untyped]
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
 from src.communityroles.models import CommunityRole
@@ -607,6 +608,7 @@ def search(request: HttpRequest) -> HttpResponse:
     partnerships = None
     consortiums = None
     comments = None
+    service_offering_enabled = flag_enabled("SERVICE_OFFERING", request=request)
 
     if request.method == "GET" and "term" in request.GET:
         form = SearchForm(request.GET)
@@ -656,24 +658,25 @@ def search(request: HttpRequest) -> HttpResponse:
             ).order_by("family")
             results_combined += list(training_requests)
 
-            partnerships = Partnership.objects.filter(
-                multiple_Q_icontains(
-                    term,
-                    "name",
-                    "agreement_link",
-                    "registration_code",
-                )
-            ).order_by("name")
-            results_combined += list(partnerships)
+            if service_offering_enabled:
+                partnerships = Partnership.objects.filter(
+                    multiple_Q_icontains(
+                        term,
+                        "name",
+                        "agreement_link",
+                        "registration_code",
+                    )
+                ).order_by("name")
+                results_combined += list(partnerships)
 
-            consortiums = Consortium.objects.filter(
-                multiple_Q_icontains(
-                    term,
-                    "name",
-                    "description",
-                )
-            ).order_by("name")
-            results_combined += list(consortiums)
+                consortiums = Consortium.objects.filter(
+                    multiple_Q_icontains(
+                        term,
+                        "name",
+                        "description",
+                    )
+                ).order_by("name")
+                results_combined += list(consortiums)
 
             comments = Comment.objects.filter(
                 multiple_Q_icontains(

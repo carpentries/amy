@@ -1,8 +1,11 @@
 from datetime import UTC, date, datetime, timedelta
 
+from django.test import override_settings
 from django.urls import reverse
 from django_comments.models import Comment
 
+from src.fiscal.models import Consortium, Partnership
+from src.offering.models import Account
 from src.workshops.models import (
     Member,
     MemberRole,
@@ -242,3 +245,73 @@ class TestSearch(TestBase):
         self.assertEqual(response.status_code, 200)  # doesn't redirect
         self.assertEqual(len(response.context["organisations"]), 1)
         self.assertEqual(len(response.context["comments"]), 2)
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", False)]})
+    def test_search_for_partnerships_when_flag_is_off(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        Partnership.objects.create(
+            name="Test Partnership",
+            credits=10,
+            account=account,
+            agreement_start=date(2025, 10, 24),
+            agreement_end=date(2026, 10, 23),
+            partner_organisation=organisation,
+        )
+        # Act
+        response = self.search_for("Test Partnership", no_redirect=True, follow=False)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["partnerships"])
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_search_for_partnerships_when_flag_is_on(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        partnership = Partnership.objects.create(
+            name="Test Partnership",
+            credits=10,
+            account=account,
+            agreement_start=date(2025, 10, 24),
+            agreement_end=date(2026, 10, 23),
+            partner_organisation=organisation,
+        )
+        # Act
+        response = self.search_for("Test Partnership", no_redirect=True, follow=False)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["partnerships"]), 1)
+        self.assertIn(partnership, response.context["partnerships"])
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", False)]})
+    def test_search_for_consortiums_when_flag_is_off(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        consortium = Consortium.objects.create(name="test-consortium")
+        consortium.organisations.add(organisation)
+        # Act
+        response = self.search_for("consortium", no_redirect=True, follow=False)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["consortiums"])
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_search_for_consortiums_when_flag_is_on(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        consortium = Consortium.objects.create(name="test-consortium")
+        consortium.organisations.add(organisation)
+        # Act
+        response = self.search_for("consortium", no_redirect=True, follow=False)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["consortiums"]), 1)
+        self.assertIn(consortium, response.context["consortiums"])
