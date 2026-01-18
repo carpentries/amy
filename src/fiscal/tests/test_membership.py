@@ -10,7 +10,8 @@ from src.fiscal.forms import (
     MembershipForm,
     MembershipRollOverForm,
 )
-from src.fiscal.models import MembershipPersonRole, MembershipTask
+from src.fiscal.models import MembershipPersonRole, MembershipTask, Partnership
+from src.offering.models import Account
 from src.workshops.models import (
     Event,
     Member,
@@ -657,6 +658,53 @@ class TestMembershipForms(TestBase):
         self.assertEqual(
             form.errors["agreement_end"],
             ["Agreement end date can't be sooner than the start date."],
+        )
+
+    def test_membership_unique_registration_code_validation(self) -> None:
+        """Validate uniqueness of registration code."""
+        # Arrange
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org_alpha,
+        )
+        partnership = Partnership.objects.create(
+            name="Test Partnership",
+            agreement_start=date(2025, 1, 1),
+            agreement_end=date(2025, 12, 31),
+            agreement_link="http://example.com/agreement.pdf",
+            registration_code="DUPLICATE123",
+            public_status="public",
+            partner_organisation=self.org_alpha,
+            account=account,
+            credits=10,
+        )
+
+        data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": False,
+            "public_status": "public",
+            "agreement_start": date(2021, 1, 26),
+            "agreement_end": date(2020, 1, 26),
+            "agreement_link": "https://example.com",
+            "variant": "partner",
+            "contribution_type": "financial",
+            "public_instructor_training_seats": 0,
+            "additional_public_instructor_training_seats": 0,
+            "inhouse_instructor_training_seats": 0,
+            "additional_inhouse_instructor_training_seats": 0,
+            "registration_code": "DUPLICATE123",
+        }
+
+        # Act
+        form = MembershipForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())
+        self.assertIn("registration_code", form.errors)
+        self.assertEqual(
+            form.errors["registration_code"],
+            [f'This registration code is used by partnership "{partnership}".'],
         )
 
     def test_changing_consortium_to_nonconsortium(self) -> None:
