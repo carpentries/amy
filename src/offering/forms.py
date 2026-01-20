@@ -169,7 +169,10 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             "allocation",
         ]
         widgets = {
-            "partnership": ModelSelect2Widget(data_view="partnership-lookup"),  # type: ignore[no-untyped-call]
+            "partnership": ModelSelect2Widget(
+                data_view="partnership-lookup",
+                dependent_fields={"account": "account"},
+            ),  # type: ignore[no-untyped-call]
         }
 
     class Media:

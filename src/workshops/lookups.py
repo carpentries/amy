@@ -544,8 +544,12 @@ class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponse
     def get_queryset(self) -> QuerySet[Partnership]:
         results = Partnership.objects.order_by("name", "agreement_start")
 
+        account_id = self.request.GET.get("account")
+
         if self.term:
             results = results.filter(name__icontains=self.term)
+        if account_id:
+            results = results.filter(account_id=account_id)
 
         return results
 
