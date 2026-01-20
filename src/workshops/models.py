@@ -34,6 +34,7 @@ from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django_countries.fields import Country, CountryField
 from django_stubs_ext import Annotations
+from github import GithubException
 from reversion import revisions as reversion
 from reversion.models import Version
 from social_django.models import UserSocialAuth
@@ -932,7 +933,7 @@ class Person(
                 github_auth.validate_github_username(self.github)
 
                 github_uid = github_auth.github_username_to_uid(self.github)
-            except (ValidationError, ValueError):
+            except (ValidationError, ValueError, GithubException):
                 github_uid = None
         else:
             github_uid = None

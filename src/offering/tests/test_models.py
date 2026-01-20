@@ -52,6 +52,42 @@ class TestAccountBenefit(TestCase):
         # Assert
         self.assertEqual(human_range, "Jan 01 - Dec 31, 2024")
 
+    def test_in_future(self) -> None:
+        # Arrange
+        account_benefit = AccountBenefit.objects.create(
+            account=self.partnership1.account,
+            partnership=self.partnership1,
+            benefit=self.benefit1,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+            allocation=10,
+            frozen=False,
+        )
+
+        # Act & Assert
+        self.assertTrue(account_benefit.in_future(current_date=date(2024, 12, 31)))
+        self.assertFalse(account_benefit.in_future(current_date=date(2025, 1, 1)))
+        self.assertFalse(account_benefit.in_future(current_date=date(2025, 6, 15)))
+        self.assertFalse(account_benefit.in_future(current_date=date(2026, 1, 1)))
+
+    def test_in_past(self) -> None:
+        # Arrange
+        account_benefit = AccountBenefit.objects.create(
+            account=self.partnership1.account,
+            partnership=self.partnership1,
+            benefit=self.benefit1,
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+            allocation=10,
+            frozen=False,
+        )
+
+        # Act & Assert
+        self.assertFalse(account_benefit.in_past(current_date=date(2024, 12, 31)))
+        self.assertFalse(account_benefit.in_past(current_date=date(2025, 6, 15)))
+        self.assertFalse(account_benefit.in_past(current_date=date(2025, 12, 31)))
+        self.assertTrue(account_benefit.in_past(current_date=date(2026, 1, 1)))
+
     def test_active(self) -> None:
         # Arrange
         account_benefit = AccountBenefit.objects.create(

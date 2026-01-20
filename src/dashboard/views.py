@@ -26,6 +26,7 @@ from django.views.generic import TemplateView, View
 from django.views.generic.detail import SingleObjectMixin
 from django_comments.models import Comment
 from flags.sources import get_flags  # type: ignore[import-untyped]
+from flags.state import flag_enabled  # type: ignore[import-untyped]
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
 from src.communityroles.models import CommunityRole
@@ -47,7 +48,7 @@ from src.dashboard.utils import (
 )
 from src.emails.signals import instructor_signs_up_for_workshop_signal
 from src.extrequests.base_views import AMYCreateAndFetchObjectView
-from src.fiscal.models import MembershipTask
+from src.fiscal.models import Consortium, MembershipTask, Partnership
 from src.recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
@@ -604,7 +605,10 @@ def search(request: HttpRequest) -> HttpResponse:
     events = None
     persons = None
     training_requests = None
+    partnerships = None
+    consortiums = None
     comments = None
+    service_offering_enabled = flag_enabled("SERVICE_OFFERING", request=request)
 
     if request.method == "GET" and "term" in request.GET:
         form = SearchForm(request.GET)
@@ -654,6 +658,26 @@ def search(request: HttpRequest) -> HttpResponse:
             ).order_by("family")
             results_combined += list(training_requests)
 
+            if service_offering_enabled:
+                partnerships = Partnership.objects.filter(
+                    multiple_Q_icontains(
+                        term,
+                        "name",
+                        "agreement_link",
+                        "registration_code",
+                    )
+                ).order_by("name")
+                results_combined += list(partnerships)
+
+                consortiums = Consortium.objects.filter(
+                    multiple_Q_icontains(
+                        term,
+                        "name",
+                        "description",
+                    )
+                ).order_by("name")
+                results_combined += list(consortiums)
+
             comments = Comment.objects.filter(
                 multiple_Q_icontains(
                     term,
@@ -699,8 +723,10 @@ def search(request: HttpRequest) -> HttpResponse:
         "memberships": memberships,
         "events": events,
         "persons": persons,
-        "comments": comments,
         "training_requests": training_requests,
+        "partnerships": partnerships,
+        "consortiums": consortiums,
+        "comments": comments,
     }
     return render(request, "dashboard/search.html", context)
 

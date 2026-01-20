@@ -6,6 +6,7 @@ from src.extrequests.tests.test_training_request import create_training_request
 from src.extrequests.utils import (
     MemberCodeValidationError,
     accept_training_request_and_match_to_event,
+    get_account_benefit_warnings_after_match,
     get_eventbrite_id_from_url_or_return_input,
     get_membership_from_training_request_or_raise_error,
     get_membership_or_none_from_code,
@@ -13,6 +14,7 @@ from src.extrequests.utils import (
     member_code_valid,
     member_code_valid_training,
 )
+from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import Event, Membership, Role, Tag, Task
 from src.workshops.tests.base import TestBase
 
@@ -403,6 +405,41 @@ class TestAcceptTrainingRequestAndMatchToEvent(TestBase):
         self.assertEqual(result.seat_open_training, False)
         self.assertEqual(result.seat_membership, self.membership)
 
+    def test_creates_task_linked_to_benefit(self) -> None:
+        # Arrange
+        request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org_beta,
+        )
+        benefit = Benefit.objects.create(name="Seat Benefit", unit_type="seat", credits=1)
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            start_date=date.today() - timedelta(days=1),
+            end_date=date.today() + timedelta(days=30),
+            allocation=1,
+        )
+
+        # Act
+        result = accept_training_request_and_match_to_event(
+            request=request,
+            event=self.event,
+            role=self.role,
+            allocated_benefit=account_benefit,
+        )
+
+        # Assert
+        self.assertEqual(Task.objects.count(), 1)
+        self.assertEqual(Task.objects.all()[0], result)
+        self.assertEqual(result.person, self.spiderman)
+        self.assertEqual(result.event, self.event)
+        self.assertEqual(result.role, self.role)
+        self.assertEqual(result.seat_public, True)
+        self.assertEqual(result.seat_open_training, False)
+        self.assertEqual(result.seat_membership, None)
+        self.assertEqual(result.allocated_benefit, account_benefit)
+
     def test_returns_existing_task(self) -> None:
         # Arrange
         request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
@@ -607,3 +644,70 @@ class TestGetEventbriteIdFromUrl(TestCase):
 
         # Assert
         self.assertEqual(result, "711575811407")
+
+
+class TestGetAccountBenefitWarningsAfterMatch(TestBase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setUpRoles()
+
+        # create a benefit and account + account benefit
+        self.benefit = Benefit.objects.create(name="Seat Benefit", unit_type="seat", credits=1)
+        self.account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org_beta,
+        )
+
+    def make_account_benefit(
+        self,
+        *,
+        allocation: int = 1,
+        frozen: bool = False,
+        start_offset: int = -1,
+        end_offset: int = 1,
+    ) -> AccountBenefit:
+        return AccountBenefit.objects.create(
+            account=self.account,
+            benefit=self.benefit,
+            start_date=date.today() + timedelta(days=start_offset),
+            end_date=date.today() + timedelta(days=end_offset),
+            allocation=allocation,
+            frozen=frozen,
+        )
+
+    def test_warns_allocation_exceeded(self) -> None:
+        # Arrange
+        acc_benefit = self.make_account_benefit(allocation=1, frozen=False)
+        event = Event.objects.create(slug="ev1", host=self.org_beta, start=date.today())
+        role = Role.objects.get(name="learner")
+        # create two tasks allocated to the same benefit (exceeds allocation)
+        Task.objects.create(event=event, person=self.spiderman, role=role, allocated_benefit=acc_benefit)
+        Task.objects.create(event=event, person=self.blackwidow, role=role, allocated_benefit=acc_benefit)
+
+        # Act
+        result = get_account_benefit_warnings_after_match(acc_benefit)
+
+        # Assert
+        self.assertEqual(len(result), 1)
+        self.assertIn("exceeding", result[0])
+        self.assertIn(str(acc_benefit.allocation), result[0])
+
+    def test_warns_frozen(self) -> None:
+        # Arrange
+        acc_benefit = self.make_account_benefit(allocation=10, frozen=True)
+
+        # Act
+        result = get_account_benefit_warnings_after_match(acc_benefit)
+
+        # Assert
+        self.assertIn(f'The benefit "{acc_benefit}" has been frozen.', result)
+
+    def test_warns_inactive(self) -> None:
+        # Arrange - benefit that expired yesterday
+        acc_benefit = self.make_account_benefit(allocation=10, start_offset=-10, end_offset=-1)
+
+        # Act
+        result = get_account_benefit_warnings_after_match(acc_benefit)
+
+        # Assert
+        self.assertIn(f'The benefit "{acc_benefit}" is outside its valid dates.', result)

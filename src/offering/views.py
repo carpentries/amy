@@ -1,7 +1,7 @@
-from typing import Any, cast
+from datetime import date, timedelta
+from typing import Any
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import QuerySet
 from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
@@ -79,8 +79,9 @@ class AccountCreate(OnlyForAdminsMixin, FlaggedViewMixin, AMYCreateView[AccountF
 
     def form_valid(self, form: AccountForm) -> HttpResponse:
         obj = form.save(commit=False)
-        mapped = Account.ACCOUNT_TYPE_MAPPING[form.cleaned_data["account_type"]]
-        obj.generic_relation_content_type = ContentType.objects.get(app_label=mapped[0], model=mapped[1])
+        obj.generic_relation_content_type = Account.get_content_type_for_account_type(
+            form.cleaned_data["account_type"],
+        )
         obj.save()
 
         if obj.account_type == Account.AccountTypeChoices.INDIVIDUAL:
@@ -111,6 +112,32 @@ class AccountUpdate(OnlyForAdminsMixin, FlaggedViewMixin, AMYUpdateView[AccountF
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         return context
+
+    def form_valid(self, form: AccountForm) -> HttpResponse:
+        obj = form.save(commit=False)
+        # Update content type in case account type was changed
+        obj.generic_relation_content_type = Account.get_content_type_for_account_type(
+            form.cleaned_data["account_type"],
+        )
+        obj.save()
+
+        if obj.account_type == Account.AccountTypeChoices.INDIVIDUAL:
+            # Update AccountOwner for individual accounts. It's the same as the person this account is for.
+            try:
+                owner = Person.objects.get(pk=form.cleaned_data["generic_relation_pk"])
+                AccountOwner.objects.update_or_create(
+                    account=obj,
+                    permission_type=AccountOwner.PERMISSION_TYPE_CHOICES[0][0],
+                    defaults=dict(person=owner),
+                    create_defaults=dict(
+                        person=owner,
+                        permission_type=AccountOwner.PERMISSION_TYPE_CHOICES[0][0],
+                    ),
+                )
+            except Person.DoesNotExist:
+                pass
+
+        return super().form_valid(form)
 
 
 class AccountDelete(
@@ -144,21 +171,12 @@ class AccountOwnersUpdate(
     ]
     request: AuthenticatedHttpRequest
 
+    def account_queryset_kwargs(self) -> dict[str, Any]:
+        # Prevent from loading the page for account type of "individual"
+        return dict(account_type__in=[Account.AccountTypeChoices.CONSORTIUM, Account.AccountTypeChoices.ORGANISATION])
+
     def get_formset(self, *args: Any, **kwargs: Any) -> type[BaseModelFormSet[AccountOwner, AccountOwnerForm]]:
         return modelformset_factory(AccountOwner, AccountOwnerForm, *args, **kwargs)
-
-    def get_formset_kwargs(self) -> dict[str, Any]:
-        kwargs = super().get_formset_kwargs()
-
-        if self.account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
-            kwargs["can_delete"] = False
-            kwargs["min_num"] = 1
-            kwargs["max_num"] = 1
-            kwargs["validate_min"] = True
-            kwargs["validate_max"] = True
-            kwargs["edit_only"] = True
-
-        return kwargs
 
     def get_formset_queryset(self, object: Account) -> QuerySet[AccountOwner]:
         return object.accountowner_set.select_related("account", "person")
@@ -167,19 +185,6 @@ class AccountOwnersUpdate(
         if "title" not in kwargs:
             kwargs["title"] = f"Change owners for {self.account}"
         return super().get_context_data(**kwargs)
-
-    def form_valid(self, formset: BaseModelFormSet[AccountOwner, AccountOwnerForm]) -> HttpResponse:
-        results = formset.save(commit=True)
-
-        if self.account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
-            # overwrite any changes to the person field to keep it the same as the account's generic relation
-            original_owner = cast(Person, self.account.generic_relation)
-            permission_type = "owner"
-            for obj in results:
-                obj.person = original_owner
-                obj.permission_type = permission_type
-
-        return super().form_valid(formset)
 
 
 # -----------------------------------------------------------------
@@ -282,21 +287,33 @@ class AccountBenefitCreate(
 
     def get_initial(self) -> dict[str, Any]:
         initial = super().get_initial()
+        initial["start_date"] = date.today()
+        initial["end_date"] = date.today() + timedelta(days=365)
+
         if account_pk := self.request.GET.get("account_pk"):
             initial["account"] = get_object_or_404(Account, pk=account_pk)
+
         if partnership_pk := self.request.GET.get("partnership_pk"):
             partnership = get_object_or_404(Partnership, pk=partnership_pk)
             initial["partnership"] = partnership
             initial["start_date"] = partnership.agreement_start
             initial["end_date"] = partnership.agreement_end
+
         return initial
 
     def get_form_kwargs(self) -> dict[str, Any]:
         kwargs = super().get_form_kwargs()
-        if kwargs.get("initial", {}).get("account") is not None:
+
+        if (account := kwargs.get("initial", {}).get("account")) is not None:
             kwargs["disable_account"] = True
+            if account.account_type == Account.AccountTypeChoices.INDIVIDUAL:
+                # For individual accounts, we also disable partnership selection
+                kwargs["disable_partnership"] = True
+
         if kwargs.get("initial", {}).get("partnership") is not None:
             kwargs["disable_partnership"] = True
+            kwargs["disable_dates"] = True
+
         return kwargs
 
     def get_success_url(self) -> str:

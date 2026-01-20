@@ -18,6 +18,7 @@ from src.extrequests.utils import (
     member_code_valid,
     member_code_valid_training,
 )
+from src.offering.models import AccountBenefit
 from src.workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
@@ -38,7 +39,6 @@ from src.workshops.models import (
     Membership,
     Organization,
     Person,
-    Task,
     TrainingRequest,
     WorkshopRequest,
 )
@@ -129,77 +129,68 @@ class BulkMatchTrainingRequestForm(forms.Form):
         required=False,
     )
 
-    seat_public = forms.TypedChoiceField(
-        coerce=lambda x: x == "True",
-        choices=Task.SEAT_PUBLIC_CHOICES,
-        initial=Task._meta.get_field("seat_public").default,
+    allocated_benefit = forms.ModelChoiceField(
+        label="Allocated account benefit (of type 'seat')",
         required=False,
-        label=Task._meta.get_field("seat_public").verbose_name,
-        widget=forms.RadioSelect(),
+        help_text="Use this for partnerships instead of memberships.",
+        queryset=AccountBenefit.objects.filter(benefit__unit_type="seat"),
+        widget=ModelSelect2Widget(data_view="account-benefit-seats-lookup"),  # type: ignore[no-untyped-call]
     )
 
-    seat_open_training = forms.BooleanField(
-        label="Open training seat",
-        required=False,
-        help_text="Some TTT events allow for open training; check this field "
-        "to count this person into open applications.",
-    )
-
-    helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
-    helper.layout = Layout(
-        "event",
-        "seat_membership",
-        "seat_membership_auto_assign",
-        "seat_public",
-        "seat_open_training",
-    )  # type: ignore[no-untyped-call]
-    helper.add_input(
-        Submit(  # type: ignore[no-untyped-call]
-            "match",
-            "Accept & match selected trainees to chosen training",
-            **{
-                "data-toggle": "popover",
-                "data-html": "true",
-                "data-trigger": "hover",
-                "data-content": "If you want to <strong>re</strong>match "
-                "trainees to other training, first "
-                "<strong>unmatch</strong> them!",
-            },
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        show_allocated_benefit = kwargs.pop("show_allocated_benefit", False)
+        super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
+        self.helper.layout = Layout(
+            "event",
+            "seat_membership",
+            "seat_membership_auto_assign",
+            "allocated_benefit" if show_allocated_benefit else None,
+        )  # type: ignore[no-untyped-call]
+        self.helper.add_input(
+            Submit(  # type: ignore[no-untyped-call]
+                "match",
+                "Accept & match selected trainees to chosen training",
+                **{
+                    "data-toggle": "popover",
+                    "data-html": "true",
+                    "data-trigger": "hover",
+                    "data-content": "If you want to <strong>re</strong>match "
+                    "trainees to other training, first "
+                    "<strong>unmatch</strong> them!",
+                },
+            )
         )
-    )
 
     def clean(self) -> None:
         super().clean()
 
-        event = self.cleaned_data["event"]
+        errors = {}
+
         seat_membership = self.cleaned_data["seat_membership"]
         seat_membership_auto_assign = self.cleaned_data["seat_membership_auto_assign"]
-        open_training = self.cleaned_data["seat_open_training"]
+        allocated_benefit = self.cleaned_data["allocated_benefit"]
 
-        if any(r.person is None for r in self.cleaned_data.get("requests", [])):
-            raise ValidationError(
-                "Some of the requests are not matched "
-                "to a trainee yet. Before matching them to "
-                "a training, you need to accept them "
-                "and match with a trainee."
+        if allocated_benefit and (seat_membership or seat_membership_auto_assign):
+            errors["allocated_benefit"] = ValidationError(
+                "Cannot simultaneously use an explicitly selected benefit and "
+                "use seats from membership or auto-assign membership."
             )
 
-        if (seat_membership or seat_membership_auto_assign) and open_training:
-            raise ValidationError(
-                "Cannot simultaneously match as open training and use a Membership instructor training seat."
+        if any(r.person is None for r in self.cleaned_data.get("requests", [])):
+            errors["__all__"] = ValidationError(
+                "Some of the requests are not matched to a trainee yet. Before matching them to "
+                "a training, you need to accept them and match with a trainee."
             )
 
         if seat_membership and seat_membership_auto_assign:
-            raise ValidationError(
-                "Cannot simultaneously use seats from selected membership and use seats based on registration code."
+            errors["seat_membership_auto_assign"] = ValidationError(
+                "Cannot simultaneously use seats from selected membership and auto-assign seats based on "
+                "registration code."
             )
 
-        if open_training and not event.open_TTT_applications:
-            raise ValidationError(
-                {
-                    "seat_open_training": ValidationError("Selected TTT event does not allow for open training seats."),
-                }
-            )
+        if errors:
+            raise ValidationError(errors)
 
 
 class MatchTrainingRequestForm(forms.Form):

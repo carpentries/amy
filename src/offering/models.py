@@ -58,6 +58,11 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self) -> str:
         return reverse("account-details", kwargs={"pk": self.pk})
 
+    @classmethod
+    def get_content_type_for_account_type(cls, account_type: str) -> ContentType:
+        mapped = cls.ACCOUNT_TYPE_MAPPING[account_type]
+        return ContentType.objects.get(app_label=mapped[0], model=mapped[1])
+
 
 class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""
@@ -127,11 +132,17 @@ class AccountBenefit(CreatedUpdatedMixin, models.Model):
     def human_daterange(self) -> str:
         return human_daterange(self.start_date, self.end_date)
 
+    def in_future(self, current_date: date | None = None) -> bool:
+        return (current_date or timezone.now().date()) < self.start_date
+
+    def in_past(self, current_date: date | None = None) -> bool:
+        return (current_date or timezone.now().date()) > self.end_date
+
     def active(self, current_date: date | None = None) -> bool:
         return self.start_date <= (current_date or timezone.now().date()) <= self.end_date
 
     def __str__(self) -> str:
-        state = "(FROZEN)" if self.frozen else "(EXPIRED)" if not self.active() else ""
+        state = "(FROZEN)" if self.frozen else "(FUTURE)" if self.in_future() else "(EXPIRED)" if self.in_past() else ""
         return (
             f"{state} Account {self.benefit} for "
             f'"{self.partnership or self.account.generic_relation}" '

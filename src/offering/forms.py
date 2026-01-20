@@ -3,6 +3,7 @@ from typing import Any, cast
 from crispy_forms.layout import Div
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
 
 from src.fiscal.forms import EditableFormsetFormMixin
 from src.offering.models import Account, AccountBenefit, AccountOwner, Benefit
@@ -18,6 +19,9 @@ class AccountForm(forms.ModelForm[Account]):
             "generic_relation_pk",
             "active",
         ]
+        labels = {
+            "generic_relation_pk": "Name",
+        }
         widgets = {
             "generic_relation_pk": HeavySelect2Widget(
                 data_view="offering-account-relation-lookup",
@@ -31,6 +35,45 @@ class AccountForm(forms.ModelForm[Account]):
             "django_select2/django_select2.js",
             "offering_account_form.js",
         )
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        update = "instance" in kwargs and kwargs["instance"] and kwargs["instance"].pk is not None
+
+        if update:
+            self.helper = BootstrapHelper(
+                submit_label="Update",
+                submit_onclick='return confirm("Are you sure you want to update this account?");',
+            )
+
+    def clean(self) -> dict[str, Any]:
+        cleaned_data = cast(dict[str, Any], super().clean())
+        errors = {}
+
+        # Select proper content type based on account type
+        account_type = cleaned_data["account_type"]
+        generic_relation_content_type = Account.get_content_type_for_account_type(account_type)
+
+        # Verify if there isn't already an account with the given generic relation
+        generic_relation_pk = cleaned_data["generic_relation_pk"]
+        try:
+            account = Account.objects.get(
+                generic_relation_content_type=generic_relation_content_type,
+                generic_relation_pk=generic_relation_pk,
+            )
+            errors["generic_relation_pk"] = ValidationError(
+                format_html(
+                    'An account for the selected entity already exists: <a href="{}">account</a>.',
+                    account.get_absolute_url(),
+                )
+            )
+        except Account.DoesNotExist:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
+
+        return cleaned_data
 
 
 class AccountOwnerForm(EditableFormsetFormMixin[AccountOwner], forms.ModelForm[AccountOwner]):
@@ -126,7 +169,10 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             "allocation",
         ]
         widgets = {
-            "partnership": ModelSelect2Widget(data_view="partnership-lookup"),  # type: ignore[no-untyped-call]
+            "partnership": ModelSelect2Widget(
+                data_view="partnership-lookup",
+                dependent_fields={"account": "account"},
+            ),  # type: ignore[no-untyped-call]
         }
 
     class Media:
@@ -137,6 +183,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
         *args: Any,
         disable_account: bool = False,
         disable_partnership: bool = False,
+        disable_dates: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -145,6 +192,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             self.fields["account"].disabled = True
         if disable_partnership:
             self.fields["partnership"].disabled = True
+        if disable_dates:
             self.fields["start_date"].disabled = True
             self.fields["end_date"].disabled = True
 
@@ -179,7 +227,7 @@ class AccountBenefitForm(forms.ModelForm[AccountBenefit]):
             and (end_date := cleaned_data["end_date"])
             and start_date > end_date
         ):
-            errors["end_date"] = ValidationError("End date must be after start date.")
+            errors["end_date"] = ValidationError("End date must not be before start date.")
 
         if errors:
             raise ValidationError(errors)

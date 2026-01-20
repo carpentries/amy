@@ -21,7 +21,7 @@ from src.extrequests.models import (
     WorkshopInquiryRequest,
 )
 from src.fiscal.models import Consortium, MembershipPersonRole, Partnership, PartnershipTier
-from src.offering.models import Account, AccountBenefit, AccountBenefitDiscount, Benefit
+from src.offering.models import Account, AccountBenefit, AccountBenefitDiscount, AccountOwner, Benefit
 from src.recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from src.trainings.models import Involvement
 from src.workshops.consts import IATA_AIRPORTS
@@ -1006,17 +1006,32 @@ class Command(BaseCommand):
         person2 = Person.objects.all()[1]
         person3 = Person.objects.all()[2]
 
-        Account.objects.create(
+        account1 = Account.objects.create(
             account_type=Account.AccountTypeChoices.INDIVIDUAL,
             generic_relation=person1,
         )
-        Account.objects.create(
+        AccountOwner.objects.create(
+            account=account1,
+            person=person1,
+            permission_type="owner",
+        )
+        account2 = Account.objects.create(
             account_type=Account.AccountTypeChoices.INDIVIDUAL,
             generic_relation=person2,
         )
-        Account.objects.create(
+        AccountOwner.objects.create(
+            account=account2,
+            person=person2,
+            permission_type="owner",
+        )
+        account3 = Account.objects.create(
             account_type=Account.AccountTypeChoices.INDIVIDUAL,
             generic_relation=person3,
+        )
+        AccountOwner.objects.create(
+            account=account3,
+            person=person3,
+            permission_type="owner",
         )
 
     def fake_benefits(self) -> None:

@@ -119,6 +119,15 @@ class OrganizationDetails(UnquoteSlugMixin, OnlyForAdminsMixin, AMYDetailView[Or
         context["main_organisation_memberships"] = Membership.objects.filter(
             member__role__name="main", member__organization=self.object
         )
+        context["account"] = Account.objects.filter(
+            generic_relation_content_type=ContentType.objects.get_for_model(Organization),
+            generic_relation_pk=self.object.pk,
+        ).first()
+        context["partnerships"] = (
+            Partnership.objects.credits_usage_annotation()
+            .filter(partner_organisation=self.object)
+            .select_related("tier", "account")
+        )
         return context
 
 
@@ -965,6 +974,10 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         context["account_benefits"] = AccountBenefit.objects.filter(partnership=self.object).select_related("benefit")
+
+        if self.object.credits_used > self.object.credits:  # type: ignore[attr-defined]
+            messages.warning(self.request, "Credits used exceed credits allowed.")
+
         return context
 
 

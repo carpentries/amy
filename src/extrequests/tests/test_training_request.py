@@ -1,3 +1,4 @@
+import unittest
 from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock
 from urllib.parse import urlencode
@@ -21,6 +22,7 @@ from src.consents.models import (
 )
 from src.extrequests.forms import TrainingRequestsMergeForm
 from src.extrequests.views import _match_training_request_to_person
+from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import (
     Event,
     KnowledgeDomain,
@@ -359,7 +361,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.first_req.pk],
-            "seat_public": "True",
+            # "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
@@ -396,6 +398,43 @@ class TestTrainingRequestsListView(TestBase):
             {self.first_training},
         )
 
+    def test_successful_matching_to_allocated_benefit(self) -> None:
+        # Arrange
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        benefit = Benefit.objects.create(
+            unit_type="seat",
+            name="Instructor Training",
+            description="Benefit for instructor training seat",
+            credits=1,
+        )
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            allocation=5,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+        )
+        data = {
+            "match": "",
+            "event": self.second_training.pk,
+            "requests": [self.first_req.pk],
+            "allocated_benefit": account_benefit.pk,
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        msg = "Successfully accepted and matched selected people to training."
+        self.assertContains(rv, msg)
+        task = Task.objects.get(person=self.spiderman, role__name="learner", event=self.second_training)
+        self.assertEqual(task.allocated_benefit, account_benefit)
+
     def test_trainee_accepted_during_matching(self) -> None:
         # this request is set up without matched person
         self.second_req.person = self.spiderman
@@ -406,7 +445,7 @@ class TestTrainingRequestsListView(TestBase):
             "match": "",
             "event": self.second_training.pk,
             "requests": [self.second_req.pk],
-            "seat_public": "True",
+            # "seat_public": "True",
         }
         rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
 
@@ -525,7 +564,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.first_req.pk, self.third_req.pk],
             "event": self.second_training.pk,
             "seat_membership": membership1.pk,
-            "seat_public": True,
+            # "seat_public": True,
         }
         msg1 = f"Membership &quot;{membership1}&quot; is using more training seats than it&#x27;s been allowed."
         self.second_req.person = self.blackwidow
@@ -535,7 +574,7 @@ class TestTrainingRequestsListView(TestBase):
             "requests": [self.second_req.pk],
             "event": self.second_training.pk,
             "seat_membership": membership2.pk,
-            "seat_public": True,
+            # "seat_public": True,
         }
         msg2 = f"Membership &quot;{membership2}&quot; is using more training seats than it&#x27;s been allowed."
 
@@ -549,6 +588,7 @@ class TestTrainingRequestsListView(TestBase):
         self.assertEqual(membership2.public_instructor_training_seats_remaining, 0)
         self.assertContains(rv2, msg2)
 
+    @unittest.skip("In-house seats are not handled anymore.")
     def test_inhouse_created_successfully(self) -> None:
         """Regression test: in-house seat can be created successfully."""
         # Arrange
@@ -612,7 +652,7 @@ class TestTrainingRequestsListView(TestBase):
             "event": self.first_training.pk,
             "seat_membership_auto_assign": "True",
             "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
-            "seat_public": "True",
+            # "seat_public": "True",
         }
 
         # Act

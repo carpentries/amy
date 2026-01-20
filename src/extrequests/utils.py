@@ -3,6 +3,7 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 
+from src.offering.models import AccountBenefit
 from src.workshops.models import Event, Membership, Role, Task, TrainingRequest
 
 # ----------------------------------------
@@ -97,9 +98,10 @@ def accept_training_request_and_match_to_event(
     request: TrainingRequest,
     event: Event,
     role: Role,
-    seat_public: bool,
-    seat_open_training: bool,
+    seat_public: bool = True,  # default value taken from Task model
+    seat_open_training: bool = False,  # default value taken from Task model
     seat_membership: Membership | None = None,
+    allocated_benefit: AccountBenefit | None = None,
 ) -> Task:
     # accept the request
     request.state = "a"
@@ -114,6 +116,7 @@ def accept_training_request_and_match_to_event(
             seat_membership=seat_membership,
             seat_public=seat_public,
             seat_open_training=seat_open_training,
+            allocated_benefit=allocated_benefit,
         ),
     )
 
@@ -150,6 +153,28 @@ def get_membership_warnings_after_match(membership: Membership, seat_public: boo
     ):
         warnings.append(
             f'Training "{event}" has start or end date outside membership "{membership}" agreement dates.',
+        )
+
+    return warnings
+
+
+def get_account_benefit_warnings_after_match(benefit: AccountBenefit) -> list[str]:
+    """Returns a list of warnings based on allocated benefit usage
+    and start/end dates."""
+    warnings = []
+
+    used = benefit.allocation_used()
+    if used > benefit.allocation:
+        warnings.append(
+            f'The benefit "{benefit}" is exceeding ({used}) allocation ({benefit.allocation}).',
+        )
+
+    if benefit.frozen:
+        warnings.append(f'The benefit "{benefit}" has been frozen.')
+
+    if not benefit.active():
+        warnings.append(
+            f'The benefit "{benefit}" is outside its valid dates.',
         )
 
     return warnings

@@ -194,6 +194,14 @@ class MembershipForm(forms.ModelForm[Membership]):
                     "assigned. Remove the members so that at most 1 is left."
                 )
 
+        registration_code = self.cleaned_data["registration_code"]
+        if registration_code:
+            existing_partnership = Partnership.objects.filter(registration_code=registration_code).first()
+            if existing_partnership:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by partnership "{existing_partnership}".'
+                )
+
         if errors:
             raise ValidationError(errors)
 
@@ -568,6 +576,30 @@ class PartnershipForm(forms.ModelForm[Partnership]):
 
     class Media:
         js = ("partnership_form.js",)
+
+    def clean(self) -> None:
+        super().clean()
+        errors = dict()
+
+        # validate agreement end date is no sooner than start date
+        agreement_start = self.cleaned_data.get("agreement_start")
+        agreement_end = self.cleaned_data.get("agreement_end")
+        try:
+            if agreement_end < agreement_start:  # type: ignore
+                errors["agreement_end"] = ValidationError("Agreement end date can't be sooner than the start date.")
+        except TypeError:
+            pass
+
+        registration_code = self.cleaned_data["registration_code"]
+        if registration_code:
+            existing_membership = Membership.objects.filter(registration_code=registration_code).first()
+            if existing_membership:
+                errors["registration_code"] = ValidationError(
+                    f'This registration code is used by membership "{existing_membership}".'
+                )
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class PartnershipExtensionForm(forms.Form):

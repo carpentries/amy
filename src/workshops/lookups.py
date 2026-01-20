@@ -19,7 +19,7 @@ from django_select2.views import AutoResponseView
 
 from src.communityroles.models import CommunityRoleConfig
 from src.fiscal.models import Consortium, MembershipPersonRole, Partnership
-from src.offering.models import Account
+from src.offering.models import Account, AccountBenefit
 from src.workshops import models
 from src.workshops.base_views import AuthenticatedHttpRequest
 from src.workshops.consts import COUNTRIES, IATA_AIRPORTS
@@ -491,14 +491,11 @@ class OfferingAccountRelation(GenericObjectLookupView):
         if self.content_type_name == "individual":
             qs = qs.filter(Q(personal__icontains=term) | Q(family__icontains=term) | Q(email__icontains=term))
 
-        if self.content_type_name == "organization":
+        if self.content_type_name == "organisation":
             qs = qs.filter(Q(domain__icontains=term) | Q(fullname__icontains=term))
 
         if self.content_type_name == "consortium":
             qs = qs.filter(Q(name__icontains=term) | Q(description__icontains=term))
-
-        if self.content_type_name == "partnership":
-            qs = qs.filter(Q(name__icontains=term))
 
         return qs  # type: ignore
 
@@ -547,8 +544,12 @@ class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponse
     def get_queryset(self) -> QuerySet[Partnership]:
         results = Partnership.objects.order_by("name", "agreement_start")
 
+        account_id = self.request.GET.get("account")
+
         if self.term:
             results = results.filter(name__icontains=self.term)
+        if account_id:
+            results = results.filter(account_id=account_id)
 
         return results
 
@@ -562,6 +563,41 @@ class PartnershipLookupView(OnlyForAdminsNoRedirectMixin, ExtensibleAutoResponse
             }
             for obj in object_list
         ]
+
+
+class AccountBenefitsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    unit_type: str
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.unit_type = ""
+
+    def get_queryset(self) -> QuerySet[AccountBenefit]:
+        results = AccountBenefit.objects.all()
+
+        if self.unit_type in ("seat", "event"):
+            results = results.filter(benefit__unit_type=self.unit_type)
+
+        if self.term:
+            results = results.filter(
+                Q(partnership__name__icontains=self.term)
+                | Q(benefit__name__icontains=self.term)
+                | Q(benefit__description__icontains=self.term)
+            )
+
+        return results
+
+
+class AccountBenefitSeatsLookupView(AccountBenefitsLookupView):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.unit_type = "seat"
+
+
+class AccountBenefitEventsLookupView(AccountBenefitsLookupView):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.unit_type = "seat"
 
 
 urlpatterns = [
@@ -614,4 +650,6 @@ urlpatterns = [
     path("offering-account-relation/", OfferingAccountRelation.as_view(), name="offering-account-relation-lookup"),
     path("airports/", AirportsLookupView.as_view(), name="airports-lookup"),
     path("partnerships/", PartnershipLookupView.as_view(), name="partnership-lookup"),
+    path("account-benefits-seats/", AccountBenefitSeatsLookupView.as_view(), name="account-benefit-seats-lookup"),
+    path("account-benefits-events/", AccountBenefitEventsLookupView.as_view(), name="account-benefit-events-lookup"),
 ]

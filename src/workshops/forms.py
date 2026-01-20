@@ -623,6 +623,11 @@ class EventForm(forms.ModelForm[Event]):
                 ),
             )
 
+        if cleaned_data["allocated_benefit"] and cleaned_data["membership"]:
+            errors["allocated_benefit"].append(
+                ValidationError("You cannot have both allocated benefit and membership for the same event."),
+            )
+
         if errors:
             raise ValidationError(errors)
 
@@ -672,14 +677,14 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
             "person",
             "role",
             "seat_membership",
-            "seat_public",
-            "seat_open_training",
+            # "seat_public",
+            # "seat_open_training",
             "allocated_benefit",
         ]
         widgets = {
             "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
             "event": ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
-            "seat_public": forms.RadioSelect(),
+            # "seat_public": forms.RadioSelect(),
         }
 
     class Media:
@@ -704,8 +709,8 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
             "person",
             "role",
             "seat_membership",
-            "seat_public",
-            "seat_open_training",
+            # "seat_public",
+            # "seat_open_training",
             "allocated_benefit" if show_allocated_benefit else None,
         )
 
@@ -735,6 +740,11 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
                 errors["role"] = ValidationError(
                     f'{person} has inactive "{community_role_name}" community role(s) related to "{{role.name}}" task.'
                 )
+
+        if self.cleaned_data["allocated_benefit"] and self.cleaned_data["seat_membership"]:
+            errors["allocated_benefit"] = ValidationError(
+                "You cannot have both allocated benefit and membership for the same event."
+            )
 
         # raise errors if any present
         if errors:

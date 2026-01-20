@@ -18,6 +18,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError
@@ -104,6 +105,7 @@ from src.emails.signals import (
     persons_merged_signal,
 )
 from src.fiscal.models import MembershipTask
+from src.offering.models import Account
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
@@ -270,6 +272,10 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView[Person]):
             messages.info(self.request, f"{title} is not active.")
         if not self.object.airport_iata:
             messages.warning(self.request, PERSON_HAS_NO_AIRPORT_ALERT.format(person=title))
+        context["account"] = Account.objects.filter(
+            generic_relation_content_type=ContentType.objects.get_for_model(Person),
+            generic_relation_pk=self.object.pk,
+        ).first()
         return context
 
 
@@ -946,8 +952,6 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
         slug=slug,
     )
 
-    member_sites = Membership.objects.filter(task__event=event).distinct()
-
     try:
         recruitment_stats = event.instructorrecruitment.signups.aggregate(
             all_signups=Count("person"),
@@ -1008,7 +1012,6 @@ def event_details(request: AuthenticatedHttpRequest, slug: str) -> HttpResponse:
         "title": f"Event {event}",
         "event": event,
         "tasks": tasks,
-        "member_sites": member_sites,
         "all_emails": tasks.filter(
             person__consent__archived_at__isnull=True,
             person__consent__term_option__option_type=TermOptionChoices.AGREE,
@@ -1196,9 +1199,16 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[Eve
         )
 
     def form_valid(self, form: EventForm) -> HttpResponse:
-        """Check if RQ job conditions changed, and add/delete jobs if
-        necessary."""
         res = super().form_valid(form)
+
+        # TODO: remove this check once SERVICE_OFFERING feature flag is always ON
+        if self.object.allocated_benefit and self.object.membership:
+            self.object.allocated_benefit = None
+            self.object.save()
+            messages.warning(
+                self.request,
+                "This event had both allocated benefit and membership set. Allocated benefit was removed.",
+            )
 
         run_instructor_training_approaching_strategy(
             instructor_training_approaching_strategy(self.object),
@@ -1701,11 +1711,15 @@ class TaskCreate(
         """
 
         seat_membership = form.cleaned_data["seat_membership"]
-        seat_public = form.cleaned_data["seat_public"]
         event = form.cleaned_data["event"]
+        # This field is no longer available in the form.
+        # seat_public = form.cleaned_data["seat_public"]
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
+            # Assume seat_public is True if not provided (for backward compatibility)
+            seat_public = True
+
             remaining = (
                 seat_membership.public_instructor_training_seats_remaining
                 if seat_public
@@ -1831,14 +1845,27 @@ class TaskUpdate(
         return result | dict(show_allocated_benefit=show_allocated_benefit)
 
     def form_valid(self, form: TaskForm) -> HttpResponse:
-        """Check if RQ job conditions changed, and add/delete jobs if
-        necessary."""
         res = super().form_valid(form)
 
         seat_membership = form.cleaned_data["seat_membership"]
-        seat_public = form.cleaned_data["seat_public"]
+
+        # TODO: remove this check once SERVICE_OFFERING feature flag is always ON
+        if self.object.allocated_benefit and seat_membership:
+            self.object.allocated_benefit = None
+            self.object.save()
+            messages.warning(
+                self.request,
+                "This task had both allocated benefit and membership set. Allocated benefit was removed.",
+            )
+
+        # This field is no longer available in the form.
+        # seat_public = form.cleaned_data["seat_public"]
+
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
+            # Assume seat_public is True if not provided (for backward compatibility)
+            seat_public = True
+
             remaining = (
                 seat_membership.public_instructor_training_seats_remaining
                 if seat_public
