@@ -344,7 +344,7 @@ class TestTrainingRequestFilter(TestBase):
     def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
-        fields = self.filterset.filters[filter_name].param_map
+        fields = self.filterset.filters[filter_name].param_map  # type: ignore[attr-defined]
         results = {}
         # manually set some scores to order by
         # blackwidow already has score_manual=0 from setUp()
@@ -593,7 +593,7 @@ class TestWorkshopRequestFilter(TestBase):
     def test_filter_order_by(self) -> None:
         # Arrange
         filter_name = "order_by"
-        fields = self.filterset.filters[filter_name].param_map
+        fields = self.filterset.filters[filter_name].param_map  # type: ignore[attr-defined]
         results = {}
 
         # default ordering is ascending
