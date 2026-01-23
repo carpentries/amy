@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from django import template
 from django.utils.html import escape
@@ -56,32 +56,3 @@ def progress_description(progress: TrainingProgress) -> str:
 def checkout_deadline(start_date: date) -> date:
     # we allow 90 days for checkout
     return start_date + timedelta(days=90)
-
-
-@register.simple_tag
-def welcome_instructions(date: datetime | None = None) -> SafeString:
-    """Show different Etherpad links dependent on the time of year.
-
-    From January to October, show just this year's Etherpad link.
-    From November to December, show this year's and next year's Etherpad links.
-    """
-    if date is None:
-        date = datetime.now()
-    text = "<p>Register for a Welcome Session on "
-    if date.month >= 11:
-        text += (
-            f"one of these Etherpads: "
-            f'<a href="https://pad.carpentries.org/welcome-sessions-{date.year}">'
-            f"Welcome Sessions {date.year}</a>; "
-            f'<a href="https://pad.carpentries.org/welcome-sessions-{date.year + 1}">'
-            f"Welcome Sessions {date.year + 1}</a>."
-        )
-    else:
-        text += (
-            f"this Etherpad: "
-            f'<a href="https://pad.carpentries.org/welcome-sessions-{date.year}">'
-            f"Welcome Sessions {date.year}</a>."
-        )
-    text += "</p>"
-
-    return mark_safe(text)

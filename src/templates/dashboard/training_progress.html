@@ -15,7 +15,7 @@
 
 <div>
   <h2>Your progress towards becoming a Carpentries Instructor</h2>
-  
+
   {% if user.instructor_badges %}
   <div class="alert alert-success" role="alert">
     <p>Congratulations, you're a certified Instructor!
@@ -23,7 +23,7 @@
   {% elif user.instructor_eligible %}
   <div class="alert alert-info" role="alert">
   <p>
-    Congratulations. You have successfully completed all steps towards Instructor certification. 
+    Congratulations. You have successfully completed all steps towards Instructor certification.
     You will receive your certificate and more information by email in 1-2 weeks.
   </p>
   </div>
@@ -35,29 +35,29 @@
     {% if progress_training and user.passed_training %}
     <p>
         {% checkout_deadline progress_training.event.end as deadline %}
-        Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these 
+        Based on your training dates of {% human_daterange progress_training.event.start progress_training.event.end %}, the 90-day deadline to complete these
         requirements is <strong>{{ deadline | date:'F j, Y'}}</strong>.
     </p>
     <p>
-      If you would like an extension, please contact us at 
+      If you would like an extension, please contact us at
       <a href="mailto:instructor.training@carpentries.org">instructor.training@carpentries.org</a>
       and refer to your confirmation email for your updated deadline.
     </p>
     {% endif %}
     <p>
-      If you have recently completed a training or step towards checkout, 
+      If you have recently completed a training or step towards checkout,
       please allow 7-10 days for this information to show up in your profile.
-    </p> 
+    </p>
     <p>
-      Visit our 
+      Visit our
       <a href="https://carpentries.github.io/instructor-training/checkout">checkout page</a>
-      for more information. 
+      for more information.
     </p>
   </div>
   {% else %}
   <div class="alert alert-info" role="alert">
     <p>
-      If you have recently completed a training or step towards checkout, 
+      If you have recently completed a training or step towards checkout,
       please allow 7-10 days for this information to show up in your profile.
     </p>
   </div>
@@ -94,19 +94,19 @@
           </p>
           {% if progress_get_involved.state == "n" %}
               <p class="edit-object float-left">
-                <a href="{% url 'getinvolved_update' progress_get_involved.pk %}" class="btn btn-primary">Edit</a>  
+                <a href="{% url 'getinvolved_update' progress_get_involved.pk %}" class="btn btn-primary">Edit</a>
               </p>
               <div class="delete-object float-left pl-4">
                 <form action="{% url 'getinvolved_delete' progress_get_involved.pk %}" onsubmit='return confirm("Are you sure you wish to delete your Get Involved submission?")' method="POST">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
-              </div>              
+              </div>
           {% endif %}
-          
+
           {% if progress_get_involved.state == "a" %}
           <p class="create-object float-left">
-            <a href="{% url 'getinvolved_add' %}" class="btn btn-primary">Submit another Get Involved activity</a>  
+            <a href="{% url 'getinvolved_add' %}" class="btn btn-primary">Submit another Get Involved activity</a>
           </p>
           {% endif %}
         {% elif user.passed_get_involved %}
@@ -114,7 +114,7 @@
         {% else %}
           <p>Get Involved step not submitted yet.</p>
           <p class="create-object float-left">
-            <a href="{% url 'getinvolved_add' %}" class="btn btn-primary">Submit a Get Involved activity</a>  
+            <a href="{% url 'getinvolved_add' %}" class="btn btn-primary">Submit a Get Involved activity</a>
           </p>
         {% endif %}
       </td>
@@ -129,7 +129,7 @@
           </p>
         {% else %}
           <p>Welcome Session not completed yet.</p>
-          {% welcome_instructions %}
+          <p>Register for a Welcome Session on <a href="https://pretix.carpentries.org/community-events/">Pretix</a>.</p>
         {% endif %}
       </td>
     </tr>

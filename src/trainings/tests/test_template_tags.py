@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 
 from django.test import TestCase
 
@@ -8,7 +8,6 @@ from src.workshops.templatetags.training_progress import (
     checkout_deadline,
     progress_description,
     progress_label,
-    welcome_instructions,
 )
 
 
@@ -120,59 +119,3 @@ class TestCheckoutDeadlineTemplateTag(TestCase):
         # Assert
         expected = date(2023, 10, 23)
         self.assertEqual(expected, got)
-
-
-class TestWelcomeInstructionsTemplateTag(TestCase):
-    def test_welcome_instructions__early_year(self) -> None:
-        # Arrange
-        date = datetime(2020, 1, 1)
-
-        # Act
-        got = welcome_instructions(date)
-
-        # Assert
-        expected = (
-            "<p>Register for a Welcome Session on this Etherpad: "
-            '<a href="https://pad.carpentries.org/welcome-sessions-2020">'
-            "Welcome Sessions 2020</a>."
-        )
-        self.assertHTMLEqual(expected, got)
-
-    def test_welcome_instructions__late_year(self) -> None:
-        # Arrange
-        date = datetime(2020, 11, 1)
-
-        # Act
-        got = welcome_instructions(date)
-
-        # Assert
-        expected = (
-            "<p>Register for a Welcome Session on one of these Etherpads: "
-            '<a href="https://pad.carpentries.org/welcome-sessions-2020">'
-            "Welcome Sessions 2020</a>; "
-            '<a href="https://pad.carpentries.org/welcome-sessions-2021">'
-            "Welcome Sessions 2021</a>."
-        )
-        self.assertHTMLEqual(expected, got)
-
-    def test_welcome_instructions__now(self) -> None:
-        # Arrange
-        date = datetime.now()
-
-        # Act
-        got = welcome_instructions()
-
-        # Assert
-        if date.month >= 11:
-            expected_list = [
-                "one of these Etherpads:",
-                f"Welcome Sessions {date.year}",
-                f"Welcome Sessions {date.year + 1}",
-            ]
-        else:
-            expected_list = [
-                "this Etherpad:",
-                f"Welcome Sessions {date.year}",
-            ]
-        for expected in expected_list:
-            self.assertIn(expected, got)
