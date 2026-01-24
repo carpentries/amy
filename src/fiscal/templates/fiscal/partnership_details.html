@@ -189,7 +189,6 @@
 
 <h4>Related community roles:</h4>
 
-{% if community_roles %}
 <table class="table table-striped">
   <tr>
     <th>Person</th>
@@ -240,9 +239,6 @@
   </tr>
   {% endfor %}
 </table>
-{% else %}
-<p>No community roles.</p>
-{% endif %}
 <a href="{% url 'communityrole_add' %}?partnership_pk={{ object.pk }}&next={{request.get_full_path|urlencode}}" class="btn btn-success">Add community roles</a>
 
 {% endblock %}

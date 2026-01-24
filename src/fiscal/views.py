@@ -1014,8 +1014,10 @@ class PartnershipCreate(
             defaults=dict(account_type=account_type),
         )
 
+        self.object.credits = 0
         tier = cast(PartnershipTier, form.cleaned_data["tier"])
-        self.object.credits = tier.credits
+        if tier:
+            self.object.credits = tier.credits
         self.object.account = account
         self.object.save()
 
