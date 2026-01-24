@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from flags.views import FlaggedViewMixin  # type: ignore[import-untyped]
 
+from src.communityroles.models import CommunityRole
 from src.fiscal.models import Partnership
 from src.offering.base_views import AccountFormsetView
 from src.offering.filters import AccountBenefitFilter, AccountFilter, BenefitFilter
@@ -64,6 +65,9 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
             Partnership.objects.credits_usage_annotation()
             .filter(account=self.object)
             .select_related("tier", "partner_consortium", "partner_organisation", "account")
+        )
+        context["community_roles"] = CommunityRole.objects.filter(partnership__account=self.object).select_related(
+            "partnership", "person"
         )
         return context
 
