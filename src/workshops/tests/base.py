@@ -459,6 +459,7 @@ class TestBase(SuperuserMixin, TestCase):
                 link_to_award=True,
                 award_badge_limit=self.instructor_badge,
                 link_to_membership=False,
+                link_to_partnership=False,
                 additional_url=False,
             ),
         )

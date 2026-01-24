@@ -7,6 +7,7 @@ from django.db.models import Manager, Q, QuerySet
 from django.urls import reverse
 from django_better_admin_arrayfield.models.fields import ArrayField
 
+from src.fiscal.models import Partnership
 from src.workshops.mixins import CreatedUpdatedMixin
 from src.workshops.models import Award, Badge, Membership, Person
 
@@ -27,6 +28,7 @@ class CommunityRoleConfig(CreatedUpdatedMixin, models.Model):
         help_text="Should automatically assign a Community Role to a user, when a selected badge is awarded to them.",
     )
     link_to_membership = models.BooleanField("Should link to a Membership?")
+    link_to_partnership = models.BooleanField("Should link to a Membership?", default=False)
     additional_url = models.BooleanField("Should allow for additional URL?")
     generic_relation_content_type = models.ForeignKey(
         ContentType,
@@ -87,6 +89,13 @@ class CommunityRole(CreatedUpdatedMixin, models.Model):
         null=True,
         blank=True,
         verbose_name="Associated Membership",
+    )
+    partnership = models.ForeignKey(
+        Partnership,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Associated Partnership",
     )
     url = models.URLField("URL", blank=True, default="")
 

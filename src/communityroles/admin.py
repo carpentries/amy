@@ -12,6 +12,7 @@ class CommunityRoleConfigAdmin(DynamicArrayMixin, admin.ModelAdmin[CommunityRole
         "award_badge_limit",
         "autoassign_when_award_created",
         "link_to_membership",
+        "link_to_partnership",
         "additional_url",
         "generic_relation_content_type",
         "created_at",

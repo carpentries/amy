@@ -21,6 +21,7 @@ class TestCommunityRoleConfigModel(TestCase):
             link_to_award=True,
             award_badge_limit=Badge.objects.all()[0],
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=ContentType.objects.get_for_model(Badge),
         )
@@ -52,6 +53,7 @@ class TestCommunityRoleQuery(TestCase):
             link_to_award=True,
             award_badge_limit=self.instructor_badge,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         person1 = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")
@@ -124,6 +126,7 @@ class TestCommunityRoleModel(TestCase):
             display_name="Test Role",
             link_to_award=True,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
         )
         self.person = Person.objects.create(
@@ -161,6 +164,7 @@ class TestCommunityRoleModel(TestCase):
             display_name="Test Config",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         inactivation = CommunityRoleInactivation(name="test inactivation")

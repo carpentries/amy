@@ -19,6 +19,7 @@ class TestAutocreatingCommunityRoles(TestBase):
             award_badge_limit=self.badge,
             autoassign_when_award_created=True,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         self.config2 = CommunityRoleConfig.objects.create(
@@ -28,6 +29,7 @@ class TestAutocreatingCommunityRoles(TestBase):
             award_badge_limit=self.badge,
             autoassign_when_award_created=True,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
 
@@ -39,6 +41,7 @@ class TestAutocreatingCommunityRoles(TestBase):
             award_badge_limit=self.badge,
             autoassign_when_award_created=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
 

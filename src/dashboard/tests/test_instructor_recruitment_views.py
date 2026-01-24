@@ -43,6 +43,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         inactivation = CommunityRoleInactivation.objects.create(name="inactivation")
@@ -68,6 +69,7 @@ class TestUpcomingTeachingOpportunitiesList(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         role = CommunityRole.objects.create(
@@ -215,6 +217,7 @@ class TestSignupForRecruitment(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         inactivation = CommunityRoleInactivation.objects.create(name="inactivation")
@@ -240,6 +243,7 @@ class TestSignupForRecruitment(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         role = CommunityRole.objects.create(
@@ -263,6 +267,7 @@ class TestSignupForRecruitment(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         role = CommunityRole.objects.create(
@@ -467,6 +472,7 @@ class TestSignupForRecruitment(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         CommunityRole.objects.create(
@@ -512,6 +518,7 @@ class TestResignFromRecruitment(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         inactivation = CommunityRoleInactivation.objects.create(name="inactivation")
@@ -537,6 +544,7 @@ class TestResignFromRecruitment(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         role = CommunityRole.objects.create(

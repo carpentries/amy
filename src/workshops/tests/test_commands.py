@@ -168,6 +168,7 @@ class TestAssignInstructorCommunityRole(TestCase):
             link_to_award=True,
             award_badge_limit=self.instructor_badge,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         self.command = AssignInstructorCommunityRole()
@@ -290,6 +291,7 @@ class TestAssignTrainerCommunityRole(TestCase):
             link_to_award=True,
             award_badge_limit=self.trainer_badge,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         self.command = AssignTrainerCommunityRole()
@@ -394,6 +396,7 @@ class TestMigrateInactiveTrainersToTrainerBadges(TestCase):
             link_to_award=True,
             award_badge_limit=self.trainer_badge,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         self.command = MigrateInactiveTrainersToTrainerBadges()
@@ -475,6 +478,7 @@ class TestCreateSuperuserCommand(TestCase):
             link_to_award=True,
             award_badge_limit=instructor_badge,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
 

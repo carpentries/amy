@@ -18,6 +18,7 @@ class TestCommunityRoleMixin:
             display_name="Test Role",
             link_to_award=True,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=True,
         )
         self.person = Person.objects.create(
