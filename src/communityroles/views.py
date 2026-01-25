@@ -2,7 +2,9 @@ from typing import Any
 
 from django import forms
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import get_object_or_404
 
+from src.fiscal.models import Partnership
 from src.workshops.base_forms import GenericDeleteForm
 from src.workshops.base_views import (
     AMYCreateView,
@@ -42,6 +44,17 @@ class CommunityRoleCreate(
         kwargs = super().get_form_kwargs()
         kwargs.update({"prefix": "communityrole"})
         return kwargs
+
+    def get_initial(self) -> dict[str, Any]:
+        initial = super().get_initial()
+
+        if partnership_pk := self.request.GET.get("partnership_pk"):
+            partnership = get_object_or_404(Partnership, pk=partnership_pk)
+            initial["partnership"] = partnership
+            initial["start"] = partnership.agreement_start
+            initial["end"] = partnership.agreement_end
+
+        return initial
 
 
 class CommunityRoleUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView[CommunityRoleForm, CommunityRole]):
