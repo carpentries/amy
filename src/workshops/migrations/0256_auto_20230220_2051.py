@@ -5,6 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
+        ("consents", "0005_auto_20210411_2325"),
         ("workshops", "0255_auto_20230207_1818"),
     ]
 

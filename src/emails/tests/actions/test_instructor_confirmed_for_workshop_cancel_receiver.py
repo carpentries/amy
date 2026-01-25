@@ -215,6 +215,7 @@ class TestInstructorConfirmedForWorkshopCancelIntegration(TestBase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         CommunityRole.objects.create(

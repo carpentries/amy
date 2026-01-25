@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.test import RequestFactory
 from django.urls.base import reverse
 
 from src.communityroles.models import (
@@ -7,7 +8,10 @@ from src.communityroles.models import (
     CommunityRoleConfig,
     CommunityRoleInactivation,
 )
-from src.workshops.models import Award, Badge, Person
+from src.communityroles.views import CommunityRoleCreate
+from src.fiscal.models import Partnership
+from src.offering.models import Account
+from src.workshops.models import Award, Badge, Organization, Person
 from src.workshops.tests.base import TestBase
 
 
@@ -18,6 +22,7 @@ class TestCommunityRoleMixin:
             display_name="Test Role",
             link_to_award=True,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=True,
         )
         self.person = Person.objects.create(
@@ -81,6 +86,35 @@ class TestCommunityRoleCreateView(TestCommunityRoleMixin, TestBase):
         # Assert
         self.assertEqual(page.status_code, 302)  # should redirect to new object
         self.assertRedirects(page, redirect)
+
+    def test_get_initial(self) -> None:
+        # Arrange
+        organisation = Organization.objects.create(fullname="test", domain="example.com")
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        partnership = Partnership.objects.create(
+            name="Test Partnership",
+            credits=10,
+            account=account,
+            agreement_start=date(2025, 10, 24),
+            agreement_end=date(2026, 10, 23),
+            partner_organisation=organisation,
+        )
+        request = RequestFactory().get("/", query_params={"partnership_pk": partnership.pk})
+        view = CommunityRoleCreate(request=request)
+        # Act
+        result = view.get_initial()
+        # Assert
+        self.assertEqual(
+            result,
+            {
+                "partnership": partnership,
+                "start": partnership.agreement_start,
+                "end": partnership.agreement_end,
+            },
+        )
 
 
 class TestCommunityRoleUpdateView(TestCommunityRoleMixin, TestBase):

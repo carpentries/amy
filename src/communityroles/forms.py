@@ -26,6 +26,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm[CommunityRole]):
             "end",
             "inactivation",
             "membership",
+            "partnership",
             "url",
             "generic_relation_content_type",
             "generic_relation_pk",
@@ -35,6 +36,7 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm[CommunityRole]):
             "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
             "award": ModelSelect2Widget(data_view="award-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
             "membership": ModelSelect2Widget(data_view="membership-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
+            "partnership": ModelSelect2Widget(data_view="partnership-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
             "generic_relation_content_type": forms.Select(
                 # "disabled" means the browsers will not send the field during POST.
                 # See how it's handled in `clean()` method below.
@@ -95,6 +97,10 @@ class CommunityRoleForm(WidgetOverrideMixin, forms.ModelForm[CommunityRole]):
         # Membership required?
         if config.link_to_membership and not cleaned_data.get("membership"):
             errors["membership"].append(ValidationError(f"Membership is required with community role {config}"))
+
+        # Partnership required?
+        if config.link_to_partnership and not cleaned_data.get("partnership"):
+            errors["partnership"].append(ValidationError(f"Partnership is required with community role {config}"))
 
         # Additional URL supported and required?
         if config.additional_url and not url:

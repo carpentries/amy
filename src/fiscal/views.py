@@ -974,6 +974,7 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         context["account_benefits"] = AccountBenefit.objects.filter(partnership=self.object).select_related("benefit")
+        context["community_roles"] = CommunityRole.objects.filter(partnership=self.object).select_related("person")
 
         if self.object.credits_used > self.object.credits:  # type: ignore[attr-defined]
             messages.warning(self.request, "Credits used exceed credits allowed.")
@@ -1013,8 +1014,10 @@ class PartnershipCreate(
             defaults=dict(account_type=account_type),
         )
 
+        self.object.credits = 0
         tier = cast(PartnershipTier, form.cleaned_data["tier"])
-        self.object.credits = tier.credits
+        if tier:
+            self.object.credits = tier.credits
         self.object.account = account
         self.object.save()
 

@@ -1,5 +1,6 @@
 {% extends "base_nav.html" %}
 {% load links attrs %}
+{% load communityroles %}
 
 {% block content %}
 
@@ -183,5 +184,61 @@
 {% include "offering/includes/account_benefits.html" with object_list=account_benefits %}
 
 <a href="{% url 'account-benefit-create' %}?account_pk={{ object.account.pk }}&partnership_pk={{ object.pk }}&next={{request.get_full_path|urlencode}}" class="btn btn-success">Add account benefit to this partnership</a>
+
+<p></p>
+
+<h4>Related community roles:</h4>
+
+<table class="table table-striped">
+  <tr>
+    <th>Person</th>
+    <th>Role</th>
+    <th>Dates</th>
+    <th>Award</th>
+    <th>Inactive?</th>
+    <th>URL</th>
+    <th>Related object</th>
+    <th class="additional-links-wider"></th>
+  </tr>
+  {% for role in community_roles.all %}
+  <tr>
+    <td><a href="{{role.person.get_absolute_url}}">{{ role.person.full_name }}</a></td>
+    <td>{{ role.config }}</td>
+    <td>
+      {% if role.start %}
+      {% community_role_human_dates role %}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+    <td>
+      {{ role.award|default_if_none:"&mdash;" }}
+    </td>
+    <td>{{ role.inactivation|default_if_none:"&mdash;" }}</td>
+    <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
+    <td>
+      {% if role.config.generic_relation_content_type and role.generic_relation %}
+      {{ role.generic_relation|title }}
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+    <td>
+      <a href="{% url 'communityrole_details' role.pk %}" title="View {{ role }}"><i class="fas fa-info-circle"></i></a>
+      &nbsp;
+      {% if perms.communityroles.change_communityrole %}
+      <a href="{% url 'communityrole_edit' role.pk %}" title="Edit {{ role }}"><i class="fas fa-edit"></i></a>
+      {% endif %}
+      {% if perms.communityroles.delete_communityrole %}
+      <form class="amy-form-inline" action="{% url 'communityrole_delete' role.pk %}?next={{ request.get_full_path|urlencode }}#communityroles" onsubmit='return confirm("Are you sure you wish to remove role \"{{ role.config }}\" from user \"{{ role.person }}\"?")' method="POST">
+        {% csrf_token %}
+        <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<a href="{% url 'communityrole_add' %}?partnership_pk={{ object.pk }}&next={{request.get_full_path|urlencode}}" class="btn btn-success">Add community roles</a>
 
 {% endblock %}

@@ -44,6 +44,7 @@ class TestTaskForm(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         self.trainer_community_role_config = CommunityRoleConfig.objects.create(
@@ -51,6 +52,7 @@ class TestTaskForm(TestCase):
             display_name="Trainer",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         self.inactivation = CommunityRoleInactivation.objects.create(name="Test")

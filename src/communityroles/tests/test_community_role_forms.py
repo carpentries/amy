@@ -39,6 +39,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=ct,
         )
@@ -83,6 +84,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=None,
         )
@@ -115,6 +117,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=None,
         )
@@ -148,6 +151,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=Badge.objects.get(name="swc-instructor"),
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=None,
         )
@@ -183,6 +187,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=None,
         )
@@ -208,6 +213,43 @@ class TestCommunityRoleForm(TestBase):
         self.assertEqual(
             form.errors["membership"],
             ["Membership is required with community role Test"],
+        )
+
+    def test_partnership_required(self) -> None:
+        # Arrange
+        test_config = CommunityRoleConfig.objects.create(
+            name="test",
+            display_name="Test",
+            link_to_award=True,
+            award_badge_limit=None,
+            link_to_membership=False,
+            link_to_partnership=True,
+            additional_url=False,
+            generic_relation_content_type=None,
+        )
+        data = {
+            "config": test_config.pk,
+            "person": self.hermione.pk,
+            "award": self.award.pk,
+            "start": "2021-11-14",
+            "end": "2022-11-14",
+            "inactivation": None,
+            "membership": None,
+            "partnership": None,
+            "url": "https://example.org",
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
+        }
+
+        # Act
+        form = CommunityRoleForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())  # errors expected
+        self.assertEqual(form.errors.keys(), {"partnership"})
+        self.assertEqual(
+            form.errors["partnership"],
+            ["Partnership is required with community role Test"],
         )
 
     def test_start_date_gt_end_date_is_invalid(self) -> None:
@@ -260,6 +302,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=None,
         )
@@ -295,6 +338,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=False,
             generic_relation_content_type=None,
         )
@@ -327,6 +371,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=ct,
         )
@@ -366,6 +411,7 @@ class TestCommunityRoleForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             generic_relation_content_type=ct,
         )
@@ -397,6 +443,7 @@ class TestCommunityRoleForm(TestBase):
             display_name="Test1",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         config2 = CommunityRoleConfig.objects.create(
@@ -404,6 +451,7 @@ class TestCommunityRoleForm(TestBase):
             display_name="Test2",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=True,
         )
         role1 = CommunityRole.objects.create(
@@ -450,6 +498,7 @@ class TestCommunityRoleForm(TestBase):
             display_name="Test",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         # When the validation failures should occur - failure feed data.
@@ -511,6 +560,7 @@ class TestCommunityRoleForm(TestBase):
             display_name="Test",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         # When the validation failures should NOT occur - pass feed data.
@@ -565,6 +615,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
         )
         # Act
@@ -580,6 +631,7 @@ class TestCommunityRoleUpdateForm(TestBase):
                 "end",
                 "inactivation",
                 "membership",
+                "partnership",
                 "url",
                 "generic_relation_content_type",
                 "generic_relation_pk",
@@ -595,6 +647,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
         )
         # Act
@@ -611,6 +664,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             link_to_award=True,
             award_badge_limit=None,
             link_to_membership=True,
+            link_to_partnership=False,
             additional_url=True,
             custom_key_labels=labels,
         )
@@ -629,6 +683,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             link_to_award=False,
             award_badge_limit=None,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=True,
             custom_key_labels=["Label 1", "Another label"],
         )
@@ -652,6 +707,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             link_to_award=False,
             award_badge_limit=None,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=True,
             custom_key_labels=["Label 1", "Another label"],
         )
@@ -685,6 +741,7 @@ class TestCommunityRoleUpdateForm(TestBase):
             link_to_award=False,
             award_badge_limit=None,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=True,
             custom_key_labels=labels,
         )

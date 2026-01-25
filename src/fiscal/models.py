@@ -78,7 +78,7 @@ class Partnership(CreatedUpdatedMixin, models.Model):
     """A follow-up to "Membership" model, part of Service Offering 2025 project."""
 
     name = models.CharField(max_length=STR_LONG)
-    tier = models.ForeignKey(PartnershipTier, on_delete=models.SET_NULL, null=True, blank=True)
+    tier = models.ForeignKey(PartnershipTier, on_delete=models.SET_NULL, null=True)
     credits = models.IntegerField()
     credits_extensions = ArrayField(
         models.PositiveIntegerField(),

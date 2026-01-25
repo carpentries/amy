@@ -20,6 +20,7 @@ class TestCommunityRolesTemplateTag(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         role_orig = CommunityRole.objects.create(config=config, person=person)
@@ -37,6 +38,7 @@ class TestCommunityRolesTemplateTag(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         CommunityRole.objects.create(config=config, person=person)
@@ -60,6 +62,7 @@ class TestCommunityRolesTemplateTag(TestCase):
             display_name="Instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         CommunityRole.objects.create(config=config, person=person)
@@ -76,6 +79,7 @@ class TestCommunityRoleHumanDatesTemplateTag(TestCase):
             name="instructor",
             link_to_award=False,
             link_to_membership=False,
+            link_to_partnership=False,
             additional_url=False,
         )
         person = Person.objects.create(username="test1", personal="Test1", family="User", email="test1@example.org")

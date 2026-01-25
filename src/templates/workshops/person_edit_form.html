@@ -178,6 +178,7 @@
         <th>Award</th>
         <th>Inactive?</th>
         <th>Membership</th>
+        <th>Partnership</th>
         <th>URL</th>
         <th>Related object</th>
         <th class="additional-links-wider"></th>
@@ -199,6 +200,13 @@
         <td>
           {% if role.membership %}
           <a href="{{ role.membership.get_absolute_url }}">{{ role.membership }}</a>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+        <td>
+          {% if role.partnership %}
+          <a href="{{ role.partnership.get_absolute_url }}">{{ role.partnership }}</a>
           {% else %}
           &mdash;
           {% endif %}
