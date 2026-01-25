@@ -3,7 +3,7 @@ from datetime import date
 from django.test import TestCase
 
 from src.fiscal.forms import PartnershipExtensionForm, PartnershipForm
-from src.fiscal.models import Partnership
+from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account
 from src.workshops.models import Membership, Organization
 
@@ -15,6 +15,7 @@ class TestPartnershipForm(TestCase):
             account_type=Account.AccountTypeChoices.ORGANISATION,
             generic_relation=self.organisation,
         )
+        self.tier = PartnershipTier.objects.create(name="Gold", credits=10)
 
     def test_clean__valid_dates(self) -> None:
         """Test that form is valid when agreement_end is after agreement_start."""
@@ -22,6 +23,7 @@ class TestPartnershipForm(TestCase):
         data = {
             "partner_organisation": self.organisation.pk,
             "name": "Test Partnership",
+            "tier": self.tier.pk,
             "agreement_start": date(2025, 1, 1),
             "agreement_end": date(2025, 12, 31),
             "agreement_link": "http://example.com/agreement.pdf",
@@ -41,6 +43,7 @@ class TestPartnershipForm(TestCase):
         data = {
             "partner_organisation": self.organisation.pk,
             "name": "Test Partnership",
+            "tier": self.tier.pk,
             "agreement_start": date(2025, 12, 31),
             "agreement_end": date(2025, 1, 1),
             "agreement_link": "http://example.com/agreement.pdf",
@@ -65,6 +68,7 @@ class TestPartnershipForm(TestCase):
         data = {
             "partner_organisation": self.organisation.pk,
             "name": "Test Partnership",
+            "tier": self.tier.pk,
             "agreement_start": date(2025, 1, 1),
             "agreement_end": date(2025, 1, 1),
             "agreement_link": "http://example.com/agreement.pdf",
@@ -92,6 +96,7 @@ class TestPartnershipForm(TestCase):
         data = {
             "partner_organisation": self.organisation.pk,
             "name": "Test Partnership",
+            "tier": self.tier.pk,
             "agreement_start": date(2025, 1, 1),
             "agreement_end": date(2025, 12, 31),
             "agreement_link": "http://example.com/agreement.pdf",
@@ -116,6 +121,7 @@ class TestPartnershipForm(TestCase):
         data = {
             "partner_organisation": self.organisation.pk,
             "name": "Test Partnership",
+            "tier": self.tier.pk,
             "agreement_start": date(2025, 1, 1),
             "agreement_end": date(2025, 12, 31),
             "agreement_link": "http://example.com/agreement.pdf",
