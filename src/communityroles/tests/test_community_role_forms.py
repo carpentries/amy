@@ -215,6 +215,43 @@ class TestCommunityRoleForm(TestBase):
             ["Membership is required with community role Test"],
         )
 
+    def test_partnership_required(self) -> None:
+        # Arrange
+        test_config = CommunityRoleConfig.objects.create(
+            name="test",
+            display_name="Test",
+            link_to_award=True,
+            award_badge_limit=None,
+            link_to_membership=False,
+            link_to_partnership=True,
+            additional_url=False,
+            generic_relation_content_type=None,
+        )
+        data = {
+            "config": test_config.pk,
+            "person": self.hermione.pk,
+            "award": self.award.pk,
+            "start": "2021-11-14",
+            "end": "2022-11-14",
+            "inactivation": None,
+            "membership": None,
+            "partnership": None,
+            "url": "https://example.org",
+            "generic_relation_content_type": None,
+            "generic_relation_pk": None,
+        }
+
+        # Act
+        form = CommunityRoleForm(data)
+
+        # Assert
+        self.assertFalse(form.is_valid())  # errors expected
+        self.assertEqual(form.errors.keys(), {"partnership"})
+        self.assertEqual(
+            form.errors["partnership"],
+            ["Partnership is required with community role Test"],
+        )
+
     def test_start_date_gt_end_date_is_invalid(self) -> None:
         """Tests error raised if end < start"""
         # Arrange
