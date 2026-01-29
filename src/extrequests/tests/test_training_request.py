@@ -650,7 +650,7 @@ class TestTrainingRequestsListView(TestBase):
         data = {
             "match": "",
             "event": self.first_training.pk,
-            "seat_membership_auto_assign": "True",
+            "auto_assign": "True",
             "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
             # "seat_public": "True",
         }
