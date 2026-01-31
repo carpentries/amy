@@ -18,7 +18,7 @@ from src.extrequests.utils import (
     member_code_valid,
     member_code_valid_training,
 )
-from src.offering.models import AccountBenefit
+from src.offering.models import AccountBenefit, Benefit
 from src.workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
@@ -123,12 +123,6 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="membership-lookup"),  # type: ignore[no-untyped-call]
     )
 
-    seat_membership_auto_assign = forms.BooleanField(
-        label="Automatically match seats to memberships",
-        help_text="Assigned users will take instructor seats based on the registration code they entered.",
-        required=False,
-    )
-
     allocated_benefit = forms.ModelChoiceField(
         label="Allocated account benefit (of type 'seat')",
         required=False,
@@ -137,15 +131,41 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2Widget(data_view="account-benefit-seats-lookup"),  # type: ignore[no-untyped-call]
     )
 
+    auto_assign = forms.BooleanField(
+        label="Automatically match seats to memberships OR account benefits and partnerships.",
+        help_text="Assigned users will take instructor seats (instructor training benefit) based on the registration "
+        "code they entered.",
+        required=False,
+    )
+
+    benefit_override = forms.ModelChoiceField(
+        label="Benefit for auto-match",
+        required=False,
+        queryset=Benefit.objects.filter(unit_type="seat"),
+        widget=ModelSelect2Widget(data_view="benefit-seats-lookup"),  # type: ignore[no-untyped-call]
+    )
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        show_allocated_benefit = kwargs.pop("show_allocated_benefit", False)
+        self._show_allocated_benefit = kwargs.pop("show_allocated_benefit", False)
         super().__init__(*args, **kwargs)
+        self.fields["auto_assign"].label = (
+            "Automatically match seats to memberships OR account benefits and partnerships."
+            if self._show_allocated_benefit
+            else "Automatically match seats to memberships"
+        )
+        self.fields["auto_assign"].help_text = (
+            "Assigned users will take instructor seats (instructor training benefit) based on the registration "
+            "code they entered."
+            if self._show_allocated_benefit
+            else "Assigned users will take instructor seats based on the registration code they entered."
+        )
         self.helper = BootstrapHelper(add_submit_button=False, form_tag=False, add_cancel_button=False)
         self.helper.layout = Layout(
             "event",
             "seat_membership",
-            "seat_membership_auto_assign",
-            "allocated_benefit" if show_allocated_benefit else None,
+            "allocated_benefit" if self._show_allocated_benefit else None,
+            "auto_assign",
+            "benefit_override" if self._show_allocated_benefit else None,
         )  # type: ignore[no-untyped-call]
         self.helper.add_input(
             Submit(  # type: ignore[no-untyped-call]
@@ -168,14 +188,12 @@ class BulkMatchTrainingRequestForm(forms.Form):
         errors = {}
 
         seat_membership = self.cleaned_data["seat_membership"]
-        seat_membership_auto_assign = self.cleaned_data["seat_membership_auto_assign"]
+        auto_assign = self.cleaned_data["auto_assign"]
         allocated_benefit = self.cleaned_data["allocated_benefit"]
+        benefit_override = self.cleaned_data["benefit_override"]
 
-        if allocated_benefit and (seat_membership or seat_membership_auto_assign):
-            errors["allocated_benefit"] = ValidationError(
-                "Cannot simultaneously use an explicitly selected benefit and "
-                "use seats from membership or auto-assign membership."
-            )
+        if allocated_benefit and seat_membership:
+            errors["allocated_benefit"] = ValidationError("Cannot select benefit and membership at the same time.")
 
         if any(r.person is None for r in self.cleaned_data.get("requests", [])):
             errors["__all__"] = ValidationError(
@@ -183,11 +201,14 @@ class BulkMatchTrainingRequestForm(forms.Form):
                 "a training, you need to accept them and match with a trainee."
             )
 
-        if seat_membership and seat_membership_auto_assign:
-            errors["seat_membership_auto_assign"] = ValidationError(
-                "Cannot simultaneously use seats from selected membership and auto-assign seats based on "
-                "registration code."
+        if (seat_membership or allocated_benefit) and auto_assign:
+            errors["auto_assign"] = ValidationError(
+                "Cannot use seats from selected membership (or allocated benefit) and auto-assign seats "
+                "based on registration code at the same time."
             )
+
+        if self._show_allocated_benefit and not benefit_override:
+            errors["benefit_override"] = ValidationError("Must not be empty.")
 
         if errors:
             raise ValidationError(errors)

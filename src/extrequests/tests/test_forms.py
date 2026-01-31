@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -353,7 +354,7 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         data = {
             "requests": [training_request.pk],
             "event": event.pk,
-            "seat_membership_auto_assign": True,
+            "auto_assign": True,
         }
 
         # Act
@@ -391,6 +392,7 @@ class TestBulkMatchTrainingRequestForm(TestCase):
             "requests": [training_request.pk],
             "event": event.pk,
             "allocated_benefit": account_benefit.pk,
+            "benefit_override": benefit.pk,
         }
 
         # Act
@@ -422,8 +424,8 @@ class TestBulkMatchTrainingRequestForm(TestCase):
         )
         self.assertIn(msg, form.errors["__all__"])
 
-    def test_clean__membership_with_autoassign(self) -> None:
-        """Test that form is invalid when membership has auto-assign enabled."""
+    def test_clean__benefit_with_membership_or_auto_assign(self) -> None:
+        """Test that form is invalid when benefit is used with membership."""
         # Arrange
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
@@ -443,25 +445,40 @@ class TestBulkMatchTrainingRequestForm(TestCase):
             organization=organisation,
             role=MemberRole.objects.all()[0],
         )
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        benefit = Benefit.objects.create(
+            name="Test Benefit",
+            unit_type="seat",
+            credits=2,
+        )
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            start_date=date.today() - timedelta(days=1),
+            end_date=date.today() + timedelta(days=365),
+            allocation=2,
+        )
         data = {
             "requests": [training_request.pk],
             "event": event.pk,
             "seat_membership": membership.pk,
-            "seat_membership_auto_assign": True,
+            "allocated_benefit": account_benefit.pk,
         }
 
         # Act
-        form = BulkMatchTrainingRequestForm(data)
+        form = BulkMatchTrainingRequestForm(data, show_allocated_benefit=True)
 
         # Assert
-        self.assertFalse(form.is_valid())
-        msg = (
-            "Cannot simultaneously use seats from selected membership and auto-assign seats based on registration code."
-        )
-        self.assertIn(msg, form.errors["seat_membership_auto_assign"])
+        msg = "Cannot select benefit and membership at the same time."
 
-    def test_clean__benefit_with_membership_or_auto_assign(self) -> None:
-        """Test that form is invalid when benefit is used with membership or auto-assign."""
+        self.assertFalse(form.is_valid())
+        self.assertIn(msg, form.errors["allocated_benefit"])
+
+    def test_clean__auto_assign_with_membership_or_benefit(self) -> None:
+        """Test that form is invalid when auto-assign is used with benefit or membership."""
         # Arrange
         person = Person.objects.create(username="test")
         training_request = create_training_request(state="p", person=person)
@@ -501,13 +518,13 @@ class TestBulkMatchTrainingRequestForm(TestCase):
             "requests": [training_request.pk],
             "event": event.pk,
             "seat_membership": membership.pk,
-            "allocated_benefit": account_benefit.pk,
+            "auto_assign": True,
         }
         data2 = {
             "requests": [training_request.pk],
             "event": event.pk,
-            "seat_membership_auto_assign": True,
             "allocated_benefit": account_benefit.pk,
+            "auto_assign": True,
         }
 
         # Act
@@ -516,12 +533,95 @@ class TestBulkMatchTrainingRequestForm(TestCase):
 
         # Assert
         msg = (
-            "Cannot simultaneously use an explicitly selected benefit and "
-            "use seats from membership or auto-assign membership."
+            "Cannot use seats from selected membership (or allocated benefit) and auto-assign seats "
+            "based on registration code at the same time."
         )
 
         self.assertFalse(form1.is_valid())
-        self.assertIn(msg, form1.errors["allocated_benefit"])
-
+        self.assertIn(msg, form1.errors["auto_assign"])
         self.assertFalse(form2.is_valid())
-        self.assertIn(msg, form2.errors["allocated_benefit"])
+        self.assertIn(msg, form2.errors["auto_assign"])
+
+    def test_clean__benefit_override(self) -> None:
+        """Test that form is invalid when benefit override is empty and the feature flag indicates
+        that the field should be rendered."""
+        # Arrange
+        person = Person.objects.create(username="test")
+        training_request = create_training_request(state="p", person=person)
+        organisation = Organization.objects.create(fullname="Test Org", domain="test.org")
+        event = Event.objects.create(slug="test-event", host=organisation)
+        event.tags.create(name="TTT")
+        membership = Membership.objects.create(
+            name="alpha-name",
+            variant="partner",
+            registration_code="test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=organisation,
+            role=MemberRole.objects.all()[0],
+        )
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=organisation,
+        )
+        benefit = Benefit.objects.create(
+            name="Test Benefit",
+            unit_type="seat",
+            credits=2,
+        )
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            start_date=date.today() - timedelta(days=1),
+            end_date=date.today() + timedelta(days=365),
+            allocation=2,
+        )
+        data = {
+            "requests": [training_request.pk],
+            "event": event.pk,
+            "allocated_benefit": account_benefit.pk,
+            "benefit_override": "",
+        }
+
+        # Act
+        form = BulkMatchTrainingRequestForm(data, show_allocated_benefit=True)
+
+        # Assert
+        msg = "Must not be empty."
+
+        self.assertFalse(form.is_valid())
+        self.assertIn(msg, form.errors["benefit_override"])
+
+    def test_auto_assign_label_help_text_based_on_feature_flag(self) -> None:
+        """Test that auto-assign field label and help text change based on feature flag."""
+        # Arrange
+        data: dict[str, Any] = {}
+
+        # Act
+        form_with_flag = BulkMatchTrainingRequestForm(data, show_allocated_benefit=True)
+        form_without_flag = BulkMatchTrainingRequestForm(data, show_allocated_benefit=False)
+
+        # Assert
+        self.assertEqual(
+            form_with_flag.fields["auto_assign"].label,
+            "Automatically match seats to memberships OR account benefits and partnerships.",
+        )
+        self.assertEqual(
+            form_with_flag.fields["auto_assign"].help_text,
+            (
+                "Assigned users will take instructor seats (instructor training benefit) based on the registration "
+                "code they entered."
+            ),
+        )
+        self.assertEqual(
+            form_without_flag.fields["auto_assign"].label,
+            "Automatically match seats to memberships",
+        )
+        self.assertEqual(
+            form_without_flag.fields["auto_assign"].help_text,
+            ("Assigned users will take instructor seats based on the registration code they entered."),
+        )

@@ -8,7 +8,7 @@ from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import ValidationError
 from django.template import Context, Template
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.urls import reverse
 from django_comments.models import Comment
 
@@ -22,6 +22,7 @@ from src.consents.models import (
 )
 from src.extrequests.forms import TrainingRequestsMergeForm
 from src.extrequests.views import _match_training_request_to_person
+from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import (
     Event,
@@ -650,7 +651,7 @@ class TestTrainingRequestsListView(TestBase):
         data = {
             "match": "",
             "event": self.first_training.pk,
-            "seat_membership_auto_assign": "True",
+            "auto_assign": "True",
             "requests": [req1.pk, req2.pk, req3.pk, self.first_req.pk],
             # "seat_public": "True",
         }
@@ -672,6 +673,277 @@ class TestTrainingRequestsListView(TestBase):
             rv,
             "Request does not include a member registration code, so cannot be matched to a membership seat.",
         )
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_with_partnership(self) -> None:
+        """Test that auto_assign can match trainees using partnership registration codes
+        when SERVICE_OFFERING flag is enabled."""
+        # Arrange
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        partnership = Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=account,
+            registration_code="partner123",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.org,
+        )
+        # Create benefit and account benefit for the account
+        benefit = Benefit.objects.create(
+            unit_type="seat",
+            name="Instructor Training",
+            description="Benefit for instructor training seat",
+            credits=1,
+        )
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            partnership=partnership,
+            allocation=5,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+        )
+
+        # Create request with partnership code
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="partner123")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": True,
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        msg = "Successfully accepted and matched selected people to training."
+        self.assertContains(rv, msg)
+
+        # Check that the task was created with the allocated benefit
+        task = Task.objects.get(person=self.ironman, role__name="learner", event=self.first_training)
+        self.assertEqual(task.allocated_benefit, account_benefit)
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", False)]})
+    def test_auto_assign_partnership_without_service_offering_flag(self) -> None:
+        """Test that auto_assign with partnership fails when SERVICE_OFFERING flag is disabled."""
+        # Arrange
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=account,
+            registration_code="partner456",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.org,
+        )
+
+        # Create request with partnership code
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="partner456")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": "True",
+            "requests": [req.pk],
+        }
+
+        # Act - with SERVICE_OFFERING flag disabled
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        # Should error because partnership is not found without the flag
+        self.assertContains(rv, "No membership found for registration code &quot;partner456&quot;")
+        self.assertContains(rv, "1 request(s) were skipped due to errors")
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_both_membership_and_partnership_found_error(self) -> None:
+        """Test error handling when both membership and partnership exist with same registration code."""
+        # Arrange
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        shared_code = "shared_code_123"
+
+        # Create both membership and partnership with same code
+        Membership.objects.create(
+            name="Shared Org",
+            variant="bronze",
+            registration_code=shared_code,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=2,
+        )
+        Partnership.objects.create(
+            name="Shared Partner",
+            tier=tier,
+            credits=10,
+            account=account,
+            registration_code=shared_code,
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.org,
+        )
+        # Create benefit
+        benefit = Benefit.objects.create(
+            unit_type="seat",
+            name="Instructor Training",
+            description="",
+            credits=1,
+        )
+
+        req = create_training_request("p", self.ironman, open_review=False, reg_code=shared_code)
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": "True",
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act - with SERVICE_OFFERING flag enabled
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        self.assertContains(rv, "associated with both a membership and a partnership")
+        self.assertContains(rv, "1 request(s) were skipped due to errors")
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_partnership_missing_account_benefit_error(self) -> None:
+        """Test error when partnership is found but requested benefit doesn't exist."""
+        # Arrange
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=account,
+            registration_code="partner_no_benefit",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.org,
+        )
+
+        # Create benefit but don't associate it with account
+        benefit = Benefit.objects.create(
+            unit_type="seat",
+            name="Unavailable Benefit",
+            description="Not in account",
+            credits=1,
+        )
+
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="partner_no_benefit")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": "True",
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act - with SERVICE_OFFERING flag enabled
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "There is no account benefit")
+        self.assertContains(rv, "1 request(s) were skipped due to errors")
+
+    def test_matching_without_membership_or_benefit(self) -> None:
+        """Test basic matching when no membership or benefit is specified (Method 4)."""
+        # This is the case where neither seat_membership nor allocated_benefit is provided
+        data = {
+            "match": "",
+            "event": self.second_training.pk,
+            "requests": [self.first_req.pk],
+            # No seat_membership or allocated_benefit provided
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, "all_trainingrequests")
+        msg = "Successfully accepted and matched selected people to training."
+        self.assertContains(rv, msg)
+
+        # Verify task was created without seat_membership or allocated_benefit
+        task = Task.objects.get(person=self.spiderman, role__name="learner", event=self.second_training)
+        self.assertIsNone(task.seat_membership)
+        self.assertIsNone(task.allocated_benefit)
+
+    def test_auto_assign_multiple_requests_partial_success(self) -> None:
+        """Test auto_assign with multiple requests where some succeed and some fail."""
+        # Arrange
+        membership = Membership.objects.create(
+            name="Valid Org",
+            variant="bronze",
+            registration_code="valid_code",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            public_instructor_training_seats=5,
+        )
+
+        req_valid = create_training_request("p", self.ironman, open_review=False, reg_code="valid_code")
+        req_invalid = create_training_request("p", self.blackwidow, open_review=False, reg_code="invalid_code")
+        req_no_code = create_training_request("p", self.spiderman, open_review=False, reg_code="")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": "True",
+            "requests": [req_valid.pk, req_invalid.pk, req_no_code.pk],
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "Accepted and matched 1 person to training")
+        self.assertContains(rv, "2 request(s) were skipped due to errors")
+
+        # Verify only valid request was matched
+        self.assertEqual(Task.objects.filter(seat_membership=membership, role__name="learner").count(), 1)
 
 
 class TestMatchingTrainingRequestAndDetailedView(TestBase):

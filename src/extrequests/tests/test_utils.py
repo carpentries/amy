@@ -8,7 +8,6 @@ from src.extrequests.utils import (
     accept_training_request_and_match_to_event,
     get_account_benefit_warnings_after_match,
     get_eventbrite_id_from_url_or_return_input,
-    get_membership_from_training_request_or_raise_error,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
     member_code_valid,
@@ -288,55 +287,6 @@ class TestGetMembershipOrNoneFromCode(TestBase):
 
         # Assert
         self.assertEqual(result, self.membership)
-
-
-class TestGetMembershipFromTrainingRequestOrRaiseError(TestBase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.valid_code = "valid123"
-        self.membership = Membership.objects.create(
-            name="Alpha Organization",
-            variant="bronze",
-            agreement_start=date.today() - timedelta(weeks=26),
-            agreement_end=date.today() + timedelta(weeks=26),
-            contribution_type="financial",
-            registration_code=self.valid_code,
-            public_instructor_training_seats=1,
-            inhouse_instructor_training_seats=1,
-        )
-
-    def test_returns_correct_membership(self) -> None:
-        # Arrange
-        request = create_training_request("p", self.spiderman, open_review=False, reg_code=self.valid_code)
-
-        # Act
-        result = get_membership_from_training_request_or_raise_error(request)
-
-        # Assert
-        self.assertEqual(self.membership, result)
-
-    def test_error_no_code(self) -> None:
-        # Arrange
-        request = create_training_request("p", self.spiderman, open_review=False, reg_code="")
-
-        # Act & Assert
-        with self.assertRaisesMessage(
-            ValueError,
-            f"{request}: Request does not include a member registration "
-            "code, so cannot be matched to a membership seat.",
-        ):
-            get_membership_from_training_request_or_raise_error(request)
-
-    def test_error_invalid_code(self) -> None:
-        # Arrange
-        request = create_training_request("p", self.spiderman, open_review=False, reg_code="invalid")
-
-        # Act & Assert
-        with self.assertRaisesMessage(
-            Membership.DoesNotExist,
-            f'{request}: No membership found for registration code "{request.member_code}".',
-        ):
-            get_membership_from_training_request_or_raise_error(request)
 
 
 class TestAcceptTrainingRequestAndMatchToEvent(TestBase):

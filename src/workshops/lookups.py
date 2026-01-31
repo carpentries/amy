@@ -19,7 +19,7 @@ from django_select2.views import AutoResponseView
 
 from src.communityroles.models import CommunityRoleConfig
 from src.fiscal.models import Consortium, MembershipPersonRole, Partnership
-from src.offering.models import Account, AccountBenefit
+from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops import models
 from src.workshops.base_views import AuthenticatedHttpRequest
 from src.workshops.consts import COUNTRIES, IATA_AIRPORTS
@@ -600,6 +600,37 @@ class AccountBenefitEventsLookupView(AccountBenefitsLookupView):
         self.unit_type = "seat"
 
 
+class BenefitsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    unit_type: str
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.unit_type = ""
+
+    def get_queryset(self) -> QuerySet[Benefit]:
+        results = Benefit.objects.all()
+
+        if self.unit_type in ("seat", "event"):
+            results = results.filter(unit_type=self.unit_type)
+
+        if self.term:
+            results = results.filter(Q(name__icontains=self.term) | Q(description__icontains=self.term))
+
+        return results
+
+
+class BenefitSeatsLookupView(BenefitsLookupView):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.unit_type = "seat"
+
+
+class BenefitEventsLookupView(BenefitsLookupView):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.unit_type = "seat"
+
+
 urlpatterns = [
     path("tags/", TagLookupView.as_view(), name="tag-lookup"),
     path("badges/", BadgeLookupView.as_view(), name="badge-lookup"),
@@ -652,4 +683,6 @@ urlpatterns = [
     path("partnerships/", PartnershipLookupView.as_view(), name="partnership-lookup"),
     path("account-benefits-seats/", AccountBenefitSeatsLookupView.as_view(), name="account-benefit-seats-lookup"),
     path("account-benefits-events/", AccountBenefitEventsLookupView.as_view(), name="account-benefit-events-lookup"),
+    path("benefits-seats/", BenefitSeatsLookupView.as_view(), name="benefit-seats-lookup"),
+    path("benefits-events/", BenefitEventsLookupView.as_view(), name="benefit-events-lookup"),
 ]

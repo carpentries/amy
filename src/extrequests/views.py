@@ -47,10 +47,11 @@ from src.extrequests.models import SelfOrganisedSubmission, WorkshopInquiryReque
 from src.extrequests.utils import (
     accept_training_request_and_match_to_event,
     get_account_benefit_warnings_after_match,
-    get_membership_from_training_request_or_raise_error,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
 )
+from src.fiscal.models import Partnership
+from src.offering.models import AccountBenefit, Benefit
 from src.workshops.base_views import (
     AMYDetailView,
     AMYListView,
@@ -518,22 +519,36 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
 
     form = BulkChangeTrainingRequestForm()
     service_offering_enabled = flag_enabled("SERVICE_OFFERING", request=request)
-    match_form = BulkMatchTrainingRequestForm(show_allocated_benefit=service_offering_enabled)
+
+    try:
+        default_benefit = Benefit.objects.get(name="Instructor Training")
+    except Benefit.DoesNotExist:
+        default_benefit = None
+
+    match_form = BulkMatchTrainingRequestForm(
+        initial={"benefit_override": default_benefit},
+        show_allocated_benefit=service_offering_enabled,
+    )
 
     if request.method == "POST" and "match" in request.POST:
         # Bulk match people associated with selected TrainingRequests to
         # trainings.
-        match_form = BulkMatchTrainingRequestForm(request.POST, show_allocated_benefit=service_offering_enabled)
+        match_form = BulkMatchTrainingRequestForm(
+            request.POST,
+            initial={"benefit_override": default_benefit},
+            show_allocated_benefit=service_offering_enabled,
+        )
 
         if match_form.is_valid():
             event = match_form.cleaned_data["event"]
-            membership = match_form.cleaned_data["seat_membership"]
-            seat_membership_auto_assign = match_form.cleaned_data["seat_membership_auto_assign"]
+            seat_membership = cast(Membership | None, match_form.cleaned_data["seat_membership"])
+            auto_assign = cast(bool, match_form.cleaned_data["auto_assign"])
             # Assume seat_public is True for backward compatibility
             # seat_public = match_form.cleaned_data["seat_public"]
             seat_public = True
 
-            allocated_benefit = match_form.cleaned_data["allocated_benefit"]
+            allocated_benefit = cast(AccountBenefit | None, match_form.cleaned_data["allocated_benefit"])
+            benefit_override = cast(Benefit | None, match_form.cleaned_data["benefit_override"]) or default_benefit
 
             role = Role.objects.get(name="learner")
 
@@ -542,16 +557,59 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
             errors = []
             warnings = []
 
-            # Method 1: Auto assign membership
-            # membership is different for each seat (and may not be None)
-            if seat_membership_auto_assign:
+            # Method 1: Auto assign membership OR partnership
+            if auto_assign:
                 for training_request in training_requests:
-                    # find which membership to use
-                    # if membership can't be determined, skip this request
-                    try:
-                        membership_to_use = get_membership_from_training_request_or_raise_error(training_request)
-                    except (ValueError, Membership.DoesNotExist) as e:
-                        errors.append(str(e))
+                    if not (member_code := training_request.member_code):
+                        errors.append(
+                            f"{request}: Request does not include a member registration "
+                            "code, so cannot be matched to a membership seat."
+                        )
+                        continue
+
+                    membership = Membership.objects.filter(registration_code=member_code).first()
+                    partnership = (
+                        Partnership.objects.filter(registration_code=member_code).first()
+                        if service_offering_enabled
+                        else None
+                    )
+                    account_benefit = None
+
+                    if membership and partnership:
+                        # It should never happen beacause of the unique check on both models against each other's codes.
+                        errors.append(
+                            f'{training_request}: Registration code "{member_code}" is associated '
+                            "with both a membership and a partnership; cannot auto-assign. This is a problem with "
+                            "internal data, please contact an administrator."
+                        )
+                        continue
+
+                    elif membership:
+                        # found membership
+                        pass
+
+                    elif partnership and service_offering_enabled and benefit_override:
+                        # found partnership, now look for the account benefit
+                        try:
+                            account_benefit = AccountBenefit.objects.get(
+                                partnership=partnership, benefit=benefit_override
+                            )
+                        except AccountBenefit.DoesNotExist:
+                            errors.append(
+                                f'{request}: There is no account benefit "{benefit_override.name}" '
+                                f"for partnership {partnership}."
+                            )
+                            continue
+
+                    # both cases below are related to "not found registration code" situations
+                    elif service_offering_enabled:
+                        errors.append(
+                            f"{training_request}: No membership or partnership found for registration code "
+                            f'"{member_code}".'
+                        )
+                        continue
+                    else:
+                        errors.append(f'{training_request}: No membership found for registration code "{member_code}".')
                         continue
 
                     # perform match
@@ -559,34 +617,42 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                         request=training_request,
                         event=event,
                         role=role,
-                        seat_membership=membership_to_use,
+                        seat_membership=membership,
+                        allocated_benefit=account_benefit,
                     )
 
                     # collect warnings after each match
-                    warnings += [
-                        f"{training_request}: {w}"
-                        for w in get_membership_warnings_after_match(
-                            membership=membership_to_use,
-                            seat_public=seat_public,
-                            event=event,
-                        )
-                    ]
+                    if membership:
+                        warnings += [
+                            f"{training_request}: {w}"
+                            for w in get_membership_warnings_after_match(
+                                membership=membership,
+                                seat_public=seat_public,
+                                event=event,
+                            )
+                        ]
+                    elif account_benefit:
+                        warnings += [
+                            f"{training_request}: {w}"
+                            for w in get_account_benefit_warnings_after_match(account_benefit)
+                        ]
 
-            # Method 2: Don't auto assign membership
-            # membership is same for all seats (and may be None)
-            elif membership:
+            # Method 2: assign the same membership for all seats
+            elif seat_membership:
                 # perform matches
                 for training_request in training_requests:
                     accept_training_request_and_match_to_event(
                         request=training_request,
                         event=event,
                         role=role,
-                        seat_membership=membership,
+                        seat_membership=seat_membership,
                     )
 
                 # collect warnings after all requests are processed
                 warnings = get_membership_warnings_after_match(
-                    membership=membership, seat_public=seat_public, event=event
+                    membership=seat_membership,
+                    seat_public=seat_public,
+                    event=event,
                 )
 
             # Method 3: Use benefits (offering project 2025)
