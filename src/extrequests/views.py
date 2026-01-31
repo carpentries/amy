@@ -597,7 +597,7 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                         except AccountBenefit.DoesNotExist:
                             errors.append(
                                 f'{request}: There is no account benefit "{benefit_override.name}" '
-                                "for partnership {partnership}."
+                                f"for partnership {partnership}."
                             )
                             continue
 
