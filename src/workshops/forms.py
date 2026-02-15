@@ -836,6 +836,12 @@ class PersonForm(forms.ModelForm[Person]):
         if errors:
             raise ValidationError(errors)
 
+    def save(self, *args: Any, **kwargs: Any) -> Person:
+        if "airport_iata" in self.changed_data:
+            self.instance.country = ""
+            self.instance.timezone = ""
+        return super().save(*args, **kwargs)
+
 
 class PersonCreateForm(PersonForm):
     comment = MarkdownxFormField(

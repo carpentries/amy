@@ -86,6 +86,33 @@ class TestPerson(TestBase):
         form = PersonForm(data, instance=self.spiderman)
         self.assertFalse(form.is_valid(), form.errors)
 
+    def test_edit_person__airport_change_clears_country_and_timezone(self) -> None:
+        """When airport changes, country and timezone overrides should be cleared."""
+        self.ron.country = "PL"
+        self.ron.timezone = "Europe/Warsaw"
+        self.ron.save()
+
+        data = PersonForm(instance=self.ron).initial
+        data["airport_iata"] = "LAX"
+        form = PersonForm(data, instance=self.ron)
+        self.assertTrue(form.is_valid(), form.errors)
+        person = form.save()
+        self.assertEqual(person.country, "")
+        self.assertEqual(person.timezone, "")
+
+    def test_edit_person__airport_unchanged_keeps_country_and_timezone(self) -> None:
+        """When airport stays the same, country and timezone overrides are preserved."""
+        self.ron.country = "PL"
+        self.ron.timezone = "Europe/Warsaw"
+        self.ron.save()
+
+        data = PersonForm(instance=self.ron).initial
+        form = PersonForm(data, instance=self.ron)
+        self.assertTrue(form.is_valid(), form.errors)
+        person = form.save()
+        self.assertEqual(person.country, "PL")
+        self.assertEqual(person.timezone, "Europe/Warsaw")
+
     def test_edit_person_empty_family_name(self) -> None:
         data = {
             "family": "",  # family name cannot be empty
