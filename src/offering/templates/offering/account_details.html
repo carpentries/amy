@@ -50,6 +50,7 @@
   </tr>
 </table>
 
+{% if object.account_type != "individual" %}
 <h4>Partnerships:</h4>
 
 {% include "offering/includes/partnerships.html" with object_list=partnerships %}
@@ -59,6 +60,7 @@
 <a href="#" class="btn btn-success disabled">Add partnership</a>
 {% endif %}
 <p></p>
+{% endif %}
 
 <h4>Linked account benefits:</h4>
 
@@ -72,6 +74,7 @@
 
 <p></p>
 
+{% if object.account_type != "individual" %}
 <h4>Community roles related to partnerships linked to this account:</h4>
 
 <table class="table table-striped">
@@ -132,5 +135,6 @@
   </tr>
   {% endfor %}
 </table>
+{% endif %}
 
 {% endblock %}
