@@ -61,14 +61,15 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
         context["title"] = str(self.object)
         context["owners"] = AccountOwner.objects.filter(account=self.object).select_related("person")
         context["account_benefits"] = AccountBenefit.objects.filter(account=self.object).select_related("benefit")
-        context["partnerships"] = (
-            Partnership.objects.credits_usage_annotation()
-            .filter(account=self.object)
-            .select_related("tier", "partner_consortium", "partner_organisation", "account")
-        )
-        context["community_roles"] = CommunityRole.objects.filter(partnership__account=self.object).select_related(
-            "partnership", "person"
-        )
+        if self.object.account_type != "individual":
+            context["partnerships"] = (
+                Partnership.objects.credits_usage_annotation()
+                .filter(account=self.object)
+                .select_related("tier", "partner_consortium", "partner_organisation", "account")
+            )
+            context["community_roles"] = CommunityRole.objects.filter(partnership__account=self.object).select_related(
+                "partnership", "person"
+            )
         return context
 
 
