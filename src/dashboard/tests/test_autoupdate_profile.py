@@ -96,3 +96,76 @@ class TestAutoUpdateProfile(TestBase):
                 updated_consents_by_term_slug[slug].term_option.pk,  # type: ignore
                 consent_data[f"consents-{slug}"],
             )
+
+    def _build_profile_data(self) -> dict[str, object]:
+        """Build minimal valid POST data for autoupdate_profile."""
+        term_slugs = [
+            TermEnum.MAY_CONTACT,
+            TermEnum.MAY_PUBLISH_NAME,
+            TermEnum.PUBLIC_PROFILE,
+        ]
+        terms_by_term_slug = {
+            term.slug: term for term in Term.objects.filter(slug__in=term_slugs).active().prefetch_active_options()
+        }
+        consent_data = {
+            f"consents-{slug}": terms_by_term_slug[slug].active_options[0].pk  # type: ignore[attr-defined]
+            for slug in term_slugs
+        }
+        return {
+            "personal": "user",
+            "middle": "",
+            "family": "User",
+            "email": "user@example.org",
+            "gender": Person.UNDISCLOSED,
+            "airport_iata": "CDG",
+            "country": "PL",
+            "timezone": "Europe/Warsaw",
+            "github": "",
+            "twitter": "",
+            "bluesky": "",
+            "mastodon": "",
+            "url": "",
+            "username": "user",
+            "affiliation": "",
+            "languages": [],
+            "domains": [],
+            "lessons": [],
+            "consents-person": self.user.pk,
+            **consent_data,
+        }
+
+    def test_update_profile__airport_change_clears_overrides(self) -> None:
+        """When airport changes, country and timezone overrides should be cleared."""
+        self.user.airport_iata = "CDG"
+        self.user.country = "PL"
+        self.user.timezone = "Europe/Warsaw"
+        self.user.save()
+
+        data = self._build_profile_data()
+        data["airport_iata"] = "LAX"
+
+        rv = self.client.post(reverse("autoupdate_profile"), data, follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotIn("Fix errors below", rv.content.decode("utf-8"))
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.country, "")
+        self.assertEqual(self.user.timezone, "")
+
+    def test_update_profile__airport_unchanged_keeps_overrides(self) -> None:
+        """When airport stays the same, country and timezone overrides are preserved."""
+        self.user.airport_iata = "CDG"
+        self.user.country = "PL"
+        self.user.timezone = "Europe/Warsaw"
+        self.user.save()
+
+        data = self._build_profile_data()
+        # airport_iata stays as "CDG" — same as saved
+
+        rv = self.client.post(reverse("autoupdate_profile"), data, follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotIn("Fix errors below", rv.content.decode("utf-8"))
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.country, "PL")
+        self.assertEqual(self.user.timezone, "Europe/Warsaw")
