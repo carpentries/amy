@@ -73,4 +73,56 @@
   </tr>
 </table>
 
+{% if object.benefit.unit_type == "seat" %}
+<h3>Usage: tasks</h3>
+<table class="table table-striped">
+  <tr>
+    <th>Event</th>
+    <th>Person</th>
+    <th>Role</th>
+    <th class="additional-links"></th>
+  </tr>
+  {% for task in tasks %}
+  <tr>
+    <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
+    <td><a href="{{ task.person.get_absolute_url }}">{{ task.person }}</a></td>
+    <td>{{ task.role }}</td>
+    <td>
+      <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><i class="fas fa-info-circle"></i></a>
+      &nbsp;
+      {% if perms.workshops.change_task %}
+      <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><i class="fas fa-edit"></i></a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if object.benefit.unit_type == "event" %}
+<h3>Usage: events</h3>
+<table class="table table-striped">
+  <tr>
+    <th>Slug</th>
+    <th>Host</th>
+    <th>Dates</th>
+    <th class="additional-links"></th>
+  </tr>
+  {% for event in events %}
+  <tr>
+    <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
+    <td><a href="{% url 'organization_details' event.host.domain_quoted %}">{{ event.host }}</a></td>
+    <td>{{ event.start }} &ndash; {{ event.end }}</td>
+    <td>
+      <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><i class="fas fa-info-circle"></i></a>
+      &nbsp;
+      {% if perms.workshops.change_event %}
+      <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><i class="fas fa-edit"></i></a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
 {% endblock %}
