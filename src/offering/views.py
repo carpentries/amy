@@ -31,7 +31,7 @@ from src.workshops.base_views import (
 )
 from src.workshops.filters import EventCategoryFilter
 from src.workshops.forms import EventCategoryForm
-from src.workshops.models import EventCategory, Person
+from src.workshops.models import Event, EventCategory, Person, Task
 from src.workshops.utils.access import OnlyForAdminsMixin
 from src.workshops.utils.urls import safe_next_or_default_url
 
@@ -274,6 +274,8 @@ class AccountBenefitDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
+        context["tasks"] = Task.objects.filter(allocated_benefit=self.object).select_related("event", "person", "role")
+        context["events"] = Event.objects.filter(allocated_benefit=self.object).select_related("host")
         return context
 
 
