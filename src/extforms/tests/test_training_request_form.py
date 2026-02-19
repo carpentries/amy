@@ -35,6 +35,7 @@ class TestTrainingRequestForm(TestBase):
             "affiliation": "AGH University of Science and Technology",
             "location": "Cracow",
             "country": "PL",
+            "airport_iata": "KRK",
             "domains": [1, 2],
             "domains_other": "",
             "underrepresented": "undisclosed",
