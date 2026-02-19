@@ -58,6 +58,8 @@
         <td>{{ object.location}}</td></tr>
     <tr><th>Country:</th>
         <td>{{ object.get_country_display }}</td></tr>
+    <tr><th>Nearest major airport:</th>
+        <td>{{ object.airport_iata|default:"&mdash;" }}</td></tr>
     <tr><th>This is a small, remote, or under-resourced institution:</th>
         <td>{{ object.underresourced|yesno }}</td></tr>
     <tr><th>Areas of expertise:</th>
@@ -168,7 +170,7 @@
       <td>{% if consents.may_contact %}{{ consents.may_contact.term_option }}{% else %}Unset{% endif %}</td>
     </tr>
     <tr>
-      <th>{{ consents_content.privacy_policy }}</th>
+      <th>{{ consents_content.privacy_policy|safe }}</th>
       <td>{% if consents.privacy_policy %}{{ consents.privacy_policy.term_option }}{% else %}Unset{% endif %}</td>
     </tr>
     <tr>

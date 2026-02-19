@@ -2267,6 +2267,13 @@ class TrainingRequest(
         blank=False,
     )
     country = CountryField()
+    airport_iata = models.CharField(
+        max_length=STR_SHORT,
+        null=False,
+        blank=True,
+        default="",
+        help_text="Nearest major airport (IATA code: https://www.world-airport-codes.com/)",
+    )
     underresourced = models.BooleanField(
         null=False,
         default=False,

@@ -22,6 +22,7 @@ from src.offering.models import AccountBenefit, Benefit
 from src.workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
+    HeavySelect2Widget,
     ModelSelect2Widget,
     RadioSelectFakeMultiple,
     RadioSelectWithOther,
@@ -1276,6 +1277,13 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
         widget=ModelSelect2Widget(data_view="person-lookup"),  # type: ignore[no-untyped-call]
     )
 
+    airport_iata = forms.CharField(
+        required=False,
+        label="Nearest major airport",
+        help_text="Country and timezone of the airport are in the parentheses.",
+        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+    )
+
     score_auto = forms.IntegerField(
         disabled=True,
         label=TrainingRequest._meta.get_field("score_auto").verbose_name,
@@ -1413,6 +1421,7 @@ class TrainingRequestsMergeForm(forms.Form):
         widget=forms.RadioSelect,
     )
     country = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    airport_iata = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     underresourced = forms.ChoiceField(
         choices=TWO,
         initial=DEFAULT,
