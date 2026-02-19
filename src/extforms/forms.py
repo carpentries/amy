@@ -20,6 +20,7 @@ from src.extrequests.forms import (
 from src.extrequests.utils import MemberCodeValidationError, member_code_valid_training
 from src.workshops.fields import (
     CheckboxSelectMultipleWithOthers,
+    HeavySelect2Widget,
     RadioSelectWithOther,
     Select2Widget,
 )
@@ -32,6 +33,13 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
     # agreement fields are moved to the model
 
     captcha = ReCaptchaField()  # type: ignore[no-untyped-call]
+
+    airport_iata = forms.CharField(
+        required=True,
+        label="Nearest major airport",
+        help_text="Country and timezone of the airport are in the parentheses.",
+        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+    )
 
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
@@ -56,6 +64,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
             "affiliation",
             "location",
             "country",
+            "airport_iata",
             "underresourced",
             "domains",
             "domains_other",

@@ -782,6 +782,7 @@ def _match_training_request_to_person(
         training_request.person.email = training_request.email
         training_request.person.secondary_email = training_request.secondary_email
         training_request.person.country = training_request.country
+        training_request.person.airport_iata = training_request.airport_iata
         training_request.person.github = training_request.github
         training_request.person.affiliation = training_request.affiliation
         training_request.person.domains.set(training_request.domains.all())
@@ -965,6 +966,7 @@ def trainingrequests_merge(request: AuthenticatedHttpRequest) -> HttpResponse:
                 "affiliation",
                 "location",
                 "country",
+                "airport_iata",
                 "underresourced",
                 "domains_other",
                 "underrepresented",

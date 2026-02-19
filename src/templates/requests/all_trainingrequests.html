@@ -61,7 +61,7 @@
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
             &lt;{{ req.email|urlize }}&gt;
           </td>
-          <td>{{ req.member_code|default:"—" }}</td>
+          <td>{% if req.member_code %}<code>{{ req.member_code }}</code>{% else %}&mdash;{% endif %}</td>
           <td>
             {{ req.affiliation|default:"—" }}
             {% if req.person %}
