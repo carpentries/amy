@@ -887,6 +887,135 @@ class TestTrainingRequestsListView(TestBase):
         self.assertContains(rv, "There is no account benefit")
         self.assertContains(rv, "1 request(s) were skipped due to errors")
 
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_partnership_picks_first_available_benefit(self) -> None:
+        """Test that when multiple account benefits exist for the same partnership+benefit,
+        the first one with remaining allocation is used."""
+        # Arrange
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        partnership = Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=account,
+            registration_code="partner_multi",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.org,
+        )
+        benefit = Benefit.objects.create(
+            unit_type="seat",
+            name="Instructor Training",
+            description="Benefit for instructor training seat",
+            credits=1,
+        )
+        # First benefit: fully allocated
+        benefit1 = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            partnership=partnership,
+            allocation=1,
+            start_date=date.today() - timedelta(days=1),  # to ensure ordering
+            end_date=date.today() + timedelta(days=365),
+        )
+        role = Role.objects.get(name="learner")
+        # use blackwidow (spiderman already has a learner task on first_training from setUp)
+        Task.objects.create(event=self.first_training, person=self.blackwidow, role=role, allocated_benefit=benefit1)
+        # Second benefit: has allocation remaining
+        benefit2 = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            partnership=partnership,
+            allocation=5,
+            start_date=date.today(),  # to ensure ordering
+            end_date=date.today() + timedelta(days=365),
+        )
+
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="partner_multi")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": True,
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        task = Task.objects.get(person=self.ironman, role__name="learner", event=self.first_training)
+        self.assertEqual(task.allocated_benefit, benefit2)
+
+    @override_settings(FLAGS={"SERVICE_OFFERING": [("boolean", True)]})
+    def test_auto_assign_partnership_warns_when_all_benefits_exhausted(self) -> None:
+        """Test that a warning is shown when all account benefits for a partnership are exhausted."""
+        # Arrange
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org,
+        )
+        partnership = Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=account,
+            registration_code="partner_exhausted",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.org,
+        )
+        benefit = Benefit.objects.create(
+            unit_type="seat",
+            name="Instructor Training",
+            description="Benefit for instructor training seat",
+            credits=1,
+        )
+        # Only benefit: fully allocated
+        account_benefit = AccountBenefit.objects.create(
+            account=account,
+            benefit=benefit,
+            partnership=partnership,
+            allocation=1,
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=365),
+        )
+        role = Role.objects.get(name="learner")
+        # use blackwidow (spiderman already has a learner task on first_training from setUp)
+        Task.objects.create(
+            event=self.first_training, person=self.blackwidow, role=role, allocated_benefit=account_benefit
+        )
+
+        req = create_training_request("p", self.ironman, open_review=False, reg_code="partner_exhausted")
+
+        data = {
+            "match": "",
+            "event": self.first_training.pk,
+            "auto_assign": True,
+            "requests": [req.pk],
+            "benefit_override": benefit.pk,
+        }
+
+        # Act
+        rv = self.client.post(reverse("all_trainingrequests"), data, follow=True)
+
+        # Assert
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, "is exceeding (2) allocation (1).")
+        # Task is still created despite over-allocation
+        self.assertTrue(Task.objects.filter(person=self.ironman, role__name="learner").exists())
+
     def test_matching_without_membership_or_benefit(self) -> None:
         """Test basic matching when no membership or benefit is specified (Method 4)."""
         # This is the case where neither seat_membership nor allocated_benefit is provided

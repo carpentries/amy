@@ -6,6 +6,7 @@ from src.extrequests.tests.test_training_request import create_training_request
 from src.extrequests.utils import (
     MemberCodeValidationError,
     accept_training_request_and_match_to_event,
+    get_account_benefit_from_partnership,
     get_account_benefit_warnings_after_match,
     get_eventbrite_id_from_url_or_return_input,
     get_membership_or_none_from_code,
@@ -13,6 +14,7 @@ from src.extrequests.utils import (
     member_code_valid,
     member_code_valid_training,
 )
+from src.fiscal.models import Partnership, PartnershipTier
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops.models import Event, Membership, Role, Tag, Task
 from src.workshops.tests.base import TestBase
@@ -635,7 +637,7 @@ class TestGetAccountBenefitWarningsAfterMatch(TestBase):
         Task.objects.create(event=event, person=self.blackwidow, role=role, allocated_benefit=acc_benefit)
 
         # Act
-        result = get_account_benefit_warnings_after_match(acc_benefit)
+        result = get_account_benefit_warnings_after_match(acc_benefit, event)
 
         # Assert
         self.assertEqual(len(result), 1)
@@ -645,9 +647,11 @@ class TestGetAccountBenefitWarningsAfterMatch(TestBase):
     def test_warns_frozen(self) -> None:
         # Arrange
         acc_benefit = self.make_account_benefit(allocation=10, frozen=True)
+        # event within benefit dates to avoid triggering the event date warning
+        event = Event.objects.create(slug="ev-frozen", host=self.org_beta, start=date.today())
 
         # Act
-        result = get_account_benefit_warnings_after_match(acc_benefit)
+        result = get_account_benefit_warnings_after_match(acc_benefit, event)
 
         # Assert
         self.assertIn(f'The benefit "{acc_benefit}" has been frozen.', result)
@@ -655,9 +659,111 @@ class TestGetAccountBenefitWarningsAfterMatch(TestBase):
     def test_warns_inactive(self) -> None:
         # Arrange - benefit that expired yesterday
         acc_benefit = self.make_account_benefit(allocation=10, start_offset=-10, end_offset=-1)
+        # event within benefit dates to test only the inactive warning
+        event = Event.objects.create(slug="ev-inactive", host=self.org_beta, start=date.today() + timedelta(days=-5))
 
         # Act
-        result = get_account_benefit_warnings_after_match(acc_benefit)
+        result = get_account_benefit_warnings_after_match(acc_benefit, event)
 
         # Assert
         self.assertIn(f'The benefit "{acc_benefit}" is outside its valid dates.', result)
+
+    def test_warns_event_outside_benefit_dates(self) -> None:
+        # Arrange - benefit valid for next week, event starting today (outside)
+        account_benefit = self.make_account_benefit(allocation=10, start_offset=3, end_offset=10)
+        event = Event.objects.create(slug="ev-outside", host=self.org_beta, start=date.today())
+
+        # Act
+        results = get_account_benefit_warnings_after_match(account_benefit, event)
+
+        # Assert
+        self.assertIn(
+            f'"{event}" has start or end date outside account benefit "{account_benefit}" valid dates.',
+            results,
+        )
+
+    def test_no_event_date_warning_when_event_within_benefit_dates(self) -> None:
+        # Arrange
+        account_benefit = self.make_account_benefit(allocation=10)
+        event = Event.objects.create(slug="ev-inside", host=self.org_beta, start=date.today())
+
+        # Act
+        results = get_account_benefit_warnings_after_match(account_benefit, event)
+
+        # Assert
+        self.assertFalse(any("outside account benefit" in w for w in results))
+
+
+class TestGetAccountBenefitFromPartnership(TestBase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._setUpRoles()
+
+        self.benefit = Benefit.objects.create(name="Instructor Training", unit_type="seat", credits=1)
+        self.account = Account.objects.create(
+            account_type=Account.AccountTypeChoices.ORGANISATION,
+            generic_relation=self.org_beta,
+        )
+        tier = PartnershipTier.objects.create(name="Standard", credits=10)
+        self.partnership = Partnership.objects.create(
+            name="Partner Org",
+            tier=tier,
+            credits=10,
+            account=self.account,
+            registration_code="partner-test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            agreement_link="https://example.com/agreement",
+            public_status="public",
+            partner_organisation=self.org_beta,
+        )
+
+    def make_account_benefit(self, *, allocation: int, start_date_offset: int = 0) -> AccountBenefit:
+        return AccountBenefit.objects.create(
+            account=self.account,
+            benefit=self.benefit,
+            partnership=self.partnership,
+            start_date=date.today() + timedelta(days=start_date_offset),  # to ensure ordering
+            end_date=date.today() + timedelta(days=365),
+            allocation=allocation,
+        )
+
+    def allocate_benefit(self, account_benefit: AccountBenefit, count: int) -> None:
+        event = Event.objects.create(slug=f"ev-{account_benefit.pk}", host=self.org_beta)
+        role = Role.objects.get(name="learner")
+        people = [self.spiderman, self.blackwidow, self.ironman]
+        for i in range(count):
+            Task.objects.create(event=event, person=people[i], role=role, allocated_benefit=account_benefit)
+
+    def test_returns_first_with_remaining_allocation(self) -> None:
+        # Arrange - two benefits; first is fully allocated, second has room
+        benefit1 = self.make_account_benefit(allocation=1, start_date_offset=-1)
+        benefit2 = self.make_account_benefit(allocation=5)
+        self.allocate_benefit(benefit1, 1)  # exhaust benefit1
+
+        # Act
+        result = get_account_benefit_from_partnership(self.partnership, self.benefit)
+
+        # Assert
+        self.assertEqual(result, benefit2)
+
+    def test_returns_last_when_all_exhausted(self) -> None:
+        # Arrange - two benefits, both fully allocated
+        benefit1 = self.make_account_benefit(allocation=1, start_date_offset=-1)
+        benefit2 = self.make_account_benefit(allocation=1)
+        self.allocate_benefit(benefit1, 1)
+        self.allocate_benefit(benefit2, 1)
+
+        # Act - should return last one (benefit2, ordered by start_date)
+        result = get_account_benefit_from_partnership(self.partnership, self.benefit)
+
+        # Assert
+        self.assertEqual(result, benefit2)
+
+    def test_raises_does_not_exist_when_no_benefits(self) -> None:
+        # Arrange - no account benefits exist for this partnership+benefit
+        other_benefit = Benefit.objects.create(name="Other Benefit", unit_type="seat", credits=1)
+
+        # Act & Assert
+        with self.assertRaises(AccountBenefit.DoesNotExist):
+            get_account_benefit_from_partnership(self.partnership, other_benefit)

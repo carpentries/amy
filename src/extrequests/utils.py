@@ -3,7 +3,8 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 
-from src.offering.models import AccountBenefit
+from src.fiscal.models import Partnership
+from src.offering.models import AccountBenefit, Benefit
 from src.workshops.models import Event, Membership, Role, Task, TrainingRequest
 
 # ----------------------------------------
@@ -140,7 +141,7 @@ def get_membership_warnings_after_match(membership: Membership, seat_public: boo
     return warnings
 
 
-def get_account_benefit_warnings_after_match(benefit: AccountBenefit) -> list[str]:
+def get_account_benefit_warnings_after_match(benefit: AccountBenefit, event: Event) -> list[str]:
     """Returns a list of warnings based on allocated benefit usage
     and start/end dates."""
     warnings = []
@@ -159,7 +160,34 @@ def get_account_benefit_warnings_after_match(benefit: AccountBenefit) -> list[st
             f'The benefit "{benefit}" is outside its valid dates.',
         )
 
+    # show warning if training falls out of account benefit dates
+    if (
+        event.start
+        and not (benefit.start_date <= event.start <= benefit.end_date)
+        or event.end
+        and not (benefit.start_date <= event.end <= benefit.end_date)
+    ):
+        warnings.append(
+            f'"{event}" has start or end date outside account benefit "{benefit}" valid dates.',
+        )
+
     return warnings
+
+
+def get_account_benefit_from_partnership(partnership: Partnership, benefit: Benefit) -> AccountBenefit:
+    account_benefits = AccountBenefit.objects.filter(partnership=partnership, benefit=benefit).order_by("start_date")
+    if not account_benefits:
+        raise AccountBenefit.DoesNotExist(
+            f'No account benefits found for partnership "{partnership}" and benefit "{benefit}".'
+        )
+
+    for account_benefit in account_benefits:
+        # return the first account benefit that has allocation remaining
+        if account_benefit.allocation_used() < account_benefit.allocation:
+            return account_benefit
+
+    # if all account benefits are fully used, return the last one
+    return account_benefit
 
 
 # ----------------------------------------
