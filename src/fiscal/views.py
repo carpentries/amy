@@ -68,7 +68,7 @@ from src.workshops.base_views import (
     AuthenticatedHttpRequest,
     RedirectSupportMixin,
 )
-from src.workshops.models import Award, Member, MemberRole, Membership, Organization, Task
+from src.workshops.models import Award, Event, Member, MemberRole, Membership, Organization, Task
 from src.workshops.utils.access import OnlyForAdminsMixin
 
 REQUIRED_FLAG_NAME = "SERVICE_OFFERING"
@@ -973,7 +973,14 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
-        context["account_benefits"] = AccountBenefit.objects.filter(partnership=self.object).select_related("benefit")
+        context["account_benefits"] = (
+            AccountBenefit.objects.filter(partnership=self.object)
+            .select_related("benefit")
+            .prefetch_related(
+                Prefetch("event_set", queryset=Event.objects.select_related("host")),
+                Prefetch("task_set", queryset=Task.objects.select_related("event", "person", "role")),
+            )
+        )
         context["community_roles"] = CommunityRole.objects.filter(partnership=self.object).select_related("person")
 
         if self.object.credits_used > self.object.credits:  # type: ignore[attr-defined]
