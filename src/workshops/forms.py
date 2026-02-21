@@ -454,6 +454,7 @@ class EventForm(forms.ModelForm[Event]):
         ]
         widgets = {
             "membership": ModelSelect2Widget(data_view="membership-lookup"),  # type: ignore[no-untyped-call]
+            "allocated_benefit": ModelSelect2Widget(data_view="account-benefit-events-lookup"),  # type: ignore[no-untyped-call]
             "manual_attendance": TextInput,
             "latitude": TextInput,
             "longitude": TextInput,
@@ -684,6 +685,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm[Task]):
         widgets = {
             "person": ModelSelect2Widget(data_view="person-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
             "event": ModelSelect2Widget(data_view="event-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore
+            "allocated_benefit": ModelSelect2Widget(data_view="account-benefit-seats-lookup", attrs=SELECT2_SIDEBAR),  # type: ignore[no-untyped-call]
             # "seat_public": forms.RadioSelect(),
         }
 

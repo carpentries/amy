@@ -597,7 +597,7 @@ class AccountBenefitSeatsLookupView(AccountBenefitsLookupView):
 class AccountBenefitEventsLookupView(AccountBenefitsLookupView):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.unit_type = "seat"
+        self.unit_type = "event"
 
 
 class BenefitsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
@@ -628,7 +628,7 @@ class BenefitSeatsLookupView(BenefitsLookupView):
 class BenefitEventsLookupView(BenefitsLookupView):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.unit_type = "seat"
+        self.unit_type = "event"
 
 
 urlpatterns = [
