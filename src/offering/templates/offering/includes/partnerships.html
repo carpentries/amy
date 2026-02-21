@@ -2,9 +2,9 @@
       <tr>
         <th>Name</th>
         <th>Organisation / Consortium</th>
-        <th>Tier</th>
-        <th>Credits (used / allowed)</th>
         <th>Dates</th>
+        <th>Tier</th>
+        <th>Credits (allocated / allowed)</th>
       </tr>
       {% for object in object_list %}
       <tr>
@@ -18,6 +18,7 @@
             &mdash;
           {% endif %}
         </td>
+        <td>{{ object.agreement_start|date:"Y-m-d" }} &mdash; {{ object.agreement_end|date:"Y-m-d" }}</td>
         <td>{{ object.tier }}</td>
         {% if not object.account %}
         <td>
@@ -25,7 +26,7 @@
         </td>
         {% elif object.credits_used > object.credits %}
         <td class="bg-warning">
-          {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits used exceed allowed"></i>
+          {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits allocated exceed allowed"></i>
         </td>
         {% else %}
         <td>
@@ -33,7 +34,6 @@
         </td>
         {% endif %}
         </td>
-        <td>{{ object.agreement_start|date:"Y-m-d" }} &mdash; {{ object.agreement_end|date:"Y-m-d" }}</td>
       </tr>
       {% endfor %}
     </table>

@@ -977,7 +977,7 @@ class PartnershipDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Par
         context["community_roles"] = CommunityRole.objects.filter(partnership=self.object).select_related("person")
 
         if self.object.credits_used > self.object.credits:  # type: ignore[attr-defined]
-            messages.warning(self.request, "Credits used exceed credits allowed.")
+            messages.warning(self.request, "Credits allocated exceed credits allowed.")
 
         return context
 
