@@ -8,6 +8,7 @@ from django.db.models import F, Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django_stubs_ext import Annotations
+from reversion import revisions as reversion
 
 from src.offering.models import Account
 from src.workshops.consts import STR_LONG, STR_LONGEST, STR_MED
@@ -74,6 +75,7 @@ class PartnershipManager(models.Manager["Partnership"]):
         )
 
 
+@reversion.register
 class Partnership(CreatedUpdatedMixin, models.Model):
     """A follow-up to "Membership" model, part of Service Offering 2025 project."""
 
