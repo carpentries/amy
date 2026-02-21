@@ -46,6 +46,7 @@ from src.extrequests.forms import (
 from src.extrequests.models import SelfOrganisedSubmission, WorkshopInquiryRequest
 from src.extrequests.utils import (
     accept_training_request_and_match_to_event,
+    get_account_benefit_from_partnership,
     get_account_benefit_warnings_after_match,
     get_membership_or_none_from_code,
     get_membership_warnings_after_match,
@@ -591,9 +592,7 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                     elif partnership and service_offering_enabled and benefit_override:
                         # found partnership, now look for the account benefit
                         try:
-                            account_benefit = AccountBenefit.objects.get(
-                                partnership=partnership, benefit=benefit_override
-                            )
+                            account_benefit = get_account_benefit_from_partnership(partnership, benefit_override)
                         except AccountBenefit.DoesNotExist:
                             errors.append(
                                 f'{request}: There is no account benefit "{benefit_override.name}" '
@@ -634,7 +633,7 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                     elif account_benefit:
                         warnings += [
                             f"{training_request}: {w}"
-                            for w in get_account_benefit_warnings_after_match(account_benefit)
+                            for w in get_account_benefit_warnings_after_match(account_benefit, event)
                         ]
 
             # Method 2: assign the same membership for all seats
@@ -667,7 +666,7 @@ def all_trainingrequests(request: AuthenticatedHttpRequest) -> HttpResponse:
                     )
 
                 # collect warnings after all requests are processed
-                warnings = get_account_benefit_warnings_after_match(allocated_benefit)
+                warnings = get_account_benefit_warnings_after_match(allocated_benefit, event)
 
             # Method 4: No membership and no benefit
             else:
