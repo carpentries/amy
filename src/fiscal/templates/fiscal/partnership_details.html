@@ -1,8 +1,10 @@
 {% extends "base_nav.html" %}
 {% load links attrs %}
 {% load communityroles %}
+{% load revisions %}
 
 {% block content %}
+{% last_modified object %}
 
 {% if object|one2one_exists:"rolled_from_partnership" %}
 <div class="alert alert-info" role="alert">

@@ -1,8 +1,10 @@
 {% extends "base_nav.html" %}
 {% load links %}
 {% load communityroles %}
+{% load revisions %}
 
 {% block content %}
+{% last_modified object %}
 
 <div class="edit-object">
   {% if perms.offering.change_account %}

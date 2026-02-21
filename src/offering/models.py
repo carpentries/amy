@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from reversion import revisions as reversion
 
 from src.workshops.consts import STR_LONG, STR_LONGEST
 from src.workshops.mixins import ActiveMixin, CreatedUpdatedMixin
@@ -14,6 +15,7 @@ from src.workshops.models import Curriculum, Event, Person, Task
 from src.workshops.utils.dates import human_daterange
 
 
+@reversion.register
 class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """The individual or organisation that purchases benefits."""
 
@@ -64,6 +66,7 @@ class Account(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return ContentType.objects.get(app_label=mapped[0], model=mapped[1])
 
 
+@reversion.register
 class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """Person appointed as account owner. Mostly for organisations."""
 
@@ -82,6 +85,7 @@ class AccountOwner(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return f"Owner {self.person} for {self.account} ({self.permission_type})"
 
 
+@reversion.register
 class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """A single good available to be purchased for an account."""
 
@@ -103,6 +107,7 @@ class Benefit(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return reverse("benefit-details", kwargs={"pk": self.pk})
 
 
+@reversion.register
 class AccountBenefitDiscount(CreatedUpdatedMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=STR_LONG, blank=False, null=False)
@@ -111,6 +116,7 @@ class AccountBenefitDiscount(CreatedUpdatedMixin, models.Model):
         return self.name
 
 
+@reversion.register
 class AccountBenefit(CreatedUpdatedMixin, models.Model):
     """A single benefit purchased for an account."""
 
