@@ -1,4 +1,5 @@
 import datetime
+from uuid import UUID
 
 from django.db import migrations
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
@@ -19,8 +20,24 @@ def create_accounts_and_benefits_for_open_training_requests(
     ContentType = apps.get_model("contenttypes", "ContentType")
 
     person_ct = ContentType.objects.get(app_label="workshops", model="person")
-    benefit = Benefit.objects.get(name=INSTRUCTOR_TRAINING_BENEFIT_NAME)
-    discount = AccountBenefitDiscount.objects.get(name=FULL_DISCOUNT_NAME)
+    benefit = Benefit.objects.get_or_create(
+        name=INSTRUCTOR_TRAINING_BENEFIT_NAME,
+        # Defaults copied from `seed_benefits.py`.
+        defaults={
+            "active": True,
+            "id": UUID("641e0a4c-0626-43f8-ae4f-ccf507b87791"),
+            "description": "Instructor Training default benefit",
+            "unit_type": "seat",
+            "credits": 1,
+        },
+    )
+    discount = AccountBenefitDiscount.objects.get_or_create(
+        name=FULL_DISCOUNT_NAME,
+        # Defaults copied from `seed_account_benefit_discounts.py`.
+        defaults={
+            "id": UUID("b2c3d4e5-f6a7-8901-bcde-f12345678901"),
+        },
+    )
 
     # Get all open training requests with assigned person, excluding instructor training learners.
     open_requests = (
