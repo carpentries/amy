@@ -1693,10 +1693,10 @@ class TaskCreate(
 
     def get_form_kwargs(self) -> dict[str, str]:
         kwargs = super().get_form_kwargs()
-        kwargs.update({"prefix": "task"})
+        kwargs["prefix"] = "task"
         # Optionally show field `allocated benefit`
-        show_allocated_benefit = flag_enabled("SERVICE_OFFERING", request=self.request)
-        return kwargs | dict(show_allocated_benefit=show_allocated_benefit)
+        kwargs["show_allocated_benefit"] = flag_enabled("SERVICE_OFFERING", request=self.request)
+        return kwargs
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """Save request in `self.request`."""
