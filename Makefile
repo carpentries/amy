@@ -34,6 +34,7 @@ dev_database :
 	${MANAGE} runscript seed_emails
 	${MANAGE} runscript seed_event_categories
 	${MANAGE} runscript seed_benefits
+	${MANAGE} runscript seed_account_benefit_discounts
 	${MANAGE} create_superuser
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
