@@ -20,7 +20,7 @@ def create_accounts_and_benefits_for_open_training_requests(
     ContentType = apps.get_model("contenttypes", "ContentType")
 
     person_ct = ContentType.objects.get(app_label="workshops", model="person")
-    benefit = Benefit.objects.get_or_create(
+    benefit, _ = Benefit.objects.get_or_create(
         name=INSTRUCTOR_TRAINING_BENEFIT_NAME,
         # Defaults copied from `seed_benefits.py`.
         defaults={
@@ -31,7 +31,7 @@ def create_accounts_and_benefits_for_open_training_requests(
             "credits": 1,
         },
     )
-    discount = AccountBenefitDiscount.objects.get_or_create(
+    discount, _ = AccountBenefitDiscount.objects.get_or_create(
         name=FULL_DISCOUNT_NAME,
         # Defaults copied from `seed_account_benefit_discounts.py`.
         defaults={
