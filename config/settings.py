@@ -653,7 +653,11 @@ FLAGS = {
     ],
     # ------------
     # Enable the Service Offering module.
+    # The "not_in_production" required condition evaluates to False when
+    # PROD_ENVIRONMENT=True, permanently disabling the flag in production.
+    # In lower environments the flag can be toggled on/off via URL parameter or session.
     "SERVICE_OFFERING": [
+        {"condition": "not_in_production", "value": True, "required": True},
         {"condition": "anonymous", "value": False, "required": True},
         {"condition": "parameter", "value": "enable_service_offering=true"},
         {"condition": "session", "value": "enable_service_offering"},
