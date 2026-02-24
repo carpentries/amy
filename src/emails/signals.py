@@ -17,6 +17,7 @@ from src.emails.types import (
     InstructorTrainingCompletedNotBadgedContext,
     MembershipQuarterlyContext,
     NewMembershipOnboardingContext,
+    NewPartnershipOnboardingContext,
     NewSelfOrganisedWorkshopContext,
     PersonsMergedContext,
     PostWorkshop7DaysContext,
@@ -35,6 +36,7 @@ class SignalNameEnum(StrEnum):
     instructor_training_approaching = "instructor_training_approaching"
     instructor_training_completed_not_badged = "instructor_training_completed_not_badged"
     new_membership_onboarding = "new_membership_onboarding"
+    new_partnership_onboarding = "new_partnership_onboarding"
     host_instructors_introduction = "host_instructors_introduction"
     recruit_helpers = "recruit_helpers"
     post_workshop_7days = "post_workshop_7days"
@@ -139,6 +141,13 @@ NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME = "new_membership_onboarding"
     new_membership_onboarding_update_signal,
     new_membership_onboarding_cancel_signal,
 ) = triple_signals(NEW_MEMBERSHIP_ONBOARDING_SIGNAL_NAME, NewMembershipOnboardingContext)
+
+NEW_PARTNERSHIP_ONBOARDING_SIGNAL_NAME = "new_partnership_onboarding"
+(
+    new_partnership_onboarding_signal,
+    new_partnership_onboarding_update_signal,
+    new_partnership_onboarding_cancel_signal,
+) = triple_signals(NEW_PARTNERSHIP_ONBOARDING_SIGNAL_NAME, NewPartnershipOnboardingContext)
 
 HOST_INSTRUCTORS_INTRODUCTION_SIGNAL_NAME = "host_instructors_introduction"
 (

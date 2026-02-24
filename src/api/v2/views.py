@@ -15,10 +15,12 @@ from src.api.v2.serializers import (
     AttachmentPresignedUrlPayloadSerializer,
     AttachmentSerializer,
     AwardSerializer,
+    ConsortiumSerializer,
     EventSerializer,
     InstructorRecruitmentSignupSerializer,
     MembershipSerializer,
     OrganizationSerializer,
+    PartnershipSerializer,
     PersonSerializer,
     ScheduledEmailLogDetailsSerializer,
     ScheduledEmailSerializer,
@@ -30,6 +32,7 @@ from src.api.v2.serializers import (
 from src.emails.controller import EmailController
 from src.emails.models import Attachment, ScheduledEmail, ScheduledEmailStatus
 from src.extrequests.models import SelfOrganisedSubmission
+from src.fiscal.models import Consortium, Partnership
 from src.recruitment.models import InstructorRecruitmentSignup
 from src.workshops.models import (
     Award,
@@ -143,6 +146,40 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet[Person]):
     )
     queryset = Person.objects.all()
     serializer_class = PersonSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class ConsortiumViewSet(viewsets.ReadOnlyModelViewSet[Consortium]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = Consortium.objects.prefetch_related("organisations").order_by("pk").all()
+    serializer_class = ConsortiumSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class PartnershipViewSet(viewsets.ReadOnlyModelViewSet[Partnership]):
+    authentication_classes = (
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    permission_classes = (
+        IsAuthenticated,
+        ApiAccessPermission,
+    )
+    queryset = (
+        Partnership.objects.select_related(
+            "tier", "account", "rolled_to_partnership", "partner_consortium", "partner_organisation"
+        )
+        .order_by("pk")
+        .all()
+    )
+    serializer_class = PartnershipSerializer
     pagination_class = StandardResultsSetPagination
 
 

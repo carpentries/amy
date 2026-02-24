@@ -193,6 +193,22 @@ EMAIL_TEMPLATES: list[EmailTemplateDef] = [
     ),
     EmailTemplateDef(
         active=True,
+        id=UUID("08df391d-8e2f-48d0-877f-c3d24250e1fc"),
+        name="New partnership starting (partner onboarding)",
+        signal=SignalNameEnum.new_partnership_onboarding,
+        from_header="membership@carpentries.org",
+        reply_to_header="",
+        cc_header=["membership@carpentries.org"],
+        bcc_header=[],
+        subject="Carpentries Partnership with (partner name), (partner start-end dates)",
+        body=(
+            "Thank you for joining The Carpentries as a partner organization. "
+            "Here is information to get you started: "
+            "https://carpentries.org/partnership/"
+        ),
+    ),
+    EmailTemplateDef(
+        active=True,
         id=UUID("e368058b-7e3b-4717-b9e9-0b8765bd0d0d"),
         name="Host-instructors introduction",
         signal=SignalNameEnum.host_instructors_introduction,

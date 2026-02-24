@@ -41,6 +41,11 @@ from src.emails.actions.new_membership_onboarding import (
     new_membership_onboarding_receiver,
     new_membership_onboarding_update_receiver,
 )
+from src.emails.actions.new_partnership_onboarding import (
+    new_partnership_onboarding_cancel_receiver,
+    new_partnership_onboarding_receiver,
+    new_partnership_onboarding_update_receiver,
+)
 from src.emails.actions.new_self_organised_workshop import (
     new_self_organised_workshop_receiver,
 )
