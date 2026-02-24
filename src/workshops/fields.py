@@ -15,7 +15,7 @@ from django_select2.forms import Select2MultipleWidget as DS2_Select2MultipleWid
 from django_select2.forms import Select2TagWidget as DS2_Select2TagWidget
 from django_select2.forms import Select2Widget as DS2_Select2Widget
 
-from src.workshops.consts import STR_LONG, STR_MED
+from src.workshops.consts import IATA_AIRPORTS, STR_LONG, STR_MED, airport_option_label
 
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(
     39,
@@ -223,6 +223,29 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):  # type: ig
 
 class HeavySelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength, DS2_HeavySelect2Widget):  # type: ignore
     pass
+
+
+class AirportSelect2Widget(HeavySelect2Widget):
+    """HeavySelect2Widget pre-configured for airport IATA lookups.
+
+    Overrides optgroups() to inject a pre-selected <option> when the field
+    already has a value, so Select2 renders the saved airport on page load
+    instead of showing an empty selection.
+    """
+
+    data_view = "airports-lookup"
+
+    def optgroups(
+        self, name: str, value: list[str], attrs: dict[str, Any] | None = None
+    ) -> list[tuple[str | None, list[dict[str, Any]], int | None]]:
+        if not (value and value[0]):
+            return super().optgroups(name, value, attrs)  # type: ignore[no-untyped-call,no-any-return]
+
+        iata_code = value[0]
+        airport = IATA_AIRPORTS.get(iata_code)
+        label = airport_option_label(iata_code, airport) if airport else iata_code
+        option = self.create_option(name, iata_code, label, selected=True, index=0)
+        return [(None, [option], 0)]
 
 
 def choice_field_with_other(
