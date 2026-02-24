@@ -1,37 +1,124 @@
 <table class="table table-striped">
-  <tr>
-    <th>Benefit</th>
-    {% if show_partnership_column is True %}
-    <th>Partnership</th>
-    {% endif %}
-    <th>Dates</th>
-    <th>Used / allocated</th>
-    <th>Discount</th>
-    <th>Curriculum</th>
-    <th>Active</th>
-    <th>Created at</th>
-    <th>Last updated at</th>
-  </tr>
-  {% for object in object_list %}
-  <tr>
-    <td><a href="{{ object.get_absolute_url }}">{{ object.benefit.name }} ({{ object.benefit.unit_type }})</a></td>
-    {% if show_partnership_column is True %}
-      {% if object.partnership %}
-      <td><a href="{{ object.partnership.get_absolute_url }}">{{ object.partnership.name }}</a></td>
-      {% else %}
-      <td>&mdash;</td>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Benefit</th>
+      {% if show_partnership_column is True %}
+      <th>Partnership</th>
       {% endif %}
-    {% endif %}
-    <td>{{ object.human_daterange }}</td>
-    <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
-    <td>{{ object.discount|default:"&mdash;" }}</td>
-    <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
-    <td>
-      {{ object.active|yesno }}
-      {% if object.frozen %}(frozen){% endif %}
-    </td>
-    <td>{{ object.created_at }}</td>
-    <td>{{ object.last_updated_at }}</td>
-  </tr>
-  {% endfor %}
+      <th>Dates</th>
+      <th>Used / allocated</th>
+      <th>Discount</th>
+      <th>Curriculum</th>
+      <th>Active</th>
+      <th>Created at</th>
+      <th>Last updated at</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for object in object_list %}
+    <tr>
+      <td class="text-center align-middle" style="width: 2rem;">
+        <a class="text-muted" data-toggle="collapse" href="#benefit-usage-{{ object.pk }}" role="button" aria-expanded="false" aria-controls="benefit-usage-{{ object.pk }}">
+          <i class="fas fa-chevron-right fa-sm"></i>
+        </a>
+      </td>
+      <td><a href="{{ object.get_absolute_url }}">{{ object.benefit.name }} ({{ object.benefit.unit_type }})</a></td>
+      {% if show_partnership_column is True %}
+        {% if object.partnership %}
+        <td><a href="{{ object.partnership.get_absolute_url }}">{{ object.partnership.name }}</a></td>
+        {% else %}
+        <td>&mdash;</td>
+        {% endif %}
+      {% endif %}
+      <td>{{ object.human_daterange }}</td>
+      <td>{{ object.allocation_used }} / {{ object.allocation }}</td>
+      <td>{{ object.discount|default:"&mdash;" }}</td>
+      <td>{{ object.curriculum|default_if_none:"&mdash;" }}</td>
+      <td>
+        {{ object.active|yesno }}
+        {% if object.frozen %}(frozen){% endif %}
+      </td>
+      <td>{{ object.created_at }}</td>
+      <td>{{ object.last_updated_at }}</td>
+    </tr>
+    <tr class="collapse" id="benefit-usage-{{ object.pk }}">
+      <td colspan="{% if show_partnership_column %}10{% else %}9{% endif %}" class="p-0 border-top-0">
+        <div class="px-4 py-2 bg-light">
+          {% if object.benefit.unit_type == "seat" %}
+          <strong>Linked tasks:</strong>
+          {% with tasks=object.task_set.all %}
+          {% if tasks %}
+          <table class="table table-sm table-bordered mb-0 mt-2">
+            <thead class="thead-light">
+              <tr>
+                <th>Event</th>
+                <th>Person</th>
+                <th>Role</th>
+                <th class="additional-links"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for task in tasks %}
+              <tr>
+                <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
+                <td><a href="{{ task.person.get_absolute_url }}">{{ task.person }}</a></td>
+                <td>{{ task.role }}</td>
+                <td>
+                  <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><i class="fas fa-info-circle"></i></a>
+                  &nbsp;
+                  {% if perms.workshops.change_task %}
+                  <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><i class="fas fa-edit"></i></a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="mb-0 mt-1 text-muted small">No tasks linked.</p>
+          {% endif %}
+          {% endwith %}
+          {% endif %}
+
+          {% if object.benefit.unit_type == "event" %}
+          <strong>Linked events:</strong>
+          {% with events=object.event_set.all %}
+          {% if events %}
+          <table class="table table-sm table-bordered mb-0 mt-2">
+            <thead class="thead-light">
+              <tr>
+                <th>Slug</th>
+                <th>Host</th>
+                <th>Dates</th>
+                <th class="additional-links"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr>
+                <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
+                <td><a href="{% url 'organization_details' event.host.domain_quoted %}">{{ event.host }}</a></td>
+                <td>{{ event.start }} &ndash; {{ event.end }}</td>
+                <td>
+                  <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><i class="fas fa-info-circle"></i></a>
+                  &nbsp;
+                  {% if perms.workshops.change_event %}
+                  <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><i class="fas fa-edit"></i></a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="mb-0 mt-1 text-muted small">No events linked.</p>
+          {% endif %}
+          {% endwith %}
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>

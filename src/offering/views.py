@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 from django.forms import BaseModelFormSet, modelformset_factory
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -60,7 +60,14 @@ class AccountDetails(OnlyForAdminsMixin, FlaggedViewMixin, AMYDetailView[Account
         context = super().get_context_data(**kwargs)
         context["title"] = str(self.object)
         context["owners"] = AccountOwner.objects.filter(account=self.object).select_related("person")
-        context["account_benefits"] = AccountBenefit.objects.filter(account=self.object).select_related("benefit")
+        context["account_benefits"] = (
+            AccountBenefit.objects.filter(account=self.object)
+            .select_related("benefit")
+            .prefetch_related(
+                Prefetch("event_set", queryset=Event.objects.select_related("host")),
+                Prefetch("task_set", queryset=Task.objects.select_related("event", "person", "role")),
+            )
+        )
         if self.object.account_type != "individual":
             context["partnerships"] = (
                 Partnership.objects.credits_usage_annotation()

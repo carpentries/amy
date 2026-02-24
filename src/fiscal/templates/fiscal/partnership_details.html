@@ -75,14 +75,14 @@
     <td>{{ object.tier }}</td>
   </tr>
   <tr>
-    <th>Credits (used / allowed):</th>
+    <th>Credits (allocated / allowed):</th>
     {% if not object.account %}
     <td>
       No account
     </td>
     {% elif object.credits_used > object.credits %}
     <td class="bg-warning">
-      {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits used exceed allowed"></i>
+      {{ object.credits_used }} / {{ object.credits }} <i class="fas fa-exclamation-circle" data-toggle="tooltip" title="Credits allocated exceed allowed"></i>
     </td>
     {% else %}
     <td>
