@@ -52,6 +52,16 @@
     </td>
   </tr>
   <tr>
+    <th>Partnership</th>
+    <td>
+      {% if role.partnership %}
+      <a href="{{ role.partnership.get_absolute_url }}">{{ role.partnership }}</a>
+      {% else %}
+      &mdash;
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
     <th>URL</th>
     <td>{{ role.url|default:"&mdash;"|urlize_newtab }}</td>
   </tr>

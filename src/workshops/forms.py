@@ -23,7 +23,7 @@ from src.dashboard.models import Continent
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from src.workshops.fields import (
-    HeavySelect2Widget,
+    AirportSelect2Widget,
     ModelSelect2MultipleWidget,
     ModelSelect2Widget,
     RadioSelectWithOther,
@@ -248,7 +248,7 @@ class WorkshopStaffForm(forms.Form):
     airport_iata = forms.CharField(
         required=False,
         label="Airport",
-        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+        widget=AirportSelect2Widget(),  # type: ignore[no-untyped-call]
     )
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
@@ -760,7 +760,7 @@ class PersonForm(forms.ModelForm[Person]):
         required=True,
         label="Airport",
         help_text="Country and timezone of the airport are in the parentheses.",
-        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+        widget=AirportSelect2Widget(),  # type: ignore[no-untyped-call]
     )
     timezone = TimezoneChoiceField(required=False, help_text="Override timezone of the airport.")
     languages = forms.ModelMultipleChoiceField(

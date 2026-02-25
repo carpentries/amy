@@ -9,7 +9,7 @@ from src.communityroles.models import CommunityRole
 from src.recruitment.models import InstructorRecruitment, InstructorRecruitmentSignup
 from src.trainings.models import Involvement
 from src.workshops.fields import (
-    HeavySelect2Widget,
+    AirportSelect2Widget,
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
     Select2Widget,
@@ -63,7 +63,7 @@ class AutoUpdateProfileForm(forms.ModelForm[Person]):
         required=True,
         label="Airport",
         help_text="Country and timezone of the airport are in the parentheses.",
-        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+        widget=AirportSelect2Widget(),  # type: ignore[no-untyped-call]
     )
     country = CountryField().formfield(
         required=False,

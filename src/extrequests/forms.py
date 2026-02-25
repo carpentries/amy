@@ -20,9 +20,9 @@ from src.extrequests.utils import (
 )
 from src.offering.models import AccountBenefit, Benefit
 from src.workshops.fields import (
+    AirportSelect2Widget,
     CheckboxSelectMultipleWithOthers,
     CurriculumModelMultipleChoiceField,
-    HeavySelect2Widget,
     ModelSelect2Widget,
     RadioSelectFakeMultiple,
     RadioSelectWithOther,
@@ -1281,7 +1281,7 @@ class TrainingRequestUpdateForm(forms.ModelForm[TrainingRequest]):
         required=False,
         label="Nearest major airport",
         help_text="Country and timezone of the airport are in the parentheses.",
-        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+        widget=AirportSelect2Widget(),  # type: ignore[no-untyped-call]
     )
 
     score_auto = forms.IntegerField(

@@ -22,7 +22,7 @@ from src.fiscal.models import Consortium, MembershipPersonRole, Partnership
 from src.offering.models import Account, AccountBenefit, Benefit
 from src.workshops import models
 from src.workshops.base_views import AuthenticatedHttpRequest
-from src.workshops.consts import COUNTRIES, IATA_AIRPORTS
+from src.workshops.consts import COUNTRIES, IATA_AIRPORTS, airport_option_label
 from src.workshops.utils.access import LoginNotRequiredMixin, OnlyForAdminsNoRedirectMixin
 
 logger = logging.getLogger("amy")
@@ -531,7 +531,7 @@ class AirportsLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
             {
                 "results": [
                     {
-                        "text": f"{key}: {value['name']} ({COUNTRIES.get(value['country'], '-')}, {value['tz']})",
+                        "text": airport_option_label(iata_code=key, airport=value),
                         "id": key,
                     }
                     for key, value in self.object_list

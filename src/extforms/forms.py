@@ -19,8 +19,8 @@ from src.extrequests.forms import (
 )
 from src.extrequests.utils import MemberCodeValidationError, member_code_valid_training
 from src.workshops.fields import (
+    AirportSelect2Widget,
     CheckboxSelectMultipleWithOthers,
-    HeavySelect2Widget,
     RadioSelectWithOther,
     Select2Widget,
 )
@@ -38,7 +38,7 @@ class TrainingRequestForm(forms.ModelForm[TrainingRequest]):
         required=True,
         label="Nearest major airport",
         help_text="Country and timezone of the airport are in the parentheses.",
-        widget=HeavySelect2Widget(data_view="airports-lookup"),  # type: ignore[no-untyped-call]
+        widget=AirportSelect2Widget(),  # type: ignore[no-untyped-call]
     )
 
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
